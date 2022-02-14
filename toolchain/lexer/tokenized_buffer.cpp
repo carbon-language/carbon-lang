@@ -490,6 +490,9 @@ class TokenizedBuffer::Lexer {
                              .id = GetOrCreateIdentifier(identifier_text)});
   }
 
+  // Produces an error token for the current position. Assumes it's due to
+  // unrecognized characters, because anything else should ahve lexed
+  // previously.
   auto LexError(llvm::StringRef& source_text) -> LexResult {
     llvm::StringRef error_text = source_text.take_while([](char c) {
       if (IsAlnum(c)) {
@@ -516,13 +519,15 @@ class TokenizedBuffer::Lexer {
     return AddErrorToken(source_text, error_text);
   }
 
+  // Adds a token for EOF.
   void AddEndOfFileToken() {
     buffer_.AddToken({.kind = TokenKind::EndOfFile(),
                       .token_line = current_line_,
                       .column = current_column_});
   }
 
-  void AddTooManyErrors(llvm::StringRef source_text) {
+  // Adds tokens for too many errors.
+  void AddTooManyErrorsTokens(llvm::StringRef source_text) {
     emitter_.EmitError<TooManyErrors>(source_text.begin());
     while (!source_text.empty()) {
       AddErrorToken(source_text, source_text);
@@ -530,9 +535,10 @@ class TokenizedBuffer::Lexer {
   }
 
  private:
+  // Adds an error token, advancing source_text along the processed error
+  // length. Note that error tokens longer than an int32 will be split.
   auto AddErrorToken(llvm::StringRef& source_text, llvm::StringRef error_text)
       -> LexResult {
-    // Longer errors get to be multiple tokens.
     error_text = error_text.take_front(std::numeric_limits<int32_t>::max());
     auto result = buffer_.AddToken(
         {.kind = TokenKind::Error(),
@@ -570,7 +576,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
     if (error_tracking_consumer.error_count() >= LexErrorLimit) {
-      lexer.AddTooManyErrors(source_text);
+      lexer.AddTooManyErrorsTokens(source_text);
       break;
     }
     // Each time we find non-whitespace characters, try each kind of token we
