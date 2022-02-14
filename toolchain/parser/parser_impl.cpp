@@ -912,6 +912,7 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   llvm::Optional<Node> expression = ParsePrimaryExpression();
 
+  TokenizedBuffer::TokenIterator last_position = position_;
   while (true) {
     switch (NextTokenKind()) {
       case TokenKind::Period():
@@ -927,10 +928,11 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
         return expression;
     }
     // This is subject to an infinite loop if a child call fails, so monitor for
-    // that.
-    if (expression == llvm::None) {
+    // stalling.
+    if (last_position == position_) {
       return llvm::None;
     }
+    last_position = position_;
   }
 }
 
