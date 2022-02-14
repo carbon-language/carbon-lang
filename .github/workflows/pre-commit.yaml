@@ -18,5 +18,4 @@ jobs:
       - uses: pre-commit/action@v2.0.2
         env:
           # bazel-buildifier relies on a locally installed copy.
-          # clang-format-whole-file has races in cache creation.
-          SKIP: bazel-buildifier,clang-format-whole-file
+          SKIP: bazel-buildifier
