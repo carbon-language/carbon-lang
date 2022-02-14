@@ -22,6 +22,7 @@ cc_library(
 cc_library(
     name = "mocks",
     testonly = 1,
+    srcs = ["mocks.cpp"],
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",

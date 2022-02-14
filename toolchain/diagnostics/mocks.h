@@ -53,4 +53,11 @@ auto DiagnosticShortName(Matcher&& inner_matcher) -> auto {
 
 }  // namespace Carbon::Testing
 
+namespace Carbon {
+
+// Printing helper for tests.
+void PrintTo(const Diagnostic& diagnostic, std::ostream* os);
+
+}  // namespace Carbon
+
 #endif  // TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
