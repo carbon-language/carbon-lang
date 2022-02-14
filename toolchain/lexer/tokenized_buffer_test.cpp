@@ -1097,20 +1097,5 @@ TEST_F(LexerTest, PrintingAsYaml) {
                                                {"spelling", ""}}}}));
 }
 
-TEST_F(LexerTest, ManyErrors) {
-  // Input with tons errors should bail instead of timing out.
-  static constexpr size_t Length = 25000;
-  std::string code;
-  while (code.size() < Length) {
-    code += "x\1";
-  }
-  ErrorTrackingDiagnosticConsumer error_tracking_consumer(
-      ConsoleDiagnosticConsumer());
-  auto buffer = Lex(code, error_tracking_consumer);
-  ASSERT_TRUE(buffer.HasErrors());
-  EXPECT_EQ(error_tracking_consumer.error_count(),
-            TokenizedBuffer::LexErrorLimit + 1);
-}
-
 }  // namespace
 }  // namespace Carbon::Testing
