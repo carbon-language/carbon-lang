@@ -8,7 +8,11 @@ cc_library(
     name = "semantics",
     srcs = ["semantics.cpp"],
     hdrs = ["semantics.h"],
-    deps = ["//toolchain/parser:parse_tree"],
+    deps = [
+        "//common:check",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(

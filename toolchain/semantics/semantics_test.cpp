@@ -38,5 +38,11 @@ TEST_F(ParseTreeTest, Empty) {
   ASSERT_FALSE(parse_tree->HasErrors());
 }
 
+TEST_F(ParseTreeTest, FunctionBasic) {
+  // TODO: Validate the returned Semantics object.
+  Analyze("fn Foo() {}");
+  ASSERT_FALSE(parse_tree->HasErrors());
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
