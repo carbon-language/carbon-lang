@@ -549,7 +549,6 @@ TEST_F(ParseTreeTest, OperatorsMissingPrecedenceForNot) {
       "  not a and not b and not c;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
-  // TODO: This should probably error with ambiguous precedence on `not`.
   EXPECT_FALSE(tree.HasErrors());
 
   EXPECT_THAT(
