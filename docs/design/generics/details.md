@@ -4546,11 +4546,11 @@ interface.
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
+  fn TotalLess[me: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
   impl PartialOrder {
-    fn PartialLess[me: Self](right: Self) -> Bool {
+    fn PartialLess[me: Self](right: Self) -> bool {
       return me.TotalLess(right);
     }
   }
@@ -4562,12 +4562,12 @@ instead:
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
+  fn TotalLess[me: Self](right: Self) -> bool;
   impl PartialOrder;
 }
 
 external impl [T:! TotalOrder] T as PartialOrder {
-  fn PartialLess[me: Self](right: Self) -> Bool {
+  fn PartialLess[me: Self](right: Self) -> bool {
     return me.TotalLess(right);
   }
 }
@@ -4591,18 +4591,18 @@ overridden in impls.
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
-  final fn TotalGreater[me: Self](right: Self) -> Bool {
+  fn TotalLess[me: Self](right: Self) -> bool;
+  final fn TotalGreater[me: Self](right: Self) -> bool {
     return right.TotalLess(me);
   }
 }
 
 class String {
   impl as TotalOrder {
-    fn TotalLess[me: Self](right: Self) -> Bool { ... }
+    fn TotalLess[me: Self](right: Self) -> bool { ... }
     // ❌ Illegal: May not provide definition of final
     //             method `TotalGreater`.
-    fn TotalGreater[me: Self](right: Self) -> Bool { ... }
+    fn TotalGreater[me: Self](right: Self) -> bool { ... }
   }
 }
 
@@ -4612,6 +4612,18 @@ interface Add(T:! Type = Self) {
   // Has a *default* of `Self`
   let Result:! Type = Self;
   fn DoAdd[me: Self](right: AddWith) -> Result;
+}
+```
+
+Final members may also be defined out-of-line:
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> bool;
+  final fn TotalGreater[me: Self](right: Self) -> bool;
+}
+fn TotalOrder.TotalGreater[me: Self](right: Self) -> bool {
+ return right.TotalLess(me);
 }
 ```
 
