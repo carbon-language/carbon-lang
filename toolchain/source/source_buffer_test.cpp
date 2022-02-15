@@ -23,16 +23,16 @@ TEST(SourceBufferTest, StringRep) {
 }
 
 TEST(SourceBufferTest, CustomFilename) {
-  auto buffer =
-      SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
+  auto buffer = SourceBuffer::CreateFromTextWithFilename("Hello World Again!",
+                                                         "/custom/text");
   ASSERT_TRUE(static_cast<bool>(buffer));
   EXPECT_EQ("/custom/text", buffer->Filename());
   EXPECT_EQ("Hello World Again!", buffer->Text());
 }
 
 TEST(SourceBufferTest, UnprintableFilename) {
-  auto buffer =
-      SourceBuffer::CreateFromText("Unused", llvm::StringRef("\0", 1));
+  auto buffer = SourceBuffer::CreateFromTextWithFilename(
+      "Unused", llvm::StringRef("\0", 1));
   ASSERT_FALSE(static_cast<bool>(buffer));
 }
 

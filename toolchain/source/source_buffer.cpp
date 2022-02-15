@@ -44,7 +44,8 @@ static auto ErrnoToError(int errno_value) -> llvm::Error {
       std::error_code(errno_value, std::generic_category()));
 }
 
-auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
+auto SourceBuffer::CreateFromTextWithFilename(llvm::Twine text,
+                                              llvm::StringRef filename)
     -> llvm::Expected<SourceBuffer> {
   if (!IsPrintable(filename)) {
     return ErrnoToError(EINVAL);
