@@ -4328,7 +4328,13 @@ An interface may be declared earlier in a file before it is defined.
     incomplete or defined.
 -   Every internal implementation must be declared (or defined) inside the scope
     of the class definition. It may also be declared before or defined
-    afterwards.
+    afterwards. Note that the class itself is incomplete in the scope of the
+    class definition, but member function bodies defined inline are processed as
+    if they appeared immediately after the end of the outermost enclosing class,
+    see
+    [question-for-leads issue #472](https://github.com/carbon-language/carbon-lang/issues/472)
+    and
+    [proposal #875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875).
 
 ### Declaration examples
 
@@ -4385,6 +4391,7 @@ class MyClass {
   external impl as Interface1 { }
 
   // Definition of previously declared internal impl.
+  // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
   impl as Interface3  where .T3 = f32 { }
