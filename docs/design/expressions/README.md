@@ -75,7 +75,7 @@ Edges indicate a relative ordering. Where multiple operators are grouped, such
 as comparison operators, they do not have a partial ordering with respect to
 each other.
 
-The rectangle with a cutout indicates left associativity.
+Rectangles with a cutout indicate left associativity.
 
 ## Conversions and casts
 
