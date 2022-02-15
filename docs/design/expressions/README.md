@@ -71,11 +71,11 @@ graph TD
     and_or>x and y<br>x or y]
 ```
 
-Edges indicate a relative ordering. The rectangle with a cutout indicates left
-associativity.
+Edges indicate a relative ordering. Where multiple operators are grouped, such
+as comparison operators, they do not have a partial ordering with respect to
+each other.
 
-Where multiple operators are grouped, such as comparison operators, they do not
-have a partial ordering with respect to each other.
+The rectangle with a cutout indicates left associativity.
 
 ## Conversions and casts
 
