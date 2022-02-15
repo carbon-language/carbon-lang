@@ -804,10 +804,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         }
 
         // Work out the kind of this element
-        Kind elem_kind =
-            (NextTokenIs(TokenKind::Equal())
-                 ? Value
-                 : NextTokenIs(TokenKind::Colon()) ? Type : Unknown);
+        Kind elem_kind = (NextTokenIs(TokenKind::Equal())   ? Value
+                          : NextTokenIs(TokenKind::Colon()) ? Type
+                                                            : Unknown);
         if (elem_kind == Unknown || (kind != Unknown && elem_kind != kind)) {
           return diagnose_invalid_syntax();
         }
