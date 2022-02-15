@@ -96,6 +96,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Declaring interfaces](#declaring-interfaces)
     -   [Declaring implementations](#declaring-implementations)
     -   [Declaration examples](#declaration-examples)
+    -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
+    -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
@@ -4285,25 +4287,33 @@ differences between the Carbon and Rust plans:
 
 Interfaces and their implementations may be forward declared and then later
 defined. This is needed to allow cyclic references, for example when declaring
-the edges and nodes of a graph.
+the edges and nodes of a graph. It is also a tool that may be used to make code
+more readable.
 
--   declaration is the first part of a forward declaration and a definition
--   forward declarations = declaration + `;`
--   definition = declaration + `{` body `}`
--   between the first declaration and the end of the definition the interface or
-    implementation is called "incomplete"
+The syntax described in the [interface](#interfaces) and
+[implementation](#implementing-interfaces) sections described the syntax for
+their _definition_, which consists of a declaration followed by a body contained
+in curly braces `{` ... `}`. A _forward declaration_ is a declaration followed
+by a semicolon `;`. A forward declaration is a promise that the entity being
+declared will be defined later. Between the first declaration of an entity,
+which may be in a forward declaration or the first part of a definition, and the
+end of the definition the interface or implementation is called _incomplete_.
+There are additional restrictions on how the name of an incomplete entity may be
+used.
 
 ### Declaring interfaces
 
-An interface may be declared earlier in a file before it is defined.
+An interface may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
--   Declaration includes the parameter list for the interface.
--   declaration part of a forward declaration and the corresponding definition
-    must match
--   The name of the interface may not be used until after the parameter list of
-    the declaration. In particular, may not use the name of the interface in the
-    parameter list. FIXME: Workaround.
+-   The declaration includes the parameter list for the interface.
+-   The declaration part of a forward declaration and the corresponding
+    definition must match.
+-   The name of the interface must not be used until after the parameter list of
+    the declaration. In particular, it is illegal to use the name of the
+    interface in the parameter list. There is a
+    [workaround](#interfaces-with-parameters-constrained-by-the-same-interface)
+    for the use cases when this would come up.
 -   An incomplete interface may be used in constraints in declarations of types
     or functions.
 -   Any name lookup into an incomplete interface is an error. For example, an
@@ -4313,12 +4323,15 @@ An interface may be declared earlier in a file before it is defined.
 
 ### Declaring implementations
 
+An implementation of an interface for a type may be forward declared subject to
+these rules:
+
 -   The definition must be in the same library as the declaration. They must
     either be in the same file, or the declaration can be in the API file and
     the definition in an impl file.
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
-    `where` clause. If later declarations repeat the `where` clause, it must
+    `where` clause. If a later declaration repeats the `where` clause, it must
     match.
 -   The keyword `external`, when it precedes `impl`, is part of the declaration
     of the implementation and must match between a forward declaration and
@@ -4327,11 +4340,11 @@ An interface may be declared earlier in a file before it is defined.
     incomplete interface. It may be for any declared type, whether it is
     incomplete or defined.
 -   Every internal implementation must be declared (or defined) inside the scope
-    of the class definition. It may also be declared before or defined
-    afterwards. Note that the class itself is incomplete in the scope of the
-    class definition, but member function bodies defined inline are processed as
-    if they appeared immediately after the end of the outermost enclosing class,
-    see
+    of the class definition. It may also be declared before the class definition
+    or defined afterwards. Note that the class itself is incomplete in the scope
+    of the class definition, but member function bodies defined inline are
+    processed as if they appeared immediately after the end of the outermost
+    enclosing class, see
     [question-for-leads issue #472](https://github.com/carbon-language/carbon-lang/issues/472)
     and
     [proposal #875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875).
@@ -4421,7 +4434,7 @@ impl MyClass as Interface4 { }
 impl MyClass as Interface6 { }
 ```
 
-Cyclic reference:
+### Example of declaring interfaces with cyclic references
 
 ```
 // Forward declaration of interface
@@ -4449,8 +4462,11 @@ constraint NodeInterface {
 }
 ```
 
-Work around for the restriction about not being able to name an interface in its
-parameter list.
+### Interfaces with parameters constrained by the same interface
+
+To work around
+[the restriction about not being able to name an interface in its parameter list](#declaring-interfaces),
+instead include that requirement in the body of the interface.
 
 ```
 // Want to require that `T` satisfies `CommonType(Self)`,
