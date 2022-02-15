@@ -64,10 +64,10 @@ The precedence diagram is defined thusly:
 
 ```mermaid
 graph TD
-    parens["(...)"] --> as & not
-    as["x as T"] --> comparison
-    not["not X"] --> and_or
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
+    parens["(...)"] --- as & not
+    as["x as T"] --- comparison
+    not["not X"] --- and_or
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --- and_or
     and_or>"x and y<br> x or y"]
 ```
 
