@@ -60,8 +60,7 @@ ordering of two operators, it will be rejected due to ambiguity. Precedence
 orderings will only be added when it's reasonable to expect most developers to
 understand the precedence without parentheses.
 
-The precedence diagram is defined thusly, with edges indicating the partial
-ordering:
+The precedence diagram is defined thusly:
 
 ```mermaid
 graph TD
@@ -72,9 +71,8 @@ graph TD
     and_or>x and y<br>x or y]
 ```
 
-<div align="center">
-<img src="precedence.svg" alt="Precedence diagram">
-</div>
+Edges indicate a relative ordering. The rectangle with a cutout indicates left
+associativity.
 
 Where multiple operators are grouped, such as comparison operators, they do not
 have a partial ordering with respect to each other.
