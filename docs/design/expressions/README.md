@@ -63,6 +63,15 @@ understand the precedence without parentheses.
 The precedence diagram is defined thusly, with edges indicating the partial
 ordering:
 
+```mermaid
+graph TD
+    parens["(...)"] --> as & not
+    as[x as T] --> comparison
+    not[not X] --> and_or
+    comparison[x == y<br>x != y<br>x < y<br>x <= y<br>x > y<br> x >= y] --> and_or
+    and_or>x and y<br>x or y]
+```
+
 <div align="center">
 <img src="precedence.svg" alt="Precedence diagram">
 </div>
