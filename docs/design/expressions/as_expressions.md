@@ -77,6 +77,13 @@ var m: auto = b as (bool as Hashable);
 var m: auto = b as T as U;
 ```
 
+**Note:** `b as (bool as Hashable)` is valid but not useful, because
+[the second operand of `as` is implicitly converted to type `Type`](#extensibility).
+This expression therefore has the same interpretation as `b as bool`.
+
+**TODO:** We should consider making `as` expressions left-associative now that
+facet types have been removed from the language.
+
 The `as` operator has lower precedence than operators that visually bind
 tightly:
 
@@ -163,6 +170,9 @@ interface As(Dest:! Type) {
 ```
 
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
+
+**Note:** This rewrite causes the expression `U` to be implicitly converted to
+type `Type`. The program is invalid if this conversion is not possible.
 
 ## Alternatives considered
 

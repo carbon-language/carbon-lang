@@ -14,13 +14,15 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import hashlib
 import os
+from pathlib import Path
+import platform
 import re
 import shutil
 import subprocess
-from pathlib import Path
-import tempfile
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
+import urllib.request
 from xml.etree import ElementTree
 
 
@@ -28,6 +30,21 @@ from xml.etree import ElementTree
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x)
+}
+
+URL = "https://github.com/bazelbuild/buildtools/releases/download/4.2.5/"
+
+# Checksums gathered with:
+#   for v in darwin-amd64 darwin-arm64 linux-amd64 linux-arm64 windows-amd64.exe
+#   do
+#     echo \"$v\": \"$(wget -q -O - https://github.com/bazelbuild/buildtools/releases/download/4.2.5/buildozer-$v | sha256sum | cut -d ' ' -f1)\", \# noqa: E501
+#   done
+VERSIONS = {
+    "darwin-amd64": "3fe671620e6cb7d2386f9da09c1de8de88b02b9dd9275cdecd8b9e417f74df1b",  # noqa: E501
+    "darwin-arm64": "ff4d297023fe3e0fd14113c78f04cef55289ca5bfe5e45a916be738b948dc743",  # noqa: E501
+    "linux-amd64": "e8e39b71c52318a9030dd9fcb9bbfd968d0e03e59268c60b489e6e6fc1595d7b",  # noqa: E501
+    "linux-arm64": "96227142969540def1d23a9e8225524173390d23f3d7fd56ce9c4436953f02fc",  # noqa: E501
+    "windows-amd64.exe": "2a9a7176cbd3b2f0ef989502128efbafd3b156ddabae93b9c979cd4017ffa300",  # noqa: E501
 }
 
 
@@ -45,23 +62,61 @@ class Rule(NamedTuple):
     outs: Set[str]
 
 
+def get_hash(file: Path) -> str:
+    """Returns the sha256 of a file."""
+    digest = hashlib.sha256()
+    with file.open("rb") as f:
+        while True:
+            chunk = f.read(1024 * 64)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def install_buildozer() -> str:
-    # 4.2.4
-    buildozer_sha = "cdedcc0318b9c8919afb0167e30c1588fc990ffc"
-    args = [
-        "go",
-        "install",
-        f"github.com/bazelbuild/buildtools/buildozer@{buildozer_sha}",
-    ]
-    # Install to a cache.
-    env = os.environ.copy()
-    cache_dir = Path(tempfile.gettempdir()).joinpath("carbon-pre-commit-cache")
+    """Install buildozer to a cache."""
+    cache_dir = Path.home().joinpath(".cache", "carbon-lang-pre-commit")
     cache_dir.mkdir(parents=True, exist_ok=True)
-    env["GOPATH"] = str(cache_dir)
-    if "GOBIN" in env:
-        del env["GOBIN"]
-    subprocess.check_call(args, env=env)
-    return str(cache_dir.joinpath("bin", "buildozer"))
+
+    # Translate platform information into Bazel's release form.
+    machine = platform.machine()
+    if machine == "x86_64":
+        machine = "amd64"
+    version = f"{platform.system().lower()}-{machine}"
+
+    # Get ready to add .exe for Windows.
+    ext = ""
+    if platform.system() == "Windows":
+        ext = ".exe"
+
+    # Ensure the platform is supported, and grab its hash.
+    if version not in VERSIONS:
+        # If this because a platform support issue, we may need to print errors.
+        exit(f"No buildozer available for platform: {version}")
+    want_hash = VERSIONS[version]
+
+    # Check if there's a cached file that can be used.
+    local_path = cache_dir.joinpath(f"buildozer{ext}")
+    if local_path.is_file() and want_hash == get_hash(local_path):
+        return str(local_path)
+
+    # Download buildozer.
+    url = f"{URL}/buildozer-{version}{ext}"
+    with urllib.request.urlopen(url) as response:
+        with local_path.open("wb") as f:
+            shutil.copyfileobj(response, f)
+    local_path.chmod(0o755)
+
+    # Verify the downloaded hash.
+    found_hash = get_hash(local_path)
+    if want_hash != found_hash:
+        exit(
+            f"Downloaded buildozer-{version} but found sha256 {found_hash}, "
+            f"wanted {want_hash}"
+        )
+
+    return str(local_path)
 
 
 def locate_bazel() -> str:
