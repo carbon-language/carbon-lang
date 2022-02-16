@@ -117,8 +117,8 @@ void Semantics::Analyzer::AnalyzeFunction(
   llvm::StringRef fn_name = parse_tree_->GetNodeText(fn.name_node);
   auto [it, success] = name_scope.insert(
       {fn_name,
-       {NamedEntity::Kind::Function,
-        static_cast<int32_t>(semantics_->functions_.size())}});
+       {.kind = NamedEntity::Kind::Function,
+        .index = static_cast<int32_t>(semantics_->functions_.size())}});
   if (!success) {
     emitter_.EmitError<NameConflict>(
         fn.name_node,
@@ -130,9 +130,9 @@ void Semantics::Analyzer::AnalyzeFunction(
 
 auto Semantics::Analyzer::GetEntityLocation(NamedEntity entity)
     -> Diagnostic::Location {
-  switch (entity.kind_) {
+  switch (entity.kind) {
     case NamedEntity::Kind::Function: {
-      Function fn = semantics_->functions_[entity.index_];
+      Function fn = semantics_->functions_[entity.index];
       return translator_.GetLocation(fn.name_node);
     }
   }

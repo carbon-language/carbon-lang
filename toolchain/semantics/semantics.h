@@ -20,6 +20,14 @@ class Semantics {
     ParseTree::Node name_node;
   };
 
+  // Analyzes a parse tree and returns the constructed semantic information.
+  static auto Analyze(const ParseTree& parse_tree, DiagnosticConsumer& consumer)
+      -> Semantics;
+
+ private:
+  class Analyzer;
+  friend class Analyzer;
+
   // Provides a link back to an entity in a name scope.
   struct NamedEntity {
     // The kind of entity. There should be one entry per list of entities that
@@ -28,19 +36,12 @@ class Semantics {
       Function,
     };
 
-    Kind kind_;
+    Kind kind;
 
     // The index of the named entity within its list.
-    int32_t index_;
+    int32_t index;
   };
 
-  // Analyzes a parse tree and returns the constructed semantic information.
-  static auto Analyze(const ParseTree& parse_tree, DiagnosticConsumer& consumer)
-      -> Semantics;
-
- private:
-  class Analyzer;
-  friend class Analyzer;
 
   // All functions from the parse tree.
   llvm::SmallVector<Function, 0> functions_;

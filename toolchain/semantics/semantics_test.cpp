@@ -40,7 +40,7 @@ class ParseTreeTest : public ::testing::Test {
 
 TEST_F(ParseTreeTest, Empty) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
-  auto semantics = Analyze("");
+  Analyze("");
 }
 
 TEST_F(ParseTreeTest, FunctionBasic) {
