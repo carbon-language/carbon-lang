@@ -1265,5 +1265,20 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   EXPECT_TRUE(tree.HasErrors());
 }
 
+TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
+  // Stack depth errors could cause ParsePostfixExpression to infinitely loop
+  // when calling children and those children error. Because of the fragility of
+  // stack depth, this tries a few different values.
+  for (int n = 0; n <= 10; ++n) {
+    std::string code = "var x: auto = ";
+    code.append(ParseTree::StackDepthLimit - n, '*');
+    code += "(z);";
+    TokenizedBuffer tokens = GetTokenizedBuffer(code);
+    ASSERT_FALSE(tokens.HasErrors());
+    ParseTree tree = ParseTree::Parse(tokens, consumer);
+    EXPECT_TRUE(tree.HasErrors());
+  }
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
