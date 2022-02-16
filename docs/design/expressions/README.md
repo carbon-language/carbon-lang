@@ -71,7 +71,7 @@ graph TD
     and_or>"x and y<br> x or y"]
 ```
 
-The diagrams attributes are:
+The diagram's attributes are:
 
 -   Edges indicate a relative ordering: given an edge A --> B, it means that A
     can fit in B unparenthesized.
