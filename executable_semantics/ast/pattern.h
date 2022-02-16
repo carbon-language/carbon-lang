@@ -104,10 +104,12 @@ class BindingPattern : public Pattern {
   using ImplementsCarbonNamedEntity = void;
 
   BindingPattern(SourceLocation source_loc, std::string name,
-                 Nonnull<Pattern*> type)
+                 Nonnull<Pattern*> type,
+                 std::optional<ValueCategory> value_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
-        type_(type) {}
+        type_(type),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -122,7 +124,15 @@ class BindingPattern : public Pattern {
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  // Indicates whether the bound variable is a Let or Var variable.
+  // value_category_ can be null before typechecking, but mustn't be null after
+  // that because the typechecker must assign either Let or Var based on
+  // surrounding context. It will be set to Let when the name is AnonymousName.
+  auto value_category() const -> ValueCategory {
+    // TODO: replace value_or with value once typechecker changes are
+    // implemented
+    return value_category_.value_or(ValueCategory::Var);
+  }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
@@ -131,6 +141,7 @@ class BindingPattern : public Pattern {
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
+  std::optional<ValueCategory> value_category_;
 };
 
 // A pattern that matches a tuple value field-wise.
