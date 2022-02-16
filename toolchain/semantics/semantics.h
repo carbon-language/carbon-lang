@@ -42,7 +42,6 @@ class Semantics {
     int32_t index;
   };
 
-
   // All functions from the parse tree.
   llvm::SmallVector<Function, 0> functions_;
 
