@@ -67,7 +67,7 @@ The precedence diagram is defined thusly:
 graph TD
     parens["(...)"] --> as & not
     as["x as T"] --> comparison
-    not["not X"] --> and_or
+    not["not x"] --> and_or
     comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
     and_or>"x and y<br> x or y"]
 ```
@@ -75,11 +75,14 @@ graph TD
 The diagram's attributes are:
 
 -   Edges indicate a relative ordering: given an edge A --> B, it means that A
-    is higher precedence than B. In other words, something like `not x and y` is
-    valid because there is an arrow from `not` to `and`, so `not x` fits into
-    `and` unparenthesized.
+    is higher precedence than B.
 
-    -   Higher precedence operators should be higher in the graph.
+    -   Higher precedence operators are higher in the graph.
+
+    -   In other words, something like `not x or y` is valid because there is an
+        arrow from `not` to `or`, so `not` is higher precedence than `or` and
+        can be used inside `or` expressions without parentheses. The
+        parenthesized equivalent is `((not x) or y)`.
 
 -   Shapes indicate
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
