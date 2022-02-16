@@ -79,10 +79,10 @@ The diagram's attributes are:
 
     -   Higher precedence operators are higher in the graph.
 
-    -   In other words, something like `not x or y` is valid because there is an
-        arrow from `not` to `or`, so `not` is higher precedence than `or` and
-        can be used inside `or` expressions without parentheses. The
-        parenthesized equivalent is `((not x) or y)`.
+    -   For example, `not x or y` is valid because there is an arrow from `not`
+        to `or`, so `not` is higher precedence than `or` and can be used inside
+        `or` expressions without parentheses. The parenthesized equivalent is
+        `((not x) or y)`.
 
 -   Shapes indicate
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
