@@ -930,7 +930,8 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
     // This is subject to an infinite loop if a child call fails, so monitor for
     // stalling.
     if (last_position == position_) {
-      return llvm::None;
+      CHECK(expression == llvm::None);
+      return expression;
     }
     last_position = position_;
   }
