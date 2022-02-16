@@ -501,7 +501,7 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        FieldPath::Component field(access.field(), access.variable());
+        FieldPath::Component field(access.field(), access.impl());
         auto member = act.results()[0]->GetField(
             arena_, FieldPath(field), exp.source_loc(), todo_, heap_);
         return todo_.FinishAction(member);
@@ -574,9 +574,9 @@ void Interpreter::StepExp() {
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
             // Bring the impl witness tables into scope.
-            for (const auto& [bind, impl_name] :
+            for (const auto& [impl_bind, impl_name] :
                  cast<CallExpression>(exp).impls()) {
-              NamedEntityView named_ent(bind);
+              EntityView named_ent(impl_bind);
               auto impl_value = todo_.ValueOfName(impl_name, exp.source_loc());
               if (impl_value->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*impl_value);
@@ -667,7 +667,7 @@ void Interpreter::StepExp() {
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
             std::vector<Nonnull<const GenericBinding*>>(), act.results()[0],
-            act.results()[1]));
+            act.results()[1], std::vector<Nonnull<const ImplBinding*>>()));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {

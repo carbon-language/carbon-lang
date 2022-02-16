@@ -383,16 +383,53 @@ class TypeType : public Value {
   }
 };
 
+// A binding for a witness table of an impl.
+// In other words, when a witness table is passed to a generic function,
+// an instance of this class acts as a key in the runtime scope,
+// and its associated value is a witness table.
+class ImplBinding : public AstNode {
+ public:
+  using ImplementsCarbonEntity = void;
+
+  ImplBinding(SourceLocation source_loc,
+              Nonnull<const GenericBinding*> type_var,
+              Nonnull<const Value*> iface)
+      : AstNode(AstNodeKind::ImplBinding, source_loc),
+        type_var_(type_var),
+        iface_(iface) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromImplBinding(node->kind());
+  }
+  void Print(llvm::raw_ostream& out) const override;
+
+  // The binding for the type variable.
+  auto type_var() const -> Nonnull<const GenericBinding*> { return type_var_; }
+  // The interface being implemented.
+  auto interface() const -> Nonnull<const Value*> { return iface_; }
+
+  // Required for the the Entity interface
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+
+ private:
+  Nonnull<const GenericBinding*> type_var_;
+  Nonnull<const Value*> iface_;
+};
+
 // A function type.
 class FunctionType : public Value {
  public:
   FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
+               Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         deduced_(deduced),
         parameters_(parameters),
-        return_type_(return_type) {}
+        return_type_(return_type),
+        impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -403,11 +440,15 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+    return impl_bindings_;
+  }
 
  private:
   std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
 // A pointer type.

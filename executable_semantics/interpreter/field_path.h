@@ -39,24 +39,22 @@ class FieldPath {
   class Component {
    public:
     explicit Component(std::string name) : name_(std::move(name)) {}
-    Component(std::string name, std::optional<NamedEntityView> type_var)
-        : name_(std::move(name)), type_variable_(type_var) {}
+    Component(std::string name, std::optional<EntityView> impl)
+        : name_(std::move(name)), impl_(impl) {}
 
     auto name() const -> const std::string& { return name_; }
 
     // If the field access was on something whose type is generic,
-    // e.g. `T`, then type_variable() returns the `NamedEntityView`
-    // for the generic binding of `T`.
+    // e.g. `T`, then type_variable() returns the `EntityView`
+    // for the impl for `T`.
     // Otherwise returns `std::nullopt`.
-    auto type_variable() const -> std::optional<NamedEntityView> {
-      return type_variable_;
-    }
+    auto impl() const -> std::optional<EntityView> { return impl_; }
 
     void Print(llvm::raw_ostream& out) const { out << name_; }
 
    private:
     std::string name_;
-    std::optional<NamedEntityView> type_variable_;
+    std::optional<EntityView> impl_;
   };
 
   // Constructs a FieldPath consisting of a single step.

@@ -35,8 +35,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const Heap& heap) -> Nonnull<const Value*> {
   const std::string& f = field.name();
 
-  if (field.type_variable().has_value()) {
-    auto witness_addr = todo.ValueOfName(*field.type_variable(), source_loc);
+  if (field.impl().has_value()) {
+    auto witness_addr = todo.ValueOfName(*field.impl(), source_loc);
     Nonnull<const Value*> witness = heap.Read(
         llvm::dyn_cast<LValue>(witness_addr)->address(), source_loc, todo);
 
@@ -617,6 +617,10 @@ auto FindMember(const std::string& name,
     }
   }
   return std::nullopt;
+}
+
+void ImplBinding::Print(llvm::raw_ostream& out) const {
+  out << "impl " << *type_var_ << " as " << *iface_;
 }
 
 }  // namespace Carbon

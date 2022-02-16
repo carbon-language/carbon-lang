@@ -16,6 +16,7 @@ namespace Carbon {
 
 class Value;
 class Expression;
+class ImplBinding;
 
 // TODO: expand the kinds of things that can be deduced parameters.
 //   For now, only generic parameters are supported.
@@ -60,16 +61,23 @@ class GenericBinding : public AstNode {
     CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
-  // Unset the `constant_value()` after typechecking so that the
-  // generic binding can be used during interpretation to bind the
-  // witness table on the runtime stack.
-  void unset_constant_value() { constant_value_ = std::nullopt; }
+
+  // The impl binding associated with this type variable.
+  auto impl_binding() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_binding_;
+  }
+  // Set the impl binding.
+  void set_impl_binding(Nonnull<const ImplBinding*> binding) {
+    CHECK(!impl_binding_.has_value());
+    impl_binding_ = binding;
+  }
 
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> constant_value_;
+  std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };
 
 using BindingMap =

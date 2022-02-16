@@ -356,7 +356,8 @@ auto TypeChecker::Substitute(
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
       return arena_->New<FunctionType>(
-          std::vector<Nonnull<const GenericBinding*>>(), param, ret);
+          std::vector<Nonnull<const GenericBinding*>>(), param, ret,
+          std::vector<Nonnull<const ImplBinding*>>());
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
@@ -518,7 +519,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           access.set_static_type(arena_->New<FunctionType>(
               std::vector<Nonnull<const GenericBinding*>>(), *parameter_types,
-              &aggregate_type));
+              &aggregate_type, std::vector<Nonnull<const ImplBinding*>>()));
           access.set_value_category(ValueCategory::Let);
           return;
         }
@@ -565,7 +566,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 self_map[iface_decl.self()] = &var_type;
                 auto inst_member_type = Substitute(self_map, &member_type);
                 access.set_static_type(inst_member_type);
-                access.set_variable(&var_type.binding());
+                access.set_impl(*var_type.binding().impl_binding());
                 return;
               } else {
                 FATAL_COMPILATION_ERROR(e->source_loc())
@@ -722,15 +723,16 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             parameters = Substitute(deduced_args, parameters);
             return_type = Substitute(deduced_args, return_type);
-            std::map<Nonnull<const GenericBinding*>, EntityView> impls;
-            for (Nonnull<const GenericBinding*> deduced_param :
-                 fun_t.deduced()) {
-              switch (deduced_param->static_type().kind()) {
+            // Find impls for all the impl bindings of the function
+            std::map<Nonnull<const ImplBinding*>, EntityView> impls;
+            for (Nonnull<const ImplBinding*> impl_binding :
+                 fun_t.impl_bindings()) {
+              switch (impl_binding->interface()->kind()) {
                 case Value::Kind::InterfaceType: {
                   auto impl_type = impl_scope.Resolve(
-                      &deduced_param->static_type(),
-                      deduced_args[deduced_param], e->source_loc());
-                  impls.emplace(deduced_param, impl_type);
+                      impl_binding->interface(),
+                      deduced_args[impl_binding->type_var()], e->source_loc());
+                  impls.emplace(impl_binding, impl_type);
                   break;
                 }
                 case Value::Kind::TypeType:
@@ -738,7 +740,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 default:
                   FATAL_COMPILATION_ERROR(e->source_loc())
                       << "unexpected type of deduced parameter "
-                      << deduced_param->static_type();
+                      << *impl_binding->interface();
               }
             }
             call.set_impls(impls);
@@ -1092,13 +1094,21 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     SetConstantValue(deduced, arena_->New<VariableType>(deduced));
     deduced->set_static_type(InterpExp(&deduced->type(), arena_, trace_));
   }
+  // Type check the receiver pattern
   if (f->is_method()) {
-    // Type check the receiver patter
     TypeCheckPattern(&f->me_pattern(), std::nullopt, impl_scope);
   }
-
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt, impl_scope);
+
+  // Create the impl_bindings
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings;
+  for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
+    Nonnull<const ImplBinding*> impl_binding = arena_->New<ImplBinding>(
+        deduced->source_loc(), deduced, &deduced->static_type());
+    deduced->set_impl_binding(impl_binding);
+    impl_bindings.push_back(impl_binding);
+  }
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
@@ -1119,12 +1129,13 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
       FATAL_COMPILATION_ERROR(f->return_term().source_loc())
           << "Function declaration has deduced return type but no body";
     }
-    // Bring the impl's into scope
+    // Bring the impl bindings into scope
     ImplScope function_scope;
     function_scope.AddParent(&impl_scope);
-    for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-      function_scope.Add(&deduced->static_type(), *deduced->constant_value(),
-                         deduced);
+    for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
+      function_scope.Add(impl_binding->interface(),
+                         *impl_binding->type_var()->constant_value(),
+                         impl_binding);
     }
     TypeCheckStmt(*f->body(), impl_scope);
     if (!f->return_term().is_omitted()) {
@@ -1135,7 +1146,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   ExpectIsConcreteType(f->source_loc(), &f->return_term().static_type());
   f->set_static_type(arena_->New<FunctionType>(
       f->deduced_parameters(), &f->param_pattern().static_type(),
-      &f->return_term().static_type()));
+      &f->return_term().static_type(), impl_bindings));
   SetConstantValue(f, arena_->New<FunctionValue>(f));
 
   if (f->name() == "Main") {
@@ -1165,19 +1176,16 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // Bring the impl's into scope
     ImplScope function_scope;
     function_scope.AddParent(&impl_scope);
-    for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-      function_scope.Add(&deduced->static_type(), *deduced->constant_value(),
-                         deduced);
+    for (Nonnull<const ImplBinding*> impl_binding :
+         cast<FunctionType>(f->static_type()).impl_bindings()) {
+      function_scope.Add(impl_binding->interface(),
+                         *impl_binding->type_var()->constant_value(),
+                         impl_binding);
     }
     TypeCheckStmt(*f->body(), function_scope);
     if (!f->return_term().is_omitted()) {
       ExpectReturnOnAllPaths(f->body(), f->source_loc());
     }
-  }
-
-  // Unset the deduced parameters, so they can be reused at runtime.
-  for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    deduced->unset_constant_value();
   }
   if (trace_) {
     llvm::outs() << "** finished checking function " << f->name() << "\n";

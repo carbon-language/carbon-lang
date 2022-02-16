@@ -16,7 +16,7 @@ class Value;
 // and the value is the result of statically resolving to the `impl`
 // for `List` as `Container`, which is an `EntityView`. The generality
 // of `EntityView` is needed (not just `ImplDeclaration`) because
-// inside a generic, we need to map, e.g., `T` and `Container` to the
+// inside a generic, we need to map, e.g., from `T` and `Container` to the
 // witness table that is passed into the generic.
 struct Impl {
   Nonnull<const Value*> interface;

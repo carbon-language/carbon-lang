@@ -17,6 +17,7 @@ abstract class Declaration : AstNode;
   class InterfaceDeclaration : Declaration;
   class ImplDeclaration : Declaration;
 class GenericBinding : AstNode;
+class ImplBinding : AstNode;
 class AlternativeSignature : AstNode;
 abstract class Statement : AstNode;
   class ExpressionStatement : Statement;

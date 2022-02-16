@@ -157,18 +157,18 @@ class FieldAccessExpression : public Expression {
   auto field() const -> const std::string& { return field_; }
 
   // Inside a generic, when there is a field access on an expression whose
-  // type is a type variable, e.g. `T`, then we record that type
-  // variable in the field access expression during type checking
+  // type is a type variable, e.g. `T`, then we record the impl binding
+  // for that type variable in the field access expression during type checking
   // so that in the interpreter we can use it to lookup it's witness table.
   // If the field access is not on an expression whose type is a type variable
-  // (on a struct or class type), then `variable()` returns `std::nullopt`.
-  auto variable() const -> std::optional<NamedEntityView> { return variable_; }
-  void set_variable(NamedEntityView var) { variable_ = var; }
+  // (on a struct or class type), then `impl()` returns `std::nullopt`.
+  auto impl() const -> std::optional<EntityView> { return impl_; }
+  void set_impl(EntityView impl) { impl_ = impl; }
 
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
-  std::optional<NamedEntityView> variable_;
+  std::optional<EntityView> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -350,6 +350,8 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
+class ImplBinding;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -375,18 +377,18 @@ class CallExpression : public Expression {
   // uses the `impls_` to obtain witness tables for it to pass into
   // the function.
   auto impls() const
-      -> const std::map<Nonnull<const GenericBinding*>, EntityView>& {
+      -> const std::map<Nonnull<const ImplBinding*>, EntityView>& {
     return impls_;
   }
   void set_impls(
-      const std::map<Nonnull<const GenericBinding*>, EntityView>& impls) {
+      const std::map<Nonnull<const ImplBinding*>, EntityView>& impls) {
     impls_ = impls;
   }
 
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  std::map<Nonnull<const GenericBinding*>, EntityView> impls_;
+  std::map<Nonnull<const ImplBinding*>, EntityView> impls_;
 };
 
 class FunctionTypeLiteral : public Expression {
