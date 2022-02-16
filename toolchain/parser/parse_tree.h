@@ -140,6 +140,9 @@ class ParseTree {
   // that it can be used even when asserts are disabled or within a debugger.
   [[nodiscard]] auto Verify() const -> bool;
 
+  // Returns the underlying tokenized buffer.
+  auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
+
  private:
   class Parser;
   friend Parser;

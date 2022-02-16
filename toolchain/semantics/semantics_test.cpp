@@ -22,26 +22,35 @@ class ParseTreeTest : public ::testing::Test {
   auto Analyze(llvm::Twine t) -> Semantics {
     source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
+    EXPECT_FALSE(tokenized_buffer->HasErrors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
+    EXPECT_FALSE(parse_tree->HasErrors());
     return Semantics::Analyze(*parse_tree, consumer);
   }
 
   std::optional<SourceBuffer> source_buffer;
   std::optional<TokenizedBuffer> tokenized_buffer;
   std::optional<ParseTree> parse_tree;
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
+  ErrorTrackingDiagnosticConsumer consumer =
+      ErrorTrackingDiagnosticConsumer(ConsoleDiagnosticConsumer());
 };
 
 TEST_F(ParseTreeTest, Empty) {
   // TODO: Validate the returned Semantics object.
-  Analyze("");
-  ASSERT_FALSE(parse_tree->HasErrors());
+  auto semantics = Analyze("");
+  EXPECT_FALSE(consumer.SeenError());
 }
 
 TEST_F(ParseTreeTest, FunctionBasic) {
   // TODO: Validate the returned Semantics object.
   Analyze("fn Foo() {}");
-  ASSERT_FALSE(parse_tree->HasErrors());
+}
+
+TEST_F(ParseTreeTest, FunctionDuplicate) {
+  // TODO: Validate the returned Semantics object.
+  Analyze(R"(fn Foo() {}
+             fn Foo() {}
+            )");
 }
 
 }  // namespace

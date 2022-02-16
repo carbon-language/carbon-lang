@@ -20,11 +20,11 @@ class Semantics {
   };
 
   struct Entity {
-    enum class Category {
+    enum class Kind {
       Function,
     };
 
-    Category category_;
+    Kind kind_;
     int32_t index_;
   };
 
