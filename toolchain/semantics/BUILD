@@ -10,6 +10,8 @@ cc_library(
     hdrs = ["semantics.h"],
     deps = [
         "//common:check",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
         "@llvm-project//llvm:Support",
     ],
