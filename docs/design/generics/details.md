@@ -4436,12 +4436,17 @@ impl MyClass as Interface6 { }
 
 ### Example of declaring interfaces with cyclic references
 
+In this example, `NodeInterface` has an `EdgeType` associated type that is
+constrained to implement `EdgeInterface`, and `EdgeInterface` has a `NodeType`
+associated type that is constrained to implement `NodeInterface`. Furthermore,
+The `NodeType` of an `EdgeType` is the original type, and the other way around.
+
 ```
 // Forward declaration of interface
 interface EdgeInterface;
 
-// Definition that only uses the declaration of `Edge`,
-// not its definition.
+// Definition that only uses the declaration of
+// `EdgeInterface`, not its definition.
 interface NodeBootstrap {
   let EdgeType:! EdgeInterface;
   fn Edges[me: Self]() -> Vector(EdgeType);
@@ -4510,6 +4515,8 @@ interface Vector {
   fn Scale[me: Self](v: f64) -> Self;
   default fn Invert[me: Self]() -> Self;
 }
+// `Vector` is considered complete at this point,
+// even though `Vector.Invert` is still incomplete.
 fn Vector.Invert[me: Self]() -> Self {
   return me.Scale(-1.0);
 }
@@ -4645,6 +4652,8 @@ interface TotalOrder {
   fn TotalLess[me: Self](right: Self) -> bool;
   final fn TotalGreater[me: Self](right: Self) -> bool;
 }
+// `TotalOrder` is considered complete at this point, even
+// though `TotalOrder.TotalGreater` is still incomplete.
 fn TotalOrder.TotalGreater[me: Self](right: Self) -> bool {
  return right.TotalLess(me);
 }
