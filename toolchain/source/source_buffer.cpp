@@ -15,28 +15,12 @@
 
 #include "common/check.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/Locale.h"
 
 namespace Carbon {
 
-// Requires that all characters in filenames be printable.
-static auto IsPrintable(llvm::StringRef filename) -> bool {
-  llvm::UTF32 c;
-  unsigned const char* end = filename.bytes_end();
-  for (unsigned const char* begin = filename.bytes_begin(); begin < end;) {
-    unsigned const char* cp_end = begin + llvm::getNumBytesForUTF8(*begin);
-    if (cp_end > end) {
-      return false;
-    }
-    llvm::UTF32* cptr = &c;
-    llvm::ConversionResult res = llvm::ConvertUTF8toUTF32(
-        &begin, cp_end, &cptr, cptr + 1, llvm::strictConversion);
-    if (res != llvm::conversionOK || !llvm::sys::locale::isPrint(c)) {
-      return false;
-    }
-  }
-  return true;
+auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
+    -> SourceBuffer {
+  return SourceBuffer(filename, text.str());
 }
 
 static auto ErrnoToError(int errno_value) -> llvm::Error {
@@ -44,21 +28,8 @@ static auto ErrnoToError(int errno_value) -> llvm::Error {
       std::error_code(errno_value, std::generic_category()));
 }
 
-auto SourceBuffer::CreateFromTextWithFilename(llvm::Twine text,
-                                              llvm::StringRef filename)
-    -> llvm::Expected<SourceBuffer> {
-  if (!IsPrintable(filename)) {
-    return ErrnoToError(EINVAL);
-  }
-  return SourceBuffer(filename, text.str());
-}
-
 auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
     -> llvm::Expected<SourceBuffer> {
-  if (!IsPrintable(filename)) {
-    return ErrnoToError(EINVAL);
-  }
-
   SourceBuffer buffer(filename);
 
   errno = 0;

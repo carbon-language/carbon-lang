@@ -33,12 +33,9 @@ namespace Carbon {
 // some implementation complexity in the future if needed.
 class SourceBuffer {
  public:
-  static auto CreateFromTextWithFilename(llvm::Twine text,
-                                         llvm::StringRef filename)
-      -> llvm::Expected<SourceBuffer>;
-  static auto CreateFromText(llvm::Twine text) -> llvm::Expected<SourceBuffer> {
-    return CreateFromTextWithFilename(text, "/text");
-  }
+  static auto CreateFromText(llvm::Twine text,
+                             llvm::StringRef filename = "/text")
+      -> SourceBuffer;
   static auto CreateFromFile(llvm::StringRef filename)
       -> llvm::Expected<SourceBuffer>;
 

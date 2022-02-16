@@ -33,7 +33,7 @@ class LexerTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
     source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
-    return *source_storage.back();
+    return source_storage.back();
   }
 
   auto Lex(llvm::Twine text,
@@ -42,7 +42,7 @@ class LexerTest : public ::testing::Test {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
 
-  llvm::SmallVector<llvm::Expected<SourceBuffer>, 16> source_storage;
+  llvm::SmallVector<SourceBuffer, 16> source_storage;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
