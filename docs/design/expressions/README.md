@@ -53,12 +53,13 @@ Most expressions are modeled as operators:
 
 ### Precedence
 
-Operators have a partial precedence ordering. Expressions using operators that
-lack a relative ordering must be disambiguated by the developer, for example by
-adding parentheses; when a program's meaning depends on an undefined relative
-ordering of two operators, it will be rejected due to ambiguity. Precedence
-orderings will only be added when it's reasonable to expect most developers to
-understand the precedence without parentheses.
+Operators have a partial
+[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
+Expressions using operators that lack a relative ordering must be disambiguated
+by the developer, for example by adding parentheses; when a program's meaning
+depends on an undefined relative ordering of two operators, it will be rejected
+due to ambiguity. Precedence orderings will only be added when it's reasonable
+to expect most developers to understand the precedence without parentheses.
 
 The precedence diagram is defined thusly:
 
@@ -74,7 +75,11 @@ graph TD
 The diagram's attributes are:
 
 -   Edges indicate a relative ordering: given an edge A --> B, it means that A
-    can fit in B unparenthesized.
+    is higher precedence than B. In other words, something like `not x and y` is
+    valid because there is an arrow from `not` to `and`, so `not x` fits into
+    `and` unparenthesized.
+
+    -   Higher precedence operators should be higher in the graph.
 
 -   Shapes indicate
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
