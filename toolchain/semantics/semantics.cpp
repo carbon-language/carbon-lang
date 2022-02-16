@@ -26,12 +26,14 @@ struct NameConflict : DiagnosticBase<NameConflict> {
   Diagnostic::Location conflict;
 };
 
-class ParseTreeNodeTranslator
+// Provides diagnostic locations for a ParseTree Node.
+class ParseTreeNodeLocationTranslator
     : public DiagnosticLocationTranslator<ParseTree::Node> {
  public:
-  explicit ParseTreeNodeTranslator(const ParseTree& parse_tree)
+  explicit ParseTreeNodeLocationTranslator(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
+  // Translate a particular node to a location.
   auto GetLocation(ParseTree::Node loc) -> Diagnostic::Location override {
     auto token = parse_tree_->GetNodeToken(loc);
     TokenizedBuffer::TokenLocationTranslator translator(
@@ -43,6 +45,9 @@ class ParseTreeNodeTranslator
   const ParseTree* parse_tree_;
 };
 
+// Runs the actual analysis for Semantics. This is separate from Semantics in
+// order to track analysis-specific context, such as the emitter, which should
+// not be part of the resulting Semantics object.
 class Semantics::Analyzer {
  public:
   Analyzer(const ParseTree& parse_tree, DiagnosticConsumer& consumer)
@@ -50,16 +55,20 @@ class Semantics::Analyzer {
         translator_(parse_tree),
         emitter_(translator_, consumer) {}
 
+  // Produces a Semantics object from the ParseTree.
   auto Analyze() -> Semantics;
 
  private:
-  void AnalyzeFunction(llvm::StringMap<Entity>& name_scope,
+  // Analyzes a function's node, adding it to the provided name scope.
+  void AnalyzeFunction(llvm::StringMap<NamedEntity>& name_scope,
                        ParseTree::Node fn_node);
 
-  auto GetEntityLocation(Entity entity) -> Diagnostic::Location;
+  // Returns the location of an entity. This assists diagnostic output where
+  // supplemental locations are provided in formatting.
+  auto GetEntityLocation(NamedEntity entity) -> Diagnostic::Location;
 
   const ParseTree* parse_tree_;
-  ParseTreeNodeTranslator translator_;
+  ParseTreeNodeLocationTranslator translator_;
   DiagnosticEmitter<ParseTree::Node> emitter_;
   std::optional<Semantics> semantics_;
 };
@@ -88,8 +97,8 @@ auto Semantics::Analyzer::Analyze() -> Semantics {
   return *semantics_;
 }
 
-void Semantics::Analyzer::AnalyzeFunction(llvm::StringMap<Entity>& name_scope,
-                                          ParseTree::Node fn_node) {
+void Semantics::Analyzer::AnalyzeFunction(
+    llvm::StringMap<NamedEntity>& name_scope, ParseTree::Node fn_node) {
   Function fn;
   for (ParseTree::Node node : parse_tree_->Children(fn_node)) {
     switch (parse_tree_->GetNodeKind(node)) {
@@ -108,7 +117,7 @@ void Semantics::Analyzer::AnalyzeFunction(llvm::StringMap<Entity>& name_scope,
   llvm::StringRef fn_name = parse_tree_->GetNodeText(fn.name_node);
   auto [it, success] = name_scope.insert(
       {fn_name,
-       {Entity::Kind::Function,
+       {NamedEntity::Kind::Function,
         static_cast<int32_t>(semantics_->functions_.size())}});
   if (!success) {
     emitter_.EmitError<NameConflict>(
@@ -119,10 +128,10 @@ void Semantics::Analyzer::AnalyzeFunction(llvm::StringMap<Entity>& name_scope,
   semantics_->functions_.push_back(fn);
 }
 
-auto Semantics::Analyzer::GetEntityLocation(Entity entity)
+auto Semantics::Analyzer::GetEntityLocation(NamedEntity entity)
     -> Diagnostic::Location {
   switch (entity.kind_) {
-    case Entity::Kind::Function: {
+    case NamedEntity::Kind::Function: {
       Function fn = semantics_->functions_[entity.index_];
       return translator_.GetLocation(fn.name_node);
     }

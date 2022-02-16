@@ -5,26 +5,32 @@
 #ifndef TOOLCHAIN_SEMANTICS_SEMANTICS_H_
 #define TOOLCHAIN_SEMANTICS_SEMANTICS_H_
 
-#include "toolchain/parser/parse_tree.h"
-
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "toolchain/parser/parse_tree.h"
 
 namespace Carbon {
 
 // Provides semantic analysis on a ParseTree.
 class Semantics {
  public:
+  // Semantic information for a function.
   struct Function {
+    // The node corresponding to the function name.
     ParseTree::Node name_node;
   };
 
-  struct Entity {
+  // Provides a link back to an entity in a name scope.
+  struct NamedEntity {
+    // The kind of entity. There should be one entry per list of entities that
+    // needs to be indexed into.
     enum class Kind {
       Function,
     };
 
     Kind kind_;
+
+    // The index of the named entity within its list.
     int32_t index_;
   };
 
@@ -35,10 +41,12 @@ class Semantics {
  private:
   class Analyzer;
   friend class Analyzer;
-  
+
+  // All functions from the parse tree.
   llvm::SmallVector<Function, 0> functions_;
+
   // Names declared in the root scope.
-  llvm::StringMap<Entity> root_name_scope_;
+  llvm::StringMap<NamedEntity> root_name_scope_;
 
   Semantics() = default;
 };

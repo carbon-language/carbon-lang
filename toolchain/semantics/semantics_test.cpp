@@ -9,13 +9,17 @@
 
 #include <optional>
 
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::Testing {
 namespace {
+
+using ::testing::_;
+using ::testing::AllOf;
+using ::testing::Eq;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
@@ -31,23 +35,27 @@ class ParseTreeTest : public ::testing::Test {
   std::optional<SourceBuffer> source_buffer;
   std::optional<TokenizedBuffer> tokenized_buffer;
   std::optional<ParseTree> parse_tree;
-  ErrorTrackingDiagnosticConsumer consumer =
-      ErrorTrackingDiagnosticConsumer(ConsoleDiagnosticConsumer());
+  MockDiagnosticConsumer consumer;
 };
 
 TEST_F(ParseTreeTest, Empty) {
-  // TODO: Validate the returned Semantics object.
+  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   auto semantics = Analyze("");
-  EXPECT_FALSE(consumer.SeenError());
 }
 
 TEST_F(ParseTreeTest, FunctionBasic) {
-  // TODO: Validate the returned Semantics object.
+  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Analyze("fn Foo() {}");
 }
 
 TEST_F(ParseTreeTest, FunctionDuplicate) {
-  // TODO: Validate the returned Semantics object.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 4),
+          DiagnosticMessage(Eq(
+              "Name conflict for `Foo`; previously declared at /text:2:17.")))))
+      .Times(1);
   Analyze(R"(fn Foo() {}
              fn Foo() {}
             )");

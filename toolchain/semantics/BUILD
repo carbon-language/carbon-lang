@@ -21,7 +21,7 @@ cc_test(
     srcs = ["semantics_test.cpp"],
     deps = [
         ":semantics",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
