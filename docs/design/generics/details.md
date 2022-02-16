@@ -4578,7 +4578,7 @@ interface TotalOrder {
   fn TotalLess[me: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
-  impl PartialOrder {
+  impl as PartialOrder {
     fn PartialLess[me: Self](right: Self) -> bool {
       return me.TotalLess(right);
     }
@@ -4592,7 +4592,7 @@ instead:
 ```
 interface TotalOrder {
   fn TotalLess[me: Self](right: Self) -> bool;
-  impl PartialOrder;
+  impl as PartialOrder;
 }
 
 external impl [T:! TotalOrder] T as PartialOrder {
