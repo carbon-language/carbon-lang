@@ -64,18 +64,29 @@ The precedence diagram is defined thusly:
 
 ```mermaid
 graph TD
-    parens["(...)"] --- as & not
-    as["x as T"] --- comparison
-    not["not X"] --- and_or
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --- and_or
+    parens["(...)"] --> as & not
+    as["x as T"] --> comparison
+    not["not X"] --> and_or
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
     and_or>"x and y<br> x or y"]
 ```
 
-Edges indicate a relative ordering. Where multiple operators are grouped, such
-as comparison operators, they do not have a partial ordering with respect to
-each other.
+The diagrams attributes are:
 
-Rectangles with a cutout indicate left associativity.
+-   Edges indicate a relative ordering: given an edge A --> B, it means that A
+    can fit in B unparenthesized.
+
+-   Shapes indicate
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
+
+    ```mermaid
+    graph TD
+        non["Non-associative"]
+        left>"Left associative"]
+    ```
+
+-   Where multiple operators are grouped inside a shape, such as comparison
+    operators, they do not have a relative ordering with respect to each other.
 
 ## Conversions and casts
 
