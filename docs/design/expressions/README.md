@@ -74,7 +74,7 @@ graph TD
     parens["(...)"] --> primary
     primary["x.y"] --> not & negation
     negation["-x"] --> additive & modulo & as
-    as["x as T"] --> comparison & not
+    as["x as T"] --> comparison
     not["not x"] --> and_or
     additive>"x + y<br> x - y"] --> multiplicative
     multiplicative>"x * y<br> x / y"] --> comparison
