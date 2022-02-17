@@ -6,16 +6,15 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-
 ## Quicksort
 
 A sample of quicksort in Carbon.
 
 ```cpp
-fn Partition[T:! Comparable & Movable](s: Span(T)) 
+fn Partition[T:! Comparable & Movable](s: Span(T))
      -> i32 {
   var i: i32 = -1;
- 
+
   for (var j: i32 in s.Indices()) {
     if (s[j] <= s.Last()) {
       ++i;
@@ -34,7 +33,6 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 ```
 
 ## Carbon and C++
-
 
 ### C++
 
