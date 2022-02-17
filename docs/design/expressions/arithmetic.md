@@ -107,8 +107,7 @@ Although the conversions are always lossless, the arithmetic may still
 
 ### Integer types
 
-Signed integer types support all the arithmetic operators. Unsigned integer
-types support all arithmetic operators other than unary `-`.
+Signed and unsigned integer types support all the arithmetic operators.
 
 Signed integer arithmetic produces the usual mathematical result. Unsigned
 integer arithmetic in `uN` wraps around modulo 2<sup>`N`</sup>.
@@ -143,13 +142,19 @@ example, given a value `v: iN` that is the least possible value for its type,
 Signed integer overflow and signed or unsigned integer division by zero are
 programming errors:
 
--   In a development build, they will be caught at runtime.
+-   In a development build, they will be caught immediately at runtime.
 -   In a performance build, the optimizer can assume that such conditions don't
     occur.
--   In a hardened build, the behavior on overflow is defined.
+-   In a hardened build, overflow and division by zero do not result in
+    undefined behavior. On overflow, either a valid but incorrect value will be
+    produced, or the program will be aborted. The runtime error might not in all
+    cases occur immediately -- for example, multiple overflow checks might be
+    combined into one. The behavior of a division by zero is a runtime error
+    that aborts the program.
 
-**TODO:** In a hardened build, should we attempt to trap on overflow or simply
-give a two's complement result?
+**TODO:** In a hardened build, should we prefer to trap on overflow, give a
+two's complement result, or produce zero? Using zero may defeat some classes of
+exploit, but comes at a code size and performance cost.
 
 ### Strings
 
@@ -206,31 +211,47 @@ constraint Dividable extends DividableWith(Self) where .Result = Self {}
 
 ```
 // Binary `%`.
-interface ModableWith(U:! Type) {
+interface ModuloWith(U:! Type) {
   let Result:! Type = Self;
   fn Mod[me: Self](other: U) -> Result;
 }
-constraint Modable extends ModableWith(Self) where .Result = Self {}
+constraint Modulo extends ModuloWith(Self) where .Result = Self {}
 ```
 
 Given `x: T` and `y: U`:
 
 -   The expression `-x` is rewritten to `x.(Negatable.Negate)()`.
 -   The expression `x + y` is rewritten to `x.(AddableWith(U).Add)(y)`.
--   The expression `x - y` is rewritten to `x.(SubtractableWith(U).Add)(y)`.
--   The expression `x * y` is rewritten to `x.(MultipliableWith(U).Add)(y)`.
--   The expression `x / y` is rewritten to `x.(DividableWith(U).Add)(y)`.
--   The expression `x % y` is rewritten to `x.(ModableWith(U).Add)(y)`.
+-   The expression `x - y` is rewritten to
+    `x.(SubtractableWith(U).Subtract)(y)`.
+-   The expression `x * y` is rewritten to
+    `x.(MultipliableWith(U).Multiply)(y)`.
+-   The expression `x / y` is rewritten to `x.(DividableWith(U).Divide)(y)`.
+-   The expression `x % y` is rewritten to `x.(ModuloWith(U).Mod)(y)`.
 
-Implementations of these interfaces are provided for built-in types, with the
-semantics described above.
+Implementations of these interfaces are provided for built-in types as necessary
+to give the semantics described above.
 
 ## Alternatives considered
 
--   TODO
+-   [Use a sufficiently wide result type to avoid overflow](/proposals/p1083.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
+-   [Guarantee that all overflow errors are trapped](/proposals/p1083.md#guarantee-that-all-overflow-errors-are-trapped)
+-   [Guarantee that all integer arithmetic is two's complement](/proposals/p1083.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
+-   [Treat overflow as an error but don't optimize on it](/proposals/p1083.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
+-   [Don't let `Unsigned` arithmetic wrap](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap)
+-   [Provide separate wrapping types](/proposals/p1083.md#provide-separate-wrapping-types)
+-   [Do not provide an ordering or division for `uN`](/proposals/p1083.md#do-not-provide-an-ordering-or-division-for-un)
+-   [Give unary `-` lower precedence](/proposals/p1083.md#give-unary---lower-precedence)
+-   [Include a unary plus operator](/proposals/p1083.md#include-a-unary-plus-operator)
+-   [Floating-point modulo operator](/proposals/p1083.md#floating-point-modulo-operator)
+-   [Provide different division operators](/proposals/p1083.md#provide-different-division-operators)
+-   [Use different division and modulo semantics](/proposals/p1083.md#use-different-division-and-modulo-semantics)
+-   [Use different precedence groups for division and multiplication](/proposals/p1083.md#use-different-precedence-groups-for-division-and-multiplication)
+-   [Use the same precedence group for modulo and multiplication](/proposals/p1083.md#use-the-same-precedence-group-for-modulo-and-multiplication)
+-   [Use a different spelling for modulo](/proposals/p1083.md#use-a-different-spelling-for-modulo)
+-   [Use a different operator for string concatenation](/proposals/p1083.md#use-a-different-operator-for-string-concatenation)
 
 ## References
 
--   TODO
 -   Proposal
-    [#???: arithmetic](https://github.com/carbon-language/carbon-lang/pull/???).
+    [#1083: arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083).
