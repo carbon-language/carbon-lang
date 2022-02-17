@@ -67,9 +67,10 @@ The precedence diagram is defined thusly:
 graph TD
     parens["(...)"] --> as & not
     as["x as T"] --> comparison
-    not["not x"] --> and_or
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
-    and_or>"x and y<br> x or y"]
+    not["not x"] --> and & or
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and & or
+    and>"x and y]
+    or>"x or y"]
 ```
 
 The diagram's attributes are:
@@ -85,17 +86,19 @@ The diagram's attributes are:
         `or` expressions without parentheses. The parenthesized equivalent is
         `((not x) or y)`.
 
+-   When multiple operators are grouped inside a shape, they have equal
+    precedence. Associativity determines whether parenthese are required;
+    left-associative operators may be repeated without parentheses, as in
+    `x + y - z`, whereas right-associative operators .
+
 -   Shapes indicate
-    [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
+    [Associativity](https://en.wikipedia.org/wiki/Operator_associativity):
 
     ```mermaid
     graph TD
         non["Non-associative"]
         left>"Left associative"]
     ```
-
--   Where multiple operators are grouped inside a shape, such as comparison
-    operators, they do not have a relative ordering with respect to each other.
 
 ## Conversions and casts
 
