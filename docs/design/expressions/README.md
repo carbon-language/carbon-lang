@@ -105,9 +105,6 @@ The diagram's attributes are:
         left>"Left associative"]
     ```
 
--   Where multiple operators are grouped inside a shape, such as comparison
-    operators, they do not have a relative ordering with respect to each other.
-
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
