@@ -71,8 +71,9 @@ The precedence diagram is defined thusly:
 
 ```mermaid
 graph TD
-    parens["(...)"] --> primary
-    primary["x.y"] --> not & negation
+    parens["(...)"] --> postfix
+    struct_literal["{.a = x, .b = y}<br> {.a: T, .b: U}"] --> postfix
+    postfix["x.y"] --> not & negation
     negation["-x"] --> additive & modulo & as
     as["x as T"] --> comparison
     not["not x"] --> and_or
@@ -80,7 +81,10 @@ graph TD
     multiplicative>"x * y<br> x / y"] --> comparison
     modulo["x % y"] --> comparison
     comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
-    and_or>"x and y<br> x or y"]
+    and_or>"x and y<br> x or y"] --> expression_statement & if_else
+    expression_statement("x ;")
+    if_else["if x then y else z"] --> subexpression
+    subexpression("parenthesized subexpression")
 ```
 
 The diagram's attributes are:
