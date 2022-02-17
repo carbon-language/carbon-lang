@@ -87,7 +87,7 @@ The diagram's attributes are:
         `((not x) or y)`.
 
 -   When multiple operators are grouped inside a shape, they have equal
-    precedence. Associativity determines whether parenthese are required;
+    precedence. Associativity determines whether parentheses are required;
     left-associative operators may be repeated without parentheses, as in
     `x + y - z`, whereas right-associative operators .
 
