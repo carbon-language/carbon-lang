@@ -57,7 +57,7 @@ standard library.
 ```mermaid
 graph TD
     negation["-x"] --> multiplicative & modulo
-    multiplicative>"x * y<br> x / y"] -> additive
+    multiplicative>"x * y<br> x / y"] --> additive
     additive>"x + y<br> x - y"]
     modulo["x % y"]
 ```
