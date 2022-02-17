@@ -86,11 +86,6 @@ The diagram's attributes are:
         `or` expressions without parentheses. The parenthesized equivalent is
         `((not x) or y)`.
 
--   When multiple operators are grouped inside a shape, they have equal
-    precedence. Associativity determines whether parentheses are required;
-    left-associative operators may be repeated without parentheses, as in
-    `x + y - z`, whereas right-associative operators .
-
 -   Shapes indicate
     [Associativity](https://en.wikipedia.org/wiki/Operator_associativity):
 
@@ -99,6 +94,11 @@ The diagram's attributes are:
         non["Non-associative"]
         left>"Left associative"]
     ```
+
+-   When multiple operators are grouped inside a shape, they have equal
+    precedence. Associativity determines whether parentheses are required;
+    left-associative operators may be combined without parentheses, as in
+    `x + y - z`.
 
 ## Conversions and casts
 
