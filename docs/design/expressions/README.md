@@ -82,9 +82,9 @@ graph TD
     modulo["x % y"] --> comparison
     comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
     and_or>"x and y<br> x or y"] --> expression_statement & if_else
-    expression_statement("x ;")
+    expression_statement(["x ;"])
     if_else["if x then y else z"] --> subexpression
-    subexpression("parenthesized subexpression")
+    subexpression(["parenthesized subexpression"])
 ```
 
 The diagram's attributes are:
