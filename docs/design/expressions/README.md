@@ -12,8 +12,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Operators](#operators)
+    -   [Precedence](#precedence)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -54,6 +57,52 @@ Most expressions are modeled as operators:
 | Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
 | Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
+### Precedence
+
+Operators have a partial
+[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
+Expressions using operators that lack a relative ordering must be disambiguated
+by the developer, for example by adding parentheses; when a program's meaning
+depends on an undefined relative ordering of two operators, it will be rejected
+due to ambiguity. Precedence orderings will only be added when it's reasonable
+to expect most developers to understand the precedence without parentheses.
+
+The precedence diagram is defined thusly:
+
+```mermaid
+graph TD
+    parens["(...)"] --> as & not
+    as["x as T"] --> comparison
+    not["not x"] --> and_or
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
+    and_or>"x and y<br> x or y"]
+```
+
+The diagram's attributes are:
+
+-   Edges indicate a relative ordering: given an edge A --> B, it means that A
+    is higher precedence than B. This is also transitive, such as with A and C
+    in A --> B --> C.
+
+    -   Higher precedence operators are higher in the graph.
+
+    -   For example, `not x or y` is valid because there is an arrow from `not`
+        to `or`, so `not` is higher precedence than `or` and can be used inside
+        `or` expressions without parentheses. The parenthesized equivalent is
+        `((not x) or y)`.
+
+-   Shapes indicate
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
+
+    ```mermaid
+    graph TD
+        non["Non-associative"]
+        left>"Left associative"]
+    ```
+
+-   Where multiple operators are grouped inside a shape, such as comparison
+    operators, they do not have a relative ordering with respect to each other.
+
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
@@ -82,3 +131,20 @@ fn Run(args: Span(StringView)) {
 ```
 
 `if` expressions are analogous to `?:` ternary expressions in C and C++.
+
+## Alternatives considered
+
+Other expression documents will list more references; this lists references not
+noted elsewhere.
+
+-   [Total order](/proposals/p0555.md#total-order)
+-   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)
+-   [Require less than a partial order](/proposals/p0555.md#require-less-than-a-partial-order)
+
+## References
+
+Other expression documents will list more references; this lists references not
+noted elsewhere.
+
+-   Proposal
+    [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555).
