@@ -76,8 +76,8 @@ graph TD
 The diagram's attributes are:
 
 -   Edges indicate a relative ordering: given an edge A --> B, it means that A
-    is higher precedence than B. This is also transitive, such as with A and C
-    in A --> B --> C.
+    is higher precedence than B, so A can appear unparenthesized within B.
+    This is also transitive, such as with A and C in A --> B --> C.
 
     -   Higher precedence operators are higher in the graph.
 
