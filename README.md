@@ -76,7 +76,7 @@ can be mechanically transformed to Carbon, like so:
 
 <a href="docs/images/snippets.md#carbon">
 <img src="docs/images/carbon_snippet.svg" width="600"
-alt="A snippet of converted Carbon code.  Follow the link to read it.>
+alt="A snippet of converted Carbon code.  Follow the link to read it.">
 </a>
 
 without loss of performance or readability. Yet, translating C++ to Carbon isn't
