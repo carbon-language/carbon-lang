@@ -729,10 +729,10 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  fun_t.impl_bindings()) {
               switch (impl_binding->interface()->kind()) {
                 case Value::Kind::InterfaceType: {
-                  auto impl_type = impl_scope.Resolve(
+                  auto impl = impl_scope.Resolve(
                       impl_binding->interface(),
                       deduced_args[impl_binding->type_var()], e->source_loc());
-                  impls.emplace(impl_binding, impl_type);
+                  impls.emplace(impl_binding, impl);
                   break;
                 }
                 case Value::Kind::TypeType:

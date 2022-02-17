@@ -440,6 +440,8 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  // The bindings for the witness tables (impls) required by the
+  // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }

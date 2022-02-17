@@ -30,8 +30,8 @@ class Point {
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
-  var m: auto = a.Add;
-  var n: auto = m(b).Scale;
+  var m: __Fn(T)->T = a.Add;
+  var n: __Fn(i32)->T = m(b).Scale;
   return n(s);
 }
 
