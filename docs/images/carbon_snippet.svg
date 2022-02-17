@@ -145,8 +145,8 @@
 <span class="pl-k">import</span> Console;
 <span class="pl-c"><span class="pl-c">//</span> Carbon</span>
 <span class="pl-k">void</span> <span class="pl-en">PrintWithTotal</span>(v: Vector(u64)) {
-  var sum: u64 = <span class="pl-c1">0</span>;
-  <span class="pl-k">for</span> (var e: u64 in v) {
+  <span class="pl-k">var</span> sum: <span class="pl-c1">u64</span> = <span class="pl-c1">0</span>;
+  <span class="pl-k">for</span> (e: <span class="pl-c1">u64</span> in v) {
     sum += e;
     Console.<span class="pl-c1">Print</span>(e, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>);
   }

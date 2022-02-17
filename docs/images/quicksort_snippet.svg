@@ -142,11 +142,11 @@
 <div xmlns="http://www.w3.org/1999/xhtml" class="div-3">
 
   <pre>
-fn <span class="pl-c1">Partition</span>[T:! <span class="pl-c1">Comparable</span> &amp; <span class="pl-c1">Movable</span>](s: <span class="pl-c1">Span</span>(T))
-     -&gt; i32 {
-  var i: i32 = -<span class="pl-c1">1</span>;
+fn <span class="pl-c1">Partition</span>[T:! Comparable &amp; Movable](s: Span(T))
+     -&gt; <span class="pl-c1">i32</span> {
+  <span class="pl-k">var</span> i: <span class="pl-c1">i32</span> = -<span class="pl-c1">1</span>;
 
-  <span class="pl-k">for</span> (var j: i32 in s.<span class="pl-c1">Indices</span>()) {
+  <span class="pl-k">for</span> (j: <span class="pl-c1">i32</span> in s.<span class="pl-c1">Indices</span>()) {
     <span class="pl-k">if</span> (s[j] &lt;= s.<span class="pl-c1">Last</span>()) {
       ++i;
       <span class="pl-c1">Swap</span>(&amp;s[i], &amp;s[j]);
@@ -155,9 +155,9 @@ fn <span class="pl-c1">Partition</span>[T:! <span class="pl-c1">Comparable</span
   <span class="pl-k">return</span> i;
 }
 
-fn <span class="pl-c1">QuickSort</span>[T:! <span class="pl-c1">Comparable</span> &amp; <span class="pl-c1">Movable</span>](s: <span class="pl-c1">Span</span>(T)) {
+fn <span class="pl-c1">QuickSort</span>[T:! Comparable &amp; Movable](s: Span(T)) {
   <span class="pl-k">if</span> (s.<span class="pl-c1">Length</span>() &lt;= <span class="pl-c1">1</span>) { <span class="pl-k">return</span>; }
-  let p: i32 = <span class="pl-c1">Partition</span>(s);
+  <span class="pl-k">let</span> p: <span class="pl-c1">i32</span> = <span class="pl-c1">Partition</span>(s);
   <span class="pl-c1">QuickSort</span>(s.<span class="pl-c1">Sub</span>(<span class="pl-c1">0</span>, p - <span class="pl-c1">1</span>));
   <span class="pl-c1">QuickSort</span>(s.<span class="pl-c1">Sub</span>(p + <span class="pl-c1">1</span>));
 }

@@ -1,4 +1,4 @@
-# Carbon
+# Carbon language
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -15,7 +15,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
-<img src="docs/images/quicksort_snippet.svg" align="right" width="575">
+<a href="docs/images/snippets.md#quicksort>
+<img src="docs/images/quicksort_snippet.svg" align="right" width="575" alt="Quicksort code in Carbon.  Follow the link to read more.>
+</a>
+<img src="docs/images/bumper.png">
 
 **Fast and works with C++**
 
@@ -36,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   Clear goals and priorities with robust governance
 -   Community that works to be welcoming, inclusive, and friendly
 -   Batteries-included approach: compiler, libraries, docs, tools, package
-    manager, and more.
+    manager, and more
 
 <hr>
 
@@ -65,11 +68,17 @@ If you're already a C++ developer, Carbon should have a short learning curve. It
 is built out of a consistent set of language constructs that should feel
 familiar. C++ code like this:
 
-<img src="docs/images/cpp_snippet.svg" width="600">
+<a href="docs/images/snippets.md#c>
+<img src="docs/images/cpp_snippet.svg" width="600"
+alt="A snippet of C++ code.  Follow the link to read it.">
+</a>
 
 can be mechanically transformed to Carbon, like so:
 
-<img src="docs/images/carbon_snippet.svg" width="600">
+<a href="docs/images/snippets.md#carbon>
+<img src="docs/images/carbon_snippet.svg" width="600"
+alt="A snippet of converted Carbon code.  Follow the link to read it.>
+</a>
 
 without loss of performance or readability. Yet, translating C++ to Carbon isn't
 necessary; you can call Carbon from C++ without overhead and the other way
@@ -77,11 +86,14 @@ around. You can port your library to Carbon, or write new Carbon on top of your
 existing C++ investment. Carbon won't add a sea of dependencies or slow down
 your performance-critical code. For example:
 
-<img src="docs/images/mixed_snippet.svg" width="600">
+<a href="docs/images/snippets.md#mixed>
+<img src="docs/images/mixed_snippet.svg" width="600"
+alt="A snippet of mixed Carbon and C++ code.  Follow the link to read it.">
+</a>
 
 In terms of safety, any language that can seamlessly call C++ will not be
 perfectly safe in every dimension. However, Carbon's design encourages you to
-use safe constructs where possible, and on average you should see
+use safe constructs where possible.
 
 Ultimately, C++ carries a significant historical legacy, including around ABI
 stability, that constrains its evolution. Carbon is an attempt to set a new
