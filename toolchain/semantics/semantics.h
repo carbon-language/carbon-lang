@@ -20,14 +20,6 @@ class Semantics {
     ParseTree::Node name_node;
   };
 
-  // Analyzes a parse tree and returns the constructed semantic information.
-  static auto Analyze(const ParseTree& parse_tree, DiagnosticConsumer& consumer)
-      -> Semantics;
-
- private:
-  class Analyzer;
-  friend class Analyzer;
-
   // Provides a link back to an entity in a name scope.
   struct NamedEntity {
     // The kind of entity. There should be one entry per list of entities that
@@ -42,13 +34,25 @@ class Semantics {
     int32_t index;
   };
 
+ private:
+  friend class SemanticAnalyzer;
+
+  explicit Semantics(const ParseTree& parse_tree) : parse_tree_(&parse_tree) {}
+
+  // Creates a function, adds it to the enclosing scope, and returns a reference
+  // for further mutations. On a name collision, it will not be added to the
+  // scope, but will still be returned.
+  auto AddFunction(DiagnosticEmitter<ParseTree::Node> emitter,
+                   llvm::StringMap<NamedEntity>& enclosing_name_scope,
+                   llvm::StringRef name) -> Function&;
+
   // All functions from the parse tree.
   llvm::SmallVector<Function, 0> functions_;
 
   // Names declared in the root scope.
   llvm::StringMap<NamedEntity> root_name_scope_;
 
-  Semantics() = default;
+  const ParseTree* parse_tree_;
 };
 
 }  // namespace Carbon

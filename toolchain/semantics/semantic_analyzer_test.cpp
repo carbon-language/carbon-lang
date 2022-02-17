@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantics.h"
+#include "toolchain/semantics/semantics_analyzer.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@ using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Eq;
 
-class ParseTreeTest : public ::testing::Test {
+class SemanticAnalyzerTest : public ::testing::Test {
  protected:
   auto Analyze(llvm::Twine t) -> Semantics {
     source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
@@ -29,7 +29,7 @@ class ParseTreeTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->HasErrors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->HasErrors());
-    return Semantics::Analyze(*parse_tree, consumer);
+    return SemanticsAnalyzer::Analyze(*parse_tree, consumer);
   }
 
   std::optional<SourceBuffer> source_buffer;
@@ -38,17 +38,17 @@ class ParseTreeTest : public ::testing::Test {
   MockDiagnosticConsumer consumer;
 };
 
-TEST_F(ParseTreeTest, Empty) {
+TEST_F(SemanticAnalyzerTest, Empty) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Analyze("");
 }
 
-TEST_F(ParseTreeTest, FunctionBasic) {
+TEST_F(SemanticAnalyzerTest, FunctionBasic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Analyze("fn Foo() {}");
 }
 
-TEST_F(ParseTreeTest, FunctionDuplicate) {
+TEST_F(SemanticAnalyzerTest, FunctionDuplicate) {
   EXPECT_CALL(
       consumer,
       HandleDiagnostic(AllOf(

@@ -17,12 +17,25 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "semantics_analyzer",
+    srcs = ["semantics_analyzer.cpp"],
+    hdrs = ["semantics_analyzer.h"],
+    deps = [
+        "//common:check",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_node_kind",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
-    name = "semantics_test",
+    name = "semantics_analyzer_test",
     size = "small",
     srcs = ["semantics_test.cpp"],
     deps = [
-        ":semantics",
+        ":semantics_analyzer",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
