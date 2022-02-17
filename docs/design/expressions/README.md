@@ -76,12 +76,13 @@ graph TD
     postfix["x.y"] --> not & negation
     negation["-x"] --> multiplicative & modulo & as
     as["x as T"] --> comparison
-    not["not x"] --> and_or
+    not["not x"] --> and & or
     multiplicative>"x * y<br> x / y"] --> additive
     additive>"x + y<br> x - y"] --> comparison
     modulo["x % y"] --> comparison
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
-    and_or>"x and y<br> x or y"] --> expression_statement & if_else
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and & or
+    and>"x and y"] --> expression_statement & if_else
+    or>"x or y"] --> expression_statement & if_else
     expression_statement(["x ;"])
     if_else["if x then y else z"] --> subexpression
     subexpression(["parenthesized subexpression"])
