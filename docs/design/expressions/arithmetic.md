@@ -54,7 +54,15 @@ standard library.
 
 ## Precedence and associativity
 
-![Precedence diagram for arithmetic operators](arithmetic-precedence.svg)
+```mermaid
+graph TD
+    negation["-x"] --> additive & modulo
+    additive>"x + y<br> x - y"] --> multiplicative
+    multiplicative>"x * y<br> x / y"]
+    modulo["x % y"]
+```
+
+<small>[Instructions for reading this diagram.](README.md#precedence)</small>
 
 Binary `+` and `-` can be freely mixed, and are left-associative.
 
