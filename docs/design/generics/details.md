@@ -1172,6 +1172,8 @@ def DoHashAndEquals[T:! Hashable](x: T) {
 **Comparison with other languages:**
 [This feature is called "Supertraits" in Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-supertraits-to-require-one-traits-functionality-within-another-trait).
 
+**Note:** The design for this feature is continued in a later section. FIXME
+
 ### Interface extension
 
 When implementing an interface, we should allow implementing the aliased names
@@ -4432,6 +4434,21 @@ There are a few reasons for this feature:
     [`DynPtr`](#dynamic-types).
 
 Note that this applies to associated entities, not interface parameters.
+
+# Interface requiring other interfaces revisited
+
+Recall that an
+[interface can require another interface be implemented for the type](#interface-requiring-other-interfaces),
+as in:
+
+```
+interface Iterable {
+  fn Advance[addr me: Self*]() -> bool;
+  impl as Equatable;
+}
+```
+
+FIXME
 
 ## Future work
 
