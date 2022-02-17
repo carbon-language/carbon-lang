@@ -346,6 +346,7 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
+    case ExpressionKind::IfExpression:
       FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
@@ -689,6 +690,20 @@ void Interpreter::StepExp() {
     case ExpressionKind::StringTypeLiteral: {
       CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
+    }
+    case ExpressionKind::IfExpression: {
+      const auto& if_expr = cast<IfExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(if_expr.condition()));
+      } else if (act.pos() == 1) {
+        const BoolValue& condition = cast<BoolValue>(*act.results()[0]);
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            condition.value() ? if_expr.then_value() : if_expr.else_value()));
+      } else {
+        return todo_.FinishAction(act.results()[1]);
+      }
+      break;
     }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
