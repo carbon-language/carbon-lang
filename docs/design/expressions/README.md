@@ -74,11 +74,11 @@ graph TD
     parens["(...)"] --> postfix
     struct_literal["{.a = x, .b = y}<br> {.a: T, .b: U}"] --> postfix
     postfix["x.y"] --> not & negation
-    negation["-x"] --> additive & modulo & as
+    negation["-x"] --> multiplicative & modulo & as
     as["x as T"] --> comparison
     not["not x"] --> and_or
-    additive>"x + y<br> x - y"] --> multiplicative
-    multiplicative>"x * y<br> x / y"] --> comparison
+    multiplicative>"x * y<br> x / y"] --> additive
+    additive>"x + y<br> x - y"] --> comparison
     modulo["x % y"] --> comparison
     comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and_or
     and_or>"x and y<br> x or y"] --> expression_statement & if_else
