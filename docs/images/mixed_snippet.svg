@@ -147,7 +147,7 @@
 <span class="pl-c"><span class="pl-c">//</span> Carbon and C++ interop</span>
 <span class="pl-k">void</span> <span class="pl-en">PrintWithTotal</span>(v: Cpp.std.vector(Cpp.<span class="pl-c1">uint64_t</span>)) {
   <span class="pl-k">var</span> sum: <span class="pl-c1">u64</span> = <span class="pl-c1">0</span>;
-  <span class="pl-k">for</span> (e: Cpp.<span class="pl-c1">uint64_t</span> <span class="pl-k">in</span> v) {
+  <span class="pl-k">for</span> (e: Cpp.<span class="pl-c1">uint64_t</span> in v) {
     sum += e;
     Console.<span class="pl-c1">Print</span>(e, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>)
   }
