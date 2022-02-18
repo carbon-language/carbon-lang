@@ -73,7 +73,7 @@ The diagram's attributes are:
 
 -   Each node represents a precedence group.
 
--   When an expression is composed of different precedence groups, the
+-   When an expression is composed from different precedence groups, the
     interpretation is determined by the precedence edges:
 
     -   A precedence edge A --> B means that A is lower precedence than B, so A
@@ -83,7 +83,7 @@ The diagram's attributes are:
     -   Precedence edges are transitive. For example, `or --> == --> as` means
         that `or` is lower precedence than `as`.
 
--   When an expression is composed of a single precedence group, the
+-   When an expression is composed from a single precedence group, the
     interpretation is determined by the
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
     precedence group:
