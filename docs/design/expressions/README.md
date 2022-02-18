@@ -78,13 +78,14 @@ The diagram's attributes are:
 -   Each node represents a precedence group.
 
 -   When an expression contains operators from different precedence groups, the
-    interpretation is determined by the precedence edges: given an edge A --> B,
-    A is lower precedence than B, so A can contain B without parentheses.
+    interpretation is determined by the precedence edges:
 
-    -   For example, `or --> not` means `not x or y` is treated as
-        `(not x) or y`.
+    -   Given an edge A --> B, A is lower precedence than B, so A can contain B
+        without parentheses. For example, `or --> not` means that `not x or y`
+        is treated as `(not x) or y`.
 
-    -   Precedence is transitive, such as between A and C in A --> B --> C.
+    -   Precedence edges are transitive. For example, `or --> == --> as` means
+        that `or` is lower precedence than `as`.
 
 -   When an expression contains operators from a single precedence group, the
     interpretation is determined by the
