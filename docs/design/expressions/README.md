@@ -65,29 +65,33 @@ The precedence diagram is defined thusly:
 
 ```mermaid
 graph TD
-    parens["(...)"] --> as & not
-    as["x as T"] --> comparison
-    not["not x"] --> and & or
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and & or
+    parens["(...)"] <-- as & not
+    as["x as T"] <-- comparison
+    not["not x"] <-- and & or
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] <-- and & or
     and>"x and y]
     or>"x or y"]
 ```
 
 The diagram's attributes are:
 
--   Edges indicate a relative ordering: given an edge A --> B, it means that A
-    is higher precedence than B, so A can appear unparenthesized within B.
-    This is also transitive, such as with A and C in A --> B --> C.
+-   Each node represents a precedence group.
 
-    -   Higher precedence operators are higher in the graph.
+-   When an expression contains operators from different precedence groups, the
+    interpretation is determined by the precedence indicated by edges:
 
-    -   For example, `not x or y` is valid because there is an arrow from `not`
-        to `or`, so `not` is higher precedence than `or` and can be used inside
-        `or` expressions without parentheses. The parenthesized equivalent is
-        `((not x) or y)`.
+    -   Given an edge A --> B, it means A is lower precedence than B, so A can
+        contain B without parentheses. For example, `or --> not` means
+        `not x or y` is treated as `(not x) or y`.
 
--   Shapes indicate
-    [Associativity](https://en.wikipedia.org/wiki/Operator_associativity):
+    -   This is also transitive, such as between A and C in A --> B --> C.
+
+    -   If there is no edge, parentheses are required.
+
+-   When an expression contains operators from a single precedence group, the
+    interpretation is determined by the
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
+    precedence group:
 
     ```mermaid
     graph TD
@@ -95,10 +99,8 @@ The diagram's attributes are:
         left>"Left associative"]
     ```
 
--   When multiple operators are grouped inside a shape, they have equal
-    precedence. Associativity determines whether parentheses are required;
-    left-associative operators may be combined without parentheses, as in
-    `x + y - z`.
+    -   For example, `+` and `-` are left-associative and in the same precedence
+        group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
 
 ## Conversions and casts
 
