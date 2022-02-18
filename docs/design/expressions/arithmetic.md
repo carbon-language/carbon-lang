@@ -14,8 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Built-in types](#built-in-types)
     -   [Integer types](#integer-types)
+        -   [Overflow and other error conditions](#overflow-and-other-error-conditions)
     -   [Floating-point types](#floating-point-types)
-    -   [Overflow and other error conditions](#overflow-and-other-error-conditions)
     -   [Strings](#strings)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
@@ -123,25 +123,17 @@ integer arithmetic in `uN` wraps around modulo 2<sup>`N`</sup>.
 Division truncates towards zero. The result of the `%` operator is defined by
 the equation `a % b == a - a / b * b`.
 
-### Floating-point types
+#### Overflow and other error conditions
 
-Floating-point types support all the arithmetic operators other than `%`.
-Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
-rounding mode, and do not set any floating-point exception state.
-
-### Overflow and other error conditions
-
-Integer arithmetic is subject to two classes of error condition:
+Integer arithmetic is subject to two classes of problems for which an operation
+has no representable result:
 
 -   Overflow, where the resulting value is too large to be represented in the
     type, or, for `%`, when the implied multiplication overflows.
 -   Division by zero.
 
-Unsigned integer arithmetic cannot overflow, but division by zero is still an
-error.
-
-Floating-point arithmetic follows IEEE 754 rules: overflow results in ±∞, and
-division by zero results in either ±∞ or, for 0.0 / 0.0, a quiet NaN.
+Unsigned integer arithmetic cannot overflow, but division by zero can still
+occur.
 
 **Note:** All arithmetic operators can overflow for signed integer types. For
 example, given a value `v: iN` that is the least possible value for its type,
@@ -150,23 +142,36 @@ example, given a value `v: iN` that is the least possible value for its type,
 Signed integer overflow and signed or unsigned integer division by zero are
 programming errors:
 
--   In a development build, they will be caught immediately at runtime.
+-   In a development build, they will be caught immediately when the happen at
+    runtime.
 -   In a performance build, the optimizer can assume that such conditions don't
-    occur.
+    occur. As a consequence, if they do, the behavior of the program is not
+    defined.
 -   In a hardened build, overflow and division by zero do not result in
-    undefined behavior. On overflow, either a valid but incorrect value will be
-    produced, or the program will be aborted. The runtime error might not in all
-    cases occur immediately -- for example, multiple overflow checks might be
-    combined into one. The behavior of a division by zero is a runtime error
-    that aborts the program.
+    undefined behavior. On overflow and division by zero, either the program
+    will be aborted, or the arithmetic will evaluate to a mathematically
+    incorrect result, such as a two's complement result or zero. The program
+    might not in all cases be aborted immediately -- for example, multiple
+    overflow checks might be combined into one, and if the result of an
+    arithmetic operation is never observed, the abort may not happen at all.
 
 **TODO:** In a hardened build, should we prefer to trap on overflow, give a
 two's complement result, or produce zero? Using zero may defeat some classes of
 exploit, but comes at a code size and performance cost.
 
+### Floating-point types
+
+Floating-point types support all the arithmetic operators other than `%`.
+Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
+rounding mode, and do not set any floating-point exception state.
+
+Because floating-point arithmetic follows IEEE 754 rules: overflow results in
+±∞, and division by zero results in either ±∞ or, for 0.0 / 0.0, a quiet NaN.
+
 ### Strings
 
-Binary `+` performs string concatenation.
+Binary `+` performs string concatenation. No other arithmetic operators are
+supported.
 
 ## Extensibility
 
