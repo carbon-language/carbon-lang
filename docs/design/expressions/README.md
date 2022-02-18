@@ -74,8 +74,7 @@ graph BT
 
     as & not --> parens
     comparison --> as
-    not --> and & or
-    and & or --> comparison
+    and & or --> comparison & not
 ```
 
 The diagram's attributes are:
