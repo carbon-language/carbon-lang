@@ -34,6 +34,69 @@ fn Foo(a: i32*) -> i32 {
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
 
+## Precedence
+
+Expressions evaluation is based on a partial
+[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
+Expression components which lack a relative ordering must be disambiguated
+by the developer, for example by adding parentheses; otherwise, the expression
+will be invalid due to am as ambiguous. Precedence orderings will only be added
+when it's reasonable to expect most developers to understand the precedence
+without parentheses.
+
+The precedence diagram is defined thusly:
+
+```mermaid
+graph BT
+    brackets["(...)<br>
+              <a href='../classes.md#literals'>{...}</a>"]
+    as["<a href='#conversions-and-casts'>x as T</a>"]
+    not["<a href='logical_operators.md'>not x</a>"]
+    comparison["<a href='comparison_operators.md'>x == y<br>
+                                                  x != y<br>
+                                                  x < y<br>
+                                                  x <= y<br>
+                                                  x > y<br>
+                                                  x >= y</a>"]
+    and>"<a href='logical_operators.md'>x and y</a>"]
+    or>"<a href='logical_operators.md'>x or y</a>"]
+    if>"<a href='#if-expressions'>if x then y else z</a>"]
+    expressionEnd["x;"]
+
+    as & not --> brackets
+    comparison --> as
+    and & or --> comparison & not
+    if & expressionEnd --> and & or
+```
+
+The diagram's attributes are:
+
+-   Each node represents a precedence group.
+
+-   When an expression is composed of different precedence groups, the
+    interpretation is determined by the precedence edges:
+
+    -   A precedence edge A --> B means that A is lower precedence than B, so A
+        can contain B without parentheses. For example, `or --> not` means that
+        `not x or y` is treated as `(not x) or y`.
+
+    -   Precedence edges are transitive. For example, `or --> == --> as` means
+        that `or` is lower precedence than `as`.
+
+-   When an expression is composed of a single precedence group, the
+    interpretation is determined by the
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
+    precedence group:
+
+    ```mermaid
+    graph TD
+        non["Non-associative"]
+        left>"Left associative"]
+    ```
+
+    -   For example, `+` and `-` are left-associative and in the same precedence
+        group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
+
 ## Operators
 
 Most expressions are modeled as operators:
@@ -50,60 +113,6 @@ Most expressions are modeled as operators:
 | Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
 | Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
 | Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
-
-### Precedence
-
-Operators have a partial
-[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
-Expressions using operators that lack a relative ordering must be disambiguated
-by the developer, for example by adding parentheses; when a program's meaning
-depends on an undefined relative ordering of two operators, it will be rejected
-due to ambiguity. Precedence orderings will only be added when it's reasonable
-to expect most developers to understand the precedence without parentheses.
-
-The precedence diagram is defined thusly:
-
-```mermaid
-graph BT
-    parens["(...)"]
-    as["x as T"]
-    not["not x"]
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"]
-    and>"x and y"]
-    or>"x or y"]
-
-    as & not --> parens
-    comparison --> as
-    and & or --> comparison & not
-```
-
-The diagram's attributes are:
-
--   Each node represents a precedence group.
-
--   When an expression contains operators from different precedence groups, the
-    interpretation is determined by the precedence edges:
-
-    -   A precedence edge A --> B means that A is lower precedence than B, so A
-        can contain B without parentheses. For example, `or --> not` means that
-        `not x or y` is treated as `(not x) or y`.
-
-    -   Precedence edges are transitive. For example, `or --> == --> as` means
-        that `or` is lower precedence than `as`.
-
--   When an expression contains operators from a single precedence group, the
-    interpretation is determined by the
-    [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
-    precedence group:
-
-    ```mermaid
-    graph TD
-        non["Non-associative"]
-        left>"Left associative"]
-    ```
-
-    -   For example, `+` and `-` are left-associative and in the same precedence
-        group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
 
 ## Conversions and casts
 
