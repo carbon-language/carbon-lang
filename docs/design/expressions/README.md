@@ -84,7 +84,7 @@ The diagram's attributes are:
     -   For example, `or --> not` means `not x or y` is treated as
         `(not x) or y`.
 
-    -   This is also transitive, such as between A and C in A --> B --> C.
+    -   Precedence is transitive, such as between A and C in A --> B --> C.
 
 -   When an expression contains operators from a single precedence group, the
     interpretation is determined by the
