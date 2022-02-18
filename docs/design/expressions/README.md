@@ -86,7 +86,7 @@ The diagram's attributes are:
 
     -   This is also transitive, such as between A and C in A --> B --> C.
 
-    -   If there is no edge, parentheses are required.
+    -   If there is no transitive path, parentheses are required.
 
 -   When an expression contains operators from a single precedence group, the
     interpretation is determined by the
