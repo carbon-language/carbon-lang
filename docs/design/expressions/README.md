@@ -11,8 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Precedence](#precedence)
 -   [Operators](#operators)
-    -   [Precedence](#precedence)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
 -   [Alternatives considered](#alternatives-considered)
@@ -38,11 +38,11 @@ the `return` statement are all expressions.
 
 Expressions evaluation is based on a partial
 [precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
-Expression components which lack a relative ordering must be disambiguated
-by the developer, for example by adding parentheses; otherwise, the expression
-will be invalid due to am as ambiguous. Precedence orderings will only be added
-when it's reasonable to expect most developers to understand the precedence
-without parentheses.
+Expression components which lack a relative ordering must be disambiguated by
+the developer, for example by adding parentheses; otherwise, the expression will
+be invalid due to am as ambiguous. Precedence orderings will only be added when
+it's reasonable to expect most developers to understand the precedence without
+parentheses.
 
 The precedence diagram is defined thusly:
 
