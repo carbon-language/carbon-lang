@@ -64,13 +64,18 @@ to expect most developers to understand the precedence without parentheses.
 The precedence diagram is defined thusly:
 
 ```mermaid
-graph TD
-    parens["(...)"] <-- as & not
-    as["x as T"] <-- comparison
-    not["not x"] <-- and & or
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] <-- and & or
-    and>"x and y]
+graph BT
+    parens["(...)"]
+    as["x as T"]
+    not["not x"]
+    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"]
+    and>"x and y"]
     or>"x or y"]
+
+    as & not --> parens
+    comparison --> as
+    not --> and & or
+    and & or --> comparison
 ```
 
 The diagram's attributes are:
