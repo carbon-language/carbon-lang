@@ -95,6 +95,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -1172,7 +1173,8 @@ def DoHashAndEquals[T:! Hashable](x: T) {
 **Comparison with other languages:**
 [This feature is called "Supertraits" in Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-supertraits-to-require-one-traits-functionality-within-another-trait).
 
-**Note:** The design for this feature is continued in a later section. FIXME
+**Note:** The design for this feature is continued in
+[a later section](#interface-requiring-other-interfaces-revisited).
 
 ### Interface extension
 
@@ -4435,7 +4437,7 @@ There are a few reasons for this feature:
 
 Note that this applies to associated entities, not interface parameters.
 
-# Interface requiring other interfaces revisited
+## Interface requiring other interfaces revisited
 
 Recall that an
 [interface can require another interface be implemented for the type](#interface-requiring-other-interfaces),
