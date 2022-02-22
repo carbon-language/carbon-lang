@@ -24,6 +24,7 @@ cc_library(
     deps = [
         ":semantics",
         "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
