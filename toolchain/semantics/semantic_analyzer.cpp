@@ -16,6 +16,7 @@ namespace Carbon {
 auto SemanticAnalyzer::Analyze(const ParseTree& parse_tree,
                                DiagnosticConsumer& consumer) -> Semantics {
   SemanticAnalyzer analyzer(parse_tree, consumer);
+  analyzer.ProcessRoots();
   return analyzer.semantics_;
 }
 
@@ -37,18 +38,19 @@ void SemanticAnalyzer::ProcessRoots() {
 
 void SemanticAnalyzer::ProcessFunctionNode(
     llvm::StringMap<Semantics::NamedEntity>& name_scope,
-    ParseTree::Node fn_node) {
-  llvm::Expected<Semantics::Function> fn;
-  for (ParseTree::Node node : semantics_.parse_tree_->Children(fn_node)) {
+    ParseTree::Node decl_node) {
+  llvm::Optional<Semantics::Function> fn = llvm::None;
+  for (ParseTree::Node node : semantics_.parse_tree_->Children(decl_node)) {
     switch (semantics_.parse_tree_->GetNodeKind(node)) {
       case ParseNodeKind::DeclaredName():
-        fn = semantics_.AddFunction(name_scope,
-                                    semantics_.parse_tree_->GetNodeText(node));
+        fn = semantics_.AddFunction(emitter_, name_scope, decl_node, node);
+        break;
+      case ParseNodeKind::ParameterList():
+        // TODO: Maybe something like Semantics::AddVariable passed to
+        // Function::AddParameter.
         break;
       case ParseNodeKind::CodeBlock():
-      case ParseNodeKind::ParameterList():
-        // TODO: Should add information to the function object.
-        // Something like Function::AddParameter, etc.
+        // TODO: Should accumulate the definition into the code block.
         break;
       default:
         FATAL() << "Unhandled node kind: "

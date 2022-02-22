@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantics_analyzer.h"
+#include "toolchain/semantics/semantic_analyzer.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -29,7 +29,7 @@ class SemanticAnalyzerTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->HasErrors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->HasErrors());
-    return SemanticsAnalyzer::Analyze(*parse_tree, consumer);
+    return SemanticAnalyzer::Analyze(*parse_tree, consumer);
   }
 
   std::optional<SourceBuffer> source_buffer;

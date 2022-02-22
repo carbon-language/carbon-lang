@@ -11,31 +11,33 @@ cc_library(
     deps = [
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
-        "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
-    name = "semantics_analyzer",
-    srcs = ["semantics_analyzer.cpp"],
-    hdrs = ["semantics_analyzer.h"],
+    name = "semantic_analyzer",
+    srcs = ["semantic_analyzer.cpp"],
+    hdrs = ["semantic_analyzer.h"],
     deps = [
+        ":semantics",
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_test(
-    name = "semantics_analyzer_test",
+    name = "semantic_analyzer_test",
     size = "small",
-    srcs = ["semantics_test.cpp"],
+    srcs = ["semantic_analyzer_test.cpp"],
     deps = [
-        ":semantics_analyzer",
+        ":semantic_analyzer",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",

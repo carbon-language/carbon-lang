@@ -9,7 +9,7 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/parser/parse_tree_node_location_translator.h"
 
 namespace Carbon {
 
@@ -26,29 +26,32 @@ struct NameConflict : DiagnosticBase<NameConflict> {
   Diagnostic::Location conflict;
 };
 
-auto Semantics::AddFunction(DiagnosticEmitter<ParseTree::Node> emitter,
+auto Semantics::AddFunction(DiagnosticEmitter<ParseTree::Node>& emitter,
                             llvm::StringMap<NamedEntity>& name_scope,
-                            llvm::StringRef name) -> Function& {
+                            ParseTree::Node decl_node,
+                            ParseTree::Node name_node) -> Function& {
   int32_t index = functions_.size();
-  functions_.resize(index + 1);
+  functions_.push_back(Function(decl_node, name_node));
+  llvm::StringRef name = parse_tree_->GetNodeText(name_node);
+  fprintf(stderr, "Adding %s\n", name.str().c_str());
   auto [it, success] = name_scope.insert(
-      {name, {.kind = NamedEntity::Kind::Function, .index = index}});
+      {name, NamedEntity(NamedEntity::Kind::Function, index)});
+  // TODO: Probably need to distinguish between declaration and definition.
   if (!success) {
     emitter.EmitError<NameConflict>(
-        fn.name_node,
-        {.name = fn_name, .conflict = GetEntityLocation(name_scope[fn_name])});
-    return;
+        name_node,
+        {.name = name, .conflict = GetEntityLocation(name_scope[name])});
   }
-  semantics_->functions_.push_back(fn);
+  return functions_[index];
 }
 
-auto Semantics::Analyzer::GetEntityLocation(NamedEntity entity)
-    -> Diagnostic::Location {
-  switch (entity.kind) {
-    case NamedEntity::Kind::Function: {
-      Function fn = semantics_->functions_[entity.index];
-      return translator_.GetLocation(fn.name_node);
-    }
+auto Semantics::GetEntityLocation(NamedEntity entity) -> Diagnostic::Location {
+  switch (entity.kind_) {
+    case NamedEntity::Kind::Function:
+      return ParseTreeNodeLocationTranslator(*parse_tree_)
+          .GetLocation(functions_[entity.index_].name_node());
+    case NamedEntity::Kind::Invalid:
+      FATAL() << "Encountered invalid NamedEntity";
   }
 }
 

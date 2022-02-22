@@ -36,11 +36,7 @@ class SemanticAnalyzer {
   // Turns a function node from the parse tree into a semantic function node,
   // adding it to the containing scope.
   void ProcessFunctionNode(llvm::StringMap<Semantics::NamedEntity>& name_scope,
-                           ParseTree::Node fn_node);
-
-  // Returns the location of an entity. This assists diagnostic output where
-  // supplemental locations are provided in formatting.
-  auto GetEntityLocation(Semantics::NamedEntity entity) -> Diagnostic::Location;
+                           ParseTree::Node decl_node);
 
   Semantics semantics_;
   ParseTreeNodeLocationTranslator translator_;
