@@ -4347,6 +4347,10 @@ these rules:
     [question-for-leads issue #472](https://github.com/carbon-language/carbon-lang/issues/472)
     and
     [proposal #875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875).
+-   For [coherence](goals.md#coherence), we require that any impl that matches
+    an [impl lookup](#impl-lookup) query in the same file, must be declared
+    before the query. This can be done with a definition or a forward
+    declaration.
 
 ### Declaration examples
 
