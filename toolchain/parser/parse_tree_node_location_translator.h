@@ -21,7 +21,7 @@ class ParseTreeNodeLocationTranslator
   auto GetLocation(ParseTree::Node loc) -> Diagnostic::Location override {
     auto token = parse_tree_->GetNodeToken(loc);
     TokenizedBuffer::TokenLocationTranslator translator(
-        parse_tree_->tokens(), /*last_line_lexed_to_column=*/nullptr);
+        *parse_tree_->tokens_, /*last_line_lexed_to_column=*/nullptr);
     return translator.GetLocation(token);
   }
 

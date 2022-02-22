@@ -57,7 +57,6 @@ void SemanticAnalyzer::ProcessFunctionNode(
                 << semantics_.parse_tree_->GetNodeKind(node).GetName();
     }
   }
-  (void)fn;
 }
 
 }  // namespace Carbon
