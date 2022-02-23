@@ -47,21 +47,34 @@ parentheses.
 The precedence diagram is defined thusly:
 
 ```mermaid
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
 graph BT
     brackets["(...)"]
-    click brackets "../classes.md#literals"
+    click brackets "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
-    as["<a href='#conversions-and-casts'>x as T</a>"]
-    not["<a href='logical_operators.md'>not x</a>"]
-    comparison["<a href='comparison_operators.md'>x == y<br>
-                                                  x != y<br>
-                                                  x < y<br>
-                                                  x <= y<br>
-                                                  x > y<br>
-                                                  x >= y</a>"]
-    and>"<a href='logical_operators.md'>x and y</a>"]
-    or>"<a href='logical_operators.md'>x or y</a>"]
-    if>"<a href='#if-expressions'>if x then y else z</a>"]
+    as["x as T"]
+    click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
+
+    not["not x"]
+    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    comparison["x == y<br>
+                x != y<br>
+                x < y<br>
+                x <= y<br>
+                x > y<br>
+                x >= y"]
+    click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
+
+    and>"x and y"]
+    click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    or>"x or y"]
+    click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    if>"if x then y else z"]
+    click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
+
     expressionEnd["x;"]
 
     as & not --> brackets
