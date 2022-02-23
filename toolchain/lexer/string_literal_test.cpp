@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
@@ -20,7 +21,7 @@ class StringLiteralTest : public ::testing::Test {
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
-    assert(result);
+    CHECK(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }

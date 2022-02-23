@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
@@ -30,7 +31,7 @@ class NumericLiteralTest : public ::testing::Test {
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
-    assert(result);
+    CHECK(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
