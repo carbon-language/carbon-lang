@@ -4445,9 +4445,79 @@ as in:
 
 ```
 interface Iterable {
-  fn Advance[addr me: Self*]() -> bool;
   impl as Equatable;
+  // ...
 }
+```
+
+This states that the type implementing the interface `Iterable`, which in this
+context is called `Self`, must also implement the interface `Equatable`. As is
+done with [conditional conformance](#conditional-conformance), we allow another
+type to be specified between `impl` and `as` to say some type other than `Self`
+must implement an interface. For example,
+
+```
+interface IntLike {
+  impl i32 as As(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `IntLike`, then `i32` must implement `As(Self)`.
+Similarly,
+
+```
+interface CommonTypeWith(T:! Type) {
+  impl T as CommonTypeWith(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
+`CommonTypeWith(Self)`.
+
+The previous description of `impl as` in an interface definition matches the
+behavior of using a default of `Self` when the type between `impl` and `as` is
+omitted. So the previous definition of `interface Iterable` is equivalent to:
+
+```
+interface Iterable {
+  // ...
+  impl Self as Equatable;
+  // Equivalent to: impl as Equatable;
+}
+```
+
+When implementing an interface with an `impl as` requirement, that requirement
+must be satisfied either by an implementation in an imported library or an
+implementation somewhere in the same file. Implementing the requiring interface
+is a promise that the requirement will be implemented. This is like a
+
+<!-- [forward declaration of an impl](#declaring-implementations) -->
+
+forward declaration of an impl except that the definition can be broader instead
+of being required to match exactly.
+
+```
+external impl Vector(i32) as Iterable { ... }
+
+fn RequiresEquatable[T:! Equatable](x: T) { ... }
+fn ProcessVector(v: Vector(i32)) {
+  // ✅ Allowed since `Vector(i32)` is known to
+  // implement `Equatable`.
+  RequiresEquatable(v);
+}
+
+// Satisfies requirement that `Vector(i32)` must
+// implement `Iterable` since `i32` is `Equatable`.
+external impl Vector(T:! Equatable) as Equatable { ... }
+```
+
+In some cases, the interface's requirement can be trivially satisfied by the
+implementation itself, as in:
+
+```
+impl [T:! Type] T as CommonTypeWith(T) { ... }
 ```
 
 FIXME
@@ -4582,3 +4652,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1088: Generic details 10: interface implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
