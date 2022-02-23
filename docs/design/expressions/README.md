@@ -36,7 +36,7 @@ the `return` statement are all expressions.
 
 ## Precedence
 
-Expressions evaluation is based on a partial
+Expressions are interpreted based on a partial
 [precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
 Expression components which lack a relative ordering must be disambiguated by
 the developer, for example by adding parentheses; otherwise, the expression will
