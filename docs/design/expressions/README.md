@@ -48,7 +48,9 @@ The precedence diagram is defined thusly:
 
 ```mermaid
 graph BT
-    click brackets["(...)"] href "../classes.md#literals"
+    brackets["(...)"]
+    click brackets "../classes.md#literals"
+
     as["<a href='#conversions-and-casts'>x as T</a>"]
     not["<a href='logical_operators.md'>not x</a>"]
     comparison["<a href='comparison_operators.md'>x == y<br>
