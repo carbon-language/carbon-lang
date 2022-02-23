@@ -31,10 +31,3 @@ fn Main() -> i32 {
   }
   return 0;
 }
-
-// Test some alternate syntaxes
-choice MoreInts {
-  None(),
-  One(i32),
-  Two(i32,i32),
-}
