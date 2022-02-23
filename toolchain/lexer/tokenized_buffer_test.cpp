@@ -577,12 +577,11 @@ TEST_F(LexerTest, Whitespace) {
 TEST_F(LexerTest, Keywords) {
   auto buffer = Lex("   fn");
   EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
-          {TokenKind::EndOfFile()},
-      }));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
+                  {TokenKind::EndOfFile()},
+              }));
 
   buffer = Lex("and or not if else for return var break continue _");
   EXPECT_FALSE(buffer.HasErrors());
