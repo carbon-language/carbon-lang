@@ -18,6 +18,12 @@ namespace Carbon::Testing {
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
+  // Ignore large inputs.
+  // TODO: See tokenized_buffer_fuzzer.cpp.
+  if (size > 100000) {
+    return 0;
+  }
+
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
 
