@@ -96,6 +96,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
 -   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+    -   [Requirements with `where` constraints](#requirements-with-where-constraints)
+-   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
+    -   [Observing interface requirements](#observing-interface-requirements)
+    -   [Observing blanket impls](#observing-blanket-impls)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -4520,7 +4524,62 @@ implementation itself, as in:
 impl [T:! Type] T as CommonTypeWith(T) { ... }
 ```
 
-FIXME
+### Requirements with `where` constraints
+
+FIXME:
+[discussion in #generics on Discord](https://discord.com/channels/655572317891461132/941071822756143115/941089885475962940),
+[examples of problematic overlap that can't be checked locally](https://gist.github.com/zygoloid/2023db2ac55cd517c6e2732e3c37fd08/revisions)
+
+## Observing a type implements an interface
+
+An [`observe` declaration](#observe-declarations) to show that two types are
+equal so code can pass type checking without explicitly writing casts, without
+requiring the compiler to do a unbounded search that may not terminate. The
+compiler may need another form of `observe` declaration to see that a type
+implements an interface.
+
+### Observing interface requirements
+
+FIXME:
+[Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+
+FIXME:
+[discussion in #typesystem on Discord](https://discord.com/channels/655572317891461132/708431657849585705/938167784565792848)
+
+### Observing blanket impls
+
+FIXME: [Blanket impls](#blanket-impls)
+
+```
+interface A { }
+interface B { }
+interface C { }
+interface D { }
+
+impl [T:! A] T as B { }
+impl [T:! B] T as C { }
+impl [T:! C] T as D { }
+
+fn RequiresD(T:! D)(x: T);
+
+fn RequiresA(T:! A)(x: T) {
+  // ❌ Illegal: No implementation of `D` for type
+  //             `T` implementing `A`
+  // RequiresD(x);
+
+  // There is a blanket implementation of `B` for
+  // types implementing `A`.
+  observe T is B;
+
+  // There is a blanket implementation of `C` for
+  // types implementing `B`.
+  observe T is C;
+
+  // ✅ Allowed: There is a blanket implementation
+  //             of `D` for types implementing `C`.
+  RequiresD(x);
+}
+```
 
 ## Future work
 
