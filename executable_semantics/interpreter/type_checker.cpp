@@ -753,7 +753,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
 }
 
 void TypeChecker::TypeCheckPattern(
-    Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected) {
+    Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
+    ValueCategory surrounding_value_category) {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -770,7 +771,8 @@ void TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      TypeCheckPattern(&binding.type(), std::nullopt);
+      TypeCheckPattern(&binding.type(), std::nullopt,
+                       surrounding_value_category);
       Nonnull<const Value*> type =
           InterpPattern(&binding.type(), arena_, trace_);
       if (expected) {
@@ -789,6 +791,10 @@ void TypeChecker::TypeCheckPattern(
       ExpectIsConcreteType(binding.source_loc(), type);
       SetStaticType(&binding, type);
       SetValue(&binding, InterpPattern(&binding, arena_, trace_));
+
+      if (!binding.has_value_category()) {
+        binding.set_value_category(surrounding_value_category);
+      }
       return;
     }
     case PatternKind::TuplePattern: {
@@ -808,7 +814,8 @@ void TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
-        TypeCheckPattern(field, expected_field_type);
+        TypeCheckPattern(field, expected_field_type,
+                         surrounding_value_category);
         field_types.push_back(&field->static_type());
       }
       SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
@@ -838,7 +845,8 @@ void TypeChecker::TypeCheckPattern(
             << "'" << alternative.alternative_name()
             << "' is not an alternative of " << choice_type;
       }
-      TypeCheckPattern(&alternative.arguments(), *parameter_types);
+      TypeCheckPattern(&alternative.arguments(), *parameter_types,
+                       surrounding_value_category);
       SetStaticType(&alternative, &choice_type);
       SetValue(&alternative, InterpPattern(&alternative, arena_, trace_));
       return;
@@ -860,7 +868,8 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s) {
       TypeCheckExp(&match.expression());
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
-        TypeCheckPattern(&clause.pattern(), &match.expression().static_type());
+        TypeCheckPattern(&clause.pattern(), &match.expression().static_type(),
+                         ValueCategory::Let);
         TypeCheckStmt(&clause.statement());
       }
       return;
@@ -888,7 +897,7 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s) {
       auto& var = cast<VariableDefinition>(*s);
       TypeCheckExp(&var.init());
       const Value& rhs_ty = var.init().static_type();
-      TypeCheckPattern(&var.pattern(), &rhs_ty);
+      TypeCheckPattern(&var.pattern(), &rhs_ty, var.value_category());
       return;
     }
     case StatementKind::Assign: {
@@ -1036,11 +1045,11 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   if (f->is_method()) {
     // Type check the receiver patter
-    TypeCheckPattern(&f->me_pattern(), std::nullopt);
+    TypeCheckPattern(&f->me_pattern(), std::nullopt, ValueCategory::Let);
   }
 
   // Type check the parameter pattern
-  TypeCheckPattern(&f->param_pattern(), std::nullopt);
+  TypeCheckPattern(&f->param_pattern(), std::nullopt, ValueCategory::Let);
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
@@ -1198,7 +1207,7 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
       // compile-time symbol table.
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
-      TypeCheckPattern(&var.binding(), std::nullopt);
+      TypeCheckPattern(&var.binding(), std::nullopt, var.value_category());
       Nonnull<const Value*> declared_type = InterpExp(&type, arena_, trace_);
       SetStaticType(&var, declared_type);
       break;

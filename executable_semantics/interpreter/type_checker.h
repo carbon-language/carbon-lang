@@ -49,7 +49,8 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
   void TypeCheckPattern(Nonnull<Pattern*> p,
-                        std::optional<Nonnull<const Value*>> expected);
+                        std::optional<Nonnull<const Value*>> expected,
+                        ValueCategory value_category);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
   void TypeCheckDeclaration(Nonnull<Declaration*> d);

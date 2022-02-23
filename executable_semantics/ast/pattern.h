@@ -129,11 +129,18 @@ class BindingPattern : public Pattern {
   // that because the typechecker must assign either Let or Var based on
   // surrounding context. It will be set to Let when the name is AnonymousName.
   auto value_category() const -> ValueCategory {
-    // TODO: replace value_or with value once typechecker changes are
-    // implemented
-    return value_category_.value_or(ValueCategory::Var);
+    return value_category_.value();
   }
 
+  auto has_value_category() const -> bool {
+    return value_category_.has_value();
+  }
+
+  // sets the value category of the variable being bound
+  void set_value_category(ValueCategory vc) {
+    CHECK(!value_category_.has_value());
+    value_category_ = vc;
+  }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
