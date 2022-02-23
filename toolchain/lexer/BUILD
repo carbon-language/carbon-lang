@@ -65,6 +65,7 @@ cc_test(
     deps = [
         ":numeric_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -117,6 +118,7 @@ cc_test(
     deps = [
         ":string_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -160,6 +162,7 @@ cc_library(
     hdrs = ["tokenized_buffer_test_helpers.h"],
     deps = [
         ":tokenized_buffer",
+        "//common:check",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
