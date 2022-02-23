@@ -17,10 +17,14 @@ namespace Carbon::Testing {
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
   // Ignore large inputs.
+  // TODO: Investigate replacement with an error limit. Content with errors on
+  // escaped quotes (`\"` repeated) have O(M * N) behavior for M errors in a
+  // file length N, so either that will need to also be fixed or M will need to
+  // shrink for large inputs.
+  // This also affects parse_tree_fuzzer.cpp.
   if (size > 100000) {
     return 0;
   }
-
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
 

@@ -19,6 +19,7 @@ namespace Carbon::Testing {
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
   // Ignore large inputs.
+  // TODO: See tokenized_buffer_fuzzer.cpp.
   if (size > 100000) {
     return 0;
   }
