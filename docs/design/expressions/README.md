@@ -40,7 +40,7 @@ Expressions are interpreted based on a partial
 [precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
 Expression components which lack a relative ordering must be disambiguated by
 the developer, for example by adding parentheses; otherwise, the expression will
-be invalid due to am as ambiguous. Precedence orderings will only be added when
+be invalid due to ambiguity. Precedence orderings will only be added when
 it's reasonable to expect most developers to understand the precedence without
 parentheses.
 
