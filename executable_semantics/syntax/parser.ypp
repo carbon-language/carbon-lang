@@ -46,6 +46,8 @@
 %parse-param {std::optional<AST>* ast}
 
 // No shift-reduce conflicts are expected.
+// See README.md#precedence-and-associativity for a description of how
+// operator precedence is expressed.
 %expect 0
 
 // -----------------------------------------------------------------------------
@@ -323,16 +325,6 @@ postfix_expression:
           std::vector<Nonnull<Expression*>>({$1}));
     }
 ;
-// In order to avoid reduce-reduce conflicts when there are multiple equivalent
-// paths through the precedence graph, we generally exclude reconvergence
-// points in the graph from downstream rules. ref_deref_expression is a
-// precedence reconvergence point.
-//
-// For example, and_expressions and or_expressions both have higher precedence
-// than ref_deref_expressions, but have no precedence relation to each other,
-// so we model a ref_deref_expression as being neither an and_expression nor an
-// or_expression. A separate and_or_operand production adds back in the
-// possibility of ref_deref_expressions being the operand of `and` and `or`.
 ref_deref_expression:
   postfix_expression
 | PREFIX_STAR ref_deref_expression
@@ -363,6 +355,7 @@ type_expression:
 | fn_type_expression
 ;
 minus_expression:
+  // ref_deref_expression excluded due to precedence diamond.
   MINUS ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
@@ -411,6 +404,7 @@ additive_expression:
     }
 ;
 unimpl_expression:
+  // ref_deref_expression excluded due to precedence diamond.
   ref_deref_expression UNIMPL_EXAMPLE ref_deref_expression
     {
       $$ = arena->New<UnimplementedExpression>(context.source_loc(),
@@ -418,6 +412,7 @@ unimpl_expression:
     }
 ;
 value_expression:
+  // ref_deref_expression excluded due to precedence diamond.
   additive_expression
 | fn_type_expression
 | unimpl_expression
@@ -443,9 +438,8 @@ not_expression:
           std::vector<Nonnull<Expression*>>({$2}));
     }
 ;
-// predicate_expression is a precedence reconvergence point between
-// and_expression and or_expression.
 predicate_expression:
+  // ref_deref_expression excluded due to precedence diamond.
   not_expression
 | comparison_expression
 ;
@@ -458,6 +452,7 @@ and_lhs:
 | and_expression
 ;
 and_expression:
+  // predicate_expression excluded due to precedence diamond.
   and_lhs AND and_or_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
@@ -470,6 +465,7 @@ or_lhs:
 | or_expression
 ;
 or_expression:
+  // predicate_expression excluded due to precedence diamond.
   or_lhs OR and_or_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
