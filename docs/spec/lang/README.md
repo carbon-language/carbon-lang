@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 1. A _source file_ is a sequence of Unicode code points.
 
-    > Note: Source files are typically stored on disk in files with a `.6c` file
-    > extension, encoded in UTF-8.
+    > Note: Source files are typically stored on disk in files with a `.carbon`
+    > file extension, encoded in UTF-8.
 
 ## Conformance
 
@@ -38,7 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Lexical analysis](lex.md) decomposes the sequence of code points into a
       sequence of lexical elements.
     - Whitespace and text comments are discarded, leaving a sequence of
-      [tokens](../lex/tokens.md).
+      [tokens](lex.md).
     - The tokens are [parsed](parse.md) into an abstract syntax tree.
     - [Unqualified names are bound](names.md) to declarations in the abstract
       syntax tree.
