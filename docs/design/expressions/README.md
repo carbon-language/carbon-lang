@@ -41,7 +41,7 @@ Most expressions are modeled as operators:
 | Category   | Operator                        | Syntax    | Function                                                              |
 | ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
 | Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
-| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negative of `x`.                                                  |
+| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
 | Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
 | Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
 | Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |

@@ -32,7 +32,7 @@ var a: i32 = 5;
 var b: i32 = 3;
 
 // -5
-var negative: i32 = -a;
+var negation: i32 = -a;
 // 8
 var sum: i32 = a + b;
 // 2
@@ -142,7 +142,7 @@ example, given a value `v: iN` that is the least possible value for its type,
 Signed integer overflow and signed or unsigned integer division by zero are
 programming errors:
 
--   In a development build, they will be caught immediately when the happen at
+-   In a development build, they will be caught immediately when they happen at
     runtime.
 -   In a performance build, the optimizer can assume that such conditions don't
     occur. As a consequence, if they do, the behavior of the program is not
