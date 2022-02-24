@@ -49,8 +49,10 @@ The precedence diagram is defined thusly:
 ```mermaid
 %%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
 graph BT
-    brackets["(...)"]
-    click brackets "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
+    parens["(...)"]
+    
+    braces["{...}"]
+    click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
@@ -77,7 +79,7 @@ graph BT
 
     expressionEnd["x;"]
 
-    as & not --> brackets
+    as & not --> parens & braces
     comparison --> as
     and & or --> comparison & not
     if & expressionEnd --> and & or
