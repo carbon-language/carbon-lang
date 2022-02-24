@@ -877,8 +877,8 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     const char* loc) -> Diagnostic::Location {
   CHECK(llvm::is_sorted(std::array{buffer_->source_->Text().begin(), loc,
-                                    buffer_->source_->Text().end()}) <<
-         "location not within buffer";
+                                   buffer_->source_->Text().end()}))
+      << "location not within buffer";
   int64_t offset = loc - buffer_->source_->Text().begin();
 
   // Find the first line starting after the given location. Note that we can't
@@ -886,8 +886,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   // final line during lexing (but will be correct later for the parse tree).
   auto line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
-      [offset](const LineInfo& line) {
-    return line.start <= offset; });
+      [offset](const LineInfo& line) { return line.start <= offset; });
   bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
                               line_it == buffer_->line_infos_.end();
 
