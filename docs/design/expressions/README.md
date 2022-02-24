@@ -50,7 +50,7 @@ The precedence diagram is defined thusly:
 %%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
 graph BT
     parens["(...)"]
-    
+
     braces["{...}"]
     click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
