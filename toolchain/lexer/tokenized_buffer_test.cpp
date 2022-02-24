@@ -272,7 +272,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                   // newline
                   {.kind = TokenKind::IntegerLiteral(), .text = "13"},
                   {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::UnderscoreKeyword()},
+                  {.kind = TokenKind::Underscore()},
                   // newline
                   {.kind = TokenKind::EndOfFile()},
               }));
@@ -577,28 +577,26 @@ TEST_F(LexerTest, Whitespace) {
 TEST_F(LexerTest, Keywords) {
   auto buffer = Lex("   fn");
   EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::FnKeyword(), .column = 4, .indent_column = 4},
-          {TokenKind::EndOfFile()},
-      }));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
+                  {TokenKind::EndOfFile()},
+              }));
 
-  buffer = Lex("and or not if else for loop return var break continue _");
+  buffer = Lex("and or not if else for return var break continue _");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::AndKeyword()},
-                          {TokenKind::OrKeyword()},
-                          {TokenKind::NotKeyword()},
-                          {TokenKind::IfKeyword()},
-                          {TokenKind::ElseKeyword()},
-                          {TokenKind::ForKeyword()},
-                          {TokenKind::LoopKeyword()},
-                          {TokenKind::ReturnKeyword()},
-                          {TokenKind::VarKeyword()},
-                          {TokenKind::BreakKeyword()},
-                          {TokenKind::ContinueKeyword()},
-                          {TokenKind::UnderscoreKeyword()},
+                          {TokenKind::And()},
+                          {TokenKind::Or()},
+                          {TokenKind::Not()},
+                          {TokenKind::If()},
+                          {TokenKind::Else()},
+                          {TokenKind::For()},
+                          {TokenKind::Return()},
+                          {TokenKind::Var()},
+                          {TokenKind::Break()},
+                          {TokenKind::Continue()},
+                          {TokenKind::Underscore()},
                           {TokenKind::EndOfFile()},
                       }));
 }
