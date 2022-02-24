@@ -509,6 +509,9 @@ class TokenizedBuffer::Lexer {
     }
 
     // Longer errors get to be two tokens.
+    // TODO: This could actually be more than two tokens. But should LexError
+    // just generate multiple tokens directly, maybe making LexResult a plain
+    // bool or enum instead of a token conversion?
     error_text = error_text.substr(0, std::numeric_limits<int32_t>::max());
     auto token = buffer_.AddToken(
         {.kind = TokenKind::Error(),
@@ -517,6 +520,8 @@ class TokenizedBuffer::Lexer {
          .error_length = static_cast<int32_t>(error_text.size())});
     emitter_.EmitError<UnrecognizedCharacters>(error_text.begin());
 
+    // TODO: current_column_ is an int, above code assumes input may be larger
+    // than that, should it be int64?
     current_column_ += error_text.size();
     source_text = source_text.drop_front(error_text.size());
     return token;
