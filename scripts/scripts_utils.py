@@ -81,6 +81,8 @@ def _download(url: str, local_path: Path) -> Optional[int]:
             return int(response.code)
         with local_path.open("wb") as f:
             shutil.copyfileobj(response, f)
+            # Run fsync because of "Text file busy" in GH Actions.
+            os.fsync(f.fileno())
     return None
 
 
