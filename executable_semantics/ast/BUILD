@@ -93,6 +93,7 @@ cc_library(
     name = "return_term",
     hdrs = ["return_term.h"],
     deps = [
+        ":expression",
         ":source_location",
         "//common:check",
         "//common:ostream",
