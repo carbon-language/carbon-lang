@@ -279,7 +279,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"\\";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -303,19 +303,21 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Backslash(),
            .line = 3,
            .column = 1,
+           .text = llvm::StringRef("\\", 1)},
+          {.kind = TokenKind::StringLiteral(),
+           .line = 3,
+           .column = 2,
+           .recovery = true,
            .text = llvm::StringRef("\"", 1)},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::StringLiteral(),
            .line = 4,
            .column = 1,
+           .recovery = true,
            .text = llvm::StringRef("\"", 1)},
-          {.kind = TokenKind::Backslash(),
-           .line = 4,
-           .column = 2,
-           .text = llvm::StringRef("\\", 1)},
           {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
       }));
 }

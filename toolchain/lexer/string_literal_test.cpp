@@ -21,7 +21,7 @@ class StringLiteralTest : public ::testing::Test {
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     assert(result);
-    EXPECT_EQ(result->Text(), text);
+    EXPECT_EQ(result->text(), text);
     return *result;
   }
 
@@ -83,10 +83,11 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : valid) {
+    SCOPED_TRACE(test);
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue()) << test;
+    EXPECT_TRUE(result.hasValue());
     if (result) {
-      EXPECT_EQ(result->Text(), test);
+      EXPECT_EQ(result->text(), test);
     }
   }
 
@@ -107,8 +108,12 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : invalid) {
-    EXPECT_FALSE(LexedStringLiteral::Lex(test).hasValue())
-        << "`" << test << "`";
+    SCOPED_TRACE(test);
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.hasValue());
+    if (result) {
+      EXPECT_FALSE(result->is_valid());
+    }
   }
 }
 

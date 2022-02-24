@@ -267,7 +267,7 @@ class TokenizedBuffer::Lexer {
 
     Line string_line = current_line_;
     int string_column = current_column_;
-    int literal_size = literal->Text().size();
+    int literal_size = literal->text().size();
     source_text = source_text.drop_front(literal_size);
 
     if (!set_indent_) {
@@ -276,10 +276,10 @@ class TokenizedBuffer::Lexer {
     }
 
     // Update line and column information.
-    if (!literal->IsMultiLine()) {
+    if (!literal->is_multi_line()) {
       current_column_ += literal_size;
     } else {
-      for (char c : literal->Text()) {
+      for (char c : literal->text()) {
         if (c == '\n') {
           HandleNewline();
           // The indentation of all lines in a multi-line string literal is
@@ -292,11 +292,13 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral(),
-                                   .token_line = string_line,
-                                   .column = string_column});
-    buffer_.GetTokenInfo(token).literal_index =
-        buffer_.literal_string_storage_.size();
+    auto token =
+        buffer_.AddToken({.kind = TokenKind::StringLiteral(),
+                          .is_recovery = !literal->is_valid(),
+                          .token_line = string_line,
+                          .column = string_column,
+                          .literal_index = static_cast<int32_t>(
+                              buffer_.literal_string_storage_.size())});
     buffer_.literal_string_storage_.push_back(literal->ComputeValue(emitter_));
     return token;
   }
@@ -632,7 +634,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     llvm::Optional<LexedStringLiteral> relexed_token =
         LexedStringLiteral::Lex(source_->Text().substr(token_start));
     CHECK(relexed_token) << "Could not reform string literal token.";
-    return relexed_token->Text();
+    return relexed_token->text();
   }
 
   // Refer back to the source text to avoid needing to reconstruct the
