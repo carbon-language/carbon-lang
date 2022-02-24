@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Overview](#overview)
 -   [Project goals](#project-goals)
@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Performance-critical software](#performance-critical-software)
         -   [Software and language evolution](#software-and-language-evolution)
         -   [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
-        -   [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
+        -   [Practical safety and testing mechanisms](#practical-safety-and-testing-mechanisms)
         -   [Fast and scalable development](#fast-and-scalable-development)
         -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
         -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
@@ -124,6 +124,11 @@ realities. Having the specification will enable better analysis of the language
 as a whole and the production of other partial or full implementations which
 match the behavior of the reference implementation.
 
+**Approachable, developer-facing documentation.** Developers shouldn't be
+expected to read through the specification to ramp up with Carbon. User guides
+and other documentation will be provided to make it easy to learn how to use
+Carbon.
+
 **Compelling adoption tooling.** We want to provide a compelling suite of tools
 out-of-the-box in order to encourage adoption of Carbon at scale where it can
 augment existing C++ codebases. For example, we expect a C++ -> Carbon code
@@ -152,7 +157,7 @@ We believe Carbon must support:
 1.  Performance-critical software.
 2.  Software and language evolution.
 3.  Code that is easy to read, understand, and write.
-4.  Practical safety guarantees and testing mechanisms.
+4.  Practical safety and testing mechanisms.
 5.  Fast and scalable development.
 6.  Modern OS platforms, hardware architectures, and environments.
 7.  Interoperability with and migration from existing C++ code.
@@ -200,6 +205,11 @@ concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
 
+**Idiomatic code should be fast.** Developers should not regularly be required
+to choose between performance and readability. Although performance tuning may
+in rare cases require complex or surprising code, Carbon's design should ensure
+regular, idiomatic code usually results in high performance.
+
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
 knowledge of the environment in which it will run. This need not be precise, but
@@ -208,7 +218,7 @@ that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
 brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Programmers should not need to
+**Leave no room for a lower level language.** Developers should not need to
 leave the rules and structure of Carbon, whether to gain control over
 performance problems or to gain access to hardware facilities.
 
@@ -223,7 +233,7 @@ Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 > compatibility over time, dealing with changes to underlying infrastructure and
 > dependencies, and working with legacy code or data. Fundamentally, it is a
 > different task to produce a programming solution to a problem (that solves the
-> current [instance] of the problem) vs. an engineering solution (that solves
+> current [instance] of the problem) versus an engineering solution (that solves
 > current instances, future instances that we can predict, and - through
 > flexibility - allows updates to solve future instances we may not be able to
 > predict).
@@ -325,8 +335,9 @@ primary goal is to support performance-critical software, other kinds of
 software should not be penalized unnecessarily.
 
 > "The right tool for the job is often the tool you are already using -- adding
-> new tools has a higher cost than many people appreciate." --
-> [John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
+> new tools has a higher cost than many people appreciate."
+>
+> -- [John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
 
 **Focus on encouraging appropriate usage of features rather than restricting
 misuse.** Adding arbitrary restrictions to prevent misuse of otherwise general
@@ -353,17 +364,19 @@ cost.
 **Adhere to the principle of least surprise.** Defaults should match typical
 usage patterns. Implicit features should be unsurprising and expected, while
 explicit syntax should inform the reader about any behavior which might
-otherwise be surprising. The core concepts of implicit vs. explicit syntax are
-well articulated in
+otherwise be surprising. The core concepts of implicit versus explicit syntax
+are well articulated in
 [the Rust community](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html#implicit-vs-explicit),
 although we may come to different conclusions regarding the principles.
 
 **Design features to be simple to implement.** Syntax, structure, and language
-features should be chosen while keeping the complexity of the implementation
-manageable. This reduces bugs, and will in most cases make the features easier
-to understand.
+features should be chosen while keeping the implementation complexity
+manageable. Simplicity of implementation reduces bugs, and will in most cases
+make the features easier to understand. It's also often the best way to ensure
+predictable performance, although supporting peak performance may require
+options for more complex implementation behavior.
 
-#### Practical safety guarantees and testing mechanisms
+#### Practical safety and testing mechanisms
 
 Our goal is to add as much language-level safety and security to Carbon as
 possible, using a hybrid strategy to balance other goals. We will do as many
@@ -420,8 +433,12 @@ distributed build graph options. Without these options, we will again be unable
 to provide fast developer iteration as the codebase scales up.
 
 **Support separate compilation, including parallel and distributed strategies.**
-We cannot assume coarse-grained compilation without blocking fundamental
-scalability options for build systems of large software.
+Iteration requires frequent rebuilds of software as part of the edit/test/debug
+cycle of development. The language design should enable low-latency build
+strategies, particularly when relatively little has changed. This minimally
+requires separate compilation of source files, and potentially other incremental
+build strategies. Separate compilation also enables better scalability options
+for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
@@ -435,11 +452,11 @@ environments.** This goes beyond enabling compile-time translations from one
 abstraction to several implementations. While enabling high-level
 synchronization primitives like mutexes and futures is good, the underlying
 atomic operations provided by the hardware must also be directly available.
-Similarly, lowering parallel constructs into either SIMD or SPMD implementations
-is good but insufficient. Both SIMD and SPMD must be directly addressable in
-Carbon. This pattern repeats across the landscape of hardware, platform, and
-environment, including concurrency versus parallelism more generally, and more
-OS/environment distinctions such as desktop versus mobile versus bare metal.
+Similarly, lowering parallel constructs into a specific implementation, such as
+SIMD or SPMD, is good but insufficient. Multiple parallel implementations must
+be directly addressable in Carbon. The need for native support repeats across
+the landscape of OS platform, hardware, and environment distinctions; for
+example, concurrency versus parallelism, and desktop versus mobile.
 
 **Conversely, Carbon cannot prioritize support for historical platforms.** To
 use a hockey metaphor, we should not skate to where the puck is, much less where
@@ -579,7 +596,7 @@ provide a minimally "correct" migration to very unfriendly code, mechanically
 reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
 improving on it is not a goal. Migration support will prioritize code that
 adheres to reasonable C++ best practices, such as avoiding undefined behavior,
-and having reasonable test coverage that passes under sanitizers.
+maintaining good test coverage, and validating tests with sanitizers.
 
 ### Principles
 

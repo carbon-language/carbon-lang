@@ -6,6 +6,20 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Overview](#overview)
+-   [What about other languages?](#what-about-other-languages)
+-   [Project status](#project-status)
+-   [What will make Carbon a compelling future path for C++?](#what-will-make-carbon-a-compelling-future-path-for-c)
+-   [Contributing](#contributing)
+
+<!-- tocstop -->
+
+## Overview
+
 The Carbon Language project is an **_experiment_** to explore a possible,
 distant future for the C++ programming language. It is designed around a
 specific set of goals, priorities, and use cases:
@@ -137,10 +151,7 @@ the language as well as large-scale migration for users.** This is extremely
 expensive, and so the bar for Carbon to be a compelling direction for C++ is
 very high.
 
-## Repository structure overview
+## Contributing
 
-Carbon's main repositories are:
-
--   **carbon-lang** - Carbon language specification and documentation.
--   **carbon-toolchain** - Carbon language toolchain and reference
-    implementation.
+Please see our [contributing guidelines](CONTRIBUTING.md) for information about
+Carbon development.

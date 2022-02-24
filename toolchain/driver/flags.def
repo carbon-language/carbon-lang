@@ -1,0 +1,22 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// Note: X-macro header. Do not use include guards.
+
+#ifndef CARBON_SUBCOMMAND
+// FIXME: We should expand `HelpText` to be a short help name, a synopsis, and a
+// long-form description.
+#define CARBON_SUBCOMMAND(Name, Spelling, HelpText)
+#endif
+
+CARBON_SUBCOMMAND(Help, "help",
+                  "Display help information about the driver options.")
+CARBON_SUBCOMMAND(
+    DumpTokens, "dump-tokens",
+    "Dumps the sequence of tokens lexed out of the input source file.")
+CARBON_SUBCOMMAND(
+    DumpParseTree, "dump-parse-tree",
+    "Dumps the parse tree for the input source file.")
+
+#undef CARBON_SUBCOMMAND

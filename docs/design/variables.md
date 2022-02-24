@@ -6,27 +6,23 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
 
--   [TODO](#todo)
+## Table of contents
+
 -   [Overview](#overview)
-    -   [Declaring constants](#declaring-constants)
--   [Alternatives](#alternatives)
-    -   [Declaring constants](#declaring-constants-1)
+-   [Notes](#notes)
     -   [Global variables](#global-variables)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
 ## Overview
+
+Carbon's local variable syntax is:
+
+-   `var` _identifier_`:` _< expression |_ `auto` _> [_ `=` _value ]_`;`
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.
@@ -35,7 +31,7 @@ For example:
 
 ```
 fn Foo() {
-  var Int: x = 42;
+  var x: i32 = 42;
 }
 ```
 
@@ -44,28 +40,14 @@ type `Int` and is initialized with the value `42`. These variable declarations
 (and function declarations) have a lot more power than what we're covering just
 yet, but this gives you the basic idea.
 
+If `auto` is used in place of the type, [type inference](type_inference.md) is
+used to automatically determine the variable's type.
+
 While there can be global constants, there are no global variables.
 
-### Declaring constants
+## Notes
 
-Constants will use template-like syntax for declarations. For example, a simple
-integer constant looks like:
-
-```carbon
-var Int:$$ MyVal = 42;
-```
-
-## Alternatives
-
-### Declaring constants
-
-There is other syntax that could be used for declaring constants. There are
-serious problems with the use of `const` in C++ as part of the type system.
-Another alternative is `let` from Swift, although there are some questions
-around how intuitive it is for this to introduce a constant. Another candidate
-is `val` from Kotlin. Another thing we need to contend with is the surprise of
-const and reference (semantic) types. At present we are leaning towards the
-tempalte-like syntax for consistency within Carbon.
+> TODO: Constant syntax is an ongoing discussion.
 
 ### Global variables
 
@@ -74,3 +56,21 @@ patterns to replace the important use cases programmers still have for global
 variables. We may be unable to fully address them, at least for migrated code,
 and be forced to add some limited form of global variables back. We may also
 discover that their convenience outweighs any improvements afforded.
+
+## Alternatives considered
+
+-   [No `var` introducer keyword](/proposals/p0339.md#no-var-introducer-keyword)
+-   [Name of the `var` statement introducer](/proposals/p0339.md#name-of-the-var-statement-introducer)
+-   [Colon between type and identifier](/proposals/p0339.md#colon-between-type-and-identifier)
+-   [Type elision](/proposals/p0339.md#type-elision)
+-   [Type ordering](/proposals/p0618.md#type-ordering)
+-   [Elide the type instead of using `auto`](/proposals/p0851.md#elide-the-type-instead-of-using-auto)
+
+## References
+
+-   Proposal
+    [#339: `var` statement](https://github.com/carbon-language/carbon-lang/pull/339)
+-   Proposal
+    [#618: `var` ordering](https://github.com/carbon-language/carbon-lang/pull/618)
+-   Proposal
+    [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)

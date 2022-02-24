@@ -1,0 +1,9 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Keep pinned to a recent release, listed at
+# https://github.com/bazelbuild/bazel.
+# TODO: Temporarily using pre-release versions due to a python3 fix. This can
+# switch to stable versions post-release.
+USE_BAZEL_VERSION=5.0.0-pre.20211011.2

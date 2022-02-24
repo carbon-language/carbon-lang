@@ -6,9 +6,41 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Overview](#overview)
+-   [Ways to contribute](#ways-to-contribute)
+    -   [Help comment on proposals](#help-comment-on-proposals)
+    -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
+    -   [Help implement Carbon's design](#help-implement-carbons-design)
+    -   [Help address bugs](#help-address-bugs)
+-   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
+    -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
+        -   [Future CLA plans](#future-cla-plans)
+    -   [Collaboration systems](#collaboration-systems)
+    -   [Contribution tools](#contribution-tools)
+    -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
+        -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
+-   [Style](#style)
+    -   [Google Docs and Markdown](#google-docs-and-markdown)
+    -   [Other files](#other-files)
+-   [License](#license)
+    -   [Google Docs](#google-docs)
+    -   [Markdown](#markdown)
+    -   [Other files](#other-files-1)
+-   [Workflow](#workflow)
+-   [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
+
+## Overview
+
 Thank you for your interest in contributing to Carbon! There are many ways to
 contribute, and we appreciate all of them. If you have questions, please feel
-free to ask on our Discourse Forums or Discord Chat.
+free to ask on Discord or
+[GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
 Everyone contributing to Carbon is expected to:
 
@@ -84,8 +116,8 @@ instructions for how to sign and return it. Once we receive it, we'll be able to
 accept your documents, comments and pull requests.
 
 **_NOTE_**: Only original content from you and other people who have signed the
-CLA can be accepted as Carbon contributions: this covers the GitHub repository,
-GitHub issues, Google Docs, Discourse Forums, and Discord Chat.
+CLA can be accepted as Carbon contributions: this covers GitHub (including both
+code and discussion), Google Docs, and Discord.
 
 #### Future CLA plans
 
@@ -111,18 +143,7 @@ the Code of Conduct.
         [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
         if you don't see the email.
 
--   [Discourse Forums](https://forums.carbon-lang.dev) are used for long-form
-    discussions. **To join:**
-
-    1.  Go to [the forums](https://forums.carbon-lang.dev) and register your
-        GitHub account.
-        -   You will be able to choose which GitHub email you want the forums to
-            send email to.
-    2.  [An admin](docs/project/groups.md#admins) will need to approve your
-        registration.
-
--   [Discord Chat](https://discord.com/app) is used for short-form chats. **To
-    join:**
+-   [Discord](https://discord.com/app) is used for chat. **To join:**
 
     1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
         -   Please do not re-share the invite links: they're our only way to
@@ -133,11 +154,32 @@ the Code of Conduct.
 -   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
     is used for all of our Google Docs, particularly proposal drafts. **To
     join:**
+
     1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
         your Google account email.
     2.  The admin will add you to the
         [Google Group](https://groups.google.com/g/carbon-lang-contributors)
         used for access.
+
+-   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
+    is used for meeting invites and project reminders. Contributors may add
+    calendar entries for meetings added to discuss details. Standard entries
+    are:
+
+    -   The
+        [weekly sync](https://docs.google.com/document/d/1K_5uig1HHMsfEl-6eSMjM1qjwX-7PsbkBuRp36knxlQ/edit),
+        where everyone is welcome.
+    -   [Open discussions](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A)
+        which are unstructured meeting slots used for discussing proposals,
+        tooling, and other Carbon topics based on who attends.
+
+### Contribution tools
+
+Please see our [contribution tool](/docs/project/contribution_tools.md)
+documentation for information on setting up a git client for Carbon development,
+as well as helpful tooling that will ease the contribution process. For example,
+[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
+[code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
 
@@ -154,6 +196,10 @@ follow the Carbon documentation and coding styles.
         maintaining it.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
+    -   [Code review](/docs/project/code_review.md) is used to improve the
+        correctness, clarity, and consistency of all contributions.
+        -   Please avoid rebasing PRs after receiving comments; it can break
+            viewing of the comments in files.
 
 -   For documentation:
 
@@ -182,18 +228,10 @@ follow the Carbon documentation and coding styles.
     -   Unit tests must pass with the changes.
     -   If some tests fail for unrelated reasons, we wait until they're fixed.
         It helps to contribute a fix!
-    -   Code changes are made with API compatibility and evolvability in mind.
-        Reviewers will comment on any API compatibility issues.
+    -   Code changes should be made with API compatibility and evolvability in
+        mind.
     -   Keep in mind that code contribution guidelines are incomplete while we
         start work on Carbon, and may change later.
-
-## pre-commit
-
-We use [pre-commit](/docs/project/contribution_tools.md#pre-commit) for
-automated checks, including formatting of documentation. Please see
-[contribution tools](/docs/project/contribution_tools.md) for more information.
-
-Please use pre-commit to simplify reviews.
 
 ## Style
 
@@ -212,8 +250,6 @@ Other style points to be aware of are:
     (`text—text`), we are using a double-hyphen with surrounding spaces
     (`text -- text`). We are doing this because we frequently read Markdown with
     fixed-width fonts where em dashes are not clearly visible.
--   Always say "Discourse Forum" and "Discord Chat" to avoid confusion between
-    systems.
 -   Prefer the term "developers" when talking about people who would write
     Carbon code. We expect the Carbon's community to include people who think of
     themselves using many titles, including software developers, software
@@ -223,7 +259,7 @@ Other style points to be aware of are:
 
 ### Other files
 
-If you're not sure what style to use, please ask on Discourse Forums.
+If you're not sure what style to use, please ask on Discord or GitHub.
 
 ## License
 
@@ -257,7 +293,7 @@ raw content.
 
 Every file type uses a variation on the same license text ("Apache-2.0 WITH
 LLVM-exception") with similar formatting. If you're not sure what text to use,
-please ask on Discourse Forums.
+please ask on Discord or GitHub.
 
 ## Workflow
 

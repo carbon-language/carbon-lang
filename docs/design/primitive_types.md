@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO](#todo)
 -   [Overview](#overview)
@@ -37,7 +37,6 @@ modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. These will be made
 available through the [prelude package](README.md#name-lookup-for-common-types).
 
--   `Void` - a type with only one possible value: empty.
 -   `Bool` - a boolean type with two possible values: `True` and `False`.
 -   `Int` and `UInt` - signed and unsigned 64-bit integer types.
     -   Standard sizes are available, both signed and unsigned, including
@@ -71,7 +70,7 @@ those sized IEEE-754 formats, and have the semantics defined by IEEE-754.
 ### BFloat16
 
 Carbon also supports the
-`[BFloat16](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)`
+[`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
 format, a 16-bit truncation of a "binary32" IEEE-754 format floating point
 number.
 
@@ -87,7 +86,7 @@ the need to import things gratuitously.
 
 ### String view vs owning string
 
-The right model of a string view vs. an owning string is still very much
+The right model of a string view versus an owning string is still very much
 unsettled.
 
 ### Syntax for wrapping operations

@@ -6,7 +6,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains accepted proposals for the carbon-lang repo. For
+## Proposal lists
+
+-   [All proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+label%3Aproposal)
+-   [Accepted proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+label%3Aproposal+label%3A%22decision%3A+accepted%22)
+
+## Directory structure
+
+This directory contains accepted proposals for the carbon-lang repository. For
 information about declined/deferred proposals, please view the proposal's
 original pull request.
 
@@ -14,24 +21,5 @@ For accepted proposals, where `####` is the corresponding proposal's pull
 request:
 
 -   `p####.md` will contain the main proposal text.
--   `p####-decision.md` documents the decision and rationale.
--   `p####` may be present as an optional subdirectory for related files (e.g.,
-    images).
-
-## Proposal list
-
-<!-- proposals -->
-<!-- This list is updated by src/scripts/pre-commit-proposal-list.py. -->
-
--   [0029 - Linear, rebase, and pull-request GitHub workflow](p0029.md)
-    -   [Decision](p0029-decision.md)
--   [0044 - Proposal tracking](p0044.md)
-    -   [Decision](p0044-decision.md)
--   [0051 - Goals](p0051.md)
-    -   [Decision](p0051-decision.md)
--   [0074 - Change comment/decision timelines in proposal process](p0074.md)
-    -   [Decision](p0074-decision.md)
--   [0083 - In-progress design overview](p0083.md)
--   [0140 - Create initial rough framework for specification](p0140.md)
-
-<!-- endproposals -->
+-   `p####` may be present as an optional subdirectory for related files (for
+    example, images).

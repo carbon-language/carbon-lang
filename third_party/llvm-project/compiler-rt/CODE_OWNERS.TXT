@@ -1,0 +1,53 @@
+This file is a list of the people responsible for ensuring that patches for a
+particular part of compiler-rt are reviewed, either by themself or by
+someone else. They are also the gatekeepers for their part of compiler-rt, with
+the final word on what goes in or not.
+
+The list is sorted by surname and formatted to allow easy grepping and
+beautification by scripts. The fields are: name (N), email (E), web-address
+(W), PGP key ID and fingerprint (P), description (D), and snail-mail address
+(S).
+
+N: Peter Collingbourne
+E: peter@pcc.me.uk
+D: DataFlowSanitizer
+
+N: Daniel Dunbar
+E: daniel@zuster.org
+D: Makefile build
+
+N: Timur Iskhodzhanov
+E: timurrrr@google.com
+D: AddressSanitizer for Windows
+
+N: Howard Hinnant
+E: howard.hinnant@gmail.com
+D: builtins library
+
+N: Alexander Potapenko
+E: glider@google.com
+D: MacOS/iOS port of sanitizers
+
+N: Alexey Samsonov
+E: samsonov@google.com
+D: CMake build, test suite
+
+N: Kostya Serebryany
+E: kcc@google.com
+D: AddressSanitizer, sanitizer_common, porting sanitizers to another platforms, LeakSanitizer
+
+N: Richard Smith
+E: richard-llvm@metafoo.co.uk
+D: UndefinedBehaviorSanitizer
+
+N: Evgeniy Stepanov
+E: eugenis@google.com
+D: MemorySanitizer, Android port of sanitizers
+
+N: Dmitry Vyukov
+E: dvyukov@google.com
+D: ThreadSanitizer
+
+N: Bill Wendling
+E: isanbard@gmail.com
+D: Profile runtime library

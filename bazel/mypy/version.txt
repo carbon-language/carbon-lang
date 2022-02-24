@@ -1,0 +1,7 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Synced with:
+# https://github.com/thundergolfer/bazel-mypy-integration/blob/master/third_party/requirements.txt
+mypy==0.790

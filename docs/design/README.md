@@ -1,4 +1,4 @@
-# Language design overview
+# Language design
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,15 +6,16 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
 
+## Table of contents
+
+-   [Overview](#overview)
 -   [Context and disclaimer](#context-and-disclaimer)
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Files, libraries, and packages](#files-libraries-and-packages)
+    -   [Packages, libraries, and namespaces](#packages-libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -26,8 +27,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Variables](#variables)
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Control flow](#control-flow)
-        -   [`if`/`else`](#ifelse)
-        -   [`while`, `break`, and `continue`](#while-break-and-continue)
+        -   [`if` and `else`](#if-and-else)
+        -   [Loops](#loops)
+            -   [`while`](#while)
+            -   [`for`](#for)
+            -   [`break`](#break)
+            -   [`continue`](#continue)
         -   [`return`](#return)
 -   [Types](#types)
     -   [Primitive types](#primitive-types)
@@ -37,9 +42,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Pointers and references](#pointers-and-references)
         -   [Arrays and slices](#arrays-and-slices)
     -   [User-defined types](#user-defined-types)
-        -   [Structs](#structs)
+        -   [Classes](#classes)
+            -   [Assignment, copying](#assignment-copying)
+            -   [Member access](#member-access)
+            -   [Methods](#methods)
             -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
-            -   [Assignment, copying, and moving](#assignment-copying-and-moving)
+            -   [Moving](#moving)
             -   [Comparison](#comparison)
             -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
             -   [Inline type composition](#inline-type-composition)
@@ -63,6 +71,24 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 
 <!-- tocstop -->
+
+## Overview
+
+This documentation describes the design of the Carbon language, and the
+rationale for that design. The goal is to provide sufficient coverage of the
+design to support the following audiences:
+
+-   People who wish to determine whether Carbon would be the right choice to use
+    for a project compared to other existing languages.
+-   People working on the evolution of the Carbon language who wish to
+    understanding the rationale and motivation for existing design decisions.
+-   People working on a specification or implementation of the Carbon language
+    who need a detailed understanding of the intended design.
+-   People writing Carbon code who wish to understand why the language rules are
+    the way they are.
+
+For Carbon developers, documentation that is more suitable for learning the
+language will be made available separately.
 
 ## Context and disclaimer
 
@@ -105,7 +131,8 @@ cleaned up during evolution.
 
 ### Code and comments
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Source files](code_and_name_organization/source_files.md) and
+> [lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
@@ -127,78 +154,73 @@ cleaned up during evolution.
       live code
     ```
 
-### Files, libraries, and packages
+-   Decimal, hexadecimal, and binary integer literals and decimal and
+    hexadecimal floating-point literals are supported, with `_` as a digit
+    separator. For example, `42`, `0b1011_1101` and `0x1.EEFp+5`. Numeric
+    literals are case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase,
+    whereas hexadecimal digits must be uppercase. A digit is required on both
+    sides of a period.
 
-> References: [Files, libraries and packages](files_libraries_and_packages.md)
->
-> **TODO:** References need to be evolved.
+### Packages, libraries, and namespaces
 
-Carbon code is organized into files, libraries, and packages:
+> References: [Code and name organization](code_and_name_organization)
 
--   A **file** is the unit of compilation.
--   A **library** can be made up of multiple files, and is the unit whose public
-    interface can be imported.
--   A **package** is a collection of one or more libraries, typically ones with
-    a single common source and with some close association.
+-   **Files** are grouped into libraries, which are in turn grouped into
+    packages.
+-   **Libraries** are the granularity of code reuse through imports.
+-   **Packages** are the unit of distribution.
 
-A file belongs to precisely one library, and a library belongs to precisely one
-package.
+Name paths in Carbon always start with the package name. Additional namespaces
+may be specified as desired.
 
-Files have a `.6c` extension. They must start with a declaration of their
-package and library. They may import both other libraries from within their
-package, as well as libraries from other packages. For example:
+For example, this code declares a class `Geometry.Shapes.Flat.Circle` in a
+library `Geometry/OneSide`:
 
 ```carbon
-// This is a file in the "Eucalyptus" library of the "Koala" package.
-package Koala library Eucalyptus;
+package Geometry library("OneSide") namespace Shapes;
 
-// Import the "Wombat" library from the "Widget" package.
-import Widget library Wombat;
+namespace Flat;
+class Flat.Circle { ... }
+```
 
-// Import the "Container" library from the "Koala" package.
-import library Container;
+This type can be used from another package:
+
+```carbon
+package ExampleUser;
+
+import Geometry library("OneSide");
+
+fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 ```
 
 ### Names and scopes
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
-is always formed out of an "identifier", or a sequence of letters, numbers, and
-underscores which starts with a letter. As a regular expression, this would be
-`/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for more unicode
-characters as well.
+is formed from a word, which is a sequence of letters, numbers, and underscores,
+and which starts with a letter. We intend to follow Unicode's Annex 31 in
+selecting valid identifier characters, but a concrete set of valid characters
+has not been selected yet.
 
 #### Naming conventions
 
 > References: [Naming conventions](naming_conventions.md)
->
-> **TODO:** References need to be evolved.
 
-Our current proposed naming convention are:
+Our naming conventions are:
 
--   `UpperCamelCase` for names of compile-time resolved constants, whether they
-    participate in the type system or not.
--   `lower_snake_case` for keywords and names of run-time resolved values.
-
-As a matter of style and consistency, we will follow these conventions where
-possible and encourage convergence.
-
-For example:
-
--   An integer that is a compile-time constant sufficient to use in the
-    construction a compile-time array size, such as a template function
-    parameter, might be named `N`.
--   A generic function parameter's value can't be used during type-checking, but
-    might still be named `N`, since it will be a constant available to the
-    compiler at code generation time.
--   Functions and most types will be in `UpperCamelCase`.
--   A type where only run-time type information queries are available would end
-    up as `lower_snake_case`.
--   A keyword like `import` uses `lower_snake_case`.
+-   For idiomatic Carbon code:
+    -   `UpperCamelCase` will be used when the named entity cannot have a
+        dynamically varying value. For example, functions, namespaces, or
+        compile-time constant values.
+    -   `lower_snake_case` will be used when the named entity's value won't be
+        known until runtime, such as for variables.
+-   For Carbon-provided features:
+    -   Keywords and type literals will use `lower_snake_case`.
+    -   Other code will use the conventions for idiomatic Carbon code.
 
 #### Aliases
 
@@ -222,37 +244,11 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 #### Name lookup
 
-> References: [Name lookup](name_lookup.md)
+> References: [name lookup](name_lookup.md)
 >
 > **TODO:** References need to be evolved.
 
-Names are always introduced into some scope which defines where they can be
-referenced. Many of these scopes are themselves named. `namespace` is used to
-introduce a dedicated named scope, and we traverse nested names in a uniform way
-with `.`-separated names. Unqualified name lookup will always find a file-local
-result, including aliases.
-
-For example:
-
-```carbon
-package Koala library Eucalyptus;
-
-namespace Leaf {
-  namespace Vein {
-    fn Count() -> Int;
-  }
-}
-```
-
-`Count` may be referred to as:
-
--   `Count` from within the `Vein` namespace.
--   `Vein.Count` from within the `Leaf` namespace.
--   `Leaf.Vein.Count` from within this file.
--   `Koala.Leaf.Vein.Count` from any arbitrary location.
-
-Note that libraries do **not** introduce a scope; they share the scope of their
-package.
+Unqualified name lookup will always find a file-local result, including aliases.
 
 ##### Name lookup for common types
 
@@ -266,8 +262,8 @@ file, including `Int` and `Bool`. These will likely be defined in a special
 
 ### Expressions
 
-> References: [Lexical conventions](lexical_conventions.md) and
-> [operators](operators.md)
+> References: [Lexical conventions](lexical_conventions) and
+> [expressions](expressions/)
 >
 > **TODO:** References need to be evolved.
 
@@ -292,25 +288,22 @@ Some common expressions in Carbon include:
 
 ### Functions
 
-> References: [Functions](functions.md) and
-> [syntactic conventions](syntactic_conventions.md)
->
-> **TODO:** References need to be evolved.
+> References: [Functions](functions.md)
 
 Functions are the core unit of behavior. For example:
 
 ```carbon
-fn Sum(Int: a, Int: b) -> Int;
+fn Add(a: i64, b: i64) -> i64;
 ```
 
 Breaking this apart:
 
 -   `fn` is the keyword used to indicate a function.
--   Its name is `Sum`.
--   It accepts two `Int` parameters, `a` and `b`.
--   It returns an `Int` result.
+-   Its name is `Add`.
+-   It accepts two `i64` parameters, `a` and `b`.
+-   It returns an `i64` result.
 
-You would call this function like `Sum(1, 2)`.
+You would call this function like `Add(1, 2)`.
 
 ### Blocks and statements
 
@@ -339,10 +332,7 @@ fn Foo() {
 
 ### Variables
 
-> References: [Variables](variables.md) and
-> [syntactic conventions](syntactic_conventions.md)
->
-> **TODO:** References need to be evolved.
+> References: [Variables](variables.md)
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.
@@ -350,8 +340,8 @@ work similarly to function parameters.
 For example:
 
 ```carbon
-fn Foo() {
-  var Int: x = 42;
+fn DoSomething() {
+  var x: i64 = 42;
 }
 ```
 
@@ -359,7 +349,7 @@ Breaking this apart:
 
 -   `var` is the keyword used to indicate a variable.
 -   Its name is `x`.
--   Its type is `Int`.
+-   Its type is `i64`.
 -   It is initialized with the value `42`.
 
 ### Lifetime and move semantics
@@ -370,90 +360,115 @@ Breaking this apart:
 
 ### Control flow
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/README.md)
 
 Blocks of statements are generally executed sequentially. However, statements
 are the primary place where this flow of execution can be controlled.
 
-#### `if`/`else`
+#### `if` and `else`
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/conditionals.md)
 
-`if` and `else` are common flow control keywords, which can result in
-conditional execution of statements.
-
-For example:
+`if` and `else` provide conditional execution of statements. For example:
 
 ```carbon
-fn Foo(Int: x) {
-  if (x < 42) {
-    Bar();
-  } else if (x > 77) {
-    Baz();
-  }
+if (fruit.IsYellow()) {
+  Print("Banana!");
+} else if (fruit.IsOrange()) {
+  Print("Orange!");
+} else {
+  Print("Vegetable!");
 }
 ```
 
-Breaking the `Foo` function apart:
+This code will:
 
--   `Bar()` is invoked if `x` is less than `42`.
--   `Baz()` is invoked if `x` is greater than `77`.
--   Nothing happens if `x` is between `42` and `77`.
+-   Print `Banana!` if `fruit.IsYellow()` is `True`.
+-   Print `Orange!` if `fruit.IsYellow()` is `False` and `fruit.IsOrange()` is
+    `True`.
+-   Print `Vegetable!` if both of the above return `False`.
 
-#### `while`, `break`, and `continue`
+#### Loops
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+##### `while`
 
-Loops will be supported with a low-level primitive `while` statement. `break`
-will be a way to exit the `while` directly, while `continue` will skip the rest
-of the current loop iteration.
+> References: [Control flow](control_flow/loops.md#while)
 
-For example:
+`while` statements loop for as long as the passed expression returns `True`. For
+example, this prints `0`, `1`, `2`, then `Done!`:
 
 ```carbon
-fn Foo() {
-  var Int: x = 0;
-  while (x < 42) {
-    if (ShouldStop()) break;
-    if (ShouldSkip(x)) {
-      ++x;
-      continue;
-    }
-    Bar(x);
-    ++x;
-  }
+var x: Int = 0;
+while (x < 3) {
+  Print(x);
+  ++x;
+}
+Print("Done!");
+```
+
+##### `for`
+
+> References: [Control flow](control_flow/loops.md#for)
+
+`for` statements support range-based looping, typically over containers. For
+example, this prints all names in `names`:
+
+```carbon
+for (var name: String in names) {
+  Print(name);
 }
 ```
 
-Breaking the `Foo` function apart:
+`PrintNames()` prints each `String` in the `names` `List` in iteration order.
 
--   The while body is normally executed for all values of `x` in [0, 42).
-    -   The increment of x at the end causes this.
--   If `ShouldStop()` returns true, the `break` causes the `while` to exit
-    early.
--   If `ShouldSkip()` returns true, the `continue` causes the `while` to restart
-    early.
--   Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
+##### `break`
+
+> References: [Control flow](control_flow/loops.md#break)
+
+The `break` statement immediately ends a `while` or `for` loop. Execution will
+resume at the end of the loop's scope. For example, this processes steps until a
+manual step is hit (if no manual step is hit, all steps are processed):
+
+```carbon
+for (var step: Step in steps) {
+  if (step.IsManual()) {
+    Print("Reached manual step!");
+    break;
+  }
+  step.Process();
+}
+```
+
+##### `continue`
+
+> References: [Control flow](control_flow/loops.md#continue)
+
+The `continue` statement immediately goes to the next loop of a `while` or
+`for`. In a `while`, execution continues with the `while` expression. For
+example, this prints all non-empty lines of a file, using `continue` to skip
+empty lines:
+
+```carbon
+var f: File = OpenFile(path);
+while (!f.EOF()) {
+  var line: String = f.ReadLine();
+  if (line.IsEmpty()) {
+    continue;
+  }
+  Print(line);
+}
+```
 
 #### `return`
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/return.md)
 
 The `return` statement ends the flow of execution within a function, returning
 execution to the caller. If the function returns a value to the caller, that
-value is provided by an expression in the return statement. This allows us to
-complete the definition of our `Sum` function from earlier as:
+value is provided by an expression in the return statement. For example:
 
 ```carbon
-fn Sum(Int: a, Int: b) -> Int {
+fn Sum(a: Int, b: Int) -> Int {
   return a + b;
 }
 ```
@@ -461,7 +476,7 @@ fn Sum(Int: a, Int: b) -> Int {
 ## Types
 
 > References: [Primitive types](primitive_types.md), [tuples](tuples.md), and
-> [structs](structs.md)
+> [classes](classes.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -492,7 +507,6 @@ available through the [prelude package](#name-lookup-for-common-types).
 
 Primitive types fall into the following categories:
 
--   `Void` - a type with only one possible value: empty.
 -   `Bool` - a boolean type with two possible values: `True` and `False`.
 -   `Int` and `UInt` - signed and unsigned 64-bit integer types.
     -   Standard sizes are available, both signed and unsigned, including
@@ -520,7 +534,7 @@ tuple. In formal type theory, tuples are product types.
 An example use of tuples is:
 
 ```carbon
-fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
+fn DoubleBoth(x: Int, y: Int) -> (Int, Int) {
   return (2 * x, 2 * y);
 }
 ```
@@ -537,7 +551,7 @@ expression: one is a tuple of types, the other a tuple of values.
 Element access uses subscript syntax:
 
 ```carbon
-fn DoubleTuple((Int, Int): x) -> (Int, Int) {
+fn DoubleTuple(x: (Int, Int)) -> (Int, Int) {
   return (2 * x[0], 2 * x[1]);
 }
 ```
@@ -546,12 +560,12 @@ Tuples also support multiple indices and slicing to restructure tuple elements:
 
 ```carbon
 // This reverses the tuple using multiple indices.
-fn Reverse((Int, Int, Int): x) -> (Int, Int, Int) {
+fn Reverse(x: (Int, Int, Int)) -> (Int, Int, Int) {
   return x[2, 1, 0];
 }
 
 // This slices the tuple by extracting elements [0, 2).
-fn RemoveLast((Int, Int, Int): x) -> (Int, Int) {
+fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
   return x[0 .. 2];
 }
 ```
@@ -570,24 +584,21 @@ fn RemoveLast((Int, Int, Int): x) -> (Int, Int) {
 
 ### User-defined types
 
-#### Structs
+#### Classes
 
-> References: [Structs](structs.md)
->
-> **TODO:** References need to be evolved.
+> References: [Classes](classes.md)
 
-`struct`s are a way for users to define their own data strutures or named
-product types.
+Classes are a way for users to define their own data strutures or record types.
 
 For example:
 
 ```carbon
-struct Widget {
-  var Int: x;
-  var Int: y;
-  var Int: z;
+class Widget {
+  var x: Int;
+  var y: Int;
+  var z: Int;
 
-  var String: payload;
+  var payload: String;
 }
 ```
 
@@ -597,48 +608,81 @@ Breaking apart `Widget`:
 -   `Widget` has one `String` member: `payload`.
 -   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
-More advanced `struct`s may be created:
+##### Assignment, copying
+
+You may use a _structural data class literal_, also known as a _struct literal_,
+to assign or initialize a variable with a class type.
 
 ```carbon
-struct AdvancedWidget {
-  // Do a thing!
-  fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
-
-  // A nested type.
-  struct Nestedtype {
-    // ...
-  }
-
-  private var Int: x;
-  private var Int: y;
-}
-
-fn Foo(AdvancedWidget: thing) {
-  thing.DoSomething(1, 2);
-}
+var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
+sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
 ```
 
-Breaking apart `AdvancedWidget`:
+You may also copy one struct into another of the same type.
 
--   `AdvancedWidget` has a public object method `DoSomething`.
-    -   `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to
-        it, and there is no automatic scoping - `self` must be specified as the
-        first input. The `self` name is also a keyword that explains how to
-        invoke this method on an object.
-    -   `DoSomething` accepts `AdvancedWidget` _by value_, which is easily
-        expressed here along with other constraints on the object parameter.
--   `AdvancedWidget` has two private data members: `x` and `y`.
-    -   Private methods and data members are restricted to use by
-        `AdvancedWidget` only, providing a layer of easy validation of the most
-        basic interface constraints.
--   `Nestedtype` is a nested type, and can be accessed as
-    `AdvancedWidget.Nestedtype`.
+```carbon
+var thingy: Widget = sprocket;
+sprocket = thingy;
+```
+
+##### Member access
+
+The data members of a variable with a class type may be accessed using dot `.`
+notation:
+
+```carbon
+Assert(sprocket.x == thingy.x);
+```
+
+##### Methods
+
+Class type definitions can include methods:
+
+```carbon
+class Point {
+  fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
+    var dx: i32 = x2 - me.x;
+    var dy: i32 = y2 - me.y;
+    return Math.Sqrt(dx * dx - dy * dy);
+  }
+  fn Offset[addr me: Self*](dx: i32, dy: i32);
+
+  var x: i32;
+  var y: i32;
+}
+
+fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
+  me->x += dx;
+  me->y += dy;
+}
+
+var origin: Point = {.x = 0, .y = 0};
+Assert(Math.Abs(origin.Distance(3, 4) - 5.0) < 0.001);
+origin.Offset(3, 4);
+Assert(origin.Distance(3, 4) == 0.0);
+```
+
+This defines a `Point` class type with two integer data members `x` and `y` and
+two methods `Distance` and `Offset`:
+
+-   Methods are defined as functions with a `me` parameter inside square
+    brackets `[`...`]` before the regular explicit parameter list in parens
+    `(`...`)`.
+-   Methods are called using using the member syntax, `origin.Distance(`...`)`
+    and `origin.Offset(`...`)`.
+-   `Distance` computes and returns the distance to another point, without
+    modifying the `Point`. This is signified using `[me: Self]` in the method
+    declaration.
+-   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
+    using `[addr me: Self*]` in the method declaration.
+-   Methods may be declared lexically inline like `Distance`, or lexically out
+    of line like `Offset`.
 
 ##### Allocation, construction, and destruction
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
-##### Assignment, copying, and moving
+##### Moving
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
@@ -685,13 +729,13 @@ fn Bar() -> (Int, (Float, Float));
 
 fn Foo() -> Float {
   match (Bar()...) {
-    case (42, (Float: x, Float: y)) => {
+    case (42, (x: Float, y: Float)) => {
       return x - y;
     }
-    case (Int: p, (Float: x, Float: _)) if (p < 13) => {
+    case (p: Int, (x: Float, _: Float)) if (p < 13) => {
       return p * x;
     }
-    case (Int: p, auto: _) if (p > 3) => {
+    case (p: Int, _: auto) if (p > 3) => {
       return p * Pi;
     }
     default => {
@@ -708,7 +752,7 @@ Breaking apart this `match`:
     -   It then will find the _first_ `case` that matches this value, and
         execute that block.
     -   If none match, then it executes the default block.
--   Each `case` pattern contains a value pattern, such as `(Int: p, auto: _)`,
+-   Each `case` pattern contains a value pattern, such as `(Int p, auto _)`,
     followed by an optional boolean predicate introduced by the `if` keyword.
     -   The value pattern must first match, and then the predicate must also
         evaluate to true for the overall `case` pattern to match.
@@ -717,12 +761,12 @@ Breaking apart this `match`:
 Value patterns may be composed of the following:
 
 -   An expression, such as `42`, whose value must be equal to match.
--   An optional type, such as `Int`, followed by a `:` and an identifier to bind
-    the value.
+-   An identifier to bind the value, followed by a `:` and followed by a type,
+    such as `Int`.
     -   The special identifier `_` may be used to discard the value once
         matched.
 -   A destructuring pattern containing a sequence of value patterns, such as
-    `(Float: x, Float: y)`, which match against tuples and tuple-like values by
+    `(x: Float, y: Float)`, which match against tuples and tuple-like values by
     recursively matching on their elements.
 -   An unwrapping pattern containing a nested value pattern which matches
     against a variant or variant-like value by unwrapping it.
@@ -742,7 +786,7 @@ An example use is:
 ```carbon
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Int {
-  var (Int: p, auto: _) = Bar();
+  var (p: Int, _: auto) = Bar();
   return p;
 }
 ```
@@ -751,7 +795,7 @@ To break this apart:
 
 -   The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
 -   The `(Float, Float)` returned by `Bar()` matches and is discarded by
-    `auto: _`.
+    `_: auto`.
 
 ### Pattern matching as function overload resolution
 
@@ -793,10 +837,10 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(Type:$$ T) {
-  var Array(T): storage;
+class Stack(T:$$ Type) {
+  var storage: Array(T);
 
-  fn Push(T: value);
+  fn Push(value: T);
   fn Pop() -> T;
 }
 ```
@@ -806,7 +850,7 @@ Breaking apart the template use in `Stack`:
 -   `Stack` is a paremeterized type accepting a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used, and will only be type checked on instantiation.
--   `var Array(T)` instantiates a parameterized type `Array` when `Stack` is
+-   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
     instantiated.
 
 #### Functions with template parameters
@@ -823,12 +867,12 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```carbon
-fn Convert[Type:$$ T](T: source, Type:$$ U) -> U {
-  var U: converted = source;
+fn Convert[T:$$ Type](source: T, U:$$ Type) -> U {
+  var converted: U = source;
   return converted;
 }
 
-fn Foo(Int: i) -> Float {
+fn Foo(i: Int) -> Float {
   // Instantiates with the `T` implicit argument set to `Int` and the `U`
   // explicit argument set to `Float`, then calls with the runtime value `i`.
   return Convert(i, Float);

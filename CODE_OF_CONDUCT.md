@@ -6,6 +6,24 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Guidelines](#guidelines)
+-   [Conduct team](#conduct-team)
+    -   [Reporting conduct](#reporting-conduct)
+    -   [Filing a report](#filing-a-report)
+    -   [What happens after contacting the conduct team?](#what-happens-after-contacting-the-conduct-team)
+    -   [Appealing](#appealing)
+    -   [Special cases](#special-cases)
+-   [Enforcement action guidelines](#enforcement-action-guidelines)
+-   [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
+
+## Guidelines
+
 The Carbon community works to be welcoming and respectful, with a deep
 commitment to psychological safety, and we want to ensure that doesn’t change as
 we grow and evolve. To that end, we have a few ground rules that we ask all
@@ -103,14 +121,15 @@ spaces:
     give a fresh perspective. Maybe meet over VC instead. Switching approaches
     can help resume progress.
 
-If you have questions, please feel free to ask on our Discourse Forum, Discord
-Chat, or contact any member of the conduct team directly.
+If you have questions, please feel free to ask on Discord,
+[GitHub](https://github.com/carbon-language/carbon-lang/discussions), or contact
+any member of the conduct team directly.
 
 ## Conduct team
 
-At present, the [core team](docs/project/evolution.md#core-team) will serve as
-the conduct team. We expect to establish a dedicated conduct team if and when
-the project grows, along with more communication systems for reports.
+At present, the [Carbon leads](docs/project/evolution.md#carbon-leads-1) will
+serve as the conduct team. We expect to establish a dedicated conduct team if
+and when the project grows, along with more communication systems for reports.
 
 ### Reporting conduct
 
@@ -118,11 +137,9 @@ If you believe someone is violating the code of conduct, you can always report
 it to the conduct team by emailing all members of the conduct team. **All
 reports will be kept confidential.**
 
-If your report concerns a member of the conduct team, you can make a report
-directly to any individual member of the conduct team. They will follow the
-usual enforcement process with the other members of the conduct team, but will
-exclude the member(s) that the report concerns from any discussion or decision
-making.
+Please send reports concerning a member of the conduct team directly to other
+members of the conduct team. This allows discussion of the complaint to more
+easily exclude the concerned member as a [special case](#special-cases).
 
 If you believe anyone is in **physical danger**, please notify appropriate law
 enforcement first. If you are unsure what law enforcement agency is appropriate,
@@ -147,7 +164,7 @@ comfortable, please consider including:
     there were other witnesses besides you, please try to include them as well.
 -   When and where the incident occurred. Please be as specific as possible.
 -   Your account of what occurred, including any private chat logs or email.
--   Links for any public records, including Discourse Forum links.
+-   Links for any public records, including community discussions.
 -   Any extra context for the incident.
 -   If you believe this incident is ongoing.
 -   Any other information you believe we should have.
@@ -179,7 +196,7 @@ decision as to how to respond. Responses may include:
 
 -   Nothing, if no violation occurred or it has already been appropriately
     resolved.
--   One or more [enforcement actions](#enforcement-actions).
+-   One or more [enforcement actions](#enforcement-action-guidelines).
 -   Involvement of relevant law enforcement if appropriate.
 
 If the situation is not resolved within one week, we’ll respond to the original
@@ -191,25 +208,36 @@ taking. We will take into account feedback from the individuals involved on the
 appropriateness of our response, but we don’t guarantee we’ll act on it.
 
 After any incident, the conduct team will make a report on the situation to the
-core team. The core team may choose to make a public statement about the
+Carbon leads. The Carbon leads may choose to make a public statement about the
 incident. If that’s the case, the identities of anyone involved will remain
 confidential unless instructed otherwise by those individuals.
 
 ### Appealing
 
+**Note:** The process described in this section will become available when we
+have a dedicated conduct team that's separate from the Carbon leads.
+
 Only permanent resolutions, such as bans, or requests for public actions may be
 appealed. To appeal a decision of the conduct team, contact the
-[arbiters](docs/project/evolution.md#arbiters) with your appeal and the arbiters
-will review the case.
+[Carbon leads](docs/project/evolution.md#carbon-leads-1) with your appeal and
+they will review the case.
 
 In general, it is **not** appropriate to appeal a particular decision in public
-areas of Discourse Forums or Discord Chat. Doing so would involve disclosure of
-information which should remain confidential. Disclosing this kind of
-information publicly may be considered a separate and, potentially, more serious
-violation of the Code of Conduct. This is not meant to limit discussion of the
-Code of Conduct, the conduct team itself, or the appropriateness of responses in
-general, but **please** refrain from mentioning specific facts about cases
-without the explicit permission of all parties involved.
+areas of GitHub or Discord. Doing so would involve disclosure of information
+which should remain confidential. Disclosing this kind of information publicly
+may be considered a separate and, potentially, more serious violation of the
+Code of Conduct. This is not meant to limit discussion of the Code of Conduct,
+the conduct team itself, or the appropriateness of responses in general, but
+**please** refrain from mentioning specific facts about cases without the
+explicit permission of all parties involved.
+
+### Special cases
+
+If a complaint is raised against a member of the conduct team or Carbon leads,
+they will be excluded from conduct discussion and decisions, including appeals.
+They will only be included as needed for an involved party, such as to get their
+perspective or to notify them of decisions. Such complaints may lead to a
+member's responsibilities being revoked.
 
 ## Enforcement action guidelines
 
