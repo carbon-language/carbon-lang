@@ -32,7 +32,7 @@ namespace Carbon {
 #ifndef NDEBUG
 #define DCHECK(condition) CHECK(condition)
 #else
-#define DCHECK(condition) CHECK(true)
+#define DCHECK(condition) CHECK(true || (condition))
 #endif
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
