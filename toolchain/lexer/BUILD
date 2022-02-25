@@ -131,6 +131,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/string_literal/*"]),
     deps = [
         ":string_literal",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
