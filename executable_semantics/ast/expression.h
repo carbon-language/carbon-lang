@@ -162,13 +162,15 @@ class FieldAccessExpression : public Expression {
   // so that in the interpreter we can use it to lookup it's witness table.
   // If the field access is not on an expression whose type is a type variable
   // (on a struct or class type), then `impl()` returns `std::nullopt`.
-  auto impl() const -> std::optional<EntityView> { return impl_; }
-  void set_impl(EntityView impl) { impl_ = impl; }
+  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_;
+  }
+  void set_impl(Nonnull<const ImplBinding*> impl) { impl_ = impl; }
 
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
-  std::optional<EntityView> impl_;
+  std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 
 class IndexExpression : public Expression {
