@@ -33,7 +33,7 @@ graph BT
     mul>"mul<br>x * y"]
     add>"add<br>x + y"]
     mod["mod<br>x % y"]
-    eq["eq<br>x == y"]
+    eq["eq<br>x = y"]
 
     eq --> add & mod
     add --> mul
@@ -114,7 +114,7 @@ mul_lhs:
 // higher-precedence expression, because there are multiple paths from
 // eq_expression to minus_expression, and this production is on such a path.
 mul_expression:
-  mul_lhs STAR mul_operand
+  mul_lhs '*' mul_operand
 
 // minus_expression is listed here because it is excluded from mul_expression.
 add_operand:
@@ -144,5 +144,5 @@ eq_operand:
 // We also include minus_expression here because this is the bottom of the
 // precedence diamond.
 eq_expression:
-  minus_expression | add_expression | mod_expression | eq_operand EQ eq_operand ;
+  minus_expression | add_expression | mod_expression | eq_operand '=' eq_operand ;
 ```
