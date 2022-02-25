@@ -1216,7 +1216,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
     -> llvm::Optional<Node> {
   RETURN_IF_STACK_LIMITED(llvm::None);
   auto keyword_kind = NextTokenKind();
-  assert(keyword_kind.IsKeyword());
+  CHECK(keyword_kind.IsKeyword());
 
   auto start = GetSubtreeStartPosition();
   auto keyword = Consume(keyword_kind);
