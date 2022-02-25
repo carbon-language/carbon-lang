@@ -1,0 +1,18 @@
+import("//llvm/utils/unittest/unittest.gni")
+
+unittest("MCTests") {
+  deps = [
+    "//llvm/lib/MC",
+    "//llvm/lib/MC/MCDisassembler",
+    "//llvm/lib/Support",
+    "//llvm/lib/Target:TargetsToBuild",
+  ]
+  sources = [
+    "Disassembler.cpp",
+    "DwarfLineTables.cpp",
+    "MCDisassemblerTest.cpp",
+    "MCInstPrinter.cpp",
+    "StringTableBuilderTest.cpp",
+    "TargetRegistry.cpp",
+  ]
+}

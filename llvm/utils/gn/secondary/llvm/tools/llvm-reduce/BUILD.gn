@@ -1,0 +1,31 @@
+executable("llvm-reduce") {
+  deps = [
+    "//llvm/lib/IR",
+    "//llvm/lib/IRReader",
+    "//llvm/lib/Support",
+    "//llvm/lib/Target",
+    "//llvm/lib/Target:TargetsToBuild",
+    "//llvm/lib/Transforms/Utils",
+  ]
+  include_dirs = [ "." ]
+  sources = [
+    "DeltaManager.cpp",
+    "TestRunner.cpp",
+    "deltas/Delta.cpp",
+    "deltas/ReduceAliases.cpp",
+    "deltas/ReduceArguments.cpp",
+    "deltas/ReduceAttributes.cpp",
+    "deltas/ReduceBasicBlocks.cpp",
+    "deltas/ReduceFunctionBodies.cpp",
+    "deltas/ReduceFunctions.cpp",
+    "deltas/ReduceGlobalValues.cpp",
+    "deltas/ReduceGlobalVarInitializers.cpp",
+    "deltas/ReduceGlobalVars.cpp",
+    "deltas/ReduceInstructions.cpp",
+    "deltas/ReduceMetadata.cpp",
+    "deltas/ReduceModuleData.cpp",
+    "deltas/ReduceOperandBundles.cpp",
+    "deltas/ReduceSpecialGlobals.cpp",
+    "llvm-reduce.cpp",
+  ]
+}

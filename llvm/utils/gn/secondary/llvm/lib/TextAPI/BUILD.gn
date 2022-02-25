@@ -1,0 +1,18 @@
+static_library("TextAPI") {
+  output_name = "LLVMTextAPI"
+  deps = [
+    "//llvm/lib/BinaryFormat",
+    "//llvm/lib/Support",
+  ]
+  sources = [
+    "Architecture.cpp",
+    "ArchitectureSet.cpp",
+    "InterfaceFile.cpp",
+    "PackedVersion.cpp",
+    "Platform.cpp",
+    "Symbol.cpp",
+    "Target.cpp",
+    "TextStub.cpp",
+    "TextStubCommon.cpp",
+  ]
+}
