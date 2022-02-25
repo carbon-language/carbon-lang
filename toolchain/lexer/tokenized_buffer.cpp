@@ -57,6 +57,12 @@ struct UnrecognizedCharacters : DiagnosticBase<UnrecognizedCharacters> {
       "Encountered unrecognized characters while parsing.";
 };
 
+struct UnterminatedString : DiagnosticBase<UnterminatedString> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-string-terminator";
+  static constexpr llvm::StringLiteral Message =
+      "String is missing a terminator.";
+};
+
 // TODO: Move Overload and VariantMatch somewhere more central.
 
 // Form an overload set from a list of functions. For example:
@@ -292,15 +298,25 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    auto token =
-        buffer_.AddToken({.kind = TokenKind::StringLiteral(),
-                          .is_recovery = !literal->is_valid(),
-                          .token_line = string_line,
-                          .column = string_column,
-                          .literal_index = static_cast<int32_t>(
-                              buffer_.literal_string_storage_.size())});
-    buffer_.literal_string_storage_.push_back(literal->ComputeValue(emitter_));
-    return token;
+    if (literal->is_terminated()) {
+      auto token =
+          buffer_.AddToken({.kind = TokenKind::StringLiteral(),
+                            .token_line = string_line,
+                            .column = string_column,
+                            .literal_index = static_cast<int32_t>(
+                                buffer_.literal_string_storage_.size())});
+      buffer_.literal_string_storage_.push_back(
+          literal->ComputeValue(emitter_));
+      return token;
+    } else {
+      emitter_.EmitError<UnterminatedString>(literal->text().begin());
+      // TODO: This only returns a single token, but large strings should be
+      // sliced apart due to error_length_.
+      return buffer_.AddToken({.kind = TokenKind::Error(),
+                               .token_line = string_line,
+                               .column = string_column,
+                               .literal_index = literal_size});
+    }
   }
 
   auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {

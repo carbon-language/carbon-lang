@@ -154,15 +154,16 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           // should stop here.
           if (cursor >= source_text_size ||
               (!multi_line && source_text[cursor] == '\n')) {
-            return InvalidStringLiteral(source_text.take_front(cursor),
-                                        prefix_len, hash_level, multi_line);
+            return UnterminatedStringLiteral(source_text.take_front(cursor),
+                                             prefix_len, hash_level,
+                                             multi_line);
           }
         }
         break;
       case '\n':
         if (!multi_line) {
-          return InvalidStringLiteral(source_text.take_front(cursor),
-                                      prefix_len, hash_level, multi_line);
+          return UnterminatedStringLiteral(source_text.take_front(cursor),
+                                           prefix_len, hash_level, multi_line);
         }
         break;
       case '\"': {
@@ -173,14 +174,15 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
           return LexedStringLiteral(text, content, hash_level, multi_line,
-                                    /*is_valid=*/true);
+                                    /*is_terminated=*/true);
         }
         break;
       }
     }
   }
   // All remaining text was invalid.
-  return InvalidStringLiteral(source_text, prefix_len, hash_level, multi_line);
+  return UnterminatedStringLiteral(source_text, prefix_len, hash_level,
+                                   multi_line);
 }
 
 // Given a string that contains at least one newline, find the indent (the
@@ -411,7 +413,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
-  if (!is_valid_) {
+  if (!is_terminated_) {
     return "";
   }
   llvm::StringRef indent =

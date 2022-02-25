@@ -30,22 +30,23 @@ class LexedStringLiteral {
   // Determine whether this is a multi-line string literal.
   [[nodiscard]] auto is_multi_line() const -> bool { return multi_line_; }
 
-  [[nodiscard]] auto is_valid() const -> bool { return is_valid_; }
+  // Returns true if the string has a valid terminator.
+  [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
 
  private:
   LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
-                     int hash_level, bool multi_line, bool is_valid)
+                     int hash_level, bool multi_line, bool is_terminated)
       : text_(text),
         content_(content),
         hash_level_(hash_level),
         multi_line_(multi_line),
-        is_valid_(is_valid) {}
+        is_terminated_(is_terminated) {}
 
-  static auto InvalidStringLiteral(llvm::StringRef text, int prefix_len,
-                                   int hash_level, bool multi_line)
+  static auto UnterminatedStringLiteral(llvm::StringRef text, int prefix_len,
+                                        int hash_level, bool multi_line)
       -> LexedStringLiteral {
     return LexedStringLiteral(text, text.drop_front(prefix_len), hash_level,
-                              multi_line, /*is_valid=*/false);
+                              multi_line, /*is_terminated=*/false);
   }
 
   // The complete text of the string literal.
@@ -60,7 +61,7 @@ class LexedStringLiteral {
   // Whether this was a multi-line string literal.
   bool multi_line_;
   // Whether the literal is valid, or should only be used for errors.
-  bool is_valid_;
+  bool is_terminated_;
 };
 
 }  // namespace Carbon

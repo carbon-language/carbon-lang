@@ -279,7 +279,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"\\";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -288,8 +288,8 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
           {.kind = TokenKind::Error(),
            .line = 1,
            .column = 1,
+           // 💩 takes 4 bytes, and we count column as bytes offset.
            .text = llvm::StringRef("$$💩", 6)},
-          // 💩 takes 4 bytes, and we count column as bytes offset.
           {.kind = TokenKind::Minus(), .line = 1, .column = 7},
           {.kind = TokenKind::Error(), .line = 1, .column = 8, .text = "$"},
           // newline
@@ -306,18 +306,10 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
           {.kind = TokenKind::Backslash(),
            .line = 3,
            .column = 1,
-           .text = llvm::StringRef("\\", 1)},
-          {.kind = TokenKind::StringLiteral(),
-           .line = 3,
-           .column = 2,
-           .recovery = true,
-           .text = llvm::StringRef("\"", 1)},
+           .text = "\\"},
+          {.kind = TokenKind::Error(), .line = 3, .column = 2, .text = "\"\\"},
           // newline
-          {.kind = TokenKind::StringLiteral(),
-           .line = 4,
-           .column = 1,
-           .recovery = true,
-           .text = llvm::StringRef("\"", 1)},
+          {.kind = TokenKind::Error(), .line = 4, .column = 1, .text = "\"x"},
           {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
       }));
 }
@@ -800,22 +792,17 @@ TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
       R"(")",
       R"("""
-      "")",        //
-      R"("\)",     //
-      R"("\")",    //
-      R"("\\)",    //
-      R"("\\\")",  //
-      R"(""")",
+      "")",  R"("\)",   R"("\")", R"("\\)", R"("\\\")", R"(""")",
       R"("""
-      )",  //
-      R"("""\)",
+      )",  R"("""\)",
       R"(#"""
       """)",
   };
 
   for (llvm::StringLiteral test : invalid) {
+    SCOPED_TRACE(test);
     auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_TRUE(buffer.HasErrors());
 
     // We should have formed at least one error token.
     bool found_error = false;
@@ -825,7 +812,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
         break;
       }
     }
-    EXPECT_TRUE(found_error) << "`" << test << "`";
+    EXPECT_TRUE(found_error);
   }
 }
 
@@ -970,9 +957,9 @@ TEST_F(LexerTest, Diagnostics) {
           DiagnosticAt(6, 10),
           DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
   EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(7, 5),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
+              HandleDiagnostic(
+                  AllOf(DiagnosticAt(7, 5),
+                        DiagnosticMessage(HasSubstr("missing a terminator")))));
 
   Lex(testcase, consumer);
 }
