@@ -161,7 +161,7 @@ static llvm::FastMathFlags getFastmathFlags(FastmathFlagsInterface &op) {
       // clang-format on
   };
   llvm::FastMathFlags ret;
-  auto fmf = op.fastmathFlags();
+  auto fmf = op.getFastmathFlags();
   for (auto it : handlers)
     if (bitEnumContains(fmf, it.first))
       (ret.*(it.second))(true);
@@ -224,9 +224,9 @@ static void setLoopMetadata(Operation &opInst, llvm::Instruction &llvmInst,
         SmallVector<llvm::Metadata *> parallelAccess;
         parallelAccess.push_back(
             llvm::MDString::get(ctx, "llvm.loop.parallel_accesses"));
-        for (SymbolRefAttr accessGroupRef :
-             parallelAccessGroup->second.cast<ArrayAttr>()
-                 .getAsRange<SymbolRefAttr>())
+        for (SymbolRefAttr accessGroupRef : parallelAccessGroup->getValue()
+                                                .cast<ArrayAttr>()
+                                                .getAsRange<SymbolRefAttr>())
           parallelAccess.push_back(
               moduleTranslation.getAccessGroup(opInst, accessGroupRef));
         loopOptions.push_back(llvm::MDNode::get(ctx, parallelAccess));
@@ -280,11 +280,10 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     if (auto attr = op.getAttrOfType<FlatSymbolRefAttr>("callee"))
       return builder.CreateCall(
           moduleTranslation.lookupFunction(attr.getValue()), operandsRef);
-    auto *calleePtrType =
-        cast<llvm::PointerType>(operandsRef.front()->getType());
-    auto *calleeType =
-        cast<llvm::FunctionType>(calleePtrType->getElementType());
-    return builder.CreateCall(calleeType, operandsRef.front(),
+    auto *calleeType = operandsRef.front()->getType();
+    auto *calleeFunctionType =
+        cast<llvm::FunctionType>(calleeType->getPointerElementType());
+    return builder.CreateCall(calleeFunctionType, operandsRef.front(),
                               operandsRef.drop_front());
   };
 
@@ -304,8 +303,8 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     // TODO: refactor function type creation which usually occurs in std-LLVM
     // conversion.
     SmallVector<Type, 8> operandTypes;
-    operandTypes.reserve(inlineAsmOp.operands().size());
-    for (auto t : inlineAsmOp.operands().getTypes())
+    operandTypes.reserve(inlineAsmOp.getOperands().size());
+    for (auto t : inlineAsmOp.getOperands().getTypes())
       operandTypes.push_back(t);
 
     Type resultType;
@@ -317,50 +316,82 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     }
     auto ft = LLVM::LLVMFunctionType::get(resultType, operandTypes);
     llvm::InlineAsm *inlineAsmInst =
-        inlineAsmOp.asm_dialect().hasValue()
+        inlineAsmOp.getAsmDialect().hasValue()
             ? llvm::InlineAsm::get(
                   static_cast<llvm::FunctionType *>(
                       moduleTranslation.convertType(ft)),
-                  inlineAsmOp.asm_string(), inlineAsmOp.constraints(),
-                  inlineAsmOp.has_side_effects(), inlineAsmOp.is_align_stack(),
-                  convertAsmDialectToLLVM(*inlineAsmOp.asm_dialect()))
-            : llvm::InlineAsm::get(
-                  static_cast<llvm::FunctionType *>(
-                      moduleTranslation.convertType(ft)),
-                  inlineAsmOp.asm_string(), inlineAsmOp.constraints(),
-                  inlineAsmOp.has_side_effects(), inlineAsmOp.is_align_stack());
-    llvm::Value *result = builder.CreateCall(
-        inlineAsmInst, moduleTranslation.lookupValues(inlineAsmOp.operands()));
+                  inlineAsmOp.getAsmString(), inlineAsmOp.getConstraints(),
+                  inlineAsmOp.getHasSideEffects(),
+                  inlineAsmOp.getIsAlignStack(),
+                  convertAsmDialectToLLVM(*inlineAsmOp.getAsmDialect()))
+            : llvm::InlineAsm::get(static_cast<llvm::FunctionType *>(
+                                       moduleTranslation.convertType(ft)),
+                                   inlineAsmOp.getAsmString(),
+                                   inlineAsmOp.getConstraints(),
+                                   inlineAsmOp.getHasSideEffects(),
+                                   inlineAsmOp.getIsAlignStack());
+    llvm::CallInst *inst = builder.CreateCall(
+        inlineAsmInst,
+        moduleTranslation.lookupValues(inlineAsmOp.getOperands()));
+    if (auto maybeOperandAttrs = inlineAsmOp.getOperandAttrs()) {
+      llvm::AttributeList attrList;
+      for (const auto &it : llvm::enumerate(*maybeOperandAttrs)) {
+        Attribute attr = it.value();
+        if (!attr)
+          continue;
+        DictionaryAttr dAttr = attr.cast<DictionaryAttr>();
+        TypeAttr tAttr =
+            dAttr.get(InlineAsmOp::getElementTypeAttrName()).cast<TypeAttr>();
+        llvm::AttrBuilder b(moduleTranslation.getLLVMContext());
+        llvm::Type *ty = moduleTranslation.convertType(tAttr.getValue());
+        b.addTypeAttr(llvm::Attribute::ElementType, ty);
+        // shift to account for the returned value (this is always 1 aggregate
+        // value in LLVM).
+        int shift = (opInst.getNumResults() > 0) ? 1 : 0;
+        attrList = attrList.addAttributesAtIndex(
+            moduleTranslation.getLLVMContext(), it.index() + shift, b);
+      }
+      inst->setAttributes(attrList);
+    }
+
     if (opInst.getNumResults() != 0)
-      moduleTranslation.mapValue(opInst.getResult(0), result);
+      moduleTranslation.mapValue(opInst.getResult(0), inst);
     return success();
   }
 
   if (auto invOp = dyn_cast<LLVM::InvokeOp>(opInst)) {
-    auto operands = moduleTranslation.lookupValues(opInst.getOperands());
+    auto operands = moduleTranslation.lookupValues(invOp.getCalleeOperands());
     ArrayRef<llvm::Value *> operandsRef(operands);
+    llvm::Instruction *result;
     if (auto attr = opInst.getAttrOfType<FlatSymbolRefAttr>("callee")) {
-      builder.CreateInvoke(moduleTranslation.lookupFunction(attr.getValue()),
-                           moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
-                           moduleTranslation.lookupBlock(invOp.getSuccessor(1)),
-                           operandsRef);
+      result = builder.CreateInvoke(
+          moduleTranslation.lookupFunction(attr.getValue()),
+          moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
+          moduleTranslation.lookupBlock(invOp.getSuccessor(1)), operandsRef);
     } else {
-      auto *calleePtrType =
-          cast<llvm::PointerType>(operandsRef.front()->getType());
-      auto *calleeType =
-          cast<llvm::FunctionType>(calleePtrType->getElementType());
-      builder.CreateInvoke(calleeType, operandsRef.front(),
-                           moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
-                           moduleTranslation.lookupBlock(invOp.getSuccessor(1)),
-                           operandsRef.drop_front());
+      auto *calleeType = operandsRef.front()->getType();
+      auto *calleeFunctionType =
+          cast<llvm::FunctionType>(calleeType->getPointerElementType());
+      result = builder.CreateInvoke(
+          calleeFunctionType, operandsRef.front(),
+          moduleTranslation.lookupBlock(invOp.getSuccessor(0)),
+          moduleTranslation.lookupBlock(invOp.getSuccessor(1)),
+          operandsRef.drop_front());
     }
-    return success();
+    moduleTranslation.mapBranch(invOp, result);
+    // InvokeOp can only have 0 or 1 result
+    if (invOp->getNumResults() != 0) {
+      moduleTranslation.mapValue(opInst.getResult(0), result);
+      return success();
+    }
+    return success(result->getType()->isVoidTy());
   }
 
   if (auto lpOp = dyn_cast<LLVM::LandingpadOp>(opInst)) {
     llvm::Type *ty = moduleTranslation.convertType(lpOp.getType());
     llvm::LandingPadInst *lpi =
         builder.CreateLandingPad(ty, lpOp.getNumOperands());
+    lpi->setCleanup(lpOp.getCleanup());
 
     // Add clauses
     for (llvm::Value *operand :
@@ -383,14 +414,12 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     return success();
   }
   if (auto condbrOp = dyn_cast<LLVM::CondBrOp>(opInst)) {
-    auto weights = condbrOp.branch_weights();
     llvm::MDNode *branchWeights = nullptr;
-    if (weights) {
+    if (auto weights = condbrOp.getBranchWeights()) {
       // Map weight attributes to LLVM metadata.
-      auto trueWeight =
-          weights.getValue().getValue(0).cast<IntegerAttr>().getInt();
-      auto falseWeight =
-          weights.getValue().getValue(1).cast<IntegerAttr>().getInt();
+      auto weightValues = weights->getValues<APInt>();
+      auto trueWeight = weightValues[0].getSExtValue();
+      auto falseWeight = weightValues[1].getSExtValue();
       branchWeights =
           llvm::MDBuilder(moduleTranslation.getLLVMContext())
               .createBranchWeights(static_cast<uint32_t>(trueWeight),
@@ -406,7 +435,7 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
   }
   if (auto switchOp = dyn_cast<LLVM::SwitchOp>(opInst)) {
     llvm::MDNode *branchWeights = nullptr;
-    if (auto weights = switchOp.branch_weights()) {
+    if (auto weights = switchOp.getBranchWeights()) {
       llvm::SmallVector<uint32_t> weightValues;
       weightValues.reserve(weights->size());
       for (llvm::APInt weight : weights->cast<DenseIntElementsAttr>())
@@ -416,15 +445,15 @@ convertOperationImpl(Operation &opInst, llvm::IRBuilderBase &builder,
     }
 
     llvm::SwitchInst *switchInst = builder.CreateSwitch(
-        moduleTranslation.lookupValue(switchOp.value()),
-        moduleTranslation.lookupBlock(switchOp.defaultDestination()),
-        switchOp.caseDestinations().size(), branchWeights);
+        moduleTranslation.lookupValue(switchOp.getValue()),
+        moduleTranslation.lookupBlock(switchOp.getDefaultDestination()),
+        switchOp.getCaseDestinations().size(), branchWeights);
 
     auto *ty = llvm::cast<llvm::IntegerType>(
-        moduleTranslation.convertType(switchOp.value().getType()));
+        moduleTranslation.convertType(switchOp.getValue().getType()));
     for (auto i :
-         llvm::zip(switchOp.case_values()->cast<DenseIntElementsAttr>(),
-                   switchOp.caseDestinations()))
+         llvm::zip(switchOp.getCaseValues()->cast<DenseIntElementsAttr>(),
+                   switchOp.getCaseDestinations()))
       switchInst->addCase(
           llvm::ConstantInt::get(ty, std::get<0>(i).getLimitedValue()),
           moduleTranslation.lookupBlock(std::get<1>(i)));
@@ -470,7 +499,7 @@ public:
     return convertOperationImpl(*op, builder, moduleTranslation);
   }
 };
-} // end namespace
+} // namespace
 
 void mlir::registerLLVMDialectTranslation(DialectRegistry &registry) {
   registry.insert<LLVM::LLVMDialect>();

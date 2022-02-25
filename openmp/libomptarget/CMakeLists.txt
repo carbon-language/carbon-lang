@@ -37,29 +37,22 @@ endif()
 
 # This is a list of all the targets that are supported/tested right now.
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} aarch64-unknown-linux-gnu")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} aarch64-unknown-linux-gnu-newDriver")
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} amdgcn-amd-amdhsa")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} amdgcn-amd-amdhsa-newDriver")
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} powerpc64le-ibm-linux-gnu")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} powerpc64le-ibm-linux-gnu-newDriver")
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} powerpc64-ibm-linux-gnu")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} powerpc64-ibm-linux-gnu-newDriver")
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} x86_64-pc-linux-gnu")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} x86_64-pc-linux-gnu-newDriver")
 set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} nvptx64-nvidia-cuda")
+set (LIBOMPTARGET_ALL_TARGETS "${LIBOMPTARGET_ALL_TARGETS} nvptx64-nvidia-cuda-newDriver")
 
 # Once the plugins for the different targets are validated, they will be added to
 # the list of supported targets in the current system.
 set (LIBOMPTARGET_SYSTEM_TARGETS "")
 set (LIBOMPTARGET_TESTED_PLUGINS "")
-
-# Check OMPT support
-set(OMPT_DEFAULT_IN_LIBOMPTARGET FALSE)
-if ((LIBOMP_HAVE_OMPT_SUPPORT) AND (NOT WIN32))
-  set(OMPT_DEFAULT_IN_LIBOMPTARGET TRUE)
-endif()
-set(LIBOMP_OMPT_SUPPORT_IN_LIBOMPTARGET ${OMPT_DEFAULT_IN_LIBOMPTARGET} CACHE BOOL
-        "OMPT-support in libomptarget?")
-if(LIBOMP_OMPT_SUPPORT_IN_LIBOMPTARGET)
-  message(STATUS "OMPT enabled in libomptarget")
-else()
-  message(STATUS "OMPT disabled in libomptarget")
-endif()
 
 # Check whether using debug mode. In debug mode, allow dumping progress
 # messages at runtime by default. Otherwise, it can be enabled
@@ -90,7 +83,6 @@ set(LIBOMPTARGET_OPENMP_HOST_RTL_FOLDER "${LIBOMP_LIBRARY_DIR}" CACHE STRING
 
 # Build offloading plugins and device RTLs if they are available.
 add_subdirectory(plugins)
-add_subdirectory(deviceRTLs)
 add_subdirectory(DeviceRTL)
 add_subdirectory(tools)
 

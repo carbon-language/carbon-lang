@@ -591,6 +591,42 @@ TEST(FuzzerUtil, Base64) {
   EXPECT_EQ("YWJjeHl6", Base64({'a', 'b', 'c', 'x', 'y', 'z'}));
 }
 
+#ifdef __GLIBC__
+class PrintfCapture {
+ public:
+  PrintfCapture() {
+    OldOutputFile = GetOutputFile();
+    SetOutputFile(open_memstream(&Buffer, &Size));
+  }
+  ~PrintfCapture() {
+    fclose(GetOutputFile());
+    SetOutputFile(OldOutputFile);
+    free(Buffer);
+  }
+  std::string str() { return std::string(Buffer, Size); }
+
+ private:
+  char *Buffer;
+  size_t Size;
+  FILE *OldOutputFile;
+};
+
+TEST(FuzzerUtil, PrintASCII) {
+  auto f = [](const char *Str, const char *PrintAfter = "") {
+    PrintfCapture Capture;
+    PrintASCII(reinterpret_cast<const uint8_t*>(Str), strlen(Str), PrintAfter);
+    return Capture.str();
+  };
+  EXPECT_EQ("hello", f("hello"));
+  EXPECT_EQ("c:\\\\", f("c:\\"));
+  EXPECT_EQ("\\\"hi\\\"", f("\"hi\""));
+  EXPECT_EQ("\\011a", f("\ta"));
+  EXPECT_EQ("\\0111", f("\t1"));
+  EXPECT_EQ("hello\\012", f("hello\n"));
+  EXPECT_EQ("hello\n", f("hello", "\n"));
+}
+#endif
+
 TEST(Corpus, Distribution) {
   DataFlowTrace DFT;
   Random Rand(0);
@@ -614,6 +650,45 @@ TEST(Corpus, Distribution) {
     // A weak sanity check that every unit gets invoked.
     EXPECT_GT(Hist[i], TriesPerUnit / N / 3);
   }
+}
+
+TEST(Corpus, Replace) {
+  DataFlowTrace DFT;
+  struct EntropicOptions Entropic = {false, 0xFF, 100, false};
+  std::unique_ptr<InputCorpus> C(
+      new InputCorpus(/*OutputCorpus*/ "", Entropic));
+  InputInfo *FirstII =
+      C->AddToCorpus(Unit{0x01, 0x00}, /*NumFeatures*/ 1,
+                     /*MayDeleteFile*/ false, /*HasFocusFunction*/ false,
+                     /*ForceAddToCorpus*/ false,
+                     /*TimeOfUnit*/ std::chrono::microseconds(1234),
+                     /*FeatureSet*/ {}, DFT,
+                     /*BaseII*/ nullptr);
+  InputInfo *SecondII =
+      C->AddToCorpus(Unit{0x02}, /*NumFeatures*/ 1,
+                     /*MayDeleteFile*/ false, /*HasFocusFunction*/ false,
+                     /*ForceAddToCorpus*/ false,
+                     /*TimeOfUnit*/ std::chrono::microseconds(5678),
+                     /*FeatureSet*/ {}, DFT,
+                     /*BaseII*/ nullptr);
+  Unit ReplacedU = Unit{0x03};
+
+  C->Replace(FirstII, ReplacedU,
+             /*TimeOfUnit*/ std::chrono::microseconds(321));
+
+  // FirstII should be replaced.
+  EXPECT_EQ(FirstII->U, Unit{0x03});
+  EXPECT_EQ(FirstII->Reduced, true);
+  EXPECT_EQ(FirstII->TimeOfUnit, std::chrono::microseconds(321));
+  std::vector<uint8_t> ExpectedSha1(kSHA1NumBytes);
+  ComputeSHA1(ReplacedU.data(), ReplacedU.size(), ExpectedSha1.data());
+  std::vector<uint8_t> IISha1(FirstII->Sha1, FirstII->Sha1 + kSHA1NumBytes);
+  EXPECT_EQ(IISha1, ExpectedSha1);
+
+  // SecondII should not be replaced.
+  EXPECT_EQ(SecondII->U, Unit{0x02});
+  EXPECT_EQ(SecondII->Reduced, false);
+  EXPECT_EQ(SecondII->TimeOfUnit, std::chrono::microseconds(5678));
 }
 
 template <typename T>
@@ -863,6 +938,137 @@ TEST(Merger, Merge) {
   TRACED_EQ(M.Files, {"A", "B", "C", "D"});
   TRACED_EQ(NewFiles, {"D", "B"});
   TRACED_EQ(NewFeatures, {1, 2, 3});
+}
+
+TEST(Merger, SetCoverMerge) {
+  Merger M;
+  std::set<uint32_t> Features, NewFeatures;
+  std::set<uint32_t> Cov, NewCov;
+  std::vector<std::string> NewFiles;
+
+  // Adds new files and features
+  EXPECT_TRUE(M.Parse("3\n0\nA\nB\nC\n"
+                      "STARTED 0 1000\n"
+                      "FT 0 1 2 3\n"
+                      "STARTED 1 1001\n"
+                      "FT 1 4 5 6 \n"
+                      "STARTED 2 1002\n"
+                      "FT 2 6 1 3\n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            6U);
+  TRACED_EQ(M.Files, {"A", "B", "C"});
+  TRACED_EQ(NewFiles, {"A", "B"});
+  TRACED_EQ(NewFeatures, {1, 2, 3, 4, 5, 6});
+
+  // Doesn't return features or files in the initial corpus.
+  EXPECT_TRUE(M.Parse("3\n1\nA\nB\nC\n"
+                      "STARTED 0 1000\n"
+                      "FT 0 1 2 3\n"
+                      "STARTED 1 1001\n"
+                      "FT 1 4 5 6 \n"
+                      "STARTED 2 1002\n"
+                      "FT 2 6 1 3\n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            3U);
+  TRACED_EQ(M.Files, {"A", "B", "C"});
+  TRACED_EQ(NewFiles, {"B"});
+  TRACED_EQ(NewFeatures, {4, 5, 6});
+
+  // No new features, so no new files
+  EXPECT_TRUE(M.Parse("3\n2\nA\nB\nC\n"
+                      "STARTED 0 1000\n"
+                      "FT 0 1 2 3\n"
+                      "STARTED 1 1001\n"
+                      "FT 1 4 5 6 \n"
+                      "STARTED 2 1002\n"
+                      "FT 2 6 1 3\n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            0U);
+  TRACED_EQ(M.Files, {"A", "B", "C"});
+  TRACED_EQ(NewFiles, {});
+  TRACED_EQ(NewFeatures, {});
+
+  // Can pass initial features and coverage.
+  Features = {1, 2, 3};
+  Cov = {};
+  EXPECT_TRUE(M.Parse("2\n0\nA\nB\n"
+                      "STARTED 0 1000\n"
+                      "FT 0 1 2 3\n"
+                      "STARTED 1 1001\n"
+                      "FT 1 4 5 6\n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            3U);
+  TRACED_EQ(M.Files, {"A", "B"});
+  TRACED_EQ(NewFiles, {"B"});
+  TRACED_EQ(NewFeatures, {4, 5, 6});
+  Features.clear();
+  Cov.clear();
+
+  // Prefer files with a lot of features first (C has 4 features)
+  // Then prefer B over A due to the smaller size. After choosing C and B,
+  // A and D have no new features to contribute.
+  EXPECT_TRUE(M.Parse("4\n0\nA\nB\nC\nD\n"
+                      "STARTED 0 2000\n"
+                      "FT 0 3 5 6\n"
+                      "STARTED 1 1000\n"
+                      "FT 1 4 5 6 \n"
+                      "STARTED 2 1000\n"
+                      "FT 2 1 2 3 4 \n"
+                      "STARTED 3 500\n"
+                      "FT 3 1  \n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            6U);
+  TRACED_EQ(M.Files, {"A", "B", "C", "D"});
+  TRACED_EQ(NewFiles, {"C", "B"});
+  TRACED_EQ(NewFeatures, {1, 2, 3, 4, 5, 6});
+
+  // Only 1 file covers all features.
+  EXPECT_TRUE(M.Parse("4\n1\nA\nB\nC\nD\n"
+                      "STARTED 0 2000\n"
+                      "FT 0 4 5 6 7 8\n"
+                      "STARTED 1 1100\n"
+                      "FT 1 1 2 3 \n"
+                      "STARTED 2 1100\n"
+                      "FT 2 2 3 \n"
+                      "STARTED 3 1000\n"
+                      "FT 3 1  \n"
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            3U);
+  TRACED_EQ(M.Files, {"A", "B", "C", "D"});
+  TRACED_EQ(NewFiles, {"B"});
+  TRACED_EQ(NewFeatures, {1, 2, 3});
+
+  // A Feature has a value greater than (1 << 21) and hence
+  // there are collisions in the underlying `covered features`
+  // bitvector.
+  EXPECT_TRUE(M.Parse("3\n0\nA\nB\nC\n"
+                      "STARTED 0 2000\n"
+                      "FT 0 1 2 3\n"
+                      "STARTED 1 1000\n"
+                      "FT 1 3 4 5 \n"
+                      "STARTED 2 1000\n"
+                      "FT 2 3 2097153 \n" // Last feature is (2^21 + 1).
+                      "",
+                      true));
+  EXPECT_EQ(M.SetCoverMerge(Features, &NewFeatures, Cov, &NewCov, &NewFiles),
+            5U);
+  TRACED_EQ(M.Files, {"A", "B", "C"});
+  // File 'C' is not added because it's last feature is considered
+  // covered due to collision with feature 1.
+  TRACED_EQ(NewFiles, {"B", "A"});
+  TRACED_EQ(NewFeatures, {1, 2, 3, 4, 5});
 }
 
 #undef TRACED_EQ

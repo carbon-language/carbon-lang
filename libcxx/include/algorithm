@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===-------------------------- algorithm ---------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -17,6 +17,34 @@
 
 namespace std
 {
+
+namespace ranges {
+  template <class I, class F>
+    struct in_fun_result;     // since C++20
+
+  template <class I1, class I2>
+    struct in_in_result;      // since C++20
+
+  template <class I1, class I2, class O>
+    struct in_in_out_result;  // since C++20
+
+  template <class I, class O1, class O2>
+    struct in_out_out_result; // since C++20
+
+  template <class I1, class I2>
+    struct min_max_result;    // since C++20
+
+  template <class I>
+    struct in_found_result;   // since C++20
+
+  template<forward_iterator I, sentinel_for<I> S, class Proj = identity,
+    indirect_strict_weak_order<projected<I, Proj>> Comp = ranges::less>             // since C++20
+  constexpr I min_element(I first, S last, Comp comp = {}, Proj proj = {});
+
+  template<forward_range R, class Proj = identity,
+    indirect_strict_weak_order<projected<iterator_t<R>, Proj>> Comp = ranges::less> // since C++20
+  constexpr borrowed_iterator_t<R> min_element(R&& r, Comp comp = {}, Proj proj = {});
+}
 
 template <class InputIterator, class Predicate>
     constexpr bool     // constexpr in C++20
@@ -187,6 +215,16 @@ template <class BidirectionalIterator1, class BidirectionalIterator2>
 template <class ForwardIterator1, class ForwardIterator2>
     constexpr ForwardIterator2    // constexpr in C++20
     swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2);
+
+template<input_iterator I1, sentinel_for<I1> S1, input_iterator I2, sentinel_for<I2> S2>
+        requires indirectly_swappable<I1, I2>
+    constexpr ranges::swap_ranges_result<I1, I2>
+        ranges::swap_ranges(I1 first1, S1 last1, I2 first2, S2 last2);
+
+template<input_range R1, input_range R2>
+        requires indirectly_swappable<iterator_t<R1>, iterator_t<R2>>
+    constexpr ranges::swap_ranges_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
+        ranges::swap_ranges(R1&& r1, R2&& r2);
 
 template <class ForwardIterator1, class ForwardIterator2>
     constexpr void                // constexpr in C++20
@@ -640,24 +678,21 @@ template <class BidirectionalIterator>
 template <class BidirectionalIterator, class Compare>
     constexpr bool     // constexpr in C++20
     prev_permutation(BidirectionalIterator first, BidirectionalIterator last, Compare comp);
-
 }  // std
 
 */
 
+#include <__bits>
 #include <__config>
 #include <__debug>
-#include <__bits> // __libcpp_clz
 #include <cstddef>
 #include <cstring>
 #include <functional>
 #include <initializer_list>
-#include <utility> // needed to provide swap_ranges.
-#include <memory>
 #include <iterator>
 #include <memory>
 #include <type_traits>
-#include <utility> // swap_ranges
+#include <utility>
 #include <version>
 
 #include <__algorithm/adjacent_find.h>
@@ -675,8 +710,8 @@ template <class BidirectionalIterator, class Compare>
 #include <__algorithm/count_if.h>
 #include <__algorithm/equal.h>
 #include <__algorithm/equal_range.h>
-#include <__algorithm/fill_n.h>
 #include <__algorithm/fill.h>
+#include <__algorithm/fill_n.h>
 #include <__algorithm/find.h>
 #include <__algorithm/find_end.h>
 #include <__algorithm/find_first_of.h>
@@ -684,9 +719,15 @@ template <class BidirectionalIterator, class Compare>
 #include <__algorithm/find_if_not.h>
 #include <__algorithm/for_each.h>
 #include <__algorithm/for_each_n.h>
-#include <__algorithm/generate_n.h>
 #include <__algorithm/generate.h>
+#include <__algorithm/generate_n.h>
 #include <__algorithm/half_positive.h>
+#include <__algorithm/in_found_result.h>
+#include <__algorithm/in_fun_result.h>
+#include <__algorithm/in_in_out_result.h>
+#include <__algorithm/in_in_result.h>
+#include <__algorithm/in_out_out_result.h>
+#include <__algorithm/in_out_result.h>
 #include <__algorithm/includes.h>
 #include <__algorithm/inplace_merge.h>
 #include <__algorithm/is_heap.h>
@@ -704,6 +745,7 @@ template <class BidirectionalIterator, class Compare>
 #include <__algorithm/merge.h>
 #include <__algorithm/min.h>
 #include <__algorithm/min_element.h>
+#include <__algorithm/min_max_result.h>
 #include <__algorithm/minmax.h>
 #include <__algorithm/minmax_element.h>
 #include <__algorithm/mismatch.h>
@@ -720,6 +762,8 @@ template <class BidirectionalIterator, class Compare>
 #include <__algorithm/pop_heap.h>
 #include <__algorithm/prev_permutation.h>
 #include <__algorithm/push_heap.h>
+#include <__algorithm/ranges_min_element.h>
+#include <__algorithm/ranges_swap_ranges.h>
 #include <__algorithm/remove.h>
 #include <__algorithm/remove_copy.h>
 #include <__algorithm/remove_copy_if.h>
@@ -749,13 +793,13 @@ template <class BidirectionalIterator, class Compare>
 #include <__algorithm/stable_sort.h>
 #include <__algorithm/swap_ranges.h>
 #include <__algorithm/transform.h>
-#include <__algorithm/unique_copy.h>
 #include <__algorithm/unique.h>
+#include <__algorithm/unique_copy.h>
 #include <__algorithm/unwrap_iter.h>
 #include <__algorithm/upper_bound.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 #if defined(_LIBCPP_HAS_PARALLEL_ALGORITHMS) && _LIBCPP_STD_VER >= 17

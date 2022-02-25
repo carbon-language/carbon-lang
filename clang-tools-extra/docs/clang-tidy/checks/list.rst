@@ -12,6 +12,7 @@ Clang-Tidy Checks
 .. csv-table::
    :header: "Name", "Offers fixes"
 
+   `abseil-cleanup-ctad <abseil-cleanup-ctad.html>`_, "Yes"
    `abseil-duration-addition <abseil-duration-addition.html>`_, "Yes"
    `abseil-duration-comparison <abseil-duration-comparison.html>`_, "Yes"
    `abseil-duration-conversion-cast <abseil-duration-conversion-cast.html>`_, "Yes"
@@ -83,6 +84,7 @@ Clang-Tidy Checks
    `bugprone-posix-return <bugprone-posix-return.html>`_, "Yes"
    `bugprone-redundant-branch-condition <bugprone-redundant-branch-condition.html>`_, "Yes"
    `bugprone-reserved-identifier <bugprone-reserved-identifier.html>`_, "Yes"
+   `bugprone-shared-ptr-array-mismatch <bugprone-shared-ptr-array-mismatch.html>`_, "Yes"
    `bugprone-signal-handler <bugprone-signal-handler.html>`_,
    `bugprone-signed-char-misuse <bugprone-signed-char-misuse.html>`_,
    `bugprone-sizeof-container <bugprone-sizeof-container.html>`_,
@@ -91,6 +93,7 @@ Clang-Tidy Checks
    `bugprone-string-constructor <bugprone-string-constructor.html>`_, "Yes"
    `bugprone-string-integer-assignment <bugprone-string-integer-assignment.html>`_, "Yes"
    `bugprone-string-literal-with-embedded-nul <bugprone-string-literal-with-embedded-nul.html>`_,
+   `bugprone-stringview-nullptr <bugprone-stringview-nullptr.html>`_, "Yes"
    `bugprone-suspicious-enum-usage <bugprone-suspicious-enum-usage.html>`_,
    `bugprone-suspicious-include <bugprone-suspicious-include.html>`_,
    `bugprone-suspicious-memory-comparison <bugprone-suspicious-memory-comparison.html>`_,
@@ -114,13 +117,12 @@ Clang-Tidy Checks
    `cert-dcl50-cpp <cert-dcl50-cpp.html>`_,
    `cert-dcl58-cpp <cert-dcl58-cpp.html>`_,
    `cert-env33-c <cert-env33-c.html>`_,
+   `cert-err33-c <cert-err33-c.html>`_,
    `cert-err34-c <cert-err34-c.html>`_,
    `cert-err52-cpp <cert-err52-cpp.html>`_,
    `cert-err58-cpp <cert-err58-cpp.html>`_,
    `cert-err60-cpp <cert-err60-cpp.html>`_,
-   `cert-exp42-c <cert-exp42-c.html>`_,
    `cert-flp30-c <cert-flp30-c.html>`_,
-   `cert-flp37-c <cert-flp37-c.html>`_,
    `cert-mem57-cpp <cert-mem57-cpp.html>`_,
    `cert-msc50-cpp <cert-msc50-cpp.html>`_,
    `cert-msc51-cpp <cert-msc51-cpp.html>`_,
@@ -169,6 +171,7 @@ Clang-Tidy Checks
    `cppcoreguidelines-pro-type-vararg <cppcoreguidelines-pro-type-vararg.html>`_,
    `cppcoreguidelines-slicing <cppcoreguidelines-slicing.html>`_,
    `cppcoreguidelines-special-member-functions <cppcoreguidelines-special-member-functions.html>`_,
+   `cppcoreguidelines-virtual-class-destructor <cppcoreguidelines-virtual-class-destructor.html>`_, "Yes"
    `darwin-avoid-spinlock <darwin-avoid-spinlock.html>`_,
    `darwin-dispatch-once-nonstatic <darwin-dispatch-once-nonstatic.html>`_, "Yes"
    `fuchsia-default-arguments-calls <fuchsia-default-arguments-calls.html>`_,
@@ -210,6 +213,8 @@ Clang-Tidy Checks
    `llvmlibc-implementation-in-namespace <llvmlibc-implementation-in-namespace.html>`_,
    `llvmlibc-restrict-system-libc-headers <llvmlibc-restrict-system-libc-headers.html>`_, "Yes"
    `misc-definitions-in-headers <misc-definitions-in-headers.html>`_, "Yes"
+   `misc-misleading-bidirectional <misc-misleading-bidirectional.html>`_,
+   `misc-misleading-identifier <misc-misleading-identifier.html>`_,
    `misc-misplaced-const <misc-misplaced-const.html>`_,
    `misc-new-delete-overloads <misc-new-delete-overloads.html>`_,
    `misc-no-recursion <misc-no-recursion.html>`_,
@@ -256,6 +261,7 @@ Clang-Tidy Checks
    `modernize-use-using <modernize-use-using.html>`_, "Yes"
    `mpi-buffer-deref <mpi-buffer-deref.html>`_, "Yes"
    `mpi-type-mismatch <mpi-type-mismatch.html>`_, "Yes"
+   `objc-assert-equals <objc-assert-equals.html>`_, "Yes"
    `objc-avoid-nserror-init <objc-avoid-nserror-init.html>`_,
    `objc-dealloc-in-category <objc-dealloc-in-category.html>`_,
    `objc-forbidden-subclassing <objc-forbidden-subclassing.html>`_,
@@ -278,16 +284,19 @@ Clang-Tidy Checks
    `performance-noexcept-move-constructor <performance-noexcept-move-constructor.html>`_, "Yes"
    `performance-trivially-destructible <performance-trivially-destructible.html>`_, "Yes"
    `performance-type-promotion-in-math-fn <performance-type-promotion-in-math-fn.html>`_, "Yes"
-   `performance-unnecessary-copy-initialization <performance-unnecessary-copy-initialization.html>`_,
+   `performance-unnecessary-copy-initialization <performance-unnecessary-copy-initialization.html>`_, "Yes"
    `performance-unnecessary-value-param <performance-unnecessary-value-param.html>`_, "Yes"
    `portability-restrict-system-includes <portability-restrict-system-includes.html>`_, "Yes"
    `portability-simd-intrinsics <portability-simd-intrinsics.html>`_,
-   `readability-avoid-const-params-in-decls <readability-avoid-const-params-in-decls.html>`_,
+   `readability-avoid-const-params-in-decls <readability-avoid-const-params-in-decls.html>`_, "Yes"
    `readability-braces-around-statements <readability-braces-around-statements.html>`_, "Yes"
    `readability-const-return-type <readability-const-return-type.html>`_, "Yes"
+   `readability-container-contains <readability-container-contains.html>`_, "Yes"
+   `readability-container-data-pointer <readability-container-data-pointer.html>`_, "Yes"
    `readability-container-size-empty <readability-container-size-empty.html>`_, "Yes"
-   `readability-convert-member-functions-to-static <readability-convert-member-functions-to-static.html>`_,
+   `readability-convert-member-functions-to-static <readability-convert-member-functions-to-static.html>`_, "Yes"
    `readability-delete-null-pointer <readability-delete-null-pointer.html>`_, "Yes"
+   `readability-duplicate-include <readability-duplicate-include.html>`_, "Yes"
    `readability-else-after-return <readability-else-after-return.html>`_, "Yes"
    `readability-function-cognitive-complexity <readability-function-cognitive-complexity.html>`_,
    `readability-function-size <readability-function-size.html>`_,
@@ -337,7 +346,9 @@ Clang-Tidy Checks
    `cert-dcl59-cpp <cert-dcl59-cpp.html>`_, `google-build-namespaces <google-build-namespaces.html>`_,
    `cert-err09-cpp <cert-err09-cpp.html>`_, `misc-throw-by-value-catch-by-reference <misc-throw-by-value-catch-by-reference.html>`_,
    `cert-err61-cpp <cert-err61-cpp.html>`_, `misc-throw-by-value-catch-by-reference <misc-throw-by-value-catch-by-reference.html>`_,
+   `cert-exp42-c <cert-exp42-c.html>`_, `bugprone-suspicious-memory-comparison <bugprone-suspicious-memory-comparison.html>`_,
    `cert-fio38-c <cert-fio38-c.html>`_, `misc-non-copyable-objects <misc-non-copyable-objects.html>`_,
+   `cert-flp37-c <cert-flp37-c.html>`_, `bugprone-suspicious-memory-comparison <bugprone-suspicious-memory-comparison.html>`_,
    `cert-msc30-c <cert-msc30-c.html>`_, `cert-msc50-cpp <cert-msc50-cpp.html>`_,
    `cert-msc32-c <cert-msc32-c.html>`_, `cert-msc51-cpp <cert-msc51-cpp.html>`_,
    `cert-oop11-cpp <cert-oop11-cpp.html>`_, `performance-move-constructor-init <performance-move-constructor-init.html>`_,

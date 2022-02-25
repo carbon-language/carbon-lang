@@ -132,6 +132,13 @@
 // RUN: %clang -### -c -g %s -target powerpc64-ibm-aix-xcoff -gcolumn-info \
 // RUN:             2>&1 | FileCheck -check-prefix=CI %s
 
+// WebAssembly.
+// WebAssembly should default to DWARF4.
+// RUN: %clang -### -c -g %s -target wasm32 2>&1 \
+// RUN:             | FileCheck -check-prefix=G_DWARF4 %s
+// RUN: %clang -### -c -g %s -target wasm64 2>&1 \
+// RUN:             | FileCheck -check-prefix=G_DWARF4 %s
+
 // RUN: %clang -### -c -gdwarf-2 %s 2>&1 \
 // RUN:             | FileCheck -check-prefix=G_ONLY_DWARF2 %s
 //
@@ -279,7 +286,8 @@
 // NOG_PS4-NOT: "-dwarf-version=
 //
 // G_PS4: "-cc1"
-// G_PS4: "-dwarf-version=
+/// PS4 will stay on v4 even if the generic default version changes.
+// G_PS4: "-dwarf-version=4"
 // G_PS4: "-generate-arange-section"
 //
 // G_ERR: error: unknown argument:
@@ -435,3 +443,11 @@
 
 // DIRECTORY-NOT: "-fno-dwarf-directory-asm"
 // NODIRECTORY: "-fno-dwarf-directory-asm"
+
+// RUN: %clang -### -target x86_64 -c -g -gsimple-template-names %s 2>&1 | FileCheck --check-prefix=SIMPLE_TEMP_NAMES %s
+// SIMPLE_TEMP_NAMES: -gsimple-template-names=simple
+// SIMPLE_TEMP_NAMES: -debug-forward-template-params
+// RUN: not %clang -### -target x86_64 -c -g -gsimple-template-names=mangled %s 2>&1 | FileCheck --check-prefix=MANGLED_TEMP_NAMES %s
+// MANGLED_TEMP_NAMES: error: unknown argument: '-gsimple-template-names=mangled'
+// RUN: %clang -### -target x86_64 -c -g %s 2>&1 | FileCheck --check-prefix=FULL_TEMP_NAMES --implicit-check-not=debug-forward-template-params %s
+// FULL_TEMP_NAMES-NOT: -gsimple-template-names

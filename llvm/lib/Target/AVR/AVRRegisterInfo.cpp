@@ -17,8 +17,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/IR/Function.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/IR/Function.h"
 
 #include "AVR.h"
 #include "AVRInstrInfo.h"
@@ -37,19 +37,14 @@ const uint16_t *
 AVRRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const AVRMachineFunctionInfo *AFI = MF->getInfo<AVRMachineFunctionInfo>();
 
-  return AFI->isInterruptOrSignalHandler()
-              ? CSR_Interrupts_SaveList
-              : CSR_Normal_SaveList;
+  return AFI->isInterruptOrSignalHandler() ? CSR_Interrupts_SaveList
+                                           : CSR_Normal_SaveList;
 }
 
 const uint32_t *
 AVRRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                       CallingConv::ID CC) const {
-  const AVRMachineFunctionInfo *AFI = MF.getInfo<AVRMachineFunctionInfo>();
-
-  return AFI->isInterruptOrSignalHandler()
-              ? CSR_Interrupts_RegMask
-              : CSR_Normal_RegMask;
+  return CSR_Normal_RegMask;
 }
 
 BitVector AVRRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -142,6 +137,7 @@ void AVRRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const TargetInstrInfo &TII = *TM.getSubtargetImpl()->getInstrInfo();
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetFrameLowering *TFI = TM.getSubtargetImpl()->getFrameLowering();
+  const AVRSubtarget &STI = MF.getSubtarget<AVRSubtarget>();
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   int Offset = MFI.getObjectOffset(FrameIndex);
 
@@ -207,7 +203,8 @@ void AVRRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // If the offset is too big we have to adjust and restore the frame pointer
   // to materialize a valid load/store with displacement.
-  //:TODO: consider using only one adiw/sbiw chain for more than one frame index
+  //: TODO: consider using only one adiw/sbiw chain for more than one frame
+  //: index
   if (Offset > 62) {
     unsigned AddOpc = AVR::ADIWRdK, SubOpc = AVR::SBIWRdK;
     int AddOffset = Offset - 63 + 1;
@@ -223,7 +220,8 @@ void AVRRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // a compare and branch, invalidating the contents of SREG set by the
     // compare instruction because of the add/sub pairs. Conservatively save and
     // restore SREG before and after each add/sub pair.
-    BuildMI(MBB, II, dl, TII.get(AVR::INRdA), AVR::R0).addImm(0x3f);
+    BuildMI(MBB, II, dl, TII.get(AVR::INRdA), AVR::R0)
+        .addImm(STI.getIORegSREG());
 
     MachineInstr *New = BuildMI(MBB, II, dl, TII.get(AddOpc), AVR::R29R28)
                             .addReg(AVR::R29R28, RegState::Kill)
@@ -232,7 +230,7 @@ void AVRRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     // Restore SREG.
     BuildMI(MBB, std::next(II), dl, TII.get(AVR::OUTARr))
-        .addImm(0x3f)
+        .addImm(STI.getIORegSREG())
         .addReg(AVR::R0, RegState::Kill);
 
     // No need to set SREG as dead here otherwise if the next instruction is a
@@ -276,18 +274,16 @@ void AVRRegisterInfo::splitReg(Register Reg, Register &LoReg,
   HiReg = getSubReg(Reg, AVR::sub_hi);
 }
 
-bool AVRRegisterInfo::shouldCoalesce(MachineInstr *MI,
-                                     const TargetRegisterClass *SrcRC,
-                                     unsigned SubReg,
-                                     const TargetRegisterClass *DstRC,
-                                     unsigned DstSubReg,
-                                     const TargetRegisterClass *NewRC,
-                                     LiveIntervals &LIS) const {
-  if(this->getRegClass(AVR::PTRDISPREGSRegClassID)->hasSubClassEq(NewRC)) {
+bool AVRRegisterInfo::shouldCoalesce(
+    MachineInstr *MI, const TargetRegisterClass *SrcRC, unsigned SubReg,
+    const TargetRegisterClass *DstRC, unsigned DstSubReg,
+    const TargetRegisterClass *NewRC, LiveIntervals &LIS) const {
+  if (this->getRegClass(AVR::PTRDISPREGSRegClassID)->hasSubClassEq(NewRC)) {
     return false;
   }
 
-  return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg, NewRC, LIS);
+  return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg,
+                                            NewRC, LIS);
 }
 
 } // end of namespace llvm

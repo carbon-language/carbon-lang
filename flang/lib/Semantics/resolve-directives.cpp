@@ -293,10 +293,15 @@ public:
 
   bool Pre(const parser::OpenMPBlockConstruct &);
   void Post(const parser::OpenMPBlockConstruct &);
+  bool Pre(const parser::OmpCriticalDirective &x);
+  bool Pre(const parser::OmpEndCriticalDirective &x);
 
   void Post(const parser::OmpBeginBlockDirective &) {
     GetContext().withinConstruct = true;
   }
+
+  bool Pre(const parser::OpenMPSimpleStandaloneConstruct &);
+  void Post(const parser::OpenMPSimpleStandaloneConstruct &) { PopContext(); }
 
   bool Pre(const parser::OpenMPLoopConstruct &);
   void Post(const parser::OpenMPLoopConstruct &) { PopContext(); }
@@ -407,6 +412,25 @@ public:
     ResolveOmpNameList(alignedNameList, Symbol::Flag::OmpAligned);
     return false;
   }
+
+  bool Pre(const parser::OmpClause::Nontemporal &x) {
+    const auto &nontemporalNameList{x.v};
+    ResolveOmpNameList(nontemporalNameList, Symbol::Flag::OmpNontemporal);
+    return false;
+  }
+
+  bool Pre(const parser::OmpDependClause &x) {
+    if (const auto *dependSink{
+            std::get_if<parser::OmpDependClause::Sink>(&x.u)}) {
+      const auto &dependSinkVec{dependSink->v};
+      for (const auto &dependSinkElement : dependSinkVec) {
+        const auto &name{std::get<parser::Name>(dependSinkElement.t)};
+        ResolveName(&name);
+      }
+    }
+    return false;
+  }
+
   void Post(const parser::Name &);
 
   // Keep track of labels in the statements that causes jumps to target labels
@@ -454,7 +478,7 @@ private:
   static constexpr Symbol::Flags ompFlagsRequireNewSymbol{
       Symbol::Flag::OmpPrivate, Symbol::Flag::OmpLinear,
       Symbol::Flag::OmpFirstPrivate, Symbol::Flag::OmpLastPrivate,
-      Symbol::Flag::OmpReduction};
+      Symbol::Flag::OmpReduction, Symbol::Flag::OmpCriticalLock};
 
   static constexpr Symbol::Flags ompFlagsRequireMark{
       Symbol::Flag::OmpThreadprivate};
@@ -1125,6 +1149,27 @@ void OmpAttributeVisitor::Post(const parser::OpenMPBlockConstruct &x) {
   PopContext();
 }
 
+bool OmpAttributeVisitor::Pre(
+    const parser::OpenMPSimpleStandaloneConstruct &x) {
+  const auto &standaloneDir{
+      std::get<parser::OmpSimpleStandaloneDirective>(x.t)};
+  switch (standaloneDir.v) {
+  case llvm::omp::Directive::OMPD_barrier:
+  case llvm::omp::Directive::OMPD_ordered:
+  case llvm::omp::Directive::OMPD_target_enter_data:
+  case llvm::omp::Directive::OMPD_target_exit_data:
+  case llvm::omp::Directive::OMPD_target_update:
+  case llvm::omp::Directive::OMPD_taskwait:
+  case llvm::omp::Directive::OMPD_taskyield:
+    PushContext(standaloneDir.source, standaloneDir.v);
+    break;
+  default:
+    break;
+  }
+  ClearDataSharingAttributeObjects();
+  return true;
+}
+
 bool OmpAttributeVisitor::Pre(const parser::OpenMPLoopConstruct &x) {
   const auto &beginLoopDir{std::get<parser::OmpBeginLoopDirective>(x.t)};
   const auto &beginDir{std::get<parser::OmpLoopDirective>(beginLoopDir.t)};
@@ -1331,6 +1376,22 @@ bool OmpAttributeVisitor::Pre(const parser::OpenMPSectionsConstruct &x) {
   return true;
 }
 
+bool OmpAttributeVisitor::Pre(const parser::OmpCriticalDirective &x) {
+  const auto &name{std::get<std::optional<parser::Name>>(x.t)};
+  if (name) {
+    ResolveOmpName(*name, Symbol::Flag::OmpCriticalLock);
+  }
+  return true;
+}
+
+bool OmpAttributeVisitor::Pre(const parser::OmpEndCriticalDirective &x) {
+  const auto &name{std::get<std::optional<parser::Name>>(x.t)};
+  if (name) {
+    ResolveOmpName(*name, Symbol::Flag::OmpCriticalLock);
+  }
+  return true;
+}
+
 bool OmpAttributeVisitor::Pre(const parser::OpenMPCriticalConstruct &x) {
   const auto &criticalDir{std::get<parser::OmpCriticalDirective>(x.t)};
   PushContext(criticalDir.source, llvm::omp::Directive::OMPD_critical);
@@ -1454,6 +1515,13 @@ void OmpAttributeVisitor::ResolveOmpName(
         AddToContextObjectWithDSA(*resolvedSymbol, ompFlag);
       }
     }
+  } else if (ompFlagsRequireNewSymbol.test(ompFlag)) {
+    const auto pair{GetContext().scope.try_emplace(
+        name.source, Attrs{}, ObjectEntityDetails{})};
+    CHECK(pair.second);
+    name.symbol = &pair.first->second.get();
+  } else {
+    DIE("OpenMP Name resolution failed");
   }
 }
 

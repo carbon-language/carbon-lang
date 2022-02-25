@@ -70,16 +70,16 @@ static CompilerType GetLLDBNSPairType(TargetSP target_sp) {
       ScratchTypeSystemClang::GetForTarget(*target_sp);
 
   if (target_ast_context) {
-    ConstString g___lldb_autogen_nspair("__lldb_autogen_nspair");
+    ConstString g_lldb_autogen_nspair("__lldb_autogen_nspair");
 
     compiler_type =
         target_ast_context->GetTypeForIdentifier<clang::CXXRecordDecl>(
-            g___lldb_autogen_nspair);
+            g_lldb_autogen_nspair);
 
     if (!compiler_type) {
       compiler_type = target_ast_context->CreateRecordType(
           nullptr, OptionalClangModuleID(), lldb::eAccessPublic,
-          g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct,
+          g_lldb_autogen_nspair.GetCString(), clang::TTK_Struct,
           lldb::eLanguageTypeC);
 
       if (compiler_type) {
@@ -334,7 +334,6 @@ namespace Foundation1428 {
 }
   
 namespace Foundation1437 {
-  namespace {
     static const uint64_t NSDictionaryCapacities[] = {
         0, 3, 7, 13, 23, 41, 71, 127, 191, 251, 383, 631, 1087, 1723,
         2803, 4523, 7351, 11959, 19447, 31231, 50683, 81919, 132607,
@@ -345,7 +344,8 @@ namespace Foundation1437 {
     
     static const size_t NSDictionaryNumSizeBuckets =
         sizeof(NSDictionaryCapacities) / sizeof(uint64_t);
-    
+
+    namespace {
     struct DataDescriptor_32 {
       uint32_t _buffer;
       uint32_t _muts;
@@ -371,8 +371,8 @@ namespace Foundation1437 {
             0 : NSDictionaryCapacities[_szidx];
       }
     };
-  }
-  
+    } // namespace
+
   using NSDictionaryMSyntheticFrontEnd =
     GenericNSDictionaryMSyntheticFrontEnd<DataDescriptor_32, DataDescriptor_64>;
   

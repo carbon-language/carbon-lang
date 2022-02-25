@@ -16,6 +16,7 @@
 #include "CodeRegionGenerator.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCTargetOptions.h"
@@ -114,7 +115,7 @@ Expected<const CodeRegions &> AsmCodeRegionGenerator::parseCodeRegions(
 
   // Need to initialize an MCTargetStreamer otherwise
   // certain asm directives will cause a segfault.
-  // Using nulls() so that anything emitted by the MCTagetStreamer
+  // Using nulls() so that anything emitted by the MCTargetStreamer
   // doesn't show up in the llvm-mca output.
   raw_ostream &OSRef = nulls();
   formatted_raw_ostream FOSRef(OSRef);

@@ -323,7 +323,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK1-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK1-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -379,7 +379,7 @@ int bar(int n){
 // CHECK1-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK1-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK1:       omp_offload.cont:
-// CHECK1-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK1-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK1-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK1-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A]], align 4
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_CASTED]] to i32*
@@ -649,7 +649,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -726,7 +726,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK1-SAME: (i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[K_ADDR:%.*]] = alloca i64, align 8
@@ -735,7 +735,7 @@ int bar(int n){
 // CHECK1-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK1-NEXT:    store i64 [[K]], i64* [[K_ADDR]], align 8
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP0]], i32* [[CONV1]], align 4
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -747,7 +747,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -802,9 +802,9 @@ int bar(int n){
 // CHECK1-NEXT:    [[CONV3:%.*]] = sext i32 [[MUL2]] to i64
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i64 [[TMP8]], [[CONV3]]
 // CHECK1-NEXT:    store i64 [[ADD]], i64* [[K1]], align 8, !llvm.access.group !12
-// CHECK1-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK1-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK1-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP10]], 1
-// CHECK1-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK1-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK1-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK1:       omp.body.continue:
 // CHECK1-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -822,16 +822,15 @@ int bar(int n){
 // CHECK1-NEXT:    [[TMP13:%.*]] = icmp ne i32 [[TMP12]], 0
 // CHECK1-NEXT:    br i1 [[TMP13]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK1:       .omp.linear.pu:
-// CHECK1-NEXT:    [[TMP14:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK1-NEXT:    [[ADD6:%.*]] = add nsw i64 [[TMP14]], 27
-// CHECK1-NEXT:    store i64 [[ADD6]], i64* [[K_ADDR]], align 8
+// CHECK1-NEXT:    [[TMP14:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK1-NEXT:    store i64 [[TMP14]], i64* [[K_ADDR]], align 8
 // CHECK1-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK1:       .omp.linear.pu.done:
 // CHECK1-NEXT:    ret void
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK1-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -845,15 +844,15 @@ int bar(int n){
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK1-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK1-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK1-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK1-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK1-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK1-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -862,7 +861,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -889,11 +888,11 @@ int bar(int n){
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK1-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK1-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK1-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK1-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK1-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK1-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK1-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -943,11 +942,11 @@ int bar(int n){
 // CHECK1-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK1-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK1-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK1-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK1-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK1-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK1-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK1-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK1-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK1-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK1:       omp.body.continue:
 // CHECK1-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -964,27 +963,17 @@ int bar(int n){
 // CHECK1-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK1-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK1:       .omp.linear.pu:
-// CHECK1-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK1-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK1-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK1-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK1-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK1-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK1-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK1-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK1-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK1-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK1-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK1-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK1-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK1-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK1-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK1-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK1-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK1-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK1-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK1:       .omp.linear.pu.done:
 // CHECK1-NEXT:    ret void
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK1-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK1-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 8
 // CHECK1-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 8
@@ -1013,7 +1002,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK1-SAME: (i32 signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK1-SAME: (i32 noundef signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 8
@@ -1089,7 +1078,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK1-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -1099,11 +1088,11 @@ int bar(int n){
 // CHECK1-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK1-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK1-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -1112,7 +1101,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -1163,14 +1152,14 @@ int bar(int n){
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK1-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK1-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK1-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK1-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK1-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK1-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK1-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK1-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK1-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK1-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK1-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK1:       omp.body.continue:
 // CHECK1-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -1187,7 +1176,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK1-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -1221,11 +1210,11 @@ int bar(int n){
 // CHECK1-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK1-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK1-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK1-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK1-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK1-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK1-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -1234,7 +1223,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -1281,7 +1270,7 @@ int bar(int n){
 // CHECK1-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK1-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK1-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK1-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK1-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK1-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK1-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -1317,9 +1306,9 @@ int bar(int n){
 // CHECK1-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK1-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK1-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK1-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK1-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK1-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK1-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK1-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -1379,7 +1368,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK1-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK1-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -1387,22 +1376,22 @@ int bar(int n){
 // CHECK1-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK1-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK1-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK1-NEXT:    [[CALL:%.*]] = call signext i32 @_Z3fooi(i32 signext [[TMP0]])
+// CHECK1-NEXT:    [[CALL:%.*]] = call noundef signext i32 @_Z3fooi(i32 noundef signext [[TMP0]])
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK1-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK1-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK1-NEXT:    [[CALL1:%.*]] = call signext i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 8 dereferenceable(8) [[S]], i32 signext [[TMP2]])
+// CHECK1-NEXT:    [[CALL1:%.*]] = call noundef signext i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 8 dereferenceable(8) [[S]], i32 noundef signext [[TMP2]])
 // CHECK1-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK1-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK1-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK1-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK1-NEXT:    [[CALL3:%.*]] = call signext i32 @_ZL7fstatici(i32 signext [[TMP4]])
+// CHECK1-NEXT:    [[CALL3:%.*]] = call noundef signext i32 @_ZL7fstatici(i32 noundef signext [[TMP4]])
 // CHECK1-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK1-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK1-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK1-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK1-NEXT:    [[CALL5:%.*]] = call signext i32 @_Z9ftemplateIiET_i(i32 signext [[TMP6]])
+// CHECK1-NEXT:    [[CALL5:%.*]] = call noundef signext i32 @_Z9ftemplateIiET_i(i32 noundef signext [[TMP6]])
 // CHECK1-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK1-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK1-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -1411,7 +1400,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK1-SAME: (%struct.S1* nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK1-SAME: (%struct.S1* noundef nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK1-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -1525,7 +1514,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK1-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK1-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -1609,7 +1598,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK1-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK1-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK1-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -1678,7 +1667,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK1-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK1-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -1696,7 +1685,7 @@ int bar(int n){
 // CHECK1-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK1-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK1-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK1-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK1-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -1705,7 +1694,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -1764,7 +1753,7 @@ int bar(int n){
 // CHECK1-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK1-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK1-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK1-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK1-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK1-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -1794,7 +1783,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK1-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -1811,15 +1800,15 @@ int bar(int n){
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK1-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK1-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK1-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK1-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK1-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK1-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK1-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK1-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -1828,7 +1817,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -1852,7 +1841,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK1-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK1-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK1-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -1865,11 +1854,11 @@ int bar(int n){
 // CHECK1-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK1-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK1-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK1-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK1-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK1-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK1-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK1-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK1-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -1878,7 +1867,7 @@ int bar(int n){
 //
 //
 // CHECK1-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK1-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK1-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK1-NEXT:  entry:
 // CHECK1-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK1-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -1931,14 +1920,14 @@ int bar(int n){
 // CHECK1-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK1-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK1-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK1-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK1-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK1-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK1-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK1-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK1-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK1-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK1-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK1-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK1-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK1-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK1-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK1-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK1-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -1972,7 +1961,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK2-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK2-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -2028,7 +2017,7 @@ int bar(int n){
 // CHECK2-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK2-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK2:       omp_offload.cont:
-// CHECK2-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK2-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK2-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK2-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A]], align 4
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_CASTED]] to i32*
@@ -2298,7 +2287,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -2375,7 +2364,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK2-SAME: (i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[K_ADDR:%.*]] = alloca i64, align 8
@@ -2384,7 +2373,7 @@ int bar(int n){
 // CHECK2-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK2-NEXT:    store i64 [[K]], i64* [[K_ADDR]], align 8
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP0]], i32* [[CONV1]], align 4
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -2396,7 +2385,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -2451,9 +2440,9 @@ int bar(int n){
 // CHECK2-NEXT:    [[CONV3:%.*]] = sext i32 [[MUL2]] to i64
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i64 [[TMP8]], [[CONV3]]
 // CHECK2-NEXT:    store i64 [[ADD]], i64* [[K1]], align 8, !llvm.access.group !12
-// CHECK2-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK2-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK2-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP10]], 1
-// CHECK2-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK2-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK2-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK2:       omp.body.continue:
 // CHECK2-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -2471,16 +2460,15 @@ int bar(int n){
 // CHECK2-NEXT:    [[TMP13:%.*]] = icmp ne i32 [[TMP12]], 0
 // CHECK2-NEXT:    br i1 [[TMP13]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK2:       .omp.linear.pu:
-// CHECK2-NEXT:    [[TMP14:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK2-NEXT:    [[ADD6:%.*]] = add nsw i64 [[TMP14]], 27
-// CHECK2-NEXT:    store i64 [[ADD6]], i64* [[K_ADDR]], align 8
+// CHECK2-NEXT:    [[TMP14:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK2-NEXT:    store i64 [[TMP14]], i64* [[K_ADDR]], align 8
 // CHECK2-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK2:       .omp.linear.pu.done:
 // CHECK2-NEXT:    ret void
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK2-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -2494,15 +2482,15 @@ int bar(int n){
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK2-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK2-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK2-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK2-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK2-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK2-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK2-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -2511,7 +2499,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -2538,11 +2526,11 @@ int bar(int n){
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK2-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK2-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK2-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK2-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK2-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK2-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK2-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -2592,11 +2580,11 @@ int bar(int n){
 // CHECK2-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK2-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK2-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK2-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK2-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK2-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK2-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK2-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK2-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK2-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK2:       omp.body.continue:
 // CHECK2-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -2613,27 +2601,17 @@ int bar(int n){
 // CHECK2-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK2-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK2:       .omp.linear.pu:
-// CHECK2-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK2-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK2-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK2-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK2-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK2-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK2-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK2-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK2-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK2-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK2-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK2-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK2-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK2-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK2-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK2-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK2-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK2-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK2-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK2:       .omp.linear.pu.done:
 // CHECK2-NEXT:    ret void
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK2-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK2-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 8
 // CHECK2-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 8
@@ -2662,7 +2640,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK2-SAME: (i32 signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK2-SAME: (i32 noundef signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 8
@@ -2738,7 +2716,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK2-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -2748,11 +2726,11 @@ int bar(int n){
 // CHECK2-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK2-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK2-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -2761,7 +2739,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -2812,14 +2790,14 @@ int bar(int n){
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK2-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK2-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK2-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK2-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK2-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK2-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK2-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK2-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK2-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK2-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK2-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK2:       omp.body.continue:
 // CHECK2-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -2836,7 +2814,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK2-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -2870,11 +2848,11 @@ int bar(int n){
 // CHECK2-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK2-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK2-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK2-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK2-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK2-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK2-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -2883,7 +2861,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -2930,7 +2908,7 @@ int bar(int n){
 // CHECK2-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK2-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK2-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK2-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK2-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK2-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK2-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -2966,9 +2944,9 @@ int bar(int n){
 // CHECK2-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK2-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK2-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK2-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK2-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK2-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK2-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK2-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -3028,7 +3006,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK2-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK2-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -3036,22 +3014,22 @@ int bar(int n){
 // CHECK2-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK2-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK2-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK2-NEXT:    [[CALL:%.*]] = call signext i32 @_Z3fooi(i32 signext [[TMP0]])
+// CHECK2-NEXT:    [[CALL:%.*]] = call noundef signext i32 @_Z3fooi(i32 noundef signext [[TMP0]])
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK2-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK2-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK2-NEXT:    [[CALL1:%.*]] = call signext i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 8 dereferenceable(8) [[S]], i32 signext [[TMP2]])
+// CHECK2-NEXT:    [[CALL1:%.*]] = call noundef signext i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 8 dereferenceable(8) [[S]], i32 noundef signext [[TMP2]])
 // CHECK2-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK2-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK2-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK2-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK2-NEXT:    [[CALL3:%.*]] = call signext i32 @_ZL7fstatici(i32 signext [[TMP4]])
+// CHECK2-NEXT:    [[CALL3:%.*]] = call noundef signext i32 @_ZL7fstatici(i32 noundef signext [[TMP4]])
 // CHECK2-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK2-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK2-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK2-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK2-NEXT:    [[CALL5:%.*]] = call signext i32 @_Z9ftemplateIiET_i(i32 signext [[TMP6]])
+// CHECK2-NEXT:    [[CALL5:%.*]] = call noundef signext i32 @_Z9ftemplateIiET_i(i32 noundef signext [[TMP6]])
 // CHECK2-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK2-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK2-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -3060,7 +3038,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK2-SAME: (%struct.S1* nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK2-SAME: (%struct.S1* noundef nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK2-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -3174,7 +3152,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK2-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK2-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -3258,7 +3236,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK2-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK2-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK2-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -3327,7 +3305,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK2-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK2-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -3345,7 +3323,7 @@ int bar(int n){
 // CHECK2-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK2-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK2-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK2-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK2-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -3354,7 +3332,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -3413,7 +3391,7 @@ int bar(int n){
 // CHECK2-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK2-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK2-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK2-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK2-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK2-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -3443,7 +3421,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK2-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -3460,15 +3438,15 @@ int bar(int n){
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK2-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK2-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK2-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK2-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK2-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK2-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK2-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK2-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -3477,7 +3455,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -3501,7 +3479,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK2-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK2-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK2-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -3514,11 +3492,11 @@ int bar(int n){
 // CHECK2-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK2-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK2-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK2-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK2-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK2-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK2-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK2-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK2-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -3527,7 +3505,7 @@ int bar(int n){
 //
 //
 // CHECK2-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK2-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK2-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK2-NEXT:  entry:
 // CHECK2-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK2-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -3580,14 +3558,14 @@ int bar(int n){
 // CHECK2-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK2-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK2-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK2-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK2-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK2-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK2-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK2-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK2-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK2-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK2-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK2-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK2-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK2-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK2-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK2-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK2-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -3621,7 +3599,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK3-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK3-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -3674,7 +3652,7 @@ int bar(int n){
 // CHECK3-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK3-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK3:       omp_offload.cont:
-// CHECK3-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK3-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK3-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK3-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK3-NEXT:    store i32 [[TMP7]], i32* [[A_CASTED]], align 4
@@ -3937,7 +3915,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -4014,7 +3992,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK3-SAME: (i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[K_ADDR:%.*]] = alloca i64*, align 4
@@ -4030,7 +4008,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -4105,16 +4083,15 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP14:%.*]] = icmp ne i32 [[TMP13]], 0
 // CHECK3-NEXT:    br i1 [[TMP14]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK3:       .omp.linear.pu:
-// CHECK3-NEXT:    [[TMP15:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK3-NEXT:    [[ADD5:%.*]] = add nsw i64 [[TMP15]], 27
-// CHECK3-NEXT:    store i64 [[ADD5]], i64* [[TMP0]], align 8
+// CHECK3-NEXT:    [[TMP15:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK3-NEXT:    store i64 [[TMP15]], i64* [[TMP0]], align 8
 // CHECK3-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK3:       .omp.linear.pu.done:
 // CHECK3-NEXT:    ret void
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK3-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -4126,7 +4103,7 @@ int bar(int n){
 // CHECK3-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK3-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK3-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -4141,7 +4118,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -4170,7 +4147,7 @@ int bar(int n){
 // CHECK3-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK3-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK3-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK3-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK3-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK3-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -4220,11 +4197,11 @@ int bar(int n){
 // CHECK3-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK3-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK3-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK3-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK3-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK3-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK3-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK3-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK3-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK3:       omp.body.continue:
 // CHECK3-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -4241,27 +4218,17 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK3-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK3:       .omp.linear.pu:
-// CHECK3-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK3-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK3-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK3-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK3-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK3-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK3-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK3-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK3-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK3-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK3-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK3-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK3-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK3-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK3-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK3-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK3-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK3-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK3:       .omp.linear.pu.done:
 // CHECK3-NEXT:    ret void
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK3-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK3-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 4
 // CHECK3-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 4
@@ -4290,7 +4257,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK3-SAME: (i32 [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK3-SAME: (i32 noundef [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 4
@@ -4364,7 +4331,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK3-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -4376,7 +4343,7 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK3-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK3-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK3-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -4385,7 +4352,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -4438,11 +4405,11 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK3-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK3-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK3-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK3-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK3-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK3-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK3-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK3:       omp.body.continue:
 // CHECK3-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -4459,7 +4426,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK3-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -4502,7 +4469,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -4645,7 +4612,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK3-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK3-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -4653,22 +4620,22 @@ int bar(int n){
 // CHECK3-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK3-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK3-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK3-NEXT:    [[CALL:%.*]] = call i32 @_Z3fooi(i32 [[TMP0]])
+// CHECK3-NEXT:    [[CALL:%.*]] = call noundef i32 @_Z3fooi(i32 noundef [[TMP0]])
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK3-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK3-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK3-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK3-NEXT:    [[CALL1:%.*]] = call i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 4 dereferenceable(8) [[S]], i32 [[TMP2]])
+// CHECK3-NEXT:    [[CALL1:%.*]] = call noundef i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 4 dereferenceable(8) [[S]], i32 noundef [[TMP2]])
 // CHECK3-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK3-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK3-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK3-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK3-NEXT:    [[CALL3:%.*]] = call i32 @_ZL7fstatici(i32 [[TMP4]])
+// CHECK3-NEXT:    [[CALL3:%.*]] = call noundef i32 @_ZL7fstatici(i32 noundef [[TMP4]])
 // CHECK3-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK3-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK3-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK3-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK3-NEXT:    [[CALL5:%.*]] = call i32 @_Z9ftemplateIiET_i(i32 [[TMP6]])
+// CHECK3-NEXT:    [[CALL5:%.*]] = call noundef i32 @_Z9ftemplateIiET_i(i32 noundef [[TMP6]])
 // CHECK3-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK3-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK3-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -4677,7 +4644,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK3-SAME: (%struct.S1* nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK3-SAME: (%struct.S1* noundef nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK3-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -4790,7 +4757,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK3-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK3-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -4873,7 +4840,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK3-SAME: (i32 [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK3-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -4941,7 +4908,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK3-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK3-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -4966,7 +4933,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5054,7 +5021,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK3-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -5073,11 +5040,11 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK3-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK3-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK3-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK3-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK3-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK3-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK3-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK3-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK3-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -5086,7 +5053,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5109,7 +5076,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK3-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK3-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK3-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -5124,7 +5091,7 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK3-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK3-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK3-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK3-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -5133,7 +5100,7 @@ int bar(int n){
 //
 //
 // CHECK3-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK3-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK3-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK3-NEXT:  entry:
 // CHECK3-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK3-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5188,11 +5155,11 @@ int bar(int n){
 // CHECK3-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK3-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK3-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK3-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK3-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK3-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK3-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK3-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK3-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK3-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK3-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK3-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -5226,7 +5193,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK4-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK4-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -5279,7 +5246,7 @@ int bar(int n){
 // CHECK4-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK4-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK4:       omp_offload.cont:
-// CHECK4-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK4-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK4-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK4-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK4-NEXT:    store i32 [[TMP7]], i32* [[A_CASTED]], align 4
@@ -5542,7 +5509,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5619,7 +5586,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK4-SAME: (i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[K_ADDR:%.*]] = alloca i64*, align 4
@@ -5635,7 +5602,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5710,16 +5677,15 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP14:%.*]] = icmp ne i32 [[TMP13]], 0
 // CHECK4-NEXT:    br i1 [[TMP14]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK4:       .omp.linear.pu:
-// CHECK4-NEXT:    [[TMP15:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK4-NEXT:    [[ADD5:%.*]] = add nsw i64 [[TMP15]], 27
-// CHECK4-NEXT:    store i64 [[ADD5]], i64* [[TMP0]], align 8
+// CHECK4-NEXT:    [[TMP15:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK4-NEXT:    store i64 [[TMP15]], i64* [[TMP0]], align 8
 // CHECK4-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK4:       .omp.linear.pu.done:
 // CHECK4-NEXT:    ret void
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK4-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -5731,7 +5697,7 @@ int bar(int n){
 // CHECK4-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK4-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK4-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -5746,7 +5712,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -5775,7 +5741,7 @@ int bar(int n){
 // CHECK4-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK4-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK4-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK4-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK4-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK4-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -5825,11 +5791,11 @@ int bar(int n){
 // CHECK4-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK4-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK4-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK4-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK4-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK4-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK4-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK4-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK4-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK4:       omp.body.continue:
 // CHECK4-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -5846,27 +5812,17 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK4-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK4:       .omp.linear.pu:
-// CHECK4-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK4-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK4-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK4-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK4-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK4-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK4-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK4-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK4-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK4-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK4-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK4-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK4-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK4-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK4-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK4-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK4-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK4-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK4:       .omp.linear.pu.done:
 // CHECK4-NEXT:    ret void
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK4-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK4-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 4
 // CHECK4-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 4
@@ -5895,7 +5851,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK4-SAME: (i32 [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK4-SAME: (i32 noundef [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 4
@@ -5969,7 +5925,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK4-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -5981,7 +5937,7 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK4-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK4-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK4-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -5990,7 +5946,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -6043,11 +5999,11 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK4-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK4-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK4-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK4-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK4-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK4-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK4-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK4:       omp.body.continue:
 // CHECK4-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -6064,7 +6020,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK4-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -6107,7 +6063,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -6250,7 +6206,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK4-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK4-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -6258,22 +6214,22 @@ int bar(int n){
 // CHECK4-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK4-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK4-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK4-NEXT:    [[CALL:%.*]] = call i32 @_Z3fooi(i32 [[TMP0]])
+// CHECK4-NEXT:    [[CALL:%.*]] = call noundef i32 @_Z3fooi(i32 noundef [[TMP0]])
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK4-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK4-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK4-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK4-NEXT:    [[CALL1:%.*]] = call i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 4 dereferenceable(8) [[S]], i32 [[TMP2]])
+// CHECK4-NEXT:    [[CALL1:%.*]] = call noundef i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 4 dereferenceable(8) [[S]], i32 noundef [[TMP2]])
 // CHECK4-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK4-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK4-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK4-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK4-NEXT:    [[CALL3:%.*]] = call i32 @_ZL7fstatici(i32 [[TMP4]])
+// CHECK4-NEXT:    [[CALL3:%.*]] = call noundef i32 @_ZL7fstatici(i32 noundef [[TMP4]])
 // CHECK4-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK4-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK4-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK4-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK4-NEXT:    [[CALL5:%.*]] = call i32 @_Z9ftemplateIiET_i(i32 [[TMP6]])
+// CHECK4-NEXT:    [[CALL5:%.*]] = call noundef i32 @_Z9ftemplateIiET_i(i32 noundef [[TMP6]])
 // CHECK4-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK4-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK4-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -6282,7 +6238,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK4-SAME: (%struct.S1* nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK4-SAME: (%struct.S1* noundef nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK4-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -6395,7 +6351,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK4-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK4-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -6478,7 +6434,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK4-SAME: (i32 [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK4-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -6546,7 +6502,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK4-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK4-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -6571,7 +6527,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -6659,7 +6615,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK4-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -6678,11 +6634,11 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK4-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK4-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK4-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK4-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK4-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK4-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK4-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK4-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK4-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -6691,7 +6647,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -6714,7 +6670,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK4-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK4-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK4-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -6729,7 +6685,7 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK4-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK4-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK4-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK4-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -6738,7 +6694,7 @@ int bar(int n){
 //
 //
 // CHECK4-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK4-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK4-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK4-NEXT:  entry:
 // CHECK4-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK4-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -6793,11 +6749,11 @@ int bar(int n){
 // CHECK4-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK4-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK4-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK4-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK4-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK4-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK4-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK4-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK4-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK4-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK4-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK4-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -6832,7 +6788,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -6909,7 +6865,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK9-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK9-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -6923,15 +6879,15 @@ int bar(int n){
 // CHECK9-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK9-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK9-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK9-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK9-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK9-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK9-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK9-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK9-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK9-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -6940,7 +6896,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -6967,11 +6923,11 @@ int bar(int n){
 // CHECK9-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK9-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK9-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK9-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK9-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK9-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK9-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK9-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -7021,11 +6977,11 @@ int bar(int n){
 // CHECK9-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK9-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK9-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK9-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK9-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK9-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK9-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK9-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK9-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK9-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK9:       omp.body.continue:
 // CHECK9-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -7042,20 +6998,10 @@ int bar(int n){
 // CHECK9-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK9-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK9:       .omp.linear.pu:
-// CHECK9-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK9-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK9-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK9-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK9-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK9-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK9-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK9-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK9-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK9-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK9-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK9-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK9-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK9-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK9-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK9-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK9-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK9-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK9-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK9:       .omp.linear.pu.done:
 // CHECK9-NEXT:    ret void
@@ -7068,7 +7014,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK9-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK9-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -7078,11 +7024,11 @@ int bar(int n){
 // CHECK9-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK9-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK9-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK9-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK9-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK9-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -7091,7 +7037,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7142,14 +7088,14 @@ int bar(int n){
 // CHECK9-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK9-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK9-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK9-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK9-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK9-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK9-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK9-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK9-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK9-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK9-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK9-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK9:       omp.body.continue:
 // CHECK9-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -7166,7 +7112,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK9-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK9-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -7200,11 +7146,11 @@ int bar(int n){
 // CHECK9-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK9-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK9-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK9-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK9-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK9-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK9-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -7213,7 +7159,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7260,7 +7206,7 @@ int bar(int n){
 // CHECK9-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK9-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK9-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK9-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK9-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK9-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK9-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -7296,9 +7242,9 @@ int bar(int n){
 // CHECK9-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK9-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK9-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK9-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK9-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK9-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK9-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK9-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -7358,7 +7304,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK9-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK9-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -7375,15 +7321,15 @@ int bar(int n){
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK9-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK9-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK9-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK9-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK9-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK9-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK9-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK9-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK9-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -7392,7 +7338,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7416,7 +7362,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK9-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK9-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -7434,7 +7380,7 @@ int bar(int n){
 // CHECK9-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK9-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK9-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK9-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK9-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -7443,7 +7389,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7502,7 +7448,7 @@ int bar(int n){
 // CHECK9-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK9-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK9-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK9-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK9-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK9-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -7532,7 +7478,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK9-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK9-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK9-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -7545,11 +7491,11 @@ int bar(int n){
 // CHECK9-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK9-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK9-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK9-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK9-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK9-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK9-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK9-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK9-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -7558,7 +7504,7 @@ int bar(int n){
 //
 //
 // CHECK9-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK9-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK9-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK9-NEXT:  entry:
 // CHECK9-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK9-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7611,14 +7557,14 @@ int bar(int n){
 // CHECK9-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK9-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK9-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK9-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK9-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK9-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK9-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK9-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK9-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK9-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK9-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK9-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK9-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK9-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK9-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK9-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK9-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -7646,7 +7592,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7723,7 +7669,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK10-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK10-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -7737,15 +7683,15 @@ int bar(int n){
 // CHECK10-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK10-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK10-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK10-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK10-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK10-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK10-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK10-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK10-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK10-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -7754,7 +7700,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7781,11 +7727,11 @@ int bar(int n){
 // CHECK10-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK10-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK10-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK10-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK10-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK10-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK10-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK10-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -7835,11 +7781,11 @@ int bar(int n){
 // CHECK10-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK10-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK10-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK10-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK10-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK10-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK10-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK10-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK10-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK10-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK10:       omp.body.continue:
 // CHECK10-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -7856,20 +7802,10 @@ int bar(int n){
 // CHECK10-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK10-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK10:       .omp.linear.pu:
-// CHECK10-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK10-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK10-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK10-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK10-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK10-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK10-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK10-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK10-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK10-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK10-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK10-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK10-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK10-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK10-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK10-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK10-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK10-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK10-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK10:       .omp.linear.pu.done:
 // CHECK10-NEXT:    ret void
@@ -7882,7 +7818,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK10-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK10-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -7892,11 +7828,11 @@ int bar(int n){
 // CHECK10-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK10-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK10-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK10-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK10-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK10-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -7905,7 +7841,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -7956,14 +7892,14 @@ int bar(int n){
 // CHECK10-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK10-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK10-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK10-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK10-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK10-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK10-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK10-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK10-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK10-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK10-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK10-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK10:       omp.body.continue:
 // CHECK10-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -7980,7 +7916,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK10-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK10-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -8014,11 +7950,11 @@ int bar(int n){
 // CHECK10-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK10-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK10-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK10-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK10-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK10-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK10-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -8027,7 +7963,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -8074,7 +8010,7 @@ int bar(int n){
 // CHECK10-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK10-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK10-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK10-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK10-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK10-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK10-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -8110,9 +8046,9 @@ int bar(int n){
 // CHECK10-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK10-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK10-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK10-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK10-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK10-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK10-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK10-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -8172,7 +8108,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK10-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK10-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -8189,15 +8125,15 @@ int bar(int n){
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK10-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK10-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK10-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK10-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK10-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK10-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK10-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK10-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK10-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -8206,7 +8142,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -8230,7 +8166,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK10-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK10-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -8248,7 +8184,7 @@ int bar(int n){
 // CHECK10-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK10-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK10-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK10-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK10-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -8257,7 +8193,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -8316,7 +8252,7 @@ int bar(int n){
 // CHECK10-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK10-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK10-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK10-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK10-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK10-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -8346,7 +8282,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK10-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK10-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK10-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -8359,11 +8295,11 @@ int bar(int n){
 // CHECK10-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK10-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK10-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK10-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK10-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK10-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK10-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK10-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK10-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -8372,7 +8308,7 @@ int bar(int n){
 //
 //
 // CHECK10-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK10-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK10-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK10-NEXT:  entry:
 // CHECK10-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK10-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -8425,14 +8361,14 @@ int bar(int n){
 // CHECK10-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK10-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK10-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK10-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK10-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK10-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK10-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK10-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK10-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK10-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK10-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK10-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK10-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK10-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK10-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK10-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK10-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -8460,7 +8396,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -8537,7 +8473,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK11-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK11-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -8549,7 +8485,7 @@ int bar(int n){
 // CHECK11-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK11-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK11-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK11-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK11-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -8564,7 +8500,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -8593,7 +8529,7 @@ int bar(int n){
 // CHECK11-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK11-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK11-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK11-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK11-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK11-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK11-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -8643,11 +8579,11 @@ int bar(int n){
 // CHECK11-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK11-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK11-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK11-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK11-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK11-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK11-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK11-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK11-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK11:       omp.body.continue:
 // CHECK11-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -8664,20 +8600,10 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK11-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK11:       .omp.linear.pu:
-// CHECK11-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK11-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK11-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK11-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK11-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK11-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK11-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK11-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK11-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK11-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK11-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK11-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK11-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK11-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK11-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK11-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK11-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK11-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK11:       .omp.linear.pu.done:
 // CHECK11-NEXT:    ret void
@@ -8690,7 +8616,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK11-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK11-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -8702,7 +8628,7 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK11-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK11-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK11-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK11-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -8711,7 +8637,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -8764,11 +8690,11 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK11-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK11-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK11-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK11-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK11-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK11-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK11-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK11:       omp.body.continue:
 // CHECK11-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -8785,7 +8711,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK11-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK11-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -8828,7 +8754,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -8971,7 +8897,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK11-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK11-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -8990,11 +8916,11 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK11-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK11-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK11-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK11-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK11-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK11-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK11-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK11-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK11-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -9003,7 +8929,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9026,7 +8952,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK11-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK11-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -9051,7 +8977,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9139,7 +9065,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK11-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK11-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK11-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -9154,7 +9080,7 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK11-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK11-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK11-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK11-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -9163,7 +9089,7 @@ int bar(int n){
 //
 //
 // CHECK11-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK11-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK11-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK11-NEXT:  entry:
 // CHECK11-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK11-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9218,11 +9144,11 @@ int bar(int n){
 // CHECK11-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK11-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK11-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK11-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK11-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK11-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK11-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK11-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK11-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK11-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK11-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK11-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -9250,7 +9176,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9327,7 +9253,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK12-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK12-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -9339,7 +9265,7 @@ int bar(int n){
 // CHECK12-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK12-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK12-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK12-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK12-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -9354,7 +9280,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9383,7 +9309,7 @@ int bar(int n){
 // CHECK12-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK12-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK12-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK12-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK12-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK12-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK12-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -9433,11 +9359,11 @@ int bar(int n){
 // CHECK12-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK12-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK12-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK12-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK12-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK12-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK12-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK12-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK12-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK12:       omp.body.continue:
 // CHECK12-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -9454,20 +9380,10 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK12-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK12:       .omp.linear.pu:
-// CHECK12-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK12-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK12-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK12-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK12-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK12-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK12-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK12-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK12-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK12-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK12-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK12-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK12-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK12-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK12-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK12-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK12-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK12-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK12:       .omp.linear.pu.done:
 // CHECK12-NEXT:    ret void
@@ -9480,7 +9396,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK12-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK12-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -9492,7 +9408,7 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK12-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK12-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK12-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK12-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -9501,7 +9417,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9554,11 +9470,11 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK12-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK12-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK12-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK12-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK12-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK12-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK12-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK12:       omp.body.continue:
 // CHECK12-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -9575,7 +9491,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK12-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK12-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -9618,7 +9534,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9761,7 +9677,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK12-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK12-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -9780,11 +9696,11 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK12-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK12-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK12-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK12-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK12-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK12-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK12-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK12-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK12-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -9793,7 +9709,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9816,7 +9732,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK12-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK12-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -9841,7 +9757,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -9929,7 +9845,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK12-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK12-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK12-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -9944,7 +9860,7 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK12-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK12-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK12-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK12-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -9953,7 +9869,7 @@ int bar(int n){
 //
 //
 // CHECK12-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK12-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK12-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK12-NEXT:  entry:
 // CHECK12-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK12-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -10008,11 +9924,11 @@ int bar(int n){
 // CHECK12-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK12-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK12-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK12-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK12-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK12-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK12-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK12-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK12-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK12-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK12-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK12-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -10039,7 +9955,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK17-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK17-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK17-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -10095,7 +10011,7 @@ int bar(int n){
 // CHECK17-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK17-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK17:       omp_offload.cont:
-// CHECK17-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK17-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK17-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK17-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A]], align 4
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_CASTED]] to i32*
@@ -10365,7 +10281,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -10442,7 +10358,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK17-SAME: (i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[K_ADDR:%.*]] = alloca i64, align 8
@@ -10451,7 +10367,7 @@ int bar(int n){
 // CHECK17-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK17-NEXT:    store i64 [[K]], i64* [[K_ADDR]], align 8
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP0]], i32* [[CONV1]], align 4
 // CHECK17-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -10463,7 +10379,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -10518,9 +10434,9 @@ int bar(int n){
 // CHECK17-NEXT:    [[CONV3:%.*]] = sext i32 [[MUL2]] to i64
 // CHECK17-NEXT:    [[ADD:%.*]] = add nsw i64 [[TMP8]], [[CONV3]]
 // CHECK17-NEXT:    store i64 [[ADD]], i64* [[K1]], align 8, !llvm.access.group !12
-// CHECK17-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK17-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK17-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP10]], 1
-// CHECK17-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK17-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK17-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK17:       omp.body.continue:
 // CHECK17-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -10538,16 +10454,15 @@ int bar(int n){
 // CHECK17-NEXT:    [[TMP13:%.*]] = icmp ne i32 [[TMP12]], 0
 // CHECK17-NEXT:    br i1 [[TMP13]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK17:       .omp.linear.pu:
-// CHECK17-NEXT:    [[TMP14:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK17-NEXT:    [[ADD6:%.*]] = add nsw i64 [[TMP14]], 27
-// CHECK17-NEXT:    store i64 [[ADD6]], i64* [[K_ADDR]], align 8
+// CHECK17-NEXT:    [[TMP14:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK17-NEXT:    store i64 [[TMP14]], i64* [[K_ADDR]], align 8
 // CHECK17-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK17:       .omp.linear.pu.done:
 // CHECK17-NEXT:    ret void
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK17-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -10561,15 +10476,15 @@ int bar(int n){
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK17-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK17-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK17-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK17-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK17-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK17-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK17-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK17-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK17-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK17-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK17-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -10578,7 +10493,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -10605,11 +10520,11 @@ int bar(int n){
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK17-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK17-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK17-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK17-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK17-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK17-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK17-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK17-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -10659,11 +10574,11 @@ int bar(int n){
 // CHECK17-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK17-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK17-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK17-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK17-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK17-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK17-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK17-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK17-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK17-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK17:       omp.body.continue:
 // CHECK17-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -10680,27 +10595,17 @@ int bar(int n){
 // CHECK17-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK17-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK17:       .omp.linear.pu:
-// CHECK17-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK17-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK17-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK17-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK17-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK17-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK17-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK17-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK17-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK17-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK17-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK17-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK17-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK17-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK17-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK17-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK17-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK17-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK17-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK17:       .omp.linear.pu.done:
 // CHECK17-NEXT:    ret void
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK17-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK17-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 8
 // CHECK17-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 8
@@ -10729,7 +10634,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK17-SAME: (i32 signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK17-SAME: (i32 noundef signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK17-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 8
@@ -10805,7 +10710,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK17-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -10815,11 +10720,11 @@ int bar(int n){
 // CHECK17-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK17-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK17-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK17-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK17-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -10828,7 +10733,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -10879,14 +10784,14 @@ int bar(int n){
 // CHECK17-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK17-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK17-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK17-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK17-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK17-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK17-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK17-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK17-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK17-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK17-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK17-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK17:       omp.body.continue:
 // CHECK17-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -10903,7 +10808,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK17-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -10937,11 +10842,11 @@ int bar(int n){
 // CHECK17-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK17-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK17-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK17-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK17-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK17-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK17-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -10950,7 +10855,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -10997,7 +10902,7 @@ int bar(int n){
 // CHECK17-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK17-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK17-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK17-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK17-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK17-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK17-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -11033,9 +10938,9 @@ int bar(int n){
 // CHECK17-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK17-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK17-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK17-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK17-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK17-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK17-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK17-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -11095,7 +11000,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK17-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK17-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK17-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -11103,22 +11008,22 @@ int bar(int n){
 // CHECK17-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK17-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK17-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK17-NEXT:    [[CALL:%.*]] = call signext i32 @_Z3fooi(i32 signext [[TMP0]])
+// CHECK17-NEXT:    [[CALL:%.*]] = call noundef signext i32 @_Z3fooi(i32 noundef signext [[TMP0]])
 // CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK17-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK17-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK17-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK17-NEXT:    [[CALL1:%.*]] = call signext i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 8 dereferenceable(8) [[S]], i32 signext [[TMP2]])
+// CHECK17-NEXT:    [[CALL1:%.*]] = call noundef signext i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 8 dereferenceable(8) [[S]], i32 noundef signext [[TMP2]])
 // CHECK17-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK17-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK17-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK17-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK17-NEXT:    [[CALL3:%.*]] = call signext i32 @_ZL7fstatici(i32 signext [[TMP4]])
+// CHECK17-NEXT:    [[CALL3:%.*]] = call noundef signext i32 @_ZL7fstatici(i32 noundef signext [[TMP4]])
 // CHECK17-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK17-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK17-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK17-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK17-NEXT:    [[CALL5:%.*]] = call signext i32 @_Z9ftemplateIiET_i(i32 signext [[TMP6]])
+// CHECK17-NEXT:    [[CALL5:%.*]] = call noundef signext i32 @_Z9ftemplateIiET_i(i32 noundef signext [[TMP6]])
 // CHECK17-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK17-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK17-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -11127,7 +11032,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK17-SAME: (%struct.S1* nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK17-SAME: (%struct.S1* noundef nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK17-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -11241,7 +11146,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK17-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK17-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK17-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -11325,7 +11230,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK17-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK17-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK17-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -11394,7 +11299,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK17-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK17-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -11412,7 +11317,7 @@ int bar(int n){
 // CHECK17-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK17-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK17-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK17-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK17-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -11421,7 +11326,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -11480,7 +11385,7 @@ int bar(int n){
 // CHECK17-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK17-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK17-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK17-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK17-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK17-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -11510,7 +11415,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK17-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -11527,15 +11432,15 @@ int bar(int n){
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK17-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK17-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK17-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK17-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK17-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK17-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK17-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK17-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK17-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK17-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -11544,7 +11449,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -11568,7 +11473,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK17-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK17-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK17-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -11581,11 +11486,11 @@ int bar(int n){
 // CHECK17-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK17-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK17-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK17-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK17-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK17-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK17-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK17-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK17-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -11594,7 +11499,7 @@ int bar(int n){
 //
 //
 // CHECK17-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK17-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK17-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK17-NEXT:  entry:
 // CHECK17-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK17-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -11647,14 +11552,14 @@ int bar(int n){
 // CHECK17-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK17-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK17-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK17-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK17-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK17-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK17-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK17-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK17-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK17-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK17-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK17-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK17-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK17-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK17-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK17-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK17-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -11688,7 +11593,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK18-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK18-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK18-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -11744,7 +11649,7 @@ int bar(int n){
 // CHECK18-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK18-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK18:       omp_offload.cont:
-// CHECK18-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK18-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK18-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK18-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A]], align 4
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_CASTED]] to i32*
@@ -12014,7 +11919,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -12091,7 +11996,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK18-SAME: (i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[K_ADDR:%.*]] = alloca i64, align 8
@@ -12100,7 +12005,7 @@ int bar(int n){
 // CHECK18-NEXT:    store i64 [[A]], i64* [[A_ADDR]], align 8
 // CHECK18-NEXT:    store i64 [[K]], i64* [[K_ADDR]], align 8
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP0]], i32* [[CONV1]], align 4
 // CHECK18-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -12112,7 +12017,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[K:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[K:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -12167,9 +12072,9 @@ int bar(int n){
 // CHECK18-NEXT:    [[CONV3:%.*]] = sext i32 [[MUL2]] to i64
 // CHECK18-NEXT:    [[ADD:%.*]] = add nsw i64 [[TMP8]], [[CONV3]]
 // CHECK18-NEXT:    store i64 [[ADD]], i64* [[K1]], align 8, !llvm.access.group !12
-// CHECK18-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK18-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK18-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP10]], 1
-// CHECK18-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8, !llvm.access.group !12
+// CHECK18-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4, !llvm.access.group !12
 // CHECK18-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK18:       omp.body.continue:
 // CHECK18-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -12187,16 +12092,15 @@ int bar(int n){
 // CHECK18-NEXT:    [[TMP13:%.*]] = icmp ne i32 [[TMP12]], 0
 // CHECK18-NEXT:    br i1 [[TMP13]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK18:       .omp.linear.pu:
-// CHECK18-NEXT:    [[TMP14:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK18-NEXT:    [[ADD6:%.*]] = add nsw i64 [[TMP14]], 27
-// CHECK18-NEXT:    store i64 [[ADD6]], i64* [[K_ADDR]], align 8
+// CHECK18-NEXT:    [[TMP14:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK18-NEXT:    store i64 [[TMP14]], i64* [[K_ADDR]], align 8
 // CHECK18-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK18:       .omp.linear.pu.done:
 // CHECK18-NEXT:    ret void
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK18-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -12210,15 +12114,15 @@ int bar(int n){
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK18-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK18-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK18-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK18-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK18-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK18-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK18-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK18-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK18-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK18-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK18-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -12227,7 +12131,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -12254,11 +12158,11 @@ int bar(int n){
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK18-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK18-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK18-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK18-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK18-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK18-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK18-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK18-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -12308,11 +12212,11 @@ int bar(int n){
 // CHECK18-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK18-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK18-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK18-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK18-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK18-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK18-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK18-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK18-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK18-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK18:       omp.body.continue:
 // CHECK18-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -12329,27 +12233,17 @@ int bar(int n){
 // CHECK18-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK18-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK18:       .omp.linear.pu:
-// CHECK18-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK18-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK18-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK18-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK18-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK18-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK18-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK18-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK18-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK18-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK18-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK18-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK18-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK18-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK18-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK18-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK18-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK18-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK18-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK18:       .omp.linear.pu.done:
 // CHECK18-NEXT:    ret void
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK18-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK18-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 8
 // CHECK18-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 8
@@ -12378,7 +12272,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK18-SAME: (i32 signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK18-SAME: (i32 noundef signext [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK18-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 8
@@ -12454,7 +12348,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK18-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -12464,11 +12358,11 @@ int bar(int n){
 // CHECK18-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK18-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK18-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK18-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK18-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -12477,7 +12371,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -12528,14 +12422,14 @@ int bar(int n){
 // CHECK18-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK18-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK18-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK18-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK18-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK18-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK18-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK18-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK18-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK18-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK18-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK18-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK18:       omp.body.continue:
 // CHECK18-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -12552,7 +12446,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK18-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -12586,11 +12480,11 @@ int bar(int n){
 // CHECK18-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK18-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK18-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK18-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK18-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK18-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK18-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -12599,7 +12493,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -12646,7 +12540,7 @@ int bar(int n){
 // CHECK18-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK18-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK18-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK18-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK18-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK18-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK18-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -12682,9 +12576,9 @@ int bar(int n){
 // CHECK18-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK18-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK18-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK18-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK18-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK18-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK18-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK18-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -12744,7 +12638,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK18-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK18-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK18-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -12752,22 +12646,22 @@ int bar(int n){
 // CHECK18-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK18-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK18-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK18-NEXT:    [[CALL:%.*]] = call signext i32 @_Z3fooi(i32 signext [[TMP0]])
+// CHECK18-NEXT:    [[CALL:%.*]] = call noundef signext i32 @_Z3fooi(i32 noundef signext [[TMP0]])
 // CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK18-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK18-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK18-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK18-NEXT:    [[CALL1:%.*]] = call signext i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 8 dereferenceable(8) [[S]], i32 signext [[TMP2]])
+// CHECK18-NEXT:    [[CALL1:%.*]] = call noundef signext i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 8 dereferenceable(8) [[S]], i32 noundef signext [[TMP2]])
 // CHECK18-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK18-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK18-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK18-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK18-NEXT:    [[CALL3:%.*]] = call signext i32 @_ZL7fstatici(i32 signext [[TMP4]])
+// CHECK18-NEXT:    [[CALL3:%.*]] = call noundef signext i32 @_ZL7fstatici(i32 noundef signext [[TMP4]])
 // CHECK18-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK18-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK18-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK18-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK18-NEXT:    [[CALL5:%.*]] = call signext i32 @_Z9ftemplateIiET_i(i32 signext [[TMP6]])
+// CHECK18-NEXT:    [[CALL5:%.*]] = call noundef signext i32 @_Z9ftemplateIiET_i(i32 noundef signext [[TMP6]])
 // CHECK18-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK18-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK18-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -12776,7 +12670,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK18-SAME: (%struct.S1* nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK18-SAME: (%struct.S1* noundef nonnull align 8 dereferenceable(8) [[THIS:%.*]], i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK18-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -12890,7 +12784,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK18-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] {
+// CHECK18-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK18-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -12974,7 +12868,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK18-SAME: (i32 signext [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK18-SAME: (i32 noundef signext [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK18-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -13043,7 +12937,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK18-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK18-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -13061,7 +12955,7 @@ int bar(int n){
 // CHECK18-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK18-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK18-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK18-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK18-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -13070,7 +12964,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -13129,7 +13023,7 @@ int bar(int n){
 // CHECK18-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK18-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK18-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK18-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK18-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK18-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -13159,7 +13053,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK18-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -13176,15 +13070,15 @@ int bar(int n){
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK18-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK18-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK18-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK18-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK18-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK18-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK18-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK18-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK18-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK18-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -13193,7 +13087,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -13217,7 +13111,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK18-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK18-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK18-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -13230,11 +13124,11 @@ int bar(int n){
 // CHECK18-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK18-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK18-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK18-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK18-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK18-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK18-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK18-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK18-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -13243,7 +13137,7 @@ int bar(int n){
 //
 //
 // CHECK18-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK18-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK18-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK18-NEXT:  entry:
 // CHECK18-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK18-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -13296,14 +13190,14 @@ int bar(int n){
 // CHECK18-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK18-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK18-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK18-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK18-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK18-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK18-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK18-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK18-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK18-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK18-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK18-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK18-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK18-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK18-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK18-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK18-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -13337,7 +13231,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK19-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK19-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -13390,7 +13284,7 @@ int bar(int n){
 // CHECK19-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK19-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK19:       omp_offload.cont:
-// CHECK19-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK19-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK19-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK19-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK19-NEXT:    store i32 [[TMP7]], i32* [[A_CASTED]], align 4
@@ -13653,7 +13547,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -13730,7 +13624,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK19-SAME: (i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[K_ADDR:%.*]] = alloca i64*, align 4
@@ -13746,7 +13640,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -13821,16 +13715,15 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP14:%.*]] = icmp ne i32 [[TMP13]], 0
 // CHECK19-NEXT:    br i1 [[TMP14]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK19:       .omp.linear.pu:
-// CHECK19-NEXT:    [[TMP15:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK19-NEXT:    [[ADD5:%.*]] = add nsw i64 [[TMP15]], 27
-// CHECK19-NEXT:    store i64 [[ADD5]], i64* [[TMP0]], align 8
+// CHECK19-NEXT:    [[TMP15:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK19-NEXT:    store i64 [[TMP15]], i64* [[TMP0]], align 8
 // CHECK19-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK19:       .omp.linear.pu.done:
 // CHECK19-NEXT:    ret void
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK19-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -13842,7 +13735,7 @@ int bar(int n){
 // CHECK19-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK19-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK19-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK19-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -13857,7 +13750,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -13886,7 +13779,7 @@ int bar(int n){
 // CHECK19-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK19-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK19-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK19-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK19-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK19-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -13936,11 +13829,11 @@ int bar(int n){
 // CHECK19-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK19-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK19-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK19-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK19-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK19-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK19-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK19-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK19-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK19:       omp.body.continue:
 // CHECK19-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -13957,27 +13850,17 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK19-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK19:       .omp.linear.pu:
-// CHECK19-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK19-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK19-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK19-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK19-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK19-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK19-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK19-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK19-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK19-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK19-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK19-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK19-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK19-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK19-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK19-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK19-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK19-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK19:       .omp.linear.pu.done:
 // CHECK19-NEXT:    ret void
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK19-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK19-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 4
 // CHECK19-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 4
@@ -14006,7 +13889,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK19-SAME: (i32 [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK19-SAME: (i32 noundef [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 4
@@ -14080,7 +13963,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK19-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -14092,7 +13975,7 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK19-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK19-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK19-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -14101,7 +13984,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -14154,11 +14037,11 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK19-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK19-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK19-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK19-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK19-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK19-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK19-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK19:       omp.body.continue:
 // CHECK19-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -14175,7 +14058,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK19-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -14218,7 +14101,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -14361,7 +14244,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK19-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK19-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -14369,22 +14252,22 @@ int bar(int n){
 // CHECK19-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK19-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK19-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK19-NEXT:    [[CALL:%.*]] = call i32 @_Z3fooi(i32 [[TMP0]])
+// CHECK19-NEXT:    [[CALL:%.*]] = call noundef i32 @_Z3fooi(i32 noundef [[TMP0]])
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK19-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK19-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK19-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK19-NEXT:    [[CALL1:%.*]] = call i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 4 dereferenceable(8) [[S]], i32 [[TMP2]])
+// CHECK19-NEXT:    [[CALL1:%.*]] = call noundef i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 4 dereferenceable(8) [[S]], i32 noundef [[TMP2]])
 // CHECK19-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK19-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK19-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK19-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK19-NEXT:    [[CALL3:%.*]] = call i32 @_ZL7fstatici(i32 [[TMP4]])
+// CHECK19-NEXT:    [[CALL3:%.*]] = call noundef i32 @_ZL7fstatici(i32 noundef [[TMP4]])
 // CHECK19-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK19-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK19-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK19-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK19-NEXT:    [[CALL5:%.*]] = call i32 @_Z9ftemplateIiET_i(i32 [[TMP6]])
+// CHECK19-NEXT:    [[CALL5:%.*]] = call noundef i32 @_Z9ftemplateIiET_i(i32 noundef [[TMP6]])
 // CHECK19-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK19-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK19-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -14393,7 +14276,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK19-SAME: (%struct.S1* nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK19-SAME: (%struct.S1* noundef nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK19-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -14506,7 +14389,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK19-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK19-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -14589,7 +14472,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK19-SAME: (i32 [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK19-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -14657,7 +14540,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK19-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK19-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -14682,7 +14565,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -14770,7 +14653,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK19-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -14789,11 +14672,11 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK19-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK19-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK19-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK19-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK19-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK19-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK19-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK19-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK19-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -14802,7 +14685,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -14825,7 +14708,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK19-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK19-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK19-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -14840,7 +14723,7 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK19-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK19-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK19-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK19-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -14849,7 +14732,7 @@ int bar(int n){
 //
 //
 // CHECK19-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK19-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK19-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK19-NEXT:  entry:
 // CHECK19-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK19-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -14904,11 +14787,11 @@ int bar(int n){
 // CHECK19-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK19-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK19-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK19-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK19-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK19-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK19-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK19-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK19-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK19-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK19-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK19-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -14942,7 +14825,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@_Z3fooi
-// CHECK20-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK20-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -14995,7 +14878,7 @@ int bar(int n){
 // CHECK20-NEXT:    call void @{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l103() #[[ATTR4:[0-9]+]]
 // CHECK20-NEXT:    br label [[OMP_OFFLOAD_CONT]]
 // CHECK20:       omp_offload.cont:
-// CHECK20-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK20-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK20-NEXT:    store i64 [[CALL]], i64* [[K]], align 8
 // CHECK20-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK20-NEXT:    store i32 [[TMP7]], i32* [[A_CASTED]], align 4
@@ -15258,7 +15141,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR3:[0-9]+]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -15335,7 +15218,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l110
-// CHECK20-SAME: (i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[K_ADDR:%.*]] = alloca i64*, align 4
@@ -15351,7 +15234,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i64* nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i64* noundef nonnull align 4 dereferenceable(8) [[K:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -15426,16 +15309,15 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP14:%.*]] = icmp ne i32 [[TMP13]], 0
 // CHECK20-NEXT:    br i1 [[TMP14]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK20:       .omp.linear.pu:
-// CHECK20-NEXT:    [[TMP15:%.*]] = load i64, i64* [[DOTLINEAR_START]], align 8
-// CHECK20-NEXT:    [[ADD5:%.*]] = add nsw i64 [[TMP15]], 27
-// CHECK20-NEXT:    store i64 [[ADD5]], i64* [[TMP0]], align 8
+// CHECK20-NEXT:    [[TMP15:%.*]] = load i64, i64* [[K1]], align 8
+// CHECK20-NEXT:    store i64 [[TMP15]], i64* [[TMP0]], align 8
 // CHECK20-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK20:       .omp.linear.pu.done:
 // CHECK20-NEXT:    ret void
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK20-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -15447,7 +15329,7 @@ int bar(int n){
 // CHECK20-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK20-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK20-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK20-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -15462,7 +15344,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -15491,7 +15373,7 @@ int bar(int n){
 // CHECK20-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK20-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv()
+// CHECK20-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv()
 // CHECK20-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK20-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK20-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -15541,11 +15423,11 @@ int bar(int n){
 // CHECK20-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK20-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK20-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK20-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK20-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK20-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK20-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK20-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK20-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK20:       omp.body.continue:
 // CHECK20-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -15562,27 +15444,17 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK20-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK20:       .omp.linear.pu:
-// CHECK20-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK20-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK20-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK20-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK20-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK20-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK20-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK20-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK20-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK20-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK20-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK20-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK20-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK20-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK20-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK20-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK20-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK20-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK20:       .omp.linear.pu.done:
 // CHECK20-NEXT:    ret void
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_task_privates_map.
-// CHECK20-SAME: (%struct..kmp_privates.t* noalias [[TMP0:%.*]], i16** noalias [[TMP1:%.*]], [3 x i8*]** noalias [[TMP2:%.*]], [3 x i8*]** noalias [[TMP3:%.*]], [3 x i64]** noalias [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
+// CHECK20-SAME: (%struct..kmp_privates.t* noalias noundef [[TMP0:%.*]], i16** noalias noundef [[TMP1:%.*]], [3 x i8*]** noalias noundef [[TMP2:%.*]], [3 x i8*]** noalias noundef [[TMP3:%.*]], [3 x i64]** noalias noundef [[TMP4:%.*]]) #[[ATTR6:[0-9]+]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTADDR:%.*]] = alloca %struct..kmp_privates.t*, align 4
 // CHECK20-NEXT:    [[DOTADDR1:%.*]] = alloca i16**, align 4
@@ -15611,7 +15483,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_task_entry.
-// CHECK20-SAME: (i32 [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
+// CHECK20-SAME: (i32 noundef [[TMP0:%.*]], %struct.kmp_task_t_with_privates* noalias noundef [[TMP1:%.*]]) #[[ATTR7:[0-9]+]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR_I:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[DOTPART_ID__ADDR_I:%.*]] = alloca i32*, align 4
@@ -15685,7 +15557,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK20-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -15697,7 +15569,7 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK20-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK20-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK20-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -15706,7 +15578,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -15759,11 +15631,11 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK20-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK20-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK20-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK20-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK20-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK20-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK20-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK20:       omp.body.continue:
 // CHECK20-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -15780,7 +15652,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK20-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -15823,7 +15695,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..7
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -15966,7 +15838,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@_Z3bari
-// CHECK20-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK20-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -15974,22 +15846,22 @@ int bar(int n){
 // CHECK20-NEXT:    store i32 [[N]], i32* [[N_ADDR]], align 4
 // CHECK20-NEXT:    store i32 0, i32* [[A]], align 4
 // CHECK20-NEXT:    [[TMP0:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK20-NEXT:    [[CALL:%.*]] = call i32 @_Z3fooi(i32 [[TMP0]])
+// CHECK20-NEXT:    [[CALL:%.*]] = call noundef i32 @_Z3fooi(i32 noundef [[TMP0]])
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A]], align 4
 // CHECK20-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[CALL]]
 // CHECK20-NEXT:    store i32 [[ADD]], i32* [[A]], align 4
 // CHECK20-NEXT:    [[TMP2:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK20-NEXT:    [[CALL1:%.*]] = call i32 @_ZN2S12r1Ei(%struct.S1* nonnull align 4 dereferenceable(8) [[S]], i32 [[TMP2]])
+// CHECK20-NEXT:    [[CALL1:%.*]] = call noundef i32 @_ZN2S12r1Ei(%struct.S1* noundef nonnull align 4 dereferenceable(8) [[S]], i32 noundef [[TMP2]])
 // CHECK20-NEXT:    [[TMP3:%.*]] = load i32, i32* [[A]], align 4
 // CHECK20-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP3]], [[CALL1]]
 // CHECK20-NEXT:    store i32 [[ADD2]], i32* [[A]], align 4
 // CHECK20-NEXT:    [[TMP4:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK20-NEXT:    [[CALL3:%.*]] = call i32 @_ZL7fstatici(i32 [[TMP4]])
+// CHECK20-NEXT:    [[CALL3:%.*]] = call noundef i32 @_ZL7fstatici(i32 noundef [[TMP4]])
 // CHECK20-NEXT:    [[TMP5:%.*]] = load i32, i32* [[A]], align 4
 // CHECK20-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP5]], [[CALL3]]
 // CHECK20-NEXT:    store i32 [[ADD4]], i32* [[A]], align 4
 // CHECK20-NEXT:    [[TMP6:%.*]] = load i32, i32* [[N_ADDR]], align 4
-// CHECK20-NEXT:    [[CALL5:%.*]] = call i32 @_Z9ftemplateIiET_i(i32 [[TMP6]])
+// CHECK20-NEXT:    [[CALL5:%.*]] = call noundef i32 @_Z9ftemplateIiET_i(i32 noundef [[TMP6]])
 // CHECK20-NEXT:    [[TMP7:%.*]] = load i32, i32* [[A]], align 4
 // CHECK20-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP7]], [[CALL5]]
 // CHECK20-NEXT:    store i32 [[ADD6]], i32* [[A]], align 4
@@ -15998,7 +15870,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@_ZN2S12r1Ei
-// CHECK20-SAME: (%struct.S1* nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 [[N:%.*]]) #[[ATTR0]] comdat align 2 {
+// CHECK20-SAME: (%struct.S1* noundef nonnull align 4 dereferenceable(8) [[THIS:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] comdat align 2 {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK20-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
@@ -16111,7 +15983,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@_ZL7fstatici
-// CHECK20-SAME: (i32 [[N:%.*]]) #[[ATTR0]] {
+// CHECK20-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -16194,7 +16066,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@_Z9ftemplateIiET_i
-// CHECK20-SAME: (i32 [[N:%.*]]) #[[ATTR0]] comdat {
+// CHECK20-SAME: (i32 noundef [[N:%.*]]) #[[ATTR0]] comdat {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[A:%.*]] = alloca i32, align 4
@@ -16262,7 +16134,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK20-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK20-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -16287,7 +16159,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..9
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -16375,7 +16247,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK20-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -16394,11 +16266,11 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK20-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK20-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK20-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK20-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK20-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK20-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK20-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK20-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK20-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -16407,7 +16279,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..11
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -16430,7 +16302,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK20-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
+// CHECK20-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR2]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK20-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -16445,7 +16317,7 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK20-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK20-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK20-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK20-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -16454,7 +16326,7 @@ int bar(int n){
 //
 //
 // CHECK20-LABEL: define {{[^@]+}}@.omp_outlined..14
-// CHECK20-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
+// CHECK20-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR3]] {
 // CHECK20-NEXT:  entry:
 // CHECK20-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK20-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -16509,11 +16381,11 @@ int bar(int n){
 // CHECK20-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK20-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK20-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK20-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK20-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK20-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK20-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK20-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK20-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK20-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK20-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK20-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -16548,7 +16420,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -16625,7 +16497,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK25-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK25-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -16639,15 +16511,15 @@ int bar(int n){
 // CHECK25-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK25-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK25-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK25-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK25-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK25-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK25-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK25-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK25-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK25-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK25-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK25-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK25-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -16656,7 +16528,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -16683,11 +16555,11 @@ int bar(int n){
 // CHECK25-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK25-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK25-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK25-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK25-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK25-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK25-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK25-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK25-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK25-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK25-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK25-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -16737,11 +16609,11 @@ int bar(int n){
 // CHECK25-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK25-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK25-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK25-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK25-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK25-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK25-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK25-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK25-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK25-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK25:       omp.body.continue:
 // CHECK25-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -16758,20 +16630,10 @@ int bar(int n){
 // CHECK25-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK25-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK25:       .omp.linear.pu:
-// CHECK25-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK25-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK25-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK25-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK25-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK25-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK25-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK25-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK25-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK25-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK25-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK25-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK25-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK25-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK25-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK25-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK25-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK25-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK25-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK25:       .omp.linear.pu.done:
 // CHECK25-NEXT:    ret void
@@ -16784,7 +16646,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK25-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK25-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -16794,11 +16656,11 @@ int bar(int n){
 // CHECK25-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK25-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK25-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK25-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK25-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK25-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK25-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK25-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -16807,7 +16669,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -16858,14 +16720,14 @@ int bar(int n){
 // CHECK25-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK25-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK25-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK25-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK25-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK25-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK25-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK25-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK25-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK25-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK25-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK25-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK25:       omp.body.continue:
 // CHECK25-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -16882,7 +16744,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK25-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK25-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -16916,11 +16778,11 @@ int bar(int n){
 // CHECK25-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK25-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK25-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK25-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK25-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK25-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK25-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -16929,7 +16791,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -16976,7 +16838,7 @@ int bar(int n){
 // CHECK25-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK25-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK25-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK25-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK25-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK25-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK25-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -17012,9 +16874,9 @@ int bar(int n){
 // CHECK25-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK25-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK25-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK25-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK25-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK25-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK25-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK25-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -17074,7 +16936,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK25-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK25-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -17091,15 +16953,15 @@ int bar(int n){
 // CHECK25-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK25-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK25-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK25-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK25-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK25-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK25-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK25-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK25-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK25-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK25-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -17108,7 +16970,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17132,7 +16994,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK25-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK25-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -17150,7 +17012,7 @@ int bar(int n){
 // CHECK25-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK25-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK25-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK25-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK25-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -17159,7 +17021,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17218,7 +17080,7 @@ int bar(int n){
 // CHECK25-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK25-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK25-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK25-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK25-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK25-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -17248,7 +17110,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK25-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK25-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK25-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -17261,11 +17123,11 @@ int bar(int n){
 // CHECK25-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK25-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK25-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK25-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK25-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK25-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK25-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK25-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK25-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -17274,7 +17136,7 @@ int bar(int n){
 //
 //
 // CHECK25-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK25-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK25-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK25-NEXT:  entry:
 // CHECK25-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK25-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17327,14 +17189,14 @@ int bar(int n){
 // CHECK25-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK25-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK25-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK25-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK25-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK25-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK25-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK25-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK25-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK25-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK25-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK25-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK25-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK25-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK25-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK25-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK25-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -17362,7 +17224,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17439,7 +17301,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK26-SAME: (i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
 // CHECK26-NEXT:    [[LIN_ADDR:%.*]] = alloca i64, align 8
@@ -17453,15 +17315,15 @@ int bar(int n){
 // CHECK26-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK26-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK26-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK26-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK26-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK26-NEXT:    store i16 [[TMP0]], i16* [[CONV3]], align 2
 // CHECK26-NEXT:    [[TMP1:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK26-NEXT:    [[TMP2:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK26-NEXT:    [[CONV4:%.*]] = bitcast i64* [[LIN_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP2]], i32* [[CONV4]], align 4
 // CHECK26-NEXT:    [[TMP3:%.*]] = load i64, i64* [[LIN_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK26-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK26-NEXT:    [[CONV5:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP4]], i32* [[CONV5]], align 4
 // CHECK26-NEXT:    [[TMP5:%.*]] = load i64, i64* [[A_CASTED]], align 8
@@ -17470,7 +17332,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[AA:%.*]], i64 [[LIN:%.*]], i64 [[A:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[LIN:%.*]], i64 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17497,11 +17359,11 @@ int bar(int n){
 // CHECK26-NEXT:    [[CONV:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK26-NEXT:    [[CONV1:%.*]] = bitcast i64* [[LIN_ADDR]] to i32*
 // CHECK26-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_ADDR]] to i32*
-// CHECK26-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 8
+// CHECK26-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV1]], align 4
 // CHECK26-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
-// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 8
+// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV2]], align 4
 // CHECK26-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START3]], align 4
-// CHECK26-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK26-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK26-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK26-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK26-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -17551,11 +17413,11 @@ int bar(int n){
 // CHECK26-NEXT:    [[ADD12:%.*]] = add i64 [[CONV10]], [[MUL11]]
 // CHECK26-NEXT:    [[CONV13:%.*]] = trunc i64 [[ADD12]] to i32
 // CHECK26-NEXT:    store i32 [[CONV13]], i32* [[A5]], align 4
-// CHECK26-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK26-NEXT:    [[CONV14:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK26-NEXT:    [[ADD15:%.*]] = add nsw i32 [[CONV14]], 1
 // CHECK26-NEXT:    [[CONV16:%.*]] = trunc i32 [[ADD15]] to i16
-// CHECK26-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 8
+// CHECK26-NEXT:    store i16 [[CONV16]], i16* [[CONV]], align 2
 // CHECK26-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK26:       omp.body.continue:
 // CHECK26-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -17572,20 +17434,10 @@ int bar(int n){
 // CHECK26-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK26-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK26:       .omp.linear.pu:
-// CHECK26-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK26-NEXT:    [[CONV18:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK26-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK26-NEXT:    [[MUL19:%.*]] = mul i64 4, [[TMP21]]
-// CHECK26-NEXT:    [[ADD20:%.*]] = add i64 [[CONV18]], [[MUL19]]
-// CHECK26-NEXT:    [[CONV21:%.*]] = trunc i64 [[ADD20]] to i32
-// CHECK26-NEXT:    store i32 [[CONV21]], i32* [[CONV1]], align 8
-// CHECK26-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START3]], align 4
-// CHECK26-NEXT:    [[CONV22:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK26-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK26-NEXT:    [[MUL23:%.*]] = mul i64 4, [[TMP23]]
-// CHECK26-NEXT:    [[ADD24:%.*]] = add i64 [[CONV22]], [[MUL23]]
-// CHECK26-NEXT:    [[CONV25:%.*]] = trunc i64 [[ADD24]] to i32
-// CHECK26-NEXT:    store i32 [[CONV25]], i32* [[CONV2]], align 8
+// CHECK26-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN4]], align 4
+// CHECK26-NEXT:    store i32 [[TMP20]], i32* [[CONV1]], align 4
+// CHECK26-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A5]], align 4
+// CHECK26-NEXT:    store i32 [[TMP21]], i32* [[CONV2]], align 4
 // CHECK26-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK26:       .omp.linear.pu.done:
 // CHECK26-NEXT:    ret void
@@ -17598,7 +17450,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK26-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK26-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -17608,11 +17460,11 @@ int bar(int n){
 // CHECK26-NEXT:    store i64 [[AA]], i64* [[AA_ADDR]], align 8
 // CHECK26-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK26-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
-// CHECK26-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP0:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP0]], i32* [[CONV2]], align 4
 // CHECK26-NEXT:    [[TMP1:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK26-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK26-NEXT:    store i16 [[TMP2]], i16* [[CONV3]], align 2
 // CHECK26-NEXT:    [[TMP3:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -17621,7 +17473,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17672,14 +17524,14 @@ int bar(int n){
 // CHECK26-NEXT:    [[ADD:%.*]] = add nsw i32 6, [[MUL]]
 // CHECK26-NEXT:    [[CONV3:%.*]] = trunc i32 [[ADD]] to i16
 // CHECK26-NEXT:    store i16 [[CONV3]], i16* [[IT]], align 2
-// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[ADD4:%.*]] = add nsw i32 [[TMP8]], 1
-// CHECK26-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 8
-// CHECK26-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK26-NEXT:    store i32 [[ADD4]], i32* [[CONV]], align 4
+// CHECK26-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[CONV5:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK26-NEXT:    [[ADD6:%.*]] = add nsw i32 [[CONV5]], 1
 // CHECK26-NEXT:    [[CONV7:%.*]] = trunc i32 [[ADD6]] to i16
-// CHECK26-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 8
+// CHECK26-NEXT:    store i16 [[CONV7]], i16* [[CONV1]], align 2
 // CHECK26-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK26:       omp.body.continue:
 // CHECK26-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -17696,7 +17548,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK26-SAME: (i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK26-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 8
@@ -17730,11 +17582,11 @@ int bar(int n){
 // CHECK26-NEXT:    [[TMP6:%.*]] = load double*, double** [[CN_ADDR]], align 8
 // CHECK26-NEXT:    [[TMP7:%.*]] = load %struct.TT*, %struct.TT** [[D_ADDR]], align 8
 // CHECK26-NEXT:    [[CONV5:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__ADDR]] to i32*
-// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV6:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP8]], i32* [[CONV6]], align 4
 // CHECK26-NEXT:    [[TMP9:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK26-NEXT:    [[TMP10:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK26-NEXT:    [[CONV7:%.*]] = bitcast i64* [[DOTCAPTURE_EXPR__CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP10]], i32* [[CONV7]], align 4
 // CHECK26-NEXT:    [[TMP11:%.*]] = load i64, i64* [[DOTCAPTURE_EXPR__CASTED]], align 8
@@ -17743,7 +17595,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i64 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 8 dereferenceable(400) [[C:%.*]], i64 [[VLA1:%.*]], i64 [[VLA3:%.*]], double* nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 8 dereferenceable(16) [[D:%.*]], i64 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i64 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 8 dereferenceable(400) [[C:%.*]], i64 noundef [[VLA1:%.*]], i64 noundef [[VLA3:%.*]], double* noundef nonnull align 8 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 8 dereferenceable(16) [[D:%.*]], i64 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17790,7 +17642,7 @@ int bar(int n){
 // CHECK26-NEXT:    store i32 25, i32* [[DOTOMP_UB]], align 4
 // CHECK26-NEXT:    store i32 1, i32* [[DOTOMP_STRIDE]], align 4
 // CHECK26-NEXT:    store i32 0, i32* [[DOTOMP_IS_LAST]], align 4
-// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 8
+// CHECK26-NEXT:    [[TMP8:%.*]] = load i32, i32* [[CONV5]], align 4
 // CHECK26-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DOTGLOBAL_TID__ADDR]], align 8
 // CHECK26-NEXT:    [[TMP10:%.*]] = load i32, i32* [[TMP9]], align 4
 // CHECK26-NEXT:    call void @__kmpc_for_static_init_4(%struct.ident_t* @[[GLOB1]], i32 [[TMP10]], i32 33, i32* [[DOTOMP_IS_LAST]], i32* [[DOTOMP_LB]], i32* [[DOTOMP_UB]], i32* [[DOTOMP_STRIDE]], i32 1, i32 [[TMP8]])
@@ -17826,9 +17678,9 @@ int bar(int n){
 // CHECK26-NEXT:    [[SUB:%.*]] = sub nsw i32 122, [[MUL]]
 // CHECK26-NEXT:    [[CONV8:%.*]] = trunc i32 [[SUB]] to i8
 // CHECK26-NEXT:    store i8 [[CONV8]], i8* [[IT]], align 1
-// CHECK26-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP19:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP19]], 1
-// CHECK26-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 8
+// CHECK26-NEXT:    store i32 [[ADD]], i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x float], [10 x float]* [[TMP0]], i64 0, i64 2
 // CHECK26-NEXT:    [[TMP20:%.*]] = load float, float* [[ARRAYIDX]], align 4
 // CHECK26-NEXT:    [[CONV9:%.*]] = fpext float [[TMP20]] to double
@@ -17888,7 +17740,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK26-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK26-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -17905,15 +17757,15 @@ int bar(int n){
 // CHECK26-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK26-NEXT:    [[CONV2:%.*]] = bitcast i64* [[AAA_ADDR]] to i8*
 // CHECK26-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV3:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP1]], i32* [[CONV3]], align 4
 // CHECK26-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK26-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[CONV4:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK26-NEXT:    store i16 [[TMP3]], i16* [[CONV4]], align 2
 // CHECK26-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 8
+// CHECK26-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV2]], align 1
 // CHECK26-NEXT:    [[CONV5:%.*]] = bitcast i64* [[AAA_CASTED]] to i8*
 // CHECK26-NEXT:    store i8 [[TMP5]], i8* [[CONV5]], align 1
 // CHECK26-NEXT:    [[TMP6:%.*]] = load i64, i64* [[AAA_CASTED]], align 8
@@ -17922,7 +17774,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], i64 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], i64 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -17946,7 +17798,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK26-SAME: (%struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (%struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 8
 // CHECK26-NEXT:    [[B_ADDR:%.*]] = alloca i64, align 8
@@ -17964,7 +17816,7 @@ int bar(int n){
 // CHECK26-NEXT:    [[TMP1:%.*]] = load i64, i64* [[VLA_ADDR]], align 8
 // CHECK26-NEXT:    [[TMP2:%.*]] = load i64, i64* [[VLA_ADDR2]], align 8
 // CHECK26-NEXT:    [[TMP3:%.*]] = load i16*, i16** [[C_ADDR]], align 8
-// CHECK26-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP4:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV3:%.*]] = bitcast i64* [[B_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP4]], i32* [[CONV3]], align 4
 // CHECK26-NEXT:    [[TMP5:%.*]] = load i64, i64* [[B_CASTED]], align 8
@@ -17973,7 +17825,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i64 [[B:%.*]], i64 [[VLA:%.*]], i64 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i64 noundef [[B:%.*]], i64 noundef [[VLA:%.*]], i64 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -18032,7 +17884,7 @@ int bar(int n){
 // CHECK26-NEXT:    [[MUL:%.*]] = mul i64 [[TMP11]], 400
 // CHECK26-NEXT:    [[SUB:%.*]] = sub i64 2000, [[MUL]]
 // CHECK26-NEXT:    store i64 [[SUB]], i64* [[IT]], align 8
-// CHECK26-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP12:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV4:%.*]] = sitofp i32 [[TMP12]] to double
 // CHECK26-NEXT:    [[ADD:%.*]] = fadd double [[CONV4]], 1.500000e+00
 // CHECK26-NEXT:    [[A:%.*]] = getelementptr inbounds [[STRUCT_S1:%.*]], %struct.S1* [[TMP0]], i32 0, i32 0
@@ -18062,7 +17914,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK26-SAME: (i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK26-SAME: (i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[A_ADDR:%.*]] = alloca i64, align 8
 // CHECK26-NEXT:    [[AA_ADDR:%.*]] = alloca i64, align 8
@@ -18075,11 +17927,11 @@ int bar(int n){
 // CHECK26-NEXT:    [[CONV:%.*]] = bitcast i64* [[A_ADDR]] to i32*
 // CHECK26-NEXT:    [[CONV1:%.*]] = bitcast i64* [[AA_ADDR]] to i16*
 // CHECK26-NEXT:    [[TMP0:%.*]] = load [10 x i32]*, [10 x i32]** [[B_ADDR]], align 8
-// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP1:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[CONV2:%.*]] = bitcast i64* [[A_CASTED]] to i32*
 // CHECK26-NEXT:    store i32 [[TMP1]], i32* [[CONV2]], align 4
 // CHECK26-NEXT:    [[TMP2:%.*]] = load i64, i64* [[A_CASTED]], align 8
-// CHECK26-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK26-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[CONV3:%.*]] = bitcast i64* [[AA_CASTED]] to i16*
 // CHECK26-NEXT:    store i16 [[TMP3]], i16* [[CONV3]], align 2
 // CHECK26-NEXT:    [[TMP4:%.*]] = load i64, i64* [[AA_CASTED]], align 8
@@ -18088,7 +17940,7 @@ int bar(int n){
 //
 //
 // CHECK26-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK26-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i64 [[A:%.*]], i64 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK26-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i64 noundef [[A:%.*]], i64 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK26-NEXT:  entry:
 // CHECK26-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 8
 // CHECK26-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 8
@@ -18141,14 +17993,14 @@ int bar(int n){
 // CHECK26-NEXT:    [[MUL:%.*]] = mul nsw i64 [[TMP8]], 3
 // CHECK26-NEXT:    [[ADD:%.*]] = add nsw i64 -10, [[MUL]]
 // CHECK26-NEXT:    store i64 [[ADD]], i64* [[I]], align 8
-// CHECK26-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 8
+// CHECK26-NEXT:    [[TMP9:%.*]] = load i32, i32* [[CONV]], align 4
 // CHECK26-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP9]], 1
-// CHECK26-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 8
-// CHECK26-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 8
+// CHECK26-NEXT:    store i32 [[ADD3]], i32* [[CONV]], align 4
+// CHECK26-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK26-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK26-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK26-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 8
+// CHECK26-NEXT:    store i16 [[CONV6]], i16* [[CONV1]], align 2
 // CHECK26-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i64 0, i64 2
 // CHECK26-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK26-NEXT:    [[ADD7:%.*]] = add nsw i32 [[TMP11]], 1
@@ -18176,7 +18028,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18253,7 +18105,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK27-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK27-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -18265,7 +18117,7 @@ int bar(int n){
 // CHECK27-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK27-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK27-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK27-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK27-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -18280,7 +18132,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18309,7 +18161,7 @@ int bar(int n){
 // CHECK27-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK27-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK27-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK27-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK27-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK27-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK27-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -18359,11 +18211,11 @@ int bar(int n){
 // CHECK27-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK27-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK27-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK27-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK27-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK27-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK27-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK27-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK27-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK27:       omp.body.continue:
 // CHECK27-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -18380,20 +18232,10 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK27-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK27:       .omp.linear.pu:
-// CHECK27-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK27-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK27-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK27-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK27-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK27-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK27-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK27-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK27-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK27-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK27-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK27-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK27-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK27-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK27-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK27-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK27-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK27-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK27:       .omp.linear.pu.done:
 // CHECK27-NEXT:    ret void
@@ -18406,7 +18248,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK27-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK27-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -18418,7 +18260,7 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK27-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK27-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK27-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK27-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -18427,7 +18269,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18480,11 +18322,11 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK27-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK27-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK27-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK27-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK27-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK27-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK27-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK27:       omp.body.continue:
 // CHECK27-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -18501,7 +18343,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK27-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK27-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -18544,7 +18386,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18687,7 +18529,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK27-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK27-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -18706,11 +18548,11 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK27-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK27-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK27-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK27-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK27-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK27-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK27-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK27-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK27-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -18719,7 +18561,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18742,7 +18584,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK27-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK27-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -18767,7 +18609,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18855,7 +18697,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK27-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK27-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK27-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -18870,7 +18712,7 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK27-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK27-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK27-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK27-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -18879,7 +18721,7 @@ int bar(int n){
 //
 //
 // CHECK27-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK27-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK27-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK27-NEXT:  entry:
 // CHECK27-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK27-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -18934,11 +18776,11 @@ int bar(int n){
 // CHECK27-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK27-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK27-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK27-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK27-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK27-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK27-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK27-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK27-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK27-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK27-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK27-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1
@@ -18966,7 +18808,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined.
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19043,7 +18885,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l138
-// CHECK28-SAME: (i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
 // CHECK28-NEXT:    [[LIN_ADDR:%.*]] = alloca i32, align 4
@@ -19055,7 +18897,7 @@ int bar(int n){
 // CHECK28-NEXT:    store i32 [[LIN]], i32* [[LIN_ADDR]], align 4
 // CHECK28-NEXT:    store i32 [[A]], i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    [[CONV:%.*]] = bitcast i32* [[AA_ADDR]] to i16*
-// CHECK28-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP0:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK28-NEXT:    store i16 [[TMP0]], i16* [[CONV1]], align 2
 // CHECK28-NEXT:    [[TMP1:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -19070,7 +18912,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..1
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[AA:%.*]], i32 [[LIN:%.*]], i32 [[A:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[LIN:%.*]], i32 noundef [[A:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19099,7 +18941,7 @@ int bar(int n){
 // CHECK28-NEXT:    store i32 [[TMP0]], i32* [[DOTLINEAR_START]], align 4
 // CHECK28-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    store i32 [[TMP1]], i32* [[DOTLINEAR_START1]], align 4
-// CHECK28-NEXT:    [[CALL:%.*]] = call i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
+// CHECK28-NEXT:    [[CALL:%.*]] = call noundef i64 @_Z7get_valv() #[[ATTR5:[0-9]+]]
 // CHECK28-NEXT:    store i64 [[CALL]], i64* [[DOTLINEAR_STEP]], align 8
 // CHECK28-NEXT:    store i64 0, i64* [[DOTOMP_LB]], align 8
 // CHECK28-NEXT:    store i64 3, i64* [[DOTOMP_UB]], align 8
@@ -19149,11 +18991,11 @@ int bar(int n){
 // CHECK28-NEXT:    [[ADD10:%.*]] = add i64 [[CONV8]], [[MUL9]]
 // CHECK28-NEXT:    [[CONV11:%.*]] = trunc i64 [[ADD10]] to i32
 // CHECK28-NEXT:    store i32 [[CONV11]], i32* [[A3]], align 4
-// CHECK28-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP16:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV12:%.*]] = sext i16 [[TMP16]] to i32
 // CHECK28-NEXT:    [[ADD13:%.*]] = add nsw i32 [[CONV12]], 1
 // CHECK28-NEXT:    [[CONV14:%.*]] = trunc i32 [[ADD13]] to i16
-// CHECK28-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 4
+// CHECK28-NEXT:    store i16 [[CONV14]], i16* [[CONV]], align 2
 // CHECK28-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK28:       omp.body.continue:
 // CHECK28-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -19170,20 +19012,10 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP19:%.*]] = icmp ne i32 [[TMP18]], 0
 // CHECK28-NEXT:    br i1 [[TMP19]], label [[DOTOMP_LINEAR_PU:%.*]], label [[DOTOMP_LINEAR_PU_DONE:%.*]]
 // CHECK28:       .omp.linear.pu:
-// CHECK28-NEXT:    [[TMP20:%.*]] = load i32, i32* [[DOTLINEAR_START]], align 4
-// CHECK28-NEXT:    [[CONV16:%.*]] = sext i32 [[TMP20]] to i64
-// CHECK28-NEXT:    [[TMP21:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK28-NEXT:    [[MUL17:%.*]] = mul i64 4, [[TMP21]]
-// CHECK28-NEXT:    [[ADD18:%.*]] = add i64 [[CONV16]], [[MUL17]]
-// CHECK28-NEXT:    [[CONV19:%.*]] = trunc i64 [[ADD18]] to i32
-// CHECK28-NEXT:    store i32 [[CONV19]], i32* [[LIN_ADDR]], align 4
-// CHECK28-NEXT:    [[TMP22:%.*]] = load i32, i32* [[DOTLINEAR_START1]], align 4
-// CHECK28-NEXT:    [[CONV20:%.*]] = sext i32 [[TMP22]] to i64
-// CHECK28-NEXT:    [[TMP23:%.*]] = load i64, i64* [[DOTLINEAR_STEP]], align 8
-// CHECK28-NEXT:    [[MUL21:%.*]] = mul i64 4, [[TMP23]]
-// CHECK28-NEXT:    [[ADD22:%.*]] = add i64 [[CONV20]], [[MUL21]]
-// CHECK28-NEXT:    [[CONV23:%.*]] = trunc i64 [[ADD22]] to i32
-// CHECK28-NEXT:    store i32 [[CONV23]], i32* [[A_ADDR]], align 4
+// CHECK28-NEXT:    [[TMP20:%.*]] = load i32, i32* [[LIN2]], align 4
+// CHECK28-NEXT:    store i32 [[TMP20]], i32* [[LIN_ADDR]], align 4
+// CHECK28-NEXT:    [[TMP21:%.*]] = load i32, i32* [[A3]], align 4
+// CHECK28-NEXT:    store i32 [[TMP21]], i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    br label [[DOTOMP_LINEAR_PU_DONE]]
 // CHECK28:       .omp.linear.pu.done:
 // CHECK28-NEXT:    ret void
@@ -19196,7 +19028,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l146
-// CHECK28-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK28-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -19208,7 +19040,7 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP0:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    store i32 [[TMP0]], i32* [[A_CASTED]], align 4
 // CHECK28-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK28-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP2:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK28-NEXT:    store i16 [[TMP2]], i16* [[CONV1]], align 2
 // CHECK28-NEXT:    [[TMP3:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -19217,7 +19049,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..2
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19270,11 +19102,11 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP8:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    [[ADD3:%.*]] = add nsw i32 [[TMP8]], 1
 // CHECK28-NEXT:    store i32 [[ADD3]], i32* [[A_ADDR]], align 4
-// CHECK28-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP9:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV4:%.*]] = sext i16 [[TMP9]] to i32
 // CHECK28-NEXT:    [[ADD5:%.*]] = add nsw i32 [[CONV4]], 1
 // CHECK28-NEXT:    [[CONV6:%.*]] = trunc i32 [[ADD5]] to i16
-// CHECK28-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 4
+// CHECK28-NEXT:    store i16 [[CONV6]], i16* [[CONV]], align 2
 // CHECK28-NEXT:    br label [[OMP_BODY_CONTINUE:%.*]]
 // CHECK28:       omp.body.continue:
 // CHECK28-NEXT:    br label [[OMP_INNER_FOR_INC:%.*]]
@@ -19291,7 +19123,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z3fooi_l170
-// CHECK28-SAME: (i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK28-NEXT:    [[B_ADDR:%.*]] = alloca [10 x float]*, align 4
@@ -19334,7 +19166,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..3
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], [10 x float]* nonnull align 4 dereferenceable(40) [[B:%.*]], i32 [[VLA:%.*]], float* nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* nonnull align 4 dereferenceable(400) [[C:%.*]], i32 [[VLA1:%.*]], i32 [[VLA3:%.*]], double* nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* nonnull align 4 dereferenceable(12) [[D:%.*]], i32 [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], [10 x float]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]], i32 noundef [[VLA:%.*]], float* noundef nonnull align 4 dereferenceable(4) [[BN:%.*]], [5 x [10 x double]]* noundef nonnull align 4 dereferenceable(400) [[C:%.*]], i32 noundef [[VLA1:%.*]], i32 noundef [[VLA3:%.*]], double* noundef nonnull align 4 dereferenceable(8) [[CN:%.*]], %struct.TT* noundef nonnull align 4 dereferenceable(12) [[D:%.*]], i32 noundef [[DOTCAPTURE_EXPR_:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19477,7 +19309,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZL7fstatici_l224
-// CHECK28-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK28-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -19496,11 +19328,11 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK28-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK28-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV2:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK28-NEXT:    store i16 [[TMP3]], i16* [[CONV2]], align 2
 // CHECK28-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
-// CHECK28-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 4
+// CHECK28-NEXT:    [[TMP5:%.*]] = load i8, i8* [[CONV1]], align 1
 // CHECK28-NEXT:    [[CONV3:%.*]] = bitcast i32* [[AAA_CASTED]] to i8*
 // CHECK28-NEXT:    store i8 [[TMP5]], i8* [[CONV3]], align 1
 // CHECK28-NEXT:    [[TMP6:%.*]] = load i32, i32* [[AAA_CASTED]], align 4
@@ -19509,7 +19341,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..4
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], i32 [[AAA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], i32 noundef [[AAA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19532,7 +19364,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__ZN2S12r1Ei_l242
-// CHECK28-SAME: (%struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (%struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[THIS_ADDR:%.*]] = alloca %struct.S1*, align 4
 // CHECK28-NEXT:    [[B_ADDR:%.*]] = alloca i32, align 4
@@ -19557,7 +19389,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..5
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], %struct.S1* [[THIS:%.*]], i32 [[B:%.*]], i32 [[VLA:%.*]], i32 [[VLA1:%.*]], i16* nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], %struct.S1* noundef [[THIS:%.*]], i32 noundef [[B:%.*]], i32 noundef [[VLA:%.*]], i32 noundef [[VLA1:%.*]], i16* noundef nonnull align 2 dereferenceable(2) [[C:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19645,7 +19477,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@{{__omp_offloading_[0-9a-z]+_[0-9a-z]+}}__Z9ftemplateIiET_i_l207
-// CHECK28-SAME: (i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
+// CHECK28-SAME: (i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR0]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK28-NEXT:    [[AA_ADDR:%.*]] = alloca i32, align 4
@@ -19660,7 +19492,7 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP1:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    store i32 [[TMP1]], i32* [[A_CASTED]], align 4
 // CHECK28-NEXT:    [[TMP2:%.*]] = load i32, i32* [[A_CASTED]], align 4
-// CHECK28-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP3:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV1:%.*]] = bitcast i32* [[AA_CASTED]] to i16*
 // CHECK28-NEXT:    store i16 [[TMP3]], i16* [[CONV1]], align 2
 // CHECK28-NEXT:    [[TMP4:%.*]] = load i32, i32* [[AA_CASTED]], align 4
@@ -19669,7 +19501,7 @@ int bar(int n){
 //
 //
 // CHECK28-LABEL: define {{[^@]+}}@.omp_outlined..6
-// CHECK28-SAME: (i32* noalias [[DOTGLOBAL_TID_:%.*]], i32* noalias [[DOTBOUND_TID_:%.*]], i32 [[A:%.*]], i32 [[AA:%.*]], [10 x i32]* nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
+// CHECK28-SAME: (i32* noalias noundef [[DOTGLOBAL_TID_:%.*]], i32* noalias noundef [[DOTBOUND_TID_:%.*]], i32 noundef [[A:%.*]], i32 noundef [[AA:%.*]], [10 x i32]* noundef nonnull align 4 dereferenceable(40) [[B:%.*]]) #[[ATTR1]] {
 // CHECK28-NEXT:  entry:
 // CHECK28-NEXT:    [[DOTGLOBAL_TID__ADDR:%.*]] = alloca i32*, align 4
 // CHECK28-NEXT:    [[DOTBOUND_TID__ADDR:%.*]] = alloca i32*, align 4
@@ -19724,11 +19556,11 @@ int bar(int n){
 // CHECK28-NEXT:    [[TMP9:%.*]] = load i32, i32* [[A_ADDR]], align 4
 // CHECK28-NEXT:    [[ADD2:%.*]] = add nsw i32 [[TMP9]], 1
 // CHECK28-NEXT:    store i32 [[ADD2]], i32* [[A_ADDR]], align 4
-// CHECK28-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 4
+// CHECK28-NEXT:    [[TMP10:%.*]] = load i16, i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[CONV3:%.*]] = sext i16 [[TMP10]] to i32
 // CHECK28-NEXT:    [[ADD4:%.*]] = add nsw i32 [[CONV3]], 1
 // CHECK28-NEXT:    [[CONV5:%.*]] = trunc i32 [[ADD4]] to i16
-// CHECK28-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 4
+// CHECK28-NEXT:    store i16 [[CONV5]], i16* [[CONV]], align 2
 // CHECK28-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [10 x i32], [10 x i32]* [[TMP0]], i32 0, i32 2
 // CHECK28-NEXT:    [[TMP11:%.*]] = load i32, i32* [[ARRAYIDX]], align 4
 // CHECK28-NEXT:    [[ADD6:%.*]] = add nsw i32 [[TMP11]], 1

@@ -90,9 +90,11 @@ static RValue PerformReturnAdjustment(CodeGenFunction &CGF,
 
   auto ClassDecl = ResultType->getPointeeType()->getAsCXXRecordDecl();
   auto ClassAlign = CGF.CGM.getClassPointerAlignment(ClassDecl);
-  ReturnValue = CGF.CGM.getCXXABI().performReturnAdjustment(CGF,
-                                            Address(ReturnValue, ClassAlign),
-                                            Thunk.Return);
+  ReturnValue = CGF.CGM.getCXXABI().performReturnAdjustment(
+      CGF,
+      Address(ReturnValue, CGF.ConvertTypeForMem(ResultType->getPointeeType()),
+              ClassAlign),
+      Thunk.Return);
 
   if (NullCheckValue) {
     CGF.Builder.CreateBr(AdjustEnd);
@@ -198,10 +200,12 @@ CodeGenFunction::GenerateVarArgsThunk(llvm::Function *Fn,
 
   // Find the first store of "this", which will be to the alloca associated
   // with "this".
-  Address ThisPtr(&*AI, CGM.getClassPointerAlignment(MD->getParent()));
+  Address ThisPtr =
+      Address(&*AI, ConvertTypeForMem(MD->getThisType()->getPointeeType()),
+              CGM.getClassPointerAlignment(MD->getParent()));
   llvm::BasicBlock *EntryBB = &Fn->front();
   llvm::BasicBlock::iterator ThisStore =
-      std::find_if(EntryBB->begin(), EntryBB->end(), [&](llvm::Instruction &I) {
+      llvm::find_if(*EntryBB, [&](llvm::Instruction &I) {
         return isa<llvm::StoreInst>(I) &&
                I.getOperand(0) == ThisPtr.getPointer();
       });
@@ -1178,7 +1182,7 @@ bool CodeGenModule::HasLTOVisibilityPublicStd(const CXXRecordDecl *RD) {
     return false;
 
   const DeclContext *DC = RD;
-  while (1) {
+  while (true) {
     auto *D = cast<Decl>(DC);
     DC = DC->getParent();
     if (isa<TranslationUnitDecl>(DC->getRedeclContext())) {

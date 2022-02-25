@@ -30,7 +30,7 @@
 // MSVC raises a warning about a nonstandard extension being used for the 0
 // sized element in this array. Disable this for warn-as-error builds.
 #pragma warning(push)
-#pragma warning(disable : 4206)
+#pragma warning(disable : 4200)
 #endif
 
 typedef struct emutls_address_array {
@@ -150,7 +150,7 @@ static void win_error(DWORD last_err, const char *hint) {
                      NULL, last_err, 0, (LPSTR)&buffer, 1, NULL)) {
     fprintf(stderr, "Windows error: %s\n", buffer);
   } else {
-    fprintf(stderr, "Unkown Windows error: %s\n", hint);
+    fprintf(stderr, "Unknown Windows error: %s\n", hint);
   }
   LocalFree(buffer);
 }

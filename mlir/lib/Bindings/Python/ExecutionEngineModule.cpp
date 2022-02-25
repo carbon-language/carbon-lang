@@ -31,10 +31,19 @@ public:
   }
   MlirExecutionEngine get() { return executionEngine; }
 
-  void release() { executionEngine.ptr = nullptr; }
+  void release() {
+    executionEngine.ptr = nullptr;
+    referencedObjects.clear();
+  }
   pybind11::object getCapsule() {
     return py::reinterpret_steal<py::object>(
         mlirPythonExecutionEngineToCapsule(get()));
+  }
+
+  // Add an object to the list of referenced objects whose lifetime must exceed
+  // those of the ExecutionEngine.
+  void addReferencedObject(const pybind11::object &obj) {
+    referencedObjects.push_back(obj);
   }
 
   static pybind11::object createFromCapsule(pybind11::object capsule) {
@@ -47,9 +56,13 @@ public:
 
 private:
   MlirExecutionEngine executionEngine;
+  // We support Python ctypes closures as callbacks. Keep a list of the objects
+  // so that they don't get garbage collected. (The ExecutionEngine itself
+  // just holds raw pointers with no lifetime semantics).
+  std::vector<py::object> referencedObjects;
 };
 
-} // anonymous namespace
+} // namespace
 
 /// Create the `mlir.execution_engine` module here.
 PYBIND11_MODULE(_mlirExecutionEngine, m) {
@@ -58,7 +71,7 @@ PYBIND11_MODULE(_mlirExecutionEngine, m) {
   //----------------------------------------------------------------------------
   // Mapping of the top-level PassManager
   //----------------------------------------------------------------------------
-  py::class_<PyExecutionEngine>(m, "ExecutionEngine")
+  py::class_<PyExecutionEngine>(m, "ExecutionEngine", py::module_local())
       .def(py::init<>([](MlirModule module, int optLevel,
                          const std::vector<std::string> &sharedLibPaths) {
              llvm::SmallVector<MlirStringRef, 4> libPaths;
@@ -87,22 +100,27 @@ PYBIND11_MODULE(_mlirExecutionEngine, m) {
       .def(
           "raw_lookup",
           [](PyExecutionEngine &executionEngine, const std::string &func) {
-            auto *res = mlirExecutionEngineLookup(
+            auto *res = mlirExecutionEngineLookupPacked(
                 executionEngine.get(),
                 mlirStringRefCreate(func.c_str(), func.size()));
             return reinterpret_cast<uintptr_t>(res);
           },
+          py::arg("func_name"),
           "Lookup function `func` in the ExecutionEngine.")
       .def(
           "raw_register_runtime",
           [](PyExecutionEngine &executionEngine, const std::string &name,
-             uintptr_t sym) {
+             py::object callbackObj) {
+            executionEngine.addReferencedObject(callbackObj);
+            uintptr_t rawSym =
+                py::cast<uintptr_t>(py::getattr(callbackObj, "value"));
             mlirExecutionEngineRegisterSymbol(
                 executionEngine.get(),
                 mlirStringRefCreate(name.c_str(), name.size()),
-                reinterpret_cast<void *>(sym));
+                reinterpret_cast<void *>(rawSym));
           },
-          "Lookup function `func` in the ExecutionEngine.")
+          py::arg("name"), py::arg("callback"),
+          "Register `callback` as the runtime symbol `name`.")
       .def(
           "dump_to_object_file",
           [](PyExecutionEngine &executionEngine, const std::string &fileName) {
@@ -110,5 +128,5 @@ PYBIND11_MODULE(_mlirExecutionEngine, m) {
                 executionEngine.get(),
                 mlirStringRefCreate(fileName.c_str(), fileName.size()));
           },
-          "Dump ExecutionEngine to an object file.");
+          py::arg("file_name"), "Dump ExecutionEngine to an object file.");
 }

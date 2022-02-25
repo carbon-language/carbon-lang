@@ -14,17 +14,18 @@
 #include "sanitizer_fuchsia.h"
 #if SANITIZER_FUCHSIA
 
-#include <pthread.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <zircon/errors.h>
-#include <zircon/process.h>
-#include <zircon/syscalls.h>
-#include <zircon/utc.h>
+#  include <pthread.h>
+#  include <stdlib.h>
+#  include <unistd.h>
+#  include <zircon/errors.h>
+#  include <zircon/process.h>
+#  include <zircon/syscalls.h>
+#  include <zircon/utc.h>
 
-#include "sanitizer_common.h"
-#include "sanitizer_libc.h"
-#include "sanitizer_mutex.h"
+#  include "sanitizer_common.h"
+#  include "sanitizer_interface_internal.h"
+#  include "sanitizer_libc.h"
+#  include "sanitizer_mutex.h"
 
 namespace __sanitizer {
 
@@ -89,7 +90,7 @@ void InitializePlatformEarly() {}
 void MaybeReexec() {}
 void CheckASLR() {}
 void CheckMPROTECT() {}
-void PlatformPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {}
+void PlatformPrepareForSandboxing(void *args) {}
 void DisableCoreDumperIfNecessary() {}
 void InstallDeadlySignalHandlers(SignalHandlerType handler) {}
 void SetAlternateSignalStack() {}
@@ -274,6 +275,15 @@ void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name) {
   UNIMPLEMENTED();
 }
 
+bool MprotectNoAccess(uptr addr, uptr size) {
+  return _zx_vmar_protect(_zx_vmar_root_self(), 0, addr, size) == ZX_OK;
+}
+
+bool MprotectReadOnly(uptr addr, uptr size) {
+  return _zx_vmar_protect(_zx_vmar_root_self(), ZX_VM_PERM_READ, addr, size) ==
+         ZX_OK;
+}
+
 void *MmapAlignedOrDieOnFatalError(uptr size, uptr alignment,
                                    const char *mem_type) {
   CHECK_GE(size, GetPageSize());
@@ -372,7 +382,7 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
 }
 
 // FIXME implement on this platform.
-void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {}
+void GetMemoryProfile(fill_profile_f cb, uptr *stats) {}
 
 bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
                       uptr *read_len, uptr max_len, error_t *errno_p) {
@@ -474,6 +484,9 @@ bool GetRandom(void *buffer, uptr length, bool blocking) {
 u32 GetNumberOfCPUs() { return zx_system_get_num_cpus(); }
 
 uptr GetRSS() { UNIMPLEMENTED(); }
+
+void *internal_start_thread(void *(*func)(void *arg), void *arg) { return 0; }
+void internal_join_thread(void *th) {}
 
 void InitializePlatformCommonFlags(CommonFlags *cf) {}
 

@@ -155,7 +155,7 @@ public:
   void PragmaDiagnosticPop(SourceLocation Loc, StringRef Namespace) override;
   void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
                         diag::Severity Map, StringRef Str) override;
-  void PragmaWarning(SourceLocation Loc, StringRef WarningSpec,
+  void PragmaWarning(SourceLocation Loc, PragmaWarningSpecifier WarningSpec,
                      ArrayRef<int> Ids) override;
   void PragmaWarningPush(SourceLocation Loc, int Level) override;
   void PragmaWarningPop(SourceLocation Loc) override;
@@ -188,19 +188,18 @@ public:
   /// @return Whether column adjustments are necessary.
   bool MoveToLine(const Token &Tok, bool RequireStartOfLine) {
     PresumedLoc PLoc = SM.getPresumedLoc(Tok.getLocation());
-    if (PLoc.isInvalid())
-      return false;
-    bool IsFirstInFile = Tok.isAtStartOfLine() && PLoc.getLine() == 1;
-    return MoveToLine(PLoc.getLine(), RequireStartOfLine) || IsFirstInFile;
+    unsigned TargetLine = PLoc.isValid() ? PLoc.getLine() : CurLine;
+    bool IsFirstInFile =
+        Tok.isAtStartOfLine() && PLoc.isValid() && PLoc.getLine() == 1;
+    return MoveToLine(TargetLine, RequireStartOfLine) || IsFirstInFile;
   }
 
   /// Move to the line of the provided source location. Returns true if a new
   /// line was inserted.
   bool MoveToLine(SourceLocation Loc, bool RequireStartOfLine) {
     PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-    if (PLoc.isInvalid())
-      return false;
-    return MoveToLine(PLoc.getLine(), RequireStartOfLine);
+    unsigned TargetLine = PLoc.isValid() ? PLoc.getLine() : CurLine;
+    return MoveToLine(TargetLine, RequireStartOfLine);
   }
   bool MoveToLine(unsigned LineNo, bool RequireStartOfLine);
 
@@ -580,10 +579,24 @@ void PrintPPOutputPPCallbacks::PragmaDiagnostic(SourceLocation Loc,
 }
 
 void PrintPPOutputPPCallbacks::PragmaWarning(SourceLocation Loc,
-                                             StringRef WarningSpec,
+                                             PragmaWarningSpecifier WarningSpec,
                                              ArrayRef<int> Ids) {
   MoveToLine(Loc, /*RequireStartOfLine=*/true);
-  OS << "#pragma warning(" << WarningSpec << ':';
+
+  OS << "#pragma warning(";
+  switch(WarningSpec) {
+    case PWS_Default:  OS << "default"; break;
+    case PWS_Disable:  OS << "disable"; break;
+    case PWS_Error:    OS << "error"; break;
+    case PWS_Once:     OS << "once"; break;
+    case PWS_Suppress: OS << "suppress"; break;
+    case PWS_Level1:   OS << '1'; break;
+    case PWS_Level2:   OS << '2'; break;
+    case PWS_Level3:   OS << '3'; break;
+    case PWS_Level4:   OS << '4'; break;
+  }
+  OS << ':';
+
   for (ArrayRef<int>::iterator I = Ids.begin(), E = Ids.end(); I != E; ++I)
     OS << ' ' << *I;
   OS << ')';
@@ -686,7 +699,7 @@ void PrintPPOutputPPCallbacks::HandleWhitespaceBeforeTok(const Token &Tok,
     // - The whitespace is necessary to keep the tokens apart and there is not
     //   already a newline between them
     if (RequireSpace || (!MinimizeWhitespace && Tok.hasLeadingSpace()) ||
-        ((EmittedTokensOnThisLine || EmittedTokensOnThisLine) &&
+        ((EmittedTokensOnThisLine || EmittedDirectiveOnThisLine) &&
          AvoidConcat(PrevPrevTok, PrevTok, Tok)))
       OS << ' ';
   }
@@ -780,7 +793,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
 
   bool IsStartOfLine = false;
   char Buffer[256];
-  while (1) {
+  while (true) {
     // Two lines joined with line continuation ('\' as last character on the
     // line) must be emitted as one line even though Tok.getLine() returns two
     // different values. In this situation Tok.isAtStartOfLine() is false even

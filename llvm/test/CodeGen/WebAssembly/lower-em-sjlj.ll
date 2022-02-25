@@ -1,6 +1,6 @@
-; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj -S | FileCheck %s --check-prefixes=CHECK,NO-TLS -DPTR=i32
-; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj -S --mattr=+atomics,+bulk-memory | FileCheck %s --check-prefixes=CHECK,TLS -DPTR=i32
-; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj --mtriple=wasm64-unknown-unknown -data-layout="e-m:e-p:64:64-i64:64-n32:64-S128" -S | FileCheck %s --check-prefixes=CHECK -DPTR=i64
+; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj -S | FileCheck %s -DPTR=i32
+; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj -S --mattr=+atomics,+bulk-memory | FileCheck %s -DPTR=i32
+; RUN: opt < %s -wasm-lower-em-ehsjlj -enable-emscripten-sjlj --mtriple=wasm64-unknown-unknown -data-layout="e-m:e-p:64:64-i64:64-n32:64-S128" -S | FileCheck %s -DPTR=i64
 
 target datalayout = "e-m:e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
@@ -8,11 +8,9 @@ target triple = "wasm32-unknown-unknown"
 %struct.__jmp_buf_tag = type { [6 x i32], i32, [32 x i32] }
 
 @global_var = global i32 0, align 4
-; NO-TLS-DAG: __THREW__ = external global [[PTR]]
-; NO-TLS-DAG: __threwValue = external global [[PTR]]
-; TLS-DAG: __THREW__ = external thread_local(localexec) global i32
-; TLS-DAG: __threwValue = external thread_local(localexec) global i32
 @global_longjmp_ptr = global void (%struct.__jmp_buf_tag*, i32)* @longjmp, align 4
+; CHECK-DAG: @__THREW__ = external thread_local global [[PTR]]
+; CHECK-DAG: @__threwValue = external thread_local global i32
 ; CHECK-DAG: @global_longjmp_ptr = global void (%struct.__jmp_buf_tag*, i32)* bitcast (void ([[PTR]], i32)* @emscripten_longjmp to void (%struct.__jmp_buf_tag*, i32)*)
 
 ; Test a simple setjmp - longjmp sequence
@@ -61,7 +59,7 @@ entry:
 ; CHECK-NEXT: %[[__THREW__VAL_P_LOADED:.*]] = load [[PTR]], [[PTR]]* %[[__THREW__VAL_P]]
 ; CHECK-NEXT: %[[LABEL:.*]] = call i32 @testSetjmp([[PTR]] %[[__THREW__VAL_P_LOADED]], i32* %[[SETJMP_TABLE1]], i32 %[[SETJMP_TABLE_SIZE1]])
 ; CHECK-NEXT: %[[CMP:.*]] = icmp eq i32 %[[LABEL]], 0
-; CHECK-NEXT: br i1 %[[CMP]], label %if.then2, label %if.end2
+; CHECK-NEXT: br i1 %[[CMP]], label %call.em.longjmp, label %if.end2
 
 ; CHECK: if.else1:
 ; CHECK-NEXT: br label %if.end
@@ -73,10 +71,12 @@ entry:
 ; CHECK-NEXT:   i32 1, label %entry.split.split
 ; CHECK-NEXT: ]
 
-; CHECK: if.then2:
-; CHECK-NEXT: %[[BUF:.*]] = bitcast i32* %[[SETJMP_TABLE1]] to i8*
-; CHECK-NEXT: call void @free(i8* %[[BUF]])
-; CHECK-NEXT: call void @emscripten_longjmp([[PTR]] %[[__THREW__VAL]], i32 %[[THREWVALUE_VAL]])
+; CHECK: call.em.longjmp:
+; CHECK-NEXT: %threw.phi = phi [[PTR]] [ %[[__THREW__VAL]], %if.then1 ]
+; CHECK-NEXT: %threwvalue.phi = phi i32 [ %[[THREWVALUE_VAL]], %if.then1 ]
+; CHECK-NEXT: %{{.*}} = bitcast i32* %[[SETJMP_TABLE1]] to i8*
+; CHECK-NEXT: tail call void @free(i8* %{{.*}})
+; CHECK-NEXT: call void @emscripten_longjmp([[PTR]] %threw.phi, i32 %threwvalue.phi)
 ; CHECK-NEXT: unreachable
 
 ; CHECK: if.end2:
@@ -85,8 +85,8 @@ entry:
 }
 
 ; Test a case of a function call (which is not longjmp) after a setjmp
-define void @setjmp_other() {
-; CHECK-LABEL: @setjmp_other
+define void @setjmp_longjmpable_call() {
+; CHECK-LABEL: @setjmp_longjmpable_call
 entry:
   %buf = alloca [1 x %struct.__jmp_buf_tag], align 16
   %arraydecay = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %buf, i32 0, i32 0
@@ -105,9 +105,31 @@ entry:
 ; CHECK-NEXT: ret void
 }
 
+; When there are multiple longjmpable calls after setjmp. In this test we
+; specifically check if 'call.em.longjmp' BB, which rethrows longjmps by calling
+; emscripten_longjmp for ones that are not for this function's setjmp, is
+; correctly created for multiple predecessors.
+define void @setjmp_multiple_longjmpable_calls() {
+; CHECK-LABEL: @setjmp_multiple_longjmpable_calls
+entry:
+  %buf = alloca [1 x %struct.__jmp_buf_tag], align 16
+  %arraydecay = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %buf, i32 0, i32 0
+  %call = call i32 @setjmp(%struct.__jmp_buf_tag* %arraydecay) #0
+  call void @foo()
+  call void @foo()
+  ret void
+; CHECK: call.em.longjmp:
+; CHECK-NEXT:  %threw.phi = phi [[PTR]] [ %__THREW__.val, %if.then1 ], [ %__THREW__.val4, %if.then15 ]
+; CHECK-NEXT:  %threwvalue.phi = phi i32 [ %__threwValue.val, %if.then1 ], [ %__threwValue.val8, %if.then15 ]
+; CHECK-NEXT: %{{.*}} = bitcast i32* %[[SETJMP_TABLE1]] to i8*
+; CHECK-NEXT: tail call void @free(i8* %{{.*}})
+; CHECK-NEXT: call void @emscripten_longjmp([[PTR]] %threw.phi, i32 %threwvalue.phi)
+; CHECK-NEXT: unreachable
+}
+
 ; Test a case where a function has a setjmp call but no other calls that can
 ; longjmp. We don't need to do any transformation in this case.
-define void @setjmp_only(i8* %ptr) {
+define i32 @setjmp_only(i8* %ptr) {
 ; CHECK-LABEL: @setjmp_only
 entry:
   %buf = alloca [1 x %struct.__jmp_buf_tag], align 16
@@ -115,11 +137,15 @@ entry:
   %call = call i32 @setjmp(%struct.__jmp_buf_tag* %arraydecay) #0
   ; free cannot longjmp
   call void @free(i8* %ptr)
-  ret void
+  ret i32 %call
+; CHECK: entry:
 ; CHECK-NOT: @malloc
 ; CHECK-NOT: %setjmpTable
 ; CHECK-NOT: @saveSetjmp
 ; CHECK-NOT: @testSetjmp
+; The remaining setjmp call is converted to constant 0, because setjmp returns 0
+; when called directly.
+; CHECK: ret i32 0
 }
 
 ; Test SSA validity
@@ -230,7 +256,7 @@ for.inc:                                          ; preds = %for.cond
 
 ; Tests cases where longjmp function pointer is used in other ways than direct
 ; calls. longjmps should be replaced with
-; (int(*)(jmp_buf*, int))emscripten_longjmp.
+; (void(*)(jmp_buf*, int))emscripten_longjmp.
 declare void @take_longjmp(void (%struct.__jmp_buf_tag*, i32)* %arg_ptr)
 define void @indirect_longjmp() {
 ; CHECK-LABEL: @indirect_longjmp
@@ -258,12 +284,30 @@ entry:
   ret void
 }
 
+; Test if _setjmp and _longjmp calls are treated in the same way as setjmp and
+; longjmp
+define void @_setjmp__longjmp() {
+; CHECK-LABEL: @_setjmp__longjmp
+; These calls should have been transformed away
+; CHECK-NOT: call i32 @_setjmp
+; CHECK-NOT: call void @_longjmp
+entry:
+  %buf = alloca [1 x %struct.__jmp_buf_tag], align 16
+  %arraydecay = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %buf, i32 0, i32 0
+  %call = call i32 @_setjmp(%struct.__jmp_buf_tag* %arraydecay) #0
+  %arraydecay1 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %buf, i32 0, i32 0
+  call void @_longjmp(%struct.__jmp_buf_tag* %arraydecay1, i32 1) #1
+  unreachable
+}
+
 ; Function Attrs: nounwind
 declare void @foo() #2
 ; Function Attrs: returns_twice
 declare i32 @setjmp(%struct.__jmp_buf_tag*) #0
+declare i32 @_setjmp(%struct.__jmp_buf_tag*) #0
 ; Function Attrs: noreturn
 declare void @longjmp(%struct.__jmp_buf_tag*, i32) #1
+declare void @_longjmp(%struct.__jmp_buf_tag*, i32) #1
 declare i32 @__gxx_personality_v0(...)
 declare i8* @__cxa_begin_catch(i8*)
 declare void @__cxa_end_catch()
@@ -287,7 +331,7 @@ attributes #3 = { allocsize(0) }
 ; CHECK-DAG: attributes #{{[0-9]+}} = { "wasm-import-module"="env" "wasm-import-name"="__invoke_void" }
 ; CHECK-DAG: attributes #{{[0-9]+}} = { "wasm-import-module"="env" "wasm-import-name"="saveSetjmp" }
 ; CHECK-DAG: attributes #{{[0-9]+}} = { "wasm-import-module"="env" "wasm-import-name"="testSetjmp" }
-; CHECK-DAG: attributes #{{[0-9]+}} = { "wasm-import-module"="env" "wasm-import-name"="emscripten_longjmp" }
+; CHECK-DAG: attributes #{{[0-9]+}} = { noreturn "wasm-import-module"="env" "wasm-import-name"="emscripten_longjmp" }
 ; CHECK-DAG: attributes #{{[0-9]+}} = { "wasm-import-module"="env" "wasm-import-name"="__invoke_i8*_i32_%struct.__jmp_buf_tag*" }
 ; CHECK-DAG: attributes #[[ALLOCSIZE_ATTR]] = { allocsize(1) }
 

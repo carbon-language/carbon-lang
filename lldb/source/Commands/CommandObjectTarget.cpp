@@ -47,6 +47,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Utility/Args.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/State.h"
 #include "lldb/Utility/Timer.h"
 
@@ -216,7 +217,6 @@ public:
             interpreter, "target create",
             "Create a target using the argument as the main executable.",
             nullptr),
-        m_option_group(), m_arch_option(),
         m_platform_options(true), // Include the --platform option.
         m_core_file(LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename,
                     "Fullpath to a core file to use for this target."),
@@ -227,8 +227,7 @@ public:
                       "are not in the executable."),
         m_remote_file(
             LLDB_OPT_SET_1, false, "remote-file", 'r', 0, eArgTypeFilename,
-            "Fullpath to the file on the remote host if debugging remotely."),
-        m_add_dependents() {
+            "Fullpath to the file on the remote host if debugging remotely.") {
     CommandArgumentEntry arg;
     CommandArgumentData file_arg;
 
@@ -534,8 +533,8 @@ public:
       : CommandObjectParsed(interpreter, "target delete",
                             "Delete one or more targets by target index.",
                             nullptr),
-        m_option_group(), m_all_option(LLDB_OPT_SET_1, false, "all", 'a',
-                                       "Delete all targets.", false, true),
+        m_all_option(LLDB_OPT_SET_1, false, "all", 'a', "Delete all targets.",
+                     false, true),
         m_cleanup_option(
             LLDB_OPT_SET_1, false, "clean", 'c',
             "Perform extra cleanup to minimize memory consumption after "
@@ -678,7 +677,6 @@ public:
                             "Read global variables for the current target, "
                             "before or while running a process.",
                             nullptr, eCommandRequiresTarget),
-        m_option_group(),
         m_option_variable(false), // Don't include frame options
         m_option_format(eFormatDefault),
         m_option_compile_units(LLDB_OPT_SET_1, false, "file", SHORT_OPTION_FILE,
@@ -691,8 +689,7 @@ public:
             eArgTypeFilename,
             "A basename or fullpath to a shared library to use in the search "
             "for global "
-            "variables. This option can be specified multiple times."),
-        m_varobj_options() {
+            "variables. This option can be specified multiple times.") {
     CommandArgumentEntry arg;
     CommandArgumentData var_name_arg;
 
@@ -1038,7 +1035,7 @@ protected:
         const char *to = command.GetArgumentAtIndex(i + 1);
 
         if (from[0] && to[0]) {
-          Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+          Log *log = GetLog(LLDBLog::Host);
           if (log) {
             LLDB_LOGF(log,
                       "target modules search path adding ImageSearchPath "
@@ -1047,8 +1044,7 @@ protected:
           }
           bool last_pair = ((argc - i) == 2);
           target->GetImageSearchPathList().Append(
-              ConstString(from), ConstString(to),
-              last_pair); // Notify if this is the last pair
+              from, to, last_pair); // Notify if this is the last pair
           result.SetStatus(eReturnStatusSuccessFinishNoResult);
         } else {
           if (from[0])
@@ -1175,8 +1171,8 @@ protected:
 
         if (from[0] && to[0]) {
           bool last_pair = ((argc - i) == 2);
-          target->GetImageSearchPathList().Insert(
-              ConstString(from), ConstString(to), insert_idx, last_pair);
+          target->GetImageSearchPathList().Insert(from, to, insert_idx,
+                                                  last_pair);
           result.SetStatus(eReturnStatusSuccessFinishNoResult);
         } else {
           if (from[0])
@@ -1606,7 +1602,6 @@ static size_t LookupTypeInModule(Target *target,
   TypeList type_list;
   if (module && name_cstr && name_cstr[0]) {
     const uint32_t max_num_matches = UINT32_MAX;
-    size_t num_matches = 0;
     bool name_is_fully_qualified = false;
 
     ConstString name(name_cstr);
@@ -1617,8 +1612,10 @@ static size_t LookupTypeInModule(Target *target,
     if (type_list.Empty())
       return 0;
 
+    const uint64_t num_matches = type_list.GetSize();
+
     strm.Indent();
-    strm.Printf("%" PRIu64 " match%s found in ", (uint64_t)num_matches,
+    strm.Printf("%" PRIu64 " match%s found in ", num_matches,
                 num_matches > 1 ? "es" : "");
     DumpFullpath(strm, &module->GetFileSpec(), 0);
     strm.PutCString(":\n");
@@ -1928,8 +1925,7 @@ public:
       : CommandObjectTargetModulesModuleAutoComplete(
             interpreter, "target modules dump symtab",
             "Dump the symbol table from one or more target modules.", nullptr,
-            eCommandRequiresTarget),
-        m_options() {}
+            eCommandRequiresTarget) {}
 
   ~CommandObjectTargetModulesDumpSymtab() override = default;
 
@@ -1937,7 +1933,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() {}
 
     ~CommandOptions() override = default;
 
@@ -2354,7 +2350,7 @@ protected:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() { OptionParsingStarting(nullptr); }
+    CommandOptions() { OptionParsingStarting(nullptr); }
 
     Status SetOptionValue(uint32_t option_idx, llvm::StringRef option_arg,
                           ExecutionContext *execution_context) override {
@@ -2423,11 +2419,11 @@ public:
                             "Add a new module to the current target's modules.",
                             "target modules add [<module>]",
                             eCommandRequiresTarget),
-        m_option_group(), m_symbol_file(LLDB_OPT_SET_1, false, "symfile", 's',
-                                        0, eArgTypeFilename,
-                                        "Fullpath to a stand alone debug "
-                                        "symbols file for when debug symbols "
-                                        "are not in the executable.") {
+        m_symbol_file(LLDB_OPT_SET_1, false, "symfile", 's', 0,
+                      eArgTypeFilename,
+                      "Fullpath to a stand alone debug "
+                      "symbols file for when debug symbols "
+                      "are not in the executable.") {
     m_option_group.Append(&m_uuid_option_group, LLDB_OPT_SET_ALL,
                           LLDB_OPT_SET_1);
     m_option_group.Append(&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
@@ -2575,7 +2571,6 @@ public:
             "target modules load [--file <module> --uuid <uuid>] <sect-name> "
             "<address> [<sect-name> <address> ....]",
             eCommandRequiresTarget),
-        m_option_group(),
         m_file_option(LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeName,
                       "Fullpath or basename for module to load.", ""),
         m_load_option(LLDB_OPT_SET_1, false, "load", 'l',
@@ -2834,6 +2829,7 @@ protected:
   OptionGroupUInt64 m_slide_option;
 };
 
+#pragma mark CommandObjectTargetModulesList
 // List images with associated information
 #define LLDB_OPTIONS_target_modules_list
 #include "CommandOptions.inc"
@@ -2842,7 +2838,7 @@ class CommandObjectTargetModulesList : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options(), m_format_array() {}
+    CommandOptions() {}
 
     ~CommandOptions() override = default;
 
@@ -2885,8 +2881,7 @@ public:
       : CommandObjectParsed(
             interpreter, "target modules list",
             "List current executable and dependent shared library images.",
-            "target modules list [<cmd-options>]"),
-        m_options() {}
+            "target modules list [<cmd-options>]") {}
 
   ~CommandObjectTargetModulesList() override = default;
 
@@ -3185,7 +3180,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options(), m_str() {}
+    CommandOptions() {}
 
     ~CommandOptions() override = default;
 
@@ -3242,8 +3237,7 @@ public:
             interpreter, "target modules show-unwind",
             "Show synthesized unwind instructions for a function.", nullptr,
             eCommandRequiresTarget | eCommandRequiresProcess |
-                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
-        m_options() {}
+                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused) {}
 
   ~CommandObjectTargetModulesShowUnwind() override = default;
 
@@ -3532,7 +3526,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() { OptionParsingStarting(nullptr); }
+    CommandOptions() { OptionParsingStarting(nullptr); }
 
     ~CommandOptions() override = default;
 
@@ -3647,8 +3641,7 @@ public:
       : CommandObjectParsed(interpreter, "target modules lookup",
                             "Look up information within executable and "
                             "dependent shared library images.",
-                            nullptr, eCommandRequiresTarget),
-        m_options() {
+                            nullptr, eCommandRequiresTarget) {
     CommandArgumentEntry arg;
     CommandArgumentData file_arg;
 
@@ -3954,7 +3947,6 @@ public:
             "to specify a module.",
             "target symbols add <cmd-options> [<symfile>]",
             eCommandRequiresTarget),
-        m_option_group(),
         m_file_option(
             LLDB_OPT_SET_1, false, "shlib", 's',
             CommandCompletions::eModuleCompletion, eArgTypeShlibName,
@@ -3962,14 +3954,20 @@ public:
             "name."),
         m_current_frame_option(
             LLDB_OPT_SET_2, false, "frame", 'F',
-            "Locate the debug symbols for the currently selected frame.",
-            false, true)
+            "Locate the debug symbols for the currently selected frame.", false,
+            true),
+        m_current_stack_option(LLDB_OPT_SET_2, false, "stack", 'S',
+                               "Locate the debug symbols for every frame in "
+                               "the current call stack.",
+                               false, true)
 
   {
     m_option_group.Append(&m_uuid_option_group, LLDB_OPT_SET_ALL,
                           LLDB_OPT_SET_1);
     m_option_group.Append(&m_file_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
     m_option_group.Append(&m_current_frame_option, LLDB_OPT_SET_2,
+                          LLDB_OPT_SET_2);
+    m_option_group.Append(&m_current_stack_option, LLDB_OPT_SET_2,
                           LLDB_OPT_SET_2);
     m_option_group.Finalize();
   }
@@ -4143,6 +4141,167 @@ protected:
     return false;
   }
 
+  bool DownloadObjectAndSymbolFile(ModuleSpec &module_spec,
+                                   CommandReturnObject &result, bool &flush) {
+    if (Symbols::DownloadObjectAndSymbolFile(module_spec)) {
+      if (module_spec.GetSymbolFileSpec())
+        return AddModuleSymbols(m_exe_ctx.GetTargetPtr(), module_spec, flush,
+                                result);
+    }
+    return false;
+  }
+
+  bool AddSymbolsForUUID(CommandReturnObject &result, bool &flush) {
+    assert(m_uuid_option_group.GetOptionValue().OptionWasSet());
+
+    ModuleSpec module_spec;
+    module_spec.GetUUID() =
+        m_uuid_option_group.GetOptionValue().GetCurrentValue();
+
+    if (!DownloadObjectAndSymbolFile(module_spec, result, flush)) {
+      StreamString error_strm;
+      error_strm.PutCString("unable to find debug symbols for UUID ");
+      module_spec.GetUUID().Dump(&error_strm);
+      result.AppendError(error_strm.GetString());
+      return false;
+    }
+
+    return true;
+  }
+
+  bool AddSymbolsForFile(CommandReturnObject &result, bool &flush) {
+    assert(m_file_option.GetOptionValue().OptionWasSet());
+
+    ModuleSpec module_spec;
+    module_spec.GetFileSpec() =
+        m_file_option.GetOptionValue().GetCurrentValue();
+
+    Target *target = m_exe_ctx.GetTargetPtr();
+    ModuleSP module_sp(target->GetImages().FindFirstModule(module_spec));
+    if (module_sp) {
+      module_spec.GetFileSpec() = module_sp->GetFileSpec();
+      module_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
+      module_spec.GetUUID() = module_sp->GetUUID();
+      module_spec.GetArchitecture() = module_sp->GetArchitecture();
+    } else {
+      module_spec.GetArchitecture() = target->GetArchitecture();
+    }
+
+    if (!DownloadObjectAndSymbolFile(module_spec, result, flush)) {
+      StreamString error_strm;
+      error_strm.PutCString(
+          "unable to find debug symbols for the executable file ");
+      error_strm << module_spec.GetFileSpec();
+      result.AppendError(error_strm.GetString());
+      return false;
+    }
+
+    return true;
+  }
+
+  bool AddSymbolsForFrame(CommandReturnObject &result, bool &flush) {
+    assert(m_current_frame_option.GetOptionValue().OptionWasSet());
+
+    Process *process = m_exe_ctx.GetProcessPtr();
+    if (!process) {
+      result.AppendError(
+          "a process must exist in order to use the --frame option");
+      return false;
+    }
+
+    const StateType process_state = process->GetState();
+    if (!StateIsStoppedState(process_state, true)) {
+      result.AppendErrorWithFormat("process is not stopped: %s",
+                                   StateAsCString(process_state));
+      return false;
+    }
+
+    StackFrame *frame = m_exe_ctx.GetFramePtr();
+    if (!frame) {
+      result.AppendError("invalid current frame");
+      return false;
+    }
+
+    ModuleSP frame_module_sp(
+        frame->GetSymbolContext(eSymbolContextModule).module_sp);
+    if (!frame_module_sp) {
+      result.AppendError("frame has no module");
+      return false;
+    }
+
+    ModuleSpec module_spec;
+    module_spec.GetUUID() = frame_module_sp->GetUUID();
+
+    if (FileSystem::Instance().Exists(frame_module_sp->GetPlatformFileSpec())) {
+      module_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
+      module_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
+    }
+
+    if (!DownloadObjectAndSymbolFile(module_spec, result, flush)) {
+      result.AppendError("unable to find debug symbols for the current frame");
+      return false;
+    }
+
+    return true;
+  }
+
+  bool AddSymbolsForStack(CommandReturnObject &result, bool &flush) {
+    assert(m_current_stack_option.GetOptionValue().OptionWasSet());
+
+    Process *process = m_exe_ctx.GetProcessPtr();
+    if (!process) {
+      result.AppendError(
+          "a process must exist in order to use the --stack option");
+      return false;
+    }
+
+    const StateType process_state = process->GetState();
+    if (!StateIsStoppedState(process_state, true)) {
+      result.AppendErrorWithFormat("process is not stopped: %s",
+                                   StateAsCString(process_state));
+      return false;
+    }
+
+    Thread *thread = m_exe_ctx.GetThreadPtr();
+    if (!thread) {
+      result.AppendError("invalid current thread");
+      return false;
+    }
+
+    bool symbols_found = false;
+    uint32_t frame_count = thread->GetStackFrameCount();
+    for (uint32_t i = 0; i < frame_count; ++i) {
+      lldb::StackFrameSP frame_sp = thread->GetStackFrameAtIndex(i);
+
+      ModuleSP frame_module_sp(
+          frame_sp->GetSymbolContext(eSymbolContextModule).module_sp);
+      if (!frame_module_sp)
+        continue;
+
+      ModuleSpec module_spec;
+      module_spec.GetUUID() = frame_module_sp->GetUUID();
+
+      if (FileSystem::Instance().Exists(
+              frame_module_sp->GetPlatformFileSpec())) {
+        module_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
+        module_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
+      }
+
+      bool current_frame_flush = false;
+      if (DownloadObjectAndSymbolFile(module_spec, result, current_frame_flush))
+        symbols_found = true;
+      flush |= current_frame_flush;
+    }
+
+    if (!symbols_found) {
+      result.AppendError(
+          "unable to find debug symbols in the current call stack");
+      return false;
+    }
+
+    return true;
+  }
+
   bool DoExecute(Args &args, CommandReturnObject &result) override {
     Target *target = m_exe_ctx.GetTargetPtr();
     result.SetStatus(eReturnStatusFailed);
@@ -4153,100 +4312,22 @@ protected:
     const bool file_option_set = m_file_option.GetOptionValue().OptionWasSet();
     const bool frame_option_set =
         m_current_frame_option.GetOptionValue().OptionWasSet();
+    const bool stack_option_set =
+        m_current_stack_option.GetOptionValue().OptionWasSet();
     const size_t argc = args.GetArgumentCount();
 
     if (argc == 0) {
-      if (uuid_option_set || file_option_set || frame_option_set) {
-        bool success = false;
-        bool error_set = false;
-        if (frame_option_set) {
-          Process *process = m_exe_ctx.GetProcessPtr();
-          if (process) {
-            const StateType process_state = process->GetState();
-            if (StateIsStoppedState(process_state, true)) {
-              StackFrame *frame = m_exe_ctx.GetFramePtr();
-              if (frame) {
-                ModuleSP frame_module_sp(
-                    frame->GetSymbolContext(eSymbolContextModule).module_sp);
-                if (frame_module_sp) {
-                  if (FileSystem::Instance().Exists(
-                          frame_module_sp->GetPlatformFileSpec())) {
-                    module_spec.GetArchitecture() =
-                        frame_module_sp->GetArchitecture();
-                    module_spec.GetFileSpec() =
-                        frame_module_sp->GetPlatformFileSpec();
-                  }
-                  module_spec.GetUUID() = frame_module_sp->GetUUID();
-                  success = module_spec.GetUUID().IsValid() ||
-                            module_spec.GetFileSpec();
-                } else {
-                  result.AppendError("frame has no module");
-                  error_set = true;
-                }
-              } else {
-                result.AppendError("invalid current frame");
-                error_set = true;
-              }
-            } else {
-              result.AppendErrorWithFormat("process is not stopped: %s",
-                                           StateAsCString(process_state));
-              error_set = true;
-            }
-          } else {
-            result.AppendError(
-                "a process must exist in order to use the --frame option");
-            error_set = true;
-          }
-        } else {
-          if (uuid_option_set) {
-            module_spec.GetUUID() =
-                m_uuid_option_group.GetOptionValue().GetCurrentValue();
-            success |= module_spec.GetUUID().IsValid();
-          } else if (file_option_set) {
-            module_spec.GetFileSpec() =
-                m_file_option.GetOptionValue().GetCurrentValue();
-            ModuleSP module_sp(
-                target->GetImages().FindFirstModule(module_spec));
-            if (module_sp) {
-              module_spec.GetFileSpec() = module_sp->GetFileSpec();
-              module_spec.GetPlatformFileSpec() =
-                  module_sp->GetPlatformFileSpec();
-              module_spec.GetUUID() = module_sp->GetUUID();
-              module_spec.GetArchitecture() = module_sp->GetArchitecture();
-            } else {
-              module_spec.GetArchitecture() = target->GetArchitecture();
-            }
-            success |= module_spec.GetUUID().IsValid() ||
-                       FileSystem::Instance().Exists(module_spec.GetFileSpec());
-          }
-        }
-
-        if (success) {
-          if (Symbols::DownloadObjectAndSymbolFile(module_spec)) {
-            if (module_spec.GetSymbolFileSpec())
-              success = AddModuleSymbols(target, module_spec, flush, result);
-          }
-        }
-
-        if (!success && !error_set) {
-          StreamString error_strm;
-          if (uuid_option_set) {
-            error_strm.PutCString("unable to find debug symbols for UUID ");
-            module_spec.GetUUID().Dump(&error_strm);
-          } else if (file_option_set) {
-            error_strm.PutCString(
-                "unable to find debug symbols for the executable file ");
-            error_strm << module_spec.GetFileSpec();
-          } else if (frame_option_set) {
-            error_strm.PutCString(
-                "unable to find debug symbols for the current frame");
-          }
-          result.AppendError(error_strm.GetString());
-        }
-      } else {
+      if (uuid_option_set)
+        AddSymbolsForUUID(result, flush);
+      else if (file_option_set)
+        AddSymbolsForFile(result, flush);
+      else if (frame_option_set)
+        AddSymbolsForFrame(result, flush);
+      else if (stack_option_set)
+        AddSymbolsForStack(result, flush);
+      else
         result.AppendError("one or more symbol file paths must be specified, "
                            "or options must be specified");
-      }
     } else {
       if (uuid_option_set) {
         result.AppendError("specify either one or more paths to symbol files "
@@ -4313,6 +4394,7 @@ protected:
   OptionGroupUUID m_uuid_option_group;
   OptionGroupFile m_file_option;
   OptionGroupBoolean m_current_frame_option;
+  OptionGroupBoolean m_current_stack_option;
 };
 
 #pragma mark CommandObjectTargetSymbols
@@ -4351,7 +4433,7 @@ class CommandObjectTargetStopHookAdd : public CommandObjectParsed,
 public:
   class CommandOptions : public OptionGroup {
   public:
-    CommandOptions() : OptionGroup(), m_line_end(UINT_MAX), m_one_liner() {}
+    CommandOptions() : m_line_end(UINT_MAX) {}
 
     ~CommandOptions() override = default;
 
@@ -4508,35 +4590,35 @@ public:
                             "target stop-hook add"),
         IOHandlerDelegateMultiline("DONE",
                                    IOHandlerDelegate::Completion::LLDBCommand),
-        m_options(), m_python_class_options("scripted stop-hook", true, 'P') {
+        m_python_class_options("scripted stop-hook", true, 'P') {
     SetHelpLong(
         R"(
 Command Based stop-hooks:
 -------------------------
   Stop hooks can run a list of lldb commands by providing one or more
-  --one-line-command options.  The commands will get run in the order they are 
+  --one-line-command options.  The commands will get run in the order they are
   added.  Or you can provide no commands, in which case you will enter a
   command editor where you can enter the commands to be run.
-  
+
 Python Based Stop Hooks:
 ------------------------
   Stop hooks can be implemented with a suitably defined Python class, whose name
   is passed in the --python-class option.
-  
+
   When the stop hook is added, the class is initialized by calling:
-  
+
     def __init__(self, target, extra_args, internal_dict):
-    
+
     target: The target that the stop hook is being added to.
-    extra_args: An SBStructuredData Dictionary filled with the -key -value 
-                option pairs passed to the command.     
+    extra_args: An SBStructuredData Dictionary filled with the -key -value
+                option pairs passed to the command.
     dict: An implementation detail provided by lldb.
 
-  Then when the stop-hook triggers, lldb will run the 'handle_stop' method. 
+  Then when the stop-hook triggers, lldb will run the 'handle_stop' method.
   The method has the signature:
-  
+
     def handle_stop(self, exe_ctx, stream):
-    
+
     exe_ctx: An SBExecutionContext for the thread that has stopped.
     stream: An SBStream, anything written to this stream will be printed in the
             the stop message when the process stops.
@@ -4545,12 +4627,12 @@ Python Based Stop Hooks:
                   from all the stop hook executions on threads that stopped
                   with a reason, then the process will continue.  Note that this
                   will happen only after all the stop hooks are run.
-    
+
 Filter Options:
 ---------------
   Stop hooks can be set to always run, or to only run when the stopped thread
   matches the filter options passed on the command line.  The available filter
-  options include a shared library or a thread or queue specification, 
+  options include a shared library or a thread or queue specification,
   a line range in a source file, a function name or a class name.
             )");
     m_all_options.Append(&m_python_class_options,
@@ -4899,6 +4981,55 @@ public:
   ~CommandObjectMultiwordTargetStopHooks() override = default;
 };
 
+#pragma mark CommandObjectTargetDumpTypesystem
+
+/// Dumps the TypeSystem of the selected Target.
+class CommandObjectTargetDumpTypesystem : public CommandObjectParsed {
+public:
+  CommandObjectTargetDumpTypesystem(CommandInterpreter &interpreter)
+      : CommandObjectParsed(
+            interpreter, "target dump typesystem",
+            "Dump the state of the target's internal type system.\n"
+            "Intended to be used for debugging LLDB itself.",
+            nullptr, eCommandRequiresTarget) {}
+
+  ~CommandObjectTargetDumpTypesystem() override = default;
+
+protected:
+  bool DoExecute(Args &command, CommandReturnObject &result) override {
+    if (!command.empty()) {
+      result.AppendError("target dump typesystem doesn't take arguments.");
+      return result.Succeeded();
+    }
+
+    // Go over every scratch TypeSystem and dump to the command output.
+    for (TypeSystem *ts : GetSelectedTarget().GetScratchTypeSystems())
+      ts->Dump(result.GetOutputStream().AsRawOstream());
+
+    result.SetStatus(eReturnStatusSuccessFinishResult);
+    return result.Succeeded();
+  }
+};
+
+#pragma mark CommandObjectTargetDump
+
+/// Multi-word command for 'target dump'.
+class CommandObjectTargetDump : public CommandObjectMultiword {
+public:
+  // Constructors and Destructors
+  CommandObjectTargetDump(CommandInterpreter &interpreter)
+      : CommandObjectMultiword(
+            interpreter, "target dump",
+            "Commands for dumping information about the target.",
+            "target dump [typesystem]") {
+    LoadSubCommand(
+        "typesystem",
+        CommandObjectSP(new CommandObjectTargetDumpTypesystem(interpreter)));
+  }
+
+  ~CommandObjectTargetDump() override = default;
+};
+
 #pragma mark CommandObjectMultiwordTarget
 
 // CommandObjectMultiwordTarget
@@ -4912,6 +5043,8 @@ CommandObjectMultiwordTarget::CommandObjectMultiwordTarget(
                  CommandObjectSP(new CommandObjectTargetCreate(interpreter)));
   LoadSubCommand("delete",
                  CommandObjectSP(new CommandObjectTargetDelete(interpreter)));
+  LoadSubCommand("dump",
+                 CommandObjectSP(new CommandObjectTargetDump(interpreter)));
   LoadSubCommand("list",
                  CommandObjectSP(new CommandObjectTargetList(interpreter)));
   LoadSubCommand("select",

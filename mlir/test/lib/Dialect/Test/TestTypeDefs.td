@@ -14,13 +14,15 @@
 #define TEST_TYPEDEFS
 
 // To get the test dialect def.
-include "TestOps.td"
+include "TestDialect.td"
+include "TestAttrDefs.td"
+include "TestInterfaces.td"
 include "mlir/IR/BuiltinTypes.td"
 include "mlir/Interfaces/DataLayoutInterfaces.td"
 
 // All of the types will extend this class.
 class Test_Type<string name, list<Trait> traits = []>
-  : TypeDef<Test_Dialect, name, traits>;
+    : TypeDef<Test_Dialect, name, traits>;
 
 def SimpleTypeA : Test_Type<"SimpleA"> {
   let mnemonic = "smpla";
@@ -40,12 +42,43 @@ def CompoundTypeA : Test_Type<"CompoundA"> {
     ArrayRefParameter<
       "int", // The parameter C++ type.
       "An example of an array of ints" // Parameter description.
-      >: $arrayOfInts
+    >:$arrayOfInts
   );
 
   let extraClassDeclaration = [{
     struct SomeCppStruct {};
   }];
+}
+
+// A more complex and nested parameterized type.
+def CompoundNestedInnerType : Test_Type<"CompoundNestedInner"> {
+  let mnemonic = "cmpnd_inner";
+  // List of type parameters.
+  let parameters = (
+    ins
+    "int":$some_int,
+    CompoundTypeA:$cmpdA
+  );
+  let assemblyFormat = "`<` $some_int $cmpdA `>`";
+}
+
+def CompoundNestedOuterType : Test_Type<"CompoundNestedOuter"> {
+  let mnemonic = "cmpnd_nested_outer";
+
+  // List of type parameters.
+  let parameters = (ins CompoundNestedInnerType:$inner);
+  let assemblyFormat = "`<` `i`  $inner `>`";
+}
+
+def CompoundNestedOuterTypeQual : Test_Type<"CompoundNestedOuterQual"> {
+  let mnemonic = "cmpnd_nested_outer_qual";
+
+  // List of type parameters.
+  let parameters = (
+    ins
+    CompoundNestedInnerType:$inner
+  );
+  let assemblyFormat = "`<` `i`  qualified($inner) `>`";
 }
 
 // An example of how one could implement a standard integer.
@@ -61,7 +94,7 @@ def IntegerType : Test_Type<"TestInteger"> {
 
   // We define the printer inline.
   let printer = [{
-    $_printer << "int<";
+    $_printer << "<";
     printSignedness($_printer, getImpl()->signedness);
     $_printer << ", " << getImpl()->width << ">";
   }];
@@ -77,14 +110,14 @@ def IntegerType : Test_Type<"TestInteger"> {
 
   // The parser is defined here also.
   let parser = [{
-    if (parser.parseLess()) return Type();
+    if ($_parser.parseLess()) return Type();
     SignednessSemantics signedness;
-    if (parseSignedness($_parser, signedness)) return mlir::Type();
+    if (parseSignedness($_parser, signedness)) return Type();
     if ($_parser.parseComma()) return Type();
     int width;
     if ($_parser.parseInteger(width)) return Type();
     if ($_parser.parseGreater()) return Type();
-    ::mlir::Location loc = $_parser.getEncodedSourceLoc($_parser.getNameLoc());
+    Location loc = $_parser.getEncodedSourceLoc($_parser.getNameLoc());
     return getChecked(loc, loc.getContext(), width, signedness);
   }];
 
@@ -121,7 +154,7 @@ class FieldInfo_Type<string name> : Test_Type<name> {
   // Prints the type in this format:
   //   struct<[{field1Name, field1Type}, {field2Name, field2Type}]
   let printer = [{
-    $_printer << "struct" << "<";
+    $_printer << "<";
     for (size_t i=0, e = getImpl()->fields.size(); i < e; i++) {
       const auto& field = getImpl()->fields[i];
       $_printer << "{" << field.name << "," << field.type << "}";
@@ -180,6 +213,154 @@ def TestTypeWithLayoutType : Test_Type<"TestTypeWithLayout", [
 def TestMemRefElementType : Test_Type<"TestMemRefElementType",
                                       [MemRefElementTypeInterface]> {
   let mnemonic = "memref_element";
+}
+
+def TestTypeTrait : NativeTypeTrait<"TestTypeTrait">;
+
+// The definition of a singleton type that has a trait.
+def TestTypeWithTrait : Test_Type<"TestTypeWithTrait", [TestTypeTrait]> {
+  let mnemonic = "test_type_with_trait";
+}
+
+// Type with assembly format.
+def TestTypeWithFormat : Test_Type<"TestTypeWithFormat"> {
+  let parameters = (
+    ins
+    TestParamOne:$one,
+    TestParamTwo:$two,
+    "::mlir::Attribute":$three
+  );
+
+  let mnemonic = "type_with_format";
+  let assemblyFormat = "`<` $one `,` struct($three, $two) `>`";
+}
+
+// Test dispatch to parseField
+def TestTypeNoParser : Test_Type<"TestTypeNoParser"> {
+  let parameters = (
+    ins
+    "uint32_t":$one,
+    ArrayRefParameter<"int64_t">:$two,
+    StringRefParameter<>:$three,
+    "::test::CustomParam":$four
+  );
+
+  let mnemonic = "no_parser";
+  let assemblyFormat = "`<` $one `,` `[` $two `]` `,` $three `,` $four `>`";
+}
+
+def TestTypeStructCaptureAll : Test_Type<"TestStructTypeCaptureAll"> {
+  let parameters = (
+    ins
+    "int":$v0,
+    "int":$v1,
+    "int":$v2,
+    "int":$v3
+  );
+
+  let mnemonic = "struct_capture_all";
+  let assemblyFormat = "`<` struct(params) `>`";
+}
+
+def TestTypeOptionalParam : Test_Type<"TestTypeOptionalParam"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a, "int":$b);
+  let mnemonic = "optional_param";
+  let assemblyFormat = "`<` $a `,` $b `>`";
+}
+
+def TestTypeOptionalParams : Test_Type<"TestTypeOptionalParams"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a,
+                        StringRefParameter<>:$b);
+  let mnemonic = "optional_params";
+  let assemblyFormat = "`<` params `>`";
+}
+
+def TestTypeOptionalParamsAfterRequired
+    : Test_Type<"TestTypeOptionalParamsAfterRequired"> {
+  let parameters = (ins StringRefParameter<>:$a,
+                        OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "optional_params_after";
+  let assemblyFormat = "`<` params `>`";
+}
+
+def TestTypeOptionalStruct : Test_Type<"TestTypeOptionalStruct"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a,
+                        StringRefParameter<>:$b);
+  let mnemonic = "optional_struct";
+  let assemblyFormat = "`<` struct(params) `>`";
+}
+
+def TestTypeAllOptionalParams : Test_Type<"TestTypeAllOptionalParams"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a,
+                        OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "all_optional_params";
+  let assemblyFormat = "`<` params `>`";
+}
+
+def TestTypeAllOptionalStruct : Test_Type<"TestTypeAllOptionalStruct"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a,
+                        OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "all_optional_struct";
+  let assemblyFormat = "`<` struct(params) `>`";
+}
+
+def TestTypeOptionalGroup : Test_Type<"TestTypeOptionalGroup"> {
+  let parameters = (ins "int":$a, OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "optional_group";
+  let assemblyFormat = "`<` (`(` $b^ `)`) : (`x`)? $a `>`";
+}
+
+def TestTypeOptionalGroupParams : Test_Type<"TestTypeOptionalGroupParams"> {
+  let parameters = (ins DefaultValuedParameter<"mlir::Optional<int>", "10">:$a,
+                        OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "optional_group_params";
+  let assemblyFormat = "`<` (`(` params^ `)`) : (`x`)? `>`";
+}
+
+def TestTypeOptionalGroupStruct : Test_Type<"TestTypeOptionalGroupStruct"> {
+  let parameters = (ins OptionalParameter<"mlir::Optional<int>">:$a,
+                        OptionalParameter<"mlir::Optional<int>">:$b);
+  let mnemonic = "optional_group_struct";
+  let assemblyFormat = "`<` (`(` struct(params)^ `)`) : (`x`)? `>`";
+}
+
+def TestTypeSpaces : Test_Type<"TestTypeSpaceS"> {
+  let parameters = (ins "int":$a, "int":$b);
+  let mnemonic = "spaces";
+  let assemblyFormat = "`<` ` ` $a `\\n` `(` `)` `` `(` `)` $b `>`";
+}
+
+class DefaultValuedAPFloat<string value>
+    : DefaultValuedParameter<"llvm::Optional<llvm::APFloat>",
+                             "llvm::Optional<llvm::APFloat>(" # value # ")"> {
+  let comparator = "$_lhs->bitwiseIsEqual(*$_rhs)";
+  let parser = [{ [&]() -> mlir::FailureOr<llvm::Optional<llvm::APFloat>> {
+    mlir::FloatAttr attr;
+    auto result = $_parser.parseOptionalAttribute(attr);
+    if (result.hasValue() && mlir::succeeded(*result))
+      return {attr.getValue()};
+    if (!result.hasValue())
+      return llvm::Optional<llvm::APFloat>();
+    return mlir::failure();
+  }() }];
+  let printer = "$_printer << *$_self";
+}
+
+def TestTypeAPFloat : Test_Type<"TestTypeAPFloat"> {
+  let parameters = (ins
+    DefaultValuedAPFloat<"APFloat::getZero(APFloat::IEEEdouble())">:$a
+  );
+  let mnemonic = "ap_float";
+  let assemblyFormat = "`<` $a `>`";
+}
+
+def TestTypeDefaultValuedType : Test_Type<"TestTypeDefaultValuedType"> {
+  let parameters = (ins
+    DefaultValuedParameter<"mlir::IntegerType",
+                           "mlir::IntegerType::get($_ctx, 32)">:$type
+  );
+  let mnemonic = "default_valued_type";
+  let assemblyFormat = "`<` (`(` $type^ `)`)? `>`";
 }
 
 #endif // TEST_TYPEDEFS

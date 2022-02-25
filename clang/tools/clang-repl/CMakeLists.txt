@@ -7,12 +7,18 @@ set( LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_executable(clang-repl
+add_clang_tool(clang-repl
   ClangRepl.cpp
   )
 
 clang_target_link_libraries(clang-repl PUBLIC
   clangBasic
+  clangFrontend
   clangInterpreter
   clangTooling
   )
+
+# Support plugins.
+if(CLANG_PLUGIN_SUPPORT)
+  export_executable_symbols_for_plugins(clang-repl)
+endif()

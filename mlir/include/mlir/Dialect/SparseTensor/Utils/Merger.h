@@ -13,7 +13,7 @@
 #ifndef MLIR_DIALECT_SPARSETENSOR_UTILS_MERGER_H_
 #define MLIR_DIALECT_SPARSETENSOR_UTILS_MERGER_H_
 
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/IR/Value.h"
 #include "llvm/ADT/BitVector.h"
 
@@ -34,6 +34,16 @@ enum Kind {
   kFloorF,
   kNegF,
   kNegI,
+  kTruncF,
+  kExtF,
+  kCastFS, // signed
+  kCastFU, // unsigned
+  kCastSF, // signed
+  kCastUF, // unsigned
+  kCastS,  // signed
+  kCastU,  // unsigned
+  kTruncI,
+  kBitCast,
   // Binary operations.
   kMulF,
   kMulI,
@@ -73,8 +83,9 @@ struct TensorExp {
     Children children;
   };
 
-  /// Direct link to IR for an invariant. During code generation,
-  /// field is used to cache "hoisted" loop invariant tensor loads.
+  /// Direct link to IR for an invariant or the destination value (to
+  /// infer destination type) of a cast operation During code generation,
+  /// this field may be used to cache "hoisted" loop invariant tensor loads.
   Value val;
 };
 
@@ -83,16 +94,16 @@ struct TensorExp {
 /// tensor expression.
 struct LatPoint {
   LatPoint(unsigned n, unsigned e, unsigned b);
-  LatPoint(const llvm::BitVector &b, unsigned e);
+  LatPoint(const BitVector &b, unsigned e);
 
   /// Conjunction of tensor loop indices as bitvector. This represents
   /// all indices involved in the tensor expression
-  llvm::BitVector bits;
+  BitVector bits;
 
   /// Simplified conjunction of tensor loop indices as bitvector. This
   /// represents a simplified condition under which this tensor expression
   /// must execute. Pre-computed during codegen to avoid repeated eval.
-  llvm::BitVector simple;
+  BitVector simple;
 
   /// Index of the tensor expresssion.
   unsigned exp;
@@ -111,10 +122,11 @@ public:
   /// invariant expressions in the kernel.
   Merger(unsigned t, unsigned l)
       : outTensor(t - 1), syntheticTensor(t), numTensors(t + 1), numLoops(l),
-        dims(t + 1, std::vector<Dim>(l, Dim::kUndef)) {}
+        hasSparseOut(false), dims(t + 1, std::vector<Dim>(l, Dim::kUndef)) {}
 
   /// Adds a tensor expression. Returns its index.
   unsigned addExp(Kind k, unsigned e0, unsigned e1 = -1u, Value v = Value());
+  unsigned addExp(Kind k, unsigned e, Value v) { return addExp(k, e, -1u, v); }
   unsigned addExp(Kind k, Value v) { return addExp(k, -1u, -1u, v); }
 
   /// Adds an iteration lattice point. Returns its index.
@@ -140,7 +152,7 @@ public:
   /// Maps the unary operator over the lattice set of the operand, i.e. each
   /// lattice point on an expression E is simply copied over, but with OP E
   /// as new expression. Returns the index of the new set.
-  unsigned mapSet(Kind kind, unsigned s0);
+  unsigned mapSet(Kind kind, unsigned s0, Value v = Value());
 
   /// Optimizes the iteration lattice points in the given set. This
   /// method should be called right before code generation to avoid
@@ -151,7 +163,7 @@ public:
   /// within the given set using just two basic rules:
   /// (1) multiple dense conditions are reduced to single dense, and
   /// (2) a *singleton* sparse/dense is reduced to sparse/random access.
-  llvm::BitVector simplifyCond(unsigned s0, unsigned p0);
+  BitVector simplifyCond(unsigned s0, unsigned p0);
 
   /// Returns true if Li > Lj.
   bool latGT(unsigned i, unsigned j) const;
@@ -178,15 +190,19 @@ public:
   }
 
   /// Returns true if any set bit corresponds to queried dim.
-  bool hasAnyDimOf(const llvm::BitVector &bits, Dim d) const;
+  bool hasAnyDimOf(const BitVector &bits, Dim d) const;
 
-  /// Returns true if given tensor co-iterates with conjunction only in the
-  /// given tensor expression. For the output tensor, this defines a "simply
-  /// dynamic" operation [Bik96]. For instance: a(i) *=  b(i) * c(i)
-  bool isConjunction(unsigned t, unsigned e) const;
+  /// Returns true if given tensor iterates *only* in the given tensor
+  /// expression. For the output tensor, this defines a "simply dynamic"
+  /// operation [Bik96]. For instance: a(i) *= 2.0 or a(i) += a(i) for
+  /// sparse vector a.
+  bool isSingleCondition(unsigned t, unsigned e) const;
 
   /// Dimension setter.
   void setDim(unsigned t, unsigned i, Dim d) { dims[t][i] = d; }
+
+  // Has sparse output tensor setter.
+  void setHasSparseOut(bool s) { hasSparseOut = s; }
 
   /// Convenience getters to immediately access the stored nodes.
   /// Typically it is inadvisible to keep the reference around, as in
@@ -201,7 +217,7 @@ public:
   void dumpExp(unsigned e) const;
   void dumpLat(unsigned p) const;
   void dumpSet(unsigned s) const;
-  void dumpBits(const llvm::BitVector &bits) const;
+  void dumpBits(const BitVector &bits) const;
 #endif
 
   /// Builds the iteration lattices in a bottom-up traversal given the remaining
@@ -218,17 +234,20 @@ public:
                  Value v1);
 
 private:
+  /// Private helpers.
   bool maybeZero(unsigned e) const;
   bool isInvariant(unsigned e) const;
+  Type inferType(unsigned e, Value src);
 
   /// Traverses the SSA tree (possibly a DAG) to build a tensor expression.
   Optional<unsigned> buildTensorExp(linalg::GenericOp op, Value v);
 
+  /// Merger data structures.
   const unsigned outTensor;
   const unsigned syntheticTensor;
   const unsigned numTensors;
   const unsigned numLoops;
-
+  bool hasSparseOut;
   std::vector<std::vector<Dim>> dims;
   llvm::SmallVector<TensorExp, 32> tensorExps;
   llvm::SmallVector<LatPoint, 16> latPoints;

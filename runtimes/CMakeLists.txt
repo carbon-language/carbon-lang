@@ -28,13 +28,19 @@ endfunction()
 find_package(LLVM PATHS "${LLVM_BINARY_DIR}" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 find_package(Clang PATHS "${LLVM_BINARY_DIR}" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 
+set(LLVM_COMMON_CMAKE_UTILS "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+
 # Add path for custom and the LLVM build's modules to the CMake module path.
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
+  "${LLVM_COMMON_CMAKE_UTILS}"
+  "${LLVM_COMMON_CMAKE_UTILS}/Modules"
   "${CMAKE_CURRENT_SOURCE_DIR}/../llvm/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/../llvm/cmake/modules"
 )
+
+set(LLVM_THIRD_PARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third-party")
 
 function(get_compiler_rt_path path)
   foreach(entry ${runtimes})
@@ -58,30 +64,59 @@ if(compiler_rt_path)
   endif()
 endif()
 
+# If building standalone by pointing CMake at this runtimes directory,
+# LLVM_BINARY_DIR isn't set, find_package(LLVM) will fail and these
+# intermediate paths are unset.
+if (NOT LLVM_BINARY_DIR)
+  set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+if (NOT LLVM_FOUND)
+  set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
+  set(LLVM_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
+endif()
+
 # Setting these variables will allow the sub-build to put their outputs into
 # the library and bin directories of the top-level build.
 set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_LIBRARY_DIR})
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_TOOLS_BINARY_DIR})
 
 # This variable makes sure that e.g. llvm-lit is found.
-set(LLVM_MAIN_SRC_DIR ${LLVM_BUILD_MAIN_SRC_DIR})
-set(LLVM_CMAKE_PATH ${LLVM_MAIN_SRC_DIR}/cmake/modules)
+set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../llvm)
+set(LLVM_CMAKE_DIR ${LLVM_MAIN_SRC_DIR}/cmake/modules)
 
 # This variable is used by individual runtimes to locate LLVM files.
-set(LLVM_PATH ${LLVM_BUILD_MAIN_SRC_DIR})
-
-if(APPLE)
-  set(LLVM_ENABLE_LIBCXX ON CACHE BOOL "")
-endif()
+set(LLVM_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../llvm)
 
 include(CheckLibraryExists)
+include(LLVMCheckCompilerLinkerFlag)
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
-# Disable use of the installed C++ standard library when building runtimes. If
-# MSVC is true, we must be using the clang-cl driver, which doesn't understand
-# these flags.
-if (NOT MSVC)
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -nostdinc++ -nostdlib++")
+
+check_c_compiler_flag("" LLVM_RUNTIMES_LINKING_WORKS)
+if (NOT LLVM_RUNTIMES_LINKING_WORKS)
+  # The compiler driver may be implicitly trying to link against libunwind,
+  # which might not work if libunwind doesn't exist yet. Try to check if
+  # --unwindlib=none is supported, and use that if possible.
+  # Don't add this if not necessary to fix linking, as it can break using
+  # e.g. ASAN/TSAN.
+  llvm_check_compiler_linker_flag(C "--unwindlib=none" LLVM_RUNTIMES_SUPPORT_UNWINDLIB_NONE_FLAG)
+  if (LLVM_RUNTIMES_SUPPORT_UNWINDLIB_NONE_FLAG)
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} --unwindlib=none")
+  endif()
+endif()
+
+# Disable use of the installed C++ standard library when building runtimes.
+# Check for -nostdlib++ first; if there's no C++ standard library yet,
+# all check_cxx_compiler_flag commands will fail until we add -nostdlib++
+# (or -nodefaultlibs).
+llvm_check_compiler_linker_flag(C "-nostdlib++" LLVM_RUNTIMES_SUPPORT_NOSTDLIBXX_FLAG)
+if (LLVM_RUNTIMES_SUPPORT_NOSTDLIBXX_FLAG)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -nostdlib++")
+endif()
+check_cxx_compiler_flag(-nostdinc++ LLVM_RUNTIMES_SUPPORT_NOSTDINCXX_FLAG)
+if (LLVM_RUNTIMES_SUPPORT_NOSTDINCXX_FLAG)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -nostdinc++")
 endif()
 
 # Avoid checking whether the compiler is working.
@@ -92,6 +127,16 @@ include(AddLLVM)
 include(HandleLLVMOptions)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# Host triple is used by tests to check if they are running natively.
+include(GetHostTriple)
+get_host_triple(LLVM_HOST_TRIPLE)
+set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_HOST_TRIPLE}" CACHE STRING
+  "Default target for which the runtimes will be built.")
+
+option(LLVM_INCLUDE_TESTS "Generate build targets for the runtimes unit tests." ON)
+option(LLVM_INCLUDE_DOCS "Generate build targets for the runtimes documentation." ON)
+option(LLVM_ENABLE_SPHINX "Use Sphinx to generate the runtimes documentation." OFF)
 
 # Use libtool instead of ar if you are both on an Apple host, and targeting Apple.
 if(CMAKE_HOST_APPLE AND APPLE)
@@ -125,6 +170,31 @@ foreach(entry ${runtimes})
   set(HAVE_${canon_name} ON)
 endforeach()
 
+if(LLVM_INCLUDE_TESTS)
+  set(LIT_ARGS_DEFAULT "-sv --show-xfail --show-unsupported")
+  if (MSVC OR XCODE)
+    set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+  endif()
+  set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+endif()
+
+# llvm-libgcc incorporates both compiler-rt and libunwind as subprojects with very
+# specific flags, which causes clashes when they're independently built too.
+if("llvm-libgcc" IN_LIST runtimes)
+  if("compiler-rt" IN_LIST runtimes OR "compiler-rt" IN_LIST LLVM_ENABLE_PROJECTS)
+    message(FATAL_ERROR
+      "Attempting to build both compiler-rt and llvm-libgcc will cause irreconcilable "
+      "target clashes. Please choose one or the other, but not both.")
+  endif()
+
+  if("libunwind" IN_LIST runtimes)
+    message(
+      FATAL_ERROR
+      "Attempting to build both libunwind and llvm-libgcc will cause irreconcilable "
+      "target clashes. Please choose one or the other, but not both.")
+  endif()
+endif()
+
 # We do this in two loops so that HAVE_* is set for each runtime before the
 # other runtimes are added.
 foreach(entry ${runtimes})
@@ -152,7 +222,6 @@ endforeach()
 if(LLVM_INCLUDE_TESTS)
   # Add a global check rule now that all subdirectories have been traversed
   # and we know the total set of lit testsuites.
-
   add_lit_target(check-runtimes
     "Running all regression tests"
     ${RUNTIMES_LIT_TESTSUITES}
@@ -161,6 +230,14 @@ if(LLVM_INCLUDE_TESTS)
     ARGS ${RUNTIMES_LIT_EXTRA_ARGS}
     )
   add_custom_target(runtimes-test-depends DEPENDS ${RUNTIMES_LIT_DEPENDS})
+
+  if (NOT HAVE_LLVM_LIT)
+    # If built by manually invoking cmake on this directory, we don't have
+    # llvm-lit. If invoked via llvm/runtimes, the toplevel llvm cmake
+    # invocation already generated the llvm-lit script.
+    add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/llvm-lit
+                     ${CMAKE_CURRENT_BINARY_DIR}/llvm-lit)
+  endif()
 endif()
 
 get_property(SUB_COMPONENTS GLOBAL PROPERTY SUB_COMPONENTS)

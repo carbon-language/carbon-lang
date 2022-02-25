@@ -29,7 +29,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -137,7 +137,7 @@ EmulateInstructionMIPS::EmulateInstructionMIPS(
     break;
   }
 
-  std::string features = "";
+  std::string features;
   uint32_t arch_flags = arch.GetFlags();
   if (arch_flags & ArchSpec::eMIPSAse_msa)
     features += "+msa,";
@@ -193,17 +193,7 @@ void EmulateInstructionMIPS::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-ConstString EmulateInstructionMIPS::GetPluginNameStatic() {
-  ConstString g_plugin_name("lldb.emulate-instruction.mips32");
-  return g_plugin_name;
-}
-
-lldb_private::ConstString EmulateInstructionMIPS::GetPluginName() {
-  static ConstString g_plugin_name("EmulateInstructionMIPS");
-  return g_plugin_name;
-}
-
-const char *EmulateInstructionMIPS::GetPluginDescriptionStatic() {
+llvm::StringRef EmulateInstructionMIPS::GetPluginDescriptionStatic() {
   return "Emulate instructions for the MIPS32 architecture.";
 }
 
@@ -2946,9 +2936,9 @@ bool EmulateInstructionMIPS::Emulate_MSA_Branch_V(llvm::MCInst &insn,
                                                   bool bnz) {
   bool success = false;
   int32_t target = 0;
-  llvm::APInt wr_val = llvm::APInt::getNullValue(128);
+  llvm::APInt wr_val = llvm::APInt::getZero(128);
   llvm::APInt fail_value = llvm::APInt::getMaxValue(128);
-  llvm::APInt zero_value = llvm::APInt::getNullValue(128);
+  llvm::APInt zero_value = llvm::APInt::getZero(128);
   RegisterValue reg_value;
 
   uint32_t wt = m_reg_info->getEncodingValue(insn.getOperand(0).getReg());

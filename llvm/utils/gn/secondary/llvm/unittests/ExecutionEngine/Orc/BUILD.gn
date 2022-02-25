@@ -14,8 +14,10 @@ unittest("OrcJITTests") {
   ]
   sources = [
     "CoreAPIsTest.cpp",
+    "EPCGenericJITLinkMemoryManagerTest.cpp",
     "EPCGenericMemoryAccessTest.cpp",
     "ExecutionSessionWrapperFunctionCallsTest.cpp",
+    "ExecutorAddressTest.cpp",
     "IndirectionUtilsTest.cpp",
     "JITTargetMachineBuilderTest.cpp",
     "LazyCallThroughAndReexportsTest.cpp",
@@ -23,12 +25,12 @@ unittest("OrcJITTests") {
     "ObjectLinkingLayerTest.cpp",
     "OrcCAPITest.cpp",
     "OrcTestCommon.cpp",
-    "QueueChannel.cpp",
-    "RPCUtilsTest.cpp",
     "RTDyldObjectLinkingLayerTest.cpp",
     "ResourceTrackerTest.cpp",
+    "SimpleExecutorMemoryManagerTest.cpp",
     "SimplePackedSerializationTest.cpp",
     "SymbolStringPoolTest.cpp",
+    "TaskDispatchTest.cpp",
     "ThreadSafeModuleTest.cpp",
     "WrapperFunctionUtilsTest.cpp",
   ]

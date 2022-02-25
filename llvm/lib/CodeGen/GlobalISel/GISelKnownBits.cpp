@@ -37,6 +37,11 @@ Align GISelKnownBits::computeKnownAlignment(Register R, unsigned Depth) {
   switch (MI->getOpcode()) {
   case TargetOpcode::COPY:
     return computeKnownAlignment(MI->getOperand(1).getReg(), Depth);
+  case TargetOpcode::G_ASSERT_ALIGN: {
+    // TODO: Min with source
+    int64_t LogAlign = MI->getOperand(2).getImm();
+    return Align(1ull << LogAlign);
+  }
   case TargetOpcode::G_FRAME_INDEX: {
     int FrameIdx = MI->getOperand(1).getIndex();
     return MF.getFrameInfo().getObjectAlign(FrameIdx);
@@ -57,7 +62,7 @@ KnownBits GISelKnownBits::getKnownBits(MachineInstr &MI) {
 KnownBits GISelKnownBits::getKnownBits(Register R) {
   const LLT Ty = MRI.getType(R);
   APInt DemandedElts =
-      Ty.isVector() ? APInt::getAllOnesValue(Ty.getNumElements()) : APInt(1, 1);
+      Ty.isVector() ? APInt::getAllOnes(Ty.getNumElements()) : APInt(1, 1);
   return getKnownBits(R, DemandedElts);
 }
 
@@ -198,8 +203,8 @@ void GISelKnownBits::computeKnownBitsImpl(Register R, KnownBits &Known,
   case TargetOpcode::COPY:
   case TargetOpcode::G_PHI:
   case TargetOpcode::PHI: {
-    Known.One = APInt::getAllOnesValue(BitWidth);
-    Known.Zero = APInt::getAllOnesValue(BitWidth);
+    Known.One = APInt::getAllOnes(BitWidth);
+    Known.Zero = APInt::getAllOnes(BitWidth);
     // Destination registers should not have subregisters at this
     // point of the pipeline, otherwise the main live-range will be
     // defined more than once, which is against SSA.
@@ -245,7 +250,7 @@ void GISelKnownBits::computeKnownBitsImpl(Register R, KnownBits &Known,
     break;
   }
   case TargetOpcode::G_CONSTANT: {
-    auto CstVal = getConstantVRegVal(R, MRI);
+    auto CstVal = getIConstantVRegVal(R, MRI);
     if (!CstVal)
       break;
     Known = KnownBits::makeConstant(*CstVal);
@@ -464,6 +469,18 @@ void GISelKnownBits::computeKnownBitsImpl(Register R, KnownBits &Known,
     Known = Known.zextOrTrunc(BitWidth);
     if (BitWidth > SrcBitWidth)
       Known.Zero.setBitsFrom(SrcBitWidth);
+    break;
+  }
+  case TargetOpcode::G_ASSERT_ALIGN: {
+    int64_t LogOfAlign = MI.getOperand(2).getImm();
+    if (LogOfAlign == 0)
+      break;
+
+    // TODO: Should use maximum with source
+    // If a node is guaranteed to be aligned, set low zero bits accordingly as
+    // well as clearing one bits.
+    Known.Zero.setLowBits(LogOfAlign);
+    Known.One.clearLowBits(LogOfAlign);
     break;
   }
   case TargetOpcode::G_MERGE_VALUES: {
@@ -688,9 +705,8 @@ unsigned GISelKnownBits::computeNumSignBits(Register R,
 
 unsigned GISelKnownBits::computeNumSignBits(Register R, unsigned Depth) {
   LLT Ty = MRI.getType(R);
-  APInt DemandedElts = Ty.isVector()
-                           ? APInt::getAllOnesValue(Ty.getNumElements())
-                           : APInt(1, 1);
+  APInt DemandedElts =
+      Ty.isVector() ? APInt::getAllOnes(Ty.getNumElements()) : APInt(1, 1);
   return computeNumSignBits(R, DemandedElts, Depth);
 }
 

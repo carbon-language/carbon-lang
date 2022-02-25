@@ -348,7 +348,7 @@ bool Symbol::IsSubprogram() const {
 
 bool Symbol::IsFromModFile() const {
   return test(Flag::ModFile) ||
-      (!owner_->IsGlobal() && owner_->symbol()->IsFromModFile());
+      (!owner_->IsTopLevel() && owner_->symbol()->IsFromModFile());
 }
 
 ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
@@ -535,11 +535,15 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const Symbol &symbol) {
   return os;
 }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void Symbol::dump() const { llvm::errs() << *this << '\n'; }
+#endif
+
 // Output a unique name for a scope by qualifying it with the names of
 // parent scopes. For scopes without corresponding symbols, use the kind
 // with an index (e.g. Block1, Block2, etc.).
 static void DumpUniqueName(llvm::raw_ostream &os, const Scope &scope) {
-  if (!scope.IsGlobal()) {
+  if (!scope.IsTopLevel()) {
     DumpUniqueName(os, scope.parent());
     os << '/';
     if (auto *scopeSymbol{scope.symbol()};
@@ -674,6 +678,40 @@ std::string GenericKind::ToString() const {
 bool GenericKind::Is(GenericKind::OtherKind x) const {
   const OtherKind *y{std::get_if<OtherKind>(&u)};
   return y && *y == x;
+}
+
+bool SymbolOffsetCompare::operator()(
+    const SymbolRef &x, const SymbolRef &y) const {
+  const Symbol *xCommon{FindCommonBlockContaining(*x)};
+  const Symbol *yCommon{FindCommonBlockContaining(*y)};
+  if (xCommon) {
+    if (yCommon) {
+      const SymbolSourcePositionCompare sourceCmp;
+      if (sourceCmp(*xCommon, *yCommon)) {
+        return true;
+      } else if (sourceCmp(*yCommon, *xCommon)) {
+        return false;
+      } else if (x->offset() == y->offset()) {
+        return x->size() > y->size();
+      } else {
+        return x->offset() < y->offset();
+      }
+    } else {
+      return false;
+    }
+  } else if (yCommon) {
+    return true;
+  } else if (x->offset() == y->offset()) {
+    return x->size() > y->size();
+  } else {
+    return x->offset() < y->offset();
+  }
+  return x->GetSemanticsContext().allCookedSources().Precedes(
+      x->name(), y->name());
+}
+bool SymbolOffsetCompare::operator()(
+    const MutableSymbolRef &x, const MutableSymbolRef &y) const {
+  return (*this)(SymbolRef{*x}, SymbolRef{*y});
 }
 
 } // namespace Fortran::semantics

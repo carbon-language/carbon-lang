@@ -9,11 +9,14 @@
 #ifndef LLVM_LIBC_SRC_SUPPORT_FPUTIL_PLATFORM_DEFS_H
 #define LLVM_LIBC_SRC_SUPPORT_FPUTIL_PLATFORM_DEFS_H
 
-#if defined(__x86_64__) || defined(__i386__)
+#include "src/__support/architectures.h"
+
+#if defined(LLVM_LIBC_ARCH_X86)
 #define X87_FPU
 #endif
 
-#if defined(_WIN32)
+// https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
+#if defined(_WIN32) || (defined(__APPLE__) && defined(__aarch64__))
 #define LONG_DOUBLE_IS_DOUBLE
 #endif
 

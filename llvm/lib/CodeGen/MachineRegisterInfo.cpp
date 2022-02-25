@@ -43,8 +43,7 @@ void MachineRegisterInfo::Delegate::anchor() {}
 
 MachineRegisterInfo::MachineRegisterInfo(MachineFunction *MF)
     : MF(MF), TracksSubRegLiveness(MF->getSubtarget().enableSubRegLiveness() &&
-                                   EnableSubRegLiveness),
-      IsUpdatedCSRsInitialized(false) {
+                                   EnableSubRegLiveness) {
   unsigned NumRegs = getTargetRegisterInfo()->getNumRegs();
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
@@ -383,9 +382,7 @@ void MachineRegisterInfo::replaceRegWith(Register FromReg, Register ToReg) {
   const TargetRegisterInfo *TRI = getTargetRegisterInfo();
 
   // TODO: This could be more efficient by bulk changing the operands.
-  for (reg_iterator I = reg_begin(FromReg), E = reg_end(); I != E; ) {
-    MachineOperand &O = *I;
-    ++I;
+  for (MachineOperand &O : llvm::make_early_inc_range(reg_operands(FromReg))) {
     if (Register::isPhysicalRegister(ToReg)) {
       O.substPhysReg(ToReg, *TRI);
     } else {
@@ -653,4 +650,19 @@ bool MachineRegisterInfo::isReservedRegUnit(unsigned Unit) const {
       return true;
   }
   return false;
+}
+
+bool MachineRegisterInfo::isArgumentRegister(const MachineFunction &MF,
+                                             MCRegister Reg) const {
+  return getTargetRegisterInfo()->isArgumentRegister(MF, Reg);
+}
+
+bool MachineRegisterInfo::isFixedRegister(const MachineFunction &MF,
+                                          MCRegister Reg) const {
+  return getTargetRegisterInfo()->isFixedRegister(MF, Reg);
+}
+
+bool MachineRegisterInfo::isGeneralPurposeRegister(const MachineFunction &MF,
+                                                   MCRegister Reg) const {
+  return getTargetRegisterInfo()->isGeneralPurposeRegister(MF, Reg);
 }

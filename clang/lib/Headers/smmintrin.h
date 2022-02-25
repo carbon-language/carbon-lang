@@ -10,6 +10,10 @@
 #ifndef __SMMINTRIN_H
 #define __SMMINTRIN_H
 
+#if !defined(__i386__) && !defined(__x86_64__)
+#error "This header is only meant to be used on x86 and x64 architecture"
+#endif
+
 #include <tmmintrin.h>
 
 /* Define the default attributes for the functions in this file. */
@@ -664,7 +668,7 @@ _mm_stream_load_si128 (__m128i const *__V)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_min_epi8 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pminsb128 ((__v16qi) __V1, (__v16qi) __V2);
+  return (__m128i) __builtin_elementwise_min((__v16qs) __V1, (__v16qs) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -683,7 +687,7 @@ _mm_min_epi8 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_max_epi8 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pmaxsb128 ((__v16qi) __V1, (__v16qi) __V2);
+  return (__m128i) __builtin_elementwise_max((__v16qs) __V1, (__v16qs) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -702,7 +706,7 @@ _mm_max_epi8 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_min_epu16 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pminuw128 ((__v8hi) __V1, (__v8hi) __V2);
+  return (__m128i) __builtin_elementwise_min((__v8hu) __V1, (__v8hu) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -721,7 +725,7 @@ _mm_min_epu16 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_max_epu16 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pmaxuw128 ((__v8hi) __V1, (__v8hi) __V2);
+  return (__m128i) __builtin_elementwise_max((__v8hu) __V1, (__v8hu) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -740,7 +744,7 @@ _mm_max_epu16 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_min_epi32 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pminsd128 ((__v4si) __V1, (__v4si) __V2);
+  return (__m128i) __builtin_elementwise_min((__v4si) __V1, (__v4si) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -759,7 +763,7 @@ _mm_min_epi32 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_max_epi32 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pmaxsd128 ((__v4si) __V1, (__v4si) __V2);
+  return (__m128i) __builtin_elementwise_max((__v4si) __V1, (__v4si) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -778,7 +782,7 @@ _mm_max_epi32 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_min_epu32 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pminud128((__v4si) __V1, (__v4si) __V2);
+  return (__m128i) __builtin_elementwise_min((__v4su) __V1, (__v4su) __V2);
 }
 
 /// Compares the corresponding elements of two 128-bit vectors of
@@ -797,7 +801,7 @@ _mm_min_epu32 (__m128i __V1, __m128i __V2)
 static __inline__  __m128i __DEFAULT_FN_ATTRS
 _mm_max_epu32 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pmaxud128((__v4si) __V1, (__v4si) __V2);
+  return (__m128i) __builtin_elementwise_max((__v4su) __V1, (__v4su) __V2);
 }
 
 /* SSE4 Insertion and Extraction from XMM Register Instructions.  */
@@ -2338,91 +2342,10 @@ _mm_cmpgt_epi64(__m128i __V1, __m128i __V2)
   return (__m128i)((__v2di)__V1 > (__v2di)__V2);
 }
 
-/* SSE4.2 Accumulate CRC32.  */
-/// Adds the unsigned integer operand to the CRC-32C checksum of the
-///    unsigned char operand.
-///
-/// \headerfile <x86intrin.h>
-///
-/// This intrinsic corresponds to the <c> CRC32B </c> instruction.
-///
-/// \param __C
-///    An unsigned integer operand to add to the CRC-32C checksum of operand
-///    \a  __D.
-/// \param __D
-///    An unsigned 8-bit integer operand used to compute the CRC-32C checksum.
-/// \returns The result of adding operand \a __C to the CRC-32C checksum of
-///    operand \a __D.
-static __inline__ unsigned int __DEFAULT_FN_ATTRS
-_mm_crc32_u8(unsigned int __C, unsigned char __D)
-{
-  return __builtin_ia32_crc32qi(__C, __D);
-}
-
-/// Adds the unsigned integer operand to the CRC-32C checksum of the
-///    unsigned short operand.
-///
-/// \headerfile <x86intrin.h>
-///
-/// This intrinsic corresponds to the <c> CRC32W </c> instruction.
-///
-/// \param __C
-///    An unsigned integer operand to add to the CRC-32C checksum of operand
-///    \a __D.
-/// \param __D
-///    An unsigned 16-bit integer operand used to compute the CRC-32C checksum.
-/// \returns The result of adding operand \a __C to the CRC-32C checksum of
-///    operand \a __D.
-static __inline__ unsigned int __DEFAULT_FN_ATTRS
-_mm_crc32_u16(unsigned int __C, unsigned short __D)
-{
-  return __builtin_ia32_crc32hi(__C, __D);
-}
-
-/// Adds the first unsigned integer operand to the CRC-32C checksum of
-///    the second unsigned integer operand.
-///
-/// \headerfile <x86intrin.h>
-///
-/// This intrinsic corresponds to the <c> CRC32L </c> instruction.
-///
-/// \param __C
-///    An unsigned integer operand to add to the CRC-32C checksum of operand
-///    \a __D.
-/// \param __D
-///    An unsigned 32-bit integer operand used to compute the CRC-32C checksum.
-/// \returns The result of adding operand \a __C to the CRC-32C checksum of
-///    operand \a __D.
-static __inline__ unsigned int __DEFAULT_FN_ATTRS
-_mm_crc32_u32(unsigned int __C, unsigned int __D)
-{
-  return __builtin_ia32_crc32si(__C, __D);
-}
-
-#ifdef __x86_64__
-/// Adds the unsigned integer operand to the CRC-32C checksum of the
-///    unsigned 64-bit integer operand.
-///
-/// \headerfile <x86intrin.h>
-///
-/// This intrinsic corresponds to the <c> CRC32Q </c> instruction.
-///
-/// \param __C
-///    An unsigned integer operand to add to the CRC-32C checksum of operand
-///    \a __D.
-/// \param __D
-///    An unsigned 64-bit integer operand used to compute the CRC-32C checksum.
-/// \returns The result of adding operand \a __C to the CRC-32C checksum of
-///    operand \a __D.
-static __inline__ unsigned long long __DEFAULT_FN_ATTRS
-_mm_crc32_u64(unsigned long long __C, unsigned long long __D)
-{
-  return __builtin_ia32_crc32di(__C, __D);
-}
-#endif /* __x86_64__ */
-
 #undef __DEFAULT_FN_ATTRS
 
 #include <popcntintrin.h>
+
+#include <crc32intrin.h>
 
 #endif /* __SMMINTRIN_H */

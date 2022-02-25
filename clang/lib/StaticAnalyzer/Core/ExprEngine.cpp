@@ -326,8 +326,8 @@ ProgramStateRef ExprEngine::createTemporaryRegionIfNeeded(
     }
     Result = InitWithAdjustments;
   } else {
-    // We need to create a region no matter what. For sanity, make sure we don't
-    // try to stuff a Loc into a non-pointer temporary region.
+    // We need to create a region no matter what. Make sure we don't try to
+    // stuff a Loc into a non-pointer temporary region.
     assert(!InitValWithAdjustments.getAs<Loc>() ||
            Loc::isLocType(Result->getType()) ||
            Result->getType()->isMemberPointerType());
@@ -393,8 +393,7 @@ ProgramStateRef ExprEngine::createTemporaryRegionIfNeeded(
   SVal BaseReg = Reg;
 
   // Make the necessary adjustments to obtain the sub-object.
-  for (auto I = Adjustments.rbegin(), E = Adjustments.rend(); I != E; ++I) {
-    const SubobjectAdjustment &Adj = *I;
+  for (const SubobjectAdjustment &Adj : llvm::reverse(Adjustments)) {
     switch (Adj.Kind) {
     case SubobjectAdjustment::DerivedToBaseAdjustment:
       Reg = StoreMgr.evalDerivedToBase(Reg, Adj.DerivedToBase.BasePath);
@@ -1297,8 +1296,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPInteropDirectiveClass:
     case Stmt::OMPDispatchDirectiveClass:
     case Stmt::OMPMaskedDirectiveClass:
+    case Stmt::OMPGenericLoopDirectiveClass:
     case Stmt::CapturedStmtClass:
-    case Stmt::OMPUnrollDirectiveClass: {
+    case Stmt::OMPUnrollDirectiveClass:
+    case Stmt::OMPMetaDirectiveClass: {
       const ExplodedNode *node = Bldr.generateSink(S, Pred, Pred->getState());
       Engine.addAbortedBlock(node, currBldrCtx->getBlock());
       break;
@@ -1988,8 +1989,7 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
   if (BlockCount == AMgr.options.maxBlockVisitOnPath - 1 &&
       AMgr.options.ShouldWidenLoops) {
     const Stmt *Term = nodeBuilder.getContext().getBlock()->getTerminatorStmt();
-    if (!(Term &&
-          (isa<ForStmt>(Term) || isa<WhileStmt>(Term) || isa<DoStmt>(Term))))
+    if (!isa_and_nonnull<ForStmt, WhileStmt, DoStmt>(Term))
       return;
     // Widen.
     const LocationContext *LCtx = Pred->getLocationContext();
@@ -2265,7 +2265,7 @@ void ExprEngine::processBranch(const Stmt *Condition,
       continue;
     }
     if (StTrue && StFalse)
-      assert(!isa<ObjCForCollectionStmt>(Condition));;
+      assert(!isa<ObjCForCollectionStmt>(Condition));
 
     // Process the true branch.
     if (builder.isFeasible(true)) {
@@ -2593,7 +2593,7 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
                       ProgramPoint::PostLValueKind);
     return;
   }
-  if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D)) {
+  if (isa<FieldDecl, IndirectFieldDecl>(D)) {
     // Delegate all work related to pointer to members to the surrounding
     // operator&.
     return;
@@ -2670,7 +2670,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 
   // Handle static member variables and enum constants accessed via
   // member syntax.
-  if (isa<VarDecl>(Member) || isa<EnumConstantDecl>(Member)) {
+  if (isa<VarDecl, EnumConstantDecl>(Member)) {
     for (const auto I : CheckedSet)
       VisitCommonDeclRefExpr(M, Member, I, EvalSet);
   } else {

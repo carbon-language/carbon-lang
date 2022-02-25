@@ -625,8 +625,8 @@ bool LoopIdiomRecognize::runOnLoopBlock(
   // We can only promote stores in this block if they are unconditionally
   // executed in the loop.  For a block to be unconditionally executed, it has
   // to dominate all the exit blocks of the loop.  Verify this now.
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (!DT->dominates(BB, ExitBlocks[i]))
+  for (BasicBlock *ExitBlock : ExitBlocks)
+    if (!DT->dominates(BB, ExitBlock))
       return false;
 
   bool MadeChange = false;
@@ -750,16 +750,13 @@ bool LoopIdiomRecognize::processLoopStores(SmallVectorImpl<StoreInst *> &SL,
   bool Changed = false;
 
   // For stores that start but don't end a link in the chain:
-  for (SetVector<StoreInst *>::iterator it = Heads.begin(), e = Heads.end();
-       it != e; ++it) {
-    if (Tails.count(*it))
+  for (StoreInst *I : Heads) {
+    if (Tails.count(I))
       continue;
 
     // We found a store instr that starts a chain. Now follow the chain and try
     // to transform it.
     SmallPtrSet<Instruction *, 8> AdjacentStores;
-    StoreInst *I = *it;
-
     StoreInst *HeadStore = I;
     unsigned StoreSize = 0;
 
@@ -786,11 +783,12 @@ bool LoopIdiomRecognize::processLoopStores(SmallVectorImpl<StoreInst *> &SL,
 
     bool IsNegStride = StoreSize == -Stride;
 
-    const SCEV *StoreSizeSCEV = SE->getConstant(BECount->getType(), StoreSize);
+    Type *IntIdxTy = DL->getIndexType(StorePtr->getType());
+    const SCEV *StoreSizeSCEV = SE->getConstant(IntIdxTy, StoreSize);
     if (processLoopStridedStore(StorePtr, StoreSizeSCEV,
-                                MaybeAlign(HeadStore->getAlignment()),
-                                StoredVal, HeadStore, AdjacentStores, StoreEv,
-                                BECount, IsNegStride)) {
+                                MaybeAlign(HeadStore->getAlign()), StoredVal,
+                                HeadStore, AdjacentStores, StoreEv, BECount,
+                                IsNegStride)) {
       TransformedStores.insert(AdjacentStores.begin(), AdjacentStores.end());
       Changed = true;
     }
@@ -969,12 +967,22 @@ bool LoopIdiomRecognize::processLoopMemSet(MemSetInst *MSI,
                       << "\n");
 
     if (PositiveStrideSCEV != MemsetSizeSCEV) {
-      // TODO: folding can be done to the SCEVs
-      // The folding is to fold expressions that is covered by the loop guard
-      // at loop entry. After the folding, compare again and proceed
-      // optimization if equal.
-      LLVM_DEBUG(dbgs() << "  SCEV don't match, abort\n");
-      return false;
+      // If an expression is covered by the loop guard, compare again and
+      // proceed with optimization if equal.
+      const SCEV *FoldedPositiveStride =
+          SE->applyLoopGuards(PositiveStrideSCEV, CurLoop);
+      const SCEV *FoldedMemsetSize =
+          SE->applyLoopGuards(MemsetSizeSCEV, CurLoop);
+
+      LLVM_DEBUG(dbgs() << "  Try to fold SCEV based on loop guard\n"
+                        << "    FoldedMemsetSize: " << *FoldedMemsetSize << "\n"
+                        << "    FoldedPositiveStride: " << *FoldedPositiveStride
+                        << "\n");
+
+      if (FoldedPositiveStride != FoldedMemsetSize) {
+        LLVM_DEBUG(dbgs() << "  SCEV don't match, abort\n");
+        return false;
+      }
     }
   }
 
@@ -1019,10 +1027,9 @@ mayLoopAccessLocation(Value *Ptr, ModRefInfo Access, Loop *L,
   // which will then no-alias a store to &A[100].
   MemoryLocation StoreLoc(Ptr, AccessSize);
 
-  for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
-       ++BI)
-    for (Instruction &I : **BI)
-      if (IgnoredInsts.count(&I) == 0 &&
+  for (BasicBlock *B : L->blocks())
+    for (Instruction &I : *B)
+      if (!IgnoredInsts.contains(&I) &&
           isModOrRefSet(
               intersectModRef(AA.getModRefInfo(&I, StoreLoc), Access)))
         return true;
@@ -1110,7 +1117,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
   IRBuilder<> Builder(Preheader->getTerminator());
   SCEVExpander Expander(*SE, *DL, "loop-idiom");
-  SCEVExpanderCleaner ExpCleaner(Expander, *DT);
+  SCEVExpanderCleaner ExpCleaner(Expander);
 
   Type *DestInt8PtrTy = Builder.getInt8PtrTy(DestAS);
   Type *IntIdxTy = DL->getIndexType(DestPtr->getType());
@@ -1165,8 +1172,15 @@ bool LoopIdiomRecognize::processLoopStridedStore(
 
   CallInst *NewCall;
   if (SplatValue) {
-    NewCall = Builder.CreateMemSet(BasePtr, SplatValue, NumBytes,
-                                   MaybeAlign(StoreAlignment));
+    AAMDNodes AATags = TheStore->getAAMetadata();
+    if (auto CI = dyn_cast<ConstantInt>(NumBytes))
+      AATags = AATags.extendTo(CI->getZExtValue());
+    else
+      AATags = AATags.extendTo(-1);
+
+    NewCall = Builder.CreateMemSet(
+        BasePtr, SplatValue, NumBytes, MaybeAlign(StoreAlignment),
+        /*isVolatile=*/false, AATags.TBAA, AATags.Scope, AATags.NoAlias);
   } else {
     // Everything is emitted in default address space
     Type *Int8PtrTy = DestInt8PtrTy;
@@ -1200,13 +1214,20 @@ bool LoopIdiomRecognize::processLoopStridedStore(
                     << "\n");
 
   ORE.emit([&]() {
-    return OptimizationRemark(DEBUG_TYPE, "ProcessLoopStridedStore",
-                              NewCall->getDebugLoc(), Preheader)
-           << "Transformed loop-strided store in "
-           << ore::NV("Function", TheStore->getFunction())
-           << " function into a call to "
-           << ore::NV("NewFunction", NewCall->getCalledFunction())
-           << "() intrinsic";
+    OptimizationRemark R(DEBUG_TYPE, "ProcessLoopStridedStore",
+                         NewCall->getDebugLoc(), Preheader);
+    R << "Transformed loop-strided store in "
+      << ore::NV("Function", TheStore->getFunction())
+      << " function into a call to "
+      << ore::NV("NewFunction", NewCall->getCalledFunction())
+      << "() intrinsic";
+    if (!Stores.empty())
+      R << ore::setExtraArgs();
+    for (auto *I : Stores) {
+      R << ore::NV("FromBlock", I->getParent()->getName())
+        << ore::NV("ToBlock", Preheader->getName());
+    }
+    return R;
   });
 
   // Okay, the memset has been formed.  Zap the original store and anything that
@@ -1250,6 +1271,50 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(StoreInst *SI,
                                     StoreEv, LoadEv, BECount);
 }
 
+class MemmoveVerifier {
+public:
+  explicit MemmoveVerifier(const Value &LoadBasePtr, const Value &StoreBasePtr,
+                           const DataLayout &DL)
+      : DL(DL), BP1(llvm::GetPointerBaseWithConstantOffset(
+                    LoadBasePtr.stripPointerCasts(), LoadOff, DL)),
+        BP2(llvm::GetPointerBaseWithConstantOffset(
+            StoreBasePtr.stripPointerCasts(), StoreOff, DL)),
+        IsSameObject(BP1 == BP2) {}
+
+  bool loadAndStoreMayFormMemmove(unsigned StoreSize, bool IsNegStride,
+                                  const Instruction &TheLoad,
+                                  bool IsMemCpy) const {
+    if (IsMemCpy) {
+      // Ensure that LoadBasePtr is after StoreBasePtr or before StoreBasePtr
+      // for negative stride.
+      if ((!IsNegStride && LoadOff <= StoreOff) ||
+          (IsNegStride && LoadOff >= StoreOff))
+        return false;
+    } else {
+      // Ensure that LoadBasePtr is after StoreBasePtr or before StoreBasePtr
+      // for negative stride. LoadBasePtr shouldn't overlap with StoreBasePtr.
+      int64_t LoadSize =
+          DL.getTypeSizeInBits(TheLoad.getType()).getFixedSize() / 8;
+      if (BP1 != BP2 || LoadSize != int64_t(StoreSize))
+        return false;
+      if ((!IsNegStride && LoadOff < StoreOff + int64_t(StoreSize)) ||
+          (IsNegStride && LoadOff + LoadSize > StoreOff))
+        return false;
+    }
+    return true;
+  }
+
+private:
+  const DataLayout &DL;
+  int64_t LoadOff = 0;
+  int64_t StoreOff = 0;
+  const Value *BP1;
+  const Value *BP2;
+
+public:
+  const bool IsSameObject;
+};
+
 bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
     Value *DestPtr, Value *SourcePtr, const SCEV *StoreSizeSCEV,
     MaybeAlign StoreAlign, MaybeAlign LoadAlign, Instruction *TheStore,
@@ -1269,7 +1334,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   IRBuilder<> Builder(Preheader->getTerminator());
   SCEVExpander Expander(*SE, *DL, "loop-idiom");
 
-  SCEVExpanderCleaner ExpCleaner(Expander, *DT);
+  SCEVExpanderCleaner ExpCleaner(Expander);
 
   bool Changed = false;
   const SCEV *StrStart = StoreEv->getStart();
@@ -1314,10 +1379,10 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   bool IsMemCpy = isa<MemCpyInst>(TheStore);
   const StringRef InstRemark = IsMemCpy ? "memcpy" : "load and store";
 
-  bool UseMemMove =
+  bool LoopAccessStore =
       mayLoopAccessLocation(StoreBasePtr, ModRefInfo::ModRef, CurLoop, BECount,
                             StoreSizeSCEV, *AA, IgnoredInsts);
-  if (UseMemMove) {
+  if (LoopAccessStore) {
     // For memmove case it's not enough to guarantee that loop doesn't access
     // TheStore and TheLoad. Additionally we need to make sure that TheStore is
     // the only user of TheLoad.
@@ -1356,33 +1421,31 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   // the load memory locations. So remove it from the ignored stores.
   if (IsMemCpy)
     IgnoredInsts.erase(TheStore);
+  MemmoveVerifier Verifier(*LoadBasePtr, *StoreBasePtr, *DL);
   if (mayLoopAccessLocation(LoadBasePtr, ModRefInfo::Mod, CurLoop, BECount,
                             StoreSizeSCEV, *AA, IgnoredInsts)) {
-    ORE.emit([&]() {
-      return OptimizationRemarkMissed(DEBUG_TYPE, "LoopMayAccessLoad", TheLoad)
-             << ore::NV("Inst", InstRemark) << " in "
-             << ore::NV("Function", TheStore->getFunction())
-             << " function will not be hoisted: "
-             << ore::NV("Reason", "The loop may access load location");
-    });
-    return Changed;
-  }
-  if (UseMemMove) {
-    // Ensure that LoadBasePtr is after StoreBasePtr or before StoreBasePtr for
-    // negative stride. LoadBasePtr shouldn't overlap with StoreBasePtr.
-    int64_t LoadOff = 0, StoreOff = 0;
-    const Value *BP1 = llvm::GetPointerBaseWithConstantOffset(
-        LoadBasePtr->stripPointerCasts(), LoadOff, *DL);
-    const Value *BP2 = llvm::GetPointerBaseWithConstantOffset(
-        StoreBasePtr->stripPointerCasts(), StoreOff, *DL);
-    int64_t LoadSize =
-        DL->getTypeSizeInBits(TheLoad->getType()).getFixedSize() / 8;
-    if (BP1 != BP2 || LoadSize != int64_t(StoreSize))
+    if (!IsMemCpy) {
+      ORE.emit([&]() {
+        return OptimizationRemarkMissed(DEBUG_TYPE, "LoopMayAccessLoad",
+                                        TheLoad)
+               << ore::NV("Inst", InstRemark) << " in "
+               << ore::NV("Function", TheStore->getFunction())
+               << " function will not be hoisted: "
+               << ore::NV("Reason", "The loop may access load location");
+      });
       return Changed;
-    if ((!IsNegStride && LoadOff < StoreOff + int64_t(StoreSize)) ||
-        (IsNegStride && LoadOff + LoadSize > StoreOff))
+    }
+    // At this point loop may access load only for memcpy in same underlying
+    // object. If that's not the case bail out.
+    if (!Verifier.IsSameObject)
       return Changed;
   }
+
+  bool UseMemMove = IsMemCpy ? Verifier.IsSameObject : LoopAccessStore;
+  if (UseMemMove)
+    if (!Verifier.loadAndStoreMayFormMemmove(StoreSize, IsNegStride, *TheLoad,
+                                             IsMemCpy))
+      return Changed;
 
   if (avoidLIRForMultiBlockLoop())
     return Changed;
@@ -1395,17 +1458,28 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   Value *NumBytes =
       Expander.expandCodeFor(NumBytesS, IntIdxTy, Preheader->getTerminator());
 
+  AAMDNodes AATags = TheLoad->getAAMetadata();
+  AAMDNodes StoreAATags = TheStore->getAAMetadata();
+  AATags = AATags.merge(StoreAATags);
+  if (auto CI = dyn_cast<ConstantInt>(NumBytes))
+    AATags = AATags.extendTo(CI->getZExtValue());
+  else
+    AATags = AATags.extendTo(-1);
+
   CallInst *NewCall = nullptr;
   // Check whether to generate an unordered atomic memcpy:
   //  If the load or store are atomic, then they must necessarily be unordered
   //  by previous checks.
   if (!TheStore->isAtomic() && !TheLoad->isAtomic()) {
     if (UseMemMove)
-      NewCall = Builder.CreateMemMove(StoreBasePtr, StoreAlign, LoadBasePtr,
-                                      LoadAlign, NumBytes);
+      NewCall = Builder.CreateMemMove(
+          StoreBasePtr, StoreAlign, LoadBasePtr, LoadAlign, NumBytes,
+          /*isVolatile=*/false, AATags.TBAA, AATags.Scope, AATags.NoAlias);
     else
-      NewCall = Builder.CreateMemCpy(StoreBasePtr, StoreAlign, LoadBasePtr,
-                                     LoadAlign, NumBytes);
+      NewCall =
+          Builder.CreateMemCpy(StoreBasePtr, StoreAlign, LoadBasePtr, LoadAlign,
+                               NumBytes, /*isVolatile=*/false, AATags.TBAA,
+                               AATags.TBAAStruct, AATags.Scope, AATags.NoAlias);
   } else {
     // For now don't support unordered atomic memmove.
     if (UseMemMove)
@@ -1429,7 +1503,8 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
     // have an alignment but non-atomic loads/stores may not.
     NewCall = Builder.CreateElementUnorderedAtomicMemCpy(
         StoreBasePtr, StoreAlign.getValue(), LoadBasePtr, LoadAlign.getValue(),
-        NumBytes, StoreSize);
+        NumBytes, StoreSize, AATags.TBAA, AATags.TBAAStruct, AATags.Scope,
+        AATags.NoAlias);
   }
   NewCall->setDebugLoc(TheStore->getDebugLoc());
 
@@ -1452,7 +1527,10 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
            << ore::NV("NewFunction", NewCall->getCalledFunction())
            << "() intrinsic from " << ore::NV("Inst", InstRemark)
            << " instruction in " << ore::NV("Function", TheStore->getFunction())
-           << " function";
+           << " function"
+           << ore::setExtraArgs()
+           << ore::NV("FromBlock", TheStore->getParent()->getName())
+           << ore::NV("ToBlock", Preheader->getName());
   });
 
   // Okay, a new call to memcpy/memmove has been formed.  Zap the original store
@@ -1621,24 +1699,22 @@ static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
   // step 4: Find the instruction which count the population: cnt2 = cnt1 + 1
   {
     CountInst = nullptr;
-    for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI()->getIterator(),
-                              IterE = LoopEntry->end();
-         Iter != IterE; Iter++) {
-      Instruction *Inst = &*Iter;
-      if (Inst->getOpcode() != Instruction::Add)
+    for (Instruction &Inst : llvm::make_range(
+             LoopEntry->getFirstNonPHI()->getIterator(), LoopEntry->end())) {
+      if (Inst.getOpcode() != Instruction::Add)
         continue;
 
-      ConstantInt *Inc = dyn_cast<ConstantInt>(Inst->getOperand(1));
+      ConstantInt *Inc = dyn_cast<ConstantInt>(Inst.getOperand(1));
       if (!Inc || !Inc->isOne())
         continue;
 
-      PHINode *Phi = getRecurrenceVar(Inst->getOperand(0), Inst, LoopEntry);
+      PHINode *Phi = getRecurrenceVar(Inst.getOperand(0), &Inst, LoopEntry);
       if (!Phi)
         continue;
 
       // Check if the result of the instruction is live of the loop.
       bool LiveOutLoop = false;
-      for (User *U : Inst->users()) {
+      for (User *U : Inst.users()) {
         if ((cast<Instruction>(U))->getParent() != LoopEntry) {
           LiveOutLoop = true;
           break;
@@ -1646,7 +1722,7 @@ static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
       }
 
       if (LiveOutLoop) {
-        CountInst = Inst;
+        CountInst = &Inst;
         CountPhi = Phi;
         break;
       }
@@ -1747,22 +1823,20 @@ static bool detectShiftUntilZeroIdiom(Loop *CurLoop, const DataLayout &DL,
   //       plus "cnt0". Currently it is not optimized.
   //       This step could be used to detect POPCNT instruction:
   //       cnt.next = cnt + (x.next & 1)
-  for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI()->getIterator(),
-                            IterE = LoopEntry->end();
-       Iter != IterE; Iter++) {
-    Instruction *Inst = &*Iter;
-    if (Inst->getOpcode() != Instruction::Add)
+  for (Instruction &Inst : llvm::make_range(
+           LoopEntry->getFirstNonPHI()->getIterator(), LoopEntry->end())) {
+    if (Inst.getOpcode() != Instruction::Add)
       continue;
 
-    ConstantInt *Inc = dyn_cast<ConstantInt>(Inst->getOperand(1));
+    ConstantInt *Inc = dyn_cast<ConstantInt>(Inst.getOperand(1));
     if (!Inc || (!Inc->isOne() && !Inc->isMinusOne()))
       continue;
 
-    PHINode *Phi = getRecurrenceVar(Inst->getOperand(0), Inst, LoopEntry);
+    PHINode *Phi = getRecurrenceVar(Inst.getOperand(0), &Inst, LoopEntry);
     if (!Phi)
       continue;
 
-    CntInst = Inst;
+    CntInst = &Inst;
     CntPhi = Phi;
     break;
   }

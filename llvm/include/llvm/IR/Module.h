@@ -47,9 +47,7 @@ class GVMaterializer;
 class LLVMContext;
 class MemoryBuffer;
 class ModuleSummaryIndex;
-class Pass;
 class RandomNumberGenerator;
-template <class PtrType> class SmallPtrSetImpl;
 class StructType;
 class VersionTuple;
 
@@ -64,9 +62,9 @@ class VersionTuple;
 /// constant references to global variables in the module.  When a global
 /// variable is destroyed, it should have no entries in the GlobalValueRefMap.
 /// The main container class for the LLVM Intermediate Representation.
-class Module {
-/// @name Types And Enumerations
-/// @{
+class LLVM_EXTERNAL_VISIBILITY Module {
+  /// @name Types And Enumerations
+  /// @{
 public:
   /// The type for the list of global variables.
   using GlobalListType = SymbolTableList<GlobalVariable>;
@@ -890,8 +888,8 @@ public:
   void setRtLibUseGOT();
 
   /// Get/set whether synthesized functions should get the uwtable attribute.
-  bool getUwtable() const;
-  void setUwtable();
+  UWTableKind getUwtable() const;
+  void setUwtable(UWTableKind Kind);
 
   /// Get/set whether synthesized functions should get the "frame-pointer"
   /// attribute.
@@ -934,6 +932,24 @@ public:
   /// Set the partial sample profile ratio in the profile summary module flag,
   /// if applicable.
   void setPartialSampleProfileRatio(const ModuleSummaryIndex &Index);
+
+  /// Get the target variant triple which is a string describing a variant of
+  /// the target host platform. For example, Mac Catalyst can be a variant
+  /// target triple for a macOS target.
+  /// @returns a string containing the target variant triple.
+  StringRef getDarwinTargetVariantTriple() const;
+
+  /// Set the target variant triple which is a string describing a variant of
+  /// the target host platform.
+  void setDarwinTargetVariantTriple(StringRef T);
+
+  /// Get the target variant version build SDK version metadata.
+  ///
+  /// An empty version is returned if no such metadata is attached.
+  VersionTuple getDarwinTargetVariantSDKVersion() const;
+
+  /// Set the target variant version build SDK version metadata.
+  void setDarwinTargetVariantSDKVersion(VersionTuple Version);
 };
 
 /// Given "llvm.used" or "llvm.compiler.used" as a global name, collect the

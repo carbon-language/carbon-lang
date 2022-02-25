@@ -43,7 +43,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
               namespace ns1 { struct S {}; }
               ^auto v = ns1::S{};
           )cpp",
-          "struct ns1::S",
+          "ns1::S",
       },
       {
           R"cpp( // decltype on struct
@@ -63,7 +63,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
             ns1::S& j = i;
             ^decltype(auto) k = j;
           )cpp",
-          "struct ns1::S &",
+          "ns1::S &",
       },
       {
           R"cpp( // auto on template class
@@ -71,7 +71,7 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
               template<typename T> class Foo {};
               ^auto v = Foo<X>();
           )cpp",
-          "class Foo<class X>",
+          "Foo<class X>",
       },
       {
           R"cpp( // auto on initializer list.
@@ -177,23 +177,78 @@ TEST(GetDeducedType, KwAutoKwDecltypeExpansion) {
             using Bar = Foo;
             ^auto x = Bar();
           )cpp",
-          // FIXME: it'd be nice if this resolved to the alias instead
+          "Bar",
+      },
+      {
+          R"cpp(
+            // Generic lambda param.
+            struct Foo{};
+            auto Generic = [](^auto x) { return 0; };
+            int m = Generic(Foo{});
+          )cpp",
           "struct Foo",
+      },
+      {
+          R"cpp(
+            // Generic lambda instantiated twice, matching deduction.
+            struct Foo{};
+            using Bar = Foo;
+            auto Generic = [](^auto x, auto y) { return 0; };
+            int m = Generic(Bar{}, "one");
+            int n = Generic(Foo{}, 2);
+          )cpp",
+          "struct Foo",
+      },
+      {
+          R"cpp(
+            // Generic lambda instantiated twice, conflicting deduction.
+            struct Foo{};
+            auto Generic = [](^auto y) { return 0; };
+            int m = Generic("one");
+            int n = Generic(2);
+          )cpp",
+          nullptr,
+      },
+      {
+          R"cpp(
+            // Generic function param.
+            struct Foo{};
+            int generic(^auto x) { return 0; }
+            int m = generic(Foo{});
+          )cpp",
+          "struct Foo",
+      },
+      {
+          R"cpp(
+            // More complicated param type involving auto.
+            template <class> concept C = true;
+            struct Foo{};
+            int generic(C ^auto *x) { return 0; }
+            const Foo *Ptr = nullptr;
+            int m = generic(Ptr);
+          )cpp",
+          "const struct Foo",
       },
   };
   for (Test T : Tests) {
     Annotations File(T.AnnotatedCode);
-    auto AST = TestTU::withCode(File.code()).build();
+    auto TU = TestTU::withCode(File.code());
+    TU.ExtraArgs.push_back("-std=c++20");
+    auto AST = TU.build();
     SourceManagerForFile SM("foo.cpp", File.code());
 
-    SCOPED_TRACE(File.code());
+    SCOPED_TRACE(T.AnnotatedCode);
     EXPECT_FALSE(File.points().empty());
     for (Position Pos : File.points()) {
       auto Location = sourceLocationInMainFile(SM.get(), Pos);
       ASSERT_TRUE(!!Location) << llvm::toString(Location.takeError());
       auto DeducedType = getDeducedType(AST.getASTContext(), *Location);
-      ASSERT_TRUE(DeducedType);
-      EXPECT_EQ(DeducedType->getAsString(), T.DeducedType);
+      if (T.DeducedType == nullptr) {
+        EXPECT_FALSE(DeducedType);
+      } else {
+        ASSERT_TRUE(DeducedType);
+        EXPECT_EQ(DeducedType->getAsString(), T.DeducedType);
+      }
     }
   }
 }
@@ -426,6 +481,29 @@ TEST(ClangdAST, GetAttributes) {
               Each(implicitAttr()));
   ASSERT_THAT(getAttributes(DynTypedNode::create(*FooIf->getThen())),
               Contains(attrKind(attr::Unlikely)));
+}
+
+TEST(ClangdAST, HasReservedName) {
+  ParsedAST AST = TestTU::withCode(R"cpp(
+    void __foo();
+    namespace std {
+      inline namespace __1 { class error_code; }
+      namespace __detail { int secret; }
+    }
+  )cpp")
+                      .build();
+
+  EXPECT_TRUE(hasReservedName(findUnqualifiedDecl(AST, "__foo")));
+  EXPECT_FALSE(
+      hasReservedScope(*findUnqualifiedDecl(AST, "__foo").getDeclContext()));
+
+  EXPECT_FALSE(hasReservedName(findUnqualifiedDecl(AST, "error_code")));
+  EXPECT_FALSE(hasReservedScope(
+      *findUnqualifiedDecl(AST, "error_code").getDeclContext()));
+
+  EXPECT_FALSE(hasReservedName(findUnqualifiedDecl(AST, "secret")));
+  EXPECT_TRUE(
+      hasReservedScope(*findUnqualifiedDecl(AST, "secret").getDeclContext()));
 }
 
 } // namespace

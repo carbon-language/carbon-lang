@@ -25,7 +25,6 @@ class MLIRContext;
 class Operation;
 class TypeConverter;
 class RewritePatternSet;
-using OwningRewritePatternList = RewritePatternSet;
 
 /// Add a pattern to the given pattern list to convert the operand and result
 /// types of a CallOp with the given type converter.
@@ -69,6 +68,6 @@ bool isLegalForReturnOpTypeConversionPattern(Operation *op,
 /// `isLegalForBranchOpInterfaceTypeConversionPattern` and
 /// `isLegalForReturnOpTypeConversionPattern`.
 bool isNotBranchOpInterfaceOrReturnLikeOp(Operation *op);
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_DIALECT_STANDARDOPS_TRANSFORMS_FUNCCONVERSIONS_H_

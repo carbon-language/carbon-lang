@@ -68,6 +68,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -341,7 +342,16 @@ std::string CodeViewDebug::getFullyQualifiedName(const DIScope *Ty) {
 
 TypeIndex CodeViewDebug::getScopeIndex(const DIScope *Scope) {
   // No scope means global scope and that uses the zero index.
-  if (!Scope || isa<DIFile>(Scope))
+  //
+  // We also use zero index when the scope is a DISubprogram
+  // to suppress the emission of LF_STRING_ID for the function,
+  // which can trigger a link-time error with the linker in
+  // VS2019 version 16.11.2 or newer.
+  // Note, however, skipping the debug info emission for the DISubprogram
+  // is a temporary fix. The root issue here is that we need to figure out
+  // the proper way to encode a function nested in another function
+  // (as introduced by the Fortran 'contains' keyword) in CodeView.
+  if (!Scope || isa<DIFile>(Scope) || isa<DISubprogram>(Scope))
     return TypeIndex();
 
   assert(!isa<DIType>(Scope) && "shouldn't make a namespace scope for a type");
@@ -561,11 +571,51 @@ void CodeViewDebug::emitCodeViewMagicVersion() {
   OS.emitInt32(COFF::DEBUG_SECTION_MAGIC);
 }
 
+static SourceLanguage MapDWLangToCVLang(unsigned DWLang) {
+  switch (DWLang) {
+  case dwarf::DW_LANG_C:
+  case dwarf::DW_LANG_C89:
+  case dwarf::DW_LANG_C99:
+  case dwarf::DW_LANG_C11:
+  case dwarf::DW_LANG_ObjC:
+    return SourceLanguage::C;
+  case dwarf::DW_LANG_C_plus_plus:
+  case dwarf::DW_LANG_C_plus_plus_03:
+  case dwarf::DW_LANG_C_plus_plus_11:
+  case dwarf::DW_LANG_C_plus_plus_14:
+    return SourceLanguage::Cpp;
+  case dwarf::DW_LANG_Fortran77:
+  case dwarf::DW_LANG_Fortran90:
+  case dwarf::DW_LANG_Fortran95:
+  case dwarf::DW_LANG_Fortran03:
+  case dwarf::DW_LANG_Fortran08:
+    return SourceLanguage::Fortran;
+  case dwarf::DW_LANG_Pascal83:
+    return SourceLanguage::Pascal;
+  case dwarf::DW_LANG_Cobol74:
+  case dwarf::DW_LANG_Cobol85:
+    return SourceLanguage::Cobol;
+  case dwarf::DW_LANG_Java:
+    return SourceLanguage::Java;
+  case dwarf::DW_LANG_D:
+    return SourceLanguage::D;
+  case dwarf::DW_LANG_Swift:
+    return SourceLanguage::Swift;
+  case dwarf::DW_LANG_Rust:
+    return SourceLanguage::Rust;
+  default:
+    // There's no CodeView representation for this language, and CV doesn't
+    // have an "unknown" option for the language field, so we'll use MASM,
+    // as it's very low level.
+    return SourceLanguage::Masm;
+  }
+}
+
 void CodeViewDebug::beginModule(Module *M) {
   // If module doesn't have named metadata anchors or COFF debug section
   // is not available, skip any debug info related stuff.
-  if (!M->getNamedMetadata("llvm.dbg.cu") ||
-      !Asm->getObjFileLowering().getCOFFDebugSymbolsSection()) {
+  NamedMDNode *CUs = M->getNamedMetadata("llvm.dbg.cu");
+  if (!CUs || !Asm->getObjFileLowering().getCOFFDebugSymbolsSection()) {
     Asm = nullptr;
     return;
   }
@@ -573,6 +623,12 @@ void CodeViewDebug::beginModule(Module *M) {
   MMI->setDebugInfoAvailability(true);
 
   TheCPU = mapArchToCVCPUType(Triple(M->getTargetTriple()).getArch());
+
+  // Get the current source language.
+  const MDNode *Node = *CUs->operands().begin();
+  const auto *CU = cast<DICompileUnit>(Node);
+
+  CurrentSourceLanguage = MapDWLangToCVLang(CU->getSourceLanguage());
 
   collectGlobalVariableInfo();
 
@@ -596,6 +652,7 @@ void CodeViewDebug::endModule() {
   switchToDebugSectionForSymbol(nullptr);
 
   MCSymbol *CompilerInfo = beginCVSubsection(DebugSubsectionKind::Symbols);
+  emitObjName();
   emitCompilerInformation();
   endCVSubsection(CompilerInfo);
 
@@ -731,41 +788,27 @@ void CodeViewDebug::emitTypeGlobalHashes() {
   }
 }
 
-static SourceLanguage MapDWLangToCVLang(unsigned DWLang) {
-  switch (DWLang) {
-  case dwarf::DW_LANG_C:
-  case dwarf::DW_LANG_C89:
-  case dwarf::DW_LANG_C99:
-  case dwarf::DW_LANG_C11:
-  case dwarf::DW_LANG_ObjC:
-    return SourceLanguage::C;
-  case dwarf::DW_LANG_C_plus_plus:
-  case dwarf::DW_LANG_C_plus_plus_03:
-  case dwarf::DW_LANG_C_plus_plus_11:
-  case dwarf::DW_LANG_C_plus_plus_14:
-    return SourceLanguage::Cpp;
-  case dwarf::DW_LANG_Fortran77:
-  case dwarf::DW_LANG_Fortran90:
-  case dwarf::DW_LANG_Fortran03:
-  case dwarf::DW_LANG_Fortran08:
-    return SourceLanguage::Fortran;
-  case dwarf::DW_LANG_Pascal83:
-    return SourceLanguage::Pascal;
-  case dwarf::DW_LANG_Cobol74:
-  case dwarf::DW_LANG_Cobol85:
-    return SourceLanguage::Cobol;
-  case dwarf::DW_LANG_Java:
-    return SourceLanguage::Java;
-  case dwarf::DW_LANG_D:
-    return SourceLanguage::D;
-  case dwarf::DW_LANG_Swift:
-    return SourceLanguage::Swift;
-  default:
-    // There's no CodeView representation for this language, and CV doesn't
-    // have an "unknown" option for the language field, so we'll use MASM,
-    // as it's very low level.
-    return SourceLanguage::Masm;
+void CodeViewDebug::emitObjName() {
+  MCSymbol *CompilerEnd = beginSymbolRecord(SymbolKind::S_OBJNAME);
+
+  StringRef PathRef(Asm->TM.Options.ObjectFilenameForDebug);
+  llvm::SmallString<256> PathStore(PathRef);
+
+  if (PathRef.empty() || PathRef == "-") {
+    // Don't emit the filename if we're writing to stdout or to /dev/null.
+    PathRef = {};
+  } else {
+    llvm::sys::path::remove_dots(PathStore, /*remove_dot_dot=*/true);
+    PathRef = PathStore;
   }
+
+  OS.AddComment("Signature");
+  OS.emitIntValue(0, 4);
+
+  OS.AddComment("Object name");
+  emitNullTerminatedSymbolName(OS, PathRef);
+
+  endSymbolRecord(CompilerEnd);
 }
 
 namespace {
@@ -783,6 +826,8 @@ static Version parseVersion(StringRef Name) {
     if (isdigit(C)) {
       V.Part[N] *= 10;
       V.Part[N] += C - '0';
+      V.Part[N] =
+          std::min<int>(V.Part[N], std::numeric_limits<uint16_t>::max());
     } else if (C == '.') {
       ++N;
       if (N >= 4)
@@ -797,15 +842,17 @@ void CodeViewDebug::emitCompilerInformation() {
   MCSymbol *CompilerEnd = beginSymbolRecord(SymbolKind::S_COMPILE3);
   uint32_t Flags = 0;
 
-  NamedMDNode *CUs = MMI->getModule()->getNamedMetadata("llvm.dbg.cu");
-  const MDNode *Node = *CUs->operands().begin();
-  const auto *CU = cast<DICompileUnit>(Node);
-
   // The low byte of the flags indicates the source language.
-  Flags = MapDWLangToCVLang(CU->getSourceLanguage());
+  Flags = CurrentSourceLanguage;
   // TODO:  Figure out which other flags need to be set.
   if (MMI->getModule()->getProfileSummary(/*IsCS*/ false) != nullptr) {
     Flags |= static_cast<uint32_t>(CompileSym3Flags::PGO);
+  }
+  using ArchType = llvm::Triple::ArchType;
+  ArchType Arch = Triple(MMI->getModule()->getTargetTriple()).getArch();
+  if (Asm->TM.Options.Hotpatch || Arch == ArchType::thumb ||
+      Arch == ArchType::aarch64) {
+    Flags |= static_cast<uint32_t>(CompileSym3Flags::HotPatch);
   }
 
   OS.AddComment("Flags and language");
@@ -814,11 +861,16 @@ void CodeViewDebug::emitCompilerInformation() {
   OS.AddComment("CPUType");
   OS.emitInt16(static_cast<uint64_t>(TheCPU));
 
+  NamedMDNode *CUs = MMI->getModule()->getNamedMetadata("llvm.dbg.cu");
+  const MDNode *Node = *CUs->operands().begin();
+  const auto *CU = cast<DICompileUnit>(Node);
+
   StringRef CompilerVersion = CU->getProducer();
   Version FrontVer = parseVersion(CompilerVersion);
   OS.AddComment("Frontend version");
-  for (int N : FrontVer.Part)
+  for (int N : FrontVer.Part) {
     OS.emitInt16(N);
+  }
 
   // Some Microsoft tools, like Binscope, expect a backend version number of at
   // least 8.something, so we'll coerce the LLVM version into a form that
@@ -845,6 +897,34 @@ static TypeIndex getStringIdTypeIdx(GlobalTypeTableBuilder &TypeTable,
   return TypeTable.writeLeafType(SIR);
 }
 
+static std::string flattenCommandLine(ArrayRef<std::string> Args,
+                                      StringRef MainFilename) {
+  std::string FlatCmdLine;
+  raw_string_ostream OS(FlatCmdLine);
+  bool PrintedOneArg = false;
+  if (!StringRef(Args[0]).contains("-cc1")) {
+    llvm::sys::printArg(OS, "-cc1", /*Quote=*/true);
+    PrintedOneArg = true;
+  }
+  for (unsigned i = 0; i < Args.size(); i++) {
+    StringRef Arg = Args[i];
+    if (Arg.empty())
+      continue;
+    if (Arg == "-main-file-name" || Arg == "-o") {
+      i++; // Skip this argument and next one.
+      continue;
+    }
+    if (Arg.startswith("-object-file-name") || Arg == MainFilename)
+      continue;
+    if (PrintedOneArg)
+      OS << " ";
+    llvm::sys::printArg(OS, Arg, /*Quote=*/true);
+    PrintedOneArg = true;
+  }
+  OS.flush();
+  return FlatCmdLine;
+}
+
 void CodeViewDebug::emitBuildInfo() {
   // First, make LF_BUILDINFO. It's a sequence of strings with various bits of
   // build info. The known prefix is:
@@ -865,8 +945,16 @@ void CodeViewDebug::emitBuildInfo() {
       getStringIdTypeIdx(TypeTable, MainSourceFile->getDirectory());
   BuildInfoArgs[BuildInfoRecord::SourceFile] =
       getStringIdTypeIdx(TypeTable, MainSourceFile->getFilename());
-  // FIXME: Path to compiler and command line. PDB is intentionally blank unless
-  // we implement /Zi type servers.
+  // FIXME: PDB is intentionally blank unless we implement /Zi type servers.
+  BuildInfoArgs[BuildInfoRecord::TypeServerPDB] =
+      getStringIdTypeIdx(TypeTable, "");
+  if (Asm->TM.Options.MCOptions.Argv0 != nullptr) {
+    BuildInfoArgs[BuildInfoRecord::BuildTool] =
+        getStringIdTypeIdx(TypeTable, Asm->TM.Options.MCOptions.Argv0);
+    BuildInfoArgs[BuildInfoRecord::CommandLine] = getStringIdTypeIdx(
+        TypeTable, flattenCommandLine(Asm->TM.Options.MCOptions.CommandLineArgs,
+                                      MainSourceFile->getFilename()));
+  }
   BuildInfoRecord BIR(BuildInfoArgs);
   TypeIndex BuildInfoIndex = TypeTable.writeLeafType(BIR);
 
@@ -1573,6 +1661,8 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty, const DIType *ClassTy) {
     return lowerTypeClass(cast<DICompositeType>(Ty));
   case dwarf::DW_TAG_union_type:
     return lowerTypeUnion(cast<DICompositeType>(Ty));
+  case dwarf::DW_TAG_string_type:
+    return lowerTypeString(cast<DIStringType>(Ty));
   case dwarf::DW_TAG_unspecified_type:
     if (Ty->getName() == "decltype(nullptr)")
       return TypeIndex::NullptrT();
@@ -1617,14 +1707,19 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
 
     const DISubrange *Subrange = cast<DISubrange>(Element);
     int64_t Count = -1;
-    // Calculate the count if either LowerBound is absent or is zero and
-    // either of Count or UpperBound are constant.
-    auto *LI = Subrange->getLowerBound().dyn_cast<ConstantInt *>();
-    if (!Subrange->getRawLowerBound() || (LI && (LI->getSExtValue() == 0))) {
-      if (auto *CI = Subrange->getCount().dyn_cast<ConstantInt*>())
-        Count = CI->getSExtValue();
-      else if (auto *UI = Subrange->getUpperBound().dyn_cast<ConstantInt*>())
-        Count = UI->getSExtValue() + 1; // LowerBound is zero
+
+    // If Subrange has a Count field, use it.
+    // Otherwise, if it has an upperboud, use (upperbound - lowerbound + 1),
+    // where lowerbound is from the LowerBound field of the Subrange,
+    // or the language default lowerbound if that field is unspecified.
+    if (auto *CI = Subrange->getCount().dyn_cast<ConstantInt *>())
+      Count = CI->getSExtValue();
+    else if (auto *UI = Subrange->getUpperBound().dyn_cast<ConstantInt *>()) {
+      // Fortran uses 1 as the default lowerbound; other languages use 0.
+      int64_t Lowerbound = (moduleIsInFortran()) ? 1 : 0;
+      auto *LI = Subrange->getLowerBound().dyn_cast<ConstantInt *>();
+      Lowerbound = (LI) ? LI->getSExtValue() : Lowerbound;
+      Count = UI->getSExtValue() - Lowerbound + 1;
     }
 
     // Forward declarations of arrays without a size and VLAs use a count of -1.
@@ -1648,6 +1743,26 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
   }
 
   return ElementTypeIndex;
+}
+
+// This function lowers a Fortran character type (DIStringType).
+// Note that it handles only the character*n variant (using SizeInBits
+// field in DIString to describe the type size) at the moment.
+// Other variants (leveraging the StringLength and StringLengthExp
+// fields in DIStringType) remain TBD.
+TypeIndex CodeViewDebug::lowerTypeString(const DIStringType *Ty) {
+  TypeIndex CharType = TypeIndex(SimpleTypeKind::NarrowCharacter);
+  uint64_t ArraySize = Ty->getSizeInBits() >> 3;
+  StringRef Name = Ty->getName();
+  // IndexType is size_t, which depends on the bitness of the target.
+  TypeIndex IndexType = getPointerSizeInBytes() == 8
+                            ? TypeIndex(SimpleTypeKind::UInt64Quad)
+                            : TypeIndex(SimpleTypeKind::UInt32Long);
+
+  // Create a type of character array of ArraySize.
+  ArrayRecord AR(CharType, IndexType, ArraySize, Name);
+
+  return TypeTable.writeLeafType(AR);
 }
 
 TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
@@ -1728,9 +1843,14 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
   }
 
   // Apply some fixups based on the source-level type name.
-  if (STK == SimpleTypeKind::Int32 && Ty->getName() == "long int")
+  // Include some amount of canonicalization from an old naming scheme Clang
+  // used to use for integer types (in an outdated effort to be compatible with
+  // GCC's debug info/GDB's behavior, which has since been addressed).
+  if (STK == SimpleTypeKind::Int32 &&
+      (Ty->getName() == "long int" || Ty->getName() == "long"))
     STK = SimpleTypeKind::Int32Long;
-  if (STK == SimpleTypeKind::UInt32 && Ty->getName() == "long unsigned int")
+  if (STK == SimpleTypeKind::UInt32 && (Ty->getName() == "long unsigned int" ||
+                                        Ty->getName() == "unsigned long"))
     STK = SimpleTypeKind::UInt32Long;
   if (STK == SimpleTypeKind::UInt16Short &&
       (Ty->getName() == "wchar_t" || Ty->getName() == "__wchar_t"))
@@ -2177,6 +2297,7 @@ void CodeViewDebug::clear() {
   TypeIndices.clear();
   CompleteTypeIndices.clear();
   ScopeGlobals.clear();
+  CVGlobalVariableOffsets.clear();
 }
 
 void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
@@ -3062,6 +3183,15 @@ void CodeViewDebug::collectGlobalVariableInfo() {
       const DIGlobalVariable *DIGV = GVE->getVariable();
       const DIExpression *DIE = GVE->getExpression();
 
+      if ((DIE->getNumElements() == 2) &&
+          (DIE->getElement(0) == dwarf::DW_OP_plus_uconst))
+        // Record the constant offset for the variable.
+        //
+        // A Fortran common block uses this idiom to encode the offset
+        // of a variable from the common block's starting address.
+        CVGlobalVariableOffsets.insert(
+            std::make_pair(DIGV, DIE->getElement(1)));
+
       // Emit constant global variables in a global symbol section.
       if (GlobalMap.count(GVE) == 0 && DIE->isConstant()) {
         CVGlobalVariable CVGV = {DIGV, DIE};
@@ -3226,7 +3356,11 @@ void CodeViewDebug::emitDebugInfoForGlobal(const CVGlobalVariable &CVGV) {
   if (const auto *MemberDecl = dyn_cast_or_null<DIDerivedType>(
           DIGV->getRawStaticDataMemberDeclaration()))
     Scope = MemberDecl->getScope();
-  std::string QualifiedName = getFullyQualifiedName(Scope, DIGV->getName());
+  // For Fortran, the scoping portion is elided in its name so that we can
+  // reference the variable in the command line of the VS debugger.
+  std::string QualifiedName =
+      (moduleIsInFortran()) ? std::string(DIGV->getName())
+                            : getFullyQualifiedName(Scope, DIGV->getName());
 
   if (const GlobalVariable *GV =
           CVGV.GVInfo.dyn_cast<const GlobalVariable *>()) {
@@ -3242,7 +3376,13 @@ void CodeViewDebug::emitDebugInfoForGlobal(const CVGlobalVariable &CVGV) {
     OS.AddComment("Type");
     OS.emitInt32(getCompleteTypeIndex(DIGV->getType()).getIndex());
     OS.AddComment("DataOffset");
-    OS.EmitCOFFSecRel32(GVSym, /*Offset=*/0);
+
+    uint64_t Offset = 0;
+    if (CVGlobalVariableOffsets.find(DIGV) != CVGlobalVariableOffsets.end())
+      // Use the offset seen while collecting info on globals.
+      Offset = CVGlobalVariableOffsets[DIGV];
+    OS.EmitCOFFSecRel32(GVSym, Offset);
+
     OS.AddComment("Segment");
     OS.EmitCOFFSectionIndex(GVSym);
     OS.AddComment("Name");

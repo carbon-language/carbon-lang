@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains structs based on the LSP specification at
-// https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md
+// https://github.com/Microsoft/language-server-protocol/blob/main/protocol.md
 //
 // This is not meant to be a complete implementation, new interfaces are added
 // when they're needed.
@@ -35,6 +35,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+// This file is using the LSP syntax for identifier names which is different
+// from the LLVM coding standard. To avoid the clang-tidy warnings, we're
+// disabling one check here.
+// NOLINTBEGIN(readability-identifier-naming)
 
 namespace clang {
 namespace clangd {
@@ -432,6 +437,11 @@ struct ClientCapabilities {
   /// Client supports processing label offsets instead of a simple label string.
   /// textDocument.signatureHelp.signatureInformation.parameterInformation.labelOffsetSupport
   bool OffsetsInSignatureHelp = false;
+
+  /// The documentation format that should be used for
+  /// textDocument/signatureHelp.
+  /// textDocument.signatureHelp.signatureInformation.documentationFormat
+  MarkupKind SignatureHelpDocumentationFormat = MarkupKind::PlainText;
 
   /// The supported set of CompletionItemKinds for textDocument/completion.
   /// textDocument.completion.completionItemKind.valueSet
@@ -1172,7 +1182,7 @@ enum class InsertTextFormat {
   /// typing in one will update others too.
   ///
   /// See also:
-  /// https//github.com/Microsoft/vscode/blob/master/src/vs/editor/contrib/snippet/common/snippet.md
+  /// https://github.com/Microsoft/vscode/blob/main/src/vs/editor/contrib/snippet/snippet.md
   Snippet = 2,
 };
 
@@ -1278,7 +1288,7 @@ struct SignatureInformation {
   std::string label;
 
   /// The documentation of this signature. Optional.
-  std::string documentation;
+  MarkupContent documentation;
 
   /// The parameters of this signature.
   std::vector<ParameterInformation> parameters;
@@ -1502,10 +1512,15 @@ struct CallHierarchyOutgoingCall {
 };
 llvm::json::Value toJSON(const CallHierarchyOutgoingCall &);
 
-/// The parameter of a `textDocument/inlayHints` request.
+/// The parameter of a `clangd/inlayHints` request.
+///
+/// This is a clangd extension.
 struct InlayHintsParams {
   /// The text document for which inlay hints are requested.
   TextDocumentIdentifier textDocument;
+
+  /// If set, requests inlay hints for only part of the document.
+  llvm::Optional<Range> range;
 };
 bool fromJSON(const llvm::json::Value &, InlayHintsParams &, llvm::json::Path);
 
@@ -1523,6 +1538,12 @@ enum class InlayHintKind {
   /// which shows the deduced type of the variable.
   TypeHint,
 
+  /// A hint before an element of an aggregate braced initializer list,
+  /// indicating what it is initializing.
+  ///   Pair{^1, ^2};
+  /// Uses designator syntax, e.g. `.first:`.
+  DesignatorHint,
+
   /// Other ideas for hints that are not currently implemented:
   ///
   /// * Chaining hints, showing the types of intermediate expressions
@@ -1532,22 +1553,32 @@ enum class InlayHintKind {
 llvm::json::Value toJSON(InlayHintKind);
 
 /// An annotation to be displayed inline next to a range of source code.
+///
+/// This is a clangd extension.
 struct InlayHint {
+  /// The position between two characters where the hint should be displayed.
+  ///
+  /// For example, n parameter hint may be positioned before an argument.
+  Position position;
+
   /// The range of source code to which the hint applies.
-  /// We provide the entire range, rather than just the endpoint
-  /// relevant to `position` (e.g. the start of the range for
-  /// InlayHintPosition::Before), to give clients the flexibility
-  /// to make choices like only displaying the hint while the cursor
-  /// is over the range, rather than displaying it all the time.
+  ///
+  /// For example, a parameter hint may have the argument as its range.
+  /// The range allows clients more flexibility of when/how to display the hint.
   Range range;
 
-  /// The type of hint.
+  /// The type of hint, such as a parameter hint.
   InlayHintKind kind;
 
-  /// The label that is displayed in the editor.
+  /// The label that is displayed in the editor, such as a parameter name.
+  ///
+  /// The label may contain punctuation and/or whitespace to allow it to read
+  /// naturally when placed inline with the code.
   std::string label;
 };
 llvm::json::Value toJSON(const InlayHint &);
+bool operator==(const InlayHint &, const InlayHint &);
+bool operator<(const InlayHint &, const InlayHint &);
 
 struct ReferenceContext {
   /// Include the declaration of the current symbol.
@@ -1791,5 +1822,7 @@ template <> struct format_provider<clang::clangd::Position> {
   }
 };
 } // namespace llvm
+
+// NOLINTEND(readability-identifier-naming)
 
 #endif

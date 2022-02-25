@@ -38,11 +38,13 @@ static bool shouldConvertToRelLookupTable(Module &M, GlobalVariable &GV) {
 
   GetElementPtrInst *GEP =
       dyn_cast<GetElementPtrInst>(GV.use_begin()->getUser());
-  if (!GEP || !GEP->hasOneUse())
+  if (!GEP || !GEP->hasOneUse() ||
+      GV.getValueType() != GEP->getSourceElementType())
     return false;
 
   LoadInst *Load = dyn_cast<LoadInst>(GEP->use_begin()->getUser());
-  if (!Load || !Load->hasOneUse())
+  if (!Load || !Load->hasOneUse() ||
+      Load->getType() != GEP->getResultElementType())
     return false;
 
   // If the original lookup table does not have local linkage and is
@@ -144,6 +146,10 @@ static void convertToRelLookupTable(GlobalVariable &LookupTable) {
   Value *Offset =
       Builder.CreateShl(Index, ConstantInt::get(IntTy, 2), "reltable.shift");
 
+  // Insert the call to load.relative instrinsic before LOAD.
+  // GEP might not be immediately followed by a LOAD, like it can be hoisted
+  // outside the loop or another instruction might be inserted them in between.
+  Builder.SetInsertPoint(Load);
   Function *LoadRelIntrinsic = llvm::Intrinsic::getDeclaration(
       &M, Intrinsic::load_relative, {Index->getType()});
   Value *Base = Builder.CreateBitCast(RelLookupTable, Builder.getInt8PtrTy());
@@ -177,9 +183,7 @@ static bool convertToRelativeLookupTables(
 
   bool Changed = false;
 
-  for (auto GVI = M.global_begin(), E = M.global_end(); GVI != E;) {
-    GlobalVariable &GV = *GVI++;
-
+  for (GlobalVariable &GV : llvm::make_early_inc_range(M.globals())) {
     if (!shouldConvertToRelLookupTable(M, GV))
       continue;
 

@@ -227,8 +227,8 @@ size_t StringRef::rfind_insensitive(StringRef Str) const {
 StringRef::size_type StringRef::find_first_of(StringRef Chars,
                                               size_t From) const {
   std::bitset<1 << CHAR_BIT> CharBits;
-  for (size_type i = 0; i != Chars.size(); ++i)
-    CharBits.set((unsigned char)Chars[i]);
+  for (char C : Chars)
+    CharBits.set((unsigned char)C);
 
   for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
     if (CharBits.test((unsigned char)Data[i]))
@@ -252,8 +252,8 @@ StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
 StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
                                                   size_t From) const {
   std::bitset<1 << CHAR_BIT> CharBits;
-  for (size_type i = 0; i != Chars.size(); ++i)
-    CharBits.set((unsigned char)Chars[i]);
+  for (char C : Chars)
+    CharBits.set((unsigned char)C);
 
   for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
     if (!CharBits.test((unsigned char)Data[i]))
@@ -268,8 +268,8 @@ StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
 StringRef::size_type StringRef::find_last_of(StringRef Chars,
                                              size_t From) const {
   std::bitset<1 << CHAR_BIT> CharBits;
-  for (size_type i = 0; i != Chars.size(); ++i)
-    CharBits.set((unsigned char)Chars[i]);
+  for (char C : Chars)
+    CharBits.set((unsigned char)C);
 
   for (size_type i = std::min(From, Length) - 1, e = -1; i != e; --i)
     if (CharBits.test((unsigned char)Data[i]))
@@ -293,8 +293,8 @@ StringRef::size_type StringRef::find_last_not_of(char C, size_t From) const {
 StringRef::size_type StringRef::find_last_not_of(StringRef Chars,
                                                  size_t From) const {
   std::bitset<1 << CHAR_BIT> CharBits;
-  for (size_type i = 0, e = Chars.size(); i != e; ++i)
-    CharBits.set((unsigned char)Chars[i]);
+  for (char C : Chars)
+    CharBits.set((unsigned char)C);
 
   for (size_type i = std::min(From, Length) - 1, e = -1; i != e; --i)
     if (!CharBits.test((unsigned char)Data[i]))
@@ -596,4 +596,12 @@ bool StringRef::getAsDouble(double &Result, bool AllowInexact) const {
 // Implementation of StringRef hashing.
 hash_code llvm::hash_value(StringRef S) {
   return hash_combine_range(S.begin(), S.end());
+}
+
+unsigned DenseMapInfo<StringRef, void>::getHashValue(StringRef Val) {
+  assert(Val.data() != getEmptyKey().data() &&
+         "Cannot hash the empty key!");
+  assert(Val.data() != getTombstoneKey().data() &&
+         "Cannot hash the tombstone key!");
+  return (unsigned)(hash_value(Val));
 }

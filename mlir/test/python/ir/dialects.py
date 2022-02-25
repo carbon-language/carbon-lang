@@ -82,16 +82,16 @@ def testCustomOpView():
       # Create via dialects context collection.
       input1 = createInput()
       input2 = createInput()
-      op1 = ctx.dialects.std.AddFOp(input1.type, input1, input2)
+      op1 = ctx.dialects.arith.AddFOp(input1, input2)
 
       # Create via an import
-      from mlir.dialects.std import AddFOp
-      AddFOp(input1.type, input1, op1.result)
+      from mlir.dialects.arith import AddFOp
+      AddFOp(input1, op1.result)
 
   # CHECK: %[[INPUT0:.*]] = "pytest_dummy.intinput"
   # CHECK: %[[INPUT1:.*]] = "pytest_dummy.intinput"
-  # CHECK: %[[R0:.*]] = addf %[[INPUT0]], %[[INPUT1]] : f32
-  # CHECK: %[[R1:.*]] = addf %[[INPUT0]], %[[R0]] : f32
+  # CHECK: %[[R0:.*]] = arith.addf %[[INPUT0]], %[[INPUT1]] : f32
+  # CHECK: %[[R1:.*]] = arith.addf %[[INPUT0]], %[[R0]] : f32
   m.operation.print()
 
 
@@ -100,7 +100,7 @@ def testCustomOpView():
 def testIsRegisteredOperation():
   ctx = Context()
 
-  # CHECK: std.cond_br: True
-  print(f"std.cond_br: {ctx.is_registered_operation('std.cond_br')}")
+  # CHECK: cf.cond_br: True
+  print(f"cf.cond_br: {ctx.is_registered_operation('cf.cond_br')}")
   # CHECK: std.not_existing: False
   print(f"std.not_existing: {ctx.is_registered_operation('std.not_existing')}")

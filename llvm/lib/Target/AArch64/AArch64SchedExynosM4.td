@@ -558,7 +558,8 @@ def : SchedAlias<WriteVLD, M4WriteL5>;
 def : SchedAlias<WriteVST, M4WriteVST1>;
 
 // ASIMD FP instructions.
-def : SchedAlias<WriteV, M4WriteNALU1>;
+def : SchedAlias<WriteVd, M4WriteNALU1>;
+def : SchedAlias<WriteVq, M4WriteNALU1>;
 
 // Other miscellaneous instructions.
 def : WriteRes<WriteAtomic,  []> { let Unsupported = 1; }
@@ -809,7 +810,7 @@ def : InstRW<[M4WriteNALU1],  (instregex "^RBITv")>;
 def : InstRW<[M4WriteNALU1],  (instregex "^(BIF|BIT|BSL|BSP)v")>;
 def : InstRW<[M4WriteNALU1],  (instregex "^CL[STZ]v")>;
 def : InstRW<[M4WriteNEONB],  (instregex "^DUPv.+gpr")>;
-def : InstRW<[M4WriteNSHF1],  (instregex "^CPY")>;
+def : InstRW<[M4WriteNSHF1],  (instregex "^DUP(i8|i16|i32|i64)$")>;
 def : InstRW<[M4WriteNSHF1],  (instregex "^DUPv.+lane")>;
 def : InstRW<[M4WriteNSHF1],  (instregex "^EXTv")>;
 def : InstRW<[M4WriteNSHT4A], (instregex "^XTNv")>;

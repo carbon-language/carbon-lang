@@ -16,13 +16,14 @@
 
 // FIXME: vector is used because that's what clang uses for subtarget feature
 // lists, but SmallVector would probably be better
-#include "llvm/ADT/Triple.h"
-#include "llvm/Support/ARMTargetParser.h"
-#include "llvm/Support/AArch64TargetParser.h"
+#include "llvm/Support/RISCVISAInfo.h"
 #include <vector>
 
 namespace llvm {
+
 class StringRef;
+template <typename T> class SmallVectorImpl;
+class Triple;
 
 // Target specific information in their own namespaces.
 // (ARM/AArch64/X86 are declared in ARM/AArch64/X86TargetParser.h)
@@ -157,12 +158,7 @@ enum CPUKind : unsigned {
 enum FeatureKind : unsigned {
   FK_INVALID = 0,
   FK_NONE = 1,
-  FK_STDEXTM = 1 << 2,
-  FK_STDEXTA = 1 << 3,
-  FK_STDEXTF = 1 << 4,
-  FK_STDEXTD = 1 << 5,
-  FK_STDEXTC = 1 << 6,
-  FK_64BIT = 1 << 7,
+  FK_64BIT = 1 << 2,
 };
 
 bool checkCPUKind(CPUKind Kind, bool IsRV64);
@@ -176,6 +172,18 @@ bool getCPUFeaturesExceptStdExt(CPUKind Kind, std::vector<StringRef> &Features);
 StringRef resolveTuneCPUAlias(StringRef TuneCPU, bool IsRV64);
 
 } // namespace RISCV
+
+namespace ARM {
+struct ParsedBranchProtection {
+  StringRef Scope;
+  StringRef Key;
+  bool BranchTargetEnforcement;
+};
+
+bool parseBranchProtection(StringRef Spec, ParsedBranchProtection &PBP,
+                           StringRef &Err);
+
+} // namespace ARM
 
 } // namespace llvm
 

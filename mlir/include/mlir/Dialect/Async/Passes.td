@@ -25,14 +25,19 @@ def AsyncParallelFor : Pass<"async-parallel-for", "ModuleOp"> {
 
     Option<"numWorkerThreads", "num-workers",
       "int32_t", /*default=*/"8",
-      "The number of available workers to execute async operations.">,
+      "The number of available workers to execute async operations. If `-1` "
+      "the value will be retrieved from the runtime.">,
 
-    Option<"targetBlockSize", "target-block-size",
+    Option<"minTaskSize", "min-task-size",
       "int32_t", /*default=*/"1000",
-      "The target block size for sharding parallel operation.">
+      "The minimum task size for sharding parallel operation.">
   ];
 
-  let dependentDialects = ["async::AsyncDialect", "scf::SCFDialect"];
+  let dependentDialects = [
+    "arith::ArithmeticDialect",
+    "async::AsyncDialect",
+    "scf::SCFDialect"
+  ];
 }
 
 def AsyncToAsyncRuntime : Pass<"async-to-async-runtime", "ModuleOp"> {

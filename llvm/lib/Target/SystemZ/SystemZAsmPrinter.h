@@ -11,6 +11,7 @@
 
 #include "SystemZMCInstLower.h"
 #include "SystemZTargetMachine.h"
+#include "SystemZTargetStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/MC/MCInstBuilder.h"
@@ -18,7 +19,6 @@
 
 namespace llvm {
 class MCStreamer;
-class MachineBasicBlock;
 class MachineInstr;
 class Module;
 class raw_ostream;
@@ -27,32 +27,23 @@ class LLVM_LIBRARY_VISIBILITY SystemZAsmPrinter : public AsmPrinter {
 private:
   StackMaps SM;
 
-  typedef std::pair<MCInst, const MCSubtargetInfo *> MCInstSTIPair;
-  struct CmpMCInst {
-    bool operator()(const MCInstSTIPair &MCI_STI_A,
-                    const MCInstSTIPair &MCI_STI_B) const {
-      if (MCI_STI_A.second != MCI_STI_B.second)
-        return uintptr_t(MCI_STI_A.second) < uintptr_t(MCI_STI_B.second);
-      const MCInst &A = MCI_STI_A.first;
-      const MCInst &B = MCI_STI_B.first;
-      assert(A.getNumOperands() == B.getNumOperands() &&
-             A.getNumOperands() == 5 && A.getOperand(2).getImm() == 1 &&
-             B.getOperand(2).getImm() == 1 && "Unexpected EXRL target MCInst");
-      if (A.getOpcode() != B.getOpcode())
-        return A.getOpcode() < B.getOpcode();
-      if (A.getOperand(0).getReg() != B.getOperand(0).getReg())
-        return A.getOperand(0).getReg() < B.getOperand(0).getReg();
-      if (A.getOperand(1).getImm() != B.getOperand(1).getImm())
-        return A.getOperand(1).getImm() < B.getOperand(1).getImm();
-      if (A.getOperand(3).getReg() != B.getOperand(3).getReg())
-        return A.getOperand(3).getReg() < B.getOperand(3).getReg();
-      if (A.getOperand(4).getImm() != B.getOperand(4).getImm())
-        return A.getOperand(4).getImm() < B.getOperand(4).getImm();
-      return false;
-    }
+  SystemZTargetStreamer *getTargetStreamer() {
+    MCTargetStreamer *TS = OutStreamer->getTargetStreamer();
+    assert(TS && "do not have a target streamer");
+    return static_cast<SystemZTargetStreamer *>(TS);
+  }
+
+  /// Call type information for XPLINK.
+  enum class CallType {
+    BASR76 = 0,   // b'x000' == BASR  r7,r6
+    BRAS7 = 1,    // b'x001' == BRAS  r7,ep
+    RESVD_2 = 2,  // b'x010'
+    BRASL7 = 3,   // b'x011' == BRASL r7,ep
+    RESVD_4 = 4,  // b'x100'
+    RESVD_5 = 5,  // b'x101'
+    BALR1415 = 6, // b'x110' == BALR  r14,r15
+    BASR33 = 7,   // b'x111' == BASR  r3,r3
   };
-  typedef std::map<MCInstSTIPair, MCSymbol *, CmpMCInst> EXRLT2SymMap;
-  EXRLT2SymMap EXRLTargets2Sym;
 
 public:
   SystemZAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
@@ -72,12 +63,13 @@ public:
     SM.reset();
     return AsmPrinter::doInitialization(M);
   }
+  void emitFunctionEntryLabel() override;
 
 private:
+  void emitCallInformation(CallType CT);
   void LowerFENTRY_CALL(const MachineInstr &MI, SystemZMCInstLower &MCIL);
   void LowerSTACKMAP(const MachineInstr &MI);
   void LowerPATCHPOINT(const MachineInstr &MI, SystemZMCInstLower &Lower);
-  void emitEXRLTargetInstructions();
 };
 } // end namespace llvm
 

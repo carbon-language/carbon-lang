@@ -29,16 +29,17 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatCommon.h"
 #include "llvm/Support/FormatProviders.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 #include "llvm/Support/raw_ostream.h"
+#include <array>
 #include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 namespace llvm {
 
@@ -94,7 +95,7 @@ public:
         continue;
       }
 
-      auto W = Adapters[R.Index];
+      auto *W = Adapters[R.Index];
 
       FmtAlign Align(*W, R.Where, R.Align, R.Pad);
       Align.format(S, R.Options);

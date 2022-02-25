@@ -18,6 +18,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/InstSimplifyFolder.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"
 #include "llvm/Analysis/TargetFolder.h"
@@ -32,8 +33,10 @@ extern cl::opt<unsigned> SCEVCheapExpansionBudget;
 
 /// Return true if the given expression is safe to expand in the sense that
 /// all materialized values are safe to speculate anywhere their operands are
-/// defined.
-bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE);
+/// defined, and the expander is capable of expanding the expression.
+/// CanonicalMode indicates whether the expander will be used in canonical mode.
+bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE,
+                    bool CanonicalMode = true);
 
 /// Return true if the given expression is safe to expand in the sense that
 /// all materialized values are defined and safe to speculate at the specified
@@ -120,7 +123,7 @@ class SCEVExpander : public SCEVVisitor<SCEVExpander, Value *> {
   /// "expanded" form.
   bool LSRMode;
 
-  typedef IRBuilder<TargetFolder, IRBuilderCallbackInserter> BuilderType;
+  typedef IRBuilder<InstSimplifyFolder, IRBuilderCallbackInserter> BuilderType;
   BuilderType Builder;
 
   // RAII object that stores the current insertion point and restores it when
@@ -176,7 +179,7 @@ public:
       : SE(se), DL(DL), IVName(name), PreserveLCSSA(PreserveLCSSA),
         IVIncInsertLoop(nullptr), IVIncInsertPos(nullptr), CanonicalMode(true),
         LSRMode(false),
-        Builder(se.getContext(), TargetFolder(DL),
+        Builder(se.getContext(), InstSimplifyFolder(DL),
                 IRBuilderCallbackInserter(
                     [this](Instruction *I) { rememberInstruction(I); })) {
 #ifdef LLVM_ENABLE_ABI_BREAKING_CHECKS
@@ -290,8 +293,9 @@ public:
   Value *expandCodeForPredicate(const SCEVPredicate *Pred, Instruction *Loc);
 
   /// A specialized variant of expandCodeForPredicate, handling the case when
-  /// we are expanding code for a SCEVEqualPredicate.
-  Value *expandEqualPredicate(const SCEVEqualPredicate *Pred, Instruction *Loc);
+  /// we are expanding code for a SCEVComparePredicate.
+  Value *expandComparePredicate(const SCEVComparePredicate *Pred,
+                                Instruction *Loc);
 
   /// Generates code that evaluates if the \p AR expression will overflow.
   Value *generateOverflowCheck(const SCEVAddRecExpr *AR, Instruction *Loc,
@@ -448,6 +452,14 @@ private:
   /// Determine the most "relevant" loop for the given SCEV.
   const Loop *getRelevantLoop(const SCEV *);
 
+  Value *expandSMaxExpr(const SCEVNAryExpr *S);
+
+  Value *expandUMaxExpr(const SCEVNAryExpr *S);
+
+  Value *expandSMinExpr(const SCEVNAryExpr *S);
+
+  Value *expandUMinExpr(const SCEVNAryExpr *S);
+
   Value *visitConstant(const SCEVConstant *S) { return S->getValue(); }
 
   Value *visitPtrToIntExpr(const SCEVPtrToIntExpr *S);
@@ -473,6 +485,8 @@ private:
   Value *visitSMinExpr(const SCEVSMinExpr *S);
 
   Value *visitUMinExpr(const SCEVUMinExpr *S);
+
+  Value *visitSequentialUMinExpr(const SCEVSequentialUMinExpr *S);
 
   Value *visitUnknown(const SCEVUnknown *S) { return S->getValue(); }
 
@@ -502,15 +516,13 @@ private:
 class SCEVExpanderCleaner {
   SCEVExpander &Expander;
 
-  DominatorTree &DT;
-
   /// Indicates whether the result of the expansion is used. If false, the
   /// instructions added during expansion are removed.
   bool ResultUsed;
 
 public:
-  SCEVExpanderCleaner(SCEVExpander &Expander, DominatorTree &DT)
-      : Expander(Expander), DT(DT), ResultUsed(false) {}
+  SCEVExpanderCleaner(SCEVExpander &Expander)
+      : Expander(Expander), ResultUsed(false) {}
 
   ~SCEVExpanderCleaner() { cleanup(); }
 

@@ -197,7 +197,7 @@ struct DLTestDialect : Dialect {
     (void)ok;
     assert(ok);
     if (succeeded(parser.parseOptionalGreater()))
-      return CustomDataLayoutSpec::get(parser.getBuilder().getContext(), {});
+      return CustomDataLayoutSpec::get(parser.getContext(), {});
 
     SmallVector<DataLayoutEntryInterface> entries;
     do {
@@ -207,7 +207,7 @@ struct DLTestDialect : Dialect {
     } while (succeeded(parser.parseOptionalComma()));
     ok = succeeded(parser.parseGreater());
     assert(ok);
-    return CustomDataLayoutSpec::get(parser.getBuilder().getContext(), entries);
+    return CustomDataLayoutSpec::get(parser.getContext(), entries);
   }
 
   void printType(Type type, DialectAsmPrinter &printer) const override {
@@ -221,11 +221,11 @@ struct DLTestDialect : Dialect {
     bool ok = succeeded(parser.parseKeyword("single_query"));
     (void)ok;
     assert(ok);
-    return SingleQueryType::get(parser.getBuilder().getContext());
+    return SingleQueryType::get(parser.getContext());
   }
 };
 
-} // end namespace
+} // namespace
 
 TEST(DataLayout, FallbackDefault) {
   const char *ir = R"MLIR(
@@ -236,7 +236,7 @@ module {}
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   DataLayout layout(module.get());
   EXPECT_EQ(layout.getTypeSize(IntegerType::get(&ctx, 42)), 6u);
   EXPECT_EQ(layout.getTypeSize(Float16Type::get(&ctx)), 2u);
@@ -257,7 +257,7 @@ TEST(DataLayout, NullSpec) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -280,7 +280,7 @@ TEST(DataLayout, EmptySpec) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -306,7 +306,7 @@ TEST(DataLayout, SpecWithEntries) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -338,7 +338,7 @@ TEST(DataLayout, Caching) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -369,7 +369,7 @@ TEST(DataLayout, CacheInvalidation) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -395,7 +395,7 @@ TEST(DataLayout, UnimplementedTypeInterface) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);
@@ -414,7 +414,7 @@ TEST(DataLayout, SevenBitByte) {
   registry.insert<DLTIDialect, DLTestDialect>();
   MLIRContext ctx(registry);
 
-  OwningModuleRef module = parseSourceString(ir, &ctx);
+  OwningOpRef<ModuleOp> module = parseSourceString(ir, &ctx);
   auto op =
       cast<DataLayoutOpInterface>(module->getBody()->getOperations().front());
   DataLayout layout(op);

@@ -15,7 +15,7 @@
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -52,7 +52,7 @@ struct _LIBCPP_TEMPLATE_VIS uses_allocator
 
 #if _LIBCPP_STD_VER > 14
 template <class _Tp, class _Alloc>
-_LIBCPP_INLINE_VAR constexpr size_t uses_allocator_v = uses_allocator<_Tp, _Alloc>::value;
+inline constexpr size_t uses_allocator_v = uses_allocator<_Tp, _Alloc>::value;
 #endif
 
 _LIBCPP_END_NAMESPACE_STD

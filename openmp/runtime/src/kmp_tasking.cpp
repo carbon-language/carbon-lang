@@ -807,6 +807,24 @@ static void __kmp_free_task_and_ancestors(kmp_int32 gtid,
            gtid, taskdata, children));
 }
 
+// Only need to keep track of child task counts if any of the following:
+// 1. team parallel and tasking not serialized;
+// 2. it is a proxy or detachable or hidden helper task
+// 3. the children counter of its parent task is greater than 0.
+// The reason for the 3rd one is for serialized team that found detached task,
+// hidden helper task, T. In this case, the execution of T is still deferred,
+// and it is also possible that a regular task depends on T. In this case, if we
+// don't track the children, task synchronization will be broken.
+static bool __kmp_track_children_task(kmp_taskdata_t *taskdata) {
+  kmp_tasking_flags_t flags = taskdata->td_flags;
+  bool ret = !(flags.team_serial || flags.tasking_ser);
+  ret = ret || flags.proxy == TASK_PROXY ||
+        flags.detachable == TASK_DETACHABLE || flags.hidden_helper;
+  ret = ret ||
+        KMP_ATOMIC_LD_ACQ(&taskdata->td_parent->td_incomplete_child_tasks) > 0;
+  return ret;
+}
+
 // __kmp_task_finish: bookkeeping to do when a task finishes execution
 //
 // gtid: global thread ID for calling thread
@@ -933,12 +951,9 @@ static void __kmp_task_finish(kmp_int32 gtid, kmp_task_t *task,
     if (ompt)
       __ompt_task_finish(task, resumed_task, ompt_task_complete);
 #endif
-
-    // Only need to keep track of count if team parallel and tasking not
-    // serialized, or task is detachable and event has already been fulfilled
-    if (!(taskdata->td_flags.team_serial || taskdata->td_flags.tasking_ser) ||
-        taskdata->td_flags.detachable == TASK_DETACHABLE ||
-        taskdata->td_flags.hidden_helper) {
+    // TODO: What would be the balance between the conditions in the function
+    // and an atomic operation?
+    if (__kmp_track_children_task(taskdata)) {
       __kmp_release_deps(gtid, taskdata);
       // Predecrement simulated by "- 1" calculation
 #if KMP_DEBUG
@@ -1376,11 +1391,9 @@ kmp_task_t *__kmp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   if (UNLIKELY(ompt_enabled.enabled))
     __ompt_task_init(taskdata, gtid);
 #endif
-  // Only need to keep track of child task counts if team parallel and tasking
-  // not serialized or if it is a proxy or detachable or hidden helper task
-  if (flags->proxy == TASK_PROXY || flags->detachable == TASK_DETACHABLE ||
-      flags->hidden_helper ||
-      !(taskdata->td_flags.team_serial || taskdata->td_flags.tasking_ser)) {
+  // TODO: What would be the balance between the conditions in the function and
+  // an atomic operation?
+  if (__kmp_track_children_task(taskdata)) {
     KMP_ATOMIC_INC(&parent_task->td_incomplete_child_tasks);
     if (parent_task->td_taskgroup)
       KMP_ATOMIC_INC(&parent_task->td_taskgroup->count);
@@ -1608,13 +1621,15 @@ static void __kmp_invoke_task(kmp_int32 gtid, kmp_task_t *task,
     KMP_FSYNC_ACQUIRED(taskdata); // acquired self (new task)
 #endif
 
+    if (task->routine != NULL) {
 #ifdef KMP_GOMP_COMPAT
-    if (taskdata->td_flags.native) {
-      ((void (*)(void *))(*(task->routine)))(task->shareds);
-    } else
+      if (taskdata->td_flags.native) {
+        ((void (*)(void *))(*(task->routine)))(task->shareds);
+      } else
 #endif /* KMP_GOMP_COMPAT */
-    {
-      (*(task->routine))(gtid, task);
+      {
+        (*(task->routine))(gtid, task);
+      }
     }
     KMP_POP_PARTITIONED_TIMER();
 
@@ -3059,6 +3074,18 @@ static inline int __kmp_execute_tasks_template(
       return FALSE;
     }
 
+    // Check the flag again to see if it has already done in case to be trapped
+    // into infinite loop when a if0 task depends on a hidden helper task
+    // outside any parallel region. Detached tasks are not impacted in this case
+    // because the only thread executing this function has to execute the proxy
+    // task so it is in another code path that has the same check.
+    if (flag == NULL || (!final_spin && flag->done_check())) {
+      KA_TRACE(15,
+               ("__kmp_execute_tasks_template: T#%d spin condition satisfied\n",
+                gtid));
+      return TRUE;
+    }
+
     // We could be getting tasks from target constructs; if this is the only
     // thread, keep trying to execute tasks from own queue
     if (nthreads == 1 &&
@@ -3463,6 +3490,7 @@ static kmp_task_team_t *__kmp_allocate_task_team(kmp_info_t *thread,
 
   TCW_4(task_team->tt.tt_found_tasks, FALSE);
   TCW_4(task_team->tt.tt_found_proxy_tasks, FALSE);
+  TCW_4(task_team->tt.tt_hidden_helper_task_encountered, FALSE);
   task_team->tt.tt_nproc = nthreads = team->t.t_nproc;
 
   KMP_ATOMIC_ST_REL(&task_team->tt.tt_unfinished_threads, nthreads);
@@ -3524,9 +3552,11 @@ void __kmp_reap_task_teams(void) {
 void __kmp_wait_to_unref_task_teams(void) {
   kmp_info_t *thread;
   kmp_uint32 spins;
+  kmp_uint64 time;
   int done;
 
   KMP_INIT_YIELD(spins);
+  KMP_INIT_BACKOFF(time);
 
   for (;;) {
     done = TRUE;
@@ -3576,7 +3606,7 @@ void __kmp_wait_to_unref_task_teams(void) {
     }
 
     // If oversubscribed or have waited a bit, yield.
-    KMP_YIELD_OVERSUB_ELSE_SPIN(spins);
+    KMP_YIELD_OVERSUB_ELSE_SPIN(spins, time);
   }
 }
 
@@ -3625,6 +3655,7 @@ void __kmp_task_team_setup(kmp_info_t *this_thr, kmp_team_t *team, int always) {
         TCW_4(task_team->tt.tt_nproc, team->t.t_nproc);
         TCW_4(task_team->tt.tt_found_tasks, FALSE);
         TCW_4(task_team->tt.tt_found_proxy_tasks, FALSE);
+        TCW_4(task_team->tt.tt_hidden_helper_task_encountered, FALSE);
         KMP_ATOMIC_ST_REL(&task_team->tt.tt_unfinished_threads,
                           team->t.t_nproc);
         TCW_4(task_team->tt.tt_active, TRUE);
@@ -3717,8 +3748,10 @@ void __kmp_task_team_wait(
          "setting active to false, setting local and team's pointer to NULL\n",
          __kmp_gtid_from_thread(this_thr), task_team));
     KMP_DEBUG_ASSERT(task_team->tt.tt_nproc > 1 ||
-                     task_team->tt.tt_found_proxy_tasks == TRUE);
+                     task_team->tt.tt_found_proxy_tasks == TRUE ||
+                     task_team->tt.tt_hidden_helper_task_encountered == TRUE);
     TCW_SYNC_4(task_team->tt.tt_found_proxy_tasks, FALSE);
+    TCW_SYNC_4(task_team->tt.tt_hidden_helper_task_encountered, FALSE);
     KMP_CHECK_UPDATE(task_team->tt.tt_untied_task_encountered, 0);
     TCW_SYNC_4(task_team->tt.tt_active, FALSE);
     KMP_MB();

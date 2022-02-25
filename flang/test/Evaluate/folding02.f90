@@ -1,5 +1,5 @@
-! RUN: %S/test_folding.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_folding.py %s %flang_fc1
+
 ! Check intrinsic function folding with host runtime library
 
 module m
@@ -260,5 +260,19 @@ module m
   TEST_C8(pow, ((0.5_8, 0.6_8)**(0.74_8, -1.1_8)), &
     (1.3223499632715445262221010125358588993549346923828125_8, &
      1.7371201007364975854585509296157397329807281494140625_8))
+
+! Extension specific intrinsic variants of ABS
+  logical, parameter, test_babs1 = kind(babs(-1_1)) == 1
+  logical, parameter, test_babs2 = babs(-1_1) == 1_1
+  logical, parameter, test_iiabs1 = kind(iiabs(-1_2)) == 2
+  logical, parameter, test_iiabs2 = iiabs(-1_2) == 1_2
+  logical, parameter, test_jiabs1 = kind(jiabs(-1_4)) == 4
+  logical, parameter, test_jiabs2 = jiabs(-1_4) == 1_4
+  logical, parameter, test_kiabs1 = kind(kiabs(-1_8)) == 8
+  logical, parameter, test_kiabs2 = kiabs(-1_8) == 1_8
+  logical, parameter, test_zabs1 = kind(zabs((3._8,4._8))) == 8
+  logical, parameter, test_zabs2 = zabs((3._8,4._8)) == 5_8
+  logical, parameter, test_cdabs1 = kind(cdabs((3._8,4._8))) == kind(1.d0)
+  logical, parameter, test_cdabs2 = cdabs((3._8,4._8)) == real(5, kind(1.d0))
 
 end

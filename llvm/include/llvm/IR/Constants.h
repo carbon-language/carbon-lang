@@ -191,19 +191,19 @@ public:
   /// This is just a convenience method to make client code smaller for a
   /// common code. It also correctly performs the comparison without the
   /// potential for an assertion from getZExtValue().
-  bool isZero() const { return Val.isNullValue(); }
+  bool isZero() const { return Val.isZero(); }
 
   /// This is just a convenience method to make client code smaller for a
   /// common case. It also correctly performs the comparison without the
   /// potential for an assertion from getZExtValue().
   /// Determine if the value is one.
-  bool isOne() const { return Val.isOneValue(); }
+  bool isOne() const { return Val.isOne(); }
 
   /// This function will return true iff every bit in this constant is set
   /// to true.
   /// @returns true iff this constant's bits are all set to true.
   /// Determine if the value is all ones.
-  bool isMinusOne() const { return Val.isAllOnesValue(); }
+  bool isMinusOne() const { return Val.isAllOnes(); }
 
   /// This function will return true iff this constant represents the largest
   /// value that may be represented by the constant's type.
@@ -926,6 +926,41 @@ struct OperandTraits<DSOLocalEquivalent>
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(DSOLocalEquivalent, Value)
 
+/// Wrapper for a value that won't be replaced with a CFI jump table
+/// pointer in LowerTypeTestsModule.
+class NoCFIValue final : public Constant {
+  friend class Constant;
+
+  NoCFIValue(GlobalValue *GV);
+
+  void *operator new(size_t S) { return User::operator new(S, 1); }
+
+  void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To);
+
+public:
+  /// Return a NoCFIValue for the specified function.
+  static NoCFIValue *get(GlobalValue *GV);
+
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  GlobalValue *getGlobalValue() const {
+    return cast<GlobalValue>(Op<0>().get());
+  }
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static bool classof(const Value *V) {
+    return V->getValueID() == NoCFIValueVal;
+  }
+};
+
+template <>
+struct OperandTraits<NoCFIValue> : public FixedNumOperandTraits<NoCFIValue, 1> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(NoCFIValue, Value)
+
 //===----------------------------------------------------------------------===//
 /// A constant value that is initialized with an expression using
 /// other constant values.
@@ -1161,13 +1196,6 @@ public:
   /// and the getIndices() method may be used.
   bool hasIndices() const;
 
-  /// Return true if this is a getelementptr expression and all
-  /// the index operands are compile-time known integers within the
-  /// corresponding notional static array extents. Note that this is
-  /// not equivalant to, a subset of, or a superset of the "inbounds"
-  /// property.
-  bool isGEPWithNoNotionalOverIndexing() const;
-
   /// Select constant expr
   ///
   /// \param OnlyIfReducedTy see \a getWithOperands() docs.
@@ -1308,13 +1336,14 @@ public:
                             Type *SrcTy = nullptr) const;
 
   /// Returns an Instruction which implements the same operation as this
-  /// ConstantExpr. The instruction is not linked to any basic block.
+  /// ConstantExpr. If \p InsertBefore is not null, the new instruction is
+  /// inserted before it, otherwise it is not inserted into any basic block.
   ///
   /// A better approach to this could be to have a constructor for Instruction
   /// which would take a ConstantExpr parameter, but that would have spread
   /// implementation details of ConstantExpr outside of Constants.cpp, which
   /// would make it harder to remove ConstantExprs altogether.
-  Instruction *getAsInstruction() const;
+  Instruction *getAsInstruction(Instruction *InsertBefore = nullptr) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

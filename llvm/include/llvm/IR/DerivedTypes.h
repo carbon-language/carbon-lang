@@ -49,10 +49,11 @@ public:
   /// This enum is just used to hold constants we need for IntegerType.
   enum {
     MIN_INT_BITS = 1,        ///< Minimum number of bits that can be specified
-    MAX_INT_BITS = (1<<24)-1 ///< Maximum number of bits that can be specified
+    MAX_INT_BITS = (1<<23)   ///< Maximum number of bits that can be specified
       ///< Note that bit width is stored in the Type classes SubclassData field
-      ///< which has 24 bits. This yields a maximum bit width of 16,777,215
-      ///< bits.
+      ///< which has 24 bits. SelectionDAG type legalization can require a
+      ///< power of 2 IntegerType, so limit to the largest representable power
+      ///< of 2, 8388608.
   };
 
   /// This static method is the primary way of constructing an IntegerType.
@@ -666,12 +667,7 @@ public:
                                              unsigned AddressSpace) {
     if (PT->isOpaque())
       return get(PT->getContext(), AddressSpace);
-    return get(PT->getElementType(), AddressSpace);
-  }
-
-  Type *getElementType() const {
-    assert(!isOpaque() && "Attempting to get element type of opaque pointer");
-    return PointeeTy;
+    return get(PT->PointeeTy, AddressSpace);
   }
 
   bool isOpaque() const { return !PointeeTy; }

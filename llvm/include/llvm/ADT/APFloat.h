@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief
 /// This file declares a class to represent arbitrary precision floating point
 /// values and provide a variety of arithmetic operations on them.
 ///
@@ -961,9 +960,7 @@ public:
   /// Returns a float which is bitcasted from an all one value int.
   ///
   /// \param Semantics - type float semantics
-  /// \param BitWidth - Select float type
-  static APFloat getAllOnesValue(const fltSemantics &Semantics,
-                                 unsigned BitWidth);
+  static APFloat getAllOnesValue(const fltSemantics &Semantics);
 
   /// Used to insert APFloat objects, or objects that contain APFloat objects,
   /// into FoldingSets.

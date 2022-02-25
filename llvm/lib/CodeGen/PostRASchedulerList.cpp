@@ -72,7 +72,7 @@ DebugMod("postra-sched-debugmod",
                       cl::desc("Debug control MBBs that are scheduled"),
                       cl::init(0), cl::Hidden);
 
-AntiDepBreaker::~AntiDepBreaker() { }
+AntiDepBreaker::~AntiDepBreaker() = default;
 
 namespace {
   class PostRAScheduler : public MachineFunctionPass {
@@ -139,7 +139,7 @@ namespace {
     ///
     /// This is the instruction number from the top of the current block, not
     /// the SlotIndex. It is only used by the AntiDepBreaker.
-    unsigned EndIndex;
+    unsigned EndIndex = 0;
 
   public:
     SchedulePostRATDList(
@@ -206,7 +206,7 @@ SchedulePostRATDList::SchedulePostRATDList(
     const RegisterClassInfo &RCI,
     TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
     SmallVectorImpl<const TargetRegisterClass *> &CriticalPathRCs)
-    : ScheduleDAGInstrs(MF, &MLI), AA(AA), EndIndex(0) {
+    : ScheduleDAGInstrs(MF, &MLI), AA(AA) {
 
   const InstrItineraryData *InstrItins =
       MF.getSubtarget().getInstrItineraryData();
@@ -252,8 +252,8 @@ void SchedulePostRATDList::exitRegion() {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// dumpSchedule - dump the scheduled Sequence.
 LLVM_DUMP_METHOD void SchedulePostRATDList::dumpSchedule() const {
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    if (SUnit *SU = Sequence[i])
+  for (const SUnit *SU : Sequence) {
+    if (SU)
       dumpNode(*SU);
     else
       dbgs() << "**** NOOP ****\n";
@@ -531,11 +531,11 @@ void SchedulePostRATDList::ListScheduleTopDown() {
   ReleaseSuccessors(&EntrySU);
 
   // Add all leaves to Available queue.
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+  for (SUnit &SUnit : SUnits) {
     // It is available if it has no predecessors.
-    if (!SUnits[i].NumPredsLeft && !SUnits[i].isAvailable) {
-      AvailableQueue.push(&SUnits[i]);
-      SUnits[i].isAvailable = true;
+    if (!SUnit.NumPredsLeft && !SUnit.isAvailable) {
+      AvailableQueue.push(&SUnit);
+      SUnit.isAvailable = true;
     }
   }
 
@@ -657,10 +657,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
 #ifndef NDEBUG
   unsigned ScheduledNodes = VerifyScheduledDAG(/*isBottomUp=*/false);
-  unsigned Noops = 0;
-  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
-    if (!Sequence[i])
-      ++Noops;
+  unsigned Noops = llvm::count(Sequence, nullptr);
   assert(Sequence.size() - Noops == ScheduledNodes &&
          "The number of nodes scheduled doesn't match the expected number!");
 #endif // NDEBUG

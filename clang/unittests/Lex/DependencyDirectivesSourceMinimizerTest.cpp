@@ -63,6 +63,9 @@ TEST(MinimizeSourceToDependencyDirectivesTest, AllTokens) {
                                            "#import <A>\n"
                                            "@import A;\n"
                                            "#pragma clang module import A\n"
+                                           "#pragma push_macro(A)\n"
+                                           "#pragma pop_macro(A)\n"
+                                           "#pragma include_alias(<A>, <B>)\n"
                                            "export module m;\n"
                                            "import m;\n",
                                            Out, Tokens));
@@ -82,10 +85,13 @@ TEST(MinimizeSourceToDependencyDirectivesTest, AllTokens) {
   EXPECT_EQ(pp_import, Tokens[13].K);
   EXPECT_EQ(decl_at_import, Tokens[14].K);
   EXPECT_EQ(pp_pragma_import, Tokens[15].K);
-  EXPECT_EQ(cxx_export_decl, Tokens[16].K);
-  EXPECT_EQ(cxx_module_decl, Tokens[17].K);
-  EXPECT_EQ(cxx_import_decl, Tokens[18].K);
-  EXPECT_EQ(pp_eof, Tokens[19].K);
+  EXPECT_EQ(pp_pragma_push_macro, Tokens[16].K);
+  EXPECT_EQ(pp_pragma_pop_macro, Tokens[17].K);
+  EXPECT_EQ(pp_pragma_include_alias, Tokens[18].K);
+  EXPECT_EQ(cxx_export_decl, Tokens[19].K);
+  EXPECT_EQ(cxx_module_decl, Tokens[20].K);
+  EXPECT_EQ(cxx_import_decl, Tokens[21].K);
+  EXPECT_EQ(pp_eof, Tokens[22].K);
 }
 
 TEST(MinimizeSourceToDependencyDirectivesTest, Define) {
@@ -406,6 +412,22 @@ TEST(MinimizeSourceToDependencyDirectivesTest, Pragma) {
   ASSERT_FALSE(minimizeSourceToDependencyDirectives("#pragma A\n", Out));
   EXPECT_STREQ("", Out.data());
 
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives(
+      "#pragma push_macro(\"MACRO\")\n", Out));
+  EXPECT_STREQ("#pragma push_macro(\"MACRO\")\n", Out.data());
+
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives(
+      "#pragma pop_macro(\"MACRO\")\n", Out));
+  EXPECT_STREQ("#pragma pop_macro(\"MACRO\")\n", Out.data());
+
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives(
+      "#pragma include_alias(\"A\", \"B\")\n", Out));
+  EXPECT_STREQ("#pragma include_alias(\"A\", \"B\")\n", Out.data());
+
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives(
+      "#pragma include_alias(<A>, <B>)\n", Out));
+  EXPECT_STREQ("#pragma include_alias(<A>, <B>)\n", Out.data());
+
   ASSERT_FALSE(minimizeSourceToDependencyDirectives("#pragma clang\n", Out));
   EXPECT_STREQ("", Out.data());
 
@@ -432,11 +454,26 @@ TEST(MinimizeSourceToDependencyDirectivesTest, Include) {
   EXPECT_STREQ("#include <A>\n", Out.data());
 
   ASSERT_FALSE(
+      minimizeSourceToDependencyDirectives("#include <A//A.h>\n", Out));
+  EXPECT_STREQ("#include <A//A.h>\n", Out.data());
+
+  ASSERT_FALSE(
+      minimizeSourceToDependencyDirectives("#include \"A//A.h\"\n", Out));
+  EXPECT_STREQ("#include \"A//A.h\"\n", Out.data());
+
+  ASSERT_FALSE(
       minimizeSourceToDependencyDirectives("#include_next <A>\n", Out));
   EXPECT_STREQ("#include_next <A>\n", Out.data());
 
   ASSERT_FALSE(minimizeSourceToDependencyDirectives("#import <A>\n", Out));
   EXPECT_STREQ("#import <A>\n", Out.data());
+
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives("#import <A//A.h>\n", Out));
+  EXPECT_STREQ("#import <A//A.h>\n", Out.data());
+
+  ASSERT_FALSE(
+      minimizeSourceToDependencyDirectives("#import \"A//A.h\"\n", Out));
+  EXPECT_STREQ("#import \"A//A.h\"\n", Out.data());
 
   ASSERT_FALSE(
       minimizeSourceToDependencyDirectives("#__include_macros <A>\n", Out));
@@ -689,6 +726,17 @@ TEST(MinimizeSourceToDependencyDirectivesTest,
   EXPECT_STREQ(
       "#if NEVER_ENABLED\n#define why(fmt,...) \"quote dropped\n#endif\n",
       Out.data());
+}
+
+TEST(MinimizeSourceToDependencyDirectivesTest,
+     SupportWhitespaceBeforeLineContinuation) {
+  SmallVector<char, 128> Out;
+
+  ASSERT_FALSE(minimizeSourceToDependencyDirectives("#define FOO(BAR) \\\n"
+                                                    "  #BAR\\\n"
+                                                    "  baz\n",
+                                                    Out));
+  EXPECT_STREQ("#define FOO(BAR) #BAR baz\n", Out.data());
 }
 
 TEST(MinimizeSourceToDependencyDirectivesTest,

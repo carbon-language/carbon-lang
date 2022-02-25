@@ -11,6 +11,7 @@
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPU_H
 
 #include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 
 namespace llvm {
@@ -101,6 +102,15 @@ extern char &AMDGPUCtorDtorLoweringID;
 FunctionPass *createAMDGPULowerKernelArgumentsPass();
 void initializeAMDGPULowerKernelArgumentsPass(PassRegistry &);
 extern char &AMDGPULowerKernelArgumentsID;
+
+FunctionPass *createAMDGPUPromoteKernelArgumentsPass();
+void initializeAMDGPUPromoteKernelArgumentsPass(PassRegistry &);
+extern char &AMDGPUPromoteKernelArgumentsID;
+
+struct AMDGPUPromoteKernelArgumentsPass
+    : PassInfoMixin<AMDGPUPromoteKernelArgumentsPass> {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+};
 
 ModulePass *createAMDGPULowerKernelAttributesPass();
 void initializeAMDGPULowerKernelAttributesPass(PassRegistry &);
@@ -358,9 +368,9 @@ namespace AMDGPUAS {
 
     BUFFER_FAT_POINTER = 7, ///< Address space for 160-bit buffer fat pointers.
 
-    /// Address space for direct addressible parameter memory (CONST0).
+    /// Address space for direct addressable parameter memory (CONST0).
     PARAM_D_ADDRESS = 6,
-    /// Address space for indirect addressible parameter memory (VTX1).
+    /// Address space for indirect addressable parameter memory (VTX1).
     PARAM_I_ADDRESS = 7,
 
     // Do not re-order the CONSTANT_BUFFER_* enums.  Several places depend on

@@ -135,6 +135,23 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
   ImmToIdxMap[PPC::SPELWZ] = PPC::SPELWZX;
 
   // Power10
+  ImmToIdxMap[PPC::PLBZ]   = PPC::LBZX; ImmToIdxMap[PPC::PLBZ8]   = PPC::LBZX8;
+  ImmToIdxMap[PPC::PLHZ]   = PPC::LHZX; ImmToIdxMap[PPC::PLHZ8]   = PPC::LHZX8;
+  ImmToIdxMap[PPC::PLHA]   = PPC::LHAX; ImmToIdxMap[PPC::PLHA8]   = PPC::LHAX8;
+  ImmToIdxMap[PPC::PLWZ]   = PPC::LWZX; ImmToIdxMap[PPC::PLWZ8]   = PPC::LWZX8;
+  ImmToIdxMap[PPC::PLWA]   = PPC::LWAX; ImmToIdxMap[PPC::PLWA8]   = PPC::LWAX;
+  ImmToIdxMap[PPC::PLD]    = PPC::LDX;  ImmToIdxMap[PPC::PSTD]   = PPC::STDX;
+
+  ImmToIdxMap[PPC::PSTB]   = PPC::STBX; ImmToIdxMap[PPC::PSTB8]   = PPC::STBX8;
+  ImmToIdxMap[PPC::PSTH]   = PPC::STHX; ImmToIdxMap[PPC::PSTH8]   = PPC::STHX8;
+  ImmToIdxMap[PPC::PSTW]   = PPC::STWX; ImmToIdxMap[PPC::PSTW8]   = PPC::STWX8;
+
+  ImmToIdxMap[PPC::PLFS]   = PPC::LFSX; ImmToIdxMap[PPC::PSTFS]   = PPC::STFSX;
+  ImmToIdxMap[PPC::PLFD]   = PPC::LFDX; ImmToIdxMap[PPC::PSTFD]   = PPC::STFDX;
+  ImmToIdxMap[PPC::PLXSSP] = PPC::LXSSPX; ImmToIdxMap[PPC::PSTXSSP] = PPC::STXSSPX;
+  ImmToIdxMap[PPC::PLXSD]  = PPC::LXSDX; ImmToIdxMap[PPC::PSTXSD]  = PPC::STXSDX;
+  ImmToIdxMap[PPC::PLXV]   = PPC::LXVX; ImmToIdxMap[PPC::PSTXV]  = PPC::STXVX;
+
   ImmToIdxMap[PPC::LXVP]   = PPC::LXVPX;
   ImmToIdxMap[PPC::STXVP]  = PPC::STXVPX;
   ImmToIdxMap[PPC::PLXVP]  = PPC::LXVPX;
@@ -373,6 +390,18 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+bool PPCRegisterInfo::isAsmClobberable(const MachineFunction &MF,
+                                       MCRegister PhysReg) const {
+  // We cannot use getReservedRegs() to find the registers that are not asm
+  // clobberable because there are some reserved registers which can be
+  // clobbered by inline asm. For example, when LR is clobbered, the register is
+  // saved and restored. We will hardcode the registers that are not asm
+  // cloberable in this function.
+
+  // The stack pointer (R1/X1) is not clobberable by inline asm
+  return PhysReg != PPC::R1 && PhysReg != PPC::X1;
+}
+
 bool PPCRegisterInfo::requiresFrameIndexScavenging(const MachineFunction &MF) const {
   const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const PPCInstrInfo *InstrInfo =  Subtarget.getInstrInfo();
@@ -406,7 +435,7 @@ bool PPCRegisterInfo::requiresFrameIndexScavenging(const MachineFunction &MF) co
       continue;
 
     int FrIdx = Info[i].getFrameIdx();
-    unsigned Reg = Info[i].getReg();
+    Register Reg = Info[i].getReg();
 
     const TargetRegisterClass *RC = getMinimalPhysRegClass(Reg);
     unsigned Opcode = InstrInfo->getStoreOpcodeForSpill(RC);
@@ -1347,7 +1376,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   // Get the instruction info.
-  const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
+  const PPCInstrInfo &TII = *Subtarget.getInstrInfo();
   // Get the frame info.
   MachineFrameInfo &MFI = MF.getFrameInfo();
   DebugLoc dl = MI.getDebugLoc();
@@ -1459,7 +1488,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   bool OffsetFitsMnemonic = (OpC == PPC::EVSTDD || OpC == PPC::EVLDD) ?
                             isUInt<8>(Offset) :
                             isInt<16>(Offset);
-  if (OpC == PPC::PLXVP || OpC == PPC::PSTXVP)
+  if (TII.isPrefixed(MI.getOpcode()))
     OffsetFitsMnemonic = isInt<34>(Offset);
   if (!noImmForm && ((OffsetFitsMnemonic &&
                       ((Offset % offsetMinAlign(MI)) == 0)) ||

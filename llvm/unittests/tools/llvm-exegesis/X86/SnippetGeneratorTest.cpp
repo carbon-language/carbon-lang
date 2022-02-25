@@ -213,26 +213,6 @@ TEST_F(X86SerialSnippetGeneratorTest, VCVTUSI642SDZrrb_Int) {
   ASSERT_TRUE(BC.Key.Instructions[0].getOperand(3).isImm());
 }
 
-TEST_F(X86ParallelSnippetGeneratorTest, ParallelInstruction) {
-  // - BNDCL32rr
-  // - Op0 Explicit Use RegClass(BNDR)
-  // - Op1 Explicit Use RegClass(GR32)
-  // - Var0 [Op0]
-  // - Var1 [Op1]
-  const unsigned Opcode = X86::BNDCL32rr;
-  const auto CodeTemplates = checkAndGetCodeTemplates(Opcode);
-  ASSERT_THAT(CodeTemplates, SizeIs(1));
-  const auto &CT = CodeTemplates[0];
-  EXPECT_THAT(CT.Info, HasSubstr("parallel"));
-  EXPECT_THAT(CT.Execution, ExecutionMode::UNKNOWN);
-  ASSERT_THAT(CT.Instructions, SizeIs(1));
-  const InstructionTemplate &IT = CT.Instructions[0];
-  EXPECT_THAT(IT.getOpcode(), Opcode);
-  ASSERT_THAT(IT.getVariableValues(), SizeIs(2));
-  EXPECT_THAT(IT.getVariableValues()[0], IsInvalid());
-  EXPECT_THAT(IT.getVariableValues()[1], IsInvalid());
-}
-
 TEST_F(X86ParallelSnippetGeneratorTest, SerialInstruction) {
   // - CDQ
   // - Op0 Implicit Def Reg(EAX)
@@ -359,6 +339,29 @@ TEST_F(X86ParallelSnippetGeneratorTest, MOV16ms) {
                                               State.getRATC().emptyRegisters());
   EXPECT_TRUE((bool)Err);
   EXPECT_THAT(toString(std::move(Err)),
+              testing::HasSubstr("no available registers"));
+}
+
+TEST_F(X86ParallelSnippetGeneratorTest,
+       AvoidSerializingThroughImplicitRegisters) {
+  // MULX32rr implicitly uses EDX. We should not select that register to avoid
+  // serialization.
+  const unsigned Opcode = X86::MULX32rr;
+  randomGenerator().seed(0); // Initialize seed.
+  const Instruction &Instr = State.getIC().getInstr(Opcode);
+  // Forbid all registers but RDX/EDX/DX/DH/DL. The only option would be to
+  // choose that register, but that would serialize the instruction, so we
+  // should be returning an error.
+  auto AllRegisters = State.getRATC().emptyRegisters();
+  AllRegisters.flip();
+  AllRegisters.reset(X86::RDX);
+  AllRegisters.reset(X86::EDX);
+  AllRegisters.reset(X86::DX);
+  AllRegisters.reset(X86::DH);
+  AllRegisters.reset(X86::DL);
+  auto Err = Generator.generateCodeTemplates(&Instr, AllRegisters);
+  EXPECT_FALSE((bool)Err);
+  EXPECT_THAT(toString(Err.takeError()),
               testing::HasSubstr("no available registers"));
 }
 

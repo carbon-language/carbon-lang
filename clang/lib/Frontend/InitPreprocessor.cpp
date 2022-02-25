@@ -25,6 +25,7 @@
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
 using namespace clang;
 
 static bool MacroBodyEndsInBackslash(StringRef MacroBody) {
@@ -194,7 +195,7 @@ static void DefineType(const Twine &MacroName, TargetInfo::IntType Ty,
   Builder.defineMacro(MacroName, TargetInfo::getTypeName(Ty));
 }
 
-static void DefineTypeWidth(StringRef MacroName, TargetInfo::IntType Ty,
+static void DefineTypeWidth(const Twine &MacroName, TargetInfo::IntType Ty,
                             const TargetInfo &TI, MacroBuilder &Builder) {
   Builder.defineMacro(MacroName, Twine(TI.getTypeWidth(Ty)));
 }
@@ -203,6 +204,16 @@ static void DefineTypeSizeof(StringRef MacroName, unsigned BitWidth,
                              const TargetInfo &TI, MacroBuilder &Builder) {
   Builder.defineMacro(MacroName,
                       Twine(BitWidth / TI.getCharWidth()));
+}
+
+// This will generate a macro based on the prefix with `_MAX__` as the suffix
+// for the max value representable for the type, and a macro with a `_WIDTH__`
+// suffix for the width of the type.
+static void DefineTypeSizeAndWidth(const Twine &Prefix, TargetInfo::IntType Ty,
+                                   const TargetInfo &TI,
+                                   MacroBuilder &Builder) {
+  DefineTypeSize(Prefix + "_MAX__", Ty, TI, Builder);
+  DefineTypeWidth(Prefix + "_WIDTH__", Ty, TI, Builder);
 }
 
 static void DefineExactWidthIntType(TargetInfo::IntType Ty,
@@ -241,6 +252,8 @@ static void DefineExactWidthIntTypeSize(TargetInfo::IntType Ty,
   if (TypeWidth == 64)
     Ty = IsSigned ? TI.getInt64Type() : TI.getUInt64Type();
 
+  // We don't need to define a _WIDTH macro for the exact-width types because
+  // we already know the width.
   const char *Prefix = IsSigned ? "__INT" : "__UINT";
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
 }
@@ -254,7 +267,12 @@ static void DefineLeastWidthIntType(unsigned TypeWidth, bool IsSigned,
 
   const char *Prefix = IsSigned ? "__INT_LEAST" : "__UINT_LEAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
-  DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
+  // We only want the *_WIDTH macro for the signed types to avoid too many
+  // predefined macros (the unsigned width and the signed width are identical.)
+  if (IsSigned)
+    DefineTypeSizeAndWidth(Prefix + Twine(TypeWidth), Ty, TI, Builder);
+  else
+    DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
   DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 }
 
@@ -268,8 +286,12 @@ static void DefineFastIntType(unsigned TypeWidth, bool IsSigned,
 
   const char *Prefix = IsSigned ? "__INT_FAST" : "__UINT_FAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
-  DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
-
+  // We only want the *_WIDTH macro for the signed types to avoid too many
+  // predefined macros (the unsigned width and the signed width are identical.)
+  if (IsSigned)
+    DefineTypeSizeAndWidth(Prefix + Twine(TypeWidth), Ty, TI, Builder);
+  else
+    DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
   DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 }
 
@@ -371,7 +393,10 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
   //      value is, are implementation-defined.
   // (Removed in C++20.)
   if (!LangOpts.CPlusPlus) {
-    if (LangOpts.C17)
+    // FIXME: Use correct value for C23.
+    if (LangOpts.C2x)
+      Builder.defineMacro("__STDC_VERSION__", "202000L");
+    else if (LangOpts.C17)
       Builder.defineMacro("__STDC_VERSION__", "201710L");
     else if (LangOpts.C11)
       Builder.defineMacro("__STDC_VERSION__", "201112L");
@@ -497,11 +522,20 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
   // Not "standard" per se, but available even with the -undef flag.
   if (LangOpts.AsmPreprocessor)
     Builder.defineMacro("__ASSEMBLER__");
-  if (LangOpts.CUDA && !LangOpts.HIP)
-    Builder.defineMacro("__CUDA__");
+  if (LangOpts.CUDA) {
+    if (LangOpts.GPURelocatableDeviceCode)
+      Builder.defineMacro("__CLANG_RDC__");
+    if (!LangOpts.HIP)
+      Builder.defineMacro("__CUDA__");
+  }
   if (LangOpts.HIP) {
     Builder.defineMacro("__HIP__");
     Builder.defineMacro("__HIPCC__");
+    Builder.defineMacro("__HIP_MEMORY_SCOPE_SINGLETHREAD", "1");
+    Builder.defineMacro("__HIP_MEMORY_SCOPE_WAVEFRONT", "2");
+    Builder.defineMacro("__HIP_MEMORY_SCOPE_WORKGROUP", "3");
+    Builder.defineMacro("__HIP_MEMORY_SCOPE_AGENT", "4");
+    Builder.defineMacro("__HIP_MEMORY_SCOPE_SYSTEM", "5");
     if (LangOpts.CUDAIsDevice)
       Builder.defineMacro("__HIP_DEVICE_COMPILE__");
   }
@@ -597,7 +631,7 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     //Builder.defineMacro("__cpp_consteval", "201811L");
     Builder.defineMacro("__cpp_constexpr_dynamic_alloc", "201907L");
     Builder.defineMacro("__cpp_constinit", "201907L");
-    //Builder.defineMacro("__cpp_coroutines", "201902L");
+    Builder.defineMacro("__cpp_impl_coroutine", "201902L");
     Builder.defineMacro("__cpp_designated_initializers", "201707L");
     Builder.defineMacro("__cpp_impl_three_way_comparison", "201907L");
     //Builder.defineMacro("__cpp_modules", "201907L");
@@ -607,6 +641,8 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
   if (LangOpts.CPlusPlus2b) {
     Builder.defineMacro("__cpp_implicit_move", "202011L");
     Builder.defineMacro("__cpp_size_t_suffix", "202011L");
+    Builder.defineMacro("__cpp_if_consteval", "202106L");
+    Builder.defineMacro("__cpp_­multidimensional_­subscript", "202110L");
   }
   if (LangOpts.Char8)
     Builder.defineMacro("__cpp_char8_t", "201811L");
@@ -874,20 +910,33 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   Builder.defineMacro("__CHAR_BIT__", Twine(TI.getCharWidth()));
 
+  Builder.defineMacro("__BOOL_WIDTH__", Twine(TI.getBoolWidth()));
+  Builder.defineMacro("__SHRT_WIDTH__", Twine(TI.getShortWidth()));
+  Builder.defineMacro("__INT_WIDTH__", Twine(TI.getIntWidth()));
+  Builder.defineMacro("__LONG_WIDTH__", Twine(TI.getLongWidth()));
+  Builder.defineMacro("__LLONG_WIDTH__", Twine(TI.getLongLongWidth()));
+
+  size_t BitIntMaxWidth = TI.getMaxBitIntWidth();
+  assert(BitIntMaxWidth <= llvm::IntegerType::MAX_INT_BITS &&
+         "Target defined a max bit width larger than LLVM can support!");
+  assert(BitIntMaxWidth >= TI.getLongLongWidth() &&
+         "Target defined a max bit width smaller than the C standard allows!");
+  Builder.defineMacro("__BITINT_MAXWIDTH__", Twine(BitIntMaxWidth));
+
   DefineTypeSize("__SCHAR_MAX__", TargetInfo::SignedChar, TI, Builder);
   DefineTypeSize("__SHRT_MAX__", TargetInfo::SignedShort, TI, Builder);
   DefineTypeSize("__INT_MAX__", TargetInfo::SignedInt, TI, Builder);
   DefineTypeSize("__LONG_MAX__", TargetInfo::SignedLong, TI, Builder);
   DefineTypeSize("__LONG_LONG_MAX__", TargetInfo::SignedLongLong, TI, Builder);
-  DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Builder);
-  DefineTypeSize("__WINT_MAX__", TI.getWIntType(), TI, Builder);
-  DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Builder);
-  DefineTypeSize("__SIZE_MAX__", TI.getSizeType(), TI, Builder);
+  DefineTypeSizeAndWidth("__WCHAR", TI.getWCharType(), TI, Builder);
+  DefineTypeSizeAndWidth("__WINT", TI.getWIntType(), TI, Builder);
+  DefineTypeSizeAndWidth("__INTMAX", TI.getIntMaxType(), TI, Builder);
+  DefineTypeSizeAndWidth("__SIZE", TI.getSizeType(), TI, Builder);
 
-  DefineTypeSize("__UINTMAX_MAX__", TI.getUIntMaxType(), TI, Builder);
-  DefineTypeSize("__PTRDIFF_MAX__", TI.getPtrDiffType(0), TI, Builder);
-  DefineTypeSize("__INTPTR_MAX__", TI.getIntPtrType(), TI, Builder);
-  DefineTypeSize("__UINTPTR_MAX__", TI.getUIntPtrType(), TI, Builder);
+  DefineTypeSizeAndWidth("__UINTMAX", TI.getUIntMaxType(), TI, Builder);
+  DefineTypeSizeAndWidth("__PTRDIFF", TI.getPtrDiffType(0), TI, Builder);
+  DefineTypeSizeAndWidth("__INTPTR", TI.getIntPtrType(), TI, Builder);
+  DefineTypeSizeAndWidth("__UINTPTR", TI.getUIntPtrType(), TI, Builder);
 
   DefineTypeSizeof("__SIZEOF_DOUBLE__", TI.getDoubleWidth(), TI, Builder);
   DefineTypeSizeof("__SIZEOF_FLOAT__", TI.getFloatWidth(), TI, Builder);
@@ -916,29 +965,29 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineFmt("__UINTMAX", TI.getUIntMaxType(), TI, Builder);
   Builder.defineMacro("__UINTMAX_C_SUFFIX__",
                       TI.getTypeConstantSuffix(TI.getUIntMaxType()));
-  DefineTypeWidth("__INTMAX_WIDTH__",  TI.getIntMaxType(), TI, Builder);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Builder);
   DefineFmt("__PTRDIFF", TI.getPtrDiffType(0), TI, Builder);
-  DefineTypeWidth("__PTRDIFF_WIDTH__", TI.getPtrDiffType(0), TI, Builder);
   DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Builder);
   DefineFmt("__INTPTR", TI.getIntPtrType(), TI, Builder);
-  DefineTypeWidth("__INTPTR_WIDTH__", TI.getIntPtrType(), TI, Builder);
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Builder);
   DefineFmt("__SIZE", TI.getSizeType(), TI, Builder);
-  DefineTypeWidth("__SIZE_WIDTH__", TI.getSizeType(), TI, Builder);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Builder);
-  DefineTypeWidth("__WCHAR_WIDTH__", TI.getWCharType(), TI, Builder);
   DefineType("__WINT_TYPE__", TI.getWIntType(), Builder);
-  DefineTypeWidth("__WINT_WIDTH__", TI.getWIntType(), TI, Builder);
-  DefineTypeWidth("__SIG_ATOMIC_WIDTH__", TI.getSigAtomicType(), TI, Builder);
-  DefineTypeSize("__SIG_ATOMIC_MAX__", TI.getSigAtomicType(), TI, Builder);
+  DefineTypeSizeAndWidth("__SIG_ATOMIC", TI.getSigAtomicType(), TI, Builder);
   DefineType("__CHAR16_TYPE__", TI.getChar16Type(), Builder);
   DefineType("__CHAR32_TYPE__", TI.getChar32Type(), Builder);
 
-  DefineTypeWidth("__UINTMAX_WIDTH__",  TI.getUIntMaxType(), TI, Builder);
   DefineType("__UINTPTR_TYPE__", TI.getUIntPtrType(), Builder);
   DefineFmt("__UINTPTR", TI.getUIntPtrType(), TI, Builder);
-  DefineTypeWidth("__UINTPTR_WIDTH__", TI.getUIntPtrType(), TI, Builder);
+
+  // The C standard requires the width of uintptr_t and intptr_t to be the same,
+  // per 7.20.2.4p1. Same for intmax_t and uintmax_t, per 7.20.2.5p1.
+  assert(TI.getTypeWidth(TI.getUIntPtrType()) ==
+             TI.getTypeWidth(TI.getIntPtrType()) &&
+         "uintptr_t and intptr_t have different widths?");
+  assert(TI.getTypeWidth(TI.getUIntMaxType()) ==
+             TI.getTypeWidth(TI.getIntMaxType()) &&
+         "uintmax_t and intmax_t have different widths?");
 
   if (TI.hasFloat16Type())
     DefineFloatMacros(Builder, "FLT16", &TI.getHalfFormat(), "F16");
@@ -1026,6 +1075,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   Builder.defineMacro("__USER_LABEL_PREFIX__", TI.getUserLabelPrefix());
 
+  if (!LangOpts.MathErrno)
+    Builder.defineMacro("__NO_MATH_ERRNO__");
+
   if (LangOpts.FastMath || LangOpts.FiniteMathOnly)
     Builder.defineMacro("__FINITE_MATH_ONLY__", "1");
   else
@@ -1084,8 +1136,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   }
 
   // Macros to control C99 numerics and <float.h>
-  // Note: __FLT_EVAL_METHOD__ is not defined here since it is a special
-  // builtin macro, its value may fluctuate during compilation.
+  Builder.defineMacro("__FLT_EVAL_METHOD__", Twine(TI.getFloatEvalMethod()));
   Builder.defineMacro("__FLT_RADIX__", "2");
   Builder.defineMacro("__DECIMAL_DIG__", "__LDBL_DECIMAL_DIG__");
 
@@ -1149,6 +1200,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     case 45:
       Builder.defineMacro("_OPENMP", "201511");
       break;
+    case 51:
+      Builder.defineMacro("_OPENMP", "202011");
+      break;
+    case 52:
+      Builder.defineMacro("_OPENMP", "202111");
+      break;
     default:
       // Default version is OpenMP 5.0
       Builder.defineMacro("_OPENMP", "201811");
@@ -1179,7 +1236,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.OpenCL) {
     InitializeOpenCLFeatureTestMacros(TI, LangOpts, Builder);
 
-    if (TI.getTriple().isSPIR())
+    if (TI.getTriple().isSPIR() || TI.getTriple().isSPIRV())
       Builder.defineMacro("__IMAGE_SUPPORT__");
   }
 

@@ -10,8 +10,10 @@ add_mlir_conversion_library(MLIRStandardToSPIRV
   MLIRConversionPassIncGen
 
   LINK_LIBS PUBLIC
+  MLIRArithmeticToSPIRV
+  MLIRControlFlowToSPIRV
   MLIRIR
-  MLIRMath
+  MLIRMathToSPIRV
   MLIRMemRef
   MLIRPass
   MLIRSPIRV
@@ -19,4 +21,5 @@ add_mlir_conversion_library(MLIRStandardToSPIRV
   MLIRSupport
   MLIRTransformUtils
   MLIRStandard
+  MLIRTensor
   )

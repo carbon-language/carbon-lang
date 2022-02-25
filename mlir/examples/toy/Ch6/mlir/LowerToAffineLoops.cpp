@@ -16,6 +16,7 @@
 #include "toy/Passes.h"
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Pass/Pass.h"
@@ -56,9 +57,9 @@ static Value insertAllocAndDealloc(MemRefType type, Location loc,
 /// induction variables for the iteration. It returns a value to store at the
 /// current index of the iteration.
 using LoopIterationFn = function_ref<Value(
-    OpBuilder &builder, ValueRange memRefOperands, ValueRange loopIvs)>;
+    OpBuilder &rewriter, ValueRange memRefOperands, ValueRange loopIvs)>;
 
-static void lowerOpToLoops(Operation *op, ArrayRef<Value> operands,
+static void lowerOpToLoops(Operation *op, ValueRange operands,
                            PatternRewriter &rewriter,
                            LoopIterationFn processIteration) {
   auto tensorType = (*op->result_type_begin()).cast<TensorType>();
@@ -124,8 +125,8 @@ struct BinaryOpLowering : public ConversionPattern {
     return success();
   }
 };
-using AddOpLowering = BinaryOpLowering<toy::AddOp, AddFOp>;
-using MulOpLowering = BinaryOpLowering<toy::MulOp, MulFOp>;
+using AddOpLowering = BinaryOpLowering<toy::AddOp, arith::AddFOp>;
+using MulOpLowering = BinaryOpLowering<toy::MulOp, arith::MulFOp>;
 
 //===----------------------------------------------------------------------===//
 // ToyToAffine RewritePatterns: Constant operations
@@ -154,23 +155,26 @@ struct ConstantOpLowering : public OpRewritePattern<toy::ConstantOp> {
     if (!valueShape.empty()) {
       for (auto i : llvm::seq<int64_t>(
                0, *std::max_element(valueShape.begin(), valueShape.end())))
-        constantIndices.push_back(rewriter.create<ConstantIndexOp>(loc, i));
+        constantIndices.push_back(
+            rewriter.create<arith::ConstantIndexOp>(loc, i));
     } else {
       // This is the case of a tensor of rank 0.
-      constantIndices.push_back(rewriter.create<ConstantIndexOp>(loc, 0));
+      constantIndices.push_back(
+          rewriter.create<arith::ConstantIndexOp>(loc, 0));
     }
+
     // The constant operation represents a multi-dimensional constant, so we
     // will need to generate a store for each of the elements. The following
     // functor recursively walks the dimensions of the constant shape,
     // generating a store when the recursion hits the base case.
     SmallVector<Value, 2> indices;
-    auto valueIt = constantValue.getValues<FloatAttr>().begin();
+    auto valueIt = constantValue.value_begin<FloatAttr>();
     std::function<void(uint64_t)> storeElements = [&](uint64_t dimension) {
       // The last dimension is the base case of the recursion, at this point
       // we store the element at the given index.
       if (dimension == valueShape.size()) {
         rewriter.create<AffineStoreOp>(
-            loc, rewriter.create<ConstantOp>(loc, *valueIt++), alloc,
+            loc, rewriter.create<arith::ConstantOp>(loc, *valueIt++), alloc,
             llvm::makeArrayRef(indices));
         return;
       }
@@ -189,6 +193,24 @@ struct ConstantOpLowering : public OpRewritePattern<toy::ConstantOp> {
 
     // Replace this operation with the generated alloc.
     rewriter.replaceOp(op, alloc);
+    return success();
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// ToyToAffine RewritePatterns: Print operations
+//===----------------------------------------------------------------------===//
+
+struct PrintOpLowering : public OpConversionPattern<toy::PrintOp> {
+  using OpConversionPattern<toy::PrintOp>::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(toy::PrintOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const final {
+    // We don't lower "toy.print" in this pass, but we need to update its
+    // operands.
+    rewriter.updateRootInPlace(op,
+                               [&] { op->setOperands(adaptor.getOperands()); });
     return success();
   }
 };
@@ -244,7 +266,7 @@ struct TransposeOpLowering : public ConversionPattern {
   }
 };
 
-} // end anonymous namespace.
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // ToyToAffineLoweringPass
@@ -255,16 +277,16 @@ struct TransposeOpLowering : public ConversionPattern {
 /// rest of the code in the Toy dialect.
 namespace {
 struct ToyToAffineLoweringPass
-    : public PassWrapper<ToyToAffineLoweringPass, FunctionPass> {
+    : public PassWrapper<ToyToAffineLoweringPass, OperationPass<FuncOp>> {
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<AffineDialect, memref::MemRefDialect, StandardOpsDialect>();
   }
-  void runOnFunction() final;
+  void runOnOperation() final;
 };
-} // end anonymous namespace.
+} // namespace
 
-void ToyToAffineLoweringPass::runOnFunction() {
-  auto function = getFunction();
+void ToyToAffineLoweringPass::runOnOperation() {
+  auto function = getOperation();
 
   // We only lower the main function as we expect that all other functions have
   // been inlined.
@@ -283,28 +305,34 @@ void ToyToAffineLoweringPass::runOnFunction() {
 
   // We define the specific operations, or dialects, that are legal targets for
   // this lowering. In our case, we are lowering to a combination of the
-  // `Affine`, `MemRef` and `Standard` dialects.
-  target.addLegalDialect<AffineDialect, memref::MemRefDialect,
-                         StandardOpsDialect>();
+  // `Affine`, `Arithmetic`, `MemRef`, and `Standard` dialects.
+  target.addLegalDialect<AffineDialect, arith::ArithmeticDialect,
+                         memref::MemRefDialect, StandardOpsDialect>();
 
   // We also define the Toy dialect as Illegal so that the conversion will fail
   // if any of these operations are *not* converted. Given that we actually want
   // a partial lowering, we explicitly mark the Toy operations that don't want
-  // to lower, `toy.print`, as `legal`.
+  // to lower, `toy.print`, as `legal`. `toy.print` will still need its operands
+  // to be updated though (as we convert from TensorType to MemRefType), so we
+  // only treat it as `legal` if its operands are legal.
   target.addIllegalDialect<toy::ToyDialect>();
-  target.addLegalOp<toy::PrintOp>();
+  target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op) {
+    return llvm::none_of(op->getOperandTypes(),
+                         [](Type type) { return type.isa<TensorType>(); });
+  });
 
   // Now that the conversion target has been defined, we just need to provide
   // the set of patterns that will lower the Toy operations.
   RewritePatternSet patterns(&getContext());
   patterns.add<AddOpLowering, ConstantOpLowering, MulOpLowering,
-               ReturnOpLowering, TransposeOpLowering>(&getContext());
+               PrintOpLowering, ReturnOpLowering, TransposeOpLowering>(
+      &getContext());
 
   // With the target and rewrite patterns defined, we can now attempt the
   // conversion. The conversion will signal failure if any of our `illegal`
   // operations were not converted successfully.
   if (failed(
-          applyPartialConversion(getFunction(), target, std::move(patterns))))
+          applyPartialConversion(getOperation(), target, std::move(patterns))))
     signalPassFailure();
 }
 

@@ -33,7 +33,7 @@ struct StaticDiagInfoRec;
 // platforms. See "How To Write Shared Libraries" by Ulrich Drepper.
 struct StaticDiagInfoDescriptionStringTable {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   char ENUM##_desc[sizeof(DESC)];
   // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -54,7 +54,7 @@ struct StaticDiagInfoDescriptionStringTable {
 
 const StaticDiagInfoDescriptionStringTable StaticDiagInfoDescriptions = {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   DESC,
 // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -79,7 +79,7 @@ extern const StaticDiagInfoRec StaticDiagInfo[];
 // StaticDiagInfoRec would have extra padding on 64-bit platforms.
 const uint32_t StaticDiagInfoDescriptionOffsets[] = {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   offsetof(StaticDiagInfoDescriptionStringTable, ENUM##_desc),
 // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -115,6 +115,7 @@ struct StaticDiagInfoRec {
   uint8_t Category : 6;
   uint8_t WarnNoWerror : 1;
   uint8_t WarnShowInSystemHeader : 1;
+  uint8_t WarnShowInSystemMacro : 1;
 
   uint16_t OptionGroupIndex : 15;
   uint16_t Deferrable : 1;
@@ -170,7 +171,7 @@ VALIDATE_DIAG_SIZE(REFACTORING)
 const StaticDiagInfoRec StaticDiagInfo[] = {
 // clang-format off
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   {                                                                            \
       diag::ENUM,                                                              \
       DEFAULT_SEVERITY,                                                        \
@@ -179,6 +180,7 @@ const StaticDiagInfoRec StaticDiagInfo[] = {
       CATEGORY,                                                                \
       NOWERROR,                                                                \
       SHOWINSYSHEADER,                                                         \
+      SHOWINSYSMACRO,                                                          \
       GROUP,                                                                   \
 	    DEFERRABLE,                                                              \
       STR_SIZE(DESC, uint16_t)},
@@ -586,6 +588,13 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
           Diag.getSourceManager().getExpansionLoc(Loc)))
     return diag::Severity::Ignored;
 
+  // We also ignore warnings due to system macros
+  bool ShowInSystemMacro =
+      !GetDiagInfo(DiagID) || GetDiagInfo(DiagID)->WarnShowInSystemMacro;
+  if (State->SuppressSystemWarnings && !ShowInSystemMacro && Loc.isValid() &&
+      Diag.getSourceManager().isInSystemMacro(Loc))
+    return diag::Severity::Ignored;
+
   return Result;
 }
 
@@ -609,17 +618,23 @@ namespace {
 
 // Second the table of options, sorted by name for fast binary lookup.
 static const WarningOption OptionTable[] = {
-#define GET_DIAG_TABLE
+#define DIAG_ENTRY(GroupName, FlagNameOffset, Members, SubGroups)              \
+  {FlagNameOffset, Members, SubGroups},
 #include "clang/Basic/DiagnosticGroups.inc"
-#undef GET_DIAG_TABLE
+#undef DIAG_ENTRY
 };
+
+StringRef DiagnosticIDs::getWarningOptionForGroup(diag::Group Group) {
+  return OptionTable[static_cast<int>(Group)].getName();
+}
 
 /// getWarningOptionForDiag - Return the lowest-level warning option that
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
 StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return OptionTable[Info->getOptionGroupIndex()].getName();
+    return getWarningOptionForGroup(
+        static_cast<diag::Group>(Info->getOptionGroupIndex()));
   return StringRef();
 }
 
@@ -686,7 +701,7 @@ void DiagnosticIDs::getAllDiagnostics(diag::Flavor Flavor,
 StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
                                           StringRef Group) {
   StringRef Best;
-  unsigned BestDistance = Group.size() + 1; // Sanity threshold.
+  unsigned BestDistance = Group.size() + 1; // Maximum threshold.
   for (const WarningOption &O : OptionTable) {
     // Don't suggest ignored warning flags.
     if (!O.Members && !O.SubGroups)

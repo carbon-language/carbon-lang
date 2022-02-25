@@ -15,30 +15,21 @@
 #define PLATFORM_SUPPORT_H
 
 // locale names
-#ifdef _WIN32
-    // WARNING: Windows does not support UTF-8 codepages.
-    // Locales are "converted" using https://docs.moodle.org/dev/Table_of_locales
-#   define LOCALE_en_US           "en-US"
-#   define LOCALE_en_US_UTF_8     "en-US"
-#   define LOCALE_cs_CZ_ISO8859_2 "cs-CZ"
-#   define LOCALE_fr_FR_UTF_8     "fr-FR"
-#   define LOCALE_fr_CA_ISO8859_1 "fr-CA"
-#   define LOCALE_ru_RU_UTF_8     "ru-RU"
-#   define LOCALE_zh_CN_UTF_8     "zh-CN"
+#define LOCALE_en_US           "en_US"
+#define LOCALE_en_US_UTF_8     "en_US.UTF-8"
+#define LOCALE_fr_FR_UTF_8     "fr_FR.UTF-8"
+#ifdef __linux__
+#    define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO-8859-1"
+#    define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO-8859-2"
+#elif defined(_WIN32)
+#    define LOCALE_fr_CA_ISO8859_1 "fr-CA"
+#    define LOCALE_cs_CZ_ISO8859_2 "cs-CZ"
 #else
-#   define LOCALE_en_US           "en_US"
-#   define LOCALE_en_US_UTF_8     "en_US.UTF-8"
-#   define LOCALE_fr_FR_UTF_8     "fr_FR.UTF-8"
-#   ifdef __linux__
-#       define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO-8859-1"
-#       define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO-8859-2"
-#   else
-#       define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO8859-1"
-#       define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO8859-2"
-#   endif
-#   define LOCALE_ru_RU_UTF_8     "ru_RU.UTF-8"
-#   define LOCALE_zh_CN_UTF_8     "zh_CN.UTF-8"
+#    define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO8859-1"
+#    define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO8859-2"
 #endif
+#define LOCALE_ru_RU_UTF_8     "ru_RU.UTF-8"
+#define LOCALE_zh_CN_UTF_8     "zh_CN.UTF-8"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,9 +37,7 @@
 #include <locale>
 #include <string>
 #if defined(_WIN32)
-#   define WIN32_LEAN_AND_MEAN // Reduce overhead of including windows.h
 #   include <io.h> // _mktemp_s
-#   include <windows.h> // MAX_PATH, GetTempPath, GetTempFileName
 #else
 #   include <unistd.h> // close
 #endif
@@ -63,13 +52,7 @@ extern "C" {
 inline
 std::string get_temp_file_name()
 {
-#if defined(__MINGW32__)
-    char Path[MAX_PATH + 1];
-    char FN[MAX_PATH + 1];
-    do { } while (0 == GetTempPath(MAX_PATH+1, Path));
-    do { } while (0 == GetTempFileName(Path, "libcxx", 0, FN));
-    return FN;
-#elif defined(_WIN32)
+#if defined(_WIN32)
     char Name[] = "libcxx.XXXXXX";
     if (_mktemp_s(Name, sizeof(Name)) != 0) abort();
     return Name;

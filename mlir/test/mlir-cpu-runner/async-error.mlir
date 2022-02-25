@@ -3,10 +3,12 @@
 // RUN:               -async-runtime-ref-counting-opt                          \
 // RUN:               -convert-async-to-llvm                                   \
 // RUN:               -convert-linalg-to-loops                                 \
-// RUN:               -convert-scf-to-std                                      \
+// RUN:               -convert-scf-to-cf                                      \
 // RUN:               -convert-linalg-to-llvm                                  \
 // RUN:               -convert-vector-to-llvm                                  \
+// RUN:               -convert-arith-to-llvm                                   \
 // RUN:               -convert-std-to-llvm                                     \
+// RUN:               -reconcile-unrealized-casts                              \
 // RUN: | mlir-cpu-runner                                                      \
 // RUN:     -e main -entry-point-result=void -O0                               \
 // RUN:     -shared-libs=%linalg_test_lib_dir/libmlir_c_runner_utils%shlibext  \
@@ -15,7 +17,7 @@
 // RUN: | FileCheck %s --dump-input=always
 
 func @main() {
-  %false = constant 0 : i1
+  %false = arith.constant 0 : i1
 
   // ------------------------------------------------------------------------ //
   // Check that simple async region completes without errors.
@@ -33,7 +35,7 @@ func @main() {
   // Check that assertion in the async region converted to async error.
   // ------------------------------------------------------------------------ //
   %token1 = async.execute {
-    assert %false, "error"
+    cf.assert %false, "error"
     async.yield
   }
   async.runtime.await %token1 : !async.token
@@ -47,7 +49,7 @@ func @main() {
   // ------------------------------------------------------------------------ //
   %token2 = async.execute {
     %token = async.execute {
-      assert %false, "error"
+      cf.assert %false, "error"
       async.yield
     }
     async.await %token : !async.token
@@ -64,8 +66,8 @@ func @main() {
   // ------------------------------------------------------------------------ //
   %token3, %value3 = async.execute -> !async.value<f32> {
     %token, %value = async.execute -> !async.value<f32> {
-      assert %false, "error"
-      %0 = constant 123.45 : f32
+      cf.assert %false, "error"
+      %0 = arith.constant 123.45 : f32
       async.yield %0 : f32
     }
     %ret = async.await %value : !async.value<f32>
@@ -85,7 +87,7 @@ func @main() {
   // Check error propagation from a token to the group.
   // ------------------------------------------------------------------------ //
 
-  %c2 = constant 2 : index
+  %c2 = arith.constant 2 : index
   %group0 = async.create_group %c2 : !async.group
 
   %token4 = async.execute {
@@ -93,7 +95,7 @@ func @main() {
   }
 
   %token5 = async.execute {
-    assert %false, "error"
+    cf.assert %false, "error"
     async.yield
   }
 

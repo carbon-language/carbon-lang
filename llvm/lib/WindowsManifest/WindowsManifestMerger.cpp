@@ -669,7 +669,7 @@ WindowsManifestMerger::WindowsManifestMergerImpl::getMergedManifest() {
     std::unique_ptr<xmlDoc, XmlDeleter> OutputDoc(
         xmlNewDoc((const unsigned char *)"1.0"));
     xmlDocSetRootElement(OutputDoc.get(), CombinedRoot);
-    assert(0 == xmlDocGetRootElement(CombinedDoc));
+    assert(nullptr == xmlDocGetRootElement(CombinedDoc));
 
     xmlKeepBlanksDefault(0);
     xmlChar *Buff = nullptr;
@@ -706,7 +706,7 @@ bool windows_manifest::isAvailable() { return false; }
 WindowsManifestMerger::WindowsManifestMerger()
     : Impl(std::make_unique<WindowsManifestMergerImpl>()) {}
 
-WindowsManifestMerger::~WindowsManifestMerger() {}
+WindowsManifestMerger::~WindowsManifestMerger() = default;
 
 Error WindowsManifestMerger::merge(MemoryBufferRef Manifest) {
   return Impl->merge(Manifest);

@@ -22,8 +22,6 @@ class Twine;
 
 namespace object {
 
-class Binary;
-
 const std::error_category &object_category();
 
 enum class object_error {
@@ -81,6 +79,10 @@ private:
 /// non-objects in the archive this is used to test the error to see if an
 /// error() function needs to called on the llvm::Error.
 Error isNotObjectErrorInvalidFileType(llvm::Error Err);
+
+inline Error createError(const Twine &Err) {
+  return make_error<StringError>(Err, object_error::parse_failed);
+}
 
 } // end namespace object.
 

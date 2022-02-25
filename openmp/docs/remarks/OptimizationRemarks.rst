@@ -39,6 +39,8 @@ OpenMP Remarks
    OMP150
    OMP160
    OMP170
+   OMP180
+   OMP190
 
 .. list-table::
    :widths: 15 15 70
@@ -107,3 +109,9 @@ OpenMP Remarks
    * - :ref:`OMP170 <omp170>`
      - Optimization
      - OpenMP runtime call <call> deduplicated.
+   * - :ref:`OMP180 <omp180>`
+     - Optimization
+     - Replacing OpenMP runtime call <call> with <value>.
+   * - :ref:`OMP190 <omp190>`
+     - Optimization
+     - Redundant barrier eliminated. (device only)

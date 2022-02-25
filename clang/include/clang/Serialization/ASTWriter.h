@@ -43,26 +43,13 @@
 #include <utility>
 #include <vector>
 
-namespace llvm {
-
-class APFloat;
-class APInt;
-class APSInt;
-
-} // namespace llvm
-
 namespace clang {
 
 class ASTContext;
 class ASTReader;
-class ASTUnresolvedSet;
 class Attr;
-class CXXBaseSpecifier;
-class CXXCtorInitializer;
 class CXXRecordDecl;
-class CXXTemporary;
 class FileEntry;
-class FPOptions;
 class FPOptionsOverride;
 class FunctionDecl;
 class HeaderSearch;
@@ -79,16 +66,13 @@ class NamedDecl;
 class ObjCInterfaceDecl;
 class PreprocessingRecord;
 class Preprocessor;
-struct QualifierInfo;
 class RecordDecl;
 class Sema;
 class SourceManager;
 class Stmt;
 class StoredDeclsList;
 class SwitchCase;
-class TemplateParameterList;
 class Token;
-class TypeSourceInfo;
 
 /// Writes an AST file containing the contents of a translation unit.
 ///
@@ -456,6 +440,9 @@ private:
   std::vector<std::unique_ptr<ModuleFileExtensionWriter>>
       ModuleFileExtensionWriters;
 
+  /// User ModuleMaps skipped when writing control block.
+  std::set<const FileEntry *> SkippedModuleMaps;
+
   /// Retrieve or create a submodule ID for this module.
   unsigned getSubmoduleID(Module *Mod);
 
@@ -475,9 +462,10 @@ private:
   createSignature(StringRef AllBytes, StringRef ASTBlockBytes);
 
   void WriteInputFiles(SourceManager &SourceMgr, HeaderSearchOptions &HSOpts,
-                       bool Modules);
+                       std::set<const FileEntry *> &AffectingModuleMaps);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP);
+  void writeIncludedFiles(raw_ostream &Out, const Preprocessor &PP);
   void WritePreprocessor(const Preprocessor &PP, bool IsModule);
   void WriteHeaderSearch(const HeaderSearch &HS);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec,

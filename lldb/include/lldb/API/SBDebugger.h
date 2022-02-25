@@ -126,6 +126,8 @@ public:
 
   FILE *GetErrorFileHandle();
 
+  SBError SetInputString(const char *data);
+
   SBError SetInputFile(SBFile file);
 
   SBError SetOutputFile(SBFile file);
@@ -247,6 +249,8 @@ public:
 
   lldb::ScriptLanguage GetScriptingLanguage(const char *script_language_name);
 
+  SBStructuredData GetScriptInterpreterInfo(ScriptLanguage);
+
   static const char *GetVersionString();
 
   static const char *StateAsCString(lldb::StateType state);
@@ -301,6 +305,10 @@ public:
   lldb::ScriptLanguage GetScriptLanguage() const;
 
   void SetScriptLanguage(lldb::ScriptLanguage script_lang);
+
+  lldb::LanguageType GetREPLLanguage() const;
+
+  void SetREPLLanguage(lldb::LanguageType repl_lang);
 
   bool GetCloseInputOnEOF() const;
 

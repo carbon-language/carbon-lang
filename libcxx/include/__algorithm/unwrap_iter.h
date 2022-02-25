@@ -10,12 +10,12 @@
 #define _LIBCPP___ALGORITHM_UNWRAP_ITER_H
 
 #include <__config>
-#include <iterator>
 #include <__memory/pointer_traits.h>
+#include <iterator>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -64,12 +64,14 @@ __unwrap_iter(_Iter __i) _NOEXCEPT
 }
 
 template<class _OrigIter>
+_LIBCPP_HIDE_FROM_ABI
 _OrigIter __rewrap_iter(_OrigIter, _OrigIter __result)
 {
     return __result;
 }
 
 template<class _OrigIter, class _UnwrappedIter>
+_LIBCPP_HIDE_FROM_ABI
 _OrigIter __rewrap_iter(_OrigIter __first, _UnwrappedIter __result)
 {
     // Precondition: __result is reachable from __first

@@ -100,6 +100,10 @@ public:
     unsigned NumExitBlocks = std::numeric_limits<unsigned>::max();
     Type *RetTy;
 
+    // Mapping from the original exit blocks, to the new blocks inside
+    // the function.
+    SmallVector<BasicBlock *, 4> OldTargets;
+
     // Suffix to use when creating extracted function (appended to the original
     // function name + "."). If empty, the default is to use the entry block
     // label, if non-empty, otherwise "extracted".
@@ -164,7 +168,7 @@ public:
     ///
     /// Based on the blocks used when constructing the code extractor,
     /// determine whether it is eligible for extraction.
-    /// 
+    ///
     /// Checks that varargs handling (with vastart and vaend) is only done in
     /// the outlined blocks.
     bool isEligible() const;
@@ -210,6 +214,10 @@ public:
     /// original block will be added to the outline region.
     BasicBlock *findOrCreateBlockForHoisting(BasicBlock *CommonExitBlock);
 
+    /// Exclude a value from aggregate argument passing when extracting a code
+    /// region, passing it instead as a scalar.
+    void excludeArgFromAggregate(Value *Arg);
+
   private:
     struct LifetimeMarkerInfo {
       bool SinkLifeStart = false;
@@ -217,6 +225,8 @@ public:
       Instruction *LifeStart = nullptr;
       Instruction *LifeEnd = nullptr;
     };
+
+    ValueSet ExcludeArgsFromAggregate;
 
     LifetimeMarkerInfo
     getLifetimeMarkers(const CodeExtractorAnalysisCache &CEAC,

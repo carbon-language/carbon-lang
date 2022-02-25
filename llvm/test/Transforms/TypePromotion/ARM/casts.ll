@@ -138,8 +138,8 @@ define i1 @or_icmp_ugt(i32 %arg, i8* %ptr) {
 ; CHECK-NEXT:    [[MUL:%.*]] = shl nuw nsw i32 [[TMP2]], 1
 ; CHECK-NEXT:    [[ADD0:%.*]] = add nuw nsw i32 [[MUL]], 6
 ; CHECK-NEXT:    [[CMP0:%.*]] = icmp ne i32 [[ARG:%.*]], [[ADD0]]
-; CHECK-NEXT:    [[TMP3:%.*]] = sub i32 [[TMP1]], 1
-; CHECK-NEXT:    [[CMP1:%.*]] = icmp ugt i32 [[TMP3]], 3
+; CHECK-NEXT:    [[ADD1:%.*]] = add i32 [[TMP1]], -1
+; CHECK-NEXT:    [[CMP1:%.*]] = icmp ugt i32 [[ADD1]], 3
 ; CHECK-NEXT:    [[OR:%.*]] = or i1 [[CMP0]], [[CMP1]]
 ; CHECK-NEXT:    ret i1 [[OR]]
 ;
@@ -476,6 +476,43 @@ entry:
 
 if.then:
   %trunc = trunc i16 %conv to i8
+  %sub = sub nuw i8 %b, %trunc
+  %conv2 = zext i8 %sub to i32
+  %cmp2 = icmp ugt i32 %conv2, %d
+  %res = select i1 %cmp2, i8 %a, i8 %b
+  br label %if.end
+
+if.end:
+  %retval = phi i8 [ 0, %entry ], [ %res, %if.then ]
+  ret i8 %retval
+}
+
+define i8 @search_through_zext_4(i8 zeroext %a, i8 zeroext %b, i16 zeroext %c, i32 %d) {
+; CHECK-LABEL: @search_through_zext_4(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[CONV_0:%.*]] = zext i8 [[A:%.*]] to i16
+; CHECK-NEXT:    [[ADD:%.*]] = add nuw i16 [[CONV_0]], [[C:%.*]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i16 [[ADD]], [[C]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[IF_THEN:%.*]], label [[IF_END:%.*]]
+; CHECK:       if.then:
+; CHECK-NEXT:    [[TRUNC:%.*]] = trunc i16 [[ADD]] to i8
+; CHECK-NEXT:    [[SUB:%.*]] = sub nuw i8 [[B:%.*]], [[TRUNC]]
+; CHECK-NEXT:    [[CONV2:%.*]] = zext i8 [[SUB]] to i32
+; CHECK-NEXT:    [[CMP2:%.*]] = icmp ugt i32 [[CONV2]], [[D:%.*]]
+; CHECK-NEXT:    [[RES:%.*]] = select i1 [[CMP2]], i8 [[A]], i8 [[B]]
+; CHECK-NEXT:    br label [[IF_END]]
+; CHECK:       if.end:
+; CHECK-NEXT:    [[RETVAL:%.*]] = phi i8 [ 0, [[ENTRY:%.*]] ], [ [[RES]], [[IF_THEN]] ]
+; CHECK-NEXT:    ret i8 [[RETVAL]]
+;
+entry:
+  %conv.0 = zext i8 %a to i16
+  %add = add nuw i16 %conv.0, %c
+  %cmp = icmp ult i16 %add, %c
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  %trunc = trunc i16 %add to i8
   %sub = sub nuw i8 %b, %trunc
   %conv2 = zext i8 %sub to i32
   %cmp2 = icmp ugt i32 %conv2, %d

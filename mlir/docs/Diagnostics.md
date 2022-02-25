@@ -295,13 +295,13 @@ A few examples are shown below:
 ```mlir
 // Expect an error on the same line.
 func @bad_branch() {
-  br ^missing  // expected-error {{reference to an undefined block}}
+  cf.br ^missing  // expected-error {{reference to an undefined block}}
 }
 
 // Expect an error on an adjacent line.
 func @foo(%a : f32) {
   // expected-error@+1 {{unknown comparison predicate "foo"}}
-  %result = cmpf "foo", %a, %a : f32
+  %result = arith.cmpf "foo", %a, %a : f32
   return
 }
 

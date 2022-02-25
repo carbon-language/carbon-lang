@@ -349,13 +349,8 @@ public:
   bool requiresFloat() const override { return false; };
   bool requiresMVE() const override { return true; }
   std::string llvmName() const override {
-    // Use <4 x i1> instead of <2 x i1> for two-lane vector types. See
-    // the comment in llvm/lib/Target/ARM/ARMInstrMVE.td for further
-    // explanation.
-    unsigned ModifiedLanes = (Lanes == 2 ? 4 : Lanes);
-
-    return "llvm::FixedVectorType::get(Builder.getInt1Ty(), " +
-           utostr(ModifiedLanes) + ")";
+    return "llvm::FixedVectorType::get(Builder.getInt1Ty(), " + utostr(Lanes) +
+           ")";
   }
 
   static bool classof(const Type *T) {
@@ -711,8 +706,8 @@ public:
   AddressResult(Ptr Arg, unsigned Align) : Arg(Arg), Align(Align) {}
   void genCode(raw_ostream &OS,
                CodeGenParamAllocator &ParamAlloc) const override {
-    OS << "Address(" << Arg->varname() << ", CharUnits::fromQuantity("
-       << Align << "))";
+    OS << "Address::deprecated(" << Arg->varname()
+       << ", CharUnits::fromQuantity(" << Align << "))";
   }
   std::string typeName() const override {
     return "Address";
@@ -1494,8 +1489,7 @@ protected:
 class raw_self_contained_string_ostream : private string_holder,
                                           public raw_string_ostream {
 public:
-  raw_self_contained_string_ostream()
-      : string_holder(), raw_string_ostream(S) {}
+  raw_self_contained_string_ostream() : raw_string_ostream(S) {}
 };
 
 const char LLVMLicenseHeader[] =
@@ -1941,8 +1935,8 @@ void MveEmitter::EmitHeader(raw_ostream &OS) {
 void MveEmitter::EmitBuiltinDef(raw_ostream &OS) {
   for (const auto &kv : ACLEIntrinsics) {
     const ACLEIntrinsic &Int = *kv.second;
-    OS << "TARGET_HEADER_BUILTIN(__builtin_arm_mve_" << Int.fullName()
-       << ", \"\", \"n\", \"arm_mve.h\", ALL_LANGUAGES, \"\")\n";
+    OS << "BUILTIN(__builtin_arm_mve_" << Int.fullName()
+       << ", \"\", \"n\")\n";
   }
 
   std::set<std::string> ShortNamesSeen;
@@ -2151,8 +2145,8 @@ void CdeEmitter::EmitBuiltinDef(raw_ostream &OS) {
     if (kv.second->headerOnly())
       continue;
     const ACLEIntrinsic &Int = *kv.second;
-    OS << "TARGET_HEADER_BUILTIN(__builtin_arm_cde_" << Int.fullName()
-       << ", \"\", \"ncU\", \"arm_cde.h\", ALL_LANGUAGES, \"\")\n";
+    OS << "BUILTIN(__builtin_arm_cde_" << Int.fullName()
+       << ", \"\", \"ncU\")\n";
   }
 }
 

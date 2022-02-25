@@ -15,7 +15,7 @@
 #include <string_view>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -96,7 +96,9 @@ private:
 };
 
 using format_parse_context = basic_format_parse_context<char>;
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
 using wformat_parse_context = basic_format_parse_context<wchar_t>;
+#endif
 
 #endif // !defined(_LIBCPP_HAS_NO_CONCEPTS)
 

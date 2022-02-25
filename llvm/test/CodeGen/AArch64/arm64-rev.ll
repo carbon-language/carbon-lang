@@ -216,8 +216,7 @@ define i64 @test_rev16_x(i64 %a) nounwind {
 ; GISEL-LABEL: test_rev16_x:
 ; GISEL:       // %bb.0: // %entry
 ; GISEL-NEXT:    rev x8, x0
-; GISEL-NEXT:    lsl x9, x8, #48
-; GISEL-NEXT:    orr x0, x9, x8, lsr #16
+; GISEL-NEXT:    ror x0, x8, #16
 ; GISEL-NEXT:    ret
 entry:
   %0 = tail call i64 @llvm.bswap.i64(i64 %a)
@@ -235,9 +234,7 @@ define i64 @test_rev32_x(i64 %a) nounwind {
 ;
 ; GISEL-LABEL: test_rev32_x:
 ; GISEL:       // %bb.0: // %entry
-; GISEL-NEXT:    rev x8, x0
-; GISEL-NEXT:    lsl x9, x8, #32
-; GISEL-NEXT:    orr x0, x9, x8, lsr #32
+; GISEL-NEXT:    rev32 x0, x0
 ; GISEL-NEXT:    ret
 entry:
   %0 = tail call i64 @llvm.bswap.i64(i64 %a)
@@ -533,16 +530,16 @@ define <8 x i16> @test_vrev32Q16_undef(<8 x i16>* %A) nounwind {
 define void @test_vrev64(<4 x i16>* nocapture %source, <2 x i16>* nocapture %dst) nounwind ssp {
 ; CHECK-LABEL: test_vrev64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    ldr q0, [x0]
 ; CHECK-NEXT:    add x8, x1, #2
+; CHECK-NEXT:    ldr q0, [x0]
 ; CHECK-NEXT:    st1.h { v0 }[5], [x8]
 ; CHECK-NEXT:    st1.h { v0 }[6], [x1]
 ; CHECK-NEXT:    ret
 ;
 ; GISEL-LABEL: test_vrev64:
 ; GISEL:       // %bb.0: // %entry
-; GISEL-NEXT:    ldr q0, [x0]
 ; GISEL-NEXT:    add x8, x1, #2
+; GISEL-NEXT:    ldr q0, [x0]
 ; GISEL-NEXT:    st1.h { v0 }[6], [x1]
 ; GISEL-NEXT:    st1.h { v0 }[5], [x8]
 ; GISEL-NEXT:    ret
@@ -561,18 +558,18 @@ entry:
 define void @float_vrev64(float* nocapture %source, <4 x float>* nocapture %dest) nounwind noinline ssp {
 ; CHECK-LABEL: float_vrev64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    ldr q0, [x0]
-; CHECK-NEXT:    movi.2d v1, #0000000000000000
-; CHECK-NEXT:    dup.4s v1, v1[0]
-; CHECK-NEXT:    ext.16b v0, v0, v1, #12
+; CHECK-NEXT:    movi.2d v0, #0000000000000000
+; CHECK-NEXT:    ldr q1, [x0]
+; CHECK-NEXT:    dup.4s v0, v0[0]
+; CHECK-NEXT:    ext.16b v0, v1, v0, #12
 ; CHECK-NEXT:    rev64.4s v0, v0
 ; CHECK-NEXT:    str q0, [x1, #176]
 ; CHECK-NEXT:    ret
 ;
 ; GISEL-LABEL: float_vrev64:
 ; GISEL:       // %bb.0: // %entry
-; GISEL-NEXT:    movi d0, #0000000000000000
 ; GISEL-NEXT:    adrp x8, .LCPI28_0
+; GISEL-NEXT:    movi d0, #0000000000000000
 ; GISEL-NEXT:    ldr q1, [x0]
 ; GISEL-NEXT:    ldr q2, [x8, :lo12:.LCPI28_0]
 ; GISEL-NEXT:    tbl.16b v0, { v0, v1 }, v2
@@ -603,3 +600,48 @@ define <4 x i32> @test_vrev32_bswap(<4 x i32> %source) nounwind {
 }
 
 declare <4 x i32> @llvm.bswap.v4i32(<4 x i32>) nounwind readnone
+
+; Reduced regression from D114354
+define void @test_rev16_truncstore() {
+; CHECK-LABEL: test_rev16_truncstore:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    cbnz wzr, .LBB30_2
+; CHECK-NEXT:  .LBB30_1: // %cleanup
+; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    ldrh w8, [x8]
+; CHECK-NEXT:    rev16 w8, w8
+; CHECK-NEXT:    strh w8, [x8]
+; CHECK-NEXT:    cbz wzr, .LBB30_1
+; CHECK-NEXT:  .LBB30_2: // %fail
+; CHECK-NEXT:    ret
+;
+; GISEL-LABEL: test_rev16_truncstore:
+; GISEL:       // %bb.0: // %entry
+; GISEL-NEXT:    tbnz wzr, #0, .LBB30_2
+; GISEL-NEXT:  .LBB30_1: // %cleanup
+; GISEL-NEXT:    // =>This Inner Loop Header: Depth=1
+; GISEL-NEXT:    ldrh w8, [x8]
+; GISEL-NEXT:    rev w8, w8
+; GISEL-NEXT:    lsr w8, w8, #16
+; GISEL-NEXT:    strh w8, [x8]
+; GISEL-NEXT:    tbz wzr, #0, .LBB30_1
+; GISEL-NEXT:  .LBB30_2: // %fail
+; GISEL-NEXT:    ret
+entry:
+  br label %body
+
+body:
+  %out.6269.i = phi i16* [ undef, %cleanup ], [ undef, %entry ]
+  %0 = load i16, i16* undef, align 2
+  %1 = icmp eq i16 undef, -10240
+  br i1 %1, label %fail, label %cleanup
+
+cleanup:
+  %or130.i = call i16 @llvm.bswap.i16(i16 %0)
+  store i16 %or130.i, i16* %out.6269.i, align 2
+  br label %body
+
+fail:
+  ret void
+}
+declare i16 @llvm.bswap.i16(i16)

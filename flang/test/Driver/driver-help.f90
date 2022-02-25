@@ -39,6 +39,7 @@
 ! HELP-NEXT:                        Specify where to find the compiled intrinsic modules
 ! HELP-NEXT: -flarge-sizes          Use INTEGER(KIND=8) for the result type in size-related intrinsics
 ! HELP-NEXT: -flogical-abbreviations Enable logical abbreviations
+! HELP-NEXT: -fno-automatic         Implies the SAVE attribute for non-automatic local objects in subprograms unless RECURSIVE
 ! HELP-NEXT: -fno-color-diagnostics  Disable colors in diagnostics
 ! HELP-NEXT: -fopenacc              Enable OpenACC
 ! HELP-NEXT: -fopenmp               Parse OpenMP pragmas and generate parallel code.
@@ -64,6 +65,8 @@
 ! HELP-FC1-NEXT:OPTIONS:
 ! HELP-FC1-NEXT: -cpp                   Enable predefined and command line preprocessor macros
 ! HELP-FC1-NEXT: -D <macro>=<value>     Define <macro> to <value> (or 1 if <value> omitted)
+! HELP-FC1-NEXT: -emit-llvm Use the LLVM representation for assembler and object files
+! HELP-FC1-NEXT: -emit-mlir Build the parse tree, then lower it to MLIR
 ! HELP-FC1-NEXT: -emit-obj Emit native object files
 ! HELP-FC1-NEXT: -E                     Only run the preprocessor
 ! HELP-FC1-NEXT: -falternative-parameter-statement
@@ -103,6 +106,7 @@
 ! HELP-FC1-NEXT: -flogical-abbreviations Enable logical abbreviations
 ! HELP-FC1-NEXT: -fno-analyzed-objects-for-unparse
 ! HELP-FC1-NEXT:                        Do not use the analyzed objects when unparsing
+! HELP-FC1-NEXT: -fno-automatic         Implies the SAVE attribute for non-automatic local objects in subprograms unless RECURSIVE
 ! HELP-FC1-NEXT: -fno-reformat          Dump the cooked character stream in -E mode
 ! HELP-FC1-NEXT: -fopenacc              Enable OpenACC
 ! HELP-FC1-NEXT: -fopenmp               Parse OpenMP pragmas and generate parallel code.

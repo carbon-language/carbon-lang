@@ -1280,11 +1280,11 @@ static ObjCMethodDecl *findMethodInCurrentClass(Sema &S, Selector Sel) {
   // whether Sel is potentially direct in this context.
   if (ObjCMethodDecl *MD = IFace->lookupMethod(Sel, /*isInstance=*/true))
     return MD;
-  if (ObjCMethodDecl *MD = IFace->lookupPrivateMethod(Sel, /*isInstance=*/true))
+  if (ObjCMethodDecl *MD = IFace->lookupPrivateMethod(Sel, /*Instance=*/true))
     return MD;
   if (ObjCMethodDecl *MD = IFace->lookupMethod(Sel, /*isInstance=*/false))
     return MD;
-  if (ObjCMethodDecl *MD = IFace->lookupPrivateMethod(Sel, /*isInstance=*/false))
+  if (ObjCMethodDecl *MD = IFace->lookupPrivateMethod(Sel, /*Instance=*/false))
     return MD;
 
   return nullptr;
@@ -3772,7 +3772,7 @@ static void addFixitForObjCARCConversion(
 
         SourceManager &SM = S.getSourceManager();
         char PrevChar = *SM.getCharacterData(range.getBegin().getLocWithOffset(-1));
-        if (Lexer::isIdentifierBodyChar(PrevChar, S.getLangOpts()))
+        if (Lexer::isAsciiIdentifierContinueChar(PrevChar, S.getLangOpts()))
           BridgeCall += ' ';
 
         BridgeCall += CFBridgeName;
@@ -3790,7 +3790,7 @@ static void addFixitForObjCARCConversion(
 
     SourceManager &SM = S.getSourceManager();
     char PrevChar = *SM.getCharacterData(range.getBegin().getLocWithOffset(-1));
-    if (Lexer::isIdentifierBodyChar(PrevChar, S.getLangOpts()))
+    if (Lexer::isAsciiIdentifierContinueChar(PrevChar, S.getLangOpts()))
       BridgeCall += ' ';
 
     BridgeCall += CFBridgeName;

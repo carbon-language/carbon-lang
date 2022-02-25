@@ -70,9 +70,7 @@ class HexagonCopyToCombine : public MachineFunctionPass  {
 public:
   static char ID;
 
-  HexagonCopyToCombine() : MachineFunctionPass(ID) {
-    initializeHexagonCopyToCombinePass(*PassRegistry::getPassRegistry());
-  }
+  HexagonCopyToCombine() : MachineFunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     MachineFunctionPass::getAnalysisUsage(AU);
@@ -237,12 +235,9 @@ static bool isEvenReg(unsigned Reg) {
 }
 
 static void removeKillInfo(MachineInstr &MI, unsigned RegNotKilled) {
-  for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
-    MachineOperand &Op = MI.getOperand(I);
-    if (!Op.isReg() || Op.getReg() != RegNotKilled || !Op.isKill())
-      continue;
-    Op.setIsKill(false);
-  }
+  for (MachineOperand &Op : MI.operands())
+    if (Op.isReg() && Op.getReg() == RegNotKilled && Op.isKill())
+      Op.setIsKill(false);
 }
 
 /// Returns true if it is unsafe to move a copy instruction from \p UseReg to
@@ -403,10 +398,7 @@ HexagonCopyToCombine::findPotentialNewifiableTFRs(MachineBasicBlock &BB) {
     // Mark TFRs that feed a potential new value store as such.
     if (TII->mayBeNewStore(MI)) {
       // Look for uses of TFR instructions.
-      for (unsigned OpdIdx = 0, OpdE = MI.getNumOperands(); OpdIdx != OpdE;
-           ++OpdIdx) {
-        MachineOperand &Op = MI.getOperand(OpdIdx);
-
+      for (const MachineOperand &Op : MI.operands()) {
         // Skip over anything except register uses.
         if (!Op.isReg() || !Op.isUse() || !Op.getReg())
           continue;
@@ -484,14 +476,13 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
     IsConst64Disabled = true;
 
   // Traverse basic blocks.
-  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end(); BI != BE;
-       ++BI) {
+  for (MachineBasicBlock &MBB : MF) {
     PotentiallyNewifiableTFR.clear();
-    findPotentialNewifiableTFRs(*BI);
+    findPotentialNewifiableTFRs(MBB);
 
     // Traverse instructions in basic block.
-    for(MachineBasicBlock::iterator MI = BI->begin(), End = BI->end();
-        MI != End;) {
+    for (MachineBasicBlock::iterator MI = MBB.begin(), End = MBB.end();
+         MI != End;) {
       MachineInstr &I1 = *MI++;
 
       if (I1.isDebugInstr())

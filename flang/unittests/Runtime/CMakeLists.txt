@@ -1,18 +1,22 @@
 add_flang_unittest(FlangRuntimeTests
   BufferTest.cpp
   CharacterTest.cpp
+  CommandTest.cpp
   CrashHandlerFixture.cpp
   ExternalIOTest.cpp
   Format.cpp
+  Inquiry.cpp
   ListInputTest.cpp
   Matmul.cpp
   MiscIntrinsic.cpp
   Namelist.cpp
   Numeric.cpp
   NumericalFormatTest.cpp
+  Ragged.cpp
   Random.cpp
   Reduction.cpp
   RuntimeCrashTest.cpp
+  Stop.cpp
   Time.cpp
   Transformational.cpp
 )

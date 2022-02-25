@@ -9,6 +9,5 @@ add_mlir_dialect_library(MLIROpenACC
 
   LINK_LIBS PUBLIC
   MLIRIR
-  MLIRStandard
   )
 

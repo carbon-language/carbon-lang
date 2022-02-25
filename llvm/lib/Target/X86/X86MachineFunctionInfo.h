@@ -102,8 +102,8 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// True if this function uses the red zone.
   bool UsesRedZone = false;
 
-  /// True if this function has WIN_ALLOCA instructions.
-  bool HasWinAlloca = false;
+  /// True if this function has DYN_ALLOCA instructions.
+  bool HasDynAlloca = false;
 
   /// True if this function has any preallocated calls.
   bool HasPreallocatedCall = false;
@@ -112,6 +112,10 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// addr]. If so, bit 60 of the in-memory frame pointer will be 1 to enable
   /// other tools to detect the extended record.
   bool HasSwiftAsyncContext = false;
+
+  /// True if this function has tile virtual register. This is used to
+  /// determine if we should insert tilerelease in frame lowering.
+  bool HasVirtualTileReg = false;
 
   Optional<int> SwiftAsyncContextFrameIdx;
 
@@ -198,14 +202,17 @@ public:
   bool getUsesRedZone() const { return UsesRedZone; }
   void setUsesRedZone(bool V) { UsesRedZone = V; }
 
-  bool hasWinAlloca() const { return HasWinAlloca; }
-  void setHasWinAlloca(bool v) { HasWinAlloca = v; }
+  bool hasDynAlloca() const { return HasDynAlloca; }
+  void setHasDynAlloca(bool v) { HasDynAlloca = v; }
 
   bool hasPreallocatedCall() const { return HasPreallocatedCall; }
   void setHasPreallocatedCall(bool v) { HasPreallocatedCall = v; }
 
   bool hasSwiftAsyncContext() const { return HasSwiftAsyncContext; }
   void setHasSwiftAsyncContext(bool v) { HasSwiftAsyncContext = v; }
+
+  bool hasVirtualTileReg() const { return HasVirtualTileReg; }
+  void setHasVirtualTileReg(bool v) { HasVirtualTileReg = v; }
 
   Optional<int> getSwiftAsyncContextFrameIdx() const {
     return SwiftAsyncContextFrameIdx;

@@ -11,6 +11,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/macosx/HostInfoMacOSX.h"
 #include "lldb/Utility/Args.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Timer.h"
 #include "Utility/UuidCompatibility.h"
@@ -55,29 +56,14 @@
 
 using namespace lldb_private;
 
-bool HostInfoMacOSX::GetOSBuildString(std::string &s) {
+llvm::Optional<std::string> HostInfoMacOSX::GetOSBuildString() {
   int mib[2] = {CTL_KERN, KERN_OSVERSION};
   char cstr[PATH_MAX];
   size_t cstr_len = sizeof(cstr);
-  if (::sysctl(mib, 2, cstr, &cstr_len, NULL, 0) == 0) {
-    s.assign(cstr, cstr_len);
-    return true;
-  }
+  if (::sysctl(mib, 2, cstr, &cstr_len, NULL, 0) == 0)
+    return std::string(cstr, cstr_len - 1);
 
-  s.clear();
-  return false;
-}
-
-bool HostInfoMacOSX::GetOSKernelDescription(std::string &s) {
-  int mib[2] = {CTL_KERN, KERN_VERSION};
-  char cstr[PATH_MAX];
-  size_t cstr_len = sizeof(cstr);
-  if (::sysctl(mib, 2, cstr, &cstr_len, NULL, 0) == 0) {
-    s.assign(cstr, cstr_len);
-    return true;
-  }
-  s.clear();
-  return false;
+  return llvm::None;
 }
 
 static void ParseOSVersion(llvm::VersionTuple &version, NSString *Key) {
@@ -159,7 +145,7 @@ bool HostInfoMacOSX::ComputeSupportExeDirectory(FileSpec &file_spec) {
     FileSpec support_dir_spec(raw_path);
     FileSystem::Instance().Resolve(support_dir_spec);
     if (!FileSystem::Instance().IsDirectory(support_dir_spec)) {
-      Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+      Log *log = GetLog(LLDBLog::Host);
       LLDB_LOGF(log, "HostInfoMacOSX::%s(): failed to find support directory",
                 __FUNCTION__);
       return false;
@@ -458,7 +444,7 @@ static std::string GetXcodeSDK(XcodeSDK sdk) {
       if (!path.empty())
         break;
     }
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+    Log *log = GetLog(LLDBLog::Host);
     LLDB_LOGF(log, "Couldn't find SDK %s on host", sdk_name.c_str());
 
     // Try without the version.

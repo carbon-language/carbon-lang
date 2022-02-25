@@ -149,6 +149,15 @@ public:
   //  all sizes attached to them have been eliminated.
   // TiedOpsRewritten: The twoaddressinstruction pass will set this flag, it
   //  means that tied-def have been rewritten to meet the RegConstraint.
+  // FailsVerification: Means that the function is not expected to pass machine
+  //  verification. This can be set by passes that introduce known problems that
+  //  have not been fixed yet.
+  // TracksDebugUserValues: Without this property enabled, debug instructions
+  // such as DBG_VALUE are allowed to reference virtual registers even if those
+  // registers do not have a definition. With the property enabled virtual
+  // registers must only be used if they have a definition. This property
+  // allows earlier passes in the pipeline to skip updates of `DBG_VALUE`
+  // instructions to save compile time.
   enum class Property : unsigned {
     IsSSA,
     NoPHIs,
@@ -159,7 +168,9 @@ public:
     RegBankSelected,
     Selected,
     TiedOpsRewritten,
-    LastProperty = TiedOpsRewritten,
+    FailsVerification,
+    TracksDebugUserValues,
+    LastProperty = TracksDebugUserValues,
   };
 
   bool hasProperty(Property P) const {
@@ -227,7 +238,7 @@ struct LandingPadInfo {
       : LandingPadBlock(MBB) {}
 };
 
-class MachineFunction {
+class LLVM_EXTERNAL_VISIBILITY MachineFunction {
   Function &F;
   const LLVMTargetMachine &Target;
   const TargetSubtargetInfo *STI;
@@ -539,6 +550,10 @@ public:
   /// Returns true if the function's variable locations should be tracked with
   /// instruction referencing.
   bool useDebugInstrRef() const;
+
+  /// A reserved operand number representing the instructions memory operand,
+  /// for instructions that have a stack spill fused into them.
+  const static unsigned int DebugOperandMemNumber;
 
   MachineFunction(Function &F, const LLVMTargetMachine &Target,
                   const TargetSubtargetInfo &STI, unsigned FunctionNum,
@@ -875,7 +890,7 @@ public:
 
   /// CreateMachineInstr - Allocate a new MachineInstr. Use this instead
   /// of `new MachineInstr'.
-  MachineInstr *CreateMachineInstr(const MCInstrDesc &MCID, const DebugLoc &DL,
+  MachineInstr *CreateMachineInstr(const MCInstrDesc &MCID, DebugLoc DL,
                                    bool NoImplicit = false);
 
   /// Create a new MachineInstr which is a copy of \p Orig, identical in all
@@ -892,18 +907,20 @@ public:
   ///
   /// Note: Does not perform target specific adjustments; consider using
   /// TargetInstrInfo::duplicate() intead.
-  MachineInstr &CloneMachineInstrBundle(MachineBasicBlock &MBB,
-      MachineBasicBlock::iterator InsertBefore, const MachineInstr &Orig);
+  MachineInstr &
+  cloneMachineInstrBundle(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator InsertBefore,
+                          const MachineInstr &Orig);
 
   /// DeleteMachineInstr - Delete the given MachineInstr.
-  void DeleteMachineInstr(MachineInstr *MI);
+  void deleteMachineInstr(MachineInstr *MI);
 
   /// CreateMachineBasicBlock - Allocate a new MachineBasicBlock. Use this
   /// instead of `new MachineBasicBlock'.
   MachineBasicBlock *CreateMachineBasicBlock(const BasicBlock *bb = nullptr);
 
   /// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
-  void DeleteMachineBasicBlock(MachineBasicBlock *MBB);
+  void deleteMachineBasicBlock(MachineBasicBlock *MBB);
 
   /// getMachineMemOperand - Allocate a new MachineMemOperand.
   /// MachineMemOperands are owned by the MachineFunction and need not be
@@ -930,7 +947,8 @@ public:
                                           int64_t Offset, LLT Ty);
   MachineMemOperand *getMachineMemOperand(const MachineMemOperand *MMO,
                                           int64_t Offset, uint64_t Size) {
-    return getMachineMemOperand(MMO, Offset, LLT::scalar(8 * Size));
+    return getMachineMemOperand(
+        MMO, Offset, Size == ~UINT64_C(0) ? LLT() : LLT::scalar(8 * Size));
   }
 
   /// getMachineMemOperand - Allocate a new MachineMemOperand by copying

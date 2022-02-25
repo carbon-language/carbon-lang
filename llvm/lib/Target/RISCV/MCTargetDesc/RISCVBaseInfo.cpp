@@ -14,13 +14,24 @@
 #include "RISCVBaseInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/RISCVISAInfo.h"
+#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+
+extern const SubtargetFeatureKV RISCVFeatureKV[RISCV::NumSubtargetFeatures];
+
 namespace RISCVSysReg {
 #define GET_SysRegsList_IMPL
 #include "RISCVGenSearchableTables.inc"
 } // namespace RISCVSysReg
+
+namespace RISCVInsnOpcode {
+#define GET_RISCVOpcodesList_IMPL
+#include "RISCVGenSearchableTables.inc"
+} // namespace RISCVInsnOpcode
 
 namespace RISCVABI {
 ABI computeTargetABI(const Triple &TT, FeatureBitset FeatureBits,
@@ -94,6 +105,19 @@ void validate(const Triple &TT, const FeatureBitset &FeatureBits) {
     report_fatal_error("RV32 target requires an RV32 CPU");
   if (TT.isArch64Bit() && FeatureBits[RISCV::FeatureRV32E])
     report_fatal_error("RV32E can't be enabled for an RV64 target");
+}
+
+llvm::Expected<std::unique_ptr<RISCVISAInfo>>
+parseFeatureBits(bool IsRV64, const FeatureBitset &FeatureBits) {
+  unsigned XLen = IsRV64 ? 64 : 32;
+  std::vector<std::string> FeatureVector;
+  // Convert FeatureBitset to FeatureVector.
+  for (auto Feature : RISCVFeatureKV) {
+    if (FeatureBits[Feature.Value] &&
+        llvm::RISCVISAInfo::isSupportedExtensionFeature(Feature.Key))
+      FeatureVector.push_back(std::string("+") + Feature.Key);
+  }
+  return llvm::RISCVISAInfo::parseFeatures(XLen, FeatureVector);
 }
 
 } // namespace RISCVFeatures

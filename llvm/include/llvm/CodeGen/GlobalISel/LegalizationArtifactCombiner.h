@@ -127,7 +127,7 @@ public:
         return false;
       LLVM_DEBUG(dbgs() << ".. Combine MI: " << MI;);
       LLT SrcTy = MRI.getType(SrcReg);
-      APInt MaskVal = APInt::getAllOnesValue(SrcTy.getScalarSizeInBits());
+      APInt MaskVal = APInt::getAllOnes(SrcTy.getScalarSizeInBits());
       auto Mask = Builder.buildConstant(
         DstTy, MaskVal.zext(DstTy.getScalarSizeInBits()));
       if (SextSrc && (DstTy != MRI.getType(SextSrc)))
@@ -487,7 +487,8 @@ public:
       // That is not done yet.
       if (ConvertOp == 0)
         return true;
-      return !DestTy.isVector() && OpTy.isVector();
+      return !DestTy.isVector() && OpTy.isVector() &&
+             DestTy == OpTy.getElementType();
     case TargetOpcode::G_CONCAT_VECTORS: {
       if (ConvertOp == 0)
         return true;
@@ -821,6 +822,12 @@ public:
 
     Builder.setInstrAndDebugLoc(MI);
 
+    ArtifactValueFinder Finder(MRI, Builder, LI);
+    if (Finder.tryCombineUnmergeDefs(MI, Observer, UpdatedDefs)) {
+      markInstAndDefDead(MI, *SrcDef, DeadInsts, SrcDefIdx);
+      return true;
+    }
+
     if (auto *SrcUnmerge = dyn_cast<GUnmerge>(SrcDef)) {
       // %0:_(<4 x s16>) = G_FOO
       // %1:_(<2 x s16>), %2:_(<2 x s16>) = G_UNMERGE_VALUES %0
@@ -844,14 +851,8 @@ public:
         if (ActionStep.TypeIdx == 1)
           return false;
         break;
-      default: {
-        ArtifactValueFinder Finder(MRI, Builder, LI);
-        if (Finder.tryCombineUnmergeDefs(MI, Observer, UpdatedDefs)) {
-          markInstAndDefDead(MI, *SrcDef, DeadInsts, SrcDefIdx);
-          return true;
-        }
+      default:
         return false;
-      }
       }
 
       auto NewUnmerge = Builder.buildUnmerge(DestTy, SrcUnmergeSrc);
@@ -883,16 +884,7 @@ public:
                                        ConvertOp, OpTy, DestTy)) {
       // We might have a chance to combine later by trying to combine
       // unmerge(cast) first
-      if (tryFoldUnmergeCast(MI, *SrcDef, DeadInsts, UpdatedDefs))
-        return true;
-
-      // Try using the value finder.
-      ArtifactValueFinder Finder(MRI, Builder, LI);
-      if (Finder.tryCombineUnmergeDefs(MI, Observer, UpdatedDefs)) {
-        markInstAndDefDead(MI, *SrcDef, DeadInsts, SrcDefIdx);
-        return true;
-      }
-      return false;
+      return tryFoldUnmergeCast(MI, *SrcDef, DeadInsts, UpdatedDefs);
     }
 
     const unsigned NumMergeRegs = MergeI->getNumOperands() - 1;
@@ -986,10 +978,13 @@ public:
         Builder.setInstr(MI);
 
         for (unsigned Idx = 0; Idx < NumDefs; ++Idx) {
-          Register MergeSrc = MergeI->getOperand(Idx + 1).getReg();
           Register DefReg = MI.getOperand(Idx).getReg();
-          Builder.buildInstr(ConvertOp, {DefReg}, {MergeSrc});
-          UpdatedDefs.push_back(DefReg);
+          Register MergeSrc = MergeI->getOperand(Idx + 1).getReg();
+
+          if (!MRI.use_empty(DefReg)) {
+            Builder.buildInstr(ConvertOp, {DefReg}, {MergeSrc});
+            UpdatedDefs.push_back(DefReg);
+          }
         }
 
         markInstAndDefDead(MI, *MergeI, DeadInsts);
@@ -1257,7 +1252,7 @@ private:
     for (auto *DeadMI : DeadInsts) {
       LLVM_DEBUG(dbgs() << *DeadMI << "Is dead, eagerly deleting\n");
       WrapperObserver.erasingInstr(*DeadMI);
-      DeadMI->eraseFromParentAndMarkDBGValuesForRemoval();
+      DeadMI->eraseFromParent();
     }
     DeadInsts.clear();
   }

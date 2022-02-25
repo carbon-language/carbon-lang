@@ -28,7 +28,7 @@ using namespace llvm;
 
 ARMException::ARMException(AsmPrinter *A) : DwarfCFIExceptionBase(A) {}
 
-ARMException::~ARMException() {}
+ARMException::~ARMException() = default;
 
 ARMTargetStreamer &ARMException::getTargetStreamer() {
   MCTargetStreamer &TS = *Asm->OutStreamer->getTargetStreamer();
@@ -75,7 +75,6 @@ void ARMException::endFunction(const MachineFunction *MF) {
     // Emit references to personality.
     if (Per) {
       MCSymbol *PerSym = Asm->getSymbol(Per);
-      Asm->OutStreamer->emitSymbolAttribute(PerSym, MCSA_Global);
       ATS.emitPersonality(PerSym);
     }
 

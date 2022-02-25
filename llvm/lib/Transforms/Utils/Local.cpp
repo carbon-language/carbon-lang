@@ -45,6 +45,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -402,6 +403,18 @@ bool llvm::isInstructionTriviallyDead(Instruction *I,
   return wouldInstructionBeTriviallyDead(I, TLI);
 }
 
+bool llvm::wouldInstructionBeTriviallyDeadOnUnusedPaths(
+    Instruction *I, const TargetLibraryInfo *TLI) {
+  // Instructions that are "markers" and have implied meaning on code around
+  // them (without explicit uses), are not dead on unused paths.
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    if (II->getIntrinsicID() == Intrinsic::stacksave ||
+        II->getIntrinsicID() == Intrinsic::launder_invariant_group ||
+        II->isLifetimeStartOrEnd())
+      return false;
+  return wouldInstructionBeTriviallyDead(I, TLI);
+}
+
 bool llvm::wouldInstructionBeTriviallyDead(Instruction *I,
                                            const TargetLibraryInfo *TLI) {
   if (I->isTerminator())
@@ -480,7 +493,7 @@ bool llvm::wouldInstructionBeTriviallyDead(Instruction *I,
     }
   }
 
-  if (isAllocLikeFn(I, TLI))
+  if (isAllocationFn(I, TLI) && isAllocRemovable(cast<CallBase>(I), TLI))
     return true;
 
   if (CallInst *CI = isFreeCall(I, TLI))
@@ -529,8 +542,8 @@ bool llvm::RecursivelyDeleteTriviallyDeadInstructionsPermissive(
     std::function<void(Value *)> AboutToDeleteCallback) {
   unsigned S = 0, E = DeadInsts.size(), Alive = 0;
   for (; S != E; ++S) {
-    auto *I = cast<Instruction>(DeadInsts[S]);
-    if (!isInstructionTriviallyDead(I)) {
+    auto *I = dyn_cast<Instruction>(DeadInsts[S]);
+    if (!I || !isInstructionTriviallyDead(I)) {
       DeadInsts[S] = nullptr;
       ++Alive;
     }
@@ -760,15 +773,18 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB,
   SmallVector<DominatorTree::UpdateType, 32> Updates;
 
   if (DTU) {
-    SmallPtrSet<BasicBlock *, 2> PredsOfPredBB(pred_begin(PredBB),
-                                               pred_end(PredBB));
-    Updates.reserve(Updates.size() + 2 * PredsOfPredBB.size() + 1);
-    for (BasicBlock *PredOfPredBB : PredsOfPredBB)
+    // To avoid processing the same predecessor more than once.
+    SmallPtrSet<BasicBlock *, 2> SeenPreds;
+    Updates.reserve(Updates.size() + 2 * pred_size(PredBB) + 1);
+    for (BasicBlock *PredOfPredBB : predecessors(PredBB))
       // This predecessor of PredBB may already have DestBB as a successor.
       if (PredOfPredBB != PredBB)
-        Updates.push_back({DominatorTree::Insert, PredOfPredBB, DestBB});
-    for (BasicBlock *PredOfPredBB : PredsOfPredBB)
-      Updates.push_back({DominatorTree::Delete, PredOfPredBB, PredBB});
+        if (SeenPreds.insert(PredOfPredBB).second)
+          Updates.push_back({DominatorTree::Insert, PredOfPredBB, DestBB});
+    SeenPreds.clear();
+    for (BasicBlock *PredOfPredBB : predecessors(PredBB))
+      if (SeenPreds.insert(PredOfPredBB).second)
+        Updates.push_back({DominatorTree::Delete, PredOfPredBB, PredBB});
     Updates.push_back({DominatorTree::Delete, PredBB, DestBB});
   }
 
@@ -1096,16 +1112,20 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
 
   SmallVector<DominatorTree::UpdateType, 32> Updates;
   if (DTU) {
+    // To avoid processing the same predecessor more than once.
+    SmallPtrSet<BasicBlock *, 8> SeenPreds;
     // All predecessors of BB will be moved to Succ.
-    SmallPtrSet<BasicBlock *, 8> PredsOfBB(pred_begin(BB), pred_end(BB));
     SmallPtrSet<BasicBlock *, 8> PredsOfSucc(pred_begin(Succ), pred_end(Succ));
-    Updates.reserve(Updates.size() + 2 * PredsOfBB.size() + 1);
-    for (auto *PredOfBB : PredsOfBB)
+    Updates.reserve(Updates.size() + 2 * pred_size(BB) + 1);
+    for (auto *PredOfBB : predecessors(BB))
       // This predecessor of BB may already have Succ as a successor.
       if (!PredsOfSucc.contains(PredOfBB))
-        Updates.push_back({DominatorTree::Insert, PredOfBB, Succ});
-    for (auto *PredOfBB : PredsOfBB)
-      Updates.push_back({DominatorTree::Delete, PredOfBB, BB});
+        if (SeenPreds.insert(PredOfBB).second)
+          Updates.push_back({DominatorTree::Insert, PredOfBB, Succ});
+    SeenPreds.clear();
+    for (auto *PredOfBB : predecessors(BB))
+      if (SeenPreds.insert(PredOfBB).second)
+        Updates.push_back({DominatorTree::Delete, PredOfBB, BB});
     Updates.push_back({DominatorTree::Delete, BB, Succ});
   }
 
@@ -1413,8 +1433,6 @@ static bool valueCoversEntireFragment(Type *ValTy, DbgVariableIntrinsic *DII) {
     if (auto *AI =
             dyn_cast_or_null<AllocaInst>(DII->getVariableLocationOp(0))) {
       if (Optional<TypeSize> FragmentSize = AI->getAllocationSizeInBits(DL)) {
-        assert(ValueSize.isScalable() == FragmentSize->isScalable() &&
-               "Both sizes should agree on the scalable flag.");
         return TypeSize::isKnownGE(ValueSize, *FragmentSize);
       }
     }
@@ -1733,9 +1751,11 @@ void llvm::salvageDebugInfo(Instruction &I) {
 
 void llvm::salvageDebugInfoForDbgValues(
     Instruction &I, ArrayRef<DbgVariableIntrinsic *> DbgUsers) {
-  // This is an arbitrary chosen limit on the maximum number of values we can
-  // salvage up to in a DIArgList, used for performance reasons.
+  // These are arbitrary chosen limits on the maximum number of values and the
+  // maximum size of a debug expression we can salvage up to, used for
+  // performance reasons.
   const unsigned MaxDebugArgs = 16;
+  const unsigned MaxExpressionSize = 128;
   bool Salvaged = false;
 
   for (auto *DII : DbgUsers) {
@@ -1772,9 +1792,10 @@ void llvm::salvageDebugInfoForDbgValues(
       break;
 
     DII->replaceVariableLocationOp(&I, Op0);
-    if (AdditionalValues.empty()) {
+    bool IsValidSalvageExpr = SalvagedExpr->getNumElements() <= MaxExpressionSize;
+    if (AdditionalValues.empty() && IsValidSalvageExpr) {
       DII->setExpression(SalvagedExpr);
-    } else if (isa<DbgValueInst>(DII) &&
+    } else if (isa<DbgValueInst>(DII) && IsValidSalvageExpr &&
                DII->getNumVariableLocationOps() + AdditionalValues.size() <=
                    MaxDebugArgs) {
       DII->addVariableLocationOps(AdditionalValues, SalvagedExpr);
@@ -1908,12 +1929,19 @@ Value *llvm::salvageDebugInfoImpl(Instruction &I, uint64_t CurrentLocOps,
     }
 
     Type *Type = CI->getType();
+    if (Type->isPointerTy())
+      Type = DL.getIntPtrType(Type);
     // Casts other than Trunc, SExt, or ZExt to scalar types cannot be salvaged.
     if (Type->isVectorTy() ||
-        !(isa<TruncInst>(&I) || isa<SExtInst>(&I) || isa<ZExtInst>(&I)))
+        !(isa<TruncInst>(&I) || isa<SExtInst>(&I) || isa<ZExtInst>(&I) ||
+          isa<IntToPtrInst>(&I) || isa<PtrToIntInst>(&I)))
       return nullptr;
 
-    unsigned FromTypeBitSize = FromValue->getType()->getScalarSizeInBits();
+    llvm::Type *FromType = FromValue->getType();
+    if (FromType->isPointerTy())
+      FromType = DL.getIntPtrType(FromType);
+
+    unsigned FromTypeBitSize = FromType->getScalarSizeInBits();
     unsigned ToTypeBitSize = Type->getScalarSizeInBits();
 
     auto ExtOps = DIExpression::getExtOps(FromTypeBitSize, ToTypeBitSize,
@@ -1924,9 +1952,9 @@ Value *llvm::salvageDebugInfoImpl(Instruction &I, uint64_t CurrentLocOps,
 
   if (auto *GEP = dyn_cast<GetElementPtrInst>(&I))
     return getSalvageOpsForGEP(GEP, DL, CurrentLocOps, Ops, AdditionalValues);
-  else if (auto *BI = dyn_cast<BinaryOperator>(&I)) {
+  if (auto *BI = dyn_cast<BinaryOperator>(&I))
     return getSalvageOpsForBinOp(BI, CurrentLocOps, Ops, AdditionalValues);
-  }
+
   // *Not* to do: we should not attempt to salvage load instructions,
   // because the validity and lifetime of a dbg.value containing
   // DW_OP_deref becomes difficult to analyze. See PR40628 for examples.
@@ -2162,8 +2190,8 @@ CallInst *llvm::createCallMatchingInvoke(InvokeInst *II) {
   return NewCall;
 }
 
-/// changeToCall - Convert the specified invoke into a normal call.
-void llvm::changeToCall(InvokeInst *II, DomTreeUpdater *DTU) {
+// changeToCall - Convert the specified invoke into a normal call.
+CallInst *llvm::changeToCall(InvokeInst *II, DomTreeUpdater *DTU) {
   CallInst *NewCall = createCallMatchingInvoke(II);
   NewCall->takeName(II);
   NewCall->insertBefore(II);
@@ -2180,6 +2208,7 @@ void llvm::changeToCall(InvokeInst *II, DomTreeUpdater *DTU) {
   II->eraseFromParent();
   if (DTU)
     DTU->applyUpdates({{DominatorTree::Delete, BB, UnwindDestBB}});
+  return NewCall;
 }
 
 BasicBlock *llvm::changeToInvokeAndSplitBasicBlock(CallInst *CI,
@@ -2320,19 +2349,42 @@ static bool markAliveBlocks(Function &F,
           isa<UndefValue>(Callee)) {
         changeToUnreachable(II, false, DTU);
         Changed = true;
-      } else if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(&F)) {
-        if (II->use_empty() && II->onlyReadsMemory()) {
-          // jump to the normal destination branch.
-          BasicBlock *NormalDestBB = II->getNormalDest();
-          BasicBlock *UnwindDestBB = II->getUnwindDest();
-          BranchInst::Create(NormalDestBB, II);
-          UnwindDestBB->removePredecessor(II->getParent());
-          II->eraseFromParent();
+      } else {
+        if (II->doesNotReturn() &&
+            !isa<UnreachableInst>(II->getNormalDest()->front())) {
+          // If we found an invoke of a no-return function,
+          // create a new empty basic block with an `unreachable` terminator,
+          // and set it as the normal destination for the invoke,
+          // unless that is already the case.
+          // Note that the original normal destination could have other uses.
+          BasicBlock *OrigNormalDest = II->getNormalDest();
+          OrigNormalDest->removePredecessor(II->getParent());
+          LLVMContext &Ctx = II->getContext();
+          BasicBlock *UnreachableNormalDest = BasicBlock::Create(
+              Ctx, OrigNormalDest->getName() + ".unreachable",
+              II->getFunction(), OrigNormalDest);
+          new UnreachableInst(Ctx, UnreachableNormalDest);
+          II->setNormalDest(UnreachableNormalDest);
           if (DTU)
-            DTU->applyUpdates({{DominatorTree::Delete, BB, UnwindDestBB}});
-        } else
-          changeToCall(II, DTU);
-        Changed = true;
+            DTU->applyUpdates(
+                {{DominatorTree::Delete, BB, OrigNormalDest},
+                 {DominatorTree::Insert, BB, UnreachableNormalDest}});
+          Changed = true;
+        }
+        if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(&F)) {
+          if (II->use_empty() && II->onlyReadsMemory()) {
+            // jump to the normal destination branch.
+            BasicBlock *NormalDestBB = II->getNormalDest();
+            BasicBlock *UnwindDestBB = II->getUnwindDest();
+            BranchInst::Create(NormalDestBB, II);
+            UnwindDestBB->removePredecessor(II->getParent());
+            II->eraseFromParent();
+            if (DTU)
+              DTU->applyUpdates({{DominatorTree::Delete, BB, UnwindDestBB}});
+          } else
+            changeToCall(II, DTU);
+          Changed = true;
+        }
       }
     } else if (auto *CatchSwitch = dyn_cast<CatchSwitchInst>(Terminator)) {
       // Remove catchpads which cannot be reached.
@@ -2657,9 +2709,7 @@ static unsigned replaceDominatedUsesWith(Value *From, Value *To,
   assert(From->getType() == To->getType());
 
   unsigned Count = 0;
-  for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
-       UI != UE;) {
-    Use &U = *UI++;
+  for (Use &U : llvm::make_early_inc_range(From->uses())) {
     if (!Dominates(Root, U))
       continue;
     U.set(To);
@@ -2675,9 +2725,7 @@ unsigned llvm::replaceNonLocalUsesWith(Instruction *From, Value *To) {
    auto *BB = From->getParent();
    unsigned Count = 0;
 
-  for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
-       UI != UE;) {
-    Use &U = *UI++;
+   for (Use &U : llvm::make_early_inc_range(From->uses())) {
     auto *I = cast<Instruction>(U.getUser());
     if (I->getParent() == BB)
       continue;
@@ -3124,11 +3172,6 @@ bool llvm::recognizeBSwapOrBitReverseIdiom(
   if (!ITy->isIntOrIntVectorTy() || ITy->getScalarSizeInBits() > 128)
     return false;  // Can't do integer/elements > 128 bits.
 
-  Type *DemandedTy = ITy;
-  if (I->hasOneUse())
-    if (auto *Trunc = dyn_cast<TruncInst>(I->user_back()))
-      DemandedTy = Trunc->getType();
-
   // Try to find all the pieces corresponding to the bswap.
   bool FoundRoot = false;
   std::map<Value *, Optional<BitPart>> BPS;
@@ -3142,6 +3185,7 @@ bool llvm::recognizeBSwapOrBitReverseIdiom(
          "Illegal bit provenance index");
 
   // If the upper bits are zero, then attempt to perform as a truncated op.
+  Type *DemandedTy = ITy;
   if (BitProvenance.back() == BitPart::Unset) {
     while (!BitProvenance.empty() && BitProvenance.back() == BitPart::Unset)
       BitProvenance = BitProvenance.drop_back();
@@ -3159,7 +3203,7 @@ bool llvm::recognizeBSwapOrBitReverseIdiom(
 
   // Now, is the bit permutation correct for a bswap or a bitreverse? We can
   // only byteswap values with an even number of bytes.
-  APInt DemandedMask = APInt::getAllOnesValue(DemandedBW);
+  APInt DemandedMask = APInt::getAllOnes(DemandedBW);
   bool OKForBSwap = MatchBSwaps && (DemandedBW % 16) == 0;
   bool OKForBitReverse = MatchBitReversals;
   for (unsigned BitIdx = 0;
@@ -3196,7 +3240,7 @@ bool llvm::recognizeBSwapOrBitReverseIdiom(
   Instruction *Result = CallInst::Create(F, Provider, "rev", I);
   InsertedInsts.push_back(Result);
 
-  if (!DemandedMask.isAllOnesValue()) {
+  if (!DemandedMask.isAllOnes()) {
     auto *Mask = ConstantInt::get(DemandedTy, DemandedMask);
     Result = BinaryOperator::Create(Instruction::And, Result, Mask, "mask", I);
     InsertedInsts.push_back(Result);
@@ -3251,7 +3295,7 @@ bool llvm::canReplaceOperandWithVariable(const Instruction *I, unsigned OpIdx) {
     if (CB.isBundleOperand(OpIdx))
       return false;
 
-    if (OpIdx < CB.getNumArgOperands()) {
+    if (OpIdx < CB.arg_size()) {
       // Some variadic intrinsics require constants in the variadic arguments,
       // which currently aren't markable as immarg.
       if (isa<IntrinsicInst>(CB) &&

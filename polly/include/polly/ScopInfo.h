@@ -81,7 +81,7 @@ extern bool UseInstructionNames;
 // The maximal number of basic sets we allow during domain construction to
 // be created. More complex scops will result in very high compile time and
 // are also unlikely to result in good code.
-extern int const MaxDisjunctsInDomain;
+extern unsigned const MaxDisjunctsInDomain;
 
 /// The different memory kinds used in Polly.
 ///
@@ -264,16 +264,6 @@ public:
   ///                          with old sizes
   bool updateSizes(ArrayRef<const SCEV *> Sizes, bool CheckConsistency = true);
 
-  /// Make the ScopArrayInfo model a Fortran array.
-  /// It receives the Fortran array descriptor and stores this.
-  /// It also adds a piecewise expression for the outermost dimension
-  /// since this information is available for Fortran arrays at runtime.
-  void applyAndSetFAD(Value *FAD);
-
-  /// Get the FortranArrayDescriptor corresponding to this array if it exists,
-  /// nullptr otherwise.
-  Value *getFortranArrayDescriptor() const { return this->FAD; }
-
   /// Set the base pointer to @p BP.
   void setBasePtr(Value *BP) { BasePtr = BP; }
 
@@ -440,10 +430,6 @@ private:
 
   /// The scop this SAI object belongs to.
   Scop &S;
-
-  /// If this array models a Fortran array, then this points
-  /// to the Fortran array descriptor.
-  Value *FAD = nullptr;
 };
 
 /// Represent memory accesses in statements.
@@ -636,13 +622,6 @@ private:
 
   /// Updated access relation read from JSCOP file.
   isl::map NewAccessRelation;
-
-  /// Fortran arrays whose sizes are not statically known are stored in terms
-  /// of a descriptor struct. This maintains a raw pointer to the memory,
-  /// along with auxiliary fields with information such as dimensions.
-  /// We hold a reference to the descriptor corresponding to a MemoryAccess
-  /// into a Fortran array. FAD for "Fortran Array Descriptor"
-  AssertingVH<Value> FAD;
   // @}
 
   isl::basic_map createBasicAccessMap(ScopStmt *Statement);
@@ -935,10 +914,6 @@ public:
   /// the dimension of the innermost loop containing the statement.
   isl::set getStride(isl::map Schedule) const;
 
-  /// Get the FortranArrayDescriptor corresponding to this memory access if
-  /// it exists, and nullptr otherwise.
-  Value *getFortranArrayDescriptor() const { return this->FAD; }
-
   /// Is the stride of the access equal to a certain width? Schedule is a map
   /// from the statement to a schedule where the innermost dimension is the
   /// dimension of the innermost loop containing the statement.
@@ -1060,10 +1035,6 @@ public:
 
   /// Get the reduction type of this access
   ReductionType getReductionType() const { return RedType; }
-
-  /// Set the array descriptor corresponding to the Array on which the
-  /// memory access is performed.
-  void setFortranArrayDescriptor(Value *FAD);
 
   /// Update the original access relation.
   ///
@@ -1643,44 +1614,6 @@ public:
 /// Print ScopStmt S to raw_ostream OS.
 raw_ostream &operator<<(raw_ostream &OS, const ScopStmt &S);
 
-/// Build the conditions sets for the branch condition @p Condition in
-/// the @p Domain.
-///
-/// This will fill @p ConditionSets with the conditions under which control
-/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p TI has successors. If @p TI is nullptr the
-/// context under which @p Condition is true/false will be returned as the
-/// new elements of @p ConditionSets.
-bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
-                        Instruction *TI, Loop *L, __isl_keep isl_set *Domain,
-                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets);
-
-/// Build condition sets for unsigned ICmpInst(s).
-/// Special handling is required for unsigned operands to ensure that if
-/// MSB (aka the Sign bit) is set for an operands in an unsigned ICmpInst
-/// it should wrap around.
-///
-/// @param IsStrictUpperBound holds information on the predicate relation
-/// between TestVal and UpperBound, i.e,
-/// TestVal < UpperBound  OR  TestVal <= UpperBound
-__isl_give isl_set *
-buildUnsignedConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
-                           __isl_keep isl_set *Domain, const SCEV *SCEV_TestVal,
-                           const SCEV *SCEV_UpperBound,
-                           DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                           bool IsStrictUpperBound);
-
-/// Build the conditions sets for the terminator @p TI in the @p Domain.
-///
-/// This will fill @p ConditionSets with the conditions under which control
-/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p TI has successors.
-bool buildConditionSets(Scop &S, BasicBlock *BB, Instruction *TI, Loop *L,
-                        __isl_keep isl_set *Domain,
-                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets);
-
 /// Static Control Part
 ///
 /// A Scop is the polyhedral representation of a control flow region detected
@@ -1946,10 +1879,6 @@ private:
        int ID);
 
   //@}
-
-  /// Initialize this ScopBuilder.
-  void init(AAResults &AA, AssumptionCache &AC, DominatorTree &DT,
-            LoopInfo &LI);
 
   /// Return the access for the base ptr of @p MA if any.
   MemoryAccess *lookupBasePtrAccess(MemoryAccess *MA);

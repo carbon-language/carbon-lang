@@ -12,9 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
-#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Async/IR/Async.h"
 #include "mlir/Dialect/Async/Passes.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/BlockAndValueMapping.h"
@@ -60,7 +62,7 @@ struct CoroMachinery {
   // each yielded value.
   //
   //   %token, %result = async.execute -> !async.value<T> {
-  //     %0 = constant ... : T
+  //     %0 = arith.constant ... : T
   //     async.yield %0 : T
   //   }
   Value asyncToken; // token representing completion of the async region
@@ -104,18 +106,18 @@ struct CoroMachinery {
 ///       %value = <async value> : !async.value<T> // create async value
 ///       %id = async.coro.id                      // create a coroutine id
 ///       %hdl = async.coro.begin %id              // create a coroutine handle
-///       br ^preexisting_entry_block
+///       cf.br ^preexisting_entry_block
 ///
 ///     /*  preexisting blocks modified to branch to the cleanup block */
 ///
 ///     ^set_error: // this block created lazily only if needed (see code below)
 ///       async.runtime.set_error %token : !async.token
 ///       async.runtime.set_error %value : !async.value<T>
-///       br ^cleanup
+///       cf.br ^cleanup
 ///
 ///     ^cleanup:
 ///       async.coro.free %hdl // delete the coroutine state
-///       br ^suspend
+///       cf.br ^suspend
 ///
 ///     ^suspend:
 ///       async.coro.end %hdl // marks the end of a coroutine
@@ -146,7 +148,7 @@ static CoroMachinery setupCoroMachinery(FuncOp func) {
   auto coroIdOp = builder.create<CoroIdOp>(CoroIdType::get(ctx));
   auto coroHdlOp =
       builder.create<CoroBeginOp>(CoroHandleType::get(ctx), coroIdOp.id());
-  builder.create<BranchOp>(originalEntryBlock);
+  builder.create<cf::BranchOp>(originalEntryBlock);
 
   Block *cleanupBlock = func.addBlock();
   Block *suspendBlock = func.addBlock();
@@ -158,7 +160,7 @@ static CoroMachinery setupCoroMachinery(FuncOp func) {
   builder.create<CoroFreeOp>(coroIdOp.id(), coroHdlOp.handle());
 
   // Branch into the suspend block.
-  builder.create<BranchOp>(suspendBlock);
+  builder.create<cf::BranchOp>(suspendBlock);
 
   // ------------------------------------------------------------------------ //
   // Coroutine suspend block: mark the end of a coroutine and return allocated
@@ -185,9 +187,16 @@ static CoroMachinery setupCoroMachinery(FuncOp func) {
     Operation *terminator = block.getTerminator();
     if (auto yield = dyn_cast<YieldOp>(terminator)) {
       builder.setInsertionPointToEnd(&block);
-      builder.create<BranchOp>(cleanupBlock);
+      builder.create<cf::BranchOp>(cleanupBlock);
     }
   }
+
+  // The switch-resumed API based coroutine should be marked with
+  // "coroutine.presplit" attribute with value "0" to mark the function as a
+  // coroutine.
+  func->setAttr("passthrough", builder.getArrayAttr(builder.getArrayAttr(
+                                   {builder.getStringAttr("coroutine.presplit"),
+                                    builder.getStringAttr("0")})));
 
   CoroMachinery machinery;
   machinery.func = func;
@@ -219,7 +228,7 @@ static Block *setupSetErrorBlock(CoroMachinery &coro) {
     builder.create<RuntimeSetErrorOp>(retValue);
 
   // Branch into the cleanup block.
-  builder.create<BranchOp>(coro.cleanup);
+  builder.create<cf::BranchOp>(coro.cleanup);
 
   return coro.setError;
 }
@@ -297,7 +306,7 @@ outlineExecuteOp(SymbolTable &symbolTable, ExecuteOp execute) {
   // Async resume operation (execution will be resumed in a thread managed by
   // the async runtime).
   {
-    BranchOp branch = cast<BranchOp>(coro.entry->getTerminator());
+    cf::BranchOp branch = cast<cf::BranchOp>(coro.entry->getTerminator());
     builder.setInsertionPointToEnd(coro.entry);
 
     // Save the coroutine state: async.coro.save
@@ -337,10 +346,10 @@ public:
   using OpConversionPattern::OpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(CreateGroupOp op, ArrayRef<Value> operands,
+  matchAndRewrite(CreateGroupOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     rewriter.replaceOpWithNewOp<RuntimeCreateGroupOp>(
-        op, GroupType::get(op->getContext()), operands);
+        op, GroupType::get(op->getContext()), adaptor.getOperands());
     return success();
   }
 };
@@ -356,10 +365,10 @@ public:
   using OpConversionPattern::OpConversionPattern;
 
   LogicalResult
-  matchAndRewrite(AddToGroupOp op, ArrayRef<Value> operands,
+  matchAndRewrite(AddToGroupOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     rewriter.replaceOpWithNewOp<RuntimeAddToGroupOp>(
-        op, rewriter.getIndexType(), operands);
+        op, rewriter.getIndexType(), adaptor.getOperands());
     return success();
   }
 };
@@ -382,7 +391,7 @@ public:
         outlinedFunctions(outlinedFunctions) {}
 
   LogicalResult
-  matchAndRewrite(AwaitType op, ArrayRef<Value> operands,
+  matchAndRewrite(AwaitType op, typename AwaitType::Adaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     // We can only await on one the `AwaitableType` (for `await` it can be
     // a `token` or a `value`, for `await_all` it must be a `group`).
@@ -395,12 +404,25 @@ public:
     const bool isInCoroutine = outlined != outlinedFunctions.end();
 
     Location loc = op->getLoc();
-    Value operand = AwaitAdaptor(operands).operand();
+    Value operand = adaptor.operand();
+
+    Type i1 = rewriter.getI1Type();
 
     // Inside regular functions we use the blocking wait operation to wait for
     // the async object (token, value or group) to become available.
-    if (!isInCoroutine)
-      rewriter.create<RuntimeAwaitOp>(loc, operand);
+    if (!isInCoroutine) {
+      ImplicitLocOpBuilder builder(loc, op, rewriter.getListener());
+      builder.create<RuntimeAwaitOp>(loc, operand);
+
+      // Assert that the awaited operands is not in the error state.
+      Value isError = builder.create<RuntimeIsErrorOp>(i1, operand);
+      Value notError = builder.create<arith::XOrIOp>(
+          isError, builder.create<arith::ConstantOp>(
+                       loc, i1, builder.getIntegerAttr(i1, 1)));
+
+      builder.create<cf::AssertOp>(notError,
+                                   "Awaited async operand is in error state");
+    }
 
     // Inside the coroutine we convert await operation into coroutine suspension
     // point, and resume execution asynchronously.
@@ -430,13 +452,12 @@ public:
 
       // Check if the awaited value is in the error state.
       builder.setInsertionPointToStart(resume);
-      auto isError =
-          builder.create<RuntimeIsErrorOp>(loc, rewriter.getI1Type(), operand);
-      builder.create<CondBranchOp>(isError,
-                                   /*trueDest=*/setupSetErrorBlock(coro),
-                                   /*trueArgs=*/ArrayRef<Value>(),
-                                   /*falseDest=*/continuation,
-                                   /*falseArgs=*/ArrayRef<Value>());
+      auto isError = builder.create<RuntimeIsErrorOp>(loc, i1, operand);
+      builder.create<cf::CondBranchOp>(isError,
+                                       /*trueDest=*/setupSetErrorBlock(coro),
+                                       /*trueArgs=*/ArrayRef<Value>(),
+                                       /*falseDest=*/continuation,
+                                       /*falseArgs=*/ArrayRef<Value>());
 
       // Make sure that replacement value will be constructed in the
       // continuation block.
@@ -508,7 +529,7 @@ public:
         outlinedFunctions(outlinedFunctions) {}
 
   LogicalResult
-  matchAndRewrite(async::YieldOp op, ArrayRef<Value> operands,
+  matchAndRewrite(async::YieldOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     // Check if yield operation is inside the async coroutine function.
     auto func = op->template getParentOfType<FuncOp>();
@@ -522,7 +543,7 @@ public:
 
     // Store yielded values into the async values storage and switch async
     // values state to available.
-    for (auto tuple : llvm::zip(operands, coro.returnValues)) {
+    for (auto tuple : llvm::zip(adaptor.getOperands(), coro.returnValues)) {
       Value yieldValue = std::get<0>(tuple);
       Value asyncValue = std::get<1>(tuple);
       rewriter.create<RuntimeStoreOp>(loc, yieldValue, asyncValue);
@@ -540,18 +561,18 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-// Convert std.assert operation to cond_br into `set_error` block.
+// Convert std.assert operation to cf.cond_br into `set_error` block.
 //===----------------------------------------------------------------------===//
 
-class AssertOpLowering : public OpConversionPattern<AssertOp> {
+class AssertOpLowering : public OpConversionPattern<cf::AssertOp> {
 public:
   AssertOpLowering(MLIRContext *ctx,
                    llvm::DenseMap<FuncOp, CoroMachinery> &outlinedFunctions)
-      : OpConversionPattern<AssertOp>(ctx),
+      : OpConversionPattern<cf::AssertOp>(ctx),
         outlinedFunctions(outlinedFunctions) {}
 
   LogicalResult
-  matchAndRewrite(AssertOp op, ArrayRef<Value> operands,
+  matchAndRewrite(cf::AssertOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     // Check if assert operation is inside the async coroutine function.
     auto func = op->template getParentOfType<FuncOp>();
@@ -565,11 +586,11 @@ public:
 
     Block *cont = rewriter.splitBlock(op->getBlock(), Block::iterator(op));
     rewriter.setInsertionPointToEnd(cont->getPrevNode());
-    rewriter.create<CondBranchOp>(loc, AssertOpAdaptor(operands).arg(),
-                                  /*trueDest=*/cont,
-                                  /*trueArgs=*/ArrayRef<Value>(),
-                                  /*falseDest=*/setupSetErrorBlock(coro),
-                                  /*falseArgs=*/ArrayRef<Value>());
+    rewriter.create<cf::CondBranchOp>(loc, adaptor.getArg(),
+                                      /*trueDest=*/cont,
+                                      /*trueArgs=*/ArrayRef<Value>(),
+                                      /*falseDest=*/setupSetErrorBlock(coro),
+                                      /*falseArgs=*/ArrayRef<Value>());
     rewriter.eraseOp(op);
 
     return success();
@@ -745,7 +766,7 @@ void AsyncToAsyncRuntimePass::runOnOperation() {
   // and we have to make sure that structured control flow operations with async
   // operations in nested regions will be converted to branch-based control flow
   // before we add the coroutine basic blocks.
-  populateLoopToStdConversionPatterns(asyncPatterns);
+  populateSCFToControlFlowConversionPatterns(asyncPatterns);
 
   // Async lowering does not use type converter because it must preserve all
   // types for async.runtime operations.
@@ -772,13 +793,15 @@ void AsyncToAsyncRuntimePass::runOnOperation() {
     });
     return !walkResult.wasInterrupted();
   });
-  runtimeTarget.addLegalOp<BranchOp, CondBranchOp>();
+  runtimeTarget.addLegalOp<cf::AssertOp, arith::XOrIOp, arith::ConstantOp,
+                           ConstantOp, cf::BranchOp, cf::CondBranchOp>();
 
   // Assertions must be converted to runtime errors inside async functions.
-  runtimeTarget.addDynamicallyLegalOp<AssertOp>([&](AssertOp op) -> bool {
-    auto func = op->getParentOfType<FuncOp>();
-    return outlinedFunctions.find(func) == outlinedFunctions.end();
-  });
+  runtimeTarget.addDynamicallyLegalOp<cf::AssertOp>(
+      [&](cf::AssertOp op) -> bool {
+        auto func = op->getParentOfType<FuncOp>();
+        return outlinedFunctions.find(func) == outlinedFunctions.end();
+      });
 
   if (eliminateBlockingAwaitOps)
     runtimeTarget.addDynamicallyLegalOp<RuntimeAwaitOp>(

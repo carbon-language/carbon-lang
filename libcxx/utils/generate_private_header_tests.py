@@ -26,7 +26,7 @@ script_name, include_path, detail_header_test_root = get_libcxx_paths()
 
 
 def generate_test(header):
-    return f'''// -*- C++ -*-
+    return f'''
 //===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -42,7 +42,7 @@ def generate_test(header):
 
 // expected-error@*:* {{{{use of private header from outside its module: '{header}'}}}}
 #include <{header}>
-'''
+'''[1:]
 
 
 def relative_path(path):
@@ -52,10 +52,9 @@ def relative_path(path):
 def is_still_public(path):
     rp = relative_path(path)
     return not rp.startswith('__support') and rp not in [
-        "__bsd_locale_defaults.h", "__bsd_locale_fallbacks.h", "__config",
-        "__config_site.in", "__debug", "__hash_table", "__functional_base",
-        "__libcpp_version", "__nullptr", "__threading_support", "__tree",
-        "__undef_macros"
+        "__assert", "__bsd_locale_defaults.h", "__bsd_locale_fallbacks.h", "__config",
+        "__config_site.in", "__debug", "__hash_table",
+        "__libcpp_version", "__threading_support", "__tree", "__undef_macros"
     ]
 
 

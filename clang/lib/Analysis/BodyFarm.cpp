@@ -461,8 +461,7 @@ static Stmt *create_call_once(ASTContext &C, const FunctionDecl *D) {
       DerefType);
 
   auto *Out =
-      IfStmt::Create(C, SourceLocation(),
-                     /* IsConstexpr=*/false,
+      IfStmt::Create(C, SourceLocation(), IfStatementKind::Ordinary,
                      /* Init=*/nullptr,
                      /* Var=*/nullptr,
                      /* Cond=*/FlagCheck,
@@ -547,8 +546,7 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
 
   Expr *GuardCondition = M.makeComparison(LValToRval, DoneValue, BO_NE);
   // (5) Create the 'if' statement.
-  auto *If = IfStmt::Create(C, SourceLocation(),
-                            /* IsConstexpr=*/false,
+  auto *If = IfStmt::Create(C, SourceLocation(), IfStatementKind::Ordinary,
                             /* Init=*/nullptr,
                             /* Var=*/nullptr,
                             /* Cond=*/GuardCondition,
@@ -658,8 +656,7 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
 
   /// Construct the If.
   auto *If =
-      IfStmt::Create(C, SourceLocation(),
-                     /* IsConstexpr=*/false,
+      IfStmt::Create(C, SourceLocation(), IfStatementKind::Ordinary,
                      /* Init=*/nullptr,
                      /* Var=*/nullptr, Comparison,
                      /* LPL=*/SourceLocation(),
@@ -793,9 +790,8 @@ static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
     }
   }
 
-  // Sanity check that the property is the same type as the ivar, or a
-  // reference to it, and that it is either an object pointer or trivially
-  // copyable.
+  // We expect that the property is the same type as the ivar, or a reference to
+  // it, and that it is either an object pointer or trivially copyable.
   if (!Ctx.hasSameUnqualifiedType(IVar->getType(),
                                   Prop->getType().getNonReferenceType()))
     return nullptr;

@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.13.4)
 
+# Default to C++17
+set(CMAKE_CXX_STANDARD 17)
+
 # Use old version of target_sources command which converts the source
 # file paths to full paths.
 cmake_policy(SET CMP0076 OLD)
-list(APPEND CMAKE_MODULE_PATH  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 # The top-level sourse and binary directories.
 set(LIBC_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -55,6 +58,7 @@ if(LLVM_LIBC_ENABLE_LINTING)
   if("clang-tools-extra" IN_LIST LLVM_ENABLE_PROJECTS
              AND "clang" IN_LIST LLVM_ENABLE_PROJECTS)
     add_custom_target(lint-libc)
+    file(COPY ${LIBC_SOURCE_DIR}/.clang-tidy DESTINATION ${LIBC_BUILD_DIR})
   else()
     message(FATAL_ERROR "
       'clang' and 'clang-tools-extra' are required in LLVM_ENABLE_PROJECTS to
@@ -79,6 +83,8 @@ if(LLVM_LIBC_INCLUDE_SCUDO)
   endif()
 endif()
 
+option(LIBC_INCLUDE_DOCS "Build the libc documentation." ${LLVM_INCLUDE_DOCS})
+
 include(CMakeParseArguments)
 include(LLVMLibCRules)
 include(LLVMLibCCheckCpuFeatures)
@@ -88,14 +94,14 @@ if(EXISTS "${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/${LIBC_TARGET_ARCHITECTUR
 elseif(EXISTS "${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/entrypoints.txt")
   set(entrypoint_file "${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/entrypoints.txt")
 else()
-  message(FATAL_ERROR "entrypoints.txt file for the target platform not found.")
+  message(FATAL_ERROR "entrypoints.txt file for the target platform '${LIBC_TARGET_OS}/${LIBC_TARGET_ARCHITECTURE}' not found.")
 endif()
 include(${entrypoint_file})
 
 if(EXISTS "${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/${LIBC_TARGET_ARCHITECTURE}/headers.txt")
   include("${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/${LIBC_TARGET_ARCHITECTURE}/headers.txt")
 elseif(EXISTS "${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/headers.txt")
-  include("${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}//headers.txt")
+  include("${LIBC_SOURCE_DIR}/config/${LIBC_TARGET_OS}/headers.txt")
 endif()
 
 set(TARGET_ENTRYPOINT_NAME_LIST "")
@@ -137,3 +143,7 @@ if(LLVM_INCLUDE_TESTS)
 endif()
 
 add_subdirectory(benchmarks)
+
+if (LIBC_INCLUDE_DOCS)
+  add_subdirectory(docs)
+endif()

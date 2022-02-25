@@ -438,7 +438,7 @@ inline cst_pred_ty<is_any_apint> m_AnyIntegralConstant() {
 }
 
 struct is_all_ones {
-  bool isValue(const APInt &C) { return C.isAllOnesValue(); }
+  bool isValue(const APInt &C) { return C.isAllOnes(); }
 };
 /// Match an integer or vector with all bits set.
 /// For vectors, this includes constants with undefined elements.
@@ -506,7 +506,7 @@ inline cst_pred_ty<is_nonpositive> m_NonPositive() {
 inline api_pred_ty<is_nonpositive> m_NonPositive(const APInt *&V) { return V; }
 
 struct is_one {
-  bool isValue(const APInt &C) { return C.isOneValue(); }
+  bool isValue(const APInt &C) { return C.isOne(); }
 };
 /// Match an integer 1 or a vector with all elements equal to 1.
 /// For vectors, this includes constants with undefined elements.
@@ -515,7 +515,7 @@ inline cst_pred_ty<is_one> m_One() {
 }
 
 struct is_zero_int {
-  bool isValue(const APInt &C) { return C.isNullValue(); }
+  bool isValue(const APInt &C) { return C.isZero(); }
 };
 /// Match an integer 0 or a vector with all elements equal to 0.
 /// For vectors, this includes constants with undefined elements.
@@ -549,7 +549,7 @@ inline api_pred_ty<is_power2> m_Power2(const APInt *&V) {
 }
 
 struct is_negated_power2 {
-  bool isValue(const APInt &C) { return (-C).isPowerOf2(); }
+  bool isValue(const APInt &C) { return C.isNegatedPowerOf2(); }
 };
 /// Match a integer or vector negated power-of-2.
 /// For vectors, this includes constants with undefined elements.
@@ -589,36 +589,14 @@ struct is_lowbit_mask {
 inline cst_pred_ty<is_lowbit_mask> m_LowBitMask() {
   return cst_pred_ty<is_lowbit_mask>();
 }
+inline api_pred_ty<is_lowbit_mask> m_LowBitMask(const APInt *&V) {
+  return V;
+}
 
 struct icmp_pred_with_threshold {
   ICmpInst::Predicate Pred;
   const APInt *Thr;
-  bool isValue(const APInt &C) {
-    switch (Pred) {
-    case ICmpInst::Predicate::ICMP_EQ:
-      return C.eq(*Thr);
-    case ICmpInst::Predicate::ICMP_NE:
-      return C.ne(*Thr);
-    case ICmpInst::Predicate::ICMP_UGT:
-      return C.ugt(*Thr);
-    case ICmpInst::Predicate::ICMP_UGE:
-      return C.uge(*Thr);
-    case ICmpInst::Predicate::ICMP_ULT:
-      return C.ult(*Thr);
-    case ICmpInst::Predicate::ICMP_ULE:
-      return C.ule(*Thr);
-    case ICmpInst::Predicate::ICMP_SGT:
-      return C.sgt(*Thr);
-    case ICmpInst::Predicate::ICMP_SGE:
-      return C.sge(*Thr);
-    case ICmpInst::Predicate::ICMP_SLT:
-      return C.slt(*Thr);
-    case ICmpInst::Predicate::ICMP_SLE:
-      return C.sle(*Thr);
-    default:
-      llvm_unreachable("Unhandled ICmp predicate");
-    }
-  }
+  bool isValue(const APInt &C) { return ICmpInst::compare(C, *Thr, Pred); }
 };
 /// Match an integer or vector with every element comparing 'pred' (eg/ne/...)
 /// to Threshold. For vectors, this includes constants with undefined elements.
@@ -988,20 +966,22 @@ struct BinaryOp_match {
   // The LHS is always matched first.
   BinaryOp_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
 
-  template <typename OpTy> bool match(OpTy *V) {
-    if (V->getValueID() == Value::InstructionVal + Opcode) {
+  template <typename OpTy> inline bool match(unsigned Opc, OpTy *V) {
+    if (V->getValueID() == Value::InstructionVal + Opc) {
       auto *I = cast<BinaryOperator>(V);
       return (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) ||
              (Commutable && L.match(I->getOperand(1)) &&
               R.match(I->getOperand(0)));
     }
     if (auto *CE = dyn_cast<ConstantExpr>(V))
-      return CE->getOpcode() == Opcode &&
+      return CE->getOpcode() == Opc &&
              ((L.match(CE->getOperand(0)) && R.match(CE->getOperand(1))) ||
               (Commutable && L.match(CE->getOperand(1)) &&
                R.match(CE->getOperand(0))));
     return false;
   }
+
+  template <typename OpTy> bool match(OpTy *V) { return match(Opcode, V); }
 };
 
 template <typename LHS, typename RHS>
@@ -1244,6 +1224,26 @@ m_NUWShl(const LHS &L, const RHS &R) {
   return OverflowingBinaryOp_match<LHS, RHS, Instruction::Shl,
                                    OverflowingBinaryOperator::NoUnsignedWrap>(
       L, R);
+}
+
+template <typename LHS_t, typename RHS_t, bool Commutable = false>
+struct SpecificBinaryOp_match
+    : public BinaryOp_match<LHS_t, RHS_t, 0, Commutable> {
+  unsigned Opcode;
+
+  SpecificBinaryOp_match(unsigned Opcode, const LHS_t &LHS, const RHS_t &RHS)
+      : BinaryOp_match<LHS_t, RHS_t, 0, Commutable>(LHS, RHS), Opcode(Opcode) {}
+
+  template <typename OpTy> bool match(OpTy *V) {
+    return BinaryOp_match<LHS_t, RHS_t, 0, Commutable>::match(Opcode, V);
+  }
+};
+
+/// Matches a specific opcode.
+template <typename LHS, typename RHS>
+inline SpecificBinaryOp_match<LHS, RHS> m_BinOp(unsigned Opcode, const LHS &L,
+                                                const RHS &R) {
+  return SpecificBinaryOp_match<LHS, RHS>(Opcode, L, R);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2223,6 +2223,13 @@ m_c_ICmp(ICmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
                                                                        R);
 }
 
+/// Matches a specific opcode with LHS and RHS in either order.
+template <typename LHS, typename RHS>
+inline SpecificBinaryOp_match<LHS, RHS, true>
+m_c_BinOp(unsigned Opcode, const LHS &L, const RHS &R) {
+  return SpecificBinaryOp_match<LHS, RHS, true>(Opcode, L, R);
+}
+
 /// Matches a Add with LHS and RHS in either order.
 template <typename LHS, typename RHS>
 inline BinaryOp_match<LHS, RHS, Instruction::Add, true> m_c_Add(const LHS &L,
@@ -2279,6 +2286,31 @@ template <typename ValTy>
 inline BinaryOp_match<ValTy, cst_pred_ty<is_all_ones>, Instruction::Xor, true>
 m_Not(const ValTy &V) {
   return m_c_Xor(V, m_AllOnes());
+}
+
+template <typename ValTy> struct NotForbidUndef_match {
+  ValTy Val;
+  NotForbidUndef_match(const ValTy &V) : Val(V) {}
+
+  template <typename OpTy> bool match(OpTy *V) {
+    // We do not use m_c_Xor because that could match an arbitrary APInt that is
+    // not -1 as C and then fail to match the other operand if it is -1.
+    // This code should still work even when both operands are constants.
+    Value *X;
+    const APInt *C;
+    if (m_Xor(m_Value(X), m_APIntForbidUndef(C)).match(V) && C->isAllOnes())
+      return Val.match(X);
+    if (m_Xor(m_APIntForbidUndef(C), m_Value(X)).match(V) && C->isAllOnes())
+      return Val.match(X);
+    return false;
+  }
+};
+
+/// Matches a bitwise 'not' as 'xor V, -1' or 'xor -1, V'. For vectors, the
+/// constant value must be composed of only -1 scalar elements.
+template <typename ValTy>
+inline NotForbidUndef_match<ValTy> m_NotForbidUndef(const ValTy &V) {
+  return NotForbidUndef_match<ValTy>(V);
 }
 
 /// Matches an SMin with LHS and RHS in either order.
@@ -2456,7 +2488,7 @@ inline VScaleVal_match m_VScale(const DataLayout &DL) {
   return VScaleVal_match(DL);
 }
 
-template <typename LHS, typename RHS, unsigned Opcode>
+template <typename LHS, typename RHS, unsigned Opcode, bool Commutable = false>
 struct LogicalOp_match {
   LHS L;
   RHS R;
@@ -2464,27 +2496,32 @@ struct LogicalOp_match {
   LogicalOp_match(const LHS &L, const RHS &R) : L(L), R(R) {}
 
   template <typename T> bool match(T *V) {
-    if (auto *I = dyn_cast<Instruction>(V)) {
-      if (!I->getType()->isIntOrIntVectorTy(1))
-        return false;
+    auto *I = dyn_cast<Instruction>(V);
+    if (!I || !I->getType()->isIntOrIntVectorTy(1))
+      return false;
 
-      if (I->getOpcode() == Opcode && L.match(I->getOperand(0)) &&
-          R.match(I->getOperand(1)))
-        return true;
+    if (I->getOpcode() == Opcode) {
+      auto *Op0 = I->getOperand(0);
+      auto *Op1 = I->getOperand(1);
+      return (L.match(Op0) && R.match(Op1)) ||
+             (Commutable && L.match(Op1) && R.match(Op0));
+    }
 
-      if (auto *SI = dyn_cast<SelectInst>(I)) {
-        if (Opcode == Instruction::And) {
-          if (const auto *C = dyn_cast<Constant>(SI->getFalseValue()))
-            if (C->isNullValue() && L.match(SI->getCondition()) &&
-                R.match(SI->getTrueValue()))
-              return true;
-        } else {
-          assert(Opcode == Instruction::Or);
-          if (const auto *C = dyn_cast<Constant>(SI->getTrueValue()))
-            if (C->isOneValue() && L.match(SI->getCondition()) &&
-                R.match(SI->getFalseValue()))
-              return true;
-        }
+    if (auto *Select = dyn_cast<SelectInst>(I)) {
+      auto *Cond = Select->getCondition();
+      auto *TVal = Select->getTrueValue();
+      auto *FVal = Select->getFalseValue();
+      if (Opcode == Instruction::And) {
+        auto *C = dyn_cast<Constant>(FVal);
+        if (C && C->isNullValue())
+          return (L.match(Cond) && R.match(TVal)) ||
+                 (Commutable && L.match(TVal) && R.match(Cond));
+      } else {
+        assert(Opcode == Instruction::Or);
+        auto *C = dyn_cast<Constant>(TVal);
+        if (C && C->isOneValue())
+          return (L.match(Cond) && R.match(FVal)) ||
+                 (Commutable && L.match(FVal) && R.match(Cond));
       }
     }
 
@@ -2503,6 +2540,13 @@ m_LogicalAnd(const LHS &L, const RHS &R) {
 /// Matches L && R where L and R are arbitrary values.
 inline auto m_LogicalAnd() { return m_LogicalAnd(m_Value(), m_Value()); }
 
+/// Matches L && R with LHS and RHS in either order.
+template <typename LHS, typename RHS>
+inline LogicalOp_match<LHS, RHS, Instruction::And, true>
+m_c_LogicalAnd(const LHS &L, const RHS &R) {
+  return LogicalOp_match<LHS, RHS, Instruction::And, true>(L, R);
+}
+
 /// Matches L || R either in the form of L | R or L ? true : R.
 /// Note that the latter form is poison-blocking.
 template <typename LHS, typename RHS>
@@ -2512,8 +2556,13 @@ m_LogicalOr(const LHS &L, const RHS &R) {
 }
 
 /// Matches L || R where L and R are arbitrary values.
-inline auto m_LogicalOr() {
-  return m_LogicalOr(m_Value(), m_Value());
+inline auto m_LogicalOr() { return m_LogicalOr(m_Value(), m_Value()); }
+
+/// Matches L || R with LHS and RHS in either order.
+template <typename LHS, typename RHS>
+inline LogicalOp_match<LHS, RHS, Instruction::Or, true>
+m_c_LogicalOr(const LHS &L, const RHS &R) {
+  return LogicalOp_match<LHS, RHS, Instruction::Or, true>(L, R);
 }
 
 } // end namespace PatternMatch

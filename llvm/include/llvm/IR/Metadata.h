@@ -20,9 +20,7 @@
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/PointerUnion.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator_range.h"
@@ -46,6 +44,8 @@ namespace llvm {
 class Module;
 class ModuleSlotTracker;
 class raw_ostream;
+template <typename T> class StringMapEntry;
+template <typename ValueTy> class StringMapEntryStorage;
 class Type;
 
 enum LLVMConstants : uint32_t {
@@ -682,6 +682,10 @@ struct AAMDNodes {
   // Shift tbaa.struct Metadata node to start off bytes later
   static MDNode *shiftTBAAStruct(MDNode *M, size_t off);
 
+  // Extend tbaa Metadata node to apply to a series of bytes of length len.
+  // A size of -1 denotes an unknown size.
+  static MDNode *extendToTBAA(MDNode *TBAA, ssize_t len);
+
   /// Given two sets of AAMDNodes that apply to the same pointer,
   /// give the best AAMDNodes that are compatible with both (i.e. a set of
   /// nodes whose allowable aliasing conclusions are a subset of those
@@ -707,6 +711,30 @@ struct AAMDNodes {
     Result.NoAlias = NoAlias;
     return Result;
   }
+
+  /// Create a new AAMDNode that describes this AAMDNode after extending it to
+  /// apply to a series of bytes of length Len. A size of -1 denotes an unknown
+  /// size.
+  AAMDNodes extendTo(ssize_t Len) const {
+    AAMDNodes Result;
+    Result.TBAA = TBAA ? extendToTBAA(TBAA, Len) : nullptr;
+    // tbaa.struct contains (offset, size, type) triples. Extending the length
+    // of the tbaa.struct doesn't require changing this (though more information
+    // could be provided by adding more triples at subsequent lengths).
+    Result.TBAAStruct = TBAAStruct;
+    Result.Scope = Scope;
+    Result.NoAlias = NoAlias;
+    return Result;
+  }
+
+  /// Given two sets of AAMDNodes applying to potentially different locations,
+  /// determine the best AAMDNodes that apply to both.
+  AAMDNodes merge(const AAMDNodes &Other) const;
+
+  /// Determine the best AAMDNodes after concatenating two different locations
+  /// together. Different from `merge`, where different locations should
+  /// overlap each other, `concat` puts non-overlapping locations together.
+  AAMDNodes concat(const AAMDNodes &Other) const;
 };
 
 // Specialize DenseMapInfo for AAMDNodes.
@@ -897,6 +925,7 @@ struct TempMDNodeDeleter {
 class MDNode : public Metadata {
   friend class ReplaceableMetadataImpl;
   friend class LLVMContextImpl;
+  friend class DIArgList;
 
   unsigned NumOperands;
   unsigned NumUnresolved;
@@ -1027,6 +1056,31 @@ public:
   replaceWithDistinct(std::unique_ptr<T, TempMDNodeDeleter> N) {
     return cast<T>(N.release()->replaceWithDistinctImpl());
   }
+
+  /// Print in tree shape.
+  ///
+  /// Prints definition of \c this in tree shape.
+  ///
+  /// If \c M is provided, metadata nodes will be numbered canonically;
+  /// otherwise, pointer addresses are substituted.
+  /// @{
+  void printTree(raw_ostream &OS, const Module *M = nullptr) const;
+  void printTree(raw_ostream &OS, ModuleSlotTracker &MST,
+                 const Module *M = nullptr) const;
+  /// @}
+
+  /// User-friendly dump in tree shape.
+  ///
+  /// If \c M is provided, metadata nodes will be numbered canonically;
+  /// otherwise, pointer addresses are substituted.
+  ///
+  /// Note: this uses an explicit overload instead of default arguments so that
+  /// the nullptr version is easy to call from a debugger.
+  ///
+  /// @{
+  void dumpTree() const;
+  void dumpTree(const Module *M) const;
+  /// @}
 
 private:
   MDNode *replaceWithPermanentImpl();

@@ -1,7 +1,7 @@
 // RUN: mlir-translate -mlir-to-llvmir -split-input-file %s | FileCheck %s
 
 // CHECK: @global_aligned32 = private global i64 42, align 32
-"llvm.mlir.global"() ({}) {sym_name = "global_aligned32", type = i64, value = 42 : i64, linkage = 0, alignment = 32} : () -> ()
+"llvm.mlir.global"() ({}) {sym_name = "global_aligned32", global_type = i64, value = 42 : i64, linkage = #llvm.linkage<private>, alignment = 32} : () -> ()
 
 // CHECK: @global_aligned64 = private global i64 42, align 64
 llvm.mlir.global private @global_aligned64(42 : i64) {alignment = 64 : i64} : i64
@@ -20,6 +20,9 @@ llvm.mlir.global internal @int_global_array(dense<62> : vector<3xi32>) : !llvm.a
 
 // CHECK: @int_global_array_zero_elements = internal constant [3 x [0 x [4 x float]]] zeroinitializer
 llvm.mlir.global internal constant @int_global_array_zero_elements(dense<> : tensor<3x0x4xf32>) : !llvm.array<3 x array<0 x array<4 x f32>>>
+
+// CHECK: @int_global_array_zero_elements_1d = internal constant [0 x float] zeroinitializer
+llvm.mlir.global internal constant @int_global_array_zero_elements_1d(dense<> : tensor<0xf32>) : !llvm.array<0 x f32>
 
 // CHECK: @i32_global_addr_space = internal addrspace(7) global i32 62
 llvm.mlir.global internal @i32_global_addr_space(62: i32) {addr_space = 7 : i32} : i32
@@ -50,6 +53,36 @@ llvm.mlir.global internal constant @int_gep() : !llvm.ptr<i32> {
   llvm.return %gepinit : !llvm.ptr<i32>
 }
 
+// CHECK{LITERAL}: @dense_float_vector = internal global <3 x float> <float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>
+llvm.mlir.global internal @dense_float_vector(dense<[1.0, 2.0, 3.0]> : vector<3xf32>) : vector<3xf32>
+
+// CHECK{LITERAL}: @splat_float_vector = internal global <3 x float> <float 4.200000e+01, float 4.200000e+01, float 4.200000e+01>
+llvm.mlir.global internal @splat_float_vector(dense<42.0> : vector<3xf32>) : vector<3xf32>
+
+// CHECK{LITERAL}: @dense_double_vector = internal global <3 x double> <double 1.000000e+00, double 2.000000e+00, double 3.000000e+00>
+llvm.mlir.global internal @dense_double_vector(dense<[1.0, 2.0, 3.0]> : vector<3xf64>) : vector<3xf64>
+
+// CHECK{LITERAL}: @splat_double_vector = internal global <3 x double> <double 4.200000e+01, double 4.200000e+01, double 4.200000e+01>
+llvm.mlir.global internal @splat_double_vector(dense<42.0> : vector<3xf64>) : vector<3xf64>
+
+// CHECK{LITERAL}: @dense_i64_vector = internal global <3 x i64> <i64 1, i64 2, i64 3>
+llvm.mlir.global internal @dense_i64_vector(dense<[1, 2, 3]> : vector<3xi64>) : vector<3xi64>
+
+// CHECK{LITERAL}: @splat_i64_vector = internal global <3 x i64> <i64 42, i64 42, i64 42>
+llvm.mlir.global internal @splat_i64_vector(dense<42> : vector<3xi64>) : vector<3xi64>
+
+// CHECK{LITERAL}: @dense_float_vector_2d = internal global [2 x <2 x float>] [<2 x float> <float 1.000000e+00, float 2.000000e+00>, <2 x float> <float 3.000000e+00, float 4.000000e+00>]
+llvm.mlir.global internal @dense_float_vector_2d(dense<[[1.0, 2.0], [3.0, 4.0]]> : vector<2x2xf32>) : !llvm.array<2 x vector<2xf32>>
+
+// CHECK{LITERAL}: @splat_float_vector_2d = internal global [2 x <2 x float>] [<2 x float> <float 4.200000e+01, float 4.200000e+01>, <2 x float> <float 4.200000e+01, float 4.200000e+01>]
+llvm.mlir.global internal @splat_float_vector_2d(dense<42.0> : vector<2x2xf32>) : !llvm.array<2 x vector<2xf32>>
+
+// CHECK{LITERAL}: @dense_float_vector_3d = internal global [2 x [2 x <2 x float>]] [[2 x <2 x float>] [<2 x float> <float 1.000000e+00, float 2.000000e+00>, <2 x float> <float 3.000000e+00, float 4.000000e+00>], [2 x <2 x float>] [<2 x float> <float 5.000000e+00, float 6.000000e+00>, <2 x float> <float 7.000000e+00, float 8.000000e+00>]]
+llvm.mlir.global internal @dense_float_vector_3d(dense<[[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]> : vector<2x2x2xf32>) : !llvm.array<2 x !llvm.array<2 x vector<2xf32>>>
+
+// CHECK{LITERAL}: @splat_float_vector_3d = internal global [2 x [2 x <2 x float>]] [[2 x <2 x float>] [<2 x float> <float 4.200000e+01, float 4.200000e+01>, <2 x float> <float 4.200000e+01, float 4.200000e+01>], [2 x <2 x float>] [<2 x float> <float 4.200000e+01, float 4.200000e+01>, <2 x float> <float 4.200000e+01, float 4.200000e+01>]]
+llvm.mlir.global internal @splat_float_vector_3d(dense<42.0> : vector<2x2x2xf32>) : !llvm.array<2 x !llvm.array<2 x vector<2xf32>>>
+
 //
 // Linkage attribute.
 //
@@ -67,7 +100,7 @@ llvm.mlir.global weak @weak(42 : i32) : i32
 // CHECK: @common = common global i32 0
 llvm.mlir.global common @common(0 : i32) : i32
 // CHECK: @appending = appending global [3 x i32] [i32 1, i32 2, i32 3]
-llvm.mlir.global appending @appending(dense<[1,2,3]> : vector<3xi32>) : !llvm.array<3xi32>
+llvm.mlir.global appending @appending(dense<[1,2,3]> : tensor<3xi32>) : !llvm.array<3xi32>
 // CHECK: @extern_weak = extern_weak global i32
 llvm.mlir.global extern_weak @extern_weak() : i32
 // CHECK: @linkonce_odr = linkonce_odr global i32 42
@@ -874,6 +907,13 @@ llvm.func @vector_splat_1d() -> vector<4xf32> {
   llvm.return %0 : vector<4xf32>
 }
 
+// CHECK-LABEL: @vector_splat_1d_scalable
+llvm.func @vector_splat_1d_scalable() -> vector<[4]xf32> {
+  // CHECK: ret <vscale x 4 x float> zeroinitializer
+  %0 = llvm.mlir.constant(dense<0.000000e+00> : vector<[4]xf32>) : vector<[4]xf32>
+  llvm.return %0 : vector<[4]xf32>
+}
+
 // CHECK-LABEL: @vector_splat_2d
 llvm.func @vector_splat_2d() -> !llvm.array<4 x vector<16 x f32>> {
   // CHECK: ret [4 x <16 x float>] zeroinitializer
@@ -893,6 +933,13 @@ llvm.func @vector_splat_nonzero() -> vector<4xf32> {
   // CHECK: ret <4 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
   %0 = llvm.mlir.constant(dense<1.000000e+00> : vector<4xf32>) : vector<4xf32>
   llvm.return %0 : vector<4xf32>
+}
+
+// CHECK-LABEL: @vector_splat_nonzero_scalable
+llvm.func @vector_splat_nonzero_scalable() -> vector<[4]xf32> {
+  // CHECK: ret <vscale x 4 x float> shufflevector (<vscale x 4 x float> insertelement (<vscale x 4 x float> poison, float 1.000000e+00, i32 0), <vscale x 4 x float> poison, <vscale x 4 x i32> zeroinitializer)
+  %0 = llvm.mlir.constant(dense<1.000000e+00> : vector<[4]xf32>) : vector<[4]xf32>
+  llvm.return %0 : vector<[4]xf32>
 }
 
 // CHECK-LABEL: @ops
@@ -940,6 +987,16 @@ llvm.func @ops(%arg0: f32, %arg1: f32, %arg2: i32, %arg3: i32) -> !llvm.struct<(
   %19 = llvm.fneg %arg0 : f32
 
   llvm.return %10 : !llvm.struct<(f32, i32)>
+}
+
+// CHECK-LABEL: @gep
+llvm.func @gep(%ptr: !llvm.ptr<struct<(i32, struct<(i32, f32)>)>>, %idx: i64,
+               %ptr2: !llvm.ptr<struct<(array<10xf32>)>>) {
+  // CHECK: = getelementptr { i32, { i32, float } }, { i32, { i32, float } }* %{{.*}}, i64 %{{.*}}, i32 1, i32 0
+  llvm.getelementptr %ptr[%idx, 1, 0] : (!llvm.ptr<struct<(i32, struct<(i32, f32)>)>>, i64) -> !llvm.ptr<i32>
+  // CHECK: = getelementptr { [10 x float] }, { [10 x float] }* %{{.*}}, i64 %{{.*}}, i32 0, i64 %{{.*}}
+  llvm.getelementptr %ptr2[%idx, 0, %idx] : (!llvm.ptr<struct<(array<10xf32>)>>, i64, i64) -> !llvm.ptr<f32>
+  llvm.return
 }
 
 //
@@ -1119,13 +1176,15 @@ llvm.func @alloca(%size : i64) {
   llvm.alloca %size x i32 {alignment = 0} : (i64) -> (!llvm.ptr<i32>)
   // CHECK-NEXT: alloca {{.*}} align 8
   llvm.alloca %size x i32 {alignment = 8} : (i64) -> (!llvm.ptr<i32>)
+  // CHECK-NEXT: alloca {{.*}} addrspace(3)
+  llvm.alloca %size x i32 {alignment = 0} : (i64) -> (!llvm.ptr<i32, 3>)
   llvm.return
 }
 
 // CHECK-LABEL: @constants
 llvm.func @constants() -> vector<4xf32> {
   // CHECK: ret <4 x float> <float 4.2{{0*}}e+01, float 0.{{0*}}e+00, float 0.{{0*}}e+00, float 0.{{0*}}e+00>
-  %0 = llvm.mlir.constant(sparse<[[0]], [4.2e+01]> : vector<4xf32>) : vector<4xf32>
+  %0 = llvm.mlir.constant(sparse<[0], [4.2e+01]> : vector<4xf32>) : vector<4xf32>
   llvm.return %0 : vector<4xf32>
 }
 
@@ -1263,6 +1322,70 @@ llvm.func @invokeLandingpad() -> i32 attributes { personality = @__gxx_personali
   %8 = llvm.invoke @bar(%6) to ^bb2 unwind ^bb1 : (!llvm.ptr<i8>) -> !llvm.ptr<i8>
 }
 
+// -----
+
+llvm.func @foo() -> i8
+llvm.func @__gxx_personality_v0(...) -> i32
+
+// CHECK-LABEL: @invoke_result
+// CHECK-SAME: %[[a0:[0-9]+]]
+llvm.func @invoke_result(%arg0 : !llvm.ptr<i8>) attributes { personality = @__gxx_personality_v0 } {
+// CHECK: %[[a1:[0-9]+]] = invoke i8 @foo()
+// CHECK-NEXT: to label %[[normal:[0-9]+]] unwind label %[[unwind:[0-9]+]]
+    %0 = llvm.invoke @foo() to ^bb1 unwind ^bb2 : () -> i8
+
+// CHECK: [[normal]]:
+// CHECK-NEXT: store i8 %[[a1]], i8* %[[a0]]
+// CHECK-NEXT: ret void
+^bb1:
+    llvm.store %0, %arg0 : !llvm.ptr<i8>
+    llvm.return
+
+// CHECK: [[unwind]]:
+// CHECK-NEXT: landingpad { i8*, i32 }
+// CHECK-NEXT: cleanup
+// CHECK-NEXT: ret void
+^bb2:
+    %7 = llvm.landingpad cleanup : !llvm.struct<(ptr<i8>, i32)>
+    llvm.return
+}
+
+// -----
+
+llvm.func @foo()
+llvm.func @__gxx_personality_v0(...) -> i32
+
+// CHECK-LABEL: @invoke_phis
+llvm.func @invoke_phis() -> i32 attributes { personality = @__gxx_personality_v0 } {
+// CHECK: invoke void @foo()
+// CHECK-NEXT: to label %[[normal:[0-9]+]] unwind label %[[unwind:[0-9]+]]
+    %0 = llvm.mlir.constant(0 : i32) : i32
+    llvm.invoke @foo() to ^bb1(%0 : i32) unwind ^bb2 : () -> ()
+
+// CHECK: [[normal]]:
+// CHECK-NEXT: %[[a1:[0-9]+]] = phi i32 [ 1, %[[unwind]] ], [ 0, %0 ]
+// CHECK-NEXT: ret i32 %[[a1]]
+^bb1(%1 : i32):
+    llvm.return %1 : i32
+
+// CHECK: [[unwind]]:
+// CHECK-NEXT: landingpad { i8*, i32 }
+// CHECK-NEXT: cleanup
+// CHECK-NEXT: br label %[[normal]]
+^bb2:
+    %2 = llvm.landingpad cleanup : !llvm.struct<(ptr<i8>, i32)>
+    %3 = llvm.mlir.constant(1 : i32) : i32
+    llvm.br ^bb1(%3 : i32)
+}
+
+// -----
+
+// CHECK-LABEL: @hasGCFunction
+// CHECK-SAME: gc "statepoint-example"
+llvm.func @hasGCFunction() attributes { garbageCollector = "statepoint-example" } {
+    llvm.return
+}
+
 // CHECK-LABEL: @callFreezeOp
 llvm.func @callFreezeOp(%x : i32) {
   // CHECK: freeze i32 %{{[0-9]+}}
@@ -1343,10 +1466,28 @@ llvm.mlir.global linkonce @take_self_address() : !llvm.struct<(i32, !llvm.ptr<i3
   %z32 = llvm.mlir.constant(0 : i32) : i32
   %0 = llvm.mlir.undef : !llvm.struct<(i32, !llvm.ptr<i32>)>
   %1 = llvm.mlir.addressof @take_self_address : !llvm.ptr<!llvm.struct<(i32, !llvm.ptr<i32>)>>
-  %2 = llvm.getelementptr %1[%z32, %z32] : (!llvm.ptr<!llvm.struct<(i32, !llvm.ptr<i32>)>>, i32, i32) -> !llvm.ptr<i32>
+  %2 = llvm.getelementptr %1[%z32, 0] : (!llvm.ptr<!llvm.struct<(i32, !llvm.ptr<i32>)>>, i32) -> !llvm.ptr<i32>
   %3 = llvm.insertvalue %z32, %0[0 : i32] : !llvm.struct<(i32, !llvm.ptr<i32>)>
   %4 = llvm.insertvalue %2, %3[1 : i32] : !llvm.struct<(i32, !llvm.ptr<i32>)>
   llvm.return %4 : !llvm.struct<(i32, !llvm.ptr<i32>)>
+}
+
+// -----
+
+// CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @foo, i8* null }]
+llvm.mlir.global_ctors { ctors = [@foo], priorities = [0 : i32]}
+
+llvm.func @foo() {
+  llvm.return
+}
+
+// -----
+
+// CHECK: @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 0, void ()* @foo, i8* null }]
+llvm.mlir.global_dtors { dtors = [@foo], priorities = [0 : i32]}
+
+llvm.func @foo() {
+  llvm.return
 }
 
 // -----
@@ -1509,7 +1650,7 @@ llvm.func @switch_args(%arg0: i32) -> i32 {
   // CHECK-NEXT:   i32 -1, label %[[SWITCHCASE_bb2:[0-9]+]]
   // CHECK-NEXT:   i32 1, label %[[SWITCHCASE_bb3:[0-9]+]]
   // CHECK-NEXT: ]
-  llvm.switch %arg0, ^bb1 [
+  llvm.switch %arg0 : i32, ^bb1 [
     -1: ^bb2(%0 : i32),
     1: ^bb3(%1, %2 : i32, i32)
   ]
@@ -1539,7 +1680,7 @@ llvm.func @switch_weights(%arg0: i32) -> i32 {
   %1 = llvm.mlir.constant(23 : i32) : i32
   %2 = llvm.mlir.constant(29 : i32) : i32
   // CHECK: !prof ![[SWITCH_WEIGHT_NODE:[0-9]+]]
-  llvm.switch %arg0, ^bb1(%0 : i32) [
+  llvm.switch %arg0 : i32, ^bb1(%0 : i32) [
     9: ^bb2(%1, %2 : i32, i32),
     99: ^bb3
   ] {branch_weights = dense<[13, 17, 19]> : vector<3xi32>}
@@ -1617,16 +1758,115 @@ module {
 
 // Function
 // CHECK-LABEL: aliasScope
-// CHECK:  store {{.*}}, !alias.scope ![[SCOPE1:[0-9]+]], !noalias ![[SCOPES23:[0-9]+]]
-// CHECK:  store {{.*}}, !alias.scope ![[SCOPE2:[0-9]+]], !noalias ![[SCOPES13:[0-9]+]]
-// CHECK:  load {{.*}},  !alias.scope ![[SCOPE3:[0-9]+]], !noalias ![[SCOPES12:[0-9]+]]
+// CHECK:  store {{.*}}, !alias.scope ![[SCOPES1:[0-9]+]], !noalias ![[SCOPES23:[0-9]+]]
+// CHECK:  store {{.*}}, !alias.scope ![[SCOPES2:[0-9]+]], !noalias ![[SCOPES13:[0-9]+]]
+// CHECK:  load {{.*}},  !alias.scope ![[SCOPES3:[0-9]+]], !noalias ![[SCOPES12:[0-9]+]]
 
 // Metadata
 // CHECK-DAG: ![[DOMAIN:[0-9]+]] = distinct !{![[DOMAIN]], !"The domain"}
-// CHECK-DAG: ![[SCOPE1]] = distinct !{![[SCOPE1]], ![[DOMAIN]], !"The first scope"}
-// CHECK-DAG: ![[SCOPE2]] = distinct !{![[SCOPE2]], ![[DOMAIN]]}
-// CHECK-DAG: ![[SCOPE3]] = distinct !{![[SCOPE3]], ![[DOMAIN]]}
+// CHECK-DAG: ![[SCOPE1:[0-9]+]] = distinct !{![[SCOPE1]], ![[DOMAIN]], !"The first scope"}
+// CHECK-DAG: ![[SCOPE2:[0-9]+]] = distinct !{![[SCOPE2]], ![[DOMAIN]]}
+// CHECK-DAG: ![[SCOPE3:[0-9]+]] = distinct !{![[SCOPE3]], ![[DOMAIN]]}
+// CHECK-DAG: ![[SCOPES1]] = !{![[SCOPE1]]}
+// CHECK-DAG: ![[SCOPES2]] = !{![[SCOPE2]]}
+// CHECK-DAG: ![[SCOPES3]] = !{![[SCOPE3]]}
 // CHECK-DAG: ![[SCOPES12]] = !{![[SCOPE1]], ![[SCOPE2]]}
 // CHECK-DAG: ![[SCOPES13]] = !{![[SCOPE1]], ![[SCOPE3]]}
 // CHECK-DAG: ![[SCOPES23]] = !{![[SCOPE2]], ![[SCOPE3]]}
 
+
+// -----
+
+// It is okay to have repeated successors if they have no arguments.
+
+// CHECK-LABEL: @duplicate_block_in_switch
+// CHECK-SAME: float %[[FIRST:.*]],
+// CHECK-SAME: float %[[SECOND:.*]])
+// CHECK:   switch i32 %{{.*}}, label %[[DEFAULT:.*]] [
+// CHECK:     i32 105, label %[[DUPLICATE:.*]]
+// CHECK:     i32 108, label %[[BLOCK:.*]]
+// CHECK:     i32 106, label %[[DUPLICATE]]
+// CHECK:   ]
+
+// CHECK: [[DEFAULT]]:
+// CHECK:   phi float [ %[[FIRST]], %{{.*}} ]
+// CHECK:   call void @bar
+
+// CHECK: [[DUPLICATE]]:
+// CHECK:   call void @baz
+
+// CHECK: [[BLOCK]]:
+// CHECK:   phi float [ %[[SECOND]], %{{.*}} ]
+// CHECK:   call void @qux
+
+llvm.func @duplicate_block_in_switch(%cond : i32, %arg1: f32, %arg2: f32) {
+  llvm.switch %cond : i32, ^bb1(%arg1: f32) [
+    105: ^bb2,
+    108: ^bb3(%arg2: f32),
+    106: ^bb2
+  ]
+
+^bb1(%arg3: f32):
+  llvm.call @bar(%arg3): (f32) -> ()
+  llvm.return
+
+^bb2:
+  llvm.call @baz() : () -> ()
+  llvm.return
+
+^bb3(%arg4: f32):
+  llvm.call @qux(%arg4) : (f32) -> ()
+  llvm.return
+}
+
+// If there are repeated successors with arguments, a new block must be created
+// for repeated successors to ensure PHI can disambiguate values based on the
+// predecessor they come from.
+
+// CHECK-LABEL: @duplicate_block_with_args_in_switch
+// CHECK-SAME: float %[[FIRST:.*]],
+// CHECK-SAME: float %[[SECOND:.*]])
+// CHECK:   switch i32 %{{.*}}, label %[[DEFAULT:.*]] [
+// CHECK:     i32 106, label %[[DUPLICATE:.*]]
+// CHECK:     i32 105, label %[[BLOCK:.*]]
+// CHECK:     i32 108, label %[[DEDUPLICATED:.*]]
+// CHECK:   ]
+
+// CHECK: [[DEFAULT]]:
+// CHECK:   phi float [ %[[FIRST]], %{{.*}} ]
+// CHECK:   call void @bar
+
+// CHECK: [[BLOCK]]:
+// CHECK:   call void @baz
+
+// CHECK: [[DUPLICATE]]:
+// CHECK:   phi float [ %[[PHI:.*]], %[[DEDUPLICATED]] ], [ %[[FIRST]], %{{.*}} ]
+// CHECK:   call void @qux
+
+// CHECK: [[DEDUPLICATED]]:
+// CHECK:   %[[PHI]] = phi float [ %[[SECOND]], %{{.*}} ]
+// CHECK:   br label %[[DUPLICATE]]
+
+llvm.func @duplicate_block_with_args_in_switch(%cond : i32, %arg1: f32, %arg2: f32) {
+  llvm.switch %cond : i32, ^bb1(%arg1: f32) [
+    106: ^bb3(%arg1: f32),
+    105: ^bb2,
+    108: ^bb3(%arg2: f32)
+  ]
+
+^bb1(%arg3: f32):
+  llvm.call @bar(%arg3): (f32) -> ()
+  llvm.return
+
+^bb2:
+  llvm.call @baz() : () -> ()
+  llvm.return
+
+^bb3(%arg4: f32):
+  llvm.call @qux(%arg4) : (f32) -> ()
+  llvm.return
+}
+
+llvm.func @bar(f32)
+llvm.func @baz()
+llvm.func @qux(f32)

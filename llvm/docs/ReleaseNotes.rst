@@ -1,21 +1,23 @@
-=========================
-LLVM 14.0.0 Release Notes
-=========================
+============================
+LLVM |release| Release Notes
+============================
 
 .. contents::
     :local:
 
-.. warning::
-   These are in-progress notes for the upcoming LLVM 14 release.
-   Release notes for previous releases can be found on
-   `the Download Page <https://releases.llvm.org/download.html>`_.
+.. only:: PreRelease
+
+  .. warning::
+     These are in-progress notes for the upcoming LLVM |version| release.
+     Release notes for previous releases can be found on
+     `the Download Page <https://releases.llvm.org/download.html>`_.
 
 
 Introduction
 ============
 
 This document contains the release notes for the LLVM Compiler Infrastructure,
-release 14.0.0.  Here we describe the status of LLVM, including major improvements
+release |release|.  Here we describe the status of LLVM, including major improvements
 from the previous release, improvements in various subprojects of LLVM, and
 some of the current users of the code.  All LLVM releases may be downloaded
 from the `LLVM releases web site <https://llvm.org/releases/>`_.
@@ -56,12 +58,8 @@ Non-comprehensive list of changes in this release
 Changes to the LLVM IR
 ----------------------
 
-* ...
-
 Changes to building LLVM
 ------------------------
-
-* ...
 
 Changes to TableGen
 -------------------
@@ -69,49 +67,57 @@ Changes to TableGen
 Changes to the AArch64 Backend
 ------------------------------
 
+Changes to the AMDGPU Backend
+-----------------------------
+
 * ...
 
 Changes to the ARM Backend
 --------------------------
 
-During this release ...
+* Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures.
+* Added support for the Armv8.1-M PACBTI-M extension.
+* Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures.
+* Added support for the Armv8.1-M PACBTI-M extension.
+* Removed the deprecation of ARMv8-A T32 Complex IT blocks. No deprecation
+  warnings will be generated and -mrestrict-it is now always off by default.
+  Previously it was on by default for Armv8 and off for all other architecture
+  versions.
 
-Changes to the MIPS Target
+Changes to the AVR Backend
 --------------------------
 
-During this release ...
+* ...
 
-Changes to the Hexagon Target
+Changes to the Hexagon Backend
+------------------------------
+
+* ...
+
+Changes to the MIPS Backend
+---------------------------
+
+* ...
+
+Changes to the PowerPC Backend
+------------------------------
+
+* ...
+
+Changes to the RISC-V Backend
 -----------------------------
 
 * ...
 
-Changes to the PowerPC Target
------------------------------
+Changes to the WebAssembly Backend
+----------------------------------
 
-During this release ...
+* ...
 
-Changes to the X86 Target
--------------------------
+Changes to the X86 Backend
+--------------------------
 
-During this release ...
-
-* Support for ``AVX512-FP16`` instructions has been added.
-
-Changes to the AMDGPU Target
------------------------------
-
-During this release ...
-
-Changes to the AVR Target
------------------------------
-
-During this release ...
-
-Changes to the WebAssembly Target
----------------------------------
-
-During this release ...
+* ...
 
 Changes to the OCaml bindings
 -----------------------------
@@ -119,8 +125,6 @@ Changes to the OCaml bindings
 
 Changes to the C API
 --------------------
-
-* ...
 
 Changes to the Go bindings
 --------------------------
@@ -143,15 +147,13 @@ During this release ...
 Changes to the LLVM tools
 ---------------------------------
 
-* ...
-
 Changes to LLDB
 ---------------------------------
 
 Changes to Sanitizers
 ---------------------
 
-External Open Source Projects Using LLVM 14
+External Open Source Projects Using LLVM 15
 ===========================================
 
 * A project...

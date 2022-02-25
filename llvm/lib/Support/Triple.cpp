@@ -7,14 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Triple.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/STLArrayExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/ARMTargetParser.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/SwapByteOrder.h"
-#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/VersionTuple.h"
 #include <cassert>
 #include <cstring>
@@ -44,6 +44,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case lanai:          return "lanai";
   case le32:           return "le32";
   case le64:           return "le64";
+  case loongarch32:    return "loongarch32";
+  case loongarch64:    return "loongarch64";
   case m68k:           return "m68k";
   case mips64:         return "mips64";
   case mips64el:       return "mips64el";
@@ -67,6 +69,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case sparcv9:        return "sparcv9";
   case spir64:         return "spir64";
   case spir:           return "spir";
+  case spirv32:        return "spirv32";
+  case spirv64:        return "spirv64";
   case systemz:        return "s390x";
   case tce:            return "tce";
   case tcele:          return "tcele";
@@ -147,6 +151,10 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
 
   case spir:
   case spir64:      return "spir";
+
+  case spirv32:
+  case spirv64:     return "spirv";
+
   case kalimba:     return "kalimba";
   case lanai:       return "lanai";
   case shave:       return "shave";
@@ -158,6 +166,9 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
 
   case ve:          return "ve";
   case csky:        return "csky";
+
+  case loongarch32:
+  case loongarch64: return "loongarch";
   }
 }
 
@@ -197,6 +208,7 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case Contiki: return "contiki";
   case Darwin: return "darwin";
   case DragonFly: return "dragonfly";
+  case DriverKit: return "driverkit";
   case ELFIAMCU: return "elfiamcu";
   case Emscripten: return "emscripten";
   case FreeBSD: return "freebsd";
@@ -323,6 +335,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("hsail64", hsail64)
     .Case("spir", spir)
     .Case("spir64", spir64)
+    .Case("spirv32", spirv32)
+    .Case("spirv64", spirv64)
     .Case("kalimba", kalimba)
     .Case("lanai", lanai)
     .Case("shave", shave)
@@ -332,6 +346,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("renderscript64", renderscript64)
     .Case("ve", ve)
     .Case("csky", csky)
+    .Case("loongarch32", loongarch32)
+    .Case("loongarch64", loongarch64)
     .Default(UnknownArch);
 }
 
@@ -456,6 +472,8 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("hsail64", Triple::hsail64)
     .Case("spir", Triple::spir)
     .Case("spir64", Triple::spir64)
+    .Case("spirv32", Triple::spirv32)
+    .Case("spirv64", Triple::spirv64)
     .StartsWith("kalimba", Triple::kalimba)
     .Case("lanai", Triple::lanai)
     .Case("renderscript32", Triple::renderscript32)
@@ -465,6 +483,8 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("wasm32", Triple::wasm32)
     .Case("wasm64", Triple::wasm64)
     .Case("csky", Triple::csky)
+    .Case("loongarch32", Triple::loongarch32)
+    .Case("loongarch64", Triple::loongarch64)
     .Default(Triple::UnknownArch);
 
   // Some architectures require special parsing logic just to compute the
@@ -531,6 +551,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("elfiamcu", Triple::ELFIAMCU)
     .StartsWith("tvos", Triple::TvOS)
     .StartsWith("watchos", Triple::WatchOS)
+    .StartsWith("driverkit", Triple::DriverKit)
     .StartsWith("mesa3d", Triple::Mesa3D)
     .StartsWith("contiki", Triple::Contiki)
     .StartsWith("amdpal", Triple::AMDPAL)
@@ -653,6 +674,16 @@ static Triple::SubArchType parseSubArch(StringRef SubArchName) {
     return Triple::ARMSubArch_v8_6a;
   case ARM::ArchKind::ARMV8_7A:
     return Triple::ARMSubArch_v8_7a;
+  case ARM::ArchKind::ARMV8_8A:
+    return Triple::ARMSubArch_v8_8a;
+  case ARM::ArchKind::ARMV9A:
+    return Triple::ARMSubArch_v9;
+  case ARM::ArchKind::ARMV9_1A:
+    return Triple::ARMSubArch_v9_1a;
+  case ARM::ArchKind::ARMV9_2A:
+    return Triple::ARMSubArch_v9_2a;
+  case ARM::ArchKind::ARMV9_3A:
+    return Triple::ARMSubArch_v9_3a;
   case ARM::ArchKind::ARMV8R:
     return Triple::ARMSubArch_v8r;
   case ARM::ArchKind::ARMV8MBaseline:
@@ -711,6 +742,8 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::lanai:
   case Triple::le32:
   case Triple::le64:
+  case Triple::loongarch32:
+  case Triple::loongarch64:
   case Triple::m68k:
   case Triple::mips64:
   case Triple::mips64el:
@@ -753,6 +786,11 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::wasm32:
   case Triple::wasm64:
     return Triple::Wasm;
+
+  case Triple::spirv32:
+  case Triple::spirv64:
+    // TODO: In future this will be Triple::SPIRV.
+    return Triple::UnknownObjectFormat;
   }
   llvm_unreachable("unknown architecture");
 }
@@ -968,10 +1006,9 @@ std::string Triple::normalize(StringRef Str) {
   }
 
   // Replace empty components with "unknown" value.
-  for (unsigned i = 0, e = Components.size(); i < e; ++i) {
-    if (Components[i].empty())
-      Components[i] = "unknown";
-  }
+  for (StringRef &C : Components)
+    if (C.empty())
+      C = "unknown";
 
   // Special case logic goes here.  At this point Arch, Vendor and OS have the
   // correct values for the computed components.
@@ -1024,6 +1061,30 @@ StringRef Triple::getArchName() const {
   return StringRef(Data).split('-').first;           // Isolate first component
 }
 
+StringRef Triple::getArchName(ArchType Kind, SubArchType SubArch) const {
+  switch (Kind) {
+  case Triple::mips:
+    if (SubArch == MipsSubArch_r6)
+      return "mipsisa32r6";
+    break;
+  case Triple::mipsel:
+    if (SubArch == MipsSubArch_r6)
+      return "mipsisa32r6el";
+    break;
+  case Triple::mips64:
+    if (SubArch == MipsSubArch_r6)
+      return "mipsisa64r6";
+    break;
+  case Triple::mips64el:
+    if (SubArch == MipsSubArch_r6)
+      return "mipsisa64r6el";
+    break;
+  default:
+    break;
+  }
+  return getArchTypeName(Kind);
+}
+
 StringRef Triple::getVendorName() const {
   StringRef Tmp = StringRef(Data).split('-').second; // Strip first component
   return Tmp.split('-').first;                       // Isolate second component
@@ -1046,53 +1107,22 @@ StringRef Triple::getOSAndEnvironmentName() const {
   return Tmp.split('-').second;                      // Strip second component
 }
 
-static unsigned EatNumber(StringRef &Str) {
-  assert(!Str.empty() && isDigit(Str[0]) && "Not a number");
-  unsigned Result = 0;
-
-  do {
-    // Consume the leading digit.
-    Result = Result*10 + (Str[0] - '0');
-
-    // Eat the digit.
-    Str = Str.substr(1);
-  } while (!Str.empty() && isDigit(Str[0]));
-
-  return Result;
+static VersionTuple parseVersionFromName(StringRef Name) {
+  VersionTuple Version;
+  Version.tryParse(Name);
+  return Version.withoutBuild();
 }
 
-static void parseVersionFromName(StringRef Name, unsigned &Major,
-                                 unsigned &Minor, unsigned &Micro) {
-  // Any unset version defaults to 0.
-  Major = Minor = Micro = 0;
-
-  // Parse up to three components.
-  unsigned *Components[3] = {&Major, &Minor, &Micro};
-  for (unsigned i = 0; i != 3; ++i) {
-    if (Name.empty() || Name[0] < '0' || Name[0] > '9')
-      break;
-
-    // Consume the leading number.
-    *Components[i] = EatNumber(Name);
-
-    // Consume the separator, if present.
-    if (Name.startswith("."))
-      Name = Name.substr(1);
-  }
-}
-
-void Triple::getEnvironmentVersion(unsigned &Major, unsigned &Minor,
-                                   unsigned &Micro) const {
+VersionTuple Triple::getEnvironmentVersion() const {
   StringRef EnvironmentName = getEnvironmentName();
   StringRef EnvironmentTypeName = getEnvironmentTypeName(getEnvironment());
   if (EnvironmentName.startswith(EnvironmentTypeName))
     EnvironmentName = EnvironmentName.substr(EnvironmentTypeName.size());
 
-  parseVersionFromName(EnvironmentName, Major, Minor, Micro);
+  return parseVersionFromName(EnvironmentName);
 }
 
-void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
-                          unsigned &Micro) const {
+VersionTuple Triple::getOSVersion() const {
   StringRef OSName = getOSName();
   // Assume that the OS portion of the triple starts with the canonical name.
   StringRef OSTypeName = getOSTypeName(getOS());
@@ -1101,40 +1131,36 @@ void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
   else if (getOS() == MacOSX)
     OSName.consume_front("macos");
 
-  parseVersionFromName(OSName, Major, Minor, Micro);
+  return parseVersionFromName(OSName);
 }
 
-bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
-                              unsigned &Micro) const {
-  getOSVersion(Major, Minor, Micro);
+bool Triple::getMacOSXVersion(VersionTuple &Version) const {
+  Version = getOSVersion();
 
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
   case Darwin:
     // Default to darwin8, i.e., MacOSX 10.4.
-    if (Major == 0)
-      Major = 8;
+    if (Version.getMajor() == 0)
+      Version = VersionTuple(8);
     // Darwin version numbers are skewed from OS X versions.
-    if (Major < 4)
+    if (Version.getMajor() < 4) {
       return false;
-    if (Major <= 19) {
-      Micro = 0;
-      Minor = Major - 4;
-      Major = 10;
+    }
+    if (Version.getMajor() <= 19) {
+      Version = VersionTuple(10, Version.getMajor() - 4);
     } else {
-      Micro = 0;
-      Minor = 0;
       // darwin20+ corresponds to macOS 11+.
-      Major = 11 + Major - 20;
+      Version = VersionTuple(11 + Version.getMajor() - 20);
     }
     break;
   case MacOSX:
     // Default to 10.4.
-    if (Major == 0) {
-      Major = 10;
-      Minor = 4;
-    } else if (Major < 10)
+    if (Version.getMajor() == 0) {
+      Version = VersionTuple(10, 4);
+    } else if (Version.getMajor() < 10) {
       return false;
+    }
     break;
   case IOS:
   case TvOS:
@@ -1143,16 +1169,15 @@ bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
     // the clang driver combines OS X and IOS support into a common Darwin
     // toolchain that wants to know the OS X version number even when targeting
     // IOS.
-    Major = 10;
-    Minor = 4;
-    Micro = 0;
+    Version = VersionTuple(10, 4);
     break;
+  case DriverKit:
+    llvm_unreachable("OSX version isn't relevant for DriverKit");
   }
   return true;
 }
 
-void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
-                           unsigned &Micro) const {
+VersionTuple Triple::getiOSVersion() const {
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
   case Darwin:
@@ -1161,24 +1186,23 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
     // the clang driver combines OS X and IOS support into a common Darwin
     // toolchain that wants to know the iOS version number even when targeting
     // OS X.
-    Major = 5;
-    Minor = 0;
-    Micro = 0;
-    break;
+    return VersionTuple(5);
   case IOS:
-  case TvOS:
-    getOSVersion(Major, Minor, Micro);
+  case TvOS: {
+    VersionTuple Version = getOSVersion();
     // Default to 5.0 (or 7.0 for arm64).
-    if (Major == 0)
-      Major = (getArch() == aarch64) ? 7 : 5;
-    break;
+    if (Version.getMajor() == 0)
+      return (getArch() == aarch64) ? VersionTuple(7) : VersionTuple(5);
+    return Version;
+  }
   case WatchOS:
     llvm_unreachable("conflicting triple info");
+  case DriverKit:
+    llvm_unreachable("DriverKit doesn't have an iOS version");
   }
 }
 
-void Triple::getWatchOSVersion(unsigned &Major, unsigned &Minor,
-                               unsigned &Micro) const {
+VersionTuple Triple::getWatchOSVersion() const {
   switch (getOS()) {
   default: llvm_unreachable("unexpected OS for Darwin triple");
   case Darwin:
@@ -1187,17 +1211,29 @@ void Triple::getWatchOSVersion(unsigned &Major, unsigned &Minor,
     // the clang driver combines OS X and IOS support into a common Darwin
     // toolchain that wants to know the iOS version number even when targeting
     // OS X.
-    Major = 2;
-    Minor = 0;
-    Micro = 0;
-    break;
-  case WatchOS:
-    getOSVersion(Major, Minor, Micro);
-    if (Major == 0)
-      Major = 2;
-    break;
+    return VersionTuple(2);
+  case WatchOS: {
+    VersionTuple Version = getOSVersion();
+    if (Version.getMajor() == 0)
+      return VersionTuple(2);
+    return Version;
+  }
   case IOS:
     llvm_unreachable("conflicting triple info");
+  case DriverKit:
+    llvm_unreachable("DriverKit doesn't have a WatchOS version");
+  }
+}
+
+VersionTuple Triple::getDriverKitVersion() const {
+  switch (getOS()) {
+  default:
+    llvm_unreachable("unexpected OS for Darwin triple");
+  case DriverKit:
+    VersionTuple Version = getOSVersion();
+    if (Version.getMajor() == 0)
+      return Version.withMajorReplaced(19);
+    return Version;
   }
 }
 
@@ -1205,8 +1241,8 @@ void Triple::setTriple(const Twine &Str) {
   *this = Triple(Str);
 }
 
-void Triple::setArch(ArchType Kind) {
-  setArchName(getArchTypeName(Kind));
+void Triple::setArch(ArchType Kind, SubArchType SubArch) {
+  setArchName(getArchName(Kind, SubArch));
 }
 
 void Triple::setVendor(VendorType Kind) {
@@ -1285,6 +1321,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::kalimba:
   case llvm::Triple::lanai:
   case llvm::Triple::le32:
+  case llvm::Triple::loongarch32:
   case llvm::Triple::m68k:
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
@@ -1298,6 +1335,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::sparc:
   case llvm::Triple::sparcel:
   case llvm::Triple::spir:
+  case llvm::Triple::spirv32:
   case llvm::Triple::tce:
   case llvm::Triple::tcele:
   case llvm::Triple::thumb:
@@ -1315,6 +1353,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::bpfel:
   case llvm::Triple::hsail64:
   case llvm::Triple::le64:
+  case llvm::Triple::loongarch64:
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
   case llvm::Triple::nvptx64:
@@ -1324,6 +1363,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::riscv64:
   case llvm::Triple::sparcv9:
   case llvm::Triple::spir64:
+  case llvm::Triple::spirv64:
   case llvm::Triple::systemz:
   case llvm::Triple::ve:
   case llvm::Triple::wasm64:
@@ -1370,6 +1410,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::kalimba:
   case Triple::lanai:
   case Triple::le32:
+  case Triple::loongarch32:
   case Triple::m68k:
   case Triple::mips:
   case Triple::mipsel:
@@ -1383,6 +1424,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::sparc:
   case Triple::sparcel:
   case Triple::spir:
+  case Triple::spirv32:
   case Triple::tce:
   case Triple::tcele:
   case Triple::thumb:
@@ -1398,8 +1440,13 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::amdil64:        T.setArch(Triple::amdil);   break;
   case Triple::hsail64:        T.setArch(Triple::hsail);   break;
   case Triple::le64:           T.setArch(Triple::le32);    break;
-  case Triple::mips64:         T.setArch(Triple::mips);    break;
-  case Triple::mips64el:       T.setArch(Triple::mipsel);  break;
+  case Triple::loongarch64:    T.setArch(Triple::loongarch32); break;
+  case Triple::mips64:
+    T.setArch(Triple::mips, getSubArch());
+    break;
+  case Triple::mips64el:
+    T.setArch(Triple::mipsel, getSubArch());
+    break;
   case Triple::nvptx64:        T.setArch(Triple::nvptx);   break;
   case Triple::ppc64:          T.setArch(Triple::ppc);     break;
   case Triple::ppc64le:        T.setArch(Triple::ppcle);   break;
@@ -1407,6 +1454,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::riscv64:        T.setArch(Triple::riscv32); break;
   case Triple::sparcv9:        T.setArch(Triple::sparc);   break;
   case Triple::spir64:         T.setArch(Triple::spir);    break;
+  case Triple::spirv64:        T.setArch(Triple::spirv32); break;
   case Triple::wasm64:         T.setArch(Triple::wasm32);  break;
   case Triple::x86_64:         T.setArch(Triple::x86);     break;
   }
@@ -1442,6 +1490,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::bpfel:
   case Triple::hsail64:
   case Triple::le64:
+  case Triple::loongarch64:
   case Triple::mips64:
   case Triple::mips64el:
   case Triple::nvptx64:
@@ -1451,6 +1500,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::riscv64:
   case Triple::sparcv9:
   case Triple::spir64:
+  case Triple::spirv64:
   case Triple::systemz:
   case Triple::ve:
   case Triple::wasm64:
@@ -1464,8 +1514,13 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::armeb:           T.setArch(Triple::aarch64_be); break;
   case Triple::hsail:           T.setArch(Triple::hsail64);    break;
   case Triple::le32:            T.setArch(Triple::le64);       break;
-  case Triple::mips:            T.setArch(Triple::mips64);     break;
-  case Triple::mipsel:          T.setArch(Triple::mips64el);   break;
+  case Triple::loongarch32:     T.setArch(Triple::loongarch64);    break;
+  case Triple::mips:
+    T.setArch(Triple::mips64, getSubArch());
+    break;
+  case Triple::mipsel:
+    T.setArch(Triple::mips64el, getSubArch());
+    break;
   case Triple::nvptx:           T.setArch(Triple::nvptx64);    break;
   case Triple::ppc:             T.setArch(Triple::ppc64);      break;
   case Triple::ppcle:           T.setArch(Triple::ppc64le);    break;
@@ -1473,6 +1528,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::riscv32:         T.setArch(Triple::riscv64);    break;
   case Triple::sparc:           T.setArch(Triple::sparcv9);    break;
   case Triple::spir:            T.setArch(Triple::spir64);     break;
+  case Triple::spirv32:         T.setArch(Triple::spirv64);    break;
   case Triple::thumb:           T.setArch(Triple::aarch64);    break;
   case Triple::thumbeb:         T.setArch(Triple::aarch64_be); break;
   case Triple::wasm32:          T.setArch(Triple::wasm64);     break;
@@ -1498,6 +1554,8 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::kalimba:
   case Triple::le32:
   case Triple::le64:
+  case Triple::loongarch32:
+  case Triple::loongarch64:
   case Triple::msp430:
   case Triple::nvptx64:
   case Triple::nvptx:
@@ -1509,6 +1567,8 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::shave:
   case Triple::spir64:
   case Triple::spir:
+  case Triple::spirv32:
+  case Triple::spirv64:
   case Triple::wasm32:
   case Triple::wasm64:
   case Triple::x86:
@@ -1526,8 +1586,12 @@ Triple Triple::getBigEndianArchVariant() const {
 
   case Triple::aarch64: T.setArch(Triple::aarch64_be); break;
   case Triple::bpfel:   T.setArch(Triple::bpfeb);      break;
-  case Triple::mips64el:T.setArch(Triple::mips64);     break;
-  case Triple::mipsel:  T.setArch(Triple::mips);       break;
+  case Triple::mips64el:
+    T.setArch(Triple::mips64, getSubArch());
+    break;
+  case Triple::mipsel:
+    T.setArch(Triple::mips, getSubArch());
+    break;
   case Triple::ppcle:   T.setArch(Triple::ppc);        break;
   case Triple::ppc64le: T.setArch(Triple::ppc64);      break;
   case Triple::sparcel: T.setArch(Triple::sparc);      break;
@@ -1559,8 +1623,12 @@ Triple Triple::getLittleEndianArchVariant() const {
 
   case Triple::aarch64_be: T.setArch(Triple::aarch64);  break;
   case Triple::bpfeb:      T.setArch(Triple::bpfel);    break;
-  case Triple::mips64:     T.setArch(Triple::mips64el); break;
-  case Triple::mips:       T.setArch(Triple::mipsel);   break;
+  case Triple::mips64:
+    T.setArch(Triple::mips64el, getSubArch());
+    break;
+  case Triple::mips:
+    T.setArch(Triple::mipsel, getSubArch());
+    break;
   case Triple::ppc:        T.setArch(Triple::ppcle);    break;
   case Triple::ppc64:      T.setArch(Triple::ppc64le);  break;
   case Triple::sparc:      T.setArch(Triple::sparcel);  break;
@@ -1588,6 +1656,8 @@ bool Triple::isLittleEndian() const {
   case Triple::kalimba:
   case Triple::le32:
   case Triple::le64:
+  case Triple::loongarch32:
+  case Triple::loongarch64:
   case Triple::mips64el:
   case Triple::mipsel:
   case Triple::msp430:
@@ -1604,6 +1674,8 @@ bool Triple::isLittleEndian() const {
   case Triple::sparcel:
   case Triple::spir64:
   case Triple::spir:
+  case Triple::spirv32:
+  case Triple::spirv64:
   case Triple::tcele:
   case Triple::thumb:
   case Triple::ve:
@@ -1694,6 +1766,8 @@ VersionTuple Triple::getMinimumSupportedOSVersion() const {
     if (isSimulatorEnvironment())
       return VersionTuple(7, 0, 0);
     break;
+  case Triple::DriverKit:
+    return VersionTuple(20, 0, 0);
   default:
     break;
   }
@@ -1709,6 +1783,7 @@ StringRef Triple::getARMCPUForArch(StringRef MArch) const {
   switch (getOS()) {
   case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
+  case llvm::Triple::OpenBSD:
     if (!MArch.empty() && MArch == "v6")
       return "arm1176jzf-s";
     if (!MArch.empty() && MArch == "v7")
@@ -1723,6 +1798,7 @@ StringRef Triple::getARMCPUForArch(StringRef MArch) const {
   case llvm::Triple::MacOSX:
   case llvm::Triple::TvOS:
   case llvm::Triple::WatchOS:
+  case llvm::Triple::DriverKit:
     if (MArch == "v7k")
       return "cortex-a7";
     break;

@@ -1,5 +1,4 @@
-!RUN: %S/test_errors.sh %s %t %flang -fopenmp
-!REQUIRES: shell
+!RUN: %python %S/test_errors.py %s %flang -fopenmp
 ! OpenMP Version 4.5
 ! 2.15.3.2 parallel shared Clause
 program omp_parallel_shared
@@ -11,7 +10,7 @@ program omp_parallel_shared
 
   type(my_type) :: my_var
 
-  !ERROR: A variable that is part of another variable (as an array or structure element) cannot appear in a PRIVATE or SHARED clause or on the ALLOCATE directive.
+  !ERROR: A variable that is part of another variable (as an array or structure element) cannot appear in a PRIVATE or SHARED clause
   !$omp parallel shared(my_var%array)
   do i = 1, 10
     c(i) = a(i) + b(i) +  k

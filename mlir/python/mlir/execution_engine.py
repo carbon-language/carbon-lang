@@ -3,8 +3,7 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Simply a wrapper around the extension module of the same name.
-from ._cext_loader import load_extension
-_execution_engine = load_extension("_mlirExecutionEngine")
+from ._mlir_libs import _mlirExecutionEngine as _execution_engine
 import ctypes
 
 __all__ = [
@@ -40,5 +39,5 @@ class ExecutionEngine(_execution_engine.ExecutionEngine):
     under the provided `name`. The `ctypes_callback` must be a
     `CFuncType` that outlives the execution engine.
     """
-    callback = ctypes.cast(ctypes_callback, ctypes.c_void_p).value
+    callback = ctypes.cast(ctypes_callback, ctypes.c_void_p)
     self.raw_register_runtime("_mlir_ciface_" + name, callback)

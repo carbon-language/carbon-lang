@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGParser.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/None.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -21,7 +21,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/SourceMgr.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -874,8 +873,9 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringInit *Name, SMLoc NameLoc,
 
     Record *TemplateRec = CurMultiClass ? &CurMultiClass->Rec : CurRec;
     if (TemplateRec->isTemplateArg(TemplateArgName)) {
-      const RecordVal *RV = TemplateRec->getValue(TemplateArgName);
+      RecordVal *RV = TemplateRec->getValue(TemplateArgName);
       assert(RV && "Template arg doesn't exist??");
+      RV->setUsed(true);
       return VarInit::get(TemplateArgName, RV->getType());
     } else if (Name->getValue() == "NAME") {
       return VarInit::get(TemplateArgName, StringRecTy::get());
@@ -3202,7 +3202,8 @@ bool TGParser::ParseIf(MultiClass *CurMultiClass) {
   // iteration variable being assigned.
 
   ListInit *EmptyList = ListInit::get({}, BitRecTy::get());
-  ListInit *SingletonList = ListInit::get({BitInit::get(1)}, BitRecTy::get());
+  ListInit *SingletonList =
+      ListInit::get({BitInit::get(true)}, BitRecTy::get());
   RecTy *BitListTy = ListRecTy::get(BitRecTy::get());
 
   // The foreach containing the then-clause selects SingletonList if
@@ -3346,7 +3347,12 @@ bool TGParser::ParseClass() {
     if (ParseTemplateArgList(CurRec))
       return true;
 
-  return ParseObjectBody(CurRec);
+  if (ParseObjectBody(CurRec))
+    return true;
+
+  if (!NoWarnOnUnusedTemplateArgs)
+    CurRec->checkUnusedTemplateArgs();
+  return false;
 }
 
 /// ParseLetList - Parse a non-empty list of assignment expressions into a list
@@ -3540,6 +3546,9 @@ bool TGParser::ParseMultiClass() {
 
     PopLocalScope(MulticlassScope);
   }
+
+  if (!NoWarnOnUnusedTemplateArgs)
+    CurMultiClass->Rec.checkUnusedTemplateArgs();
 
   CurMultiClass = nullptr;
   return false;

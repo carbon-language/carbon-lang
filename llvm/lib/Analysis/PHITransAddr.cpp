@@ -69,7 +69,7 @@ static bool VerifySubExpr(Value *Expr,
   }
 
   // If it isn't in the InstInputs list it is a subexpr incorporated into the
-  // address.  Sanity check that it is phi translatable.
+  // address.  Validate that it is phi translatable.
   if (!CanPHITrans(I)) {
     errs() << "Instruction in PHITransAddr is not phi-translatable:\n";
     errs() << *I << '\n';
@@ -226,8 +226,9 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       return GEP;
 
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
-    if (Value *V = SimplifyGEPInst(GEP->getSourceElementType(),
-                                   GEPOps, {DL, TLI, DT, AC})) {
+    if (Value *V = SimplifyGEPInst(GEP->getSourceElementType(), GEPOps[0],
+                                   ArrayRef<Value *>(GEPOps).slice(1),
+                                   GEP->isInBounds(), {DL, TLI, DT, AC})) {
       for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
         RemoveInstInputs(GEPOps[i], InstInputs);
 
@@ -239,6 +240,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     for (User *U : APHIOp->users()) {
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U))
         if (GEPI->getType() == GEP->getType() &&
+            GEPI->getSourceElementType() == GEP->getSourceElementType() &&
             GEPI->getNumOperands() == GEPOps.size() &&
             GEPI->getParent()->getParent() == CurBB->getParent() &&
             (!DT || DT->dominates(GEPI->getParent(), PredBB))) {

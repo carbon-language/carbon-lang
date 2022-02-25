@@ -26,8 +26,11 @@ function(check_cxx_section_exists section output)
     endif()
     if(LLVM_BUILD_INSTRUMENTED MATCHES IR AND COMPILER_RT_HAS_FNO_PROFILE_GENERATE_FLAG)
       list(APPEND try_compile_flags "-fno-profile-generate")
-    elseif(LLVM_BUILD_INSTRUMENTED AND COMPILER_RT_HAS_FNO_PROFILE_INSTR_GENERATE_FLAG)
+    elseif((LLVM_BUILD_INSTRUMENTED OR LLVM_BUILD_INSTRUMENTED_COVERAGE) AND COMPILER_RT_HAS_FNO_PROFILE_INSTR_GENERATE_FLAG)
       list(APPEND try_compile_flags "-fno-profile-instr-generate")
+      if(LLVM_BUILD_INSTRUMENTED_COVERAGE AND COMPILER_RT_HAS_FNO_COVERAGE_MAPPING_FLAG)
+        list(APPEND try_compile_flags "-fno-coverage-mapping")
+      endif()
     endif()
   endif()
 
@@ -97,6 +100,9 @@ append_list_if(COMPILER_RT_HAS_INITFINI_ARRAY -DCRT_HAS_INITFINI_ARRAY CRT_CFLAG
 append_list_if(COMPILER_RT_CRT_USE_EH_FRAME_REGISTRY -DEH_USE_FRAME_REGISTRY CRT_CFLAGS)
 append_list_if(COMPILER_RT_HAS_FPIC_FLAG -fPIC CRT_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WNO_PEDANTIC -Wno-pedantic CRT_CFLAGS)
+if (COMPILER_RT_HAS_FCF_PROTECTION_FLAG)
+  append_list_if(COMPILER_RT_ENABLE_CET -fcf-protection=full CRT_CFLAGS)
+endif()
 
 foreach(arch ${CRT_SUPPORTED_ARCH})
   add_compiler_rt_runtime(clang_rt.crtbegin

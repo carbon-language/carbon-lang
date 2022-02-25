@@ -175,8 +175,8 @@ bool DeadArgumentEliminationPass::DeleteDeadVarargs(Function &Fn) {
   // to pass in a smaller number of arguments into the new function.
   //
   std::vector<Value *> Args;
-  for (Value::user_iterator I = Fn.user_begin(), E = Fn.user_end(); I != E; ) {
-    CallBase *CB = dyn_cast<CallBase>(*I++);
+  for (User *U : llvm::make_early_inc_range(Fn.users())) {
+    CallBase *CB = dyn_cast<CallBase>(U);
     if (!CB)
       continue;
 
@@ -287,7 +287,8 @@ bool DeadArgumentEliminationPass::RemoveDeadArgumentsFromCallers(Function &Fn) {
   SmallVector<unsigned, 8> UnusedArgs;
   bool Changed = false;
 
-  AttrBuilder UBImplyingAttributes = AttributeFuncs::getUBImplyingAttributes();
+  AttributeMask UBImplyingAttributes =
+      AttributeFuncs::getUBImplyingAttributes();
   for (Argument &Arg : Fn.args()) {
     if (!Arg.hasSwiftErrorAttr() && Arg.use_empty() &&
         !Arg.hasPassPointeeByValueCopyAttr()) {
@@ -305,7 +306,8 @@ bool DeadArgumentEliminationPass::RemoveDeadArgumentsFromCallers(Function &Fn) {
 
   for (Use &U : Fn.uses()) {
     CallBase *CB = dyn_cast<CallBase>(U.getUser());
-    if (!CB || !CB->isCallee(&U))
+    if (!CB || !CB->isCallee(&U) ||
+        CB->getFunctionType() != Fn.getFunctionType())
       continue;
 
     // Now go through all unused args and replace them with "undef".
@@ -838,7 +840,7 @@ bool DeadArgumentEliminationPass::RemoveDeadStuffFromFunction(Function *F) {
   assert(NRetTy && "No new return type found?");
 
   // The existing function return attributes.
-  AttrBuilder RAttrs(PAL.getRetAttrs());
+  AttrBuilder RAttrs(F->getContext(), PAL.getRetAttrs());
 
   // Remove any incompatible attributes, but only if we removed all return
   // values. Otherwise, ensure that we don't have any conflicting attributes
@@ -889,7 +891,7 @@ bool DeadArgumentEliminationPass::RemoveDeadStuffFromFunction(Function *F) {
 
     // Adjust the call return attributes in case the function was changed to
     // return void.
-    AttrBuilder RAttrs(CallPAL.getRetAttrs());
+    AttrBuilder RAttrs(F->getContext(), CallPAL.getRetAttrs());
     RAttrs.remove(AttributeFuncs::typeIncompatible(NRetTy));
     AttributeSet RetAttrs = AttributeSet::get(F->getContext(), RAttrs);
 
@@ -912,7 +914,7 @@ bool DeadArgumentEliminationPass::RemoveDeadStuffFromFunction(Function *F) {
           // this is not an expected case anyway
           ArgAttrVec.push_back(AttributeSet::get(
               F->getContext(),
-              AttrBuilder(Attrs).removeAttribute(Attribute::Returned)));
+              AttrBuilder(F->getContext(), Attrs).removeAttribute(Attribute::Returned)));
         } else {
           // Otherwise, use the original attributes.
           ArgAttrVec.push_back(Attrs);
@@ -1094,11 +1096,9 @@ PreservedAnalyses DeadArgumentEliminationPass::run(Module &M,
   // fused with the next loop, because deleting a function invalidates
   // information computed while surveying other functions.
   LLVM_DEBUG(dbgs() << "DeadArgumentEliminationPass - Deleting dead varargs\n");
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    Function &F = *I++;
+  for (Function &F : llvm::make_early_inc_range(M))
     if (F.getFunctionType()->isVarArg())
       Changed |= DeleteDeadVarargs(F);
-  }
 
   // Second phase:loop through the module, determining which arguments are live.
   // We assume all arguments are dead unless proven otherwise (allowing us to
@@ -1109,13 +1109,10 @@ PreservedAnalyses DeadArgumentEliminationPass::run(Module &M,
     SurveyFunction(F);
 
   // Now, remove all dead arguments and return values from each function in
-  // turn.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    // Increment now, because the function will probably get removed (ie.
-    // replaced by a new one).
-    Function *F = &*I++;
-    Changed |= RemoveDeadStuffFromFunction(F);
-  }
+  // turn.  We use make_early_inc_range here because functions will probably get
+  // removed (i.e. replaced by new ones).
+  for (Function &F : llvm::make_early_inc_range(M))
+    Changed |= RemoveDeadStuffFromFunction(&F);
 
   // Finally, look for any unused parameters in functions with non-local
   // linkage and replace the passed in parameters with undef.

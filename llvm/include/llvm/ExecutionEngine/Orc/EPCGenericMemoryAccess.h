@@ -27,11 +27,11 @@ class EPCGenericMemoryAccess : public ExecutorProcessControl::MemoryAccess {
 public:
   /// Function addresses for memory access.
   struct FuncAddrs {
-    ExecutorAddress WriteUInt8s;
-    ExecutorAddress WriteUInt16s;
-    ExecutorAddress WriteUInt32s;
-    ExecutorAddress WriteUInt64s;
-    ExecutorAddress WriteBuffers;
+    ExecutorAddr WriteUInt8s;
+    ExecutorAddr WriteUInt16s;
+    ExecutorAddr WriteUInt32s;
+    ExecutorAddr WriteUInt64s;
+    ExecutorAddr WriteBuffers;
   };
 
   /// Create an EPCGenericMemoryAccess instance from a given set of
@@ -39,44 +39,39 @@ public:
   EPCGenericMemoryAccess(ExecutorProcessControl &EPC, FuncAddrs FAs)
       : EPC(EPC), FAs(FAs) {}
 
-  /// Create using the standard memory access function names from the ORC
-  /// runtime.
-  static Expected<std::unique_ptr<EPCGenericMemoryAccess>>
-  CreateUsingOrcRTFuncs(ExecutionSession &ES, JITDylib &OrcRuntimeJD);
-
   void writeUInt8sAsync(ArrayRef<tpctypes::UInt8Write> Ws,
                         WriteResultFn OnWriteComplete) override {
     using namespace shared;
     EPC.callSPSWrapperAsync<void(SPSSequence<SPSMemoryAccessUInt8Write>)>(
-        std::move(OnWriteComplete), FAs.WriteUInt8s.getValue(), Ws);
+        FAs.WriteUInt8s, std::move(OnWriteComplete), Ws);
   }
 
   void writeUInt16sAsync(ArrayRef<tpctypes::UInt16Write> Ws,
                          WriteResultFn OnWriteComplete) override {
     using namespace shared;
     EPC.callSPSWrapperAsync<void(SPSSequence<SPSMemoryAccessUInt16Write>)>(
-        std::move(OnWriteComplete), FAs.WriteUInt16s.getValue(), Ws);
+        FAs.WriteUInt16s, std::move(OnWriteComplete), Ws);
   }
 
   void writeUInt32sAsync(ArrayRef<tpctypes::UInt32Write> Ws,
                          WriteResultFn OnWriteComplete) override {
     using namespace shared;
     EPC.callSPSWrapperAsync<void(SPSSequence<SPSMemoryAccessUInt32Write>)>(
-        std::move(OnWriteComplete), FAs.WriteUInt32s.getValue(), Ws);
+        FAs.WriteUInt32s, std::move(OnWriteComplete), Ws);
   }
 
   void writeUInt64sAsync(ArrayRef<tpctypes::UInt64Write> Ws,
                          WriteResultFn OnWriteComplete) override {
     using namespace shared;
     EPC.callSPSWrapperAsync<void(SPSSequence<SPSMemoryAccessUInt64Write>)>(
-        std::move(OnWriteComplete), FAs.WriteUInt64s.getValue(), Ws);
+        FAs.WriteUInt64s, std::move(OnWriteComplete), Ws);
   }
 
   void writeBuffersAsync(ArrayRef<tpctypes::BufferWrite> Ws,
                          WriteResultFn OnWriteComplete) override {
     using namespace shared;
     EPC.callSPSWrapperAsync<void(SPSSequence<SPSMemoryAccessBufferWrite>)>(
-        std::move(OnWriteComplete), FAs.WriteBuffers.getValue(), Ws);
+        FAs.WriteBuffers, std::move(OnWriteComplete), Ws);
   }
 
 private:

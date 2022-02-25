@@ -42,6 +42,7 @@
 #include "PosixReturnCheck.h"
 #include "RedundantBranchConditionCheck.h"
 #include "ReservedIdentifierCheck.h"
+#include "SharedPtrArrayMismatchCheck.h"
 #include "SignalHandlerCheck.h"
 #include "SignedCharMisuseCheck.h"
 #include "SizeofContainerCheck.h"
@@ -50,6 +51,7 @@
 #include "StringConstructorCheck.h"
 #include "StringIntegerAssignmentCheck.h"
 #include "StringLiteralWithEmbeddedNulCheck.h"
+#include "StringviewNullptrCheck.h"
 #include "SuspiciousEnumUsageCheck.h"
 #include "SuspiciousIncludeCheck.h"
 #include "SuspiciousMemoryComparisonCheck.h"
@@ -142,6 +144,8 @@ public:
         "bugprone-posix-return");
     CheckFactories.registerCheck<ReservedIdentifierCheck>(
         "bugprone-reserved-identifier");
+    CheckFactories.registerCheck<SharedPtrArrayMismatchCheck>(
+        "bugprone-shared-ptr-array-mismatch");
     CheckFactories.registerCheck<SignalHandlerCheck>("bugprone-signal-handler");
     CheckFactories.registerCheck<SignedCharMisuseCheck>(
         "bugprone-signed-char-misuse");
@@ -157,6 +161,8 @@ public:
         "bugprone-string-integer-assignment");
     CheckFactories.registerCheck<StringLiteralWithEmbeddedNulCheck>(
         "bugprone-string-literal-with-embedded-nul");
+    CheckFactories.registerCheck<StringviewNullptrCheck>(
+        "bugprone-stringview-nullptr");
     CheckFactories.registerCheck<SuspiciousEnumUsageCheck>(
         "bugprone-suspicious-enum-usage");
     CheckFactories.registerCheck<SuspiciousIncludeCheck>(

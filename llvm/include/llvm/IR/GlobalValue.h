@@ -79,8 +79,7 @@ protected:
         ValueType(Ty), Visibility(DefaultVisibility),
         UnnamedAddrVal(unsigned(UnnamedAddr::None)),
         DllStorageClass(DefaultStorageClass), ThreadLocal(NotThreadLocal),
-        HasLLVMReservedName(false), IsDSOLocal(false), HasPartition(false),
-        IntID((Intrinsic::ID)0U), Parent(nullptr) {
+        HasLLVMReservedName(false), IsDSOLocal(false), HasPartition(false) {
     setLinkage(Linkage);
     setName(Name);
   }
@@ -153,7 +152,7 @@ protected:
   /// Subclasses can use it to store their intrinsic ID, if they have one.
   ///
   /// This is stored here to save space in Function on 64-bit hosts.
-  Intrinsic::ID IntID;
+  Intrinsic::ID IntID = (Intrinsic::ID)0U;
 
   unsigned getGlobalValueSubClassData() const {
     return SubClassData;
@@ -163,7 +162,7 @@ protected:
     SubClassData = V;
   }
 
-  Module *Parent;             // The containing module.
+  Module *Parent = nullptr; // The containing module.
 
   // Used by SymbolTableListTraits.
   void setParent(Module *parent) {
@@ -302,11 +301,14 @@ public:
   static bool isAvailableExternallyLinkage(LinkageTypes Linkage) {
     return Linkage == AvailableExternallyLinkage;
   }
+  static bool isLinkOnceAnyLinkage(LinkageTypes Linkage) {
+    return Linkage == LinkOnceAnyLinkage;
+  }
   static bool isLinkOnceODRLinkage(LinkageTypes Linkage) {
     return Linkage == LinkOnceODRLinkage;
   }
   static bool isLinkOnceLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
+    return isLinkOnceAnyLinkage(Linkage) || isLinkOnceODRLinkage(Linkage);
   }
   static bool isWeakAnyLinkage(LinkageTypes Linkage) {
     return Linkage == WeakAnyLinkage;
@@ -433,6 +435,9 @@ public:
     return isAvailableExternallyLinkage(getLinkage());
   }
   bool hasLinkOnceLinkage() const { return isLinkOnceLinkage(getLinkage()); }
+  bool hasLinkOnceAnyLinkage() const {
+    return isLinkOnceAnyLinkage(getLinkage());
+  }
   bool hasLinkOnceODRLinkage() const {
     return isLinkOnceODRLinkage(getLinkage());
   }
@@ -548,10 +553,10 @@ public:
     return !(isDeclarationForLinker() || isWeakForLinker());
   }
 
-  const GlobalObject *getBaseObject() const;
-  GlobalObject *getBaseObject() {
+  const GlobalObject *getAliaseeObject() const;
+  GlobalObject *getAliaseeObject() {
     return const_cast<GlobalObject *>(
-                       static_cast<const GlobalValue *>(this)->getBaseObject());
+        static_cast<const GlobalValue *>(this)->getAliaseeObject());
   }
 
   /// Returns whether this is a reference to an absolute symbol.

@@ -319,6 +319,7 @@ def llvm_v4bf16_ty     : LLVMType<v4bf16>;   //  4 x bfloat (__bf16)
 def llvm_v8bf16_ty     : LLVMType<v8bf16>;   //  8 x bfloat (__bf16)
 def llvm_v1f32_ty      : LLVMType<v1f32>;    //  1 x float
 def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
+def llvm_v3f32_ty      : LLVMType<v3f32>;    //  3 x float
 def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
 def llvm_v8f32_ty      : LLVMType<v8f32>;    //  8 x float
 def llvm_v16f32_ty     : LLVMType<v16f32>;   // 16 x float
@@ -330,6 +331,9 @@ def llvm_v8f64_ty      : LLVMType<v8f64>;    //  8 x double
 def llvm_v16f64_ty     : LLVMType<v16f64>;   // 16 x double
 
 def llvm_vararg_ty     : LLVMType<isVoid>;   // this means vararg here
+
+def llvm_externref_ty  : LLVMType<externref>;
+def llvm_funcref_ty    : LLVMType<funcref>;
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
@@ -578,6 +582,10 @@ def int_experimental_noalias_scope_decl
 def int_stackprotector : DefaultAttrsIntrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
 def int_stackguard : DefaultAttrsIntrinsic<[llvm_ptr_ty], [], []>;
 
+// A cover for instrumentation based profiling.
+def int_instrprof_cover : Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty,
+                                         llvm_i32_ty, llvm_i32_ty]>;
+
 // A counter increment for instrumentation based profiling.
 def int_instrprof_increment : Intrinsic<[],
                                         [llvm_ptr_ty, llvm_i64_ty,
@@ -716,14 +724,6 @@ let IntrProperties = [IntrInaccessibleMemOnly, IntrWillReturn] in {
   def int_flt_rounds    : DefaultAttrsIntrinsic<[llvm_i32_ty], []>;
   def int_set_rounding  : DefaultAttrsIntrinsic<[], [llvm_i32_ty]>;
 }
-
-//===--------------- Floating Point Test Intrinsics -----------------------===//
-//
-
-def int_isnan
-    : DefaultAttrsIntrinsic<[LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>],
-                            [llvm_anyfloat_ty],
-                            [IntrNoMem, IntrWillReturn]>;
 
 //===--------------- Constrained Floating Point Intrinsics ----------------===//
 //
@@ -909,6 +909,12 @@ let IntrProperties = [IntrInaccessibleMemOnly, IntrWillReturn] in {
 }
 // FIXME: Consider maybe adding intrinsics for sitofp, uitofp.
 
+
+// Truncate a floating point number with a specific rounding mode
+def int_fptrunc_round : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                              [ llvm_anyfloat_ty, llvm_metadata_ty ],
+                                              [ IntrNoMem, IntrWillReturn ]>;
+
 //===------------------------- Expect Intrinsics --------------------------===//
 //
 def int_expect : DefaultAttrsIntrinsic<[llvm_anyint_ty],
@@ -1021,14 +1027,15 @@ def int_codeview_annotation : DefaultAttrsIntrinsic<[], [llvm_metadata_ty],
 
 //===------------------------ Trampoline Intrinsics -----------------------===//
 //
-def int_init_trampoline : Intrinsic<[],
-                                    [llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty],
-                                    [IntrArgMemOnly, NoCapture<ArgIndex<0>>]>,
-                                    GCCBuiltin<"__builtin_init_trampoline">;
+def int_init_trampoline : DefaultAttrsIntrinsic<
+    [], [llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty],
+    [IntrArgMemOnly, NoCapture<ArgIndex<0>>, WriteOnly<ArgIndex<0>>,
+     ReadNone<ArgIndex<1>>, ReadNone<ArgIndex<2>>]>,
+    GCCBuiltin<"__builtin_init_trampoline">;
 
-def int_adjust_trampoline : Intrinsic<[llvm_ptr_ty], [llvm_ptr_ty],
-                                      [IntrReadMem, IntrArgMemOnly]>,
-                                      GCCBuiltin<"__builtin_adjust_trampoline">;
+def int_adjust_trampoline : DefaultAttrsIntrinsic<
+    [llvm_ptr_ty], [llvm_ptr_ty], [IntrReadMem, IntrArgMemOnly]>,
+    GCCBuiltin<"__builtin_adjust_trampoline">;
 
 //===------------------------ Overflow Intrinsics -------------------------===//
 //
@@ -1275,6 +1282,7 @@ def int_coro_end_async
 def int_coro_frame : Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
 def int_coro_noop : Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
 def int_coro_size : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+def int_coro_align : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
 
 def int_coro_save : Intrinsic<[llvm_token_ty], [llvm_ptr_ty], []>;
 def int_coro_suspend : Intrinsic<[llvm_i8_ty], [llvm_token_ty, llvm_i1_ty], []>;
@@ -1285,10 +1293,6 @@ def int_coro_alloca_alloc : Intrinsic<[llvm_token_ty],
                                       [llvm_anyint_ty, llvm_i32_ty], []>;
 def int_coro_alloca_get : Intrinsic<[llvm_ptr_ty], [llvm_token_ty], []>;
 def int_coro_alloca_free : Intrinsic<[], [llvm_token_ty], []>;
-
-def int_coro_param : Intrinsic<[llvm_i1_ty], [llvm_ptr_ty, llvm_ptr_ty],
-                               [IntrNoMem, ReadNone<ArgIndex<0>>,
-                                ReadNone<ArgIndex<1>>]>;
 
 // Coroutine Manipulation Intrinsics.
 
@@ -1342,7 +1346,7 @@ def int_sideeffect : DefaultAttrsIntrinsic<[], [], [IntrInaccessibleMemOnly, Int
 // Like the sideeffect intrinsic defined above, this intrinsic is treated by the
 // optimizer as having opaque side effects so that it won't be get rid of or moved
 // out of the block it probes.
-def int_pseudoprobe : Intrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i64_ty],
+def int_pseudoprobe : DefaultAttrsIntrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i64_ty],
                                     [IntrInaccessibleMemOnly, IntrWillReturn]>;
 
 // Arithmetic fence intrinsic.
@@ -1506,7 +1510,38 @@ let IntrProperties =
                                 LLVMMatchType<0>,
                                 LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
                                 llvm_i32_ty]>;
+
+  def int_vp_fneg : DefaultAttrsIntrinsic<[ llvm_anyvector_ty ],
+                              [ LLVMMatchType<0>,
+                                LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                                llvm_i32_ty]>;
+
+  def int_vp_fma : DefaultAttrsIntrinsic<[ llvm_anyvector_ty ],
+                              [ LLVMMatchType<0>,
+                                LLVMMatchType<0>,
+                                LLVMMatchType<0>,
+                                LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                                llvm_i32_ty]>;
 }
+
+// Casts.
+def int_vp_fptosi : DefaultAttrsIntrinsic<[ llvm_anyvector_ty ],
+                            [ llvm_anyvector_ty,
+                              LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                              llvm_i32_ty]>;
+
+// Shuffles.
+def int_vp_select : DefaultAttrsIntrinsic<[ llvm_anyvector_ty ],
+                              [ LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                                LLVMMatchType<0>,
+                                LLVMMatchType<0>,
+                                llvm_i32_ty]>;
+
+def int_vp_merge : DefaultAttrsIntrinsic<[ llvm_anyvector_ty ],
+                              [ LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                                LLVMMatchType<0>,
+                                LLVMMatchType<0>,
+                                llvm_i32_ty]>;
 
 // Reductions
 let IntrProperties = [IntrSpeculatable, IntrNoMem, IntrNoSync, IntrWillReturn] in {
@@ -1581,6 +1616,15 @@ def int_get_active_lane_mask:
   DefaultAttrsIntrinsic<[llvm_anyvector_ty],
             [llvm_anyint_ty, LLVMMatchType<1>],
             [IntrNoMem, IntrNoSync, IntrWillReturn]>;
+
+def int_experimental_vp_splice:
+  DefaultAttrsIntrinsic<[llvm_anyvector_ty],
+            [LLVMMatchType<0>,
+             LLVMMatchType<0>,
+             llvm_i32_ty,
+             LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+             llvm_i32_ty, llvm_i32_ty],
+            [IntrNoMem, ImmArg<ArgIndex<2>>]>;
 
 //===-------------------------- Masked Intrinsics -------------------------===//
 //
@@ -1842,6 +1886,61 @@ def int_experimental_vector_splice : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
                                                             LLVMMatchType<0>,
                                                             llvm_i32_ty],
                                                            [IntrNoMem, ImmArg<ArgIndex<2>>]>;
+
+
+//===----------------- Pointer Authentication Intrinsics ------------------===//
+//
+
+// Sign an unauthenticated pointer using the specified key and discriminator,
+// passed in that order.
+// Returns the first argument, with some known bits replaced with a signature.
+def int_ptrauth_sign : Intrinsic<[llvm_i64_ty],
+                                 [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty],
+                                 [IntrNoMem, ImmArg<ArgIndex<1>>]>;
+
+// Authenticate a signed pointer, using the specified key and discriminator.
+// Returns the first argument, with the signature bits removed.
+// The signature must be valid.
+def int_ptrauth_auth : Intrinsic<[llvm_i64_ty],
+                                 [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty],
+                                 [IntrNoMem,ImmArg<ArgIndex<1>>]>;
+
+// Authenticate a signed pointer and resign it.
+// The second (key) and third (discriminator) arguments specify the signing
+// schema used for authenticating.
+// The fourth and fifth arguments specify the schema used for signing.
+// The signature must be valid.
+// This is a combined form of @llvm.ptrauth.sign and @llvm.ptrauth.auth, with
+// an additional integrity guarantee on the intermediate value.
+def int_ptrauth_resign : Intrinsic<[llvm_i64_ty],
+                                   [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty,
+                                    llvm_i32_ty, llvm_i64_ty],
+                                   [IntrNoMem, ImmArg<ArgIndex<1>>,
+                                    ImmArg<ArgIndex<3>>]>;
+
+// Strip the embedded signature out of a signed pointer.
+// The second argument specifies the key.
+// This behaves like @llvm.ptrauth.auth, but doesn't require the signature to
+// be valid.
+def int_ptrauth_strip : Intrinsic<[llvm_i64_ty],
+                                  [llvm_i64_ty, llvm_i32_ty],
+                                  [IntrNoMem, ImmArg<ArgIndex<1>>]>;
+
+// Blend a small integer discriminator with an address discriminator, producing
+// a new discriminator value.
+def int_ptrauth_blend : Intrinsic<[llvm_i64_ty],
+                                  [llvm_i64_ty, llvm_i64_ty],
+                                  [IntrNoMem]>;
+
+// Compute the signature of a value, using a given discriminator.
+// This differs from @llvm.ptrauth.sign in that it doesn't embed the computed
+// signature in the pointer, but instead returns the signature as a value.
+// That allows it to be used to sign non-pointer data: in that sense, it is
+// generic.  There is no generic @llvm.ptrauth.auth: instead, the signature
+// can be computed using @llvm.ptrauth.sign_generic, and compared with icmp.
+def int_ptrauth_sign_generic : Intrinsic<[llvm_i64_ty],
+                                         [llvm_i64_ty, llvm_i64_ty],
+                                         [IntrNoMem]>;
 
 //===----------------------------------------------------------------------===//
 

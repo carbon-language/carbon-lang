@@ -770,7 +770,7 @@ public:
 
     // Don't distribute the loop if we need too many SCEV run-time checks, or
     // any if it's illegal.
-    const SCEVUnionPredicate &Pred = LAI->getPSE().getUnionPredicate();
+    const SCEVPredicate &Pred = LAI->getPSE().getPredicate();
     if (LAI->hasConvergentOp() && !Pred.isAlwaysTrue()) {
       return fail("RuntimeCheckWithConvergent",
                   "may not insert runtime check with convergent operation");
@@ -1057,8 +1057,8 @@ PreservedAnalyses LoopDistributePass::run(Function &F,
   auto &LAM = AM.getResult<LoopAnalysisManagerFunctionProxy>(F).getManager();
   std::function<const LoopAccessInfo &(Loop &)> GetLAA =
       [&](Loop &L) -> const LoopAccessInfo & {
-    LoopStandardAnalysisResults AR = {AA,  AC,  DT,      LI,     SE,
-                                      TLI, TTI, nullptr, nullptr};
+    LoopStandardAnalysisResults AR = {AA,  AC,  DT,      LI,      SE,
+                                      TLI, TTI, nullptr, nullptr, nullptr};
     return LAM.getResult<LoopAccessAnalysis>(L, AR);
   };
 

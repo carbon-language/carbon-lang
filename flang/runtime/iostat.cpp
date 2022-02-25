@@ -1,4 +1,4 @@
-//===-- runtime/iostat.cpp --------------------------------------*- C++ -*-===//
+//===-- runtime/iostat.cpp ------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "iostat.h"
+#include "flang/Runtime/iostat.h"
 
 namespace Fortran::runtime::io {
 const char *IostatErrorString(int iostat) {
@@ -33,8 +33,8 @@ const char *IostatErrorString(int iostat) {
     return "Invalid FORMAT";
   case IostatErrorInKeyword:
     return "Bad keyword argument value";
-  case IostatEndfileNonSequential:
-    return "ENDFILE on non-sequential file";
+  case IostatEndfileDirect:
+    return "ENDFILE on direct-access file";
   case IostatEndfileUnwritable:
     return "ENDFILE on read-only file";
   case IostatOpenBadRecl:
@@ -53,6 +53,8 @@ const char *IostatErrorString(int iostat) {
     return "BACKSPACE at first record";
   case IostatRewindNonSequential:
     return "REWIND on non-sequential file";
+  case IostatWriteAfterEndfile:
+    return "WRITE after ENDFILE";
   default:
     return nullptr;
   }

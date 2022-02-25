@@ -134,6 +134,16 @@ struct Fragment {
   ///
   /// This section modifies how the compile command is constructed.
   struct CompileFlagsBlock {
+    /// Override the compiler executable name to simulate.
+    ///
+    /// The name can affect how flags are parsed (clang++ vs clang).
+    /// If the executable name is in the --query-driver allowlist, then it will
+    /// be invoked to extract include paths.
+    ///
+    /// (That this simply replaces argv[0], and may mangle commands that use
+    /// more complicated drivers like ccache).
+    llvm::Optional<Located<std::string>> Compiler;
+
     /// List of flags to append to the compile command.
     std::vector<Located<std::string>> Add;
     /// List of flags to remove from the compile command.
@@ -210,6 +220,20 @@ struct Fragment {
     /// This often has other advantages, such as skipping some analysis.
     std::vector<Located<std::string>> Suppress;
 
+    /// Controls how clangd will correct "unnecessary #include directives.
+    /// clangd can warn if a header is `#include`d but not used, and suggest
+    /// removing it.
+    //
+    /// Strict means a header is unused if it does not *directly* provide any
+    /// symbol used in the file. Removing it may still break compilation if it
+    /// transitively includes headers that are used. This should be fixed by
+    /// including those headers directly.
+    ///
+    /// Valid values are:
+    /// - Strict
+    /// - None
+    llvm::Optional<Located<std::string>> UnusedIncludes;
+
     /// Controls how clang-tidy will run over the code base.
     ///
     /// The settings are merged with any settings found in .clang-tidy
@@ -252,6 +276,27 @@ struct Fragment {
     llvm::Optional<Located<bool>> AllScopes;
   };
   CompletionBlock Completion;
+
+  /// Describes hover preferences.
+  struct HoverBlock {
+    /// Whether hover show a.k.a type.
+    llvm::Optional<Located<bool>> ShowAKA;
+  };
+  HoverBlock Hover;
+
+  /// Configures labels shown inline with the code.
+  struct InlayHintsBlock {
+    /// Enables/disables the inlay-hints feature.
+    llvm::Optional<Located<bool>> Enabled;
+
+    /// Show parameter names before function arguments.
+    llvm::Optional<Located<bool>> ParameterNames;
+    /// Show deduced types for `auto`.
+    llvm::Optional<Located<bool>> DeducedTypes;
+    /// Show designators in aggregate initialization.
+    llvm::Optional<Located<bool>> Designators;
+  };
+  InlayHintsBlock InlayHints;
 };
 
 } // namespace config

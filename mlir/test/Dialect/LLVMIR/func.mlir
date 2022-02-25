@@ -121,7 +121,7 @@ module {
   // Check that it is present in the generic format using its numeric value.
   //
   // CHECK: llvm.func @external_func
-  // GENERIC: linkage = 10
+  // GENERIC: linkage = #llvm.linkage<external>
   llvm.func external @external_func()
 }
 
@@ -211,6 +211,13 @@ module {
   llvm.func @variadic_def(...) {
     llvm.return
   }
+}
+
+// -----
+
+module {
+  // expected-error@+1 {{cannot attach result attributes to functions with a void return}}
+  llvm.func @variadic_def() -> (!llvm.void {llvm.noalias})
 }
 
 // -----

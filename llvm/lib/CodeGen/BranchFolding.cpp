@@ -611,7 +611,7 @@ ProfitableToMerge(MachineBasicBlock *MBB1, MachineBasicBlock *MBB2,
   // there are fallthroughs, and we don't know until after layout.
   if (AfterPlacement && FullBlockTail1 && FullBlockTail2) {
     auto BothFallThrough = [](MachineBasicBlock *MBB) {
-      if (MBB->succ_size() != 0 && !MBB->canFallThrough())
+      if (!MBB->succ_empty() && !MBB->canFallThrough())
         return false;
       MachineFunction::iterator I(MBB);
       MachineFunction *MF = MBB->getParent();
@@ -1013,8 +1013,8 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // If this is a large problem, avoid visiting the same basic blocks
   // multiple times.
   if (MergePotentials.size() == TailMergeThreshold)
-    for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
-      TriedMerging.insert(MergePotentials[i].getBlock());
+    for (const MergePotentialsElt &Elt : MergePotentials)
+      TriedMerging.insert(Elt.getBlock());
 
   // See if we can do any tail merging on those.
   if (MergePotentials.size() >= 2)
@@ -1125,8 +1125,8 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
     // If this is a large problem, avoid visiting the same basic blocks multiple
     // times.
     if (MergePotentials.size() == TailMergeThreshold)
-      for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
-        TriedMerging.insert(MergePotentials[i].getBlock());
+      for (MergePotentialsElt &Elt : MergePotentials)
+        TriedMerging.insert(Elt.getBlock());
 
     if (MergePotentials.size() >= 2)
       MadeChange |= TryTailMergeBlocks(IBB, PredBB, MinCommonTailLength);
@@ -1198,14 +1198,13 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
   // Renumbering blocks alters EH scope membership, recalculate it.
   EHScopeMembership = getEHScopeMembership(MF);
 
-  for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
-       I != E; ) {
-    MachineBasicBlock *MBB = &*I++;
-    MadeChange |= OptimizeBlock(MBB);
+  for (MachineBasicBlock &MBB :
+       llvm::make_early_inc_range(llvm::drop_begin(MF))) {
+    MadeChange |= OptimizeBlock(&MBB);
 
     // If it is dead, remove it.
-    if (MBB->pred_empty()) {
-      RemoveDeadBlock(MBB);
+    if (MBB.pred_empty()) {
+      RemoveDeadBlock(&MBB);
       MadeChange = true;
       ++NumDeadBlocks;
     }
@@ -1753,10 +1752,8 @@ ReoptimizeBlock:
 
 bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
   bool MadeChange = false;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ) {
-    MachineBasicBlock *MBB = &*I++;
-    MadeChange |= HoistCommonCodeInSuccs(MBB);
-  }
+  for (MachineBasicBlock &MBB : llvm::make_early_inc_range(MF))
+    MadeChange |= HoistCommonCodeInSuccs(&MBB);
 
   return MadeChange;
 }

@@ -16,7 +16,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 using namespace llvm;
@@ -141,6 +140,10 @@ bool Instruction::hasNoSignedWrap() const {
   return cast<OverflowingBinaryOperator>(this)->hasNoSignedWrap();
 }
 
+bool Instruction::hasPoisonGeneratingFlags() const {
+  return cast<Operator>(this)->hasPoisonGeneratingFlags();
+}
+
 void Instruction::dropPoisonGeneratingFlags() {
   switch (getOpcode()) {
   case Instruction::Add:
@@ -162,7 +165,12 @@ void Instruction::dropPoisonGeneratingFlags() {
     cast<GetElementPtrInst>(this)->setIsInBounds(false);
     break;
   }
-  // TODO: FastMathFlags!
+  if (isa<FPMathOperator>(this)) {
+    setHasNoNaNs(false);
+    setHasNoInfs(false);
+  }
+
+  assert(!hasPoisonGeneratingFlags() && "must be kept in sync");
 }
 
 void Instruction::dropUndefImplyingAttrsAndUnknownMetadata(
@@ -177,8 +185,9 @@ void Instruction::dropUndefImplyingAttrsAndUnknownMetadata(
   AttributeList AL = CB->getAttributes();
   if (AL.isEmpty())
     return;
-  AttrBuilder UBImplyingAttributes = AttributeFuncs::getUBImplyingAttributes();
-  for (unsigned ArgNo = 0; ArgNo < CB->getNumArgOperands(); ArgNo++)
+  AttributeMask UBImplyingAttributes =
+      AttributeFuncs::getUBImplyingAttributes();
+  for (unsigned ArgNo = 0; ArgNo < CB->arg_size(); ArgNo++)
     CB->removeParamAttrs(ArgNo, UBImplyingAttributes);
   CB->removeRetAttrs(UBImplyingAttributes);
 }
@@ -307,20 +316,20 @@ void Instruction::copyIRFlags(const Value *V, bool IncludeWrapFlags) {
 
   if (auto *SrcGEP = dyn_cast<GetElementPtrInst>(V))
     if (auto *DestGEP = dyn_cast<GetElementPtrInst>(this))
-      DestGEP->setIsInBounds(SrcGEP->isInBounds() | DestGEP->isInBounds());
+      DestGEP->setIsInBounds(SrcGEP->isInBounds() || DestGEP->isInBounds());
 }
 
 void Instruction::andIRFlags(const Value *V) {
   if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
     if (isa<OverflowingBinaryOperator>(this)) {
-      setHasNoSignedWrap(hasNoSignedWrap() & OB->hasNoSignedWrap());
-      setHasNoUnsignedWrap(hasNoUnsignedWrap() & OB->hasNoUnsignedWrap());
+      setHasNoSignedWrap(hasNoSignedWrap() && OB->hasNoSignedWrap());
+      setHasNoUnsignedWrap(hasNoUnsignedWrap() && OB->hasNoUnsignedWrap());
     }
   }
 
   if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
     if (isa<PossiblyExactOperator>(this))
-      setIsExact(isExact() & PE->isExact());
+      setIsExact(isExact() && PE->isExact());
 
   if (auto *FP = dyn_cast<FPMathOperator>(V)) {
     if (isa<FPMathOperator>(this)) {
@@ -332,7 +341,7 @@ void Instruction::andIRFlags(const Value *V) {
 
   if (auto *SrcGEP = dyn_cast<GetElementPtrInst>(V))
     if (auto *DestGEP = dyn_cast<GetElementPtrInst>(this))
-      DestGEP->setIsInBounds(SrcGEP->isInBounds() & DestGEP->isInBounds());
+      DestGEP->setIsInBounds(SrcGEP->isInBounds() && DestGEP->isInBounds());
 }
 
 const char *Instruction::getOpcodeName(unsigned OpCode) {
@@ -430,17 +439,17 @@ static bool haveSameSpecialState(const Instruction *I1, const Instruction *I2,
 
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(I1))
     return AI->getAllocatedType() == cast<AllocaInst>(I2)->getAllocatedType() &&
-           (AI->getAlignment() == cast<AllocaInst>(I2)->getAlignment() ||
+           (AI->getAlign() == cast<AllocaInst>(I2)->getAlign() ||
             IgnoreAlignment);
   if (const LoadInst *LI = dyn_cast<LoadInst>(I1))
     return LI->isVolatile() == cast<LoadInst>(I2)->isVolatile() &&
-           (LI->getAlignment() == cast<LoadInst>(I2)->getAlignment() ||
+           (LI->getAlign() == cast<LoadInst>(I2)->getAlign() ||
             IgnoreAlignment) &&
            LI->getOrdering() == cast<LoadInst>(I2)->getOrdering() &&
            LI->getSyncScopeID() == cast<LoadInst>(I2)->getSyncScopeID();
   if (const StoreInst *SI = dyn_cast<StoreInst>(I1))
     return SI->isVolatile() == cast<StoreInst>(I2)->isVolatile() &&
-           (SI->getAlignment() == cast<StoreInst>(I2)->getAlignment() ||
+           (SI->getAlign() == cast<StoreInst>(I2)->getAlign() ||
             IgnoreAlignment) &&
            SI->getOrdering() == cast<StoreInst>(I2)->getOrdering() &&
            SI->getSyncScopeID() == cast<StoreInst>(I2)->getSyncScopeID();
@@ -483,6 +492,9 @@ static bool haveSameSpecialState(const Instruction *I1, const Instruction *I2,
   if (const ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I1))
     return SVI->getShuffleMask() ==
            cast<ShuffleVectorInst>(I2)->getShuffleMask();
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I1))
+    return GEP->getSourceElementType() ==
+           cast<GetElementPtrInst>(I2)->getSourceElementType();
 
   return true;
 }
@@ -575,7 +587,7 @@ bool Instruction::mayReadFromMemory() const {
   case Instruction::Call:
   case Instruction::Invoke:
   case Instruction::CallBr:
-    return !cast<CallBase>(this)->doesNotReadMemory();
+    return !cast<CallBase>(this)->onlyWritesMemory();
   case Instruction::Store:
     return !cast<StoreInst>(this)->isUnordered();
   }

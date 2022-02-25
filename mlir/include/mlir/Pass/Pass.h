@@ -170,7 +170,7 @@ protected:
     return *passState;
   }
 
-  /// Return the MLIR context for the current function being transformed.
+  /// Return the MLIR context for the current operation being transformed.
   MLIRContext &getContext() { return *getOperation()->getContext(); }
 
   /// The polymorphic API that runs the pass over the currently held operation.
@@ -332,7 +332,7 @@ private:
 ///   - modify any state within the parent operation, this includes adding
 ///     additional operations.
 ///
-/// Derived function passes are expected to provide the following:
+/// Derived operation passes are expected to provide the following:
 ///   - A 'void runOnOperation()' method.
 ///   - A 'StringRef getName() const' method.
 ///   - A 'std::unique_ptr<Pass> clonePass() const' method.
@@ -365,7 +365,7 @@ protected:
 ///   - modify any state within the parent operation, this includes adding
 ///     additional operations.
 ///
-/// Derived function passes are expected to provide the following:
+/// Derived operation passes are expected to provide the following:
 ///   - A 'void runOnOperation()' method.
 ///   - A 'StringRef getName() const' method.
 ///   - A 'std::unique_ptr<Pass> clonePass() const' method.
@@ -373,29 +373,6 @@ template <> class OperationPass<void> : public Pass {
 protected:
   OperationPass(TypeID passID) : Pass(passID) {}
   OperationPass(const OperationPass &) = default;
-};
-
-/// A model for providing function pass specific utilities.
-///
-/// Derived function passes are expected to provide the following:
-///   - A 'void runOnFunction()' method.
-///   - A 'StringRef getName() const' method.
-///   - A 'std::unique_ptr<Pass> clonePass() const' method.
-class FunctionPass : public OperationPass<FuncOp> {
-public:
-  using OperationPass<FuncOp>::OperationPass;
-
-  /// The polymorphic API that runs the pass over the currently held function.
-  virtual void runOnFunction() = 0;
-
-  /// The polymorphic API that runs the pass over the currently held operation.
-  void runOnOperation() final {
-    if (!getFunction().isExternal())
-      runOnFunction();
-  }
-
-  /// Return the current function being transformed.
-  FuncOp getFunction() { return this->getOperation(); }
 };
 
 /// This class provides a CRTP wrapper around a base pass class to define
@@ -422,6 +399,6 @@ protected:
   }
 };
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // MLIR_PASS_PASS_H

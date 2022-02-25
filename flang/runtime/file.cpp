@@ -1,4 +1,4 @@
-//===-- runtime/file.cpp ----------------------------------------*- C++ -*-===//
+//===-- runtime/file.cpp --------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "file.h"
-#include "magic-numbers.h"
-#include "memory.h"
+#include "flang/Runtime/magic-numbers.h"
+#include "flang/Runtime/memory.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
@@ -45,8 +45,8 @@ static int openfile_mkstemp(IoErrorHandler &handler) {
   if (::GetTempFileNameA(tempDirName, "Fortran", uUnique, tempFileName) == 0) {
     return -1;
   }
-  int fd{::_open(
-      tempFileName, _O_CREAT | _O_TEMPORARY | _O_RDWR, _S_IREAD | _S_IWRITE)};
+  int fd{::_open(tempFileName, _O_CREAT | _O_BINARY | _O_TEMPORARY | _O_RDWR,
+      _S_IREAD | _S_IWRITE)};
 #else
   char path[]{"/tmp/Fortran-Scratch-XXXXXX"};
   int fd{::mkstemp(path)};
@@ -66,16 +66,7 @@ void OpenFile::Open(OpenStatus status, std::optional<Action> action,
       (status == OpenStatus::Old || status == OpenStatus::Unknown)) {
     return;
   }
-  if (fd_ >= 0) {
-    if (fd_ <= 2) {
-      // don't actually close a standard file descriptor, we might need it
-    } else {
-      if (::close(fd_) != 0) {
-        handler.SignalErrno();
-      }
-    }
-    fd_ = -1;
-  }
+  CloseFd(handler);
   if (status == OpenStatus::Scratch) {
     if (path_.get()) {
       handler.SignalError("FILE= must not appear with STATUS='SCRATCH'");
@@ -91,6 +82,12 @@ void OpenFile::Open(OpenStatus status, std::optional<Action> action,
       return;
     }
     int flags{0};
+#ifdef _WIN32
+    // We emit explicit CR+LF line endings and cope with them on input
+    // for formatted files, since we can't yet always know now at OPEN
+    // time whether the file is formatted or not.
+    flags |= O_BINARY;
+#endif
     if (status != OpenStatus::Old) {
       flags |= O_CREAT;
     }
@@ -149,6 +146,7 @@ void OpenFile::Open(OpenStatus status, std::optional<Action> action,
     knownSize_ = 0;
     mayPosition_ = true;
   }
+  openPosition_ = position; // for INQUIRE(POSITION=)
 }
 
 void OpenFile::Predefine(int fd) {
@@ -162,10 +160,12 @@ void OpenFile::Predefine(int fd) {
   mayRead_ = fd == 0;
   mayWrite_ = fd != 0;
   mayPosition_ = false;
+#ifdef _WIN32
+  isWindowsTextFile_ = true;
+#endif
 }
 
 void OpenFile::Close(CloseStatus status, IoErrorHandler &handler) {
-  CheckOpen(handler);
   pending_.reset();
   knownSize_.reset();
   switch (status) {
@@ -178,12 +178,7 @@ void OpenFile::Close(CloseStatus status, IoErrorHandler &handler) {
     break;
   }
   path_.reset();
-  if (fd_ >= 0) {
-    if (::close(fd_) != 0) {
-      handler.SignalErrno();
-    }
-    fd_ = -1;
-  }
+  CloseFd(handler);
 }
 
 std::size_t OpenFile::Read(FileOffset at, char *buffer, std::size_t minBytes,
@@ -208,7 +203,7 @@ std::size_t OpenFile::Read(FileOffset at, char *buffer, std::size_t minBytes,
         break;
       }
     } else {
-      position_ += chunk;
+      SetPosition(position_ + chunk);
       got += chunk;
     }
   }
@@ -228,7 +223,7 @@ std::size_t OpenFile::Write(FileOffset at, const char *buffer,
   while (put < bytes) {
     auto chunk{::write(fd_, buffer + put, bytes - put)};
     if (chunk >= 0) {
-      position_ += chunk;
+      SetPosition(position_ + chunk);
       put += chunk;
     } else {
       auto err{errno};
@@ -351,6 +346,20 @@ void OpenFile::WaitAll(IoErrorHandler &handler) {
   }
 }
 
+Position OpenFile::InquirePosition() const {
+  if (openPosition_) { // from OPEN statement
+    return *openPosition_;
+  } else { // unit has been repositioned since opening
+    if (position_ == knownSize_.value_or(position_ + 1)) {
+      return Position::Append;
+    } else if (position_ == 0 && mayPosition_) {
+      return Position::Rewind;
+    } else {
+      return Position::AsIs; // processor-dependent & no common behavior
+    }
+  }
+}
+
 void OpenFile::CheckOpen(const Terminator &terminator) {
   RUNTIME_CHECK(terminator, fd_ >= 0);
 }
@@ -359,7 +368,7 @@ bool OpenFile::Seek(FileOffset at, IoErrorHandler &handler) {
   if (at == position_) {
     return true;
   } else if (RawSeek(at)) {
-    position_ = at;
+    SetPosition(at);
     return true;
   } else {
     handler.SignalErrno();
@@ -393,6 +402,19 @@ int OpenFile::PendingResult(const Terminator &terminator, int iostat) {
   int id{nextId_++};
   pending_ = New<Pending>{terminator}(id, iostat, std::move(pending_));
   return id;
+}
+
+void OpenFile::CloseFd(IoErrorHandler &handler) {
+  if (fd_ >= 0) {
+    if (fd_ <= 2) {
+      // don't actually close a standard file descriptor, we might need it
+    } else {
+      if (::close(fd_) != 0) {
+        handler.SignalErrno();
+      }
+    }
+    fd_ = -1;
+  }
 }
 
 bool IsATerminal(int fd) { return ::isatty(fd); }

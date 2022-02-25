@@ -41,7 +41,7 @@ class ShapedTypeComponents {
 
 public:
   /// Default construction is an unranked shape.
-  ShapedTypeComponents() : elementType(nullptr), attr(nullptr), ranked(false){};
+  ShapedTypeComponents() : elementType(nullptr), attr(nullptr){};
   ShapedTypeComponents(Type elementType)
       : elementType(elementType), attr(nullptr), ranked(false) {}
   ShapedTypeComponents(ShapedType shapedType) : attr(nullptr) {
@@ -83,7 +83,7 @@ private:
   ShapeStorageT dims;
   Type elementType;
   Attribute attr;
-  bool ranked;
+  bool ranked{false};
 };
 
 /// Adaptor class to abstract the differences between whether value is from
@@ -165,10 +165,7 @@ public:
   ValueShapeRange(const std::initializer_list<Value> &values)
       : ValueShapeRange(ValueRange(values)) {}
 
-  ValueShapeRange(const ValueShapeRange &other) : RangeBaseT(other) {
-    operandShape = other.operandShape;
-    valueToShape = other.valueToShape;
-  }
+  ValueShapeRange(const ValueShapeRange &) = default;
 
   /// Sets the Value to ShapeAdaptor mapping function and returns this.
   ValueShapeRange &setValueToShapeMapping(ValueShapeMapFn fn) {
@@ -246,10 +243,24 @@ LogicalResult verifyInferredResultTypes(Operation *op);
 } // namespace detail
 
 namespace OpTrait {
+template <typename ConcreteType>
+class InferTensorType;
+} // namespace OpTrait
+} // namespace mlir
+
+/// Include the generated interface declarations.
+#include "mlir/Interfaces/InferTypeOpInterface.h.inc"
+
+namespace mlir {
+namespace OpTrait {
 
 /// Tensor type inference trait that constructs a tensor from the inferred
 /// shape and elemental types.
-/// Requires: Op implements functions of InferShapedTypeOpInterface.
+/// Requires: Op implements InferShapedTypeOpInterface and InferTypeOpInterface.
+///   Less strict is possible (e.g., implements inferReturnTypeComponents and
+///   these always populates all element types and shapes or fails, but this\
+///   trait is currently only used where the interfaces are, so keep it
+///   restricted for now).
 template <typename ConcreteType>
 class InferTensorType : public TraitBase<ConcreteType, InferTensorType> {
 public:
@@ -258,6 +269,12 @@ public:
                    ValueRange operands, DictionaryAttr attributes,
                    RegionRange regions,
                    SmallVectorImpl<Type> &inferredReturnTypes) {
+    static_assert(
+        ConcreteType::template hasTrait<InferShapedTypeOpInterface::Trait>(),
+        "requires InferShapedTypeOpInterface to ensure succesful invocation");
+    static_assert(
+        ConcreteType::template hasTrait<InferTypeOpInterface::Trait>(),
+        "requires InferTypeOpInterface to ensure succesful invocation");
     return ::mlir::detail::inferReturnTensorTypes(
         ConcreteType::inferReturnTypeComponents, context, location, operands,
         attributes, regions, inferredReturnTypes);
@@ -266,8 +283,5 @@ public:
 
 } // namespace OpTrait
 } // namespace mlir
-
-/// Include the generated interface declarations.
-#include "mlir/Interfaces/InferTypeOpInterface.h.inc"
 
 #endif // MLIR_INTERFACES_INFERTYPEOPINTERFACE_H_

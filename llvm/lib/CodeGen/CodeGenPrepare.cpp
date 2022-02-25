@@ -530,10 +530,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   while (MadeChange) {
     MadeChange = false;
     DT.reset();
-    for (Function::iterator I = F.begin(); I != F.end(); ) {
-      BasicBlock *BB = &*I++;
+    for (BasicBlock &BB : llvm::make_early_inc_range(F)) {
       bool ModifiedDTOnIteration = false;
-      MadeChange |= optimizeBlock(*BB, ModifiedDTOnIteration);
+      MadeChange |= optimizeBlock(BB, ModifiedDTOnIteration);
 
       // Restart BB iteration if the dominator tree of the Function was changed
       if (ModifiedDTOnIteration)
@@ -660,12 +659,8 @@ void CodeGenPrepare::removeAllAssertingVHReferences(Value *V) {
     return;
 
   auto &GEPVector = VecI->second;
-  const auto &I =
-      llvm::find_if(GEPVector, [=](auto &Elt) { return Elt.first == GEP; });
-  if (I == GEPVector.end())
-    return;
+  llvm::erase_if(GEPVector, [=](auto &Elt) { return Elt.first == GEP; });
 
-  GEPVector.erase(I);
   if (GEPVector.empty())
     LargeOffsetGEPMap.erase(VecI);
 }
@@ -2037,7 +2032,7 @@ static bool despeculateCountZeros(IntrinsicInst *CountZeros,
 
   // Only handle legal scalar cases. Anything else requires too much work.
   Type *Ty = CountZeros->getType();
-  unsigned SizeInBits = Ty->getPrimitiveSizeInBits();
+  unsigned SizeInBits = Ty->getScalarSizeInBits();
   if (Ty->isVectorTy() || SizeInBits > DL->getLargestLegalIntTypeSizeInBits())
     return false;
 
@@ -2108,7 +2103,7 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool &ModifiedDT) {
   // idea
   unsigned MinSize, PrefAlign;
   if (TLI->shouldAlignPointerArgs(CI, MinSize, PrefAlign)) {
-    for (auto &Arg : CI->arg_operands()) {
+    for (auto &Arg : CI->args()) {
       // We want to align both objects whose address is used directly and
       // objects whose address is used in casts and GEPs, though it only makes
       // sense for GEPs if the offset is a multiple of the desired alignment and
@@ -2159,7 +2154,7 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool &ModifiedDT) {
   // into their uses.  TODO: generalize this to work over profiling data
   if (CI->hasFnAttr(Attribute::Cold) &&
       !OptSize && !llvm::shouldOptimizeForSize(BB, PSI, BFI.get()))
-    for (auto &Arg : CI->arg_operands()) {
+    for (auto &Arg : CI->args()) {
       if (!Arg->getType()->isPointerTy())
         continue;
       unsigned AS = Arg->getType()->getPointerAddressSpace();
@@ -3451,7 +3446,7 @@ private:
   bool AllAddrModesTrivial = true;
 
   /// Common Type for all different fields in addressing modes.
-  Type *CommonType;
+  Type *CommonType = nullptr;
 
   /// SimplifyQuery for simplifyInstruction utility.
   const SimplifyQuery &SQ;
@@ -3461,7 +3456,7 @@ private:
 
 public:
   AddressingModeCombiner(const SimplifyQuery &_SQ, Value *OriginalValue)
-      : CommonType(nullptr), SQ(_SQ), Original(OriginalValue) {}
+      : SQ(_SQ), Original(OriginalValue) {}
 
   /// Get the combined AddrMode
   const ExtAddrMode &getAddrMode() const {
@@ -4173,11 +4168,11 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
 
   // We can get through binary operator, if it is legal. In other words, the
   // binary operator must have a nuw or nsw flag.
-  const BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst);
-  if (isa_and_nonnull<OverflowingBinaryOperator>(BinOp) &&
-      ((!IsSExt && BinOp->hasNoUnsignedWrap()) ||
-       (IsSExt && BinOp->hasNoSignedWrap())))
-    return true;
+  if (const auto *BinOp = dyn_cast<BinaryOperator>(Inst))
+    if (isa<OverflowingBinaryOperator>(BinOp) &&
+        ((!IsSExt && BinOp->hasNoUnsignedWrap()) ||
+         (IsSExt && BinOp->hasNoSignedWrap())))
+      return true;
 
   // ext(and(opnd, cst)) --> and(ext(opnd), ext(cst))
   if ((Inst->getOpcode() == Instruction::And ||
@@ -4186,10 +4181,10 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
 
   // ext(xor(opnd, cst)) --> xor(ext(opnd), ext(cst))
   if (Inst->getOpcode() == Instruction::Xor) {
-    const ConstantInt *Cst = dyn_cast<ConstantInt>(Inst->getOperand(1));
     // Make sure it is not a NOT.
-    if (Cst && !Cst->getValue().isAllOnesValue())
-      return true;
+    if (const auto *Cst = dyn_cast<ConstantInt>(Inst->getOperand(1)))
+      if (!Cst->getValue().isAllOnes())
+        return true;
   }
 
   // zext(shrl(opnd, cst)) --> shrl(zext(opnd), zext(cst))
@@ -4555,9 +4550,9 @@ bool AddressingModeMatcher::matchOperationAddr(User *AddrInst, unsigned Opcode,
     ConstantInt *RHS = dyn_cast<ConstantInt>(AddrInst->getOperand(1));
     if (!RHS || RHS->getBitWidth() > 64)
       return false;
-    int64_t Scale = RHS->getSExtValue();
-    if (Opcode == Instruction::Shl)
-      Scale = 1LL << Scale;
+    int64_t Scale = Opcode == Instruction::Shl
+                        ? 1LL << RHS->getLimitedValue(RHS->getBitWidth() - 1)
+                        : RHS->getSExtValue();
 
     return matchScaledValue(AddrInst->getOperand(0), Scale, Depth);
   }
@@ -4836,9 +4831,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
   TargetLowering::AsmOperandInfoVector TargetConstraints =
       TLI.ParseConstraints(F->getParent()->getDataLayout(), &TRI, *CI);
 
-  for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
-    TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
-
+  for (TargetLowering::AsmOperandInfo &OpInfo : TargetConstraints) {
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, SDValue());
 
@@ -4859,10 +4852,9 @@ static constexpr int MaxMemoryUsesToScan = 20;
 
 /// Recursively walk all the uses of I until we find a memory use.
 /// If we find an obviously non-foldable instruction, return true.
-/// Add the ultimately found memory instructions to MemoryUses.
+/// Add accessed addresses and types to MemoryUses.
 static bool FindAllMemoryUses(
-    Instruction *I,
-    SmallVectorImpl<std::pair<Instruction *, unsigned>> &MemoryUses,
+    Instruction *I, SmallVectorImpl<std::pair<Value *, Type *>> &MemoryUses,
     SmallPtrSetImpl<Instruction *> &ConsideredInsts, const TargetLowering &TLI,
     const TargetRegisterInfo &TRI, bool OptSize, ProfileSummaryInfo *PSI,
     BlockFrequencyInfo *BFI, int SeenInsts = 0) {
@@ -4883,31 +4875,28 @@ static bool FindAllMemoryUses(
 
     Instruction *UserI = cast<Instruction>(U.getUser());
     if (LoadInst *LI = dyn_cast<LoadInst>(UserI)) {
-      MemoryUses.push_back(std::make_pair(LI, U.getOperandNo()));
+      MemoryUses.push_back({U.get(), LI->getType()});
       continue;
     }
 
     if (StoreInst *SI = dyn_cast<StoreInst>(UserI)) {
-      unsigned opNo = U.getOperandNo();
-      if (opNo != StoreInst::getPointerOperandIndex())
+      if (U.getOperandNo() != StoreInst::getPointerOperandIndex())
         return true; // Storing addr, not into addr.
-      MemoryUses.push_back(std::make_pair(SI, opNo));
+      MemoryUses.push_back({U.get(), SI->getValueOperand()->getType()});
       continue;
     }
 
     if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(UserI)) {
-      unsigned opNo = U.getOperandNo();
-      if (opNo != AtomicRMWInst::getPointerOperandIndex())
+      if (U.getOperandNo() != AtomicRMWInst::getPointerOperandIndex())
         return true; // Storing addr, not into addr.
-      MemoryUses.push_back(std::make_pair(RMW, opNo));
+      MemoryUses.push_back({U.get(), RMW->getValOperand()->getType()});
       continue;
     }
 
     if (AtomicCmpXchgInst *CmpX = dyn_cast<AtomicCmpXchgInst>(UserI)) {
-      unsigned opNo = U.getOperandNo();
-      if (opNo != AtomicCmpXchgInst::getPointerOperandIndex())
+      if (U.getOperandNo() != AtomicCmpXchgInst::getPointerOperandIndex())
         return true; // Storing addr, not into addr.
-      MemoryUses.push_back(std::make_pair(CmpX, opNo));
+      MemoryUses.push_back({U.get(), CmpX->getCompareOperand()->getType()});
       continue;
     }
 
@@ -5017,7 +5006,7 @@ isProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   // we can remove the addressing mode and effectively trade one live register
   // for another (at worst.)  In this context, folding an addressing mode into
   // the use is just a particularly nice way of sinking it.
-  SmallVector<std::pair<Instruction*,unsigned>, 16> MemoryUses;
+  SmallVector<std::pair<Value *, Type *>, 16> MemoryUses;
   SmallPtrSet<Instruction*, 16> ConsideredInsts;
   if (FindAllMemoryUses(I, MemoryUses, ConsideredInsts, TLI, TRI, OptSize,
                         PSI, BFI))
@@ -5033,18 +5022,10 @@ isProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   // growth since most architectures have some reasonable small and fast way to
   // compute an effective address.  (i.e LEA on x86)
   SmallVector<Instruction*, 32> MatchedAddrModeInsts;
-  for (unsigned i = 0, e = MemoryUses.size(); i != e; ++i) {
-    Instruction *User = MemoryUses[i].first;
-    unsigned OpNo = MemoryUses[i].second;
-
-    // Get the access type of this use.  If the use isn't a pointer, we don't
-    // know what it accesses.
-    Value *Address = User->getOperand(OpNo);
-    PointerType *AddrTy = dyn_cast<PointerType>(Address->getType());
-    if (!AddrTy)
-      return false;
-    Type *AddressAccessTy = AddrTy->getElementType();
-    unsigned AS = AddrTy->getAddressSpace();
+  for (const std::pair<Value *, Type *> &Pair : MemoryUses) {
+    Value *Address = Pair.first;
+    Type *AddressAccessTy = Pair.second;
+    unsigned AS = Address->getType()->getPointerAddressSpace();
 
     // Do a match against the root of this address, ignoring profitability. This
     // will tell us if the addressing mode for the memory operation will
@@ -5125,8 +5106,7 @@ bool CodeGenPrepare::optimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   TypePromotionTransaction::ConstRestorationPt LastKnownGood =
       TPT.getRestorationPoint();
   while (!worklist.empty()) {
-    Value *V = worklist.back();
-    worklist.pop_back();
+    Value *V = worklist.pop_back_val();
 
     // We allow traversing cyclic Phi nodes.
     // In case of success after this loop we ensure that traversing through
@@ -5635,9 +5615,7 @@ bool CodeGenPrepare::optimizeInlineAsmInst(CallInst *CS) {
   TargetLowering::AsmOperandInfoVector TargetConstraints =
       TLI->ParseConstraints(*DL, TRI, *CS);
   unsigned ArgNo = 0;
-  for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
-    TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
-
+  for (TargetLowering::AsmOperandInfo &OpInfo : TargetConstraints) {
     // Compute the constraint code and ConstraintType to use.
     TLI->ComputeConstraintToUse(OpInfo, SDValue());
 
@@ -6478,8 +6456,7 @@ bool CodeGenPrepare::optimizeLoadExt(LoadInst *Load) {
   APInt WidestAndBits(BitWidth, 0);
 
   while (!WorkList.empty()) {
-    Instruction *I = WorkList.back();
-    WorkList.pop_back();
+    Instruction *I = WorkList.pop_back_val();
 
     // Break use-def graph loops.
     if (!Visited.insert(I).second)
@@ -6875,8 +6852,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
   // Use reverse iterator because later select may use the value of the
   // earlier select, and we need to propagate value through earlier select
   // to get the PHI operand.
-  for (auto It = ASI.rbegin(); It != ASI.rend(); ++It) {
-    SelectInst *SI = *It;
+  for (SelectInst *SI : llvm::reverse(ASI)) {
     // The select itself is replaced with a PHI Node.
     PHINode *PN = PHINode::Create(SI->getType(), 2, "", &EndBlock->front());
     PN->takeName(SI);
@@ -7874,8 +7850,9 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool &ModifiedDT) {
 
   BinaryOperator *BinOp = dyn_cast<BinaryOperator>(I);
 
-  if (BinOp && (BinOp->getOpcode() == Instruction::And) && EnableAndCmpSinking)
-    return sinkAndCmp0Expression(BinOp, *TLI, InsertedInsts);
+  if (BinOp && BinOp->getOpcode() == Instruction::And && EnableAndCmpSinking &&
+      sinkAndCmp0Expression(BinOp, *TLI, InsertedInsts))
+    return true;
 
   // TODO: Move this into the switch on opcode - it handles shifts already.
   if (BinOp && (BinOp->getOpcode() == Instruction::AShr ||
@@ -8041,9 +8018,8 @@ bool CodeGenPrepare::placeDbgValues(Function &F) {
   DominatorTree DT(F);
 
   for (BasicBlock &BB : F) {
-    for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
-      Instruction *Insn = &*BI++;
-      DbgValueInst *DVI = dyn_cast<DbgValueInst>(Insn);
+    for (Instruction &Insn : llvm::make_early_inc_range(BB)) {
+      DbgValueInst *DVI = dyn_cast<DbgValueInst>(&Insn);
       if (!DVI)
         continue;
 

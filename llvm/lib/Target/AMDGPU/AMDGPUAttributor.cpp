@@ -12,6 +12,7 @@
 
 #include "AMDGPU.h"
 #include "GCNSubtarget.h"
+#include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsR600.h"
@@ -22,37 +23,25 @@
 
 using namespace llvm;
 
-enum ImplicitArgumentMask {
-  NOT_IMPLICIT_INPUT = 0,
+#define AMDGPU_ATTRIBUTE(Name, Str) Name##_POS,
 
-  // SGPRs
-  DISPATCH_PTR = 1 << 0,
-  QUEUE_PTR = 1 << 1,
-  DISPATCH_ID = 1 << 2,
-  IMPLICIT_ARG_PTR = 1 << 3,
-  WORKGROUP_ID_X = 1 << 4,
-  WORKGROUP_ID_Y = 1 << 5,
-  WORKGROUP_ID_Z = 1 << 6,
-
-  // VGPRS:
-  WORKITEM_ID_X = 1 << 7,
-  WORKITEM_ID_Y = 1 << 8,
-  WORKITEM_ID_Z = 1 << 9,
-  ALL_ARGUMENT_MASK = (1 << 10) - 1
+enum ImplicitArgumentPositions {
+  #include "AMDGPUAttributes.def"
+  LAST_ARG_POS
 };
 
+#define AMDGPU_ATTRIBUTE(Name, Str) Name = 1 << Name##_POS,
+
+enum ImplicitArgumentMask {
+  NOT_IMPLICIT_INPUT = 0,
+  #include "AMDGPUAttributes.def"
+  ALL_ARGUMENT_MASK = (1 << LAST_ARG_POS) - 1
+};
+
+#define AMDGPU_ATTRIBUTE(Name, Str) {Name, Str},
 static constexpr std::pair<ImplicitArgumentMask,
                            StringLiteral> ImplicitAttrs[] = {
-  {DISPATCH_PTR, "amdgpu-no-dispatch-ptr"},
-  {QUEUE_PTR, "amdgpu-no-queue-ptr"},
-  {DISPATCH_ID, "amdgpu-no-dispatch-id"},
-  {IMPLICIT_ARG_PTR, "amdgpu-no-implicitarg-ptr"},
-  {WORKGROUP_ID_X, "amdgpu-no-workgroup-id-x"},
-  {WORKGROUP_ID_Y, "amdgpu-no-workgroup-id-y"},
-  {WORKGROUP_ID_Z, "amdgpu-no-workgroup-id-z"},
-  {WORKITEM_ID_X, "amdgpu-no-workitem-id-x"},
-  {WORKITEM_ID_Y, "amdgpu-no-workitem-id-y"},
-  {WORKITEM_ID_Z, "amdgpu-no-workitem-id-z"}
+ #include "AMDGPUAttributes.def"
 };
 
 // We do not need to note the x workitem or workgroup id because they are always
@@ -90,7 +79,7 @@ intrinsicToAttrMask(Intrinsic::ID ID, bool &NonKernelOnly, bool &IsQueuePtr) {
   case Intrinsic::amdgcn_queue_ptr:
   case Intrinsic::amdgcn_is_shared:
   case Intrinsic::amdgcn_is_private:
-    // TODO: Does not require queue ptr on gfx9+
+    // TODO: Does not require the queue pointer on gfx9+
   case Intrinsic::trap:
   case Intrinsic::debugtrap:
     IsQueuePtr = true;
@@ -112,6 +101,18 @@ static bool isDSAddress(const Constant *C) {
   return AS == AMDGPUAS::LOCAL_ADDRESS || AS == AMDGPUAS::REGION_ADDRESS;
 }
 
+/// Returns true if the function requires the implicit argument be passed
+/// regardless of the function contents.
+static bool funcRequiresHostcallPtr(const Function &F) {
+  // Sanitizers require the hostcall buffer passed in the implicit arguments.
+  return F.hasFnAttribute(Attribute::SanitizeAddress) ||
+         F.hasFnAttribute(Attribute::SanitizeThread) ||
+         F.hasFnAttribute(Attribute::SanitizeMemory) ||
+         F.hasFnAttribute(Attribute::SanitizeHWAddress) ||
+         F.hasFnAttribute(Attribute::SanitizeMemTag);
+}
+
+namespace {
 class AMDGPUInformationCache : public InformationCache {
 public:
   AMDGPUInformationCache(const Module &M, AnalysisGetter &AG,
@@ -128,8 +129,19 @@ public:
     return ST.hasApertureRegs();
   }
 
+  std::pair<unsigned, unsigned> getFlatWorkGroupSizes(const Function &F) {
+    const GCNSubtarget &ST = TM.getSubtarget<GCNSubtarget>(F);
+    return ST.getFlatWorkGroupSizes(F);
+  }
+
+  std::pair<unsigned, unsigned>
+  getMaximumFlatWorkGroupRange(const Function &F) {
+    const GCNSubtarget &ST = TM.getSubtarget<GCNSubtarget>(F);
+    return {ST.getMinFlatWorkGroupSize(), ST.getMaxFlatWorkGroupSize()};
+  }
+
 private:
-  /// Check if the ConstantExpr \p CE requires queue ptr attribute.
+  /// Check if the ConstantExpr \p CE requires the queue pointer.
   static bool visitConstExpr(const ConstantExpr *CE) {
     if (CE->getOpcode() == Instruction::AddrSpaceCast) {
       unsigned SrcAS = CE->getOperand(0)->getType()->getPointerAddressSpace();
@@ -163,7 +175,7 @@ private:
   }
 
 public:
-  /// Returns true if \p Fn needs a queue ptr attribute because of \p C.
+  /// Returns true if \p Fn needs the queue pointer because of \p C.
   bool needsQueuePtr(const Constant *C, Function &Fn) {
     bool IsNonEntryFunc = !AMDGPU::isEntryFunctionCC(Fn.getCallingConv());
     bool HasAperture = hasApertureRegs(Fn);
@@ -182,7 +194,7 @@ public:
   }
 
 private:
-  /// Used to determine if the Constant needs a queue ptr attribute.
+  /// Used to determine if the Constant needs the queue pointer.
   DenseMap<const Constant *, uint8_t> ConstantStatus;
 };
 
@@ -214,17 +226,19 @@ struct AAAMDAttributes : public StateWrapper<
 };
 const char AAAMDAttributes::ID = 0;
 
-struct AAAMDWorkGroupSize
+struct AAUniformWorkGroupSize
     : public StateWrapper<BooleanState, AbstractAttribute> {
   using Base = StateWrapper<BooleanState, AbstractAttribute>;
-  AAAMDWorkGroupSize(const IRPosition &IRP, Attributor &A) : Base(IRP) {}
+  AAUniformWorkGroupSize(const IRPosition &IRP, Attributor &A) : Base(IRP) {}
 
   /// Create an abstract attribute view for the position \p IRP.
-  static AAAMDWorkGroupSize &createForPosition(const IRPosition &IRP,
-                                               Attributor &A);
+  static AAUniformWorkGroupSize &createForPosition(const IRPosition &IRP,
+                                                   Attributor &A);
 
   /// See AbstractAttribute::getName().
-  const std::string getName() const override { return "AAAMDWorkGroupSize"; }
+  const std::string getName() const override {
+    return "AAUniformWorkGroupSize";
+  }
 
   /// See AbstractAttribute::getIdAddr().
   const char *getIdAddr() const override { return &ID; }
@@ -238,11 +252,11 @@ struct AAAMDWorkGroupSize
   /// Unique ID (due to the unique address)
   static const char ID;
 };
-const char AAAMDWorkGroupSize::ID = 0;
+const char AAUniformWorkGroupSize::ID = 0;
 
-struct AAAMDWorkGroupSizeFunction : public AAAMDWorkGroupSize {
-  AAAMDWorkGroupSizeFunction(const IRPosition &IRP, Attributor &A)
-      : AAAMDWorkGroupSize(IRP, A) {}
+struct AAUniformWorkGroupSizeFunction : public AAUniformWorkGroupSize {
+  AAUniformWorkGroupSizeFunction(const IRPosition &IRP, Attributor &A)
+      : AAUniformWorkGroupSize(IRP, A) {}
 
   void initialize(Attributor &A) override {
     Function *F = getAssociatedFunction();
@@ -268,10 +282,10 @@ struct AAAMDWorkGroupSizeFunction : public AAAMDWorkGroupSize {
 
     auto CheckCallSite = [&](AbstractCallSite CS) {
       Function *Caller = CS.getInstruction()->getFunction();
-      LLVM_DEBUG(dbgs() << "[AAAMDWorkGroupSize] Call " << Caller->getName()
+      LLVM_DEBUG(dbgs() << "[AAUniformWorkGroupSize] Call " << Caller->getName()
                         << "->" << getAssociatedFunction()->getName() << "\n");
 
-      const auto &CallerInfo = A.getAAFor<AAAMDWorkGroupSize>(
+      const auto &CallerInfo = A.getAAFor<AAUniformWorkGroupSize>(
           *this, IRPosition::function(*Caller), DepClassTy::REQUIRED);
 
       Change = Change | clampStateAndIndicateChange(this->getState(),
@@ -282,7 +296,7 @@ struct AAAMDWorkGroupSizeFunction : public AAAMDWorkGroupSize {
 
     bool AllCallSitesKnown = true;
     if (!A.checkForAllCallSites(CheckCallSite, *this, true, AllCallSitesKnown))
-      indicatePessimisticFixpoint();
+      return indicatePessimisticFixpoint();
 
     return Change;
   }
@@ -310,11 +324,13 @@ struct AAAMDWorkGroupSizeFunction : public AAAMDWorkGroupSize {
   void trackStatistics() const override {}
 };
 
-AAAMDWorkGroupSize &AAAMDWorkGroupSize::createForPosition(const IRPosition &IRP,
-                                                          Attributor &A) {
+AAUniformWorkGroupSize &
+AAUniformWorkGroupSize::createForPosition(const IRPosition &IRP,
+                                          Attributor &A) {
   if (IRP.getPositionKind() == IRPosition::IRP_FUNCTION)
-    return *new (A.Allocator) AAAMDWorkGroupSizeFunction(IRP, A);
-  llvm_unreachable("AAAMDWorkGroupSize is only valid for function position");
+    return *new (A.Allocator) AAUniformWorkGroupSizeFunction(IRP, A);
+  llvm_unreachable(
+      "AAUniformWorkGroupSize is only valid for function position");
 }
 
 struct AAAMDAttributesFunction : public AAAMDAttributes {
@@ -323,7 +339,20 @@ struct AAAMDAttributesFunction : public AAAMDAttributes {
 
   void initialize(Attributor &A) override {
     Function *F = getAssociatedFunction();
+
+    // If the function requires the implicit arg pointer due to sanitizers,
+    // assume it's needed even if explicitly marked as not requiring it.
+    const bool NeedsHostcall = funcRequiresHostcallPtr(*F);
+    if (NeedsHostcall) {
+      removeAssumedBits(IMPLICIT_ARG_PTR);
+      removeAssumedBits(HOSTCALL_PTR);
+    }
+
     for (auto Attr : ImplicitAttrs) {
+      if (NeedsHostcall &&
+          (Attr.first == IMPLICIT_ARG_PTR || Attr.first == HOSTCALL_PTR))
+        continue;
+
       if (F->hasFnAttribute(Attr.second))
         addKnownBits(Attr.first);
     }
@@ -351,7 +380,6 @@ struct AAAMDAttributesFunction : public AAAMDAttributes {
       return indicatePessimisticFixpoint();
 
     bool IsNonEntryFunc = !AMDGPU::isEntryFunctionCC(F->getCallingConv());
-    auto &InfoCache = static_cast<AMDGPUInformationCache &>(A.getInfoCache());
 
     bool NeedsQueuePtr = false;
 
@@ -373,63 +401,21 @@ struct AAAMDAttributesFunction : public AAAMDAttributes {
       }
     }
 
-    // If we found that we need amdgpu-queue-ptr, nothing else to do.
+    if (!NeedsQueuePtr) {
+      NeedsQueuePtr = checkForQueuePtr(A);
+    }
+
     if (NeedsQueuePtr) {
       removeAssumedBits(QUEUE_PTR);
-      return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED :
-                                           ChangeStatus::UNCHANGED;
     }
 
-    auto CheckAddrSpaceCasts = [&](Instruction &I) {
-      unsigned SrcAS = static_cast<AddrSpaceCastInst &>(I).getSrcAddressSpace();
-      if (castRequiresQueuePtr(SrcAS)) {
-        NeedsQueuePtr = true;
-        return false;
-      }
-      return true;
-    };
-
-    bool HasApertureRegs = InfoCache.hasApertureRegs(*F);
-
-    // `checkForAllInstructions` is much more cheaper than going through all
-    // instructions, try it first.
-
-    // amdgpu-queue-ptr is not needed if aperture regs is present.
-    if (!HasApertureRegs) {
-      bool UsedAssumedInformation = false;
-      A.checkForAllInstructions(CheckAddrSpaceCasts, *this,
-                                {Instruction::AddrSpaceCast},
-                                UsedAssumedInformation);
+    if (funcRetrievesHostcallPtr(A)) {
+      removeAssumedBits(IMPLICIT_ARG_PTR);
+      removeAssumedBits(HOSTCALL_PTR);
     }
 
-    // If we found  that we need amdgpu-queue-ptr, nothing else to do.
-    if (NeedsQueuePtr) {
-      removeAssumedBits(QUEUE_PTR);
-      return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED :
-                                           ChangeStatus::UNCHANGED;
-    }
-
-    if (!IsNonEntryFunc && HasApertureRegs) {
-      return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED :
-                                           ChangeStatus::UNCHANGED;
-    }
-
-    for (BasicBlock &BB : *F) {
-      for (Instruction &I : BB) {
-        for (const Use &U : I.operands()) {
-          if (const auto *C = dyn_cast<Constant>(U)) {
-            if (InfoCache.needsQueuePtr(C, *F)) {
-              removeAssumedBits(QUEUE_PTR);
-              return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED :
-                                                   ChangeStatus::UNCHANGED;
-            }
-          }
-        }
-      }
-    }
-
-    return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED :
-                                         ChangeStatus::UNCHANGED;
+    return getAssumed() != OrigAssumed ? ChangeStatus::CHANGED
+                                       : ChangeStatus::UNCHANGED;
   }
 
   ChangeStatus manifest(Attributor &A) override {
@@ -457,6 +443,87 @@ struct AAAMDAttributesFunction : public AAAMDAttributes {
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override {}
+
+private:
+  bool checkForQueuePtr(Attributor &A) {
+    Function *F = getAssociatedFunction();
+    bool IsNonEntryFunc = !AMDGPU::isEntryFunctionCC(F->getCallingConv());
+
+    auto &InfoCache = static_cast<AMDGPUInformationCache &>(A.getInfoCache());
+
+    bool NeedsQueuePtr = false;
+
+    auto CheckAddrSpaceCasts = [&](Instruction &I) {
+      unsigned SrcAS = static_cast<AddrSpaceCastInst &>(I).getSrcAddressSpace();
+      if (castRequiresQueuePtr(SrcAS)) {
+        NeedsQueuePtr = true;
+        return false;
+      }
+      return true;
+    };
+
+    bool HasApertureRegs = InfoCache.hasApertureRegs(*F);
+
+    // `checkForAllInstructions` is much more cheaper than going through all
+    // instructions, try it first.
+
+    // The queue pointer is not needed if aperture regs is present.
+    if (!HasApertureRegs) {
+      bool UsedAssumedInformation = false;
+      A.checkForAllInstructions(CheckAddrSpaceCasts, *this,
+                                {Instruction::AddrSpaceCast},
+                                UsedAssumedInformation);
+    }
+
+    // If we found  that we need the queue pointer, nothing else to do.
+    if (NeedsQueuePtr)
+      return true;
+
+    if (!IsNonEntryFunc && HasApertureRegs)
+      return false;
+
+    for (BasicBlock &BB : *F) {
+      for (Instruction &I : BB) {
+        for (const Use &U : I.operands()) {
+          if (const auto *C = dyn_cast<Constant>(U)) {
+            if (InfoCache.needsQueuePtr(C, *F))
+              return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool funcRetrievesHostcallPtr(Attributor &A) {
+    auto Pos = llvm::AMDGPU::getHostcallImplicitArgPosition();
+
+    // Check if this is a call to the implicitarg_ptr builtin and it
+    // is used to retrieve the hostcall pointer. The implicit arg for
+    // hostcall is not used only if every use of the implicitarg_ptr
+    // is a load that clearly does not retrieve any byte of the
+    // hostcall pointer. We check this by tracing all the uses of the
+    // initial call to the implicitarg_ptr intrinsic.
+    auto DoesNotLeadToHostcallPtr = [&](Instruction &I) {
+      auto &Call = cast<CallBase>(I);
+      if (Call.getIntrinsicID() != Intrinsic::amdgcn_implicitarg_ptr)
+        return true;
+
+      const auto &PointerInfoAA = A.getAAFor<AAPointerInfo>(
+          *this, IRPosition::callsite_returned(Call), DepClassTy::REQUIRED);
+
+      AAPointerInfo::OffsetAndSize OAS(Pos, 8);
+      return PointerInfoAA.forallInterferingAccesses(
+          OAS, [](const AAPointerInfo::Access &Acc, bool IsExact) {
+            return Acc.getRemoteInst()->isDroppable();
+          });
+    };
+
+    bool UsedAssumedInformation = false;
+    return !A.checkForAllCallLikeInstructions(DoesNotLeadToHostcallPtr, *this,
+                                              UsedAssumedInformation);
+  }
 };
 
 AAAMDAttributes &AAAMDAttributes::createForPosition(const IRPosition &IRP,
@@ -464,6 +531,121 @@ AAAMDAttributes &AAAMDAttributes::createForPosition(const IRPosition &IRP,
   if (IRP.getPositionKind() == IRPosition::IRP_FUNCTION)
     return *new (A.Allocator) AAAMDAttributesFunction(IRP, A);
   llvm_unreachable("AAAMDAttributes is only valid for function position");
+}
+
+/// Propagate amdgpu-flat-work-group-size attribute.
+struct AAAMDFlatWorkGroupSize
+    : public StateWrapper<IntegerRangeState, AbstractAttribute, uint32_t> {
+  using Base = StateWrapper<IntegerRangeState, AbstractAttribute, uint32_t>;
+  AAAMDFlatWorkGroupSize(const IRPosition &IRP, Attributor &A)
+      : Base(IRP, 32) {}
+
+  /// See AbstractAttribute::getState(...).
+  IntegerRangeState &getState() override { return *this; }
+  const IntegerRangeState &getState() const override { return *this; }
+
+  void initialize(Attributor &A) override {
+    Function *F = getAssociatedFunction();
+    auto &InfoCache = static_cast<AMDGPUInformationCache &>(A.getInfoCache());
+    unsigned MinGroupSize, MaxGroupSize;
+    std::tie(MinGroupSize, MaxGroupSize) = InfoCache.getFlatWorkGroupSizes(*F);
+    intersectKnown(
+        ConstantRange(APInt(32, MinGroupSize), APInt(32, MaxGroupSize + 1)));
+
+    if (AMDGPU::isEntryFunctionCC(F->getCallingConv()))
+      indicatePessimisticFixpoint();
+  }
+
+  ChangeStatus updateImpl(Attributor &A) override {
+    ChangeStatus Change = ChangeStatus::UNCHANGED;
+
+    auto CheckCallSite = [&](AbstractCallSite CS) {
+      Function *Caller = CS.getInstruction()->getFunction();
+      LLVM_DEBUG(dbgs() << "[AAAMDFlatWorkGroupSize] Call " << Caller->getName()
+                        << "->" << getAssociatedFunction()->getName() << '\n');
+
+      const auto &CallerInfo = A.getAAFor<AAAMDFlatWorkGroupSize>(
+          *this, IRPosition::function(*Caller), DepClassTy::REQUIRED);
+
+      Change |=
+          clampStateAndIndicateChange(this->getState(), CallerInfo.getState());
+
+      return true;
+    };
+
+    bool AllCallSitesKnown = true;
+    if (!A.checkForAllCallSites(CheckCallSite, *this, true, AllCallSitesKnown))
+      return indicatePessimisticFixpoint();
+
+    return Change;
+  }
+
+  ChangeStatus manifest(Attributor &A) override {
+    SmallVector<Attribute, 8> AttrList;
+    Function *F = getAssociatedFunction();
+    LLVMContext &Ctx = F->getContext();
+
+    auto &InfoCache = static_cast<AMDGPUInformationCache &>(A.getInfoCache());
+    unsigned Min, Max;
+    std::tie(Min, Max) = InfoCache.getMaximumFlatWorkGroupRange(*F);
+
+    // Don't add the attribute if it's the implied default.
+    if (getAssumed().getLower() == Min && getAssumed().getUpper() - 1 == Max)
+      return ChangeStatus::UNCHANGED;
+
+    SmallString<10> Buffer;
+    raw_svector_ostream OS(Buffer);
+    OS << getAssumed().getLower() << ',' << getAssumed().getUpper() - 1;
+
+    AttrList.push_back(
+        Attribute::get(Ctx, "amdgpu-flat-work-group-size", OS.str()));
+    return IRAttributeManifest::manifestAttrs(A, getIRPosition(), AttrList,
+                                              /* ForceReplace */ true);
+  }
+
+  const std::string getAsStr() const override {
+    std::string Str;
+    raw_string_ostream OS(Str);
+    OS << "AMDFlatWorkGroupSize[";
+    OS << getAssumed().getLower() << ',' << getAssumed().getUpper() - 1;
+    OS << ']';
+    return OS.str();
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {}
+
+  /// Create an abstract attribute view for the position \p IRP.
+  static AAAMDFlatWorkGroupSize &createForPosition(const IRPosition &IRP,
+                                                   Attributor &A);
+
+  /// See AbstractAttribute::getName()
+  const std::string getName() const override {
+    return "AAAMDFlatWorkGroupSize";
+  }
+
+  /// See AbstractAttribute::getIdAddr()
+  const char *getIdAddr() const override { return &ID; }
+
+  /// This function should return true if the type of the \p AA is
+  /// AAAMDFlatWorkGroupSize
+  static bool classof(const AbstractAttribute *AA) {
+    return (AA->getIdAddr() == &ID);
+  }
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
+};
+
+const char AAAMDFlatWorkGroupSize::ID = 0;
+
+AAAMDFlatWorkGroupSize &
+AAAMDFlatWorkGroupSize::createForPosition(const IRPosition &IRP,
+                                          Attributor &A) {
+  if (IRP.getPositionKind() == IRPosition::IRP_FUNCTION)
+    return *new (A.Allocator) AAAMDFlatWorkGroupSize(IRP, A);
+  llvm_unreachable(
+      "AAAMDFlatWorkGroupSize is only valid for function position");
 }
 
 class AMDGPUAttributor : public ModulePass {
@@ -493,14 +675,18 @@ public:
     BumpPtrAllocator Allocator;
     AMDGPUInformationCache InfoCache(M, AG, Allocator, nullptr, *TM);
     DenseSet<const char *> Allowed(
-        {&AAAMDAttributes::ID, &AAAMDWorkGroupSize::ID, &AACallEdges::ID});
+        {&AAAMDAttributes::ID, &AAUniformWorkGroupSize::ID,
+         &AAAMDFlatWorkGroupSize::ID, &AACallEdges::ID, &AAPointerInfo::ID});
 
     Attributor A(Functions, InfoCache, CGUpdater, &Allowed);
 
     for (Function &F : M) {
       if (!F.isIntrinsic()) {
         A.getOrCreateAAFor<AAAMDAttributes>(IRPosition::function(F));
-        A.getOrCreateAAFor<AAAMDWorkGroupSize>(IRPosition::function(F));
+        A.getOrCreateAAFor<AAUniformWorkGroupSize>(IRPosition::function(F));
+        if (!AMDGPU::isEntryFunctionCC(F.getCallingConv())) {
+          A.getOrCreateAAFor<AAAMDFlatWorkGroupSize>(IRPosition::function(F));
+        }
       }
     }
 
@@ -512,6 +698,7 @@ public:
   TargetMachine *TM;
   static char ID;
 };
+} // namespace
 
 char AMDGPUAttributor::ID = 0;
 

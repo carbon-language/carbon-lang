@@ -111,7 +111,7 @@ entry:
   call void @test2_f(i1 true)
 ; CHECK-NOT: @test2_f
 
-  ; Sanity check that two calls with the hard predicate remain uninlined.
+  ; Check that two calls with the hard predicate remain uninlined.
   call void @test2_g(i1 true)
   call void @test2_g(i1 true)
 ; CHECK: call void @test2_g(i1 true)
@@ -183,7 +183,7 @@ entry:
   call void @test3_f(i1 false)
 ; CHECK-NOT: @test3_f
 
-  ; Sanity check that two calls with the hard predicate remain uninlined.
+  ; Check that two calls with the hard predicate remain uninlined.
   call void @test3_g(i1 true)
   call void @test3_g(i1 true)
 ; CHECK: call void @test3_g(i1 true)
@@ -260,10 +260,10 @@ entry:
   ; constant expression cannot be inlined because the constant expression forms
   ; a second use. If this part starts failing we need to use more complex
   ; constant expressions to reference a particular function with them.
-  %sink = alloca i1
-  store volatile i1 icmp ne (i64 ptrtoint (void (i1)* @test4_g to i64), i64 ptrtoint(void (i1)* @test4_g to i64)), i1* %sink
+  %sink = alloca i64
+  store volatile i64 mul (i64 ptrtoint (void (i1)* @test4_g to i64), i64 ptrtoint(void (i1)* @test4_g to i64)), i64* %sink
   call void @test4_g(i1 true)
-; CHECK: store volatile i1 false
+; CHECK: store volatile i64 mul (i64 ptrtoint (void (i1)* @test4_g to i64), i64 ptrtoint (void (i1)* @test4_g to i64)), i64* %sink
 ; CHECK: call void @test4_g(i1 true)
 
   ret void

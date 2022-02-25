@@ -626,7 +626,7 @@ bool PeepholeOptimizer::optimizeCmpInstr(MachineInstr &MI) {
   // If this instruction is a comparison against zero and isn't comparing a
   // physical register, we can try to optimize it.
   Register SrcReg, SrcReg2;
-  int CmpMask, CmpValue;
+  int64_t CmpMask, CmpValue;
   if (!TII->analyzeCompare(MI, SrcReg, SrcReg2, CmpMask, CmpValue) ||
       SrcReg.isPhysical() || SrcReg2.isPhysical())
     return false;
@@ -810,7 +810,7 @@ protected:
   unsigned CurrentSrcIdx = 0;   ///< The index of the source being rewritten.
 public:
   Rewriter(MachineInstr &CopyLike) : CopyLike(CopyLike) {}
-  virtual ~Rewriter() {}
+  virtual ~Rewriter() = default;
 
   /// Get the next rewritable source (SrcReg, SrcSubReg) and
   /// the related value that it affects (DstReg, DstSubReg).

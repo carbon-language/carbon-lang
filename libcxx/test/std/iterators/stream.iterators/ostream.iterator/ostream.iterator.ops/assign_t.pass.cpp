@@ -22,7 +22,7 @@
 #pragma clang diagnostic ignored "-Wliteral-conversion"
 #endif
 
-#ifdef TEST_COMPILER_C1XX
+#ifdef TEST_COMPILER_MSVC
 #pragma warning(disable: 4244) // conversion from 'X' to 'Y', possible loss of data
 #endif
 
@@ -40,6 +40,7 @@ int main(int, char**)
         i = 2.4;
         assert(outf.str() == "2, ");
     }
+#ifndef TEST_HAS_NO_WIDE_CHARACTERS
     {
         std::wostringstream outf;
         std::ostream_iterator<int, wchar_t> i(outf);
@@ -52,6 +53,7 @@ int main(int, char**)
         i = 2.4;
         assert(outf.str() == L"2, ");
     }
+#endif
 
   return 0;
 }

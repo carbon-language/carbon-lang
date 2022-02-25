@@ -16,6 +16,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/InputInfo.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/Tool.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatAdapters.h"
@@ -95,9 +96,9 @@ const char *AMDGCN::OpenMPLinker::constructLLVMLinkCommand(
     if (II.isFilename())
       CmdArgs.push_back(II.getFilename());
 
+  bool HasLibm = false;
   if (Args.hasArg(options::OPT_l)) {
     auto Lm = Args.getAllArgValues(options::OPT_l);
-    bool HasLibm = false;
     for (auto &Lib : Lm) {
       if (Lib == "m") {
         HasLibm = true;
@@ -106,6 +107,22 @@ const char *AMDGCN::OpenMPLinker::constructLLVMLinkCommand(
     }
 
     if (HasLibm) {
+      // This is not certain to work. The device libs added here, and passed to
+      // llvm-link, are missing attributes that they expect to be inserted when
+      // passed to mlink-builtin-bitcode. The amdgpu backend does not generate
+      // conservatively correct code when attributes are missing, so this may
+      // be the root cause of miscompilations. Passing via mlink-builtin-bitcode
+      // ultimately hits CodeGenModule::addDefaultFunctionDefinitionAttributes
+      // on each function, see D28538 for context.
+      // Potential workarounds:
+      //  - unconditionally link all of the device libs to every translation
+      //    unit in clang via mlink-builtin-bitcode
+      //  - build a libm bitcode file as part of the DeviceRTL and explictly
+      //    mlink-builtin-bitcode the rocm device libs components at build time
+      //  - drop this llvm-link fork in favour or some calls into LLVM, chosen
+      //    to do basically the same work as llvm-link but with that call first
+      //  - write an opt pass that sets that on every function it sees and pipe
+      //    the device-libs bitcode through that on the way to this llvm-link
       SmallVector<std::string, 12> BCLibs =
           AMDGPUOpenMPTC.getCommonDeviceLibNames(Args, SubArchName.str());
       llvm::for_each(BCLibs, [&](StringRef BCFile) {
@@ -114,6 +131,9 @@ const char *AMDGCN::OpenMPLinker::constructLLVMLinkCommand(
     }
   }
 
+  AddStaticDeviceLibsLinking(C, *this, JA, Inputs, Args, CmdArgs, "amdgcn",
+                             SubArchName, /*isBitCodeSDL=*/true,
+                             /*postClangLink=*/false);
   // Add an intermediate output file.
   CmdArgs.push_back("-o");
   const char *OutputFileName =
@@ -124,6 +144,26 @@ const char *AMDGCN::OpenMPLinker::constructLLVMLinkCommand(
   C.addCommand(std::make_unique<Command>(
       JA, *this, ResponseFileSupport::AtFileCurCP(), Exec, CmdArgs, Inputs,
       InputInfo(&JA, Args.MakeArgString(OutputFileName))));
+
+  // If we linked in libm definitions late we run another round of optimizations
+  // to inline the definitions and fold what is foldable.
+  if (HasLibm) {
+    ArgStringList OptCmdArgs;
+    const char *OptOutputFileName =
+        getOutputFileName(C, OutputFilePrefix, "-linked-opt", "bc");
+    addLLCOptArg(Args, OptCmdArgs);
+    OptCmdArgs.push_back(OutputFileName);
+    OptCmdArgs.push_back("-o");
+    OptCmdArgs.push_back(OptOutputFileName);
+    const char *OptExec =
+        Args.MakeArgString(getToolChain().GetProgramPath("opt"));
+    C.addCommand(std::make_unique<Command>(
+        JA, *this, ResponseFileSupport::AtFileCurCP(), OptExec, OptCmdArgs,
+        InputInfo(&JA, Args.MakeArgString(OutputFileName)),
+        InputInfo(&JA, Args.MakeArgString(OptOutputFileName))));
+    OutputFileName = OptOutputFileName;
+  }
+
   return OutputFileName;
 }
 
@@ -245,15 +285,11 @@ void AMDGPUOpenMPToolChain::addClangTargetOptions(
   if (DriverArgs.hasArg(options::OPT_nogpulib))
     return;
 
-  std::string BitcodeSuffix;
-  if (DriverArgs.hasFlag(options::OPT_fopenmp_target_new_runtime,
-                         options::OPT_fno_openmp_target_new_runtime, false))
-    BitcodeSuffix = "new-amdgcn-" + GPUArch;
-  else
-    BitcodeSuffix = "amdgcn-" + GPUArch;
+  // Link the bitcode library late if we're using device LTO.
+  if (getDriver().isUsingLTO(/* IsOffload */ true))
+    return;
 
-  addOpenMPDeviceRTL(getDriver(), DriverArgs, CC1Args, BitcodeSuffix,
-                     getTriple());
+  addOpenMPDeviceRTL(getDriver(), DriverArgs, CC1Args, GPUArch, getTriple());
 }
 
 llvm::opt::DerivedArgList *AMDGPUOpenMPToolChain::TranslateArgs(
@@ -266,10 +302,22 @@ llvm::opt::DerivedArgList *AMDGPUOpenMPToolChain::TranslateArgs(
 
   const OptTable &Opts = getDriver().getOpts();
 
-  if (DeviceOffloadKind != Action::OFK_OpenMP) {
-    for (Arg *A : Args) {
-      DAL->append(A);
+  if (DeviceOffloadKind == Action::OFK_OpenMP) {
+    for (Arg *A : Args)
+      if (!llvm::is_contained(*DAL, A))
+        DAL->append(A);
+
+    std::string Arch = DAL->getLastArgValue(options::OPT_march_EQ).str();
+    if (Arch.empty()) {
+      checkSystemForAMDGPU(Args, *this, Arch);
+      DAL->AddJoinedArg(nullptr, Opts.getOption(options::OPT_march_EQ), Arch);
     }
+
+    return DAL;
+  }
+
+  for (Arg *A : Args) {
+    DAL->append(A);
   }
 
   if (!BoundArch.empty()) {

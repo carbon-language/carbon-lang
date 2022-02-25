@@ -52,14 +52,8 @@ enum Linkage : unsigned char;
 class LinkageSpecDecl;
 class Module;
 class NamedDecl;
-class ObjCCategoryDecl;
-class ObjCCategoryImplDecl;
 class ObjCContainerDecl;
-class ObjCImplDecl;
-class ObjCImplementationDecl;
-class ObjCInterfaceDecl;
 class ObjCMethodDecl;
-class ObjCProtocolDecl;
 struct PrintingPolicy;
 class RecordDecl;
 class SourceManager;
@@ -352,7 +346,7 @@ protected:
                      DeclContext *Parent, std::size_t Extra = 0);
 
 private:
-  bool AccessDeclContextSanity() const;
+  bool AccessDeclContextCheck() const;
 
   /// Get the module ownership kind to use for a local lexical child of \p DC,
   /// which may be either a local or (rarely) an imported declaration.
@@ -472,11 +466,11 @@ public:
 
   void setAccess(AccessSpecifier AS) {
     Access = AS;
-    assert(AccessDeclContextSanity());
+    assert(AccessDeclContextCheck());
   }
 
   AccessSpecifier getAccess() const {
-    assert(AccessDeclContextSanity());
+    assert(AccessDeclContextCheck());
     return AccessSpecifier(Access);
   }
 
@@ -612,6 +606,20 @@ public:
   bool isModulePrivate() const {
     return getModuleOwnershipKind() == ModuleOwnershipKind::ModulePrivate;
   }
+
+  /// Whether this declaration was exported in a lexical context.
+  /// e.g.:
+  ///
+  ///   export namespace A {
+  ///      void f1();        // isInExportDeclContext() == true
+  ///   }
+  ///   void A::f1();        // isInExportDeclContext() == false
+  ///
+  ///   namespace B {
+  ///      void f2();        // isInExportDeclContext() == false
+  ///   }
+  ///   export void B::f2(); // isInExportDeclContext() == true
+  bool isInExportDeclContext() const;
 
   /// Return true if this declaration has an attribute which acts as
   /// definition of the entity, such as 'alias' or 'ifunc'.
@@ -1435,10 +1443,14 @@ class DeclContext {
     /// Has the full definition of this type been required by a use somewhere in
     /// the TU.
     uint64_t IsCompleteDefinitionRequired : 1;
+
+    /// Whether this tag is a definition which was demoted due to
+    /// a module merge.
+    uint64_t IsThisDeclarationADemotedDefinition : 1;
   };
 
   /// Number of non-inherited bits in TagDeclBitfields.
-  enum { NumTagDeclBits = 9 };
+  enum { NumTagDeclBits = 10 };
 
   /// Stores the bits used by EnumDecl.
   /// If modified NumEnumDeclBit and the accessor

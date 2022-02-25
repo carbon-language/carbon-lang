@@ -90,7 +90,7 @@ AST_MATCHER(CXXConstructExpr, isDefaultConstruction) {
 namespace tidy {
 namespace readability {
 
-using utils::IsBinaryOrTernary;
+using utils::isBinaryOrTernary;
 
 ContainerSizeEmptyCheck::ContainerSizeEmptyCheck(StringRef Name,
                                                  ClangTidyContext *Context)
@@ -191,7 +191,7 @@ void ContainerSizeEmptyCheck::check(const MatchFinder::MatchResult &Result) {
   std::string ReplacementText = std::string(
       Lexer::getSourceText(CharSourceRange::getTokenRange(E->getSourceRange()),
                            *Result.SourceManager, getLangOpts()));
-  if (IsBinaryOrTernary(E) || isa<UnaryOperator>(E)) {
+  if (isBinaryOrTernary(E) || isa<UnaryOperator>(E)) {
     ReplacementText = "(" + ReplacementText + ")";
   }
   if (E->getType()->isPointerType())
@@ -218,23 +218,22 @@ void ContainerSizeEmptyCheck::check(const MatchFinder::MatchResult &Result) {
     Hint = FixItHint::CreateReplacement(BinCmpRewritten->getSourceRange(),
                                         ReplacementText);
   } else if (BinaryOp) { // Determine the correct transformation.
-    bool Negation = false;
-    const bool ContainerIsLHS =
-        !llvm::isa<IntegerLiteral>(BinaryOp->getLHS()->IgnoreImpCasts());
-    const auto OpCode = BinaryOp->getOpcode();
+    const auto *LiteralLHS =
+        llvm::dyn_cast<IntegerLiteral>(BinaryOp->getLHS()->IgnoreImpCasts());
+    const auto *LiteralRHS =
+        llvm::dyn_cast<IntegerLiteral>(BinaryOp->getRHS()->IgnoreImpCasts());
+    const bool ContainerIsLHS = !LiteralLHS;
+
     uint64_t Value = 0;
-    if (ContainerIsLHS) {
-      if (const auto *Literal = llvm::dyn_cast<IntegerLiteral>(
-              BinaryOp->getRHS()->IgnoreImpCasts()))
-        Value = Literal->getValue().getLimitedValue();
-      else
-        return;
-    } else {
-      Value =
-          llvm::dyn_cast<IntegerLiteral>(BinaryOp->getLHS()->IgnoreImpCasts())
-              ->getValue()
-              .getLimitedValue();
-    }
+    if (LiteralLHS)
+      Value = LiteralLHS->getValue().getLimitedValue();
+    else if (LiteralRHS)
+      Value = LiteralRHS->getValue().getLimitedValue();
+    else
+      return;
+
+    bool Negation = false;
+    const auto OpCode = BinaryOp->getOpcode();
 
     // Constant that is not handled.
     if (Value > 1)

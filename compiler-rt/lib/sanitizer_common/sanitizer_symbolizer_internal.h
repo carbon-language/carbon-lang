@@ -21,7 +21,7 @@ namespace __sanitizer {
 
 // Parsing helpers, 'str' is searched for delimiter(s) and a string or uptr
 // is extracted. When extracting a string, a newly allocated (using
-// InternalAlloc) and null-terminataed buffer is returned. They return a pointer
+// InternalAlloc) and null-terminated buffer is returned. They return a pointer
 // to the next characted after the found delimiter.
 const char *ExtractToken(const char *str, const char *delims, char **result);
 const char *ExtractInt(const char *str, const char *delims, int *result);
@@ -70,11 +70,6 @@ class SymbolizerTool {
     return nullptr;
   }
 
-  // Called during the LateInitialize phase of Sanitizer initialization.
-  // Usually this is a safe place to call code that might need to use user
-  // memory allocators.
-  virtual void LateInitialize() {}
-
  protected:
   ~SymbolizerTool() {}
 };
@@ -91,7 +86,7 @@ class SymbolizerProcess {
   ~SymbolizerProcess() {}
 
   /// The maximum number of arguments required to invoke a tool process.
-  static const unsigned kArgVMax = 6;
+  static const unsigned kArgVMax = 16;
 
   // Customizable by subclasses.
   virtual bool StartSymbolizerSubprocess();

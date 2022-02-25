@@ -7,6 +7,7 @@
 # CHECK-NEXT:    "capabilities": {
 # CHECK-NEXT:      "astProvider": true,
 # CHECK-NEXT:      "callHierarchyProvider": true,
+# CHECK-NEXT:      "clangdInlayHintsProvider": true,
 # CHECK-NEXT:      "codeActionProvider": true,
 # CHECK-NEXT:      "compilationDatabase": {
 # CHECK-NEXT:        "automaticReload": true
@@ -48,7 +49,8 @@
 # CHECK-NEXT:          ">",
 # CHECK-NEXT:          ":",
 # CHECK-NEXT:          "\"",
-# CHECK-NEXT:          "/"
+# CHECK-NEXT:          "/",
+# CHECK-NEXT:          "*"
 # CHECK-NEXT:        ]
 # CHECK-NEXT:      },
 # CHECK-NEXT:      "declarationProvider": true,
@@ -91,6 +93,7 @@
 # CHECK-NEXT:            "virtual",
 # CHECK-NEXT:            "dependentName",
 # CHECK-NEXT:            "defaultLibrary",
+# CHECK-NEXT:            "usedAsMutableReference",
 # CHECK-NEXT:            "functionScope",
 # CHECK-NEXT:            "classScope",
 # CHECK-NEXT:            "fileScope",
@@ -105,6 +108,11 @@
 # CHECK-NEXT:      "signatureHelpProvider": {
 # CHECK-NEXT:        "triggerCharacters": [
 # CHECK-NEXT:          "(",
+# CHECK-NEXT:          ")",
+# CHECK-NEXT:          "{",
+# CHECK-NEXT:          "}",
+# CHECK-NEXT:          "<",
+# CHECK-NEXT:          ">"
 # CHECK-NEXT:          ","
 # CHECK-NEXT:        ]
 # CHECK-NEXT:      },
@@ -113,6 +121,7 @@
 # CHECK-NEXT:        "openClose": true,
 # CHECK-NEXT:        "save": true
 # CHECK-NEXT:      },
+# CHECK-NEXT:      "typeDefinitionProvider": true,
 # CHECK-NEXT:      "typeHierarchyProvider": true
 # CHECK-NEXT:      "workspaceSymbolProvider": true
 # CHECK-NEXT:    },

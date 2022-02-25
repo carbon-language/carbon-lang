@@ -5,10 +5,8 @@ define i1 @and(i32 %x, i32 %y, i32 %z, i32 %w) {
 ; CHECK-LABEL: and:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    cmp w0, w1
-; CHECK-NEXT:    cset w8, eq
-; CHECK-NEXT:    cmp w2, w3
-; CHECK-NEXT:    cset w9, gt
-; CHECK-NEXT:    and w0, w8, w9
+; CHECK-NEXT:    ccmp w2, w3, #4, eq
+; CHECK-NEXT:    cset w0, gt
 ; CHECK-NEXT:    ret
   %a = icmp eq i32 %x, %y
   %b = icmp sgt i32 %z, %w
@@ -35,10 +33,8 @@ define i1 @and_not(i32 %x, i32 %y, i32 %z, i32 %w) {
 ; CHECK-LABEL: and_not:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    cmp w0, w1
-; CHECK-NEXT:    cset w8, ne
-; CHECK-NEXT:    cmp w2, w3
-; CHECK-NEXT:    cset w9, gt
-; CHECK-NEXT:    and w0, w8, w9
+; CHECK-NEXT:    ccmp w2, w3, #4, ne
+; CHECK-NEXT:    cset w0, gt
 ; CHECK-NEXT:    ret
   %a = icmp eq i32 %x, %y
   %b = icmp sgt i32 %z, %w
@@ -64,9 +60,9 @@ define i1 @or_not(i32 %x, i32 %y, i32 %z, i32 %w) {
 define <4 x i1> @and_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: and_vec:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    and v0.16b, v0.16b, v1.16b
+; CHECK-NEXT:    and v0.16b, v0.16b, v2.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -78,9 +74,9 @@ define <4 x i1> @and_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w)
 define <4 x i1> @or_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: or_vec:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    orr v0.16b, v0.16b, v1.16b
+; CHECK-NEXT:    orr v0.16b, v0.16b, v2.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -92,9 +88,9 @@ define <4 x i1> @or_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) 
 define <4 x i1> @and_not_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: and_not_vec:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    bic v0.16b, v1.16b, v0.16b
+; CHECK-NEXT:    bic v0.16b, v2.16b, v0.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -106,9 +102,9 @@ define <4 x i1> @and_not_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32>
 define <4 x i1> @or_not_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: or_not_vec:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    orn v0.16b, v1.16b, v0.16b
+; CHECK-NEXT:    orn v0.16b, v2.16b, v0.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -120,9 +116,9 @@ define <4 x i1> @or_not_vec(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> 
 define <4 x i1> @and_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: and_vec_undef:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    and v0.16b, v0.16b, v1.16b
+; CHECK-NEXT:    and v0.16b, v0.16b, v2.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -134,9 +130,9 @@ define <4 x i1> @and_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i3
 define <4 x i1> @or_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: or_vec_undef:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    orr v0.16b, v0.16b, v1.16b
+; CHECK-NEXT:    orr v0.16b, v0.16b, v2.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -148,9 +144,9 @@ define <4 x i1> @or_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32
 define <4 x i1> @and_not_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: and_not_vec_undef:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    bic v0.16b, v1.16b, v0.16b
+; CHECK-NEXT:    bic v0.16b, v2.16b, v0.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y
@@ -162,9 +158,9 @@ define <4 x i1> @and_not_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 
 define <4 x i1> @or_not_vec_undef(<4 x i32> %x, <4 x i32> %y, <4 x i32> %z, <4 x i32> %w) {
 ; CHECK-LABEL: or_not_vec_undef:
 ; CHECK:       // %bb.0:
+; CHECK-NEXT:    cmgt v2.4s, v2.4s, v3.4s
 ; CHECK-NEXT:    cmeq v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    cmgt v1.4s, v2.4s, v3.4s
-; CHECK-NEXT:    orn v0.16b, v1.16b, v0.16b
+; CHECK-NEXT:    orn v0.16b, v2.16b, v0.16b
 ; CHECK-NEXT:    xtn v0.4h, v0.4s
 ; CHECK-NEXT:    ret
   %a = icmp eq <4 x i32> %x, %y

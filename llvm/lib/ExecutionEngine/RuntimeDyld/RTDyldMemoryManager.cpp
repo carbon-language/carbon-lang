@@ -29,7 +29,7 @@
 
 namespace llvm {
 
-RTDyldMemoryManager::~RTDyldMemoryManager() {}
+RTDyldMemoryManager::~RTDyldMemoryManager() = default;
 
 #if defined(HAVE_REGISTER_FRAME) && defined(HAVE_DEREGISTER_FRAME) &&          \
     !defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)
@@ -286,7 +286,7 @@ void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
   uint64_t Addr = getSymbolAddress(Name);
 
   if (!Addr && AbortOnFailure)
-    report_fatal_error("Program used external function '" + Name +
+    report_fatal_error(Twine("Program used external function '") + Name +
                        "' which could not be resolved!");
 
   return (void*)Addr;

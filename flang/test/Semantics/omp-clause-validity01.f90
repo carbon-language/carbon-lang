@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1 -fopenmp
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1 -fopenmp
 use omp_lib
 ! Check OpenMP clause validity for the following directives:
 !
@@ -481,8 +480,6 @@ use omp_lib
   ! !$omp target enter data map(to:arrayA) map(alloc:arrayB)
   ! !$omp target update from(arrayA) to(arrayB)
   ! !$omp target exit data map(from:arrayA) map(delete:arrayB)
-  !$omp ordered depend(source)
-  ! !$omp ordered depend(sink:i-1)
   !$omp flush (c)
   !$omp flush acq_rel
   !$omp flush release
@@ -559,4 +556,8 @@ use omp_lib
   do i = 1, N
      a = 3.14
   enddo
+
+  !$omp target enter data map(alloc:A) device(0) 
+  !$omp target exit data map(delete:A) device(0) 
+
 end program

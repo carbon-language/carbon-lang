@@ -18,9 +18,6 @@
 
 class MoveOnly
 {
-    MoveOnly(const MoveOnly&);
-    MoveOnly& operator=(const MoveOnly&);
-
     int data_;
 public:
     constexpr MoveOnly(int data = 1) : data_(data) {}
@@ -48,19 +45,19 @@ public:
         { return MoveOnly{data_ + x.data_}; }
     TEST_CONSTEXPR_CXX14 MoveOnly operator*(const MoveOnly& x) const
         { return MoveOnly{data_ * x.data_}; }
+
+    template<class T, class U>
+    friend void operator,(T t, U u) = delete;
 };
 
-namespace std {
 
 template <>
-struct hash<MoveOnly>
+struct std::hash<MoveOnly>
 {
     typedef MoveOnly argument_type;
     typedef size_t result_type;
     constexpr size_t operator()(const MoveOnly& x) const {return x.get();}
 };
-
-}
 
 #endif // TEST_STD_VER >= 11
 

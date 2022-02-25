@@ -74,7 +74,7 @@
 // CXX-RV32-BAREMETAL-NOSYSROOT-ILP32: "-lstdc++" "--start-group" "-lc" "-lgloss" "--end-group" "-lgcc"
 // CXX-RV32-BAREMETAL-NOSYSROOT-ILP32: "{{.*}}/Inputs/basic_riscv32_tree/lib/gcc/riscv32-unknown-elf/8.0.1{{/|\\\\}}crtend.o"
 
-// RUN: %clang %s -### -no-canonical-prefixes -fuse-ld=ld \
+// RUN: %clang %s -### -no-canonical-prefixes -fuse-ld=ld -no-pie \
 // RUN:   -target riscv32-unknown-linux-gnu --rtlib=platform -mabi=ilp32 \
 // RUN:   --gcc-toolchain=%S/Inputs/multilib_riscv_linux_sdk \
 // RUN:   --sysroot=%S/Inputs/multilib_riscv_linux_sdk/sysroot 2>&1 \
@@ -89,7 +89,7 @@
 // C-RV32-LINUX-MULTI-ILP32: "-L{{.*}}/Inputs/multilib_riscv_linux_sdk/sysroot/lib32/ilp32"
 // C-RV32-LINUX-MULTI-ILP32: "-L{{.*}}/Inputs/multilib_riscv_linux_sdk/sysroot/usr/lib32/ilp32"
 
-// RUN: %clang %s -### -no-canonical-prefixes -fuse-ld=ld \
+// RUN: %clang %s -### -no-canonical-prefixes -fuse-ld=ld -no-pie \
 // RUN:   -target riscv32-unknown-linux-gnu --rtlib=platform -march=rv32imafd \
 // RUN:   --gcc-toolchain=%S/Inputs/multilib_riscv_linux_sdk \
 // RUN:   --sysroot=%S/Inputs/multilib_riscv_linux_sdk/sysroot 2>&1 \
@@ -196,6 +196,20 @@
 // C-RV32-RTLIB-COMPILERRT-ILP32: "{{.*}}clang_rt.crtbegin-riscv32.o"
 // C-RV32-RTLIB-COMPILERRT-ILP32: "--start-group" "-lc" "-lgloss" "--end-group" "{{.*}}libclang_rt.builtins-riscv32.a"
 // C-RV32-RTLIB-COMPILERRT-ILP32: "{{.*}}clang_rt.crtend-riscv32.o"
+
+// RUN: %clang %s -### -no-canonical-prefixes -target riscv32 \
+// RUN:   --gcc-toolchain=%S/Inputs/basic_riscv32_tree --sysroot= \
+// RUN:   -resource-dir=%s/Inputs/resource_dir 2>&1 \
+// RUN:   | FileCheck -check-prefix=RESOURCE-INC %s
+// RESOURCE-INC: "-internal-isystem" "{{.*}}/Inputs/resource_dir{{/|\\\\}}include"
+// RESOURCE-INC: "-internal-isystem" "{{.*}}/basic_riscv32_tree{{.*}}riscv32-unknown-elf{{/|\\\\}}include"
+
+// RUN: %clang %s -### -no-canonical-prefixes -target riscv32 \
+// RUN:   --gcc-toolchain=%S/Inputs/basic_riscv32_tree --sysroot= \
+// RUN:   -resource-dir=%s/Inputs/resource_dir -nobuiltininc 2>&1 \
+// RUN:   | FileCheck -check-prefix=NO-RESOURCE-INC %s
+// NO-RESOURCE-INC-NOT: "-internal-isystem" "{{.*}}/Inputs/resource_dir{{/|\\\\}}include"
+// NO-RESOURCE-INC: "-internal-isystem" "{{.*}}/basic_riscv32_tree/{{.*}}riscv32-unknown-elf{{/|\\\\}}include"
 
 // RUN: %clang -target riscv32 %s -emit-llvm -S -o - | FileCheck %s
 
@@ -329,46 +343,46 @@ int size_a_ld = sizeof(_Atomic(long double));
 // Check types
 
 // CHECK: zeroext i8 @check_char()
-char check_char() { return 0; }
+char check_char(void) { return 0; }
 
 // CHECK: define dso_local signext i16 @check_short()
-short check_short() { return 0; }
+short check_short(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_int()
-int check_int() { return 0; }
+int check_int(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_wchar_t()
-int check_wchar_t() { return 0; }
+int check_wchar_t(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_long()
-long check_long() { return 0; }
+long check_long(void) { return 0; }
 
 // CHECK: define dso_local i64 @check_longlong()
-long long check_longlong() { return 0; }
+long long check_longlong(void) { return 0; }
 
 // CHECK: define dso_local zeroext i8 @check_uchar()
-unsigned char check_uchar() { return 0; }
+unsigned char check_uchar(void) { return 0; }
 
 // CHECK: define dso_local zeroext i16 @check_ushort()
-unsigned short check_ushort() { return 0; }
+unsigned short check_ushort(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_uint()
-unsigned int check_uint() { return 0; }
+unsigned int check_uint(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_ulong()
-unsigned long check_ulong() { return 0; }
+unsigned long check_ulong(void) { return 0; }
 
 // CHECK: define dso_local i64 @check_ulonglong()
-unsigned long long check_ulonglong() { return 0; }
+unsigned long long check_ulonglong(void) { return 0; }
 
 // CHECK: define dso_local i32 @check_size_t()
-size_t check_size_t() { return 0; }
+size_t check_size_t(void) { return 0; }
 
 // CHECK: define dso_local float @check_float()
-float check_float() { return 0; }
+float check_float(void) { return 0; }
 
 // CHECK: define dso_local double @check_double()
-double check_double() { return 0; }
+double check_double(void) { return 0; }
 
 // CHECK: define dso_local fp128 @check_longdouble()
-long double check_longdouble() { return 0; }
+long double check_longdouble(void) { return 0; }

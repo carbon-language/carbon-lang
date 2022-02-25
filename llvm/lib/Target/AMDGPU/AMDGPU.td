@@ -18,7 +18,6 @@ def p4 : PtrValueType<i64, 4>;
 def p5 : PtrValueType<i32, 5>;
 def p6 : PtrValueType<i32, 6>;
 
-
 class BoolToList<bit Value> {
   list<int> ret = !if(Value, [1]<int>, []<int>);
 }
@@ -85,6 +84,12 @@ def FeatureScalarFlatScratchInsts : SubtargetFeature<"scalar-flat-scratch-insts"
   "ScalarFlatScratchInsts",
   "true",
   "Have s_scratch_* flat memory instructions"
+>;
+
+def FeatureEnableFlatScratch : SubtargetFeature<"enable-flat-scratch",
+  "EnableFlatScratch",
+  "true",
+  "Use scratch_* flat memory instructions to access scratch"
 >;
 
 def FeatureAddNoCarryInsts : SubtargetFeature<"add-no-carry-insts",
@@ -416,7 +421,7 @@ def FeatureDPP : SubtargetFeature<"dpp",
   "Support DPP (Data Parallel Primitives) extension"
 >;
 
-// DPP8 allows arbitrary cross-lane swizzling withing groups of 8 lanes.
+// DPP8 allows arbitrary cross-lane swizzling within groups of 8 lanes.
 def FeatureDPP8 : SubtargetFeature<"dpp8",
   "HasDPP8",
   "true",
@@ -609,12 +614,6 @@ def FeatureDsSrc2Insts : SubtargetFeature<"ds-src2-insts",
   "HasDsSrc2Insts",
   "true",
   "Has ds_*_src2 instructions"
->;
-
-def FeatureRegisterBanking : SubtargetFeature<"register-banking",
-  "HasRegisterBanking",
-  "true",
-  "Has register banking"
 >;
 
 def FeatureVOP3Literal : SubtargetFeature<"vop3-literal",
@@ -827,7 +826,7 @@ def FeatureGFX10 : GCNSubtargetFeatureGeneration<"GFX10",
    FeatureSDWA, FeatureSDWAOmod, FeatureSDWAScalar, FeatureSDWASdst,
    FeatureFlatInstOffsets, FeatureFlatGlobalInsts, FeatureFlatScratchInsts,
    FeatureAddNoCarryInsts, FeatureFmaMixInsts, FeatureGFX8Insts,
-   FeatureNoSdstCMPX, FeatureVscnt, FeatureRegisterBanking,
+   FeatureNoSdstCMPX, FeatureVscnt,
    FeatureVOP3Literal, FeatureDPP8, FeatureExtendedImageInsts,
    FeatureNoDataDepHazard, FeaturePkFmacF16Inst,
    FeatureGFX10A16, FeatureSMemTimeInst, FeatureFastDenormalF32, FeatureG16,
@@ -1351,7 +1350,7 @@ def NotLDSRequiresM0Init : Predicate<"!Subtarget->ldsRequiresM0Init()">;
 def HasDSAddTid : Predicate<"Subtarget->getGeneration() >= AMDGPUSubtarget::GFX9">,
   AssemblerPredicate<(all_of FeatureGFX9Insts)>;
 
-def HasLDSFPAtomics : Predicate<"Subtarget->hasLDSFPAtomics()">,
+def HasLDSFPAtomicAdd : Predicate<"Subtarget->hasLDSFPAtomicAdd()">,
   AssemblerPredicate<(all_of FeatureGFX8Insts)>;
 
 def HasAddNoCarryInsts : Predicate<"Subtarget->hasAddNoCarry()">,

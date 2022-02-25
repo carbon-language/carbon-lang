@@ -290,7 +290,7 @@ void f(_Atomic(int) *i, const _Atomic(int) *ci,
 }
 
 _Atomic(int*) PR12527_a;
-void PR12527() { int *b = PR12527_a; }
+void PR12527(void) { int *b = PR12527_a; }
 
 void PR16931(int* x) { // expected-note {{passing argument to parameter 'x' here}}
   typedef struct { _Atomic(_Bool) flag; } flag;
@@ -361,6 +361,13 @@ void memory_checks(_Atomic(int) *Ap, int *p, int val) {
   (void)__c11_atomic_fetch_xor(Ap, val, memory_order_release);
   (void)__c11_atomic_fetch_xor(Ap, val, memory_order_acq_rel);
   (void)__c11_atomic_fetch_xor(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_consume);
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_release);
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_nand(Ap, val, memory_order_seq_cst);
 
   (void)__c11_atomic_fetch_min(Ap, val, memory_order_relaxed);
   (void)__c11_atomic_fetch_min(Ap, val, memory_order_acquire);
@@ -566,7 +573,7 @@ void memory_checks(_Atomic(int) *Ap, int *p, int val) {
   (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_seq_cst, memory_order_relaxed);
 }
 
-void nullPointerWarning() {
+void nullPointerWarning(void) {
   volatile _Atomic(int) vai;
   _Atomic(int) ai;
   volatile int vi = 42;
@@ -602,6 +609,8 @@ void nullPointerWarning() {
   (void)__c11_atomic_fetch_or((_Atomic(int)*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
   (void)__c11_atomic_fetch_xor((volatile _Atomic(int)*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
   (void)__c11_atomic_fetch_xor((_Atomic(int)*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)__c11_atomic_fetch_nand((volatile _Atomic(int)*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)__c11_atomic_fetch_nand((_Atomic(int)*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
 
   __atomic_store_n((volatile int*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
   __atomic_store_n((int*)0, 42, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
@@ -680,6 +689,8 @@ void nullPointerWarning() {
   (void)__c11_atomic_fetch_or(&ai, 0, memory_order_relaxed);
   (void)__c11_atomic_fetch_xor(&vai, 0, memory_order_relaxed);
   (void)__c11_atomic_fetch_xor(&ai, 0, memory_order_relaxed);
+  (void)__c11_atomic_fetch_nand(&vai, 0, memory_order_relaxed);
+  (void)__c11_atomic_fetch_nand(&ai, 0, memory_order_relaxed);
 
   // Ditto.
   __atomic_store_n(&vi, 0, memory_order_relaxed);

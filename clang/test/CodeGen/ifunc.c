@@ -15,11 +15,11 @@ typedef int (*foo_t)(int);
 
 int global;
 
-static foo_t foo_ifunc() {
+static foo_t foo_ifunc(void) {
   return global ? f1 : f2;
 }
 
-int bar() {
+int bar(void) {
   return foo(1);
 }
 
@@ -34,8 +34,8 @@ extern void goo(void) __attribute__ ((ifunc("goo_ifunc")));
 void* goo_ifunc(void) {
   return 0;
 }
-// CHECK: @foo = ifunc i32 (i32), bitcast (i32 (i32)* ()* @foo_ifunc to i32 (i32)*)
-// CHECK: @goo = ifunc void (), bitcast (i8* ()* @goo_ifunc to void ()*)
+// CHECK: @foo = ifunc i32 (i32), i32 (i32)* ()* @foo_ifunc
+// CHECK: @goo = ifunc void (), bitcast (i8* ()* @goo_ifunc to void ()* ()*)
 
 // CHECK: call i32 @foo(i32
 // CHECK: call void @goo()

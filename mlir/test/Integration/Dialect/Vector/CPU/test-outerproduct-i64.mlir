@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -convert-scf-to-std -convert-vector-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt %s -convert-scf-to-cf -convert-vector-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e entry -entry-point-result=void  \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
 // RUN: FileCheck %s
@@ -14,9 +14,9 @@
 !vector_type_R = type vector<7xi64>
 
 func @vector_outerproduct_splat_8x8(%ia: i64, %ib: i64, %ic: i64) -> !vector_type_C {
-  %a = splat %ia: !vector_type_A
-  %b = splat %ib: !vector_type_B
-  %c = splat %ic: !vector_type_C
+  %a = vector.splat %ia: !vector_type_A
+  %b = vector.splat %ib: !vector_type_B
+  %c = vector.splat %ic: !vector_type_C
   %d = vector.outerproduct %a, %b, %c : !vector_type_A, !vector_type_B
   return %d: !vector_type_C
 }
@@ -35,13 +35,13 @@ func @vector_outerproduct_vec_2x3_acc(%x : !vector_type_X,
 }
 
 func @entry() {
-  %i0 = constant 0: i64
-  %i1 = constant 1: i64
-  %i2 = constant 2: i64
-  %i3 = constant 3: i64
-  %i4 = constant 4: i64
-  %i5 = constant 5: i64
-  %i10 = constant 10: i64
+  %i0 = arith.constant 0: i64
+  %i1 = arith.constant 1: i64
+  %i2 = arith.constant 2: i64
+  %i3 = arith.constant 3: i64
+  %i4 = arith.constant 4: i64
+  %i5 = arith.constant 5: i64
+  %i10 = arith.constant 10: i64
 
   // Simple case, splat scalars into vectors, then take outer product.
   %v = call @vector_outerproduct_splat_8x8(%i1, %i2, %i10)

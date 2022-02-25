@@ -108,8 +108,8 @@ struct StoreToLoadForwardingCandidate {
     // Currently we only support accesses with unit stride.  FIXME: we should be
     // able to handle non unit stirde as well as long as the stride is equal to
     // the dependence distance.
-    if (getPtrStride(PSE, LoadPtr, L) != 1 ||
-        getPtrStride(PSE, StorePtr, L) != 1)
+    if (getPtrStride(PSE, LoadType, LoadPtr, L) != 1 ||
+        getPtrStride(PSE, LoadType, StorePtr, L) != 1)
       return false;
 
     auto &DL = Load->getParent()->getModule()->getDataLayout();
@@ -213,7 +213,8 @@ public:
         continue;
 
       // Only progagate the value if they are of the same type.
-      if (Store->getPointerOperandType() != Load->getPointerOperandType())
+      if (Store->getPointerOperandType() != Load->getPointerOperandType() ||
+          getLoadStoreType(Store) != getLoadStoreType(Load))
         continue;
 
       Candidates.emplace_front(Load, Store);
@@ -528,7 +529,7 @@ public:
       return false;
     }
 
-    if (LAI.getPSE().getUnionPredicate().getComplexity() >
+    if (LAI.getPSE().getPredicate().getComplexity() >
         LoadElimSCEVCheckThreshold) {
       LLVM_DEBUG(dbgs() << "Too many SCEV run-time checks needed.\n");
       return false;
@@ -539,7 +540,7 @@ public:
       return false;
     }
 
-    if (!Checks.empty() || !LAI.getPSE().getUnionPredicate().isAlwaysTrue()) {
+    if (!Checks.empty() || !LAI.getPSE().getPredicate().isAlwaysTrue()) {
       if (LAI.hasConvergentOp()) {
         LLVM_DEBUG(dbgs() << "Versioning is needed but not allowed with "
                              "convergent calls\n");
@@ -721,8 +722,8 @@ PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
   auto &LAM = AM.getResult<LoopAnalysisManagerFunctionProxy>(F).getManager();
   bool Changed = eliminateLoadsAcrossLoops(
       F, LI, DT, BFI, PSI, &SE, &AC, [&](Loop &L) -> const LoopAccessInfo & {
-        LoopStandardAnalysisResults AR = {AA,  AC,  DT,      LI,  SE,
-                                          TLI, TTI, nullptr, nullptr};
+        LoopStandardAnalysisResults AR = {AA,  AC,  DT,      LI,      SE,
+                                          TLI, TTI, nullptr, nullptr, nullptr};
         return LAM.getResult<LoopAccessAnalysis>(L, AR);
       });
 

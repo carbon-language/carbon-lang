@@ -26,9 +26,9 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -110,6 +110,15 @@ void X86_MC::initLLVMToSEHAndCVRegMapping(MCRegisterInfo *MRI) {
       {codeview::RegisterId::EDI, X86::EDI},
 
       {codeview::RegisterId::EFLAGS, X86::EFLAGS},
+
+      {codeview::RegisterId::ST0, X86::ST0},
+      {codeview::RegisterId::ST1, X86::ST1},
+      {codeview::RegisterId::ST2, X86::ST2},
+      {codeview::RegisterId::ST3, X86::ST3},
+      {codeview::RegisterId::ST4, X86::ST4},
+      {codeview::RegisterId::ST5, X86::ST5},
+      {codeview::RegisterId::ST6, X86::ST6},
+      {codeview::RegisterId::ST7, X86::ST7},
 
       {codeview::RegisterId::ST0, X86::FP0},
       {codeview::RegisterId::ST1, X86::FP1},
@@ -281,8 +290,8 @@ void X86_MC::initLLVMToSEHAndCVRegMapping(MCRegisterInfo *MRI) {
       {codeview::RegisterId::AMD64_XMM31, X86::XMM31},
 
   };
-  for (unsigned I = 0; I < array_lengthof(RegMap); ++I)
-    MRI->mapLLVMRegToCVReg(RegMap[I].Reg, static_cast<int>(RegMap[I].CVReg));
+  for (const auto &I : RegMap)
+    MRI->mapLLVMRegToCVReg(I.Reg, static_cast<int>(I.CVReg));
 }
 
 MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(const Triple &TT,
@@ -408,6 +417,9 @@ public:
                                                   const MCSubtargetInfo *STI,
                                                   uint64_t Addr,
                                                   uint64_t Size) const override;
+  Optional<uint64_t>
+  getMemoryOperandRelocationOffset(const MCInst &Inst,
+                                   uint64_t Size) const override;
 };
 
 #define GET_STIPREDICATE_DEFS_FOR_MC_ANALYSIS
@@ -555,6 +567,30 @@ Optional<uint64_t> X86MCInstrAnalysis::evaluateMemoryOperandAddress(
     return Addr + Size + Disp.getImm();
 
   return None;
+}
+
+Optional<uint64_t>
+X86MCInstrAnalysis::getMemoryOperandRelocationOffset(const MCInst &Inst,
+                                                     uint64_t Size) const {
+  if (Inst.getOpcode() != X86::LEA64r)
+    return None;
+  const MCInstrDesc &MCID = Info->get(Inst.getOpcode());
+  int MemOpStart = X86II::getMemoryOperandNo(MCID.TSFlags);
+  if (MemOpStart == -1)
+    return None;
+  MemOpStart += X86II::getOperandBias(MCID);
+  const MCOperand &SegReg = Inst.getOperand(MemOpStart + X86::AddrSegmentReg);
+  const MCOperand &BaseReg = Inst.getOperand(MemOpStart + X86::AddrBaseReg);
+  const MCOperand &IndexReg = Inst.getOperand(MemOpStart + X86::AddrIndexReg);
+  const MCOperand &ScaleAmt = Inst.getOperand(MemOpStart + X86::AddrScaleAmt);
+  const MCOperand &Disp = Inst.getOperand(MemOpStart + X86::AddrDisp);
+  // Must be a simple rip-relative address.
+  if (BaseReg.getReg() != X86::RIP || SegReg.getReg() != 0 ||
+      IndexReg.getReg() != 0 || ScaleAmt.getImm() != 1 || !Disp.isImm())
+    return None;
+  // rip-relative ModR/M immediate is 32 bits.
+  assert(Size > 4 && "invalid instruction size for rip-relative lea");
+  return Size - 4;
 }
 
 } // end of namespace X86_MC

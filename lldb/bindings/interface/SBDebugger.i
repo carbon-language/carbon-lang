@@ -117,6 +117,22 @@ or the equivalent arguments for :py:class:`SBTarget.AttachToProcessWithID` .") S
 class SBDebugger
 {
 public:
+    enum
+    {
+        eBroadcastBitProgress = (1 << 0)
+    };
+
+
+    %apply uint64_t& INOUT { uint64_t& progress_id };
+    %apply uint64_t& INOUT { uint64_t& completed };
+    %apply uint64_t& INOUT { uint64_t& total };
+    %apply bool& INOUT { bool& is_debugger_specific };
+    static const char *GetProgressFromEvent(const lldb::SBEvent &event,
+                                        uint64_t &progress_id,
+                                        uint64_t &completed, uint64_t &total,
+                                        bool &is_debugger_specific);
+
+    SBBroadcaster GetBroadcaster();
 
     static void
     Initialize();
@@ -205,6 +221,9 @@ public:
             return self->GetErrorFile().GetFile();
         }
     }
+
+    SBError
+    SetInputString (const char* data);
 
     SBError
     SetInputFile (SBFile file);
@@ -478,6 +497,8 @@ public:
 
     lldb::SBTypeSynthetic
     GetSyntheticForType (lldb::SBTypeNameSpecifier);
+
+    SBStructuredData GetScriptInterpreterInfo(ScriptLanguage);
 
     STRING_EXTENSION(SBDebugger)
 

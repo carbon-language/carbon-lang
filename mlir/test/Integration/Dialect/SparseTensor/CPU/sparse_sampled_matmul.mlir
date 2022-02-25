@@ -1,9 +1,4 @@
-// RUN: mlir-opt %s \
-// RUN:   --sparsification --sparse-tensor-conversion \
-// RUN:   --convert-vector-to-scf --convert-scf-to-std \
-// RUN:   --func-bufferize --tensor-constant-bufferize --tensor-bufferize \
-// RUN:   --std-bufferize --finalizing-bufferize  \
-// RUN:   --convert-vector-to-llvm --convert-memref-to-llvm --convert-std-to-llvm | \
+// RUN: mlir-opt %s --sparse-compiler | \
 // RUN: TENSOR0="%mlir_integration_test_dir/data/test.mtx" \
 // RUN: mlir-cpu-runner \
 // RUN:  -e entry -entry-point-result=void  \
@@ -13,11 +8,7 @@
 // Do the same run, but now with SIMDization as well. This should not change the outcome.
 //
 // RUN: mlir-opt %s \
-// RUN:   --sparsification="vectorization-strategy=2 vl=4 enable-simd-index32" --sparse-tensor-conversion \
-// RUN:   --convert-vector-to-scf --convert-scf-to-std \
-// RUN:   --func-bufferize --tensor-constant-bufferize --tensor-bufferize \
-// RUN:   --std-bufferize --finalizing-bufferize --lower-affine \
-// RUN:   --convert-vector-to-llvm --convert-memref-to-llvm --convert-std-to-llvm | \
+// RUN:   --sparse-compiler="vectorization-strategy=2 vl=4 enable-simd-index32" | \
 // RUN: TENSOR0="%mlir_integration_test_dir/data/test.mtx" \
 // RUN: mlir-cpu-runner \
 // RUN:  -e entry -entry-point-result=void  \
@@ -61,9 +52,9 @@ module {
       ins(%args, %arga, %argb: tensor<?x?xf32, #SparseMatrix>, tensor<?x?xf32>, tensor<?x?xf32>)
       outs(%argx: tensor<?x?xf32>) {
         ^bb(%s: f32, %a: f32, %b: f32, %x: f32):
-          %0 = mulf %a, %b : f32
-          %1 = mulf %s, %0 : f32
-          %2 = addf %x, %1 : f32
+          %0 = arith.mulf %a, %b : f32
+          %1 = arith.mulf %s, %0 : f32
+          %2 = arith.addf %x, %1 : f32
           linalg.yield %2 : f32
     } -> tensor<?x?xf32>
     return %0 : tensor<?x?xf32>
@@ -75,11 +66,11 @@ module {
   // Main driver that reads matrix from file and calls the sparse kernel.
   //
   func @entry() {
-    %d0 = constant 0.0 : f32
-    %c0 = constant 0 : index
-    %c1 = constant 1 : index
-    %c5 = constant 5 : index
-    %c10 = constant 10 : index
+    %d0 = arith.constant 0.0 : f32
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %c5 = arith.constant 5 : index
+    %c10 = arith.constant 10 : index
 
     // Setup memory for the dense matrices and initialize.
     %adata = memref.alloc(%c5, %c10) : memref<?x?xf32>
@@ -89,17 +80,17 @@ module {
       scf.for %j = %c0 to %c5 step %c1 {
         memref.store %d0, %xdata[%i, %j] : memref<?x?xf32>
       }
-      %p = addi %i, %c1 : index
-      %q = index_cast %p : index to i32
-      %d = sitofp %q : i32 to f32
+      %p = arith.addi %i, %c1 : index
+      %q = arith.index_cast %p : index to i32
+      %d = arith.sitofp %q : i32 to f32
       scf.for %j = %c0 to %c10 step %c1 {
         memref.store %d, %adata[%i, %j] : memref<?x?xf32>
         memref.store %d, %bdata[%j, %i] : memref<?x?xf32>
       }
     }
-    %a = memref.tensor_load %adata : memref<?x?xf32>
-    %b = memref.tensor_load %bdata : memref<?x?xf32>
-    %x = memref.tensor_load %xdata : memref<?x?xf32>
+    %a = bufferization.to_tensor %adata : memref<?x?xf32>
+    %b = bufferization.to_tensor %bdata : memref<?x?xf32>
+    %x = bufferization.to_tensor %xdata : memref<?x?xf32>
 
     // Read the sparse matrix from file, construct sparse storage.
     %fileName = call @getTensorFilename(%c0) : (index) -> (!Filename)
@@ -118,7 +109,7 @@ module {
     // CHECK: ( 164, 0, 0, 640, 0 )
     // CHECK: ( 0, 520, 0, 0, 1250 )
     //
-    %r = memref.buffer_cast %0 : memref<?x?xf32>
+    %r = bufferization.to_memref %0 : memref<?x?xf32>
     scf.for %i = %c0 to %c5 step %c1 {
       %v = vector.transfer_read %r[%i, %c0], %d0: memref<?x?xf32>, vector<5xf32>
       vector.print %v : vector<5xf32>
@@ -128,6 +119,7 @@ module {
     memref.dealloc %adata : memref<?x?xf32>
     memref.dealloc %bdata : memref<?x?xf32>
     memref.dealloc %xdata : memref<?x?xf32>
+    sparse_tensor.release %s : tensor<?x?xf32, #SparseMatrix>
 
     return
   }

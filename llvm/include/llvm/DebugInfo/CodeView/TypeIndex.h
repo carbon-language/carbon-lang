@@ -13,11 +13,11 @@
 #include "llvm/Support/Endian.h"
 #include <cassert>
 #include <cinttypes>
-#include <functional>
 
 namespace llvm {
 
 class ScopedPrinter;
+class StringRef;
 
 namespace codeview {
 

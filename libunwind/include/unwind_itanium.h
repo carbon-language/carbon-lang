@@ -1,4 +1,4 @@
-//===------------------------------- unwind.h -----------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -16,9 +16,10 @@
 struct _Unwind_Context;   // opaque
 struct _Unwind_Exception; // forward declaration
 typedef struct _Unwind_Exception _Unwind_Exception;
+typedef uint64_t _Unwind_Exception_Class;
 
 struct _Unwind_Exception {
-  uint64_t exception_class;
+  _Unwind_Exception_Class exception_class;
   void (*exception_cleanup)(_Unwind_Reason_Code reason,
                             _Unwind_Exception *exc);
 #if defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)

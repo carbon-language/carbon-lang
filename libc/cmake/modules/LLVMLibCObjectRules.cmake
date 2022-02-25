@@ -5,6 +5,15 @@ function(_get_common_compile_options output_var)
   if(NOT ${LIBC_TARGET_OS} STREQUAL "windows")
     set(compile_options ${compile_options} -fpie -ffreestanding)
   endif()
+  if(LLVM_COMPILER_IS_GCC_COMPATIBLE)
+    list(APPEND compile_options "-fno-exceptions")
+    list(APPEND compile_options "-fno-unwind-tables")
+    list(APPEND compile_options "-fno-asynchronous-unwind-tables")
+    list(APPEND compile_options "-fno-rtti")
+  elseif(MSVC)
+    list(APPEND compile_options "/EHs-c-")
+    list(APPEND compile_options "/GR-")
+  endif()
   set(${output_var} ${compile_options} PARENT_SCOPE)
 endfunction()
 
@@ -20,8 +29,8 @@ endfunction()
 function(add_object_library target_name)
   cmake_parse_arguments(
     "ADD_OBJECT"
-    "" # No option arguments
-    "" # Single value arguments
+    "" # No optional arguments
+    "CXX_STANDARD" # Single value arguments
     "SRCS;HDRS;COMPILE_OPTIONS;DEPENDS" # Multivalue arguments
     ${ARGN}
   )
@@ -53,6 +62,14 @@ function(add_object_library target_name)
     add_dependencies(${fq_target_name} ${fq_deps_list})
   endif()
 
+  if(ADD_OBJECT_CXX_STANDARD)
+    set_target_properties(
+      ${fq_target_name}
+      PROPERTIES
+        CXX_STANDARD ${ADD_OBJECT_CXX_STANDARD}
+    )
+  endif()
+
   set_target_properties(
     ${fq_target_name}
     PROPERTIES
@@ -80,7 +97,7 @@ function(add_entrypoint_object target_name)
   cmake_parse_arguments(
     "ADD_ENTRYPOINT_OBJ"
     "ALIAS;REDIRECTED" # Optional argument
-    "NAME" # Single value arguments
+    "NAME;CXX_STANDARD" # Single value arguments
     "SRCS;HDRS;DEPENDS;COMPILE_OPTIONS"  # Multi value arguments
     ${ARGN}
   )
@@ -184,6 +201,14 @@ function(add_entrypoint_object target_name)
   target_include_directories(${fq_target_name} PRIVATE ${include_dirs})
   add_dependencies(${fq_target_name} ${full_deps_list})
 
+  if(ADD_ENTRYPOINT_OBJ_CXX_STANDARD)
+    set_target_properties(
+      ${fq_target_name} ${internal_target_name}
+      PROPERTIES
+        CXX_STANDARD ${ADD_ENTRYPOINT_OBJ_CXX_STANDARD}
+    )
+  endif()
+
   set_target_properties(
     ${fq_target_name}
     PROPERTIES
@@ -257,6 +282,36 @@ function(add_entrypoint_object target_name)
   endif()
 
 endfunction(add_entrypoint_object)
+
+set(ENTRYPOINT_EXT_TARGET_TYPE "ENTRYPOINT_EXT")
+
+# A rule for external entrypoint targets.
+# Usage:
+#     add_entrypoint_external(
+#       <target_name>
+#       DEPENDS <list of dependencies>
+#     )
+function(add_entrypoint_external target_name)
+  cmake_parse_arguments(
+    "ADD_ENTRYPOINT_EXT"
+    "" # No optional arguments
+    "" # No single value arguments
+    "DEPENDS"  # Multi value arguments
+    ${ARGN}
+  )
+  get_fq_target_name(${target_name} fq_target_name)
+  set(entrypoint_name ${target_name})
+
+  add_custom_target(${fq_target_name})
+  set_target_properties(
+    ${fq_target_name}
+    PROPERTIES
+      "ENTRYPOINT_NAME" ${entrypoint_name}
+      "TARGET_TYPE" ${ENTRYPOINT_EXT_TARGET_TYPE}
+      "DEPS" "${ADD_ENTRYPOINT_EXT_DEPENDS}"
+  )
+
+endfunction(add_entrypoint_external)
 
 # Rule build a redirector object file.
 function(add_redirector_object target_name)

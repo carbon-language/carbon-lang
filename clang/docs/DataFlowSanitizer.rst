@@ -32,15 +32,15 @@ libc++ and the libc++ ABI with data flow sanitizer instrumentation.
 
 .. code-block:: console
 
+  mkdir libcxx-build
   cd libcxx-build
 
   # An example using ninja
-  cmake -GNinja path/to/llvm-project/llvm \
+  cmake -GNinja -S <monorepo-root>/runtimes \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DLLVM_USE_SANITIZER="DataFlow" \
-    -DLLVM_ENABLE_LIBCXX=ON \
-    -DLLVM_ENABLE_PROJECTS="libcxx;libcxxabi"
+    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi"
 
   ninja cxx cxxabi
 
@@ -137,6 +137,20 @@ For example:
   fun:memcpy=uninstrumented
   fun:memcpy=custom
 
+For instrumented functions, the ABI list supports a ``force_zero_labels``
+category, which will make all stores and return values set zero labels.
+Functions should never be labelled with both ``force_zero_labels``
+and ``uninstrumented`` or any of the unistrumented wrapper kinds.
+
+For example:
+
+.. code-block:: none
+
+  # e.g. void writes_data(char* out_buf, int out_buf_len) {...}
+  # Applying force_zero_labels will force out_buf shadow to zero.
+  fun:writes_data=force_zero_labels
+
+
 Compilation Flags
 -----------------
 
@@ -199,6 +213,25 @@ labels of just ``v1`` and ``v2``.
   void __dfsan_store_callback(dfsan_label Label, void* Addr);
   void __dfsan_mem_transfer_callback(dfsan_label *Start, size_t Len);
   void __dfsan_cmp_callback(dfsan_label CombinedLabel);
+
+* ``-dfsan-conditional-callbacks`` -- An experimental feature that inserts
+  callbacks for control flow conditional expressions.
+  This can be used to find where tainted values can control execution.
+
+  In addition to this compilation flag, a callback handler must be registered
+  using ``dfsan_set_conditional_callback(my_callback);``, where my_callback is
+  a function with a signature matching
+  ``void my_callback(dfsan_label l, dfsan_origin o);``.
+  This signature is the same when origin tracking is disabled - in this case
+  the dfsan_origin passed in it will always be 0.
+
+  The callback will only be called when a tainted value reaches a conditional
+  expression for control flow (such as an if's condition).
+  The callback will be skipped for conditional expressions inside signal
+  handlers, as this is prone to deadlock. Tainted values used in conditional
+  expressions inside signal handlers will instead be aggregated via bitwise
+  or, and can be accessed using
+  ``dfsan_label dfsan_get_labels_in_signal_conditional();``.
 
 * ``-dfsan-track-origins`` -- Controls how to track origins. When its value is
   0, the runtime does not track origins. When its value is 1, the runtime tracks

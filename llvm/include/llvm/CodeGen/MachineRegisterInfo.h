@@ -84,7 +84,7 @@ private:
 
   /// The flag is true upon \p UpdatedCSRs initialization
   /// and false otherwise.
-  bool IsUpdatedCSRsInitialized;
+  bool IsUpdatedCSRsInitialized = false;
 
   /// Contains the updated callee saved register list.
   /// As opposed to the static list defined in register info,
@@ -228,6 +228,16 @@ public:
 
   /// Returns true if the updated CSR list was initialized and false otherwise.
   bool isUpdatedCSRsInitialized() const { return IsUpdatedCSRsInitialized; }
+
+  /// Returns true if a register can be used as an argument to a function.
+  bool isArgumentRegister(const MachineFunction &MF, MCRegister Reg) const;
+
+  /// Returns true if a register is a fixed register.
+  bool isFixedRegister(const MachineFunction &MF, MCRegister Reg) const;
+
+  /// Returns true if a register is a general purpose register.
+  bool isGeneralPurposeRegister(const MachineFunction &MF,
+                                MCRegister Reg) const;
 
   /// Disables the register from the list of CSRs.
   /// I.e. the register will not appear as part of the CSR mask.
@@ -821,29 +831,31 @@ public:
   /// deleted during LiveDebugVariables analysis.
   void markUsesInDebugValueAsUndef(Register Reg) const;
 
-  /// updateDbgUsersToReg - Update a collection of DBG_VALUE instructions
+  /// updateDbgUsersToReg - Update a collection of debug instructions
   /// to refer to the designated register.
   void updateDbgUsersToReg(MCRegister OldReg, MCRegister NewReg,
                            ArrayRef<MachineInstr *> Users) const {
-    SmallSet<MCRegister, 4> OldRegUnits;
-    for (MCRegUnitIterator RUI(OldReg, getTargetRegisterInfo()); RUI.isValid();
-         ++RUI)
-      OldRegUnits.insert(*RUI);
+    // If this operand is a register, check whether it overlaps with OldReg.
+    // If it does, replace with NewReg.
+    auto UpdateOp = [this, &NewReg, &OldReg](MachineOperand &Op) {
+      if (Op.isReg() &&
+          getTargetRegisterInfo()->regsOverlap(Op.getReg(), OldReg))
+        Op.setReg(NewReg);
+    };
+
+    // Iterate through (possibly several) operands to DBG_VALUEs and update
+    // each. For DBG_PHIs, only one operand will be present.
     for (MachineInstr *MI : Users) {
-      assert(MI->isDebugValue());
-      for (auto &Op : MI->debug_operands()) {
-        if (Op.isReg()) {
-          for (MCRegUnitIterator RUI(OldReg, getTargetRegisterInfo());
-               RUI.isValid(); ++RUI) {
-            if (OldRegUnits.contains(*RUI)) {
-              Op.setReg(NewReg);
-              break;
-            }
-          }
-        }
+      if (MI->isDebugValue()) {
+        for (auto &Op : MI->debug_operands())
+          UpdateOp(Op);
+        assert(MI->hasDebugOperandForReg(NewReg) &&
+               "Expected debug value to have some overlap with OldReg");
+      } else if (MI->isDebugPHI()) {
+        UpdateOp(MI->getOperand(0));
+      } else {
+        llvm_unreachable("Non-DBG_VALUE, Non-DBG_PHI debug instr updated");
       }
-      assert(MI->hasDebugOperandForReg(NewReg) &&
-             "Expected debug value to have some overlap with OldReg");
     }
   }
 
@@ -964,7 +976,7 @@ public:
   MCRegister getLiveInPhysReg(Register VReg) const;
 
   /// getLiveInVirtReg - If PReg is a live-in physical register, return the
-  /// corresponding live-in physical register.
+  /// corresponding live-in virtual register.
   Register getLiveInVirtReg(MCRegister PReg) const;
 
   /// EmitLiveInCopies - Emit copies to initialize livein virtual registers

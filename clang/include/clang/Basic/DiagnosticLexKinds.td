@@ -127,6 +127,15 @@ def warn_utf8_symbol_zero_width : Warning<
   "identifier contains Unicode character <U+%0> that is invisible in "
   "some environments">, InGroup<DiagGroup<"unicode-zero-width">>;
 
+def ext_delimited_escape_sequence : Extension<
+  "delimited escape sequences are a Clang extension">,
+  InGroup<DiagGroup<"delimited-escape-sequence-extension">>;
+def err_delimited_escape_empty : Error<
+  "delimited escape sequence cannot be empty">;
+def err_delimited_escape_missing_brace: Error<
+  "expected '{' after '\\%0' escape sequence">;
+def err_delimited_escape_invalid : Error<
+  "invalid digit '%0' in escape sequence">;
 def err_hex_escape_no_digits : Error<
   "\\%0 used with no following hex digits">;
 def warn_ucn_escape_no_digits : Warning<
@@ -134,6 +143,12 @@ def warn_ucn_escape_no_digits : Warning<
   "treating as '\\' followed by identifier">, InGroup<Unicode>;
 def err_ucn_escape_incomplete : Error<
   "incomplete universal character name">;
+def warn_delimited_ucn_incomplete : Warning<
+  "incomplete delimited universal character name; "
+  "treating as '\\' 'u' '{' identifier">, InGroup<Unicode>;
+def warn_delimited_ucn_empty : Warning<
+  "empty delimited universal character name; "
+  "treating as '\\' 'u' '{' '}'">, InGroup<Unicode>;
 def warn_ucn_escape_incomplete : Warning<
   "incomplete universal character name; "
   "treating as '\\' followed by identifier">, InGroup<Unicode>;
@@ -254,7 +269,9 @@ def err_bad_character_encoding : Error<
 def warn_bad_character_encoding : ExtWarn<
   "illegal character encoding in character literal">,
   InGroup<InvalidSourceEncoding>;
-def err_lexing_string : Error<"failure when lexing a string">;
+def err_lexing_string : Error<"failure when lexing a string literal">;
+def err_lexing_char : Error<"failure when lexing a character literal">;
+def err_lexing_numeric : Error<"failure when lexing a numeric literal">;
 def err_placeholder_in_source : Error<"editor placeholder in source file">;
 
 //===----------------------------------------------------------------------===//
@@ -397,6 +414,10 @@ def ext_embedded_directive : Extension<
 def ext_missing_varargs_arg : Extension<
   "must specify at least one argument for '...' parameter of variadic macro">,
   InGroup<GNUZeroVariadicMacroArguments>;
+def warn_cxx17_compat_missing_varargs_arg : Warning<
+  "passing no argument for the '...' parameter of a variadic macro is "
+  "incompatible with C++ standards before C++20">,
+  InGroup<CXXPre20Compat>, DefaultIgnore;
 def ext_empty_fnmacro_arg : Extension<
   "empty macro arguments are a C99 feature">, InGroup<C99>;
 def warn_cxx98_compat_empty_fnmacro_arg : Warning<
@@ -427,6 +448,9 @@ def warn_pp_hdrstop_filename_ignored : Warning<
   "#pragma hdrstop filename not supported, "
   "/Fp can be used to specify precompiled header filename">,
   InGroup<ClangClPch>;
+def remark_pp_search_path_usage : Remark<
+  "search path used: '%0'">,
+  InGroup<UsedSearchPath>;
 def err_pp_file_not_found_angled_include_not_fatal : Error<
   "'%0' file not found with <angled> %select{include|import}1; "
   "use \"quotes\" instead">;
@@ -536,7 +560,13 @@ def warn_pragma_restrict_expansion_macro_use :
 
 // - Note for macro annotations.
 def note_pp_macro_annotation :
-  Note<"macro marked '%select{deprecated|restrict_expansion}0' here">;
+  Note<"macro marked '%select{deprecated|restrict_expansion|final}0' here">;
+
+// - #pragma clang final(...)
+def warn_pragma_final_macro :
+  ExtWarn<"macro %0 has been marked as final and should not be "
+          "%select{undefined|redefined}1">,
+  InGroup<FinalMacro>,  ShowInSystemHeader;
 
 // - #pragma execution_character_set(...)
 def warn_pragma_exec_charset_expected :

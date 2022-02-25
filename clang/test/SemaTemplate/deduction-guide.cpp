@@ -23,7 +23,7 @@ using AT = A<int[3], int, int, short>;
 // CHECK: | |-ParmVarDecl {{.*}} 'X<Ps...>'
 // CHECK: | `-ParmVarDecl {{.*}} 'Ts (*)[Ns]...' pack
 // CHECK: `-CXXDeductionGuideDecl
-// CHECK:   |-TemplateArgument type 'int [3]'
+// CHECK:   |-TemplateArgument type 'int[3]'
 // CHECK:   |-TemplateArgument pack
 // CHECK:   | |-TemplateArgument type 'int'
 // CHECK:   | |-TemplateArgument type 'int'
@@ -34,9 +34,9 @@ using AT = A<int[3], int, int, short>;
 // CHECK:   | `-TemplateArgument integral 4
 // CHECK:   |-TemplateArgument pack
 // CHECK:   | |-TemplateArgument decl
-// CHECK:   | | `-Var {{.*}} 'arr1' 'int [3]'
+// CHECK:   | | `-Var {{.*}} 'arr1' 'int[3]'
 // CHECK:   | `-TemplateArgument decl
-// CHECK:   |   `-Var {{.*}} 'arr2' 'int [3]'
+// CHECK:   |   `-Var {{.*}} 'arr2' 'int[3]'
 // CHECK:   |-ParmVarDecl {{.*}} 'X<&arr1, &arr2>':'X<&arr1, &arr2>'
 // CHECK:   |-ParmVarDecl {{.*}} 'int (*)[3]'
 // CHECK:   |-ParmVarDecl {{.*}} 'int (*)[3]'
@@ -49,8 +49,8 @@ using AT = A<int[3], int, int, short>;
 // CHECK: |     `-DeclRefExpr {{.*}} 'T *' NonTypeTemplateParm {{.*}} 'Ps' 'T *'
 // CHECK: `-PackExpansionType {{.*}} 'Ts (*)[Ns]...' dependent
 // CHECK:   `-PointerType {{.*}} 'Ts (*)[Ns]' dependent contains_unexpanded_pack
-// CHECK:     `-ParenType {{.*}} 'Ts [Ns]' sugar dependent contains_unexpanded_pack
-// CHECK:       `-DependentSizedArrayType {{.*}} 'Ts [Ns]' dependent contains_unexpanded_pack
+// CHECK:     `-ParenType {{.*}} 'Ts[Ns]' sugar dependent contains_unexpanded_pack
+// CHECK:       `-DependentSizedArrayType {{.*}} 'Ts[Ns]' dependent contains_unexpanded_pack
 // CHECK:         |-TemplateTypeParmType {{.*}} 'Ts' dependent contains_unexpanded_pack depth 0 index 1 pack
 // CHECK:         | `-TemplateTypeParm {{.*}} 'Ts'
 // CHECK:         `-DeclRefExpr {{.*}} 'Ts' NonTypeTemplateParm {{.*}} 'Ns' 'Ts...'
@@ -73,7 +73,7 @@ using BT = B<char, 'x'>;
 // CHECK: `-CXXDeductionGuideDecl {{.*}} 'auto (X<nullptr, 'x'>) -> B<char, 'x'>'
 // CHECK:   |-TemplateArgument type 'char'
 // CHECK:   |-TemplateArgument integral 120
-// CHECK:   |-TemplateArgument type 'nullptr_t'
+// CHECK:   |-TemplateArgument type 'std::nullptr_t'
 // CHECK:   |-TemplateArgument nullptr
 // CHECK:   `-ParmVarDecl {{.*}} 'X<nullptr, 'x'>':'X<nullptr, 'x'>'
 // CHECK: FunctionProtoType {{.*}} 'auto (X<W, V>) -> B<T, V>' dependent trailing_return

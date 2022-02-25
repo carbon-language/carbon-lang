@@ -19,6 +19,10 @@
 /* Define to 1 to enable crash memory dumps, and to 0 otherwise. */
 #cmakedefine01 LLVM_ENABLE_CRASH_DUMPS
 
+/* Define to 1 to prefer forward slashes on Windows, and to 0 prefer
+   backslashes. */
+#cmakedefine01 LLVM_WINDOWS_PREFER_FORWARD_SLASH
+
 /* Define to 1 if you have the `backtrace' function. */
 #cmakedefine HAVE_BACKTRACE ${HAVE_BACKTRACE}
 
@@ -147,9 +151,6 @@
 
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
 #cmakedefine HAVE_MALLOC_ZONE_STATISTICS ${HAVE_MALLOC_ZONE_STATISTICS}
-
-/* Define to 1 if you have the `posix_fallocate' function. */
-#cmakedefine HAVE_POSIX_FALLOCATE ${HAVE_POSIX_FALLOCATE}
 
 /* Define to 1 if you have the `posix_spawn' function. */
 #cmakedefine HAVE_POSIX_SPAWN ${HAVE_POSIX_SPAWN}
@@ -299,9 +300,6 @@
 /* Doesn't use `cmakedefine` because it is allowed to be empty. */
 #define LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}"
 
-/* Define if zlib compression is available */
-#cmakedefine01 LLVM_ENABLE_ZLIB
-
 /* Define if overriding target triple is enabled */
 #cmakedefine LLVM_TARGET_TRIPLE_ENV "${LLVM_TARGET_TRIPLE_ENV}"
 
@@ -352,6 +350,9 @@
 
 /* Define to the default GlobalISel coverage file prefix */
 #cmakedefine LLVM_GISEL_COV_PREFIX "${LLVM_GISEL_COV_PREFIX}"
+
+/* Whether Timers signpost passes in Xcode Instruments */
+#cmakedefine01 LLVM_SUPPORT_XCODE_SIGNPOSTS
 
 #cmakedefine HAVE_PROC_PID_RUSAGE 1
 

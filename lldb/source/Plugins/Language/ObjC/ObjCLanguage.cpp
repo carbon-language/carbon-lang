@@ -48,19 +48,6 @@ void ObjCLanguage::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-lldb_private::ConstString ObjCLanguage::GetPluginNameStatic() {
-  static ConstString g_name("objc");
-  return g_name;
-}
-
-// PluginInterface protocol
-
-lldb_private::ConstString ObjCLanguage::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ObjCLanguage::GetPluginVersion() { return 1; }
-
 // Static Functions
 
 Language *ObjCLanguage::CreateInstance(lldb::LanguageType language) {
@@ -934,7 +921,8 @@ lldb::TypeCategoryImplSP ObjCLanguage::GetFormatters() {
   static TypeCategoryImplSP g_category;
 
   llvm::call_once(g_initialize, [this]() -> void {
-    DataVisualization::Categories::GetCategory(GetPluginName(), g_category);
+    DataVisualization::Categories::GetCategory(ConstString(GetPluginName()),
+                                               g_category);
     if (g_category) {
       LoadCoreMediaFormatters(g_category);
       LoadObjCFormatters(g_category);

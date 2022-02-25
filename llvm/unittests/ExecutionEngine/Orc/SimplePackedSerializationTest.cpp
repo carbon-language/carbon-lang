@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/Shared/SimplePackedSerialization.h"
-#include "llvm/ExecutionEngine/Orc/LLVMSPSSerializers.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -167,4 +166,24 @@ TEST(SimplePackedSerializationTest, ArgListSerialization) {
 TEST(SimplePackedSerialization, StringMap) {
   StringMap<int32_t> M({{"A", 1}, {"B", 2}});
   spsSerializationRoundTrip<SPSSequence<SPSTuple<SPSString, int32_t>>>(M);
+}
+
+TEST(SimplePackedSerializationTest, ArrayRef) {
+  constexpr unsigned BufferSize = 6 + 8; // "hello\0" + sizeof(uint64_t)
+  ArrayRef<char> HelloOut = "hello";
+  char Buffer[BufferSize];
+  memset(Buffer, 0, BufferSize);
+
+  SPSOutputBuffer OB(Buffer, BufferSize);
+  EXPECT_TRUE(SPSArgList<SPSSequence<char>>::serialize(OB, HelloOut));
+
+  ArrayRef<char> HelloIn;
+  SPSInputBuffer IB(Buffer, BufferSize);
+  EXPECT_TRUE(SPSArgList<SPSSequence<char>>::deserialize(IB, HelloIn));
+
+  // Output should be copied to buffer.
+  EXPECT_NE(HelloOut.data(), Buffer);
+
+  // Input should reference buffer.
+  EXPECT_LT(HelloIn.data() - Buffer, BufferSize);
 }

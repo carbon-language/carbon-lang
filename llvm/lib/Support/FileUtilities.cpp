@@ -12,16 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cctype>
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -300,8 +296,7 @@ llvm::Error llvm::writeFileAtomically(
     std::function<llvm::Error(llvm::raw_ostream &)> Writer) {
   SmallString<128> GeneratedUniqPath;
   int TempFD;
-  if (sys::fs::createUniqueFile(TempPathModel.str(), TempFD,
-                                GeneratedUniqPath)) {
+  if (sys::fs::createUniqueFile(TempPathModel, TempFD, GeneratedUniqPath)) {
     return llvm::make_error<AtomicFileWriteError>(
         atomic_write_error::failed_to_create_uniq_file);
   }
@@ -319,8 +314,7 @@ llvm::Error llvm::writeFileAtomically(
         atomic_write_error::output_stream_error);
   }
 
-  if (sys::fs::rename(/*from=*/GeneratedUniqPath.c_str(),
-                      /*to=*/FinalPath.str().c_str())) {
+  if (sys::fs::rename(/*from=*/GeneratedUniqPath, /*to=*/FinalPath)) {
     return llvm::make_error<AtomicFileWriteError>(
         atomic_write_error::failed_to_rename_temp_file);
   }

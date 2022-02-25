@@ -43,9 +43,11 @@ write_lit_config("lit_site_cfg") {
   output = clang_lit_site_cfg_file
   dir = get_path_info(output, "dir")
   extra_values = [
-    "LLVM_WITH_Z3=",  # Must be empty, not 0.
+    "LLVM_WITH_Z3=0",
     "CLANG_BUILD_EXAMPLES=0",
     "CLANG_DEFAULT_CXX_STDLIB=",  # Empty string means "default value" here.
+    "CLANG_DEFAULT_PIE_ON_LINUX=0",
+    "CLANG_PLUGIN_SUPPORT=0",  # FIXME: Analysis/plugins need global -fPIC
     "CLANG_TOOLS_DIR=" + rebase_path("$root_out_dir/bin", dir),
     "CLANG_VENDOR_UTI=org.llvm.clang",
 
@@ -107,14 +109,12 @@ write_lit_config("lit_site_cfg") {
     extra_values += [
       # See comment for Windows solink in llvm/utils/gn/build/toolchain/BUILD.gn
       "CMAKE_LIBRARY_OUTPUT_DIRECTORY=" + rebase_path("$root_out_dir/bin", dir),
-      "LLVM_ENABLE_PLUGINS=0",
       "LLVM_LIT_ERRC_MESSAGES=no such file or directory;is a directory;" +
           "invalid argument;permission denied",
     ]
   } else {
     extra_values += [
       "CMAKE_LIBRARY_OUTPUT_DIRECTORY=" + rebase_path("$root_out_dir/lib", dir),
-      "LLVM_ENABLE_PLUGINS=0",  # FIXME: Analysis/plugins need global -fPIC
       "LLVM_LIT_ERRC_MESSAGES=",
     ]
   }
@@ -147,6 +147,7 @@ group("test") {
     "//clang/tools/clang-format",
     "//clang/tools/clang-import-test",
     "//clang/tools/clang-offload-bundler",
+    "//clang/tools/clang-pseudo",
     "//clang/tools/clang-refactor",
     "//clang/tools/clang-rename",
     "//clang/tools/clang-repl",
@@ -157,6 +158,7 @@ group("test") {
     "//clang/utils/TableGen:clang-tblgen",
     "//clang/utils/hmaptool",
     "//llvm/tools/llc",
+    "//llvm/tools/llvm-ar:symlinks",
     "//llvm/tools/llvm-as",
     "//llvm/tools/llvm-bcanalyzer",
     "//llvm/tools/llvm-cat",

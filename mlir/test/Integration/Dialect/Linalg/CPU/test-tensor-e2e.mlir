@@ -1,12 +1,12 @@
-// RUN: mlir-opt %s -tensor-constant-bufferize -std-bufferize -linalg-bufferize \
-// RUN: -tensor-bufferize -func-bufferize -finalizing-bufferize -convert-linalg-to-loops \
-// RUN: -convert-linalg-to-llvm --convert-memref-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt %s -arith-bufferize -linalg-bufferize \
+// RUN: -tensor-bufferize -func-bufferize -finalizing-bufferize -buffer-deallocation -convert-linalg-to-loops \
+// RUN: -convert-linalg-to-llvm --convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e main -entry-point-result=void \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext \
 // RUN: | FileCheck %s
 
 func @foo() -> tensor<4xf32> {
-  %0 = constant dense<[1.0, 2.0, 3.0, 4.0]> : tensor<4xf32>
+  %0 = arith.constant dense<[1.0, 2.0, 3.0, 4.0]> : tensor<4xf32>
   return %0 : tensor<4xf32>
 }
 

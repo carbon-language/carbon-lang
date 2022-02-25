@@ -58,13 +58,13 @@
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCSymbolXCOFF.h"
 #include "llvm/MC/SectionKind.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Process.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -108,6 +108,23 @@ struct DenseMapInfo<std::pair<const MCSymbol *, MCSymbolRefExpr::VariantKind>> {
 } // end namespace llvm
 
 namespace {
+
+enum {
+  // GNU attribute tags for PowerPC ABI
+  Tag_GNU_Power_ABI_FP = 4,
+  Tag_GNU_Power_ABI_Vector = 8,
+  Tag_GNU_Power_ABI_Struct_Return = 12,
+
+  // GNU attribute values for PowerPC float ABI, as combination of two parts
+  Val_GNU_Power_ABI_NoFloat = 0b00,
+  Val_GNU_Power_ABI_HardFloat_DP = 0b01,
+  Val_GNU_Power_ABI_SoftFloat_DP = 0b10,
+  Val_GNU_Power_ABI_HardFloat_SP = 0b11,
+
+  Val_GNU_Power_ABI_LDBL_IBM128 = 0b0100,
+  Val_GNU_Power_ABI_LDBL_64 = 0b1000,
+  Val_GNU_Power_ABI_LDBL_IEEE128 = 0b1100,
+};
 
 class PPCAsmPrinter : public AsmPrinter {
 protected:
@@ -178,6 +195,8 @@ public:
     return "Linux PPC Assembly Printer";
   }
 
+  void emitGNUAttributes(Module &M);
+
   void emitStartOfAsmFile(Module &M) override;
   void emitEndOfAsmFile(Module &) override;
 
@@ -234,6 +253,8 @@ public:
   void emitFunctionEntryLabel() override;
 
   void emitFunctionBodyEnd() override;
+
+  void emitPGORefs();
 
   void emitEndOfAsmFile(Module &) override;
 
@@ -347,7 +368,6 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 // At the moment, all inline asm memory operands are a single register.
 // In any case, the output of this routine should always be just one
 // assembler operand.
-
 bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                           const char *ExtraCode,
                                           raw_ostream &O) {
@@ -875,18 +895,19 @@ void PPCAsmPrinter::emitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
-  case PPC::ADDItoc: {
+  case PPC::ADDItoc:
+  case PPC::ADDItoc8: {
     assert(IsAIX && TM.getCodeModel() == CodeModel::Small &&
-           "Operand only valid in AIX 32 bit mode");
+           "PseudoOp only valid for small code model AIX");
 
-    // Transform %rN = ADDItoc @op1, %r2.
+    // Transform %rN = ADDItoc/8 @op1, %r2.
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to load address.
-    TmpInst.setOpcode(PPC::LA);
+    TmpInst.setOpcode((!IsPPC64) ? (PPC::LA) : (PPC::LA8));
 
     const MachineOperand &MO = MI->getOperand(1);
-    assert(MO.isGlobal() && "Invalid operand for ADDItoc.");
+    assert(MO.isGlobal() && "Invalid operand for ADDItoc[8].");
 
     // Map the operand to its corresponding MCSymbol.
     const MCSymbol *const MOSymbol = getMCSymbolForTOCPseudoMO(MO, *this);
@@ -1388,6 +1409,28 @@ void PPCAsmPrinter::emitInstruction(const MachineInstr *MI) {
   EmitToStreamer(*OutStreamer, TmpInst);
 }
 
+void PPCLinuxAsmPrinter::emitGNUAttributes(Module &M) {
+  // Emit float ABI into GNU attribute
+  Metadata *MD = M.getModuleFlag("float-abi");
+  MDString *FloatABI = dyn_cast_or_null<MDString>(MD);
+  if (!FloatABI)
+    return;
+  StringRef flt = FloatABI->getString();
+  // TODO: Support emitting soft-fp and hard double/single attributes.
+  if (flt == "doubledouble")
+    OutStreamer->emitGNUAttribute(Tag_GNU_Power_ABI_FP,
+                                  Val_GNU_Power_ABI_HardFloat_DP |
+                                      Val_GNU_Power_ABI_LDBL_IBM128);
+  else if (flt == "ieeequad")
+    OutStreamer->emitGNUAttribute(Tag_GNU_Power_ABI_FP,
+                                  Val_GNU_Power_ABI_HardFloat_DP |
+                                      Val_GNU_Power_ABI_LDBL_IEEE128);
+  else if (flt == "ieeedouble")
+    OutStreamer->emitGNUAttribute(Tag_GNU_Power_ABI_FP,
+                                  Val_GNU_Power_ABI_HardFloat_DP |
+                                      Val_GNU_Power_ABI_LDBL_64);
+}
+
 void PPCLinuxAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (!Subtarget->isPPC64())
     return PPCAsmPrinter::emitInstruction(MI);
@@ -1494,7 +1537,7 @@ void PPCLinuxAsmPrinter::emitInstruction(const MachineInstr *MI) {
     //
     // Update compiler-rt/lib/xray/xray_powerpc64.cc accordingly when number
     // of instructions change.
-    OutStreamer->emitCodeAlignment(8);
+    OutStreamer->emitCodeAlignment(8, &getSubtargetInfo());
     MCSymbol *BeginOfSled = OutContext.createTempSymbol();
     OutStreamer->emitLabel(BeginOfSled);
     EmitToStreamer(*OutStreamer, RetInst);
@@ -1641,6 +1684,8 @@ void PPCLinuxAsmPrinter::emitEndOfAsmFile(Module &M) {
 
   PPCTargetStreamer *TS =
       static_cast<PPCTargetStreamer *>(OutStreamer->getTargetStreamer());
+
+  emitGNUAttributes(M);
 
   if (!TOC.empty()) {
     const char *Name = isPPC64 ? ".toc" : ".got2";
@@ -2432,11 +2477,38 @@ void PPCAIXAsmPrinter::emitFunctionEntryLabel() {
       });
 }
 
+void PPCAIXAsmPrinter::emitPGORefs() {
+  if (OutContext.hasXCOFFSection(
+          "__llvm_prf_cnts",
+          XCOFF::CsectProperties(XCOFF::XMC_RW, XCOFF::XTY_SD))) {
+    MCSection *CntsSection = OutContext.getXCOFFSection(
+        "__llvm_prf_cnts", SectionKind::getData(),
+        XCOFF::CsectProperties(XCOFF::XMC_RW, XCOFF::XTY_SD),
+        /*MultiSymbolsAllowed*/ true);
+
+    OutStreamer->SwitchSection(CntsSection);
+    if (OutContext.hasXCOFFSection(
+            "__llvm_prf_data",
+            XCOFF::CsectProperties(XCOFF::XMC_RW, XCOFF::XTY_SD)))
+      OutStreamer->emitXCOFFRefDirective("__llvm_prf_data[RW]");
+    if (OutContext.hasXCOFFSection(
+            "__llvm_prf_names",
+            XCOFF::CsectProperties(XCOFF::XMC_RO, XCOFF::XTY_SD)))
+      OutStreamer->emitXCOFFRefDirective("__llvm_prf_names[RO]");
+    if (OutContext.hasXCOFFSection(
+            "__llvm_prf_vnds",
+            XCOFF::CsectProperties(XCOFF::XMC_RW, XCOFF::XTY_SD)))
+      OutStreamer->emitXCOFFRefDirective("__llvm_prf_vnds[RW]");
+  }
+}
+
 void PPCAIXAsmPrinter::emitEndOfAsmFile(Module &M) {
   // If there are no functions and there are no toc-data definitions in this
   // module, we will never need to reference the TOC base.
   if (M.empty() && TOCDataGlobalVars.empty())
     return;
+
+  emitPGORefs();
 
   // Switch to section to emit TOC base.
   OutStreamer->SwitchSection(getObjFileLowering().getTOCBaseSection());
@@ -2528,7 +2600,7 @@ bool PPCAIXAsmPrinter::doInitialization(Module &M) {
 
   // Construct an aliasing list for each GlobalObject.
   for (const auto &Alias : M.aliases()) {
-    const GlobalObject *Base = Alias.getBaseObject();
+    const GlobalObject *Base = Alias.getAliaseeObject();
     if (!Base)
       report_fatal_error(
           "alias without a base object is not yet supported on AIX");

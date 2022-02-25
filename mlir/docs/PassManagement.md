@@ -23,24 +23,25 @@ further below. All passes in MLIR derive from `OperationPass` and adhere to the
 following restrictions; any noncompliance will lead to problematic behavior in
 multithreaded and other advanced scenarios:
 
-*   Modify any state referenced or relied upon outside the current being
-    operated on. This includes adding or removing operations from the parent
-    block, changing the attributes(depending on the contract of the current
-    operation)/operands/results/successors of the current operation.
-*   Modify the state of another operation not nested within the current
+*   Must not modify any state referenced or relied upon outside the current
+    being operated on. This includes adding or removing operations from the
+    parent block, changing the attributes(depending on the contract of the
+    current operation)/operands/results/successors of the current operation.
+*   Must not modify the state of another operation not nested within the current
     operation being operated on.
     *   Other threads may be operating on these operations simultaneously.
-*   Inspect the state of sibling operations.
+*   Must not inspect the state of sibling operations.
     *   Other threads may be modifying these operations in parallel.
     *   Inspecting the state of ancestor/parent operations is permitted.
-*   Maintain mutable pass state across invocations of `runOnOperation`. A pass
-    may be run on many different operations with no guarantee of execution
-    order.
+*   Must not maintain mutable pass state across invocations of `runOnOperation`.
+    A pass may be run on many different operations with no guarantee of
+    execution order.
     *   When multithreading, a specific pass instance may not even execute on
         all operations within the IR. As such, a pass should not rely on running
         on all operations.
-*   Maintain any global mutable state, e.g. static variables within the source
-    file. All mutable state should be maintained by an instance of the pass.
+*   Must not maintain any global mutable state, e.g. static variables within the
+    source file. All mutable state should be maintained by an instance of the
+    pass.
 *   Must be copy-constructible
     *   Multiple instances of the pass may be created by the pass manager to
         process operations in parallel.
@@ -81,7 +82,7 @@ struct MyFunctionPass : public PassWrapper<MyFunctionPass,
     });
   }
 };
-} // end anonymous namespace
+} // namespace
 
 /// Register this pass so that it can be built via from a textual pass pipeline.
 /// (Pass registration is discussed more below)
@@ -1092,8 +1093,8 @@ $ mlir-opt foo.mlir -pass-pipeline='builtin.func(cse)' -print-ir-before=cse
 
 *** IR Dump Before CSE ***
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
-  %c1_i32_0 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
+  %c1_i32_0 = arith.constant 1 : i32
   return %c1_i32, %c1_i32_0 : i32, i32
 }
 ```
@@ -1108,7 +1109,7 @@ $ mlir-opt foo.mlir -pass-pipeline='builtin.func(cse)' -print-ir-after=cse
 
 *** IR Dump After CSE ***
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
   return %c1_i32, %c1_i32 : i32, i32
 }
 ```
@@ -1129,7 +1130,7 @@ $ mlir-opt foo.mlir -pass-pipeline='builtin.func(cse,cse)' -print-ir-after=cse -
 
 *** IR Dump After CSE ***
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
   return %c1_i32, %c1_i32 : i32, i32
 }
 ```
@@ -1144,7 +1145,7 @@ $ mlir-opt foo.mlir -pass-pipeline='builtin.func(cse,bad-pass)' -print-ir-failur
 
 *** IR Dump After BadPass Failed ***
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
   return %c1_i32, %c1_i32 : i32, i32
 }
 ```
@@ -1164,8 +1165,8 @@ func @bar(%arg0: f32, %arg1: f32) -> f32 {
 }
 
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
-  %c1_i32_0 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
+  %c1_i32_0 = arith.constant 1 : i32
   return %c1_i32, %c1_i32_0 : i32, i32
 }
 
@@ -1175,7 +1176,7 @@ func @bar(%arg0: f32, %arg1: f32) -> f32 {
 }
 
 func @simple_constant() -> (i32, i32) {
-  %c1_i32 = constant 1 : i32
+  %c1_i32 = arith.constant 1 : i32
   return %c1_i32, %c1_i32 : i32, i32
 }
 ```

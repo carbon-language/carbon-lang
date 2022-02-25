@@ -260,6 +260,8 @@ StringExtractorGDBRemote::GetServerPacketType() const {
       break;
 
     case 'S':
+      if (PACKET_STARTS_WITH("qSaveCore"))
+        return eServerPacketType_qLLDBSaveCore;
       if (PACKET_STARTS_WITH("qSpeedTest:"))
         return eServerPacketType_qSpeedTest;
       if (PACKET_MATCHES("qShlibInfoAddr"))
@@ -337,6 +339,8 @@ StringExtractorGDBRemote::GetServerPacketType() const {
         return eServerPacketType_vFile_size;
       else if (PACKET_STARTS_WITH("vFile:exists"))
         return eServerPacketType_vFile_exists;
+      else if (PACKET_STARTS_WITH("vFile:fstat"))
+        return eServerPacketType_vFile_fstat;
       else if (PACKET_STARTS_WITH("vFile:stat"))
         return eServerPacketType_vFile_stat;
       else if (PACKET_STARTS_WITH("vFile:mode"))
@@ -361,6 +365,8 @@ StringExtractorGDBRemote::GetServerPacketType() const {
         return eServerPacketType_vCont;
       if (PACKET_MATCHES("vCont?"))
         return eServerPacketType_vCont_actions;
+      if (PACKET_STARTS_WITH("vRun;"))
+        return eServerPacketType_vRun;
     }
     break;
   case '_':

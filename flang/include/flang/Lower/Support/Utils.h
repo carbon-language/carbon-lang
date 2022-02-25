@@ -15,10 +15,15 @@
 
 #include "flang/Common/indirection.h"
 #include "flang/Parser/char-block.h"
+#include "flang/Semantics/tools.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "llvm/ADT/StringRef.h"
 #include <cstdint>
+
+namespace Fortran::lower {
+using SomeExpr = Fortran::evaluate::Expr<Fortran::evaluate::SomeType>;
+}
 
 //===----------------------------------------------------------------------===//
 // Small inline helper functions to deal with repetitive, clumsy conversions.
@@ -30,8 +35,8 @@ inline llvm::StringRef toStringRef(const Fortran::parser::CharBlock &cb) {
 }
 
 namespace fir {
-/// Return the integer value of a ConstantOp.
-inline std::int64_t toInt(mlir::ConstantOp cop) {
+/// Return the integer value of a arith::ConstantOp.
+inline std::int64_t toInt(mlir::arith::ConstantOp cop) {
   return cop.getValue().cast<mlir::IntegerAttr>().getValue().getSExtValue();
 }
 } // namespace fir
@@ -44,6 +49,12 @@ const A &removeIndirection(const A &a) {
 template <typename A>
 const A &removeIndirection(const Fortran::common::Indirection<A> &a) {
   return a.value();
+}
+
+/// Clone subexpression and wrap it as a generic `Fortran::evaluate::Expr`.
+template <typename A>
+static Fortran::lower::SomeExpr toEvExpr(const A &x) {
+  return Fortran::evaluate::AsGenericExpr(Fortran::common::Clone(x));
 }
 
 #endif // FORTRAN_LOWER_SUPPORT_UTILS_H

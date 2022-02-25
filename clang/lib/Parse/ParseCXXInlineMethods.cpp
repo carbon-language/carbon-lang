@@ -140,8 +140,22 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(
   // function body.
   if (ConsumeAndStoreFunctionPrologue(Toks)) {
     // We didn't find the left-brace we expected after the
-    // constructor initializer; we already printed an error, and it's likely
-    // impossible to recover, so don't try to parse this method later.
+    // constructor initializer.
+
+    // If we're code-completing and the completion point was in the broken
+    // initializer, we want to parse it even though that will fail.
+    if (PP.isCodeCompletionEnabled() &&
+        llvm::any_of(Toks, [](const Token &Tok) {
+          return Tok.is(tok::code_completion);
+        })) {
+      // If we gave up at the completion point, the initializer list was
+      // likely truncated, so don't eat more tokens. We'll hit some extra
+      // errors, but they should be ignored in code completion.
+      return FnD;
+    }
+
+    // We already printed an error, and it's likely impossible to recover,
+    // so don't try to parse this method later.
     // Skip over the rest of the decl and back to somewhere that looks
     // reasonable.
     SkipMalformedDecl();
@@ -452,13 +466,14 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
     CXXMethodDecl *Method;
     if (FunctionTemplateDecl *FunTmpl
           = dyn_cast<FunctionTemplateDecl>(LM.Method))
-      Method = cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+      Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
     else
-      Method = cast<CXXMethodDecl>(LM.Method);
+      Method = dyn_cast<CXXMethodDecl>(LM.Method);
 
-    Sema::CXXThisScopeRAII ThisScope(Actions, Method->getParent(),
-                                     Method->getMethodQualifiers(),
-                                     getLangOpts().CPlusPlus11);
+    Sema::CXXThisScopeRAII ThisScope(
+        Actions, Method ? Method->getParent() : nullptr,
+        Method ? Method->getMethodQualifiers() : Qualifiers{},
+        Method && getLangOpts().CPlusPlus11);
 
     // Parse the exception-specification.
     SourceRange SpecificationRange;
@@ -802,7 +817,7 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
   // We always want this function to consume at least one token if the first
   // token isn't T and if not at EOF.
   bool isFirstTokenConsumed = true;
-  while (1) {
+  while (true) {
     // If we found one of the tokens, stop and return true.
     if (Tok.is(T1) || Tok.is(T2)) {
       if (ConsumeFinalToken) {
@@ -1158,7 +1173,7 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
   unsigned AngleCount = 0;
   unsigned KnownTemplateCount = 0;
 
-  while (1) {
+  while (true) {
     switch (Tok.getKind()) {
     case tok::comma:
       // If we might be in a template, perform a tentative parse to check.

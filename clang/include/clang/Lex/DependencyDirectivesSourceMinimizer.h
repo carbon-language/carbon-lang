@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LEX_DEPENDENCY_DIRECTIVES_SOURCE_MINIMIZER_H
-#define LLVM_CLANG_LEX_DEPENDENCY_DIRECTIVES_SOURCE_MINIMIZER_H
+#ifndef LLVM_CLANG_LEX_DEPENDENCYDIRECTIVESSOURCEMINIMIZER_H
+#define LLVM_CLANG_LEX_DEPENDENCYDIRECTIVESSOURCEMINIMIZER_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -39,6 +39,9 @@ enum TokenKind {
   pp_import,
   pp_pragma_import,
   pp_pragma_once,
+  pp_pragma_push_macro,
+  pp_pragma_pop_macro,
+  pp_pragma_include_alias,
   pp_include_next,
   pp_if,
   pp_ifdef,
@@ -109,4 +112,4 @@ bool minimizeSourceToDependencyDirectives(
 
 } // end namespace clang
 
-#endif // LLVM_CLANG_LEX_DEPENDENCY_DIRECTIVES_SOURCE_MINIMIZER_H
+#endif // LLVM_CLANG_LEX_DEPENDENCYDIRECTIVESSOURCEMINIMIZER_H

@@ -142,7 +142,7 @@ TEST(LlvmLibcStrToLLTest, MessyBaseTenDecode) {
   errno = 0;
   ASSERT_EQ(__llvm_libc::strtoll(two_signs, &str_end, 10), 0ll);
   ASSERT_EQ(errno, 0);
-  EXPECT_EQ(str_end - two_signs, ptrdiff_t(1));
+  EXPECT_EQ(str_end - two_signs, ptrdiff_t(0));
 
   const char *sign_before = "+2=4";
   errno = 0;
@@ -167,25 +167,37 @@ TEST(LlvmLibcStrToLLTest, MessyBaseTenDecode) {
   ASSERT_EQ(__llvm_libc::strtoll(all_together, &str_end, 10), -12345ll);
   ASSERT_EQ(errno, 0);
   EXPECT_EQ(str_end - all_together, ptrdiff_t(9));
+
+  const char *just_spaces = "  ";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_spaces, &str_end, 10), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_spaces, ptrdiff_t(0));
+
+  const char *just_space_and_sign = " +";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_space_and_sign, &str_end, 10), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_space_and_sign, ptrdiff_t(0));
 }
 
 static char int_to_b36_char(int input) {
   if (input < 0 || input > 36)
     return '0';
   if (input < 10)
-    return '0' + input;
-  return 'A' + input - 10;
+    return static_cast<char>('0' + input);
+  return static_cast<char>('A' + input - 10);
 }
 
 TEST(LlvmLibcStrToLLTest, DecodeInOtherBases) {
   char small_string[4] = {'\0', '\0', '\0', '\0'};
-  for (long long base = 2; base <= 36; ++base) {
-    for (long long first_digit = 0; first_digit <= 36; ++first_digit) {
+  for (int base = 2; base <= 36; ++base) {
+    for (int first_digit = 0; first_digit <= 36; ++first_digit) {
       small_string[0] = int_to_b36_char(first_digit);
       if (first_digit < base) {
         errno = 0;
         ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                  first_digit);
+                  static_cast<long long int>(first_digit));
         ASSERT_EQ(errno, 0);
       } else {
         errno = 0;
@@ -195,20 +207,21 @@ TEST(LlvmLibcStrToLLTest, DecodeInOtherBases) {
     }
   }
 
-  for (long long base = 2; base <= 36; ++base) {
-    for (long long first_digit = 0; first_digit <= 36; ++first_digit) {
+  for (int base = 2; base <= 36; ++base) {
+    for (int first_digit = 0; first_digit <= 36; ++first_digit) {
       small_string[0] = int_to_b36_char(first_digit);
-      for (long long second_digit = 0; second_digit <= 36; ++second_digit) {
+      for (int second_digit = 0; second_digit <= 36; ++second_digit) {
         small_string[1] = int_to_b36_char(second_digit);
         if (first_digit < base && second_digit < base) {
           errno = 0;
-          ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                    second_digit + (first_digit * base));
+          ASSERT_EQ(
+              __llvm_libc::strtoll(small_string, nullptr, base),
+              static_cast<long long int>(second_digit + (first_digit * base)));
           ASSERT_EQ(errno, 0);
         } else if (first_digit < base) {
           errno = 0;
           ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                    first_digit);
+                    static_cast<long long int>(first_digit));
           ASSERT_EQ(errno, 0);
         } else {
           errno = 0;
@@ -219,24 +232,26 @@ TEST(LlvmLibcStrToLLTest, DecodeInOtherBases) {
     }
   }
 
-  for (long long base = 2; base <= 36; ++base) {
-    for (long long first_digit = 0; first_digit <= 36; ++first_digit) {
+  for (int base = 2; base <= 36; ++base) {
+    for (int first_digit = 0; first_digit <= 36; ++first_digit) {
       small_string[0] = int_to_b36_char(first_digit);
-      for (long long second_digit = 0; second_digit <= 36; ++second_digit) {
+      for (int second_digit = 0; second_digit <= 36; ++second_digit) {
         small_string[1] = int_to_b36_char(second_digit);
-        for (long long third_digit = 0; third_digit <= 36; ++third_digit) {
+        for (int third_digit = 0; third_digit <= 36; ++third_digit) {
           small_string[2] = int_to_b36_char(third_digit);
 
           if (first_digit < base && second_digit < base && third_digit < base) {
             errno = 0;
             ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                      third_digit + (second_digit * base) +
-                          (first_digit * base * base));
+                      static_cast<long long int>(third_digit +
+                                                 (second_digit * base) +
+                                                 (first_digit * base * base)));
             ASSERT_EQ(errno, 0);
           } else if (first_digit < base && second_digit < base) {
             errno = 0;
             ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                      second_digit + (first_digit * base));
+                      static_cast<long long int>(second_digit +
+                                                 (first_digit * base)));
             ASSERT_EQ(errno, 0);
           } else if (first_digit < base) {
             // if the base is 16 there is a special case for the prefix 0X.
@@ -245,7 +260,7 @@ TEST(LlvmLibcStrToLLTest, DecodeInOtherBases) {
               if (third_digit < base) {
                 errno = 0;
                 ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                          third_digit);
+                          static_cast<long long int>(third_digit));
                 ASSERT_EQ(errno, 0);
               } else {
                 errno = 0;
@@ -256,7 +271,7 @@ TEST(LlvmLibcStrToLLTest, DecodeInOtherBases) {
             } else {
               errno = 0;
               ASSERT_EQ(__llvm_libc::strtoll(small_string, nullptr, base),
-                        first_digit);
+                        static_cast<long long int>(first_digit));
               ASSERT_EQ(errno, 0);
             }
           } else {
@@ -284,6 +299,39 @@ TEST(LlvmLibcStrToLLTest, CleanBaseSixteenDecode) {
   ASSERT_EQ(__llvm_libc::strtoll(yes_prefix, &str_end, 16), 0x456defll);
   ASSERT_EQ(errno, 0);
   EXPECT_EQ(str_end - yes_prefix, ptrdiff_t(8));
+
+  const char *letter_after_prefix = "0xabc123";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(letter_after_prefix, &str_end, 16),
+            0xabc123ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - letter_after_prefix, ptrdiff_t(8));
+}
+
+TEST(LlvmLibcStrToLLTest, MessyBaseSixteenDecode) {
+  char *str_end = nullptr;
+
+  const char *just_prefix = "0x";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_prefix, &str_end, 16), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_prefix, ptrdiff_t(1));
+
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_prefix, &str_end, 0), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_prefix, ptrdiff_t(1));
+
+  const char *prefix_with_x_after = "0xx";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(prefix_with_x_after, &str_end, 16), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - prefix_with_x_after, ptrdiff_t(1));
+
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(prefix_with_x_after, &str_end, 0), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - prefix_with_x_after, ptrdiff_t(1));
 }
 
 TEST(LlvmLibcStrToLLTest, AutomaticBaseSelection) {
@@ -314,4 +362,22 @@ TEST(LlvmLibcStrToLLTest, AutomaticBaseSelection) {
             012345ll);
   ASSERT_EQ(errno, 0);
   EXPECT_EQ(str_end - base_eight_with_prefix, ptrdiff_t(6));
+
+  const char *just_zero = "0";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_zero, &str_end, 0), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_zero, ptrdiff_t(1));
+
+  const char *just_zero_x = "0x";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_zero_x, &str_end, 0), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_zero_x, ptrdiff_t(1));
+
+  const char *just_zero_eight = "08";
+  errno = 0;
+  ASSERT_EQ(__llvm_libc::strtoll(just_zero_eight, &str_end, 0), 0ll);
+  ASSERT_EQ(errno, 0);
+  EXPECT_EQ(str_end - just_zero_eight, ptrdiff_t(1));
 }

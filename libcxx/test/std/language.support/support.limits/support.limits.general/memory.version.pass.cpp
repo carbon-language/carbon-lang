@@ -17,6 +17,7 @@
 
 /*  Constant                                      Value
     __cpp_lib_addressof_constexpr                 201603L [C++17]
+    __cpp_lib_allocate_at_least                   202106L [C++2b]
     __cpp_lib_allocator_traits_is_always_equal    201411L [C++17]
     __cpp_lib_assume_aligned                      201811L [C++20]
     __cpp_lib_atomic_value_initialization         201911L [C++20]
@@ -24,7 +25,7 @@
     __cpp_lib_constexpr_memory                    201811L [C++20]
     __cpp_lib_enable_shared_from_this             201603L [C++17]
     __cpp_lib_make_unique                         201304L [C++14]
-    __cpp_lib_polymorphic_allocator               201902L [C++20]
+    __cpp_lib_out_ptr                             202106L [C++2b]
     __cpp_lib_ranges                              201811L [C++20]
     __cpp_lib_raw_memory_algorithms               201606L [C++17]
     __cpp_lib_shared_ptr_arrays                   201611L [C++17]
@@ -42,6 +43,10 @@
 
 # ifdef __cpp_lib_addressof_constexpr
 #   error "__cpp_lib_addressof_constexpr should not be defined before c++17"
+# endif
+
+# ifdef __cpp_lib_allocate_at_least
+#   error "__cpp_lib_allocate_at_least should not be defined before c++2b"
 # endif
 
 # ifdef __cpp_lib_allocator_traits_is_always_equal
@@ -72,8 +77,8 @@
 #   error "__cpp_lib_make_unique should not be defined before c++14"
 # endif
 
-# ifdef __cpp_lib_polymorphic_allocator
-#   error "__cpp_lib_polymorphic_allocator should not be defined before c++20"
+# ifdef __cpp_lib_out_ptr
+#   error "__cpp_lib_out_ptr should not be defined before c++2b"
 # endif
 
 # ifdef __cpp_lib_ranges
@@ -110,6 +115,10 @@
 #   error "__cpp_lib_addressof_constexpr should not be defined before c++17"
 # endif
 
+# ifdef __cpp_lib_allocate_at_least
+#   error "__cpp_lib_allocate_at_least should not be defined before c++2b"
+# endif
+
 # ifdef __cpp_lib_allocator_traits_is_always_equal
 #   error "__cpp_lib_allocator_traits_is_always_equal should not be defined before c++17"
 # endif
@@ -141,8 +150,8 @@
 #   error "__cpp_lib_make_unique should have the value 201304L in c++14"
 # endif
 
-# ifdef __cpp_lib_polymorphic_allocator
-#   error "__cpp_lib_polymorphic_allocator should not be defined before c++20"
+# ifdef __cpp_lib_out_ptr
+#   error "__cpp_lib_out_ptr should not be defined before c++2b"
 # endif
 
 # ifdef __cpp_lib_ranges
@@ -185,6 +194,10 @@
 #   error "__cpp_lib_addressof_constexpr should have the value 201603L in c++17"
 # endif
 
+# ifdef __cpp_lib_allocate_at_least
+#   error "__cpp_lib_allocate_at_least should not be defined before c++2b"
+# endif
+
 # ifndef __cpp_lib_allocator_traits_is_always_equal
 #   error "__cpp_lib_allocator_traits_is_always_equal should be defined in c++17"
 # endif
@@ -222,8 +235,8 @@
 #   error "__cpp_lib_make_unique should have the value 201304L in c++17"
 # endif
 
-# ifdef __cpp_lib_polymorphic_allocator
-#   error "__cpp_lib_polymorphic_allocator should not be defined before c++20"
+# ifdef __cpp_lib_out_ptr
+#   error "__cpp_lib_out_ptr should not be defined before c++2b"
 # endif
 
 # ifdef __cpp_lib_ranges
@@ -275,6 +288,10 @@
 #   error "__cpp_lib_addressof_constexpr should have the value 201603L in c++20"
 # endif
 
+# ifdef __cpp_lib_allocate_at_least
+#   error "__cpp_lib_allocate_at_least should not be defined before c++2b"
+# endif
+
 # ifndef __cpp_lib_allocator_traits_is_always_equal
 #   error "__cpp_lib_allocator_traits_is_always_equal should be defined in c++20"
 # endif
@@ -295,17 +312,11 @@
 #   endif
 # endif
 
-# if !defined(_LIBCPP_HAS_NO_THREADS)
-#   ifndef __cpp_lib_atomic_value_initialization
-#     error "__cpp_lib_atomic_value_initialization should be defined in c++20"
-#   endif
-#   if __cpp_lib_atomic_value_initialization != 201911L
-#     error "__cpp_lib_atomic_value_initialization should have the value 201911L in c++20"
-#   endif
-# else
-#   ifdef __cpp_lib_atomic_value_initialization
-#     error "__cpp_lib_atomic_value_initialization should not be defined when !defined(_LIBCPP_HAS_NO_THREADS) is not defined!"
-#   endif
+# ifndef __cpp_lib_atomic_value_initialization
+#   error "__cpp_lib_atomic_value_initialization should be defined in c++20"
+# endif
+# if __cpp_lib_atomic_value_initialization != 201911L
+#   error "__cpp_lib_atomic_value_initialization should have the value 201911L in c++20"
 # endif
 
 # ifndef __cpp_lib_constexpr_dynamic_alloc
@@ -336,17 +347,8 @@
 #   error "__cpp_lib_make_unique should have the value 201304L in c++20"
 # endif
 
-# if !defined(_LIBCPP_VERSION)
-#   ifndef __cpp_lib_polymorphic_allocator
-#     error "__cpp_lib_polymorphic_allocator should be defined in c++20"
-#   endif
-#   if __cpp_lib_polymorphic_allocator != 201902L
-#     error "__cpp_lib_polymorphic_allocator should have the value 201902L in c++20"
-#   endif
-# else // _LIBCPP_VERSION
-#   ifdef __cpp_lib_polymorphic_allocator
-#     error "__cpp_lib_polymorphic_allocator should not be defined because it is unimplemented in libc++!"
-#   endif
+# ifdef __cpp_lib_out_ptr
+#   error "__cpp_lib_out_ptr should not be defined before c++2b"
 # endif
 
 # if !defined(_LIBCPP_VERSION)
@@ -419,6 +421,19 @@
 #   error "__cpp_lib_addressof_constexpr should have the value 201603L in c++2b"
 # endif
 
+# if !defined(_LIBCPP_VERSION)
+#   ifndef __cpp_lib_allocate_at_least
+#     error "__cpp_lib_allocate_at_least should be defined in c++2b"
+#   endif
+#   if __cpp_lib_allocate_at_least != 202106L
+#     error "__cpp_lib_allocate_at_least should have the value 202106L in c++2b"
+#   endif
+# else // _LIBCPP_VERSION
+#   ifdef __cpp_lib_allocate_at_least
+#     error "__cpp_lib_allocate_at_least should not be defined because it is unimplemented in libc++!"
+#   endif
+# endif
+
 # ifndef __cpp_lib_allocator_traits_is_always_equal
 #   error "__cpp_lib_allocator_traits_is_always_equal should be defined in c++2b"
 # endif
@@ -439,17 +454,11 @@
 #   endif
 # endif
 
-# if !defined(_LIBCPP_HAS_NO_THREADS)
-#   ifndef __cpp_lib_atomic_value_initialization
-#     error "__cpp_lib_atomic_value_initialization should be defined in c++2b"
-#   endif
-#   if __cpp_lib_atomic_value_initialization != 201911L
-#     error "__cpp_lib_atomic_value_initialization should have the value 201911L in c++2b"
-#   endif
-# else
-#   ifdef __cpp_lib_atomic_value_initialization
-#     error "__cpp_lib_atomic_value_initialization should not be defined when !defined(_LIBCPP_HAS_NO_THREADS) is not defined!"
-#   endif
+# ifndef __cpp_lib_atomic_value_initialization
+#   error "__cpp_lib_atomic_value_initialization should be defined in c++2b"
+# endif
+# if __cpp_lib_atomic_value_initialization != 201911L
+#   error "__cpp_lib_atomic_value_initialization should have the value 201911L in c++2b"
 # endif
 
 # ifndef __cpp_lib_constexpr_dynamic_alloc
@@ -481,15 +490,15 @@
 # endif
 
 # if !defined(_LIBCPP_VERSION)
-#   ifndef __cpp_lib_polymorphic_allocator
-#     error "__cpp_lib_polymorphic_allocator should be defined in c++2b"
+#   ifndef __cpp_lib_out_ptr
+#     error "__cpp_lib_out_ptr should be defined in c++2b"
 #   endif
-#   if __cpp_lib_polymorphic_allocator != 201902L
-#     error "__cpp_lib_polymorphic_allocator should have the value 201902L in c++2b"
+#   if __cpp_lib_out_ptr != 202106L
+#     error "__cpp_lib_out_ptr should have the value 202106L in c++2b"
 #   endif
 # else // _LIBCPP_VERSION
-#   ifdef __cpp_lib_polymorphic_allocator
-#     error "__cpp_lib_polymorphic_allocator should not be defined because it is unimplemented in libc++!"
+#   ifdef __cpp_lib_out_ptr
+#     error "__cpp_lib_out_ptr should not be defined because it is unimplemented in libc++!"
 #   endif
 # endif
 

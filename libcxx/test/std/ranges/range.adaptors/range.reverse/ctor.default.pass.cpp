@@ -10,12 +10,11 @@
 // UNSUPPORTED: libcpp-no-concepts
 // UNSUPPORTED: libcpp-has-no-incomplete-ranges
 
-// reverse_view() requires default_­initializable<V> = default;
+// reverse_view() requires default_initializable<V> = default;
 
 #include <ranges>
 #include <cassert>
 
-#include "test_macros.h"
 #include "types.h"
 
 enum CtorKind { DefaultCtor, PtrCtor };

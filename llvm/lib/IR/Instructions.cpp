@@ -328,11 +328,10 @@ bool CallBase::isReturnNonNull() const {
 Value *CallBase::getReturnedArgOperand() const {
   unsigned Index;
 
-  if (Attrs.hasAttrSomewhere(Attribute::Returned, &Index) && Index)
+  if (Attrs.hasAttrSomewhere(Attribute::Returned, &Index))
     return getArgOperand(Index - AttributeList::FirstArgIndex);
   if (const Function *F = getCalledFunction())
-    if (F->getAttributes().hasAttrSomewhere(Attribute::Returned, &Index) &&
-        Index)
+    if (F->getAttributes().hasAttrSomewhere(Attribute::Returned, &Index))
       return getArgOperand(Index - AttributeList::FirstArgIndex);
 
   return nullptr;
@@ -340,7 +339,7 @@ Value *CallBase::getReturnedArgOperand() const {
 
 /// Determine whether the argument or parameter has the given attribute.
 bool CallBase::paramHasAttr(unsigned ArgNo, Attribute::AttrKind Kind) const {
-  assert(ArgNo < getNumArgOperands() && "Param index out of bounds!");
+  assert(ArgNo < arg_size() && "Param index out of bounds!");
 
   if (Attrs.hasParamAttr(ArgNo, Kind))
     return true;
@@ -350,14 +349,26 @@ bool CallBase::paramHasAttr(unsigned ArgNo, Attribute::AttrKind Kind) const {
 }
 
 bool CallBase::hasFnAttrOnCalledFunction(Attribute::AttrKind Kind) const {
-  if (const Function *F = getCalledFunction())
+  Value *V = getCalledOperand();
+  if (auto *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == BitCast)
+      V = CE->getOperand(0);
+
+  if (auto *F = dyn_cast<Function>(V))
     return F->getAttributes().hasFnAttr(Kind);
+
   return false;
 }
 
 bool CallBase::hasFnAttrOnCalledFunction(StringRef Kind) const {
-  if (const Function *F = getCalledFunction())
+  Value *V = getCalledOperand();
+  if (auto *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == BitCast)
+      V = CE->getOperand(0);
+
+  if (auto *F = dyn_cast<Function>(V))
     return F->getAttributes().hasFnAttr(Kind);
+
   return false;
 }
 
@@ -471,9 +482,10 @@ CallBase *CallBase::removeOperandBundle(CallBase *CB, uint32_t ID,
 
 bool CallBase::hasReadingOperandBundles() const {
   // Implementation note: this is a conservative implementation of operand
-  // bundle semantics, where *any* non-assume operand bundle forces a callsite
-  // to be at least readonly.
-  return hasOperandBundles() && getIntrinsicID() != Intrinsic::assume;
+  // bundle semantics, where *any* non-assume operand bundle (other than
+  // ptrauth) forces a callsite to be at least readonly.
+  return hasOperandBundlesOtherThan(LLVMContext::OB_ptrauth) &&
+         getIntrinsicID() != Intrinsic::assume;
 }
 
 //===----------------------------------------------------------------------===//
@@ -932,7 +944,7 @@ void CallBrInst::updateArgBlockAddresses(unsigned i, BasicBlock *B) {
   if (BasicBlock *OldBB = getIndirectDest(i)) {
     BlockAddress *Old = BlockAddress::get(OldBB);
     BlockAddress *New = BlockAddress::get(B);
-    for (unsigned ArgNo = 0, e = getNumArgOperands(); ArgNo != e; ++ArgNo)
+    for (unsigned ArgNo = 0, e = arg_size(); ArgNo != e; ++ArgNo)
       if (dyn_cast<BlockAddress>(getArgOperand(ArgNo)) == Old)
         setArgOperand(ArgNo, New);
   }
@@ -1399,8 +1411,6 @@ bool AllocaInst::isStaticAlloca() const {
 void LoadInst::AssertOK() {
   assert(getOperand(0)->getType()->isPointerTy() &&
          "Ptr must have pointer type.");
-  assert(!(isAtomic() && getAlignment() == 0) &&
-         "Alignment required for atomic load");
 }
 
 static Align computeLoadStoreDefaultAlign(Type *Ty, BasicBlock *BB) {
@@ -1479,8 +1489,6 @@ void StoreInst::AssertOK() {
   assert(cast<PointerType>(getOperand(1)->getType())
              ->isOpaqueOrPointeeTypeMatches(getOperand(0)->getType()) &&
          "Ptr must be a pointer to Val type!");
-  assert(!(isAtomic() && getAlignment() == 0) &&
-         "Alignment required for atomic store");
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
@@ -1908,6 +1916,32 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
 //                      ShuffleVectorInst Implementation
 //===----------------------------------------------------------------------===//
 
+static Value *createPlaceholderForShuffleVector(Value *V) {
+  assert(V && "Cannot create placeholder of nullptr V");
+  return PoisonValue::get(V->getType());
+}
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *Mask, const Twine &Name,
+                                     Instruction *InsertBefore)
+    : ShuffleVectorInst(V1, createPlaceholderForShuffleVector(V1), Mask, Name,
+                        InsertBefore) {}
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *Mask, const Twine &Name,
+                                     BasicBlock *InsertAtEnd)
+    : ShuffleVectorInst(V1, createPlaceholderForShuffleVector(V1), Mask, Name,
+                        InsertAtEnd) {}
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, ArrayRef<int> Mask,
+                                     const Twine &Name,
+                                     Instruction *InsertBefore)
+    : ShuffleVectorInst(V1, createPlaceholderForShuffleVector(V1), Mask, Name,
+                        InsertBefore) {}
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, ArrayRef<int> Mask,
+                                     const Twine &Name, BasicBlock *InsertAtEnd)
+    : ShuffleVectorInst(V1, createPlaceholderForShuffleVector(V1), Mask, Name,
+                        InsertAtEnd) {}
+
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const Twine &Name,
                                      Instruction *InsertBefore)
@@ -2272,9 +2306,9 @@ bool ShuffleVectorInst::isInsertSubvectorMask(ArrayRef<int> Mask,
     return false;
 
   // Determine which mask elements are attributed to which source.
-  APInt UndefElts = APInt::getNullValue(NumMaskElts);
-  APInt Src0Elts = APInt::getNullValue(NumMaskElts);
-  APInt Src1Elts = APInt::getNullValue(NumMaskElts);
+  APInt UndefElts = APInt::getZero(NumMaskElts);
+  APInt Src0Elts = APInt::getZero(NumMaskElts);
+  APInt Src1Elts = APInt::getZero(NumMaskElts);
   bool Src0Identity = true;
   bool Src1Identity = true;
 
@@ -2291,11 +2325,10 @@ bool ShuffleVectorInst::isInsertSubvectorMask(ArrayRef<int> Mask,
     }
     Src1Elts.setBit(i);
     Src1Identity &= (M == (i + NumSrcElts));
-    continue;
   }
-  assert((Src0Elts | Src1Elts | UndefElts).isAllOnesValue() &&
+  assert((Src0Elts | Src1Elts | UndefElts).isAllOnes() &&
          "unknown shuffle elements");
-  assert(!Src0Elts.isNullValue() && !Src1Elts.isNullValue() &&
+  assert(!Src0Elts.isZero() && !Src1Elts.isZero() &&
          "2-source shuffle not found");
 
   // Determine lo/hi span ranges.
@@ -2397,6 +2430,87 @@ bool ShuffleVectorInst::isConcat() const {
   // and neither of the inputs are undef vectors. If the mask picks consecutive
   // elements from both inputs, then this is a concatenation of the inputs.
   return isIdentityMaskImpl(getShuffleMask(), NumMaskElts);
+}
+
+static bool isReplicationMaskWithParams(ArrayRef<int> Mask,
+                                        int ReplicationFactor, int VF) {
+  assert(Mask.size() == (unsigned)ReplicationFactor * VF &&
+         "Unexpected mask size.");
+
+  for (int CurrElt : seq(0, VF)) {
+    ArrayRef<int> CurrSubMask = Mask.take_front(ReplicationFactor);
+    assert(CurrSubMask.size() == (unsigned)ReplicationFactor &&
+           "Run out of mask?");
+    Mask = Mask.drop_front(ReplicationFactor);
+    if (!all_of(CurrSubMask, [CurrElt](int MaskElt) {
+          return MaskElt == UndefMaskElem || MaskElt == CurrElt;
+        }))
+      return false;
+  }
+  assert(Mask.empty() && "Did not consume the whole mask?");
+
+  return true;
+}
+
+bool ShuffleVectorInst::isReplicationMask(ArrayRef<int> Mask,
+                                          int &ReplicationFactor, int &VF) {
+  // undef-less case is trivial.
+  if (none_of(Mask, [](int MaskElt) { return MaskElt == UndefMaskElem; })) {
+    ReplicationFactor =
+        Mask.take_while([](int MaskElt) { return MaskElt == 0; }).size();
+    if (ReplicationFactor == 0 || Mask.size() % ReplicationFactor != 0)
+      return false;
+    VF = Mask.size() / ReplicationFactor;
+    return isReplicationMaskWithParams(Mask, ReplicationFactor, VF);
+  }
+
+  // However, if the mask contains undef's, we have to enumerate possible tuples
+  // and pick one. There are bounds on replication factor: [1, mask size]
+  // (where RF=1 is an identity shuffle, RF=mask size is a broadcast shuffle)
+  // Additionally, mask size is a replication factor multiplied by vector size,
+  // which further significantly reduces the search space.
+
+  // Before doing that, let's perform basic correctness checking first.
+  int Largest = -1;
+  for (int MaskElt : Mask) {
+    if (MaskElt == UndefMaskElem)
+      continue;
+    // Elements must be in non-decreasing order.
+    if (MaskElt < Largest)
+      return false;
+    Largest = std::max(Largest, MaskElt);
+  }
+
+  // Prefer larger replication factor if all else equal.
+  for (int PossibleReplicationFactor :
+       reverse(seq_inclusive<unsigned>(1, Mask.size()))) {
+    if (Mask.size() % PossibleReplicationFactor != 0)
+      continue;
+    int PossibleVF = Mask.size() / PossibleReplicationFactor;
+    if (!isReplicationMaskWithParams(Mask, PossibleReplicationFactor,
+                                     PossibleVF))
+      continue;
+    ReplicationFactor = PossibleReplicationFactor;
+    VF = PossibleVF;
+    return true;
+  }
+
+  return false;
+}
+
+bool ShuffleVectorInst::isReplicationMask(int &ReplicationFactor,
+                                          int &VF) const {
+  // Not possible to express a shuffle mask for a scalable vector for this
+  // case.
+  if (isa<ScalableVectorType>(getType()))
+    return false;
+
+  VF = cast<FixedVectorType>(Op<0>()->getType())->getNumElements();
+  if (ShuffleMask.size() % VF != 0)
+    return false;
+  ReplicationFactor = ShuffleMask.size() / VF;
+
+  return isReplicationMaskWithParams(ShuffleMask, ReplicationFactor, VF);
 }
 
 //===----------------------------------------------------------------------===//
@@ -4018,6 +4132,76 @@ bool CmpInst::isSigned(Predicate predicate) {
   }
 }
 
+bool ICmpInst::compare(const APInt &LHS, const APInt &RHS,
+                       ICmpInst::Predicate Pred) {
+  assert(ICmpInst::isIntPredicate(Pred) && "Only for integer predicates!");
+  switch (Pred) {
+  case ICmpInst::Predicate::ICMP_EQ:
+    return LHS.eq(RHS);
+  case ICmpInst::Predicate::ICMP_NE:
+    return LHS.ne(RHS);
+  case ICmpInst::Predicate::ICMP_UGT:
+    return LHS.ugt(RHS);
+  case ICmpInst::Predicate::ICMP_UGE:
+    return LHS.uge(RHS);
+  case ICmpInst::Predicate::ICMP_ULT:
+    return LHS.ult(RHS);
+  case ICmpInst::Predicate::ICMP_ULE:
+    return LHS.ule(RHS);
+  case ICmpInst::Predicate::ICMP_SGT:
+    return LHS.sgt(RHS);
+  case ICmpInst::Predicate::ICMP_SGE:
+    return LHS.sge(RHS);
+  case ICmpInst::Predicate::ICMP_SLT:
+    return LHS.slt(RHS);
+  case ICmpInst::Predicate::ICMP_SLE:
+    return LHS.sle(RHS);
+  default:
+    llvm_unreachable("Unexpected non-integer predicate.");
+  };
+}
+
+bool FCmpInst::compare(const APFloat &LHS, const APFloat &RHS,
+                       FCmpInst::Predicate Pred) {
+  APFloat::cmpResult R = LHS.compare(RHS);
+  switch (Pred) {
+  default:
+    llvm_unreachable("Invalid FCmp Predicate");
+  case FCmpInst::FCMP_FALSE:
+    return false;
+  case FCmpInst::FCMP_TRUE:
+    return true;
+  case FCmpInst::FCMP_UNO:
+    return R == APFloat::cmpUnordered;
+  case FCmpInst::FCMP_ORD:
+    return R != APFloat::cmpUnordered;
+  case FCmpInst::FCMP_UEQ:
+    return R == APFloat::cmpUnordered || R == APFloat::cmpEqual;
+  case FCmpInst::FCMP_OEQ:
+    return R == APFloat::cmpEqual;
+  case FCmpInst::FCMP_UNE:
+    return R != APFloat::cmpEqual;
+  case FCmpInst::FCMP_ONE:
+    return R == APFloat::cmpLessThan || R == APFloat::cmpGreaterThan;
+  case FCmpInst::FCMP_ULT:
+    return R == APFloat::cmpUnordered || R == APFloat::cmpLessThan;
+  case FCmpInst::FCMP_OLT:
+    return R == APFloat::cmpLessThan;
+  case FCmpInst::FCMP_UGT:
+    return R == APFloat::cmpUnordered || R == APFloat::cmpGreaterThan;
+  case FCmpInst::FCMP_OGT:
+    return R == APFloat::cmpGreaterThan;
+  case FCmpInst::FCMP_ULE:
+    return R != APFloat::cmpGreaterThan;
+  case FCmpInst::FCMP_OLE:
+    return R == APFloat::cmpLessThan || R == APFloat::cmpEqual;
+  case FCmpInst::FCMP_UGE:
+    return R != APFloat::cmpLessThan;
+  case FCmpInst::FCMP_OGE:
+    return R == APFloat::cmpGreaterThan || R == APFloat::cmpEqual;
+  }
+}
+
 CmpInst::Predicate CmpInst::getFlippedSignednessPredicate(Predicate pred) {
   assert(CmpInst::isRelational(pred) &&
          "Call only with non-equality predicates!");
@@ -4264,7 +4448,7 @@ void SwitchInstProfUpdateWrapper::addCase(
     Weights.getValue()[SI.getNumSuccessors() - 1] = *W;
   } else if (Weights) {
     Changed = true;
-    Weights.getValue().push_back(W ? *W : 0);
+    Weights.getValue().push_back(W.getValueOr(0));
   }
   if (Weights)
     assert(SI.getNumSuccessors() == Weights->size() &&

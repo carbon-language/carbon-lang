@@ -1,9 +1,9 @@
 # Defining Dialect Attributes and Types
 
 This document is a quickstart to defining dialect specific extensions to the
-[attribute](../LangRef.md/#attributes) and [type](../LangRef.md/#type-system) systems in
-MLIR. The main part of this tutorial focuses on defining types, but the
-instructions are nearly identical for defining attributes.
+[attribute](../LangRef.md/#attributes) and [type](../LangRef.md/#type-system)
+systems in MLIR. The main part of this tutorial focuses on defining types, but
+the instructions are nearly identical for defining attributes.
 
 See [MLIR specification](../LangRef.md) for more information about MLIR, the
 structure of the IR, operations, etc.
@@ -24,18 +24,19 @@ defining a new `Type` it isn't always necessary to define a new storage class.
 So before defining the derived `Type`, it's important to know which of the two
 classes of `Type` we are defining:
 
-Some types are _singleton_ in nature, meaning they have no parameters and only
-ever have one instance, like the [`index` type](../Dialects/Builtin.md/#indextype).
+Some types are *singleton* in nature, meaning they have no parameters and only
+ever have one instance, like the
+[`index` type](../Dialects/Builtin.md/#indextype).
 
-Other types are _parametric_, and contain additional information that
+Other types are *parametric*, and contain additional information that
 differentiates different instances of the same `Type`. For example the
-[`integer` type](../Dialects/Builtin.md/#integertype) contains a bitwidth, with `i8` and
-`i16` representing different instances of
-[`integer` type](../Dialects/Builtin.md/#integertype). _Parametric_ may also contain a
-mutable component, which can be used, for example, to construct self-referring
-recursive types. The mutable component _cannot_ be used to differentiate
-instances of a type class, so usually such types contain other parametric
-components that serve to identify them.
+[`integer` type](../Dialects/Builtin.md/#integertype) contains a bitwidth, with
+`i8` and `i16` representing different instances of
+[`integer` type](../Dialects/Builtin.md/#integertype). *Parametric* may also
+contain a mutable component, which can be used, for example, to construct
+self-referring recursive types. The mutable component *cannot* be used to
+differentiate instances of a type class, so usually such types contain other
+parametric components that serve to identify them.
 
 #### Singleton types
 
@@ -382,3 +383,269 @@ the things named `*Type` are generally now named `*Attr`.
 
 Aside from that, all of the interfaces for uniquing and storage construction are
 all the same.
+
+## Defining Custom Parsers and Printers using Assembly Formats
+
+Attributes and types defined in ODS with a mnemonic can define an
+`assemblyFormat` to declaratively describe custom parsers and printers. The
+assembly format consists of literals, variables, and directives.
+
+*   A literal is a keyword or valid punctuation enclosed in backticks, e.g. ``
+    `keyword` `` or `` `<` ``.
+*   A variable is a parameter name preceeded by a dollar sign, e.g. `$param0`,
+    which captures one attribute or type parameter.
+*   A directive is a keyword followed by an optional argument list that defines
+    special parser and printer behaviour.
+
+```tablegen
+// An example type with an assembly format.
+def MyType : TypeDef<My_Dialect, "MyType"> {
+  // Define a mnemonic to allow the dialect's parser hook to call into the
+  // generated parser.
+  let mnemonic = "my_type";
+
+  // Define two parameters whose C++ types are indicated in string literals.
+  let parameters = (ins "int":$count, "AffineMap":$map);
+
+  // Define the assembly format. Surround the format with less `<` and greater
+  // `>` so that MLIR's printers use the pretty format.
+  let assemblyFormat = "`<` $count `,` `map` `=` $map `>`";
+}
+```
+
+The declarative assembly format for `MyType` results in the following format in
+the IR:
+
+```mlir
+!my_dialect.my_type<42, map = affine_map<(i, j) -> (j, i)>
+```
+
+### Parameter Parsing and Printing
+
+For many basic parameter types, no additional work is needed to define how these
+parameters are parsed or printed.
+
+*   The default printer for any parameter is `$_printer << $_self`, where
+    `$_self` is the C++ value of the parameter and `$_printer` is an
+    `AsmPrinter`.
+*   The default parser for a parameter is
+    `FieldParser<$cppClass>::parse($_parser)`, where `$cppClass` is the C++ type
+    of the parameter and `$_parser` is an `AsmParser`.
+
+Printing and parsing behaviour can be added to additional C++ types by
+overloading these functions or by defining a `parser` and `printer` in an ODS
+parameter class.
+
+Example of overloading:
+
+```c++
+using MyParameter = std::pair<int, int>;
+
+AsmPrinter &operator<<(AsmPrinter &printer, MyParameter param) {
+  printer << param.first << " * " << param.second;
+}
+
+template <> struct FieldParser<MyParameter> {
+  static FailureOr<MyParameter> parse(AsmParser &parser) {
+    int a, b;
+    if (parser.parseInteger(a) || parser.parseStar() ||
+        parser.parseInteger(b))
+      return failure();
+    return MyParameter(a, b);
+  }
+};
+```
+
+Example of using ODS parameter classes:
+
+```
+def MyParameter : TypeParameter<"std::pair<int, int>", "pair of ints"> {
+  let printer = [{ $_printer << $_self.first << " * " << $_self.second }];
+  let parser = [{ [&] -> FailureOr<std::pair<int, int>> {
+    int a, b;
+    if ($_parser.parseInteger(a) || $_parser.parseStar() ||
+        $_parser.parseInteger(b))
+      return failure();
+    return std::make_pair(a, b);
+  }() }];
+}
+```
+
+A type using this parameter with the assembly format `` `<` $myParam `>` `` will
+look as follows in the IR:
+
+```mlir
+!my_dialect.my_type<42 * 24>
+```
+
+#### Non-POD Parameters
+
+Parameters that aren't plain-old-data (e.g. references) may need to define a
+`cppStorageType` to contain the data until it is copied into the allocator. For
+example, `StringRefParameter` uses `std::string` as its storage type, whereas
+`ArrayRefParameter` uses `SmallVector` as its storage type. The parsers for
+these parameters are expected to return `FailureOr<$cppStorageType>`.
+
+#### Optional Parameters
+
+Optional parameters in the assembly format can be indicated by setting
+`isOptional`. The C++ type of an optional parameter is required to satisfy the
+following requirements:
+
+*   is default-constructible
+*   is contextually convertible to `bool`
+*   only the default-constructed value is `false`
+
+The parameter parser should return the default-constructed value to indicate "no
+value present". The printer will guard on the presence of a value to print the
+parameter.
+
+If a value was not parsed for an optional parameter, then the parameter will be
+set to its default-constructed C++ value. For example, `Optional<int>` will be
+set to `llvm::None` and `Attribute` will be set to `nullptr`.
+
+Only optional parameters or directives that only capture optional parameters can
+be used in optional groups. An optional group is a set of elements optionally
+printed based on the presence of an anchor. Suppose parameter `a` is an
+`IntegerAttr`.
+
+```
+( `(` $a^ `)` ) : (`x`)?
+```
+
+In the above assembly format, if `a` is present (non-null), then it will be
+printed as `(5 : i32)`. If it is not present, it will be `x`. Directives that
+are used inside optional groups are allowed only if all captured parameters are
+also optional.
+
+#### Default-Valued Parameters
+
+Optional parameters can be given default values by setting `defaultValue`, a
+string of the C++ default value, or by using `DefaultValuedParameter`. If a
+value for the parameter was not encountered during parsing, it is set to this
+default value. If a parameter is equal to its default value, it is not printed.
+The `comparator` field of the parameter is used, but if one is not specified,
+the equality operator is used.
+
+For example:
+
+```
+let parameters = (ins DefaultValuedParameter<"Optional<int>", "5">:$a)
+let mnemonic = "default_valued";
+let assemblyFormat = "(`<` $a^ `>`)?";
+```
+
+Which will look like:
+
+```
+!test.default_valued     // a = 5
+!test.default_valued<10> // a = 10
+```
+
+For optional `Attribute` or `Type` parameters, the current MLIR context is
+available through `$_ctx`. E.g.
+
+```
+DefaultValuedParameter<"IntegerType", "IntegerType::get($_ctx, 32)">
+```
+
+### Assembly Format Directives
+
+Attribute and type assembly formats have the following directives:
+
+*   `params`: capture all parameters of an attribute or type.
+*   `qualified`: mark a parameter to be printed with its leading dialect and
+    mnemonic.
+*   `struct`: generate a "struct-like" parser and printer for a list of
+    key-value pairs.
+
+#### `params` Directive
+
+This directive is used to refer to all parameters of an attribute or type. When
+used as a top-level directive, `params` generates a parser and printer for a
+comma-separated list of the parameters. For example:
+
+```tablegen
+def MyPairType : TypeDef<My_Dialect, "MyPairType"> {
+  let parameters = (ins "int":$a, "int":$b);
+  let mnemonic = "pair";
+  let assemblyFormat = "`<` params `>`";
+}
+```
+
+In the IR, this type will appear as:
+
+```mlir
+!my_dialect.pair<42, 24>
+```
+
+The `params` directive can also be passed to other directives, such as `struct`,
+as an argument that refers to all parameters in place of explicitly listing all
+parameters as variables.
+
+#### `qualified` Directive
+
+This directive can be used to wrap attribute or type parameters such that they
+are printed in a fully qualified form, i.e., they include the dialect name and
+mnemonic prefix.
+
+For example:
+
+```tablegen
+def OuterType : TypeDef<My_Dialect, "MyOuterType"> {
+  let parameters = (ins MyPairType:$inner);
+  let mnemonic = "outer";
+  let assemblyFormat = "`<` pair `:` $inner `>`";
+}
+def OuterQualifiedType : TypeDef<My_Dialect, "MyOuterQualifiedType"> {
+  let parameters = (ins MyPairType:$inner);
+  let mnemonic = "outer_qual";
+  let assemblyFormat = "`<` pair `:` qualified($inner) `>`";
+}
+```
+
+In the IR, the types will appear as:
+
+```mlir
+!my_dialect.outer<pair : <42, 24>>
+!my_dialect.outer_qual<pair : !mydialect.pair<42, 24>>
+```
+
+If optional parameters are present, they are not printed in the parameter list
+if they are not present.
+
+#### `struct` Directive
+
+The `struct` directive accepts a list of variables to capture and will generate
+a parser and printer for a comma-separated list of key-value pairs. If an
+optional parameter is included in the `struct`, it can be elided. The variables
+are printed in the order they are specified in the argument list **but can be
+parsed in any order**. For example:
+
+```tablegen
+def MyStructType : TypeDef<My_Dialect, "MyStructType"> {
+  let parameters = (ins StringRefParameter<>:$sym_name,
+                        "int":$a, "int":$b, "int":$c);
+  let mnemonic = "struct";
+  let assemblyFormat = "`<` $sym_name `->` struct($a, $b, $c) `>`";
+}
+```
+
+In the IR, this type can appear with any permutation of the order of the
+parameters captured in the directive.
+
+```mlir
+!my_dialect.struct<"foo" -> a = 1, b = 2, c = 3>
+!my_dialect.struct<"foo" -> b = 2, c = 3, a = 1>
+```
+
+Passing `params` as the only argument to `struct` makes the directive capture
+all the parameters of the attribute or type. For the same type above, an
+assembly format of `` `<` struct(params) `>` `` will result in:
+
+```mlir
+!my_dialect.struct<b = 2, sym_name = "foo", c = 3, a = 1>
+```
+
+The order in which the parameters are printed is the order in which they are
+declared in the attribute's or type's `parameter` list.

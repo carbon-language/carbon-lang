@@ -23,6 +23,7 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Frontend/LogDiagnosticPrinter.h"
 #include "clang/Frontend/SerializedDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -36,6 +37,7 @@
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
 #include "clang/Serialization/InMemoryModuleCache.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/BuryPointer.h"
 #include "llvm/Support/CrashRecoveryContext.h"
@@ -558,6 +560,54 @@ void CompilerInstance::createASTContext() {
 
 // ExternalASTSource
 
+namespace {
+// Helper to recursively read the module names for all modules we're adding.
+// We mark these as known and redirect any attempt to load that module to
+// the files we were handed.
+struct ReadModuleNames : ASTReaderListener {
+  Preprocessor &PP;
+  llvm::SmallVector<std::string, 8> LoadedModules;
+
+  ReadModuleNames(Preprocessor &PP) : PP(PP) {}
+
+  void ReadModuleName(StringRef ModuleName) override {
+    // Keep the module name as a string for now. It's not safe to create a new
+    // IdentifierInfo from an ASTReader callback.
+    LoadedModules.push_back(ModuleName.str());
+  }
+
+  void registerAll() {
+    ModuleMap &MM = PP.getHeaderSearchInfo().getModuleMap();
+    for (const std::string &LoadedModule : LoadedModules)
+      MM.cacheModuleLoad(*PP.getIdentifierInfo(LoadedModule),
+                         MM.findModule(LoadedModule));
+    LoadedModules.clear();
+  }
+
+  void markAllUnavailable() {
+    for (const std::string &LoadedModule : LoadedModules) {
+      if (Module *M = PP.getHeaderSearchInfo().getModuleMap().findModule(
+              LoadedModule)) {
+        M->HasIncompatibleModuleFile = true;
+
+        // Mark module as available if the only reason it was unavailable
+        // was missing headers.
+        SmallVector<Module *, 2> Stack;
+        Stack.push_back(M);
+        while (!Stack.empty()) {
+          Module *Current = Stack.pop_back_val();
+          if (Current->IsUnimportable) continue;
+          Current->IsAvailable = true;
+          Stack.insert(Stack.end(),
+                       Current->submodule_begin(), Current->submodule_end());
+        }
+      }
+    }
+    LoadedModules.clear();
+  }
+};
+} // namespace
+
 void CompilerInstance::createPCHExternalASTSource(
     StringRef Path, DisableValidationForModuleKind DisableValidation,
     bool AllowPCHWithCompilerErrors, void *DeserializationListener,
@@ -602,6 +652,11 @@ IntrusiveRefCntPtr<ASTReader> CompilerInstance::createPCHExternalASTSource(
   for (auto &Listener : DependencyCollectors)
     Listener->attachToASTReader(*Reader);
 
+  auto Listener = std::make_unique<ReadModuleNames>(PP);
+  auto &ListenerRef = *Listener;
+  ASTReader::ListenerScope ReadModuleNamesListener(*Reader,
+                                                   std::move(Listener));
+
   switch (Reader->ReadAST(Path,
                           Preamble ? serialization::MK_Preamble
                                    : serialization::MK_PCH,
@@ -611,6 +666,7 @@ IntrusiveRefCntPtr<ASTReader> CompilerInstance::createPCHExternalASTSource(
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.
     PP.setPredefines(Reader->getSuggestedPredefines());
+    ListenerRef.registerAll();
     return Reader;
 
   case ASTReader::Failure:
@@ -626,6 +682,7 @@ IntrusiveRefCntPtr<ASTReader> CompilerInstance::createPCHExternalASTSource(
     break;
   }
 
+  ListenerRef.markAllUnavailable();
   Context.setExternalSource(nullptr);
   return nullptr;
 }
@@ -940,6 +997,11 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   // DesiredStackSpace available.
   noteBottomOfStack();
 
+  auto FinishDiagnosticClient = llvm::make_scope_exit([&]() {
+    // Notify the diagnostic client that all files were processed.
+    getDiagnosticClient().finish();
+  });
+
   raw_ostream &OS = getVerboseOutputStream();
 
   if (!Act.PrepareToExecute(*this))
@@ -977,9 +1039,6 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
       Act.EndSourceFile();
     }
   }
-
-  // Notify the diagnostic client that all files were processed.
-  getDiagnostics().getClient()->finish();
 
   if (getDiagnosticOpts().ShowCarets) {
     // We can have multiple diagnostics sharing one diagnostic client.
@@ -1027,6 +1086,27 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   }
 
   return !getDiagnostics().getClient()->getNumErrors();
+}
+
+void CompilerInstance::LoadRequestedPlugins() {
+  // Load any requested plugins.
+  for (const std::string &Path : getFrontendOpts().Plugins) {
+    std::string Error;
+    if (llvm::sys::DynamicLibrary::LoadLibraryPermanently(Path.c_str(), &Error))
+      getDiagnostics().Report(diag::err_fe_unable_to_load_plugin)
+          << Path << Error;
+  }
+
+  // Check if any of the loaded plugins replaces the main AST action
+  for (const FrontendPluginRegistry::entry &Plugin :
+       FrontendPluginRegistry::entries()) {
+    std::unique_ptr<PluginASTAction> P(Plugin.instantiate());
+    if (P->getActionType() == PluginASTAction::ReplaceAction) {
+      getFrontendOpts().ProgramAction = clang::frontend::PluginAction;
+      getFrontendOpts().ActionName = Plugin.getName().str();
+      break;
+    }
+  }
 }
 
 /// Determine the appropriate source input kind based on language
@@ -1077,14 +1157,12 @@ compileModuleImpl(CompilerInstance &ImportingInstance, SourceLocation ImportLoc,
   // Remove any macro definitions that are explicitly ignored by the module.
   // They aren't supposed to affect how the module is built anyway.
   HeaderSearchOptions &HSOpts = Invocation->getHeaderSearchOpts();
-  PPOpts.Macros.erase(
-      std::remove_if(PPOpts.Macros.begin(), PPOpts.Macros.end(),
-                     [&HSOpts](const std::pair<std::string, bool> &def) {
-        StringRef MacroDef = def.first;
-        return HSOpts.ModulesIgnoreMacros.count(
-                   llvm::CachedHashString(MacroDef.split('=').first)) > 0;
-      }),
-      PPOpts.Macros.end());
+  llvm::erase_if(PPOpts.Macros,
+                 [&HSOpts](const std::pair<std::string, bool> &def) {
+                   StringRef MacroDef = def.first;
+                   return HSOpts.ModulesIgnoreMacros.contains(
+                       llvm::CachedHashString(MacroDef.split('=').first));
+                 });
 
   // If the original compiler invocation had -fmodule-name, pass it through.
   Invocation->getLangOpts()->ModuleName =
@@ -1339,7 +1417,7 @@ static bool compileModuleAndReadASTBehindLock(
   StringRef Dir = llvm::sys::path::parent_path(ModuleFileName);
   llvm::sys::fs::create_directories(Dir);
 
-  while (1) {
+  while (true) {
     llvm::LockFileManager Locked(ModuleFileName);
     switch (Locked) {
     case llvm::LockFileManager::LFS_Error:
@@ -1612,52 +1690,6 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
                *FrontendTimerGroup);
   llvm::TimeRegion TimeLoading(FrontendTimerGroup ? &Timer : nullptr);
 
-  // Helper to recursively read the module names for all modules we're adding.
-  // We mark these as known and redirect any attempt to load that module to
-  // the files we were handed.
-  struct ReadModuleNames : ASTReaderListener {
-    CompilerInstance &CI;
-    llvm::SmallVector<IdentifierInfo*, 8> LoadedModules;
-
-    ReadModuleNames(CompilerInstance &CI) : CI(CI) {}
-
-    void ReadModuleName(StringRef ModuleName) override {
-      LoadedModules.push_back(
-          CI.getPreprocessor().getIdentifierInfo(ModuleName));
-    }
-
-    void registerAll() {
-      ModuleMap &MM = CI.getPreprocessor().getHeaderSearchInfo().getModuleMap();
-      for (auto *II : LoadedModules)
-        MM.cacheModuleLoad(*II, MM.findModule(II->getName()));
-      LoadedModules.clear();
-    }
-
-    void markAllUnavailable() {
-      for (auto *II : LoadedModules) {
-        if (Module *M = CI.getPreprocessor()
-                            .getHeaderSearchInfo()
-                            .getModuleMap()
-                            .findModule(II->getName())) {
-          M->HasIncompatibleModuleFile = true;
-
-          // Mark module as available if the only reason it was unavailable
-          // was missing headers.
-          SmallVector<Module *, 2> Stack;
-          Stack.push_back(M);
-          while (!Stack.empty()) {
-            Module *Current = Stack.pop_back_val();
-            if (Current->IsUnimportable) continue;
-            Current->IsAvailable = true;
-            Stack.insert(Stack.end(),
-                         Current->submodule_begin(), Current->submodule_end());
-          }
-        }
-      }
-      LoadedModules.clear();
-    }
-  };
-
   // If we don't already have an ASTReader, create one now.
   if (!TheASTReader)
     createASTReader();
@@ -1669,7 +1701,7 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
                                           SourceLocation())
         <= DiagnosticsEngine::Warning;
 
-  auto Listener = std::make_unique<ReadModuleNames>(*this);
+  auto Listener = std::make_unique<ReadModuleNames>(*PP);
   auto &ListenerRef = *Listener;
   ASTReader::ListenerScope ReadModuleNamesListener(*TheASTReader,
                                                    std::move(Listener));
@@ -1748,7 +1780,8 @@ ModuleLoadResult CompilerInstance::findOrCompileModuleAndReadAST(
     SourceLocation ModuleNameLoc, bool IsInclusionDirective) {
   // Search for a module with the given name.
   HeaderSearch &HS = PP->getHeaderSearchInfo();
-  Module *M = HS.lookupModule(ModuleName, true, !IsInclusionDirective);
+  Module *M =
+      HS.lookupModule(ModuleName, ImportLoc, true, !IsInclusionDirective);
 
   // Select the source and filename for loading the named module.
   std::string ModuleFilename;
@@ -1807,7 +1840,7 @@ ModuleLoadResult CompilerInstance::findOrCompileModuleAndReadAST(
 
     // A prebuilt module is indexed as a ModuleFile; the Module does not exist
     // until the first call to ReadAST.  Look it up now.
-    M = HS.lookupModule(ModuleName, true, !IsInclusionDirective);
+    M = HS.lookupModule(ModuleName, ImportLoc, true, !IsInclusionDirective);
 
     // Check whether M refers to the file in the prebuilt module path.
     if (M && M->getASTFile())
@@ -1930,7 +1963,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
   } else if (ModuleName == getLangOpts().CurrentModule) {
     // This is the module we're building.
     Module = PP->getHeaderSearchInfo().lookupModule(
-        ModuleName, /*AllowSearch*/ true,
+        ModuleName, ImportLoc, /*AllowSearch*/ true,
         /*AllowExtraModuleMapSearch*/ !IsInclusionDirective);
     /// FIXME: perhaps we should (a) look for a module using the module name
     //  to file map (PrebuiltModuleFiles) and (b) diagnose if still not found?
@@ -1960,90 +1993,84 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
   // Verify that the rest of the module path actually corresponds to
   // a submodule.
   bool MapPrivateSubModToTopLevel = false;
-  if (Path.size() > 1) {
-    for (unsigned I = 1, N = Path.size(); I != N; ++I) {
-      StringRef Name = Path[I].first->getName();
-      clang::Module *Sub = Module->findSubmodule(Name);
+  for (unsigned I = 1, N = Path.size(); I != N; ++I) {
+    StringRef Name = Path[I].first->getName();
+    clang::Module *Sub = Module->findSubmodule(Name);
 
-      // If the user is requesting Foo.Private and it doesn't exist, try to
-      // match Foo_Private and emit a warning asking for the user to write
-      // @import Foo_Private instead. FIXME: remove this when existing clients
-      // migrate off of Foo.Private syntax.
-      if (!Sub && PP->getLangOpts().ImplicitModules && Name == "Private" &&
-          Module == Module->getTopLevelModule()) {
-        SmallString<128> PrivateModule(Module->Name);
-        PrivateModule.append("_Private");
+    // If the user is requesting Foo.Private and it doesn't exist, try to
+    // match Foo_Private and emit a warning asking for the user to write
+    // @import Foo_Private instead. FIXME: remove this when existing clients
+    // migrate off of Foo.Private syntax.
+    if (!Sub && PP->getLangOpts().ImplicitModules && Name == "Private" &&
+        Module == Module->getTopLevelModule()) {
+      SmallString<128> PrivateModule(Module->Name);
+      PrivateModule.append("_Private");
 
-        SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> PrivPath;
-        auto &II = PP->getIdentifierTable().get(
-            PrivateModule, PP->getIdentifierInfo(Module->Name)->getTokenID());
-        PrivPath.push_back(std::make_pair(&II, Path[0].second));
+      SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> PrivPath;
+      auto &II = PP->getIdentifierTable().get(
+          PrivateModule, PP->getIdentifierInfo(Module->Name)->getTokenID());
+      PrivPath.push_back(std::make_pair(&II, Path[0].second));
 
-        if (PP->getHeaderSearchInfo().lookupModule(PrivateModule, true,
-                                                   !IsInclusionDirective))
-          Sub =
-              loadModule(ImportLoc, PrivPath, Visibility, IsInclusionDirective);
-        if (Sub) {
-          MapPrivateSubModToTopLevel = true;
-          if (!getDiagnostics().isIgnored(
-                  diag::warn_no_priv_submodule_use_toplevel, ImportLoc)) {
-            getDiagnostics().Report(Path[I].second,
-                                    diag::warn_no_priv_submodule_use_toplevel)
-                << Path[I].first << Module->getFullModuleName() << PrivateModule
-                << SourceRange(Path[0].second, Path[I].second)
-                << FixItHint::CreateReplacement(SourceRange(Path[0].second),
-                                                PrivateModule);
-            getDiagnostics().Report(Sub->DefinitionLoc,
-                                    diag::note_private_top_level_defined);
+      if (PP->getHeaderSearchInfo().lookupModule(PrivateModule, ImportLoc, true,
+                                                 !IsInclusionDirective))
+        Sub = loadModule(ImportLoc, PrivPath, Visibility, IsInclusionDirective);
+      if (Sub) {
+        MapPrivateSubModToTopLevel = true;
+        if (!getDiagnostics().isIgnored(
+                diag::warn_no_priv_submodule_use_toplevel, ImportLoc)) {
+          getDiagnostics().Report(Path[I].second,
+                                  diag::warn_no_priv_submodule_use_toplevel)
+              << Path[I].first << Module->getFullModuleName() << PrivateModule
+              << SourceRange(Path[0].second, Path[I].second)
+              << FixItHint::CreateReplacement(SourceRange(Path[0].second),
+                                              PrivateModule);
+          getDiagnostics().Report(Sub->DefinitionLoc,
+                                  diag::note_private_top_level_defined);
+        }
+      }
+    }
+
+    if (!Sub) {
+      // Attempt to perform typo correction to find a module name that works.
+      SmallVector<StringRef, 2> Best;
+      unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
+
+      for (class Module *SubModule : Module->submodules()) {
+        unsigned ED =
+            Name.edit_distance(SubModule->Name,
+                               /*AllowReplacements=*/true, BestEditDistance);
+        if (ED <= BestEditDistance) {
+          if (ED < BestEditDistance) {
+            Best.clear();
+            BestEditDistance = ED;
           }
+
+          Best.push_back(SubModule->Name);
         }
       }
 
-      if (!Sub) {
-        // Attempt to perform typo correction to find a module name that works.
-        SmallVector<StringRef, 2> Best;
-        unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
-
-        for (clang::Module::submodule_iterator J = Module->submodule_begin(),
-                                            JEnd = Module->submodule_end();
-             J != JEnd; ++J) {
-          unsigned ED = Name.edit_distance((*J)->Name,
-                                           /*AllowReplacements=*/true,
-                                           BestEditDistance);
-          if (ED <= BestEditDistance) {
-            if (ED < BestEditDistance) {
-              Best.clear();
-              BestEditDistance = ED;
-            }
-
-            Best.push_back((*J)->Name);
-          }
-        }
-
-        // If there was a clear winner, user it.
-        if (Best.size() == 1) {
-          getDiagnostics().Report(Path[I].second,
-                                  diag::err_no_submodule_suggest)
+      // If there was a clear winner, user it.
+      if (Best.size() == 1) {
+        getDiagnostics().Report(Path[I].second, diag::err_no_submodule_suggest)
             << Path[I].first << Module->getFullModuleName() << Best[0]
-            << SourceRange(Path[0].second, Path[I-1].second)
+            << SourceRange(Path[0].second, Path[I - 1].second)
             << FixItHint::CreateReplacement(SourceRange(Path[I].second),
                                             Best[0]);
 
-          Sub = Module->findSubmodule(Best[0]);
-        }
+        Sub = Module->findSubmodule(Best[0]);
       }
-
-      if (!Sub) {
-        // No submodule by this name. Complain, and don't look for further
-        // submodules.
-        getDiagnostics().Report(Path[I].second, diag::err_no_submodule)
-          << Path[I].first << Module->getFullModuleName()
-          << SourceRange(Path[0].second, Path[I-1].second);
-        break;
-      }
-
-      Module = Sub;
     }
+
+    if (!Sub) {
+      // No submodule by this name. Complain, and don't look for further
+      // submodules.
+      getDiagnostics().Report(Path[I].second, diag::err_no_submodule)
+          << Path[I].first << Module->getFullModuleName()
+          << SourceRange(Path[0].second, Path[I - 1].second);
+      break;
+    }
+
+    Module = Sub;
   }
 
   // Make the named module visible, if it's not already part of the module
@@ -2128,8 +2155,7 @@ void CompilerInstance::createModuleFromSource(SourceLocation ImportLoc,
     const FileEntry *ModuleMapFile = Other.getFileManager().getVirtualFile(
         ModuleMapFileName, NullTerminatedSource.size(), 0);
     Other.getSourceManager().overrideFileContents(
-        ModuleMapFile,
-        llvm::MemoryBuffer::getMemBuffer(NullTerminatedSource.c_str()));
+        ModuleMapFile, llvm::MemoryBuffer::getMemBuffer(NullTerminatedSource));
 
     Other.BuiltModules = std::move(BuiltModules);
     Other.DeleteBuiltModules = false;

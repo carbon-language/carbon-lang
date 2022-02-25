@@ -106,6 +106,8 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
       EmitGeneric = AP.EmitGeneric;
     }
 
+    // Copy Num bytes from Ptr.
+    // if Bytes > Num, zero fill up to Bytes.
     unsigned addBytes(unsigned char *Ptr, int Num, int Bytes) {
       assert((curpos + Num) <= size);
       assert((curpos + Bytes) <= size);
@@ -304,6 +306,11 @@ public:
   std::string getVirtualRegisterName(unsigned) const;
 
   const MCSymbol *getFunctionFrameSymbol() const override;
+
+  // Make emitGlobalVariable() no-op for NVPTX.
+  // Global variables have been already emitted by the time the base AsmPrinter
+  // attempts to do so in doFinalization() (see NVPTXAsmPrinter::emitGlobals()).
+  void emitGlobalVariable(const GlobalVariable *GV) override {}
 };
 
 } // end namespace llvm

@@ -88,7 +88,9 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     }
   }
   if (Subtarget->hasReferenceTypes()) {
-    for (auto T : {MVT::externref, MVT::funcref}) {
+    // We need custom load and store lowering for both externref, funcref and
+    // Other. The MVT::Other here represents tables of reference types.
+    for (auto T : {MVT::externref, MVT::funcref, MVT::Other}) {
       setOperationAction(ISD::LOAD, T, Custom);
       setOperationAction(ISD::STORE, T, Custom);
     }
@@ -174,6 +176,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     setTargetDAGCombine(ISD::FP_ROUND);
     setTargetDAGCombine(ISD::CONCAT_VECTORS);
 
+    setTargetDAGCombine(ISD::TRUNCATE);
+
     // Support saturating add for i8x16 and i16x8
     for (auto Op : {ISD::SADDSAT, ISD::UADDSAT})
       for (auto T : {MVT::v16i8, MVT::v8i16})
@@ -213,8 +217,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
       setOperationAction(ISD::SELECT_CC, T, Expand);
 
     // Expand integer operations supported for scalars but not SIMD
-    for (auto Op : {ISD::CTLZ, ISD::CTTZ, ISD::CTPOP, ISD::SDIV, ISD::UDIV,
-                    ISD::SREM, ISD::UREM, ISD::ROTL, ISD::ROTR})
+    for (auto Op :
+         {ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM, ISD::ROTL, ISD::ROTR})
       for (auto T : {MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v2i64})
         setOperationAction(Op, T, Expand);
 
@@ -223,8 +227,15 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
       for (auto T : {MVT::v16i8, MVT::v8i16, MVT::v4i32})
         setOperationAction(Op, T, Legal);
 
-    // And we have popcnt for i8x16
+    // And we have popcnt for i8x16. It can be used to expand ctlz/cttz.
     setOperationAction(ISD::CTPOP, MVT::v16i8, Legal);
+    setOperationAction(ISD::CTLZ, MVT::v16i8, Expand);
+    setOperationAction(ISD::CTTZ, MVT::v16i8, Expand);
+
+    // Custom lower bit counting operations for other types to scalarize them.
+    for (auto Op : {ISD::CTLZ, ISD::CTTZ, ISD::CTPOP})
+      for (auto T : {MVT::v8i16, MVT::v4i32, MVT::v2i64})
+        setOperationAction(Op, T, Custom);
 
     // Expand float operations supported for scalars but not SIMD
     for (auto Op : {ISD::FCOPYSIGN, ISD::FLOG, ISD::FLOG2, ISD::FLOG10,
@@ -303,6 +314,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
       setLoadExtAction(Ext, MVT::v4i32, MVT::v4i16, Legal);
       setLoadExtAction(Ext, MVT::v2i64, MVT::v2i32, Legal);
     }
+    setLoadExtAction(ISD::EXTLOAD, MVT::v2f64, MVT::v2f32, Legal);
   }
 
   // Don't do anything clever with build_pairs
@@ -333,6 +345,24 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // is equivalent to a simple branch. This reduces code size for wasm, and we
   // defer possible jump table optimizations to the VM.
   setMinimumJumpTableEntries(2);
+}
+
+MVT WebAssemblyTargetLowering::getPointerTy(const DataLayout &DL,
+                                            uint32_t AS) const {
+  if (AS == WebAssembly::WasmAddressSpace::WASM_ADDRESS_SPACE_EXTERNREF)
+    return MVT::externref;
+  if (AS == WebAssembly::WasmAddressSpace::WASM_ADDRESS_SPACE_FUNCREF)
+    return MVT::funcref;
+  return TargetLowering::getPointerTy(DL, AS);
+}
+
+MVT WebAssemblyTargetLowering::getPointerMemTy(const DataLayout &DL,
+                                               uint32_t AS) const {
+  if (AS == WebAssembly::WasmAddressSpace::WASM_ADDRESS_SPACE_EXTERNREF)
+    return MVT::externref;
+  if (AS == WebAssembly::WasmAddressSpace::WASM_ADDRESS_SPACE_FUNCREF)
+    return MVT::funcref;
+  return TargetLowering::getPointerMemTy(DL, AS);
 }
 
 TargetLowering::AtomicExpansionKind
@@ -548,7 +578,21 @@ LowerCallResults(MachineInstr &CallResults, DebugLoc DL, MachineBasicBlock *BB,
   if (IsIndirect) {
     auto FnPtr = CallParams.getOperand(0);
     CallParams.RemoveOperand(0);
-    CallParams.addOperand(FnPtr);
+
+    // For funcrefs, call_indirect is done through __funcref_call_table and the
+    // funcref is always installed in slot 0 of the table, therefore instead of having
+    // the function pointer added at the end of the params list, a zero (the index in
+    // __funcref_call_table is added).
+    if (IsFuncrefCall) {
+      Register RegZero =
+          MF.getRegInfo().createVirtualRegister(&WebAssembly::I32RegClass);
+      MachineInstrBuilder MIBC0 =
+          BuildMI(MF, DL, TII.get(WebAssembly::CONST_I32), RegZero).addImm(0);
+
+      BB->insert(CallResults.getIterator(), MIBC0);
+      MachineInstrBuilder(MF, CallParams).addReg(RegZero);
+    } else
+      CallParams.addOperand(FnPtr);
   }
 
   for (auto Def : CallResults.defs())
@@ -602,8 +646,7 @@ LowerCallResults(MachineInstr &CallResults, DebugLoc DL, MachineBasicBlock *BB,
     Register RegFuncref =
         MF.getRegInfo().createVirtualRegister(&WebAssembly::FUNCREFRegClass);
     MachineInstr *RefNull =
-        BuildMI(MF, DL, TII.get(WebAssembly::REF_NULL_FUNCREF), RegFuncref)
-            .addImm(static_cast<int32_t>(WebAssembly::HeapType::Funcref));
+        BuildMI(MF, DL, TII.get(WebAssembly::REF_NULL_FUNCREF), RegFuncref);
     BB->insertAfter(Const0->getIterator(), RefNull);
 
     MachineInstr *TableSet =
@@ -1131,7 +1174,8 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Lastly, if this is a call to a funcref we need to add an instruction
   // table.set to the chain and transform the call.
-  if (CLI.CB && isFuncrefType(CLI.CB->getCalledOperand()->getType())) {
+  if (CLI.CB &&
+      WebAssembly::isFuncrefType(CLI.CB->getCalledOperand()->getType())) {
     // In the absence of function references proposal where a funcref call is
     // lowered to call_ref, using reference types we generate a table.set to set
     // the funcref to a special table used solely for this purpose, followed by
@@ -1149,7 +1193,8 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
         WebAssemblyISD::TABLE_SET, DL, DAG.getVTList(MVT::Other), TableSetOps,
         MVT::funcref,
         // Machine Mem Operand args
-        MachinePointerInfo(WasmAddressSpace::FUNCREF),
+        MachinePointerInfo(
+            WebAssembly::WasmAddressSpace::WASM_ADDRESS_SPACE_FUNCREF),
         CLI.CB->getCalledOperand()->getPointerAlignment(DAG.getDataLayout()),
         MachineMemOperand::MOStore);
 
@@ -1368,6 +1413,10 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return LowerLoad(Op, DAG);
   case ISD::STORE:
     return LowerStore(Op, DAG);
+  case ISD::CTPOP:
+  case ISD::CTLZ:
+  case ISD::CTTZ:
+    return DAG.UnrollVectorOp(Op.getNode());
   }
 }
 
@@ -1387,14 +1436,77 @@ static Optional<unsigned> IsWebAssemblyLocal(SDValue Op, SelectionDAG &DAG) {
   return WebAssemblyFrameLowering::getLocalForStackObject(MF, FI->getIndex());
 }
 
-bool WebAssemblyTargetLowering::isFuncrefType(const Type *Ty) {
-  return isa<PointerType>(Ty) &&
-         Ty->getPointerAddressSpace() == WasmAddressSpace::FUNCREF;
+static bool IsWebAssemblyTable(SDValue Op) {
+  const GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
+  if (GA && WebAssembly::isWasmVarAddressSpace(GA->getAddressSpace())) {
+    const GlobalValue *Value = GA->getGlobal();
+    const Type *Ty = Value->getValueType();
+
+    if (Ty->isArrayTy() && WebAssembly::isRefType(Ty->getArrayElementType()))
+      return true;
+  }
+  return false;
 }
 
-bool WebAssemblyTargetLowering::isExternrefType(const Type *Ty) {
-  return isa<PointerType>(Ty) &&
-         Ty->getPointerAddressSpace() == WasmAddressSpace::EXTERNREF;
+// This function will accept as Op any access to a table, so Op can
+// be the actual table or an offset into the table.
+static bool IsWebAssemblyTableWithOffset(SDValue Op) {
+  if (Op->getOpcode() == ISD::ADD && Op->getNumOperands() == 2)
+    return (Op->getOperand(1).getSimpleValueType() == MVT::i32 &&
+            IsWebAssemblyTableWithOffset(Op->getOperand(0))) ||
+           (Op->getOperand(0).getSimpleValueType() == MVT::i32 &&
+            IsWebAssemblyTableWithOffset(Op->getOperand(1)));
+
+  return IsWebAssemblyTable(Op);
+}
+
+// Helper for table pattern matching used in LowerStore and LowerLoad
+bool WebAssemblyTargetLowering::MatchTableForLowering(SelectionDAG &DAG,
+                                                      const SDLoc &DL,
+                                                      const SDValue &Base,
+                                                      GlobalAddressSDNode *&GA,
+                                                      SDValue &Idx) const {
+  // We expect the following graph for a load of the form:
+  // table[<var> + <constant offset>]
+  //
+  // Case 1:
+  // externref = load t1
+  // t1: i32 = add t2, i32:<constant offset>
+  // t2: i32 = add tX, table
+  //
+  // This is in some cases simplified to just:
+  // Case 2:
+  // externref = load t1
+  // t1: i32 = add t2, i32:tX
+  //
+  // So, unfortunately we need to check for both cases and if we are in the
+  // first case extract the table GlobalAddressNode and build a new node tY
+  // that's tY: i32 = add i32:<constant offset>, i32:tX
+  //
+  if (IsWebAssemblyTable(Base)) {
+    GA = cast<GlobalAddressSDNode>(Base);
+    Idx = DAG.getConstant(0, DL, MVT::i32);
+  } else {
+    GA = dyn_cast<GlobalAddressSDNode>(Base->getOperand(0));
+    if (GA) {
+      // We are in Case 2 above.
+      Idx = Base->getOperand(1);
+      assert(GA->getNumValues() == 1);
+    } else {
+      // This might be Case 1 above (or an error)
+      SDValue V = Base->getOperand(0);
+      GA = dyn_cast<GlobalAddressSDNode>(V->getOperand(1));
+
+      if (V->getOpcode() != ISD::ADD || V->getNumOperands() != 2 || !GA)
+        return false;
+
+      SDValue IdxV = DAG.getNode(ISD::ADD, DL, MVT::i32, Base->getOperand(1),
+                                 V->getOperand(0));
+      Idx = IdxV;
+    }
+  }
+
+  return true;
 }
 
 SDValue WebAssemblyTargetLowering::LowerStore(SDValue Op,
@@ -1404,6 +1516,26 @@ SDValue WebAssemblyTargetLowering::LowerStore(SDValue Op,
   const SDValue &Value = SN->getValue();
   const SDValue &Base = SN->getBasePtr();
   const SDValue &Offset = SN->getOffset();
+
+  if (IsWebAssemblyTableWithOffset(Base)) {
+    if (!Offset->isUndef())
+      report_fatal_error(
+          "unexpected offset when loading from webassembly table", false);
+
+    SDValue Idx;
+    GlobalAddressSDNode *GA;
+
+    if (!MatchTableForLowering(DAG, DL, Base, GA, Idx))
+      report_fatal_error("failed pattern matching for lowering table store",
+                         false);
+
+    SDVTList Tys = DAG.getVTList(MVT::Other);
+    SDValue TableSetOps[] = {SN->getChain(), SDValue(GA, 0), Idx, Value};
+    SDValue TableSet =
+        DAG.getMemIntrinsicNode(WebAssemblyISD::TABLE_SET, DL, Tys, TableSetOps,
+                                SN->getMemoryVT(), SN->getMemOperand());
+    return TableSet;
+  }
 
   if (IsWebAssemblyGlobal(Base)) {
     if (!Offset->isUndef())
@@ -1436,6 +1568,26 @@ SDValue WebAssemblyTargetLowering::LowerLoad(SDValue Op,
   LoadSDNode *LN = cast<LoadSDNode>(Op.getNode());
   const SDValue &Base = LN->getBasePtr();
   const SDValue &Offset = LN->getOffset();
+
+  if (IsWebAssemblyTableWithOffset(Base)) {
+    if (!Offset->isUndef())
+      report_fatal_error(
+          "unexpected offset when loading from webassembly table", false);
+
+    GlobalAddressSDNode *GA;
+    SDValue Idx;
+
+    if (!MatchTableForLowering(DAG, DL, Base, GA, Idx))
+      report_fatal_error("failed pattern matching for lowering table load",
+                         false);
+
+    SDVTList Tys = DAG.getVTList(LN->getValueType(0), MVT::Other);
+    SDValue TableGetOps[] = {LN->getChain(), SDValue(GA, 0), Idx};
+    SDValue TableGet =
+        DAG.getMemIntrinsicNode(WebAssemblyISD::TABLE_GET, DL, Tys, TableGetOps,
+                                LN->getMemoryVT(), LN->getMemOperand());
+    return TableGet;
+  }
 
   if (IsWebAssemblyGlobal(Base)) {
     if (!Offset->isUndef())
@@ -1476,7 +1628,7 @@ SDValue WebAssemblyTargetLowering::LowerCopyToReg(SDValue Op,
     // local.copy between Op and its FI operand.
     SDValue Chain = Op.getOperand(0);
     SDLoc DL(Op);
-    unsigned Reg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
+    Register Reg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
     EVT VT = Src.getValueType();
     SDValue Copy(DAG.getMachineNode(VT == MVT::i32 ? WebAssembly::COPY_I32
                                                    : WebAssembly::COPY_I64,
@@ -1538,7 +1690,6 @@ WebAssemblyTargetLowering::LowerGlobalTLSAddress(SDValue Op,
                                                  SelectionDAG &DAG) const {
   SDLoc DL(Op);
   const auto *GA = cast<GlobalAddressSDNode>(Op);
-  MVT PtrVT = getPointerTy(DAG.getDataLayout());
 
   MachineFunction &MF = DAG.getMachineFunction();
   if (!MF.getSubtarget<WebAssemblySubtarget>().hasBulkMemory())
@@ -1560,20 +1711,43 @@ WebAssemblyTargetLowering::LowerGlobalTLSAddress(SDValue Op,
                        false);
   }
 
-  auto GlobalGet = PtrVT == MVT::i64 ? WebAssembly::GLOBAL_GET_I64
-                                     : WebAssembly::GLOBAL_GET_I32;
-  const char *BaseName = MF.createExternalSymbolName("__tls_base");
+  auto model = GV->getThreadLocalMode();
 
-  SDValue BaseAddr(
-      DAG.getMachineNode(GlobalGet, DL, PtrVT,
-                         DAG.getTargetExternalSymbol(BaseName, PtrVT)),
-      0);
+  // Unsupported TLS modes
+  assert(model != GlobalValue::NotThreadLocal);
+  assert(model != GlobalValue::InitialExecTLSModel);
 
-  SDValue TLSOffset = DAG.getTargetGlobalAddress(
-      GV, DL, PtrVT, GA->getOffset(), WebAssemblyII::MO_TLS_BASE_REL);
-  SDValue SymAddr = DAG.getNode(WebAssemblyISD::Wrapper, DL, PtrVT, TLSOffset);
+  if (model == GlobalValue::LocalExecTLSModel ||
+      model == GlobalValue::LocalDynamicTLSModel ||
+      (model == GlobalValue::GeneralDynamicTLSModel &&
+       getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV))) {
+    // For DSO-local TLS variables we use offset from __tls_base
 
-  return DAG.getNode(ISD::ADD, DL, PtrVT, BaseAddr, SymAddr);
+    MVT PtrVT = getPointerTy(DAG.getDataLayout());
+    auto GlobalGet = PtrVT == MVT::i64 ? WebAssembly::GLOBAL_GET_I64
+                                       : WebAssembly::GLOBAL_GET_I32;
+    const char *BaseName = MF.createExternalSymbolName("__tls_base");
+
+    SDValue BaseAddr(
+        DAG.getMachineNode(GlobalGet, DL, PtrVT,
+                           DAG.getTargetExternalSymbol(BaseName, PtrVT)),
+        0);
+
+    SDValue TLSOffset = DAG.getTargetGlobalAddress(
+        GV, DL, PtrVT, GA->getOffset(), WebAssemblyII::MO_TLS_BASE_REL);
+    SDValue SymOffset =
+        DAG.getNode(WebAssemblyISD::WrapperREL, DL, PtrVT, TLSOffset);
+
+    return DAG.getNode(ISD::ADD, DL, PtrVT, BaseAddr, SymOffset);
+  }
+
+  assert(model == GlobalValue::GeneralDynamicTLSModel);
+
+  EVT VT = Op.getValueType();
+  return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
+                     DAG.getTargetGlobalAddress(GA->getGlobal(), DL, VT,
+                                                GA->getOffset(),
+                                                WebAssemblyII::MO_GOT_TLS));
 }
 
 SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
@@ -1606,14 +1780,13 @@ SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
                       DAG.getTargetExternalSymbol(BaseName, PtrVT));
 
       SDValue SymAddr = DAG.getNode(
-          WebAssemblyISD::WrapperPIC, DL, VT,
+          WebAssemblyISD::WrapperREL, DL, VT,
           DAG.getTargetGlobalAddress(GA->getGlobal(), DL, VT, GA->getOffset(),
                                      OperandFlags));
 
       return DAG.getNode(ISD::ADD, DL, VT, BaseAddr, SymAddr);
-    } else {
-      OperandFlags = WebAssemblyII::MO_GOT;
     }
+    OperandFlags = WebAssemblyII::MO_GOT;
   }
 
   return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
@@ -1705,14 +1878,22 @@ SDValue WebAssemblyTargetLowering::LowerIntrinsic(SDValue Op,
     return SDValue(); // Don't custom lower most intrinsics.
 
   case Intrinsic::wasm_lsda: {
-    EVT VT = Op.getValueType();
-    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    MVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
-    auto &Context = MF.getMMI().getContext();
-    MCSymbol *S = Context.getOrCreateSymbol(Twine("GCC_except_table") +
-                                            Twine(MF.getFunctionNumber()));
-    return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
-                       DAG.getMCSymbol(S, PtrVT));
+    auto PtrVT = getPointerTy(MF.getDataLayout());
+    const char *SymName = MF.createExternalSymbolName(
+        "GCC_except_table" + std::to_string(MF.getFunctionNumber()));
+    if (isPositionIndependent()) {
+      SDValue Node = DAG.getTargetExternalSymbol(
+          SymName, PtrVT, WebAssemblyII::MO_MEMORY_BASE_REL);
+      const char *BaseName = MF.createExternalSymbolName("__memory_base");
+      SDValue BaseAddr =
+          DAG.getNode(WebAssemblyISD::Wrapper, DL, PtrVT,
+                      DAG.getTargetExternalSymbol(BaseName, PtrVT));
+      SDValue SymAddr =
+          DAG.getNode(WebAssemblyISD::WrapperREL, DL, PtrVT, Node);
+      return DAG.getNode(ISD::ADD, DL, PtrVT, BaseAddr, SymAddr);
+    }
+    SDValue Node = DAG.getTargetExternalSymbol(SymName, PtrVT);
+    return DAG.getNode(WebAssemblyISD::Wrapper, DL, PtrVT, Node);
   }
 
   case Intrinsic::wasm_shuffle: {
@@ -1973,12 +2154,8 @@ SDValue WebAssemblyTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   size_t NumShuffleLanes = 0;
   if (ShuffleCounts.size()) {
     std::tie(ShuffleSrc1, NumShuffleLanes) = GetMostCommon(ShuffleCounts);
-    ShuffleCounts.erase(std::remove_if(ShuffleCounts.begin(),
-                                       ShuffleCounts.end(),
-                                       [&](const auto &Pair) {
-                                         return Pair.first == ShuffleSrc1;
-                                       }),
-                        ShuffleCounts.end());
+    llvm::erase_if(ShuffleCounts,
+                   [&](const auto &Pair) { return Pair.first == ShuffleSrc1; });
   }
   if (ShuffleCounts.size()) {
     size_t AdditionalShuffleLanes;
@@ -2433,6 +2610,114 @@ performVectorTruncZeroCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
   return DAG.getNode(Op, SDLoc(N), ResVT, Source);
 }
 
+// Helper to extract VectorWidth bits from Vec, starting from IdxVal.
+static SDValue extractSubVector(SDValue Vec, unsigned IdxVal, SelectionDAG &DAG,
+                                const SDLoc &DL, unsigned VectorWidth) {
+  EVT VT = Vec.getValueType();
+  EVT ElVT = VT.getVectorElementType();
+  unsigned Factor = VT.getSizeInBits() / VectorWidth;
+  EVT ResultVT = EVT::getVectorVT(*DAG.getContext(), ElVT,
+                                  VT.getVectorNumElements() / Factor);
+
+  // Extract the relevant VectorWidth bits.  Generate an EXTRACT_SUBVECTOR
+  unsigned ElemsPerChunk = VectorWidth / ElVT.getSizeInBits();
+  assert(isPowerOf2_32(ElemsPerChunk) && "Elements per chunk not power of 2");
+
+  // This is the index of the first element of the VectorWidth-bit chunk
+  // we want. Since ElemsPerChunk is a power of 2 just need to clear bits.
+  IdxVal &= ~(ElemsPerChunk - 1);
+
+  // If the input is a buildvector just emit a smaller one.
+  if (Vec.getOpcode() == ISD::BUILD_VECTOR)
+    return DAG.getBuildVector(ResultVT, DL,
+                              Vec->ops().slice(IdxVal, ElemsPerChunk));
+
+  SDValue VecIdx = DAG.getIntPtrConstant(IdxVal, DL);
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ResultVT, Vec, VecIdx);
+}
+
+// Helper to recursively truncate vector elements in half with NARROW_U. DstVT
+// is the expected destination value type after recursion. In is the initial
+// input. Note that the input should have enough leading zero bits to prevent
+// NARROW_U from saturating results.
+static SDValue truncateVectorWithNARROW(EVT DstVT, SDValue In, const SDLoc &DL,
+                                        SelectionDAG &DAG) {
+  EVT SrcVT = In.getValueType();
+
+  // No truncation required, we might get here due to recursive calls.
+  if (SrcVT == DstVT)
+    return In;
+
+  unsigned SrcSizeInBits = SrcVT.getSizeInBits();
+  unsigned NumElems = SrcVT.getVectorNumElements();
+  if (!isPowerOf2_32(NumElems))
+    return SDValue();
+  assert(DstVT.getVectorNumElements() == NumElems && "Illegal truncation");
+  assert(SrcSizeInBits > DstVT.getSizeInBits() && "Illegal truncation");
+
+  LLVMContext &Ctx = *DAG.getContext();
+  EVT PackedSVT = EVT::getIntegerVT(Ctx, SrcVT.getScalarSizeInBits() / 2);
+
+  // Narrow to the largest type possible:
+  // vXi64/vXi32 -> i16x8.narrow_i32x4_u and vXi16 -> i8x16.narrow_i16x8_u.
+  EVT InVT = MVT::i16, OutVT = MVT::i8;
+  if (SrcVT.getScalarSizeInBits() > 16) {
+    InVT = MVT::i32;
+    OutVT = MVT::i16;
+  }
+  unsigned SubSizeInBits = SrcSizeInBits / 2;
+  InVT = EVT::getVectorVT(Ctx, InVT, SubSizeInBits / InVT.getSizeInBits());
+  OutVT = EVT::getVectorVT(Ctx, OutVT, SubSizeInBits / OutVT.getSizeInBits());
+
+  // Split lower/upper subvectors.
+  SDValue Lo = extractSubVector(In, 0, DAG, DL, SubSizeInBits);
+  SDValue Hi = extractSubVector(In, NumElems / 2, DAG, DL, SubSizeInBits);
+
+  // 256bit -> 128bit truncate - Narrow lower/upper 128-bit subvectors.
+  if (SrcVT.is256BitVector() && DstVT.is128BitVector()) {
+    Lo = DAG.getBitcast(InVT, Lo);
+    Hi = DAG.getBitcast(InVT, Hi);
+    SDValue Res = DAG.getNode(WebAssemblyISD::NARROW_U, DL, OutVT, Lo, Hi);
+    return DAG.getBitcast(DstVT, Res);
+  }
+
+  // Recursively narrow lower/upper subvectors, concat result and narrow again.
+  EVT PackedVT = EVT::getVectorVT(Ctx, PackedSVT, NumElems / 2);
+  Lo = truncateVectorWithNARROW(PackedVT, Lo, DL, DAG);
+  Hi = truncateVectorWithNARROW(PackedVT, Hi, DL, DAG);
+
+  PackedVT = EVT::getVectorVT(Ctx, PackedSVT, NumElems);
+  SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, DL, PackedVT, Lo, Hi);
+  return truncateVectorWithNARROW(DstVT, Res, DL, DAG);
+}
+
+static SDValue performTruncateCombine(SDNode *N,
+                                      TargetLowering::DAGCombinerInfo &DCI) {
+  auto &DAG = DCI.DAG;
+
+  SDValue In = N->getOperand(0);
+  EVT InVT = In.getValueType();
+  if (!InVT.isSimple())
+    return SDValue();
+
+  EVT OutVT = N->getValueType(0);
+  if (!OutVT.isVector())
+    return SDValue();
+
+  EVT OutSVT = OutVT.getVectorElementType();
+  EVT InSVT = InVT.getVectorElementType();
+  // Currently only cover truncate to v16i8 or v8i16.
+  if (!((InSVT == MVT::i16 || InSVT == MVT::i32 || InSVT == MVT::i64) &&
+        (OutSVT == MVT::i8 || OutSVT == MVT::i16) && OutVT.is128BitVector()))
+    return SDValue();
+
+  SDLoc DL(N);
+  APInt Mask = APInt::getLowBitsSet(InVT.getScalarSizeInBits(),
+                                    OutVT.getScalarSizeInBits());
+  In = DAG.getNode(ISD::AND, DL, InVT, In, DAG.getConstant(Mask, DL, InVT));
+  return truncateVectorWithNARROW(OutVT, In, DL, DAG);
+}
+
 SDValue
 WebAssemblyTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
@@ -2449,5 +2734,7 @@ WebAssemblyTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::FP_ROUND:
   case ISD::CONCAT_VECTORS:
     return performVectorTruncZeroCombine(N, DCI);
+  case ISD::TRUNCATE:
+    return performTruncateCombine(N, DCI);
   }
 }

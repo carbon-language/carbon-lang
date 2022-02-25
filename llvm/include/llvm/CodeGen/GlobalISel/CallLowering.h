@@ -95,7 +95,7 @@ public:
             bool IsFixed = true)
       : ArgInfo(Regs, OrigValue.getType(), OrigIndex, Flags, IsFixed, &OrigValue) {}
 
-    ArgInfo() : BaseArgInfo() {}
+    ArgInfo() = default;
   };
 
   struct CallLoweringInfo {
@@ -262,7 +262,7 @@ public:
     /// handle the appropriate COPY (either to or from) and mark any
     /// relevant uses/defines as needed.
     virtual void assignValueToReg(Register ValVReg, Register PhysReg,
-                                  CCValAssign &VA) = 0;
+                                  CCValAssign VA) = 0;
 
     /// The specified value has been assigned to a stack
     /// location. Load or store it there, with appropriate extension
@@ -282,11 +282,14 @@ public:
     }
 
     /// Handle custom values, which may be passed into one or more of \p VAs.
+    /// \p If the handler wants the assignments to be delayed until after
+    /// mem loc assignments, then it sets \p Thunk to the thunk to do the
+    /// assignment.
     /// \return The number of \p VAs that have been assigned after the first
     ///         one, and which should therefore be skipped from further
     ///         processing.
-    virtual unsigned assignCustomValue(ArgInfo &Arg,
-                                       ArrayRef<CCValAssign> VAs) {
+    virtual unsigned assignCustomValue(ArgInfo &Arg, ArrayRef<CCValAssign> VAs,
+                                       std::function<void()> *Thunk = nullptr) {
       // This is not a pure virtual method because not all targets need to worry
       // about custom values.
       llvm_unreachable("Custom values not supported");
@@ -318,7 +321,7 @@ public:
 
     /// Provides a default implementation for argument handling.
     void assignValueToReg(Register ValVReg, Register PhysReg,
-                          CCValAssign &VA) override;
+                          CCValAssign VA) override;
   };
 
   /// Base class for ValueHandlers used for arguments passed to a function call,
@@ -385,12 +388,12 @@ protected:
   /// \p Handler to move them to the assigned locations.
   ///
   /// \return True if everything has succeeded, false otherwise.
-  bool determineAndHandleAssignments(ValueHandler &Handler,
-                                     ValueAssigner &Assigner,
-                                     SmallVectorImpl<ArgInfo> &Args,
-                                     MachineIRBuilder &MIRBuilder,
-                                     CallingConv::ID CallConv, bool IsVarArg,
-                                     Register ThisReturnReg = Register()) const;
+  bool
+  determineAndHandleAssignments(ValueHandler &Handler, ValueAssigner &Assigner,
+                                SmallVectorImpl<ArgInfo> &Args,
+                                MachineIRBuilder &MIRBuilder,
+                                CallingConv::ID CallConv, bool IsVarArg,
+                                ArrayRef<Register> ThisReturnRegs = None) const;
 
   /// Use \p Handler to insert code to handle the argument/return values
   /// represented by \p Args. It's expected determineAssignments previously
@@ -399,7 +402,7 @@ protected:
                          CCState &CCState,
                          SmallVectorImpl<CCValAssign> &ArgLocs,
                          MachineIRBuilder &MIRBuilder,
-                         Register ThisReturnReg = Register()) const;
+                         ArrayRef<Register> ThisReturnRegs = None) const;
 
   /// Check whether parameters to a call that are passed in callee saved
   /// registers are the same as from the calling function.  This needs to be

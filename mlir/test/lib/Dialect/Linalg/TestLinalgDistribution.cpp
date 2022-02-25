@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/GPU/GPUDialect.h"
-#include "mlir/Dialect/Linalg/IR/LinalgOps.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
@@ -19,47 +19,46 @@
 using namespace mlir;
 using namespace mlir::linalg;
 
-template <char dim>
+template <gpu::Dimension Dim>
 static linalg::ProcInfo getGpuBlockInfo(OpBuilder &b, Location loc) {
-  std::string d(1, dim);
-  StringAttr attr = b.getStringAttr(d);
-
   Type indexType = b.getIndexType();
-  ProcInfo procInfo = {b.create<gpu::BlockIdOp>(loc, indexType, attr),
-                       b.create<gpu::GridDimOp>(loc, indexType, attr)};
+  ProcInfo procInfo = {b.create<gpu::BlockIdOp>(loc, indexType, Dim),
+                       b.create<gpu::GridDimOp>(loc, indexType, Dim)};
   return procInfo;
 }
 
 static LinalgLoopDistributionOptions getDistributionOptions() {
   LinalgLoopDistributionOptions opts;
-  opts.procInfoMap.insert(std::make_pair("block_x", getGpuBlockInfo<'x'>));
-  opts.procInfoMap.insert(std::make_pair("block_y", getGpuBlockInfo<'y'>));
+  opts.procInfoMap.insert(
+      std::make_pair("block_x", getGpuBlockInfo<gpu::Dimension::x>));
+  opts.procInfoMap.insert(
+      std::make_pair("block_y", getGpuBlockInfo<gpu::Dimension::y>));
   return opts;
 }
 
 namespace {
 struct TestLinalgDistribution
-    : public PassWrapper<TestLinalgDistribution, FunctionPass> {
+    : public PassWrapper<TestLinalgDistribution, OperationPass<FuncOp>> {
   StringRef getArgument() const final { return "test-linalg-distribution"; }
   StringRef getDescription() const final { return "Test Linalg distribution."; }
   TestLinalgDistribution() = default;
-  TestLinalgDistribution(const TestLinalgDistribution &pass) {}
+  TestLinalgDistribution(const TestLinalgDistribution &pass) = default;
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<AffineDialect, gpu::GPUDialect>();
   }
 
-  void runOnFunction() override;
+  void runOnOperation() override;
 };
 } // namespace
 
-void TestLinalgDistribution::runOnFunction() {
-  auto funcOp = getFunction();
-  OwningRewritePatternList distributeTiledLoopsPatterns(&getContext());
+void TestLinalgDistribution::runOnOperation() {
+  auto funcOp = getOperation();
+  RewritePatternSet distributeTiledLoopsPatterns(&getContext());
   populateLinalgDistributeTiledLoopPattern(
       distributeTiledLoopsPatterns, getDistributionOptions(),
       LinalgTransformationFilter(
-          ArrayRef<Identifier>{},
-          {Identifier::get("distributed", funcOp.getContext())})
+          ArrayRef<StringAttr>{},
+          {StringAttr::get(funcOp.getContext(), "distributed")})
           .addFilter([](Operation *op) {
             return success(!op->getParentOfType<linalg::TiledLoopOp>());
           }));

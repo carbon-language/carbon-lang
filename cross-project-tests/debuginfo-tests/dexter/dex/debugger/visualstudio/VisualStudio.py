@@ -11,10 +11,10 @@ import imp
 import os
 import sys
 from pathlib import PurePath
-from collections import namedtuple
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
-from dex.debugger.DebuggerBase import DebuggerBase
+from dex.command.CommandBase import StepExpectInfo
+from dex.debugger.DebuggerBase import DebuggerBase, watch_is_active
 from dex.dextIR import FrameIR, LocIR, StepIR, StopReason, ValueIR
 from dex.dextIR import StackFrame, SourceLocation, ProgramState
 from dex.utils.Exceptions import Error, LoadDebuggerException
@@ -67,6 +67,23 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
 
         super(VisualStudio, self).__init__(*args)
 
+    def _create_solution(self):
+        self._solution.Create(self.context.working_directory.path,
+                              'DexterSolution')
+        try:
+            self._solution.AddFromFile(self._project_file)
+        except OSError:
+            raise LoadDebuggerException(
+                'could not debug the specified executable', sys.exc_info())
+
+    def _load_solution(self):
+        try:
+            self._solution.Open(self.context.options.vs_solution)
+        except:
+            raise LoadDebuggerException(
+                    'could not load specified vs solution at {}'.
+                    format(self.context.options.vs_solution), sys.exc_info())
+
     def _custom_init(self):
         try:
             self._debugger = self._interface.Debugger
@@ -76,14 +93,10 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
                 self.context.options.show_debugger)
 
             self._solution = self._interface.Solution
-            self._solution.Create(self.context.working_directory.path,
-                                  'DexterSolution')
-
-            try:
-                self._solution.AddFromFile(self._project_file)
-            except OSError:
-                raise LoadDebuggerException(
-                    'could not debug the specified executable', sys.exc_info())
+            if self.context.options.vs_solution is None:
+                self._create_solution()
+            else:
+                self._load_solution()
 
             self._fn_step = self._debugger.StepInto
             self._fn_go = self._debugger.Go
@@ -216,7 +229,26 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
                 bp.Delete()
                 break
 
-    def launch(self):
+    def _fetch_property(self, props, name):
+        num_props = props.Count
+        result = None
+        for x in range(1, num_props+1):
+            item = props.Item(x)
+            if item.Name == name:
+                return item
+        assert False, "Couldn't find property {}".format(name)
+
+    def launch(self, cmdline):
+        cmdline_str = ' '.join(cmdline)
+
+        # In a slightly baroque manner, lookup the VS project that runs when
+        # you click "run", and set its command line options to the desired
+        # command line options.
+        startup_proj_name = str(self._fetch_property(self._interface.Solution.Properties, 'StartupProject'))
+        project = self._fetch_property(self._interface.Solution, startup_proj_name)
+        ActiveConfiguration = self._fetch_property(project.Properties, 'ActiveConfiguration').Object
+        ActiveConfiguration.DebugSettings.CommandArguments = cmdline_str
+
         self._fn_go()
 
     def step(self):
@@ -244,6 +276,9 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
         state_frames = []
 
 
+        loc = LocIR(**self._location)
+        valid_loc_for_watch = loc.path and os.path.exists(loc.path)
+
         for idx, sf in enumerate(stackframes):
             frame = FrameIR(
                 function=self._sanitize_function_name(sf.FunctionName),
@@ -254,20 +289,20 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
             if any(name in fname for name in self.frames_below_main):
                 break
 
-
             state_frame = StackFrame(function=frame.function,
                                      is_inlined=frame.is_inlined,
                                      watches={})
 
-            for watch in watches:
-                state_frame.watches[watch] = self.evaluate_expression(
-                    watch, idx)
+            if valid_loc_for_watch and idx == 0:
+                for watch_info in watches:
+                    if watch_is_active(watch_info, loc.path, idx, loc.lineno):
+                        watch_expr = watch_info.expression
+                        state_frame.watches[watch_expr] = self.evaluate_expression(watch_expr, idx)
 
 
             state_frames.append(state_frame)
             frames.append(frame)
 
-        loc = LocIR(**self._location)
         if frames:
             frames[0].loc = loc
             state_frames[0].location = SourceLocation(**self._location)
@@ -298,9 +333,11 @@ class VisualStudio(DebuggerBase, metaclass=abc.ABCMeta):  # pylint: disable=abst
         ]
 
     def evaluate_expression(self, expression, frame_idx=0) -> ValueIR:
-        self.set_current_stack_frame(frame_idx)
+        if frame_idx != 0:
+            self.set_current_stack_frame(frame_idx)
         result = self._debugger.GetExpression(expression)
-        self.set_current_stack_frame(0)
+        if frame_idx != 0:
+            self.set_current_stack_frame(0)
         value = result.Value
 
         is_optimized_away = any(s in value for s in [

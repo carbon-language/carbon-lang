@@ -14,14 +14,12 @@
 #define LLVM_ANALYSIS_INLINECOST_H
 
 #include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/InlineModelFeatureMaps.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include <cassert>
 #include <climits>
 
 namespace llvm {
-class AssumptionCacheTracker;
 class BlockFrequencyInfo;
 class CallBase;
 class DataLayout;
@@ -212,7 +210,10 @@ struct InlineParams {
   Optional<bool> ComputeFullInlineCost;
 
   /// Indicate whether we should allow inline deferral.
-  Optional<bool> EnableDeferral = true;
+  Optional<bool> EnableDeferral;
+
+  /// Indicate whether we allow inlining for recursive call.
+  Optional<bool> AllowRecursiveCall = false;
 };
 
 /// Generate the parameters to tune the inline cost analysis based only on the

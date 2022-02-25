@@ -8,6 +8,7 @@
 
 #include "Preamble.h"
 #include "Compiler.h"
+#include "Config.h"
 #include "Headers.h"
 #include "SourceCode.h"
 #include "support/Logger.h"
@@ -22,6 +23,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
@@ -73,6 +75,8 @@ public:
 
   MainFileMacros takeMacros() { return std::move(Macros); }
 
+  std::vector<PragmaMark> takeMarks() { return std::move(Marks); }
+
   CanonicalIncludes takeCanonicalIncludes() { return std::move(CanonIncludes); }
 
   bool isMainFileIncludeGuarded() const { return IsMainFileIncludeGuarded; }
@@ -80,8 +84,7 @@ public:
   void AfterExecute(CompilerInstance &CI) override {
     if (ParsedCallback) {
       trace::Span Tracer("Running PreambleCallback");
-      ParsedCallback(CI.getASTContext(), CI.getPreprocessorPtr(),
-                     CanonIncludes);
+      ParsedCallback(CI.getASTContext(), CI.getPreprocessor(), CanonIncludes);
     }
 
     const SourceManager &SM = CI.getSourceManager();
@@ -95,6 +98,7 @@ public:
     CanonIncludes.addSystemHeadersMapping(CI.getLangOpts());
     LangOpts = &CI.getLangOpts();
     SourceMgr = &CI.getSourceManager();
+    Includes.collect(CI);
   }
 
   std::unique_ptr<PPCallbacks> createPPCallbacks() override {
@@ -102,8 +106,8 @@ public:
            "SourceMgr and LangOpts must be set at this point");
 
     return std::make_unique<PPChainedCallbacks>(
-        collectIncludeStructureCallback(*SourceMgr, &Includes),
-        std::make_unique<CollectMainFileMacros>(*SourceMgr, Macros));
+        std::make_unique<CollectMainFileMacros>(*SourceMgr, Macros),
+        collectPragmaMarksCallback(*SourceMgr, Marks));
   }
 
   CommentHandler *getCommentHandler() override {
@@ -130,6 +134,7 @@ private:
   IncludeStructure Includes;
   CanonicalIncludes CanonIncludes;
   MainFileMacros Macros;
+  std::vector<PragmaMark> Marks;
   bool IsMainFileIncludeGuarded = false;
   std::unique_ptr<CommentHandler> IWYUHandler = nullptr;
   const clang::LangOptions *LangOpts = nullptr;
@@ -142,10 +147,11 @@ struct TextualPPDirective {
   unsigned DirectiveLine;
   // Full text that's representing the directive, including the `#`.
   std::string Text;
+  unsigned Offset;
 
   bool operator==(const TextualPPDirective &RHS) const {
-    return std::tie(DirectiveLine, Text) ==
-           std::tie(RHS.DirectiveLine, RHS.Text);
+    return std::tie(DirectiveLine, Offset, Text) ==
+           std::tie(RHS.DirectiveLine, RHS.Offset, RHS.Text);
   }
 };
 
@@ -155,7 +161,7 @@ struct TextualPPDirective {
 std::string spellDirective(llvm::StringRef Prefix,
                            CharSourceRange DirectiveRange,
                            const LangOptions &LangOpts, const SourceManager &SM,
-                           unsigned &DirectiveLine) {
+                           unsigned &DirectiveLine, unsigned &Offset) {
   std::string SpelledDirective;
   llvm::raw_string_ostream OS(SpelledDirective);
   OS << Prefix;
@@ -169,6 +175,7 @@ std::string spellDirective(llvm::StringRef Prefix,
 
   auto DecompLoc = SM.getDecomposedLoc(DirectiveRange.getBegin());
   DirectiveLine = SM.getLineNumber(DecompLoc.first, DecompLoc.second);
+  Offset = DecompLoc.second;
   auto TargetColumn = SM.getColumnNumber(DecompLoc.first, DecompLoc.second) - 1;
 
   // Pad with spaces before DirectiveRange to make sure it will be on right
@@ -217,7 +224,7 @@ struct DirectiveCollector : public PPCallbacks {
         spellDirective("#define ",
                        CharSourceRange::getTokenRange(
                            MI->getDefinitionLoc(), MI->getDefinitionEndLoc()),
-                       LangOpts, SM, TD.DirectiveLine);
+                       LangOpts, SM, TD.DirectiveLine, TD.Offset);
   }
 
 private:
@@ -275,10 +282,9 @@ scanPreamble(llvm::StringRef Contents, const tooling::CompileCommand &Cmd) {
   PreprocessOnlyAction Action;
   if (!Action.BeginSourceFile(*Clang, Clang->getFrontendOpts().Inputs[0]))
     return error("failed BeginSourceFile");
-  const auto &SM = Clang->getSourceManager();
   Preprocessor &PP = Clang->getPreprocessor();
   IncludeStructure Includes;
-  PP.addPPCallbacks(collectIncludeStructureCallback(SM, &Includes));
+  Includes.collect(*Clang);
   ScannedPreamble SP;
   SP.Bounds = Bounds;
   PP.addPPCallbacks(
@@ -340,20 +346,25 @@ buildPreamble(PathRef FileName, CompilerInvocation CI,
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> PreambleDiagsEngine =
       CompilerInstance::createDiagnostics(&CI.getDiagnosticOpts(),
                                           &PreambleDiagnostics, false);
-  PreambleDiagnostics.setLevelAdjuster(
-      [&](DiagnosticsEngine::Level DiagLevel, const clang::Diagnostic &Info) {
-        switch (Info.getID()) {
-        case diag::warn_no_newline_eof:
-        case diag::warn_cxx98_compat_no_newline_eof:
-        case diag::ext_no_newline_eof:
-          // If the preamble doesn't span the whole file, drop the no newline at
-          // eof warnings.
-          return Bounds.Size != ContentsBuffer->getBufferSize()
-                     ? DiagnosticsEngine::Level::Ignored
-                     : DiagLevel;
-        }
-        return DiagLevel;
-      });
+  const Config &Cfg = Config::current();
+  PreambleDiagnostics.setLevelAdjuster([&](DiagnosticsEngine::Level DiagLevel,
+                                           const clang::Diagnostic &Info) {
+    if (Cfg.Diagnostics.SuppressAll ||
+        isBuiltinDiagnosticSuppressed(Info.getID(), Cfg.Diagnostics.Suppress,
+                                      *CI.getLangOpts()))
+      return DiagnosticsEngine::Ignored;
+    switch (Info.getID()) {
+    case diag::warn_no_newline_eof:
+    case diag::warn_cxx98_compat_no_newline_eof:
+    case diag::ext_no_newline_eof:
+      // If the preamble doesn't span the whole file, drop the no newline at
+      // eof warnings.
+      return Bounds.Size != ContentsBuffer->getBufferSize()
+                 ? DiagnosticsEngine::Level::Ignored
+                 : DiagLevel;
+    }
+    return DiagLevel;
+  });
 
   // Skip function bodies when building the preamble to speed up building
   // the preamble and make it smaller.
@@ -387,6 +398,7 @@ buildPreamble(PathRef FileName, CompilerInvocation CI,
     Result->Diags = std::move(Diags);
     Result->Includes = CapturedInfo.takeIncludes();
     Result->Macros = CapturedInfo.takeMacros();
+    Result->Marks = CapturedInfo.takeMarks();
     Result->CanonIncludes = CapturedInfo.takeCanonicalIncludes();
     Result->StatCache = std::move(StatCache);
     Result->MainIsIncludeGuarded = CapturedInfo.isMainFileIncludeGuarded();
@@ -426,7 +438,8 @@ void escapeBackslashAndQuotes(llvm::StringRef Text, llvm::raw_ostream &OS) {
 
 PreamblePatch PreamblePatch::create(llvm::StringRef FileName,
                                     const ParseInputs &Modified,
-                                    const PreambleData &Baseline) {
+                                    const PreambleData &Baseline,
+                                    PatchType PatchType) {
   trace::Span Tracer("CreatePreamblePatch");
   SPAN_ATTACH(Tracer, "File", FileName);
   assert(llvm::sys::path::is_absolute(FileName) && "relative FileName!");
@@ -456,7 +469,8 @@ PreamblePatch PreamblePatch::create(llvm::StringRef FileName,
   bool IncludesChanged = BaselineScan->Includes != ModifiedScan->Includes;
   bool DirectivesChanged =
       BaselineScan->TextualDirectives != ModifiedScan->TextualDirectives;
-  if (!IncludesChanged && !DirectivesChanged)
+  if ((PatchType == PatchType::MacroDirectives || !IncludesChanged) &&
+      !DirectivesChanged)
     return PreamblePatch::unmodified(Baseline);
 
   PreamblePatch PP;
@@ -475,7 +489,7 @@ PreamblePatch PreamblePatch::create(llvm::StringRef FileName,
   escapeBackslashAndQuotes(FileName, Patch);
   Patch << "\"\n";
 
-  if (IncludesChanged) {
+  if (IncludesChanged && PatchType == PatchType::All) {
     // We are only interested in newly added includes, record the ones in
     // Baseline for exclusion.
     llvm::DenseMap<std::pair<tok::PPKeywordKind, llvm::StringRef>,
@@ -526,6 +540,18 @@ PreamblePatch PreamblePatch::create(llvm::StringRef FileName,
   dlog("Created preamble patch: {0}", Patch.str());
   Patch.flush();
   return PP;
+}
+
+PreamblePatch PreamblePatch::createFullPatch(llvm::StringRef FileName,
+                                             const ParseInputs &Modified,
+                                             const PreambleData &Baseline) {
+  return create(FileName, Modified, Baseline, PatchType::All);
+}
+
+PreamblePatch PreamblePatch::createMacroPatch(llvm::StringRef FileName,
+                                              const ParseInputs &Modified,
+                                              const PreambleData &Baseline) {
+  return create(FileName, Modified, Baseline, PatchType::MacroDirectives);
 }
 
 void PreamblePatch::apply(CompilerInvocation &CI) const {

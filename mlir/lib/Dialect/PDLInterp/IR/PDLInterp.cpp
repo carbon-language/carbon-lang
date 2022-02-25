@@ -27,6 +27,21 @@ void PDLInterpDialect::initialize() {
       >();
 }
 
+template <typename OpT>
+static LogicalResult verifySwitchOp(OpT op) {
+  // Verify that the number of case destinations matches the number of case
+  // values.
+  size_t numDests = op.cases().size();
+  size_t numValues = op.caseValues().size();
+  if (numDests != numValues) {
+    return op.emitOpError(
+               "expected number of cases to match the number of case "
+               "values, got ")
+           << numDests << " but expected " << numValues;
+  }
+  return success();
+}
+
 //===----------------------------------------------------------------------===//
 // pdl_interp::CreateOperationOp
 //===----------------------------------------------------------------------===//
@@ -66,6 +81,87 @@ static void printCreateOperationOpAttributes(OpAsmPrinter &p,
 }
 
 //===----------------------------------------------------------------------===//
+// pdl_interp::ForEachOp
+//===----------------------------------------------------------------------===//
+
+void ForEachOp::build(::mlir::OpBuilder &builder, ::mlir::OperationState &state,
+                      Value range, Block *successor, bool initLoop) {
+  build(builder, state, range, successor);
+  if (initLoop) {
+    // Create the block and the loop variable.
+    // FIXME: Allow passing in a proper location for the loop variable.
+    auto rangeType = range.getType().cast<pdl::RangeType>();
+    state.regions.front()->emplaceBlock();
+    state.regions.front()->addArgument(rangeType.getElementType(),
+                                       state.location);
+  }
+}
+
+ParseResult ForEachOp::parse(OpAsmParser &parser, OperationState &result) {
+  // Parse the loop variable followed by type.
+  OpAsmParser::OperandType loopVariable;
+  Type loopVariableType;
+  if (parser.parseRegionArgument(loopVariable) ||
+      parser.parseColonType(loopVariableType))
+    return failure();
+
+  // Parse the "in" keyword.
+  if (parser.parseKeyword("in", " after loop variable"))
+    return failure();
+
+  // Parse the operand (value range).
+  OpAsmParser::OperandType operandInfo;
+  if (parser.parseOperand(operandInfo))
+    return failure();
+
+  // Resolve the operand.
+  Type rangeType = pdl::RangeType::get(loopVariableType);
+  if (parser.resolveOperand(operandInfo, rangeType, result.operands))
+    return failure();
+
+  // Parse the body region.
+  Region *body = result.addRegion();
+  if (parser.parseRegion(*body, {loopVariable}, {loopVariableType}))
+    return failure();
+
+  // Parse the attribute dictionary.
+  if (parser.parseOptionalAttrDict(result.attributes))
+    return failure();
+
+  // Parse the successor.
+  Block *successor;
+  if (parser.parseArrow() || parser.parseSuccessor(successor))
+    return failure();
+  result.addSuccessors(successor);
+
+  return success();
+}
+
+void ForEachOp::print(OpAsmPrinter &p) {
+  BlockArgument arg = getLoopVariable();
+  p << ' ' << arg << " : " << arg.getType() << " in " << values() << ' ';
+  p.printRegion(region(), /*printEntryBlockArgs=*/false);
+  p.printOptionalAttrDict((*this)->getAttrs());
+  p << " -> ";
+  p.printSuccessor(successor());
+}
+
+LogicalResult ForEachOp::verify() {
+  // Verify that the operation has exactly one argument.
+  if (region().getNumArguments() != 1)
+    return emitOpError("requires exactly one argument");
+
+  // Verify that the loop variable and the operand (value range)
+  // have compatible types.
+  BlockArgument arg = getLoopVariable();
+  Type rangeType = pdl::RangeType::get(arg.getType());
+  if (rangeType != values().getType())
+    return emitOpError("operand must be a range of loop variable type");
+
+  return success();
+}
+
+//===----------------------------------------------------------------------===//
 // pdl_interp::GetValueTypeOp
 //===----------------------------------------------------------------------===//
 
@@ -74,6 +170,42 @@ static Type getGetValueTypeOpValueType(Type type) {
   Type valueTy = pdl::ValueType::get(type.getContext());
   return type.isa<pdl::RangeType>() ? pdl::RangeType::get(valueTy) : valueTy;
 }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchAttributeOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchAttributeOp::verify() { return verifySwitchOp(*this); }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchOperandCountOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchOperandCountOp::verify() { return verifySwitchOp(*this); }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchOperationNameOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchOperationNameOp::verify() { return verifySwitchOp(*this); }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchResultCountOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchResultCountOp::verify() { return verifySwitchOp(*this); }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchTypeOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchTypeOp::verify() { return verifySwitchOp(*this); }
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::SwitchTypesOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult SwitchTypesOp::verify() { return verifySwitchOp(*this); }
 
 //===----------------------------------------------------------------------===//
 // TableGen Auto-Generated Op and Interface Definitions

@@ -33,7 +33,6 @@ class APInt;
 class AssumptionCache;
 class DominatorTree;
 class GEPOperator;
-class IntrinsicInst;
 class LoadInst;
 class WithOverflowInst;
 struct KnownBits;
@@ -203,14 +202,14 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
                               const DominatorTree *DT = nullptr,
                               bool UseInstrInfo = true);
 
-  /// This function computes the integer multiple of Base that equals V. If
-  /// successful, it returns true and returns the multiple in Multiple. If
-  /// unsuccessful, it returns false. Also, if V can be simplified to an
-  /// integer, then the simplified V is returned in Val. Look through sext only
-  /// if LookThroughSExt=true.
-  bool ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
-                       bool LookThroughSExt = false,
-                       unsigned Depth = 0);
+  /// Get the upper bound on bit size for this Value \p Op as a signed integer.
+  /// i.e.  x == sext(trunc(x to MaxSignificantBits) to bitwidth(x)).
+  /// Similar to the APInt::getSignificantBits function.
+  unsigned ComputeMaxSignificantBits(const Value *Op, const DataLayout &DL,
+                                     unsigned Depth = 0,
+                                     AssumptionCache *AC = nullptr,
+                                     const Instruction *CxtI = nullptr,
+                                     const DominatorTree *DT = nullptr);
 
   /// Map a call instruction to an intrinsic ID.  Libcalls which have equivalent
   /// intrinsics are treated as-if they were intrinsics.
@@ -546,9 +545,11 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
 
   /// Determine the possible constant range of an integer or vector of integer
   /// value. This is intended as a cheap, non-recursive check.
-  ConstantRange computeConstantRange(const Value *V, bool UseInstrInfo = true,
+  ConstantRange computeConstantRange(const Value *V, bool ForSigned,
+                                     bool UseInstrInfo = true,
                                      AssumptionCache *AC = nullptr,
                                      const Instruction *CtxI = nullptr,
+                                     const DominatorTree *DT = nullptr,
                                      unsigned Depth = 0);
 
   /// Return true if this function can prove that the instruction I will
@@ -572,6 +573,18 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
   /// block. This has the same assumptions w.r.t. undefined behavior as the
   /// instruction variant of this function.
   bool isGuaranteedToTransferExecutionToSuccessor(const BasicBlock *BB);
+
+  /// Return true if every instruction in the range (Begin, End) is
+  /// guaranteed to transfer execution to its static successor. \p ScanLimit
+  /// bounds the search to avoid scanning huge blocks.
+  bool isGuaranteedToTransferExecutionToSuccessor(
+     BasicBlock::const_iterator Begin, BasicBlock::const_iterator End,
+     unsigned ScanLimit = 32);
+
+  /// Same as previous, but with range expressed via iterator_range.
+  bool isGuaranteedToTransferExecutionToSuccessor(
+     iterator_range<BasicBlock::const_iterator> Range,
+     unsigned ScanLimit = 32);
 
   /// Return true if this function can prove that the instruction I
   /// is executed for every iteration of the loop L.
@@ -624,10 +637,16 @@ constexpr unsigned MaxAnalysisRecursionDepth = 6;
   /// true. If Op raises immediate UB but never creates poison or undef
   /// (e.g. sdiv I, 0), canCreatePoison returns false.
   ///
+  /// \p ConsiderFlags controls whether poison producing flags on the
+  /// instruction are considered.  This can be used to see if the instruction
+  /// could still introduce undef or poison even without poison generating flags
+  /// which might be on the instruction.  (i.e. could the result of
+  /// Op->dropPoisonGeneratingFlags() still create poison or undef)
+  ///
   /// canCreatePoison returns true if Op can create poison from non-poison
   /// operands.
-  bool canCreateUndefOrPoison(const Operator *Op);
-  bool canCreatePoison(const Operator *Op);
+  bool canCreateUndefOrPoison(const Operator *Op, bool ConsiderFlags = true);
+  bool canCreatePoison(const Operator *Op, bool ConsiderFlags = true);
 
   /// Return true if V is poison given that ValAssumedPoison is already poison.
   /// For example, if ValAssumedPoison is `icmp X, 10` and V is `icmp X, 5`,

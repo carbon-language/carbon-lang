@@ -1,11 +1,12 @@
-//===------------------------- cxa_default_handlers.cpp -------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //
-// This file implements the default terminate_handler and unexpected_handler.
+// This file implements the default terminate_handler, unexpected_handler and
+// new_handler.
 //===----------------------------------------------------------------------===//
 
 #include <exception>
@@ -15,12 +16,11 @@
 #include "cxa_handlers.h"
 #include "cxa_exception.h"
 #include "private_typeinfo.h"
-#include "include/atomic_support.h"
+#include "include/atomic_support.h" // from libc++
 
 #if !defined(LIBCXXABI_SILENT_TERMINATE)
 
-_LIBCPP_SAFE_STATIC
-static const char* cause = "uncaught";
+static constinit const char* cause = "uncaught";
 
 __attribute__((noreturn))
 static void demangling_terminate_handler()
@@ -99,10 +99,13 @@ static constexpr std::terminate_handler default_unexpected_handler = std::termin
 // Global variables that hold the pointers to the current handler
 //
 _LIBCXXABI_DATA_VIS
-_LIBCPP_SAFE_STATIC std::terminate_handler __cxa_terminate_handler = default_terminate_handler;
+constinit std::terminate_handler __cxa_terminate_handler = default_terminate_handler;
 
 _LIBCXXABI_DATA_VIS
-_LIBCPP_SAFE_STATIC std::unexpected_handler __cxa_unexpected_handler = default_unexpected_handler;
+constinit std::unexpected_handler __cxa_unexpected_handler = default_unexpected_handler;
+
+_LIBCXXABI_DATA_VIS
+constinit std::new_handler __cxa_new_handler = nullptr;
 
 namespace std
 {
@@ -123,6 +126,12 @@ set_terminate(terminate_handler func) noexcept
         func = default_terminate_handler;
     return __libcpp_atomic_exchange(&__cxa_terminate_handler, func,
                                     _AO_Acq_Rel);
+}
+
+new_handler
+set_new_handler(new_handler handler) noexcept
+{
+    return __libcpp_atomic_exchange(&__cxa_new_handler, handler, _AO_Acq_Rel);
 }
 
 }

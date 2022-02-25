@@ -292,7 +292,7 @@ class Variable {
   std::string N;
 
 public:
-  Variable() : T(Type::getVoid()), N("") {}
+  Variable() : T(Type::getVoid()) {}
   Variable(Type T, std::string N) : T(std::move(T)), N(std::move(N)) {}
 
   Type getType() const { return T; }
@@ -382,7 +382,7 @@ public:
     StringRef Mods = getNextModifiers(Proto, Pos);
     while (!Mods.empty()) {
       Types.emplace_back(InTS, Mods);
-      if (Mods.find('!') != StringRef::npos)
+      if (Mods.contains('!'))
         PolymorphicKeyType = Types.size() - 1;
 
       Mods = getNextModifiers(Proto, Pos);
@@ -417,8 +417,7 @@ public:
 
   /// Return true if the intrinsic takes an immediate operand.
   bool hasImmediate() const {
-    return std::any_of(Types.begin(), Types.end(),
-                       [](const Type &T) { return T.isImmediate(); });
+    return llvm::any_of(Types, [](const Type &T) { return T.isImmediate(); });
   }
 
   /// Return the parameter index of the immediate operand.
@@ -1271,9 +1270,8 @@ void Intrinsic::emitShadowedArgs() {
 }
 
 bool Intrinsic::protoHasScalar() const {
-  return std::any_of(Types.begin(), Types.end(), [](const Type &T) {
-    return T.isScalar() && !T.isImmediate();
-  });
+  return llvm::any_of(
+      Types, [](const Type &T) { return T.isScalar() && !T.isImmediate(); });
 }
 
 void Intrinsic::emitBodyAsBuiltinCall() {
@@ -1308,7 +1306,7 @@ void Intrinsic::emitBodyAsBuiltinCall() {
       if (LocalCK == ClassB) {
         Type T2 = T;
         T2.makeOneVector();
-        T2.makeInteger(8, /*Signed=*/true);
+        T2.makeInteger(8, /*Sign=*/true);
         Cast = "(" + T2.str() + ")";
       }
 
@@ -1475,7 +1473,7 @@ Intrinsic::DagEmitter::emitDagCall(DagInit *DI, bool MatchMangledName) {
   Intr.Dependencies.insert(&Callee);
 
   // Now create the call itself.
-  std::string S = "";
+  std::string S;
   if (!Callee.isBigEndianSafe())
     S += CallPrefix.str();
   S += Callee.getMangledName(true) + "(";
@@ -1916,10 +1914,9 @@ Intrinsic &NeonEmitter::getIntrinsic(StringRef Name, ArrayRef<Type> Types,
       continue;
 
     unsigned ArgNum = 0;
-    bool MatchingArgumentTypes =
-        std::all_of(Types.begin(), Types.end(), [&](const auto &Type) {
-          return Type == I.getParamType(ArgNum++);
-        });
+    bool MatchingArgumentTypes = llvm::all_of(Types, [&](const auto &Type) {
+      return Type == I.getParamType(ArgNum++);
+    });
 
     if (MatchingArgumentTypes)
       GoodVec.push_back(&I);

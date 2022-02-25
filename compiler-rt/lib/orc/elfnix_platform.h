@@ -19,6 +19,7 @@
 // Atexit functions.
 ORC_RT_INTERFACE int __orc_rt_elfnix_cxa_atexit(void (*func)(void *), void *arg,
                                                 void *dso_handle);
+ORC_RT_INTERFACE int __orc_rt_elfnix_atexit(void (*func)(void *));
 ORC_RT_INTERFACE void __orc_rt_elfnix_cxa_finalize(void *dso_handle);
 
 // dlfcn functions.
@@ -32,19 +33,19 @@ namespace __orc_rt {
 namespace elfnix {
 
 struct ELFNixPerObjectSectionsToRegister {
-  ExecutorAddressRange EHFrameSection;
-  ExecutorAddressRange ThreadDataSection;
+  ExecutorAddrRange EHFrameSection;
+  ExecutorAddrRange ThreadDataSection;
 };
 
 struct ELFNixJITDylibInitializers {
-  using SectionList = std::vector<ExecutorAddressRange>;
+  using SectionList = std::vector<ExecutorAddrRange>;
 
   ELFNixJITDylibInitializers() = default;
-  ELFNixJITDylibInitializers(std::string Name, ExecutorAddress DSOHandleAddress)
+  ELFNixJITDylibInitializers(std::string Name, ExecutorAddr DSOHandleAddress)
       : Name(std::move(Name)), DSOHandleAddress(std::move(DSOHandleAddress)) {}
 
   std::string Name;
-  ExecutorAddress DSOHandleAddress;
+  ExecutorAddr DSOHandleAddress;
 
   std::unordered_map<std::string, SectionList> InitSections;
 };
@@ -67,7 +68,7 @@ enum dlopen_mode : int {
 } // end namespace elfnix
 
 using SPSELFNixPerObjectSectionsToRegister =
-    SPSTuple<SPSExecutorAddressRange, SPSExecutorAddressRange>;
+    SPSTuple<SPSExecutorAddrRange, SPSExecutorAddrRange>;
 
 template <>
 class SPSSerializationTraits<SPSELFNixPerObjectSectionsToRegister,
@@ -93,12 +94,11 @@ public:
   }
 };
 
-using SPSNamedExecutorAddressRangeSequenceMap =
-    SPSSequence<SPSTuple<SPSString, SPSExecutorAddressRangeSequence>>;
+using SPSNamedExecutorAddrRangeSequenceMap =
+    SPSSequence<SPSTuple<SPSString, SPSExecutorAddrRangeSequence>>;
 
 using SPSELFNixJITDylibInitializers =
-    SPSTuple<SPSString, SPSExecutorAddress,
-             SPSNamedExecutorAddressRangeSequenceMap>;
+    SPSTuple<SPSString, SPSExecutorAddr, SPSNamedExecutorAddrRangeSequenceMap>;
 
 using SPSELFNixJITDylibInitializerSequence =
     SPSSequence<SPSELFNixJITDylibInitializers>;

@@ -41,7 +41,7 @@ static cl::opt<std::string> inputFilename(cl::Positional,
 
 namespace {
 enum InputType { Toy, MLIR };
-}
+} // namespace
 static cl::opt<enum InputType> inputType(
     "x", cl::init(Toy), cl::desc("Decided the kind of output desired"),
     cl::values(clEnumValN(Toy, "toy", "load the input file as a Toy source.")),
@@ -50,7 +50,7 @@ static cl::opt<enum InputType> inputType(
 
 namespace {
 enum Action { None, DumpAST, DumpMLIR };
-}
+} // namespace
 static cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
@@ -73,7 +73,7 @@ std::unique_ptr<toy::ModuleAST> parseInputFile(llvm::StringRef filename) {
 }
 
 int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
-             mlir::OwningModuleRef &module) {
+             mlir::OwningOpRef<mlir::ModuleOp> &module) {
   // Handle '.toy' input to the compiler.
   if (inputType != InputType::MLIR &&
       !llvm::StringRef(inputFilename).endswith(".mlir")) {
@@ -87,8 +87,8 @@ int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
   // Otherwise, the input is '.mlir'.
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> fileOrErr =
       llvm::MemoryBuffer::getFileOrSTDIN(inputFilename);
-  if (std::error_code EC = fileOrErr.getError()) {
-    llvm::errs() << "Could not open input file: " << EC.message() << "\n";
+  if (std::error_code ec = fileOrErr.getError()) {
+    llvm::errs() << "Could not open input file: " << ec.message() << "\n";
     return -1;
   }
 
@@ -107,7 +107,7 @@ int dumpMLIR() {
   // Load our Dialect in this MLIR Context.
   context.getOrLoadDialect<mlir::toy::ToyDialect>();
 
-  mlir::OwningModuleRef module;
+  mlir::OwningOpRef<mlir::ModuleOp> module;
   llvm::SourceMgr sourceMgr;
   mlir::SourceMgrDiagnosticHandler sourceMgrHandler(sourceMgr, &context);
   if (int error = loadMLIR(sourceMgr, context, module))

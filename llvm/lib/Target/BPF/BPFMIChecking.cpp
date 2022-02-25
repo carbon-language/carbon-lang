@@ -41,7 +41,7 @@ private:
   // Initialize class variables.
   void initialize(MachineFunction &MFParm);
 
-  bool processAtomicInsts(void);
+  bool processAtomicInsts();
 
 public:
 
@@ -151,7 +151,7 @@ static bool hasLiveDefs(const MachineInstr &MI, const TargetRegisterInfo *TRI) {
   return false;
 }
 
-bool BPFMIPreEmitChecking::processAtomicInsts(void) {
+bool BPFMIPreEmitChecking::processAtomicInsts() {
   for (MachineBasicBlock &MBB : *MF) {
     for (MachineInstr &MI : MBB) {
       if (MI.getOpcode() != BPF::XADDW &&
@@ -164,7 +164,7 @@ bool BPFMIPreEmitChecking::processAtomicInsts(void) {
         DebugLoc Empty;
         const DebugLoc &DL = MI.getDebugLoc();
         if (DL != Empty)
-          report_fatal_error("line " + std::to_string(DL.getLine()) +
+          report_fatal_error(Twine("line ") + std::to_string(DL.getLine()) +
                              ": Invalid usage of the XADD return value", false);
         else
           report_fatal_error("Invalid usage of the XADD return value", false);
