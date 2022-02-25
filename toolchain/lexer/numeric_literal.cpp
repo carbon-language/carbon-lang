@@ -403,7 +403,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
-  CHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
+  DCHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
       << "given wrong number of digit separators: " << num_digit_separators;
 
   if (radix == 2) {
