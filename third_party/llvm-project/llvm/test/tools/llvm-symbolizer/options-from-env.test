@@ -1,6 +1,0 @@
-# RUN: env LLVM_SYMBOLIZER_OPTS='0 1 --verbose' llvm-symbolizer 2 | FileCheck %s
-# RUN: env LLVM_ADDR2LINE_OPTS='0 1 --verbose' llvm-addr2line 2 | FileCheck %s
-
-# CHECK:      0
-# CHECK-NEXT: 1
-# CHECK-NEXT: 2

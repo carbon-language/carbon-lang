@@ -1,1 +1,0 @@
-set(LLVM_USE_SANITIZER "Thread" CACHE STRING "")
