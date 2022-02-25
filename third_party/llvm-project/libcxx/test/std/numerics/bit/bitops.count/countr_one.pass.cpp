@@ -1,0 +1,143 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+// UNSUPPORTED: c++03, c++11, c++14, c++17
+
+// template <class T>
+//   constexpr int countr_one(T x) noexcept;
+
+// Constraints: T is an unsigned integer type
+// Returns: The number of consecutive 1 bits, starting from the least significant bit.
+//   [ Note: Returns N if x == std::numeric_limits<T>::max(). ]
+
+#include <bit>
+#include <cstdint>
+#include <type_traits>
+#include <cassert>
+
+#include "test_macros.h"
+
+struct A {};
+enum       E1 : unsigned char { rEd };
+enum class E2 : unsigned char { red };
+
+template <class T>
+constexpr bool test()
+{
+    ASSERT_SAME_TYPE(decltype(std::countr_one(T())), int);
+    ASSERT_NOEXCEPT(std::countr_one(T()));
+    T max = std::numeric_limits<T>::max();
+
+    assert(std::countr_one(T(0)) == 0);
+    assert(std::countr_one(T(1)) == 1);
+    assert(std::countr_one(T(2)) == 0);
+    assert(std::countr_one(T(3)) == 2);
+    assert(std::countr_one(T(4)) == 0);
+    assert(std::countr_one(T(5)) == 1);
+    assert(std::countr_one(T(6)) == 0);
+    assert(std::countr_one(T(7)) == 3);
+    assert(std::countr_one(T(8)) == 0);
+    assert(std::countr_one(T(9)) == 1);
+    assert(std::countr_one(T(126)) == 0);
+    assert(std::countr_one(T(127)) == 7);
+    assert(std::countr_one(T(128)) == 0);
+    assert(std::countr_one(T(max - 1)) == 0);
+    assert(std::countr_one(max) == std::numeric_limits<T>::digits);
+
+#ifndef _LIBCPP_HAS_NO_INT128
+    if constexpr (std::is_same_v<T, __uint128_t>) {
+        T val = 128;
+        assert(std::countr_one(val-1) ==  7);
+        assert(std::countr_one(val)   ==  0);
+        assert(std::countr_one(val+1) ==  1);
+        val <<= 32;
+        assert(std::countr_one(val-1) == 39);
+        assert(std::countr_one(val)   ==  0);
+        assert(std::countr_one(val+1) ==  1);
+        val <<= 60;
+        assert(std::countr_one(val-1) == 99);
+        assert(std::countr_one(val)   ==  0);
+        assert(std::countr_one(val+1) ==  1);
+    }
+#endif
+
+    return true;
+}
+
+int main(int, char**)
+{
+    {
+    auto lambda = [](auto x) -> decltype(std::countr_one(x)) {};
+    using L = decltype(lambda);
+
+    static_assert(!std::is_invocable_v<L, signed char>);
+    static_assert(!std::is_invocable_v<L, short>);
+    static_assert(!std::is_invocable_v<L, int>);
+    static_assert(!std::is_invocable_v<L, long>);
+    static_assert(!std::is_invocable_v<L, long long>);
+#ifndef _LIBCPP_HAS_NO_INT128
+    static_assert(!std::is_invocable_v<L, __int128_t>);
+#endif
+
+    static_assert(!std::is_invocable_v<L, int8_t>);
+    static_assert(!std::is_invocable_v<L, int16_t>);
+    static_assert(!std::is_invocable_v<L, int32_t>);
+    static_assert(!std::is_invocable_v<L, int64_t>);
+    static_assert(!std::is_invocable_v<L, intmax_t>);
+    static_assert(!std::is_invocable_v<L, intptr_t>);
+    static_assert(!std::is_invocable_v<L, ptrdiff_t>);
+
+    static_assert(!std::is_invocable_v<L, bool>);
+    static_assert(!std::is_invocable_v<L, char>);
+    static_assert(!std::is_invocable_v<L, wchar_t>);
+#ifndef _LIBCPP_HAS_NO_CHAR8_T
+    static_assert(!std::is_invocable_v<L, char8_t>);
+#endif
+    static_assert(!std::is_invocable_v<L, char16_t>);
+    static_assert(!std::is_invocable_v<L, char32_t>);
+
+    static_assert(!std::is_invocable_v<L, A>);
+    static_assert(!std::is_invocable_v<L, A*>);
+    static_assert(!std::is_invocable_v<L, E1>);
+    static_assert(!std::is_invocable_v<L, E2>);
+    }
+
+    static_assert(test<unsigned char>());
+    static_assert(test<unsigned short>());
+    static_assert(test<unsigned int>());
+    static_assert(test<unsigned long>());
+    static_assert(test<unsigned long long>());
+#ifndef _LIBCPP_HAS_NO_INT128
+    static_assert(test<__uint128_t>());
+#endif
+    static_assert(test<uint8_t>());
+    static_assert(test<uint16_t>());
+    static_assert(test<uint32_t>());
+    static_assert(test<uint64_t>());
+    static_assert(test<uintmax_t>());
+    static_assert(test<uintptr_t>());
+    static_assert(test<size_t>());
+
+    test<unsigned char>();
+    test<unsigned short>();
+    test<unsigned int>();
+    test<unsigned long>();
+    test<unsigned long long>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__uint128_t>();
+#endif
+    test<uint8_t>();
+    test<uint16_t>();
+    test<uint32_t>();
+    test<uint64_t>();
+    test<uintmax_t>();
+    test<uintptr_t>();
+    test<size_t>();
+
+    return 0;
+}

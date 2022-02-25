@@ -1,0 +1,10 @@
+fun:discard*=uninstrumented
+fun:discard*=discard
+
+fun:functional=uninstrumented
+fun:functional=functional
+
+fun:custom*=uninstrumented
+fun:custom*=custom
+
+fun:uninstrumented*=uninstrumented

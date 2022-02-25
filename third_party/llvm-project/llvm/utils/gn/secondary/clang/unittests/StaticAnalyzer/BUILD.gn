@@ -1,0 +1,27 @@
+import("//llvm/utils/unittest/unittest.gni")
+
+unittest("StaticAnalysisTests") {
+  configs += [ "//llvm/utils/gn/build:clang_code" ]
+  deps = [
+    "//clang/lib/Analysis",
+    "//clang/lib/Basic",
+    "//clang/lib/StaticAnalyzer/Core",
+    "//clang/lib/StaticAnalyzer/Frontend",
+    "//clang/lib/Tooling",
+    "//llvm/lib/Support",
+  ]
+  sources = [
+    "AnalyzerOptionsTest.cpp",
+    "BugReportInterestingnessTest.cpp",
+    "CallDescriptionTest.cpp",
+    "CallEventTest.cpp",
+    "FalsePositiveRefutationBRVisitorTest.cpp",
+    "ParamRegionTest.cpp",
+    "RangeSetTest.cpp",
+    "RegisterCustomCheckersTest.cpp",
+    "SValTest.cpp",
+    "StoreTest.cpp",
+    "SymbolReaperTest.cpp",
+    "TestReturnValueUnderConstruction.cpp",
+  ]
+}
