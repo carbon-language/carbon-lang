@@ -10,14 +10,10 @@
 #define LLD_ELF_DRIVER_H
 
 #include "LTO.h"
-#include "SymbolTable.h"
 #include "lld/Common/LLVM.h"
-#include "lld/Common/Reproduce.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Option/ArgList.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace lld {
 namespace elf {
@@ -33,7 +29,7 @@ public:
 private:
   void createFiles(llvm::opt::InputArgList &args);
   void inferMachineType();
-  template <class ELFT> void link(llvm::opt::InputArgList &args);
+  void link(llvm::opt::InputArgList &args);
   template <class ELFT> void compileBitcodeFiles(bool skipLinkedOutput);
 
   // True if we are in --whole-archive and --no-whole-archive.
@@ -46,6 +42,9 @@ private:
   std::unique_ptr<BitcodeCompiler> lto;
 
   std::vector<InputFile *> files;
+
+public:
+  SmallVector<std::pair<StringRef, unsigned>, 0> archiveFiles;
 };
 
 // Parses command line options.

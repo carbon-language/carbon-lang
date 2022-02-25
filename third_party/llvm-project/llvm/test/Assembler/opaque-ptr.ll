@@ -11,6 +11,9 @@
 @fptr2 = external global ptr () addrspace(1)*
 @fptr3 = external global ptr () addrspace(1)* addrspace(2)*
 
+; CHECK: @ifunc = ifunc void (), ptr @f
+@ifunc = ifunc void (), ptr @f
+
 ; CHECK: define ptr @f(ptr %a) {
 ; CHECK:     %b = bitcast ptr %a to ptr
 ; CHECK:     ret ptr %b
@@ -144,5 +147,17 @@ cleanup:
 
 ; CHECK: define void @byval(ptr byval({ i32, i32 }) %0)
 define void @byval(ptr byval({ i32, i32 }) %0) {
+  ret void
+}
+
+; CHECK: define void @call_unnamed_fn() {
+; CHECK:  call void @0()
+define void @call_unnamed_fn() {
+  call void @0()
+  ret void
+}
+
+; CHECK: define void @0() {
+define void @0() {
   ret void
 }

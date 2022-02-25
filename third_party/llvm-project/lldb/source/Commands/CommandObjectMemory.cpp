@@ -48,7 +48,7 @@ using namespace lldb_private;
 class OptionGroupReadMemory : public OptionGroup {
 public:
   OptionGroupReadMemory()
-      : m_num_per_line(1, 1), m_view_as_type(), m_offset(0, 0),
+      : m_num_per_line(1, 1), m_offset(0, 0),
         m_language_for_type(eLanguageTypeUnknown) {}
 
   ~OptionGroupReadMemory() override = default;
@@ -91,6 +91,10 @@ public:
       error = m_offset.SetValueFromString(option_value);
       break;
 
+    case '\x01':
+      m_show_tags = true;
+      break;
+
     default:
       llvm_unreachable("Unimplemented option");
     }
@@ -104,6 +108,7 @@ public:
     m_force = false;
     m_offset.Clear();
     m_language_for_type.Clear();
+    m_show_tags = false;
   }
 
   Status FinalizeSettings(Target *target, OptionGroupFormat &format_options) {
@@ -277,6 +282,7 @@ public:
   bool m_force;
   OptionValueUInt64 m_offset;
   OptionValueLanguage m_language_for_type;
+  bool m_show_tags = false;
 };
 
 // Read memory from the inferior process
@@ -287,12 +293,10 @@ public:
             interpreter, "memory read",
             "Read from the memory of the current target process.", nullptr,
             eCommandRequiresTarget | eCommandProcessMustBePaused),
-        m_option_group(), m_format_options(eFormatBytesWithASCII, 1, 8),
-        m_memory_options(), m_outfile_options(), m_varobj_options(),
+        m_format_options(eFormatBytesWithASCII, 1, 8),
+
         m_next_addr(LLDB_INVALID_ADDRESS), m_prev_byte_size(0),
-        m_prev_format_options(eFormatBytesWithASCII, 1, 8),
-        m_prev_memory_options(), m_prev_outfile_options(),
-        m_prev_varobj_options() {
+        m_prev_format_options(eFormatBytesWithASCII, 1, 8) {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentData start_addr_arg;
@@ -341,9 +345,9 @@ public:
 
   Options *GetOptions() override { return &m_option_group; }
 
-  const char *GetRepeatCommand(Args &current_command_args,
-                               uint32_t index) override {
-    return m_cmd_name.c_str();
+  llvm::Optional<std::string> GetRepeatCommand(Args &current_command_args,
+                                               uint32_t index) override {
+    return m_cmd_name;
   }
 
 protected:
@@ -862,7 +866,7 @@ protected:
     size_t bytes_dumped = DumpDataExtractor(
         data, output_stream_p, 0, format, item_byte_size, item_count,
         num_per_line / target->GetArchitecture().GetDataByteSize(), addr, 0, 0,
-        exe_scope);
+        exe_scope, m_memory_options.m_show_tags);
     m_next_addr = addr + bytes_dumped;
     output_stream_p->EOL();
     return true;
@@ -890,7 +894,7 @@ class CommandObjectMemoryFind : public CommandObjectParsed {
 public:
   class OptionGroupFindMemory : public OptionGroup {
   public:
-    OptionGroupFindMemory() : OptionGroup(), m_count(1), m_offset(0) {}
+    OptionGroupFindMemory() : m_count(1), m_offset(0) {}
 
     ~OptionGroupFindMemory() override = default;
 
@@ -944,8 +948,7 @@ public:
       : CommandObjectParsed(
             interpreter, "memory find",
             "Find a value in the memory of the current target process.",
-            nullptr, eCommandRequiresProcess | eCommandProcessMustBeLaunched),
-        m_option_group(), m_memory_options() {
+            nullptr, eCommandRequiresProcess | eCommandProcessMustBeLaunched) {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentData addr_arg;
@@ -1033,6 +1036,12 @@ protected:
     if (high_addr == LLDB_INVALID_ADDRESS || error.Fail()) {
       result.AppendError("invalid high address");
       return false;
+    }
+
+    ABISP abi = m_exe_ctx.GetProcessPtr()->GetABI();
+    if (abi) {
+      low_addr = abi->FixDataAddress(low_addr);
+      high_addr = abi->FixDataAddress(high_addr);
     }
 
     if (high_addr <= low_addr) {
@@ -1178,7 +1187,7 @@ class CommandObjectMemoryWrite : public CommandObjectParsed {
 public:
   class OptionGroupWriteMemory : public OptionGroup {
   public:
-    OptionGroupWriteMemory() : OptionGroup() {}
+    OptionGroupWriteMemory() {}
 
     ~OptionGroupWriteMemory() override = default;
 
@@ -1230,16 +1239,14 @@ public:
             interpreter, "memory write",
             "Write to the memory of the current target process.", nullptr,
             eCommandRequiresProcess | eCommandProcessMustBeLaunched),
-        m_option_group(),
         m_format_options(
             eFormatBytes, 1, UINT64_MAX,
             {std::make_tuple(
                  eArgTypeFormat,
                  "The format to use for each of the value to be written."),
-             std::make_tuple(
-                 eArgTypeByteSize,
-                 "The size in bytes to write from input file or each value.")}),
-        m_memory_options() {
+             std::make_tuple(eArgTypeByteSize,
+                             "The size in bytes to write from input file or "
+                             "each value.")}) {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
     CommandArgumentData addr_arg;
@@ -1579,9 +1586,9 @@ public:
 
   ~CommandObjectMemoryHistory() override = default;
 
-  const char *GetRepeatCommand(Args &current_command_args,
-                               uint32_t index) override {
-    return m_cmd_name.c_str();
+  llvm::Optional<std::string> GetRepeatCommand(Args &current_command_args,
+                                               uint32_t index) override {
+    return m_cmd_name;
   }
 
 protected:
@@ -1658,14 +1665,11 @@ protected:
     m_prev_end_addr = LLDB_INVALID_ADDRESS;
 
     const size_t argc = command.GetArgumentCount();
-    if (argc > 1 || (argc == 0 && load_addr == LLDB_INVALID_ADDRESS)) {
-      result.AppendErrorWithFormat("'%s' takes one argument:\nUsage: %s\n",
-                                   m_cmd_name.c_str(), m_cmd_syntax.c_str());
-      return false;
-    }
+    const lldb::ABISP &abi = process_sp->GetABI();
 
     if (argc == 1) {
       auto load_addr_str = command[0].ref();
+      // Non-address bits in this will be handled later by GetMemoryRegion
       load_addr = OptionArgParser::ToAddress(&m_exe_ctx, load_addr_str,
                                              LLDB_INVALID_ADDRESS, &error);
       if (error.Fail() || load_addr == LLDB_INVALID_ADDRESS) {
@@ -1673,6 +1677,19 @@ protected:
                                      command[0].c_str(), error.AsCString());
         return false;
       }
+    } else if (argc > 1 ||
+               // When we're repeating the command, the previous end address is
+               // used for load_addr. If that was 0xF...F then we must have
+               // reached the end of memory.
+               (argc == 0 && load_addr == LLDB_INVALID_ADDRESS) ||
+               // If the target has non-address bits (tags, limited virtual
+               // address size, etc.), the end of mappable memory will be lower
+               // than that. So if we find any non-address bit set, we must be
+               // at the end of the mappable range.
+               (abi && (abi->FixDataAddress(load_addr) != load_addr))) {
+      result.AppendErrorWithFormat("'%s' takes one argument:\nUsage: %s\n",
+                                   m_cmd_name.c_str(), m_cmd_syntax.c_str());
+      return false;
     }
 
     lldb_private::MemoryRegionInfo range_info;
@@ -1733,11 +1750,11 @@ protected:
     return false;
   }
 
-  const char *GetRepeatCommand(Args &current_command_args,
-                               uint32_t index) override {
+  llvm::Optional<std::string> GetRepeatCommand(Args &current_command_args,
+                                               uint32_t index) override {
     // If we repeat this command, repeat it without any arguments so we can
     // show the next memory range
-    return m_cmd_name.c_str();
+    return m_cmd_name;
   }
 
   lldb::addr_t m_prev_end_addr;

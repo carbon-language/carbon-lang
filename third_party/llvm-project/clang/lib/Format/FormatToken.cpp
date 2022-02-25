@@ -74,6 +74,20 @@ bool FormatToken::isTypeOrIdentifier() const {
   return isSimpleTypeSpecifier() || Tok.isOneOf(tok::kw_auto, tok::identifier);
 }
 
+bool FormatToken::opensBlockOrBlockTypeList(const FormatStyle &Style) const {
+  // C# Does not indent object initialisers as continuations.
+  if (is(tok::l_brace) && getBlockKind() == BK_BracedInit && Style.isCSharp())
+    return true;
+  if (is(TT_TemplateString) && opensScope())
+    return true;
+  return is(TT_ArrayInitializerLSquare) || is(TT_ProtoExtensionLSquare) ||
+         (is(tok::l_brace) &&
+          (getBlockKind() == BK_Block || is(TT_DictLiteral) ||
+           (!Style.Cpp11BracedListStyle && NestingLevel == 0))) ||
+         (is(tok::less) && (Style.Language == FormatStyle::LK_Proto ||
+                            Style.Language == FormatStyle::LK_TextProto));
+}
+
 TokenRole::~TokenRole() {}
 
 void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}
@@ -186,9 +200,13 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // The lengths of an item if it is put at the end of the line. This includes
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
+  MustBreakBeforeItem.reserve(Commas.size() + 1);
+  EndOfLineItemLength.reserve(Commas.size() + 1);
+  ItemLengths.reserve(Commas.size() + 1);
 
   bool HasSeparatingComment = false;
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
+    assert(ItemBegin);
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment()) {
       ItemBegin = ItemBegin->Next;

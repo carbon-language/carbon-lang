@@ -16,6 +16,7 @@
 #define LLVM_PROFILEDATA_INSTRPROF_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
@@ -277,6 +278,19 @@ void createPGOFuncNameMetadata(Function &F, StringRef PGOFuncName);
 /// the duplicated profile variables for Comdat functions.
 bool needsComdatForCounter(const Function &F, const Module &M);
 
+/// An enum describing the attributes of an instrumented profile.
+enum class InstrProfKind {
+  Unknown = 0x0,
+  FE = 0x1, // A frontend clang profile, incompatible with other attrs.
+  IR = 0x2, // An IR-level profile (default when -fprofile-generate is used).
+  BB = 0x4, // A profile with entry basic block instrumentation.
+  CS = 0x8, // A context sensitive IR-level profile.
+  SingleByteCoverage = 0x10, // Use single byte probes for coverage.
+  FunctionEntryOnly = 0x20,  // Only instrument the function entry basic block.
+  MemProf = 0x40, // A memory profile collected using -fprofile=memory.
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/MemProf)
+};
+
 const std::error_category &instrprof_category();
 
 enum class instrprof_error {
@@ -293,7 +307,6 @@ enum class instrprof_error {
   missing_debug_info_for_correlation,
   unexpected_debug_info_for_correlation,
   unable_to_correlate_profile,
-  unsupported_debug_format,
   unknown_function,
   invalid_prof,
   hash_mismatch,
@@ -530,6 +543,12 @@ public:
 
   /// Return the name section data.
   inline StringRef getNameData() const { return Data; }
+
+  /// Dump the symbols in this table.
+  void dumpNames(raw_ostream &OS) const {
+    for (StringRef S : NameTab.keys())
+      OS << S << "\n";
+  }
 };
 
 Error InstrProfSymtab::create(StringRef D, uint64_t BaseAddr) {
@@ -993,7 +1012,9 @@ enum ProfVersion {
   Version6 = 6,
   // An additional counter is added around logical operators.
   Version7 = 7,
-  // The current version is 7.
+  // An additional (optional) memory profile type is added.
+  Version8 = 8,
+  // The current version is 8.
   CurrentVersion = INSTR_PROF_INDEX_VERSION
 };
 const uint64_t Version = ProfVersion::CurrentVersion;
@@ -1010,6 +1031,21 @@ struct Header {
   uint64_t Unused; // Becomes unused since version 4
   uint64_t HashType;
   uint64_t HashOffset;
+  uint64_t MemProfOffset;
+  // New fields should only be added at the end to ensure that the size
+  // computation is correct. The methods below need to be updated to ensure that
+  // the new field is read correctly.
+
+  // Reads a header struct from the buffer.
+  static Expected<Header> readFromBuffer(const unsigned char *Buffer);
+
+  // Returns the size of the header in bytes for all valid fields based on the
+  // version. I.e a older version header will return a smaller size.
+  size_t size() const;
+
+  // Returns the format version in little endian. The header retains the version
+  // in native endian of the compiler runtime.
+  uint64_t formatVersion() const;
 };
 
 // Profile summary data recorded in the profile data file in indexed
@@ -1149,12 +1185,6 @@ struct Header {
 // Parse MemOP Size range option.
 void getMemOPSizeRangeFromOption(StringRef Str, int64_t &RangeStart,
                                  int64_t &RangeLast);
-
-// Create a COMDAT variable INSTR_PROF_RAW_VERSION_VAR to make the runtime
-// aware this is an ir_level profile so it can set the version flag.
-GlobalVariable *createIRLevelProfileFlagVar(Module &M, bool IsCS,
-                                            bool InstrEntryBBEnabled,
-                                            bool DebugInfoCorrelate);
 
 // Create the variable for the profile file name.
 void createProfileFileNameVar(Module &M, StringRef InstrProfileOutput);

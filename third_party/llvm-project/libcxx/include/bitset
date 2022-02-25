@@ -112,9 +112,10 @@ template <size_t N> struct hash<std::bitset<N>>;
 
 */
 
+#include <__algorithm/fill.h>
 #include <__bit_reference>
 #include <__config>
-#include <__functional_base>
+#include <__functional/unary_function.h>
 #include <climits>
 #include <cstddef>
 #include <iosfwd>
@@ -123,7 +124,7 @@ template <size_t N> struct hash<std::bitset<N>>;
 #include <version>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_PUSH_MACROS

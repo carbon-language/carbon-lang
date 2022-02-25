@@ -75,8 +75,9 @@ DominatingValue<RValue>::saved_type::save(CodeGenFunction &CGF, RValue rv) {
 /// point.
 RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
   auto getSavingAddress = [&](llvm::Value *value) {
-    auto alignment = cast<llvm::AllocaInst>(value)->getAlignment();
-    return Address(value, CharUnits::fromQuantity(alignment));
+    auto *AI = cast<llvm::AllocaInst>(value);
+    return Address(value, AI->getAllocatedType(),
+                   CharUnits::fromQuantity(AI->getAlignment()));
   };
   switch (K) {
   case ScalarLiteral:
@@ -84,10 +85,12 @@ RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
   case ScalarAddress:
     return RValue::get(CGF.Builder.CreateLoad(getSavingAddress(Value)));
   case AggregateLiteral:
-    return RValue::getAggregate(Address(Value, CharUnits::fromQuantity(Align)));
+    return RValue::getAggregate(
+        Address::deprecated(Value, CharUnits::fromQuantity(Align)));
   case AggregateAddress: {
     auto addr = CGF.Builder.CreateLoad(getSavingAddress(Value));
-    return RValue::getAggregate(Address(addr, CharUnits::fromQuantity(Align)));
+    return RValue::getAggregate(
+        Address::deprecated(addr, CharUnits::fromQuantity(Align)));
   }
   case ComplexAddress: {
     Address address = getSavingAddress(Value);
@@ -180,6 +183,15 @@ void *EHScopeStack::pushCleanup(CleanupKind Kind, size_t Size) {
   bool IsNormalCleanup = Kind & NormalCleanup;
   bool IsEHCleanup = Kind & EHCleanup;
   bool IsLifetimeMarker = Kind & LifetimeMarker;
+
+  // Per C++ [except.terminate], it is implementation-defined whether none,
+  // some, or all cleanups are called before std::terminate. Thus, when
+  // terminate is the current EH scope, we may skip adding any EH cleanup
+  // scopes.
+  if (InnermostEHScope != stable_end() &&
+      find(InnermostEHScope)->getKind() == EHScope::Terminate)
+    IsEHCleanup = false;
+
   EHCleanupScope *Scope =
     new (Buffer) EHCleanupScope(IsNormalCleanup,
                                 IsEHCleanup,

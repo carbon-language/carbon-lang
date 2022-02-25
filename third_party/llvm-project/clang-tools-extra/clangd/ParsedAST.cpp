@@ -10,6 +10,7 @@
 #include "../clang-tidy/ClangTidyCheck.h"
 #include "../clang-tidy/ClangTidyDiagnosticConsumer.h"
 #include "../clang-tidy/ClangTidyModuleRegistry.h"
+#include "../clang-tidy/NoLintDirectiveHandler.h"
 #include "AST.h"
 #include "Compiler.h"
 #include "Config.h"
@@ -225,10 +226,6 @@ private:
           /*Imported=*/nullptr, Inc.FileKind);
       if (File)
         Delegate->FileSkipped(*File, SynthesizedFilenameTok, Inc.FileKind);
-      else {
-        llvm::SmallString<1> UnusedRecovery;
-        Delegate->FileNotFound(WrittenFilename, UnusedRecovery);
-      }
     }
   }
 
@@ -445,7 +442,8 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
     ASTDiags.setLevelAdjuster([&](DiagnosticsEngine::Level DiagLevel,
                                   const clang::Diagnostic &Info) {
       if (Cfg.Diagnostics.SuppressAll ||
-          isBuiltinDiagnosticSuppressed(Info.getID(), Cfg.Diagnostics.Suppress))
+          isBuiltinDiagnosticSuppressed(Info.getID(), Cfg.Diagnostics.Suppress,
+                                        Clang->getLangOpts()))
         return DiagnosticsEngine::Ignored;
 
       auto It = OverriddenSeverity.find(Info.getID());
@@ -467,12 +465,11 @@ ParsedAST::build(llvm::StringRef Filename, const ParseInputs &Inputs,
           bool IsInsideMainFile =
               Info.hasSourceManager() &&
               isInsideMainFile(Info.getLocation(), Info.getSourceManager());
-          SmallVector<tidy::ClangTidyError, 1> TidySuppressedErrors;
-          if (IsInsideMainFile &&
-              tidy::shouldSuppressDiagnostic(DiagLevel, Info, *CTContext,
-                                             TidySuppressedErrors,
-                                             /*AllowIO=*/false,
-                                             /*EnableNolintBlocks=*/false)) {
+          SmallVector<tooling::Diagnostic, 1> TidySuppressedErrors;
+          if (IsInsideMainFile && CTContext->shouldSuppressDiagnostic(
+                                      DiagLevel, Info, TidySuppressedErrors,
+                                      /*AllowIO=*/false,
+                                      /*EnableNolintBlocks=*/false)) {
             // FIXME: should we expose the suppression error (invalid use of
             // NOLINT comments)?
             return DiagnosticsEngine::Ignored;

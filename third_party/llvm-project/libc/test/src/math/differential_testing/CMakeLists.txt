@@ -3,7 +3,7 @@ function(add_diff_binary target_name)
   cmake_parse_arguments(
     "DIFF"
     "" # No optional arguments
-    "SUITE" # Single value arguments
+    "SUITE;CXX_STANDARD" # Single value arguments
     "SRCS;HDRS;DEPENDS;COMPILE_OPTIONS" # Multi-value arguments
     ${ARGN}
   )
@@ -53,6 +53,14 @@ function(add_diff_binary target_name)
 
   set_target_properties(${fq_target_name}
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  
+  if(DIFF_CXX_STANDARD)
+    set_target_properties(
+      ${fq_target_name}
+      PROPERTIES
+        CXX_STANDARD ${DIFF_CXX_STANDARD}
+    )
+  endif()
 
   add_dependencies(
     ${fq_target_name}
@@ -229,6 +237,50 @@ add_diff_binary(
   DEPENDS
     .single_input_single_output_diff
     libc.src.math.floorf
+  COMPILE_OPTIONS
+    -fno-builtin
+)
+
+add_diff_binary(
+  log10f_perf
+  SRCS
+    log10f_perf.cpp
+  DEPENDS
+    .single_input_single_output_diff
+    libc.src.math.log10f
+  COMPILE_OPTIONS
+    -fno-builtin
+)
+
+add_diff_binary(
+  log1pf_perf
+  SRCS
+    log1pf_perf.cpp
+  DEPENDS
+    .single_input_single_output_diff
+    libc.src.math.log1pf
+  COMPILE_OPTIONS
+    -fno-builtin
+)
+
+add_diff_binary(
+  log2f_diff
+  SRCS
+    log2f_diff.cpp
+  DEPENDS
+    .single_input_single_output_diff
+    libc.src.math.log2f
+  COMPILE_OPTIONS
+    -fno-builtin
+)
+
+add_diff_binary(
+  log2f_perf
+  SRCS
+    log2f_perf.cpp
+  DEPENDS
+    .single_input_single_output_diff
+    libc.src.math.log2f
   COMPILE_OPTIONS
     -fno-builtin
 )

@@ -186,7 +186,7 @@ LinalgOpInstancePromotionOptions::LinalgOpInstancePromotionOptions(
   Location loc = linalgOp.getLoc();
   auto defaultCopyCallBack = [loc](OpBuilder &b, Value src,
                                    Value dst) -> LogicalResult {
-    b.create<linalg::CopyOp>(loc, src, dst);
+    b.create<memref::CopyOp>(loc, src, dst);
     return success();
   };
   copyInFn = (options.copyInFn ? *(options.copyInFn) : defaultCopyCallBack);
@@ -397,8 +397,8 @@ struct LinalgPromotionPass : public LinalgPromotionBase<LinalgPromotionPass> {
     this->useAlloca = useAlloca;
   }
 
-  void runOnFunction() override {
-    getFunction().walk([&](LinalgOp op) {
+  void runOnOperation() override {
+    getOperation().walk([&](LinalgOp op) {
       auto options = LinalgPromotionOptions()
                          .setDynamicBuffers(dynamicBuffers)
                          .setUseAlloca(useAlloca);
