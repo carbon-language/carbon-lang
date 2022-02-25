@@ -35,9 +35,9 @@ graph BT
     mod["mod<br>x % y"]
     eq["eq<br>x == y"]
 
-    minus --> mul & mod
-    mul --> add
-    add & mod --> eq
+    eq --> add & mod
+    add --> mul
+    mul & mod --> minus
 ```
 
 For each precedence level, we have up to three grammar productions:
