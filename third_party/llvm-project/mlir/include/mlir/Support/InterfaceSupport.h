@@ -93,6 +93,7 @@ public:
       : BaseType(t), impl(t ? ConcreteType::getInterfaceFor(t) : nullptr) {
     assert((!t || impl) && "expected value to provide interface instance");
   }
+  Interface(std::nullptr_t) : BaseType(ValueT()), impl(nullptr) {}
 
   /// Construct an interface instance from a type that implements this
   /// interface's trait.
@@ -175,6 +176,12 @@ class InterfaceMap {
 
 public:
   InterfaceMap(InterfaceMap &&) = default;
+  InterfaceMap &operator=(InterfaceMap &&rhs) {
+    for (auto &it : interfaces)
+      free(it.second);
+    interfaces = std::move(rhs.interfaces);
+    return *this;
+  }
   ~InterfaceMap() {
     for (auto &it : interfaces)
       free(it.second);
@@ -253,9 +260,10 @@ private:
   /// Returns an instance of the concept object for the given interface id if it
   /// was registered to this map, null otherwise.
   void *lookup(TypeID id) const {
-    auto it = llvm::lower_bound(interfaces, id, [](const auto &it, TypeID id) {
-      return compare(it.first, id);
-    });
+    const auto *it =
+        llvm::lower_bound(interfaces, id, [](const auto &it, TypeID id) {
+          return compare(it.first, id);
+        });
     return (it != interfaces.end() && it->first == id) ? it->second : nullptr;
   }
 
@@ -263,7 +271,7 @@ private:
   SmallVector<std::pair<TypeID, void *>> interfaces;
 };
 
-} // end namespace detail
-} // end namespace mlir
+} // namespace detail
+} // namespace mlir
 
 #endif

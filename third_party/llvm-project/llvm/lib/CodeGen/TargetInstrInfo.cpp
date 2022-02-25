@@ -12,6 +12,7 @@
 
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -40,8 +41,7 @@ static cl::opt<bool> DisableHazardRecognizer(
   "disable-sched-hazard", cl::Hidden, cl::init(false),
   cl::desc("Disable hazard detection during preRA scheduling"));
 
-TargetInstrInfo::~TargetInstrInfo() {
-}
+TargetInstrInfo::~TargetInstrInfo() = default;
 
 const TargetRegisterClass*
 TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
@@ -366,7 +366,7 @@ bool TargetInstrInfo::hasLoadFromStackSlot(
                                   oe = MI.memoperands_end();
        o != oe; ++o) {
     if ((*o)->isLoad() &&
-        dyn_cast_or_null<FixedStackPseudoSourceValue>((*o)->getPseudoValue()))
+        isa_and_nonnull<FixedStackPseudoSourceValue>((*o)->getPseudoValue()))
       Accesses.push_back(*o);
   }
   return Accesses.size() != StartSize;
@@ -380,7 +380,7 @@ bool TargetInstrInfo::hasStoreToStackSlot(
                                   oe = MI.memoperands_end();
        o != oe; ++o) {
     if ((*o)->isStore() &&
-        dyn_cast_or_null<FixedStackPseudoSourceValue>((*o)->getPseudoValue()))
+        isa_and_nonnull<FixedStackPseudoSourceValue>((*o)->getPseudoValue()))
       Accesses.push_back(*o);
   }
   return Accesses.size() != StartSize;
@@ -436,7 +436,7 @@ MachineInstr &TargetInstrInfo::duplicate(MachineBasicBlock &MBB,
     MachineBasicBlock::iterator InsertBefore, const MachineInstr &Orig) const {
   assert(!Orig.isNotDuplicable() && "Instruction cannot be duplicated");
   MachineFunction &MF = *MBB.getParent();
-  return MF.CloneMachineInstrBundle(MBB, InsertBefore, Orig);
+  return MF.cloneMachineInstrBundle(MBB, InsertBefore, Orig);
 }
 
 // If the COPY instruction in MI can be folded to a stack operation, return
@@ -873,11 +873,13 @@ void TargetInstrInfo::reassociateOps(
   MachineInstrBuilder MIB1 =
       BuildMI(*MF, Prev.getDebugLoc(), TII->get(Opcode), NewVR)
           .addReg(RegX, getKillRegState(KillX))
-          .addReg(RegY, getKillRegState(KillY));
+          .addReg(RegY, getKillRegState(KillY))
+          .setMIFlags(Prev.getFlags());
   MachineInstrBuilder MIB2 =
       BuildMI(*MF, Root.getDebugLoc(), TII->get(Opcode), RegC)
           .addReg(RegA, getKillRegState(KillA))
-          .addReg(NewVR, getKillRegState(true));
+          .addReg(NewVR, getKillRegState(true))
+          .setMIFlags(Root.getFlags());
 
   setSpecialOperandAttr(Root, Prev, *MIB1, *MIB2);
 
@@ -921,8 +923,7 @@ bool TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(
   const MachineRegisterInfo &MRI = MF.getRegInfo();
 
   // Remat clients assume operand 0 is the defined register.
-  if (!MI.getNumOperands() || !MI.getOperand(0).isReg() ||
-      MI.getOperand(0).isTied())
+  if (!MI.getNumOperands() || !MI.getOperand(0).isReg())
     return false;
   Register DefReg = MI.getOperand(0).getReg();
 
@@ -958,8 +959,7 @@ bool TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(
 
   // If any of the registers accessed are non-constant, conservatively assume
   // the instruction is not rematerializable.
-  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
+  for (const MachineOperand &MO : MI.operands()) {
     if (!MO.isReg()) continue;
     Register Reg = MO.getReg();
     if (Reg == 0)
@@ -983,6 +983,12 @@ bool TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(
     // Only allow one virtual-register def.  There may be multiple defs of the
     // same virtual register, though.
     if (MO.isDef() && Reg != DefReg)
+      return false;
+
+    // Don't allow any virtual-register uses. Rematting an instruction with
+    // virtual register uses would length the live ranges of the uses, which
+    // is not necessarily a good idea, certainly not "trivial".
+    if (MO.isUse())
       return false;
   }
 
@@ -1395,4 +1401,35 @@ std::string TargetInstrInfo::createMIROperandComment(
   return OS.str();
 }
 
-TargetInstrInfo::PipelinerLoopInfo::~PipelinerLoopInfo() {}
+TargetInstrInfo::PipelinerLoopInfo::~PipelinerLoopInfo() = default;
+
+void TargetInstrInfo::mergeOutliningCandidateAttributes(
+    Function &F, std::vector<outliner::Candidate> &Candidates) const {
+  // Include target features from an arbitrary candidate for the outlined
+  // function. This makes sure the outlined function knows what kinds of
+  // instructions are going into it. This is fine, since all parent functions
+  // must necessarily support the instructions that are in the outlined region.
+  outliner::Candidate &FirstCand = Candidates.front();
+  const Function &ParentFn = FirstCand.getMF()->getFunction();
+  if (ParentFn.hasFnAttribute("target-features"))
+    F.addFnAttr(ParentFn.getFnAttribute("target-features"));
+
+  // Set nounwind, so we don't generate eh_frame.
+  if (llvm::all_of(Candidates, [](const outliner::Candidate &C) {
+        return C.getMF()->getFunction().hasFnAttribute(Attribute::NoUnwind);
+      }))
+    F.addFnAttr(Attribute::NoUnwind);
+}
+
+bool TargetInstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
+                                             unsigned &Flags) const {
+  // Some instrumentations create special TargetOpcode at the start which
+  // expands to special code sequences which must be present.
+  auto First = MBB.getFirstNonDebugInstr();
+  if (First != MBB.end() &&
+      (First->getOpcode() == TargetOpcode::FENTRY_CALL ||
+       First->getOpcode() == TargetOpcode::PATCHABLE_FUNCTION_ENTER))
+    return false;
+
+  return true;
+}

@@ -9,10 +9,11 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 
 #include "llvm/ADT/APInt.h"
-#include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCInstrInfo.h"
 #include <cstdint>
+
+namespace llvm {
+class MCSubtargetInfo;
+}
 
 using namespace llvm;
 
@@ -32,5 +33,11 @@ bool MCInstrAnalysis::evaluateBranch(const MCInst & /*Inst*/, uint64_t /*Addr*/,
 Optional<uint64_t> MCInstrAnalysis::evaluateMemoryOperandAddress(
     const MCInst &Inst, const MCSubtargetInfo *STI, uint64_t Addr,
     uint64_t Size) const {
+  return None;
+}
+
+Optional<uint64_t>
+MCInstrAnalysis::getMemoryOperandRelocationOffset(const MCInst &Inst,
+                                                  uint64_t Size) const {
   return None;
 }

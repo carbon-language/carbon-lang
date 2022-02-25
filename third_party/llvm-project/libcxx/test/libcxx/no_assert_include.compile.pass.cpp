@@ -1,4 +1,3 @@
-// -*- C++ -*-
 //===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -28,9 +27,7 @@
 #include <algorithm>
 #include <any>
 #include <array>
-#ifndef _LIBCPP_HAS_NO_THREADS
-#    include <atomic>
-#endif
+#include <atomic>
 #ifndef _LIBCPP_HAS_NO_THREADS
 #    include <barrier>
 #endif
@@ -58,6 +55,9 @@
 #include <complex.h>
 #include <concepts>
 #include <condition_variable>
+#ifndef _LIBCPP_HAS_NO_CXX20_COROUTINES
+#    include <coroutine>
+#endif
 #include <csetjmp>
 #include <csignal>
 #include <cstdarg>
@@ -70,8 +70,12 @@
 #include <ctgmath>
 #include <ctime>
 #include <ctype.h>
-#include <cwchar>
-#include <cwctype>
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+#    include <cwchar>
+#endif
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+#    include <cwctype>
+#endif
 #include <deque>
 #include <errno.h>
 #include <exception>
@@ -187,19 +191,20 @@
 #include <variant>
 #include <vector>
 #include <version>
-#include <wchar.h>
-#include <wctype.h>
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+#    include <wchar.h>
+#endif
+#ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS
+#    include <wctype.h>
+#endif
 
 // experimental headers
 #if __cplusplus >= 201103L
 #    include <experimental/algorithm>
-#    if defined(__cpp_coroutines)
+#    ifndef _LIBCPP_HAS_NO_EXPERIMENTAL_COROUTINES
 #        include <experimental/coroutine>
 #    endif
 #    include <experimental/deque>
-#    ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY
-#        include <experimental/filesystem>
-#    endif
 #    include <experimental/forward_list>
 #    include <experimental/functional>
 #    include <experimental/iterator>

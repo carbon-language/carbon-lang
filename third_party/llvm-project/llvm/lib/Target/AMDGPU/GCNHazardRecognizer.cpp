@@ -20,7 +20,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// Hazard Recoginizer Implementation
+// Hazard Recognizer Implementation
 //===----------------------------------------------------------------------===//
 
 static bool shouldRunLdsBranchVmemWARHazardFixup(const MachineFunction &MF,
@@ -95,7 +95,9 @@ static bool isDGEMM(unsigned Opcode) {
   return Opcode == AMDGPU::V_MFMA_F64_4X4X4F64_e64 ||
          Opcode == AMDGPU::V_MFMA_F64_4X4X4F64_vgprcd_e64 ||
          Opcode == AMDGPU::V_MFMA_F64_16X16X4F64_e64 ||
-         Opcode == AMDGPU::V_MFMA_F64_16X16X4F64_vgprcd_e64;
+         Opcode == AMDGPU::V_MFMA_F64_16X16X4F64_vgprcd_e64 ||
+         Opcode == AMDGPU::V_MFMA_F64_16X16X4F64_mac_e64 ||
+         Opcode == AMDGPU::V_MFMA_F64_16X16X4F64_mac_vgprcd_e64;
 }
 
 static bool isXDL(const GCNSubtarget &ST, const MachineInstr &MI) {
@@ -532,7 +534,7 @@ int GCNHazardRecognizer::checkSoftClauseHazards(MachineInstr *MEM) {
   // In order to handle these situations correctly we need to make sure that
   // when a clause has more than one instruction, no instruction in the clause
   // writes to a register that is read by another instruction in the clause
-  // (including itself). If we encounter this situaion, we need to break the
+  // (including itself). If we encounter this situation, we need to break the
   // clause by inserting a non SMEM instruction.
 
   for (MachineInstr *MI : EmittedInstrs) {
@@ -891,7 +893,7 @@ bool GCNHazardRecognizer::fixVcmpxPermlaneHazards(MachineInstr *MI) {
     return false;
 
   // V_NOP will be discarded by SQ.
-  // Use V_MOB_B32 v?, v?. Register must be alive so use src0 of V_PERMLANE*
+  // Use V_MOV_B32 v?, v?. Register must be alive so use src0 of V_PERMLANE*
   // which is always a VGPR and available.
   auto *Src0 = TII->getNamedOperand(*MI, AMDGPU::OpName::src0);
   Register Reg = Src0->getReg();
@@ -1438,15 +1440,13 @@ int GCNHazardRecognizer::checkMAIHazards90A(MachineInstr *MI) {
 
     if (!Use.isReg())
       continue;
-    unsigned Reg = Use.getReg();
+    Register Reg = Use.getReg();
     bool FullReg;
     const MachineInstr *MI1;
 
-    auto IsOverlappedDGEMMorXDLFn = [Reg, &IsMFMAFn, &FullReg, &MI1,
-                                     this](const MachineInstr &MI) {
+    auto IsOverlappedMFMAFn = [Reg, &IsMFMAFn, &FullReg, &MI1,
+                               this](const MachineInstr &MI) {
       if (!IsMFMAFn(MI))
-        return false;
-      if (!isDGEMM(MI.getOpcode()) && !isXDL(ST, MI))
         return false;
       Register DstReg = MI.getOperand(0).getReg();
       FullReg = (DstReg == Reg);
@@ -1458,8 +1458,8 @@ int GCNHazardRecognizer::checkMAIHazards90A(MachineInstr *MI) {
       getWaitStatesSinceDef(Reg, IsLegacyVALUNotDotFn, MaxWaitStates);
     WaitStatesNeeded = std::max(WaitStatesNeeded, WaitStatesNeededForUse);
 
-    int NumWaitStates = getWaitStatesSinceDef(Reg, IsOverlappedDGEMMorXDLFn,
-                                              MaxWaitStates);
+    int NumWaitStates =
+        getWaitStatesSinceDef(Reg, IsOverlappedMFMAFn, MaxWaitStates);
     if (NumWaitStates == std::numeric_limits<int>::max())
       continue;
 
@@ -1479,6 +1479,8 @@ int GCNHazardRecognizer::checkMAIHazards90A(MachineInstr *MI) {
         switch (Opc1) {
         case AMDGPU::V_MFMA_F64_16X16X4F64_e64:
         case AMDGPU::V_MFMA_F64_16X16X4F64_vgprcd_e64:
+        case AMDGPU::V_MFMA_F64_16X16X4F64_mac_e64:
+        case AMDGPU::V_MFMA_F64_16X16X4F64_mac_vgprcd_e64:
           if (!isXDL(ST, *MI))
             NeedWaitStates = DMFMA16x16WritesVGPROverlappedSrcCWaitStates;
           break;
@@ -1511,6 +1513,8 @@ int GCNHazardRecognizer::checkMAIHazards90A(MachineInstr *MI) {
       switch (Opc1) {
       case AMDGPU::V_MFMA_F64_16X16X4F64_e64:
       case AMDGPU::V_MFMA_F64_16X16X4F64_vgprcd_e64:
+      case AMDGPU::V_MFMA_F64_16X16X4F64_mac_e64:
+      case AMDGPU::V_MFMA_F64_16X16X4F64_mac_vgprcd_e64:
         NeedWaitStates = DMFMA16x16WritesVGPROverlappedMFMASrcABWaitStates;
         break;
       case AMDGPU::V_MFMA_F64_4X4X4F64_e64:
@@ -1545,7 +1549,7 @@ int GCNHazardRecognizer::checkMAIHazards90A(MachineInstr *MI) {
 }
 
 int GCNHazardRecognizer::checkMAILdStHazards(MachineInstr *MI) {
-  // On gfx90a+ releveant hazards are checked in checkMAIVALUHazards()
+  // On gfx90a+ relevant hazards are checked in checkMAIVALUHazards()
   if (!ST.hasMAIInsts() || ST.hasGFX90AInsts())
     return 0;
 
@@ -1619,11 +1623,8 @@ int GCNHazardRecognizer::checkMAIVALUHazards(MachineInstr *MI) {
 
   const MachineInstr *MFMA = nullptr;
   unsigned Reg;
-  auto IsDGEMMorXDLWriteFn = [&Reg, &IsMFMAFn, &MFMA,
-                              this](const MachineInstr &MI) {
+  auto IsMFMAWriteFn = [&Reg, &IsMFMAFn, &MFMA, this](const MachineInstr &MI) {
     if (!IsMFMAFn(MI) || !TRI.regsOverlap(MI.getOperand(0).getReg(), Reg))
-      return false;
-    if (!isDGEMM(MI.getOpcode()) && !isXDL(ST, MI))
       return false;
     MFMA = &MI;
     return true;
@@ -1675,8 +1676,8 @@ int GCNHazardRecognizer::checkMAIVALUHazards(MachineInstr *MI) {
       }
 
       MFMA = nullptr;
-      WaitStatesSinceDef = getWaitStatesSinceDef(Reg, IsDGEMMorXDLWriteFn,
-                                                 MaxWaitStates);
+      WaitStatesSinceDef =
+          getWaitStatesSinceDef(Reg, IsMFMAWriteFn, MaxWaitStates);
       if (!MFMA)
         continue;
 
@@ -1750,8 +1751,8 @@ int GCNHazardRecognizer::checkMAIVALUHazards(MachineInstr *MI) {
                                                     WaitStatesSinceDef);
 
     MFMA = nullptr;
-    WaitStatesSinceDef = getWaitStatesSinceDef(Reg, IsDGEMMorXDLWriteFn,
-                                               MaxWaitStates);
+    WaitStatesSinceDef =
+        getWaitStatesSinceDef(Reg, IsMFMAWriteFn, MaxWaitStates);
     if (MFMA) {
       int NeedWaitStates = MaxWaitStates;
       switch (TSchedModel.computeInstrLatency(MFMA)) {

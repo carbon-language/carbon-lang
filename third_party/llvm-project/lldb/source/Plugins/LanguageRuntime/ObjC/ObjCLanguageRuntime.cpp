@@ -19,7 +19,9 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Symbol/Variable.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Timer.h"
 
@@ -62,7 +64,7 @@ bool ObjCLanguageRuntime::AddClass(ObjCISA isa,
 void ObjCLanguageRuntime::AddToMethodCache(lldb::addr_t class_addr,
                                            lldb::addr_t selector,
                                            lldb::addr_t impl_addr) {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_STEP));
+  Log *log = GetLog(LLDBLog::Step);
   if (log) {
     LLDB_LOGF(log,
               "Caching: class 0x%" PRIx64 " selector 0x%" PRIx64
@@ -273,10 +275,17 @@ ObjCLanguageRuntime::ClassDescriptorSP
 ObjCLanguageRuntime::GetClassDescriptorFromISA(ObjCISA isa) {
   if (isa) {
     UpdateISAToDescriptorMap();
+
     ObjCLanguageRuntime::ISAToDescriptorIterator pos =
         m_isa_to_descriptor.find(isa);
     if (pos != m_isa_to_descriptor.end())
       return pos->second;
+
+    if (ABISP abi_sp = m_process->GetABI()) {
+      pos = m_isa_to_descriptor.find(abi_sp->FixCodeAddress(isa));
+      if (pos != m_isa_to_descriptor.end())
+        return pos->second;
+    }
   }
   return ClassDescriptorSP();
 }

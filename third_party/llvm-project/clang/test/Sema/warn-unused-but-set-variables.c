@@ -4,7 +4,7 @@ struct S {
   int i;
 };
 
-int f0() {
+int f0(void) {
   int y; // expected-warning{{variable 'y' set but not used}}
   y = 0;
 
@@ -48,4 +48,14 @@ void f2 (void) {
   int x;
   x = 0;
   (void) sizeof(x);
+}
+
+void for_cleanup(int *x) {
+  *x = 0;
+}
+
+void f3(void) {
+  // Don't warn if the __cleanup__ attribute is used.
+  __attribute__((__cleanup__(for_cleanup))) int x;
+  x = 5;
 }

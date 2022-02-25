@@ -1,4 +1,4 @@
-; RUN: llc -aarch64-sve-vector-bits-min=128  -asm-verbose=0 < %s | FileCheck %s -check-prefix=NO_SVE
+; RUN: llc -aarch64-sve-vector-bits-min=128  -asm-verbose=0 < %s | FileCheck %s -check-prefix=VBITS_EQ_128
 ; RUN: llc -aarch64-sve-vector-bits-min=256  -asm-verbose=0 < %s | FileCheck %s -check-prefixes=CHECK,VBITS_EQ_256
 ; RUN: llc -aarch64-sve-vector-bits-min=384  -asm-verbose=0 < %s | FileCheck %s -check-prefixes=CHECK,VBITS_EQ_256
 ; RUN: llc -aarch64-sve-vector-bits-min=512  -asm-verbose=0 < %s | FileCheck %s -check-prefixes=CHECK,VBITS_GE_512,VBITS_EQ_512
@@ -17,14 +17,12 @@
 
 target triple = "aarch64-unknown-linux-gnu"
 
-; Don't use SVE when its registers are no bigger than NEON.
-; NO_SVE-NOT: ptrue
-
 ;
 ; SDIV
 ;
 
 ; Vector vXi8 sdiv are not legal for NEON so use SVE when available.
+; FIXME: We should be able to improve the codegen for >= 256 bits here.
 define <8 x i8> @sdiv_v8i8(<8 x i8> %op1, <8 x i8> %op2) #0 {
 ; CHECK-LABEL: sdiv_v8i8:
 ; CHECK: ptrue [[PG0:p[0-9]+]].s, vl8
@@ -34,23 +32,38 @@ define <8 x i8> @sdiv_v8i8(<8 x i8> %op1, <8 x i8> %op2) #0 {
 ; CHECK-NEXT: sunpklo [[OP1_LO_LO:z[0-9]+]].s, z0.h
 ; CHECK-NEXT: sdiv [[DIV:z[0-9]+]].s, [[PG0]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
 ; CHECK-NEXT: uzp1 [[RES:z[0-9]+]].h, [[DIV]].h, [[DIV]].h
-; CHECK-NEXT: umov [[SCALAR:w[0-9]+]], [[VEC:v[0-9]+]].h[0]
-; CHECK-NEXT: fmov s0, [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[1]
-; CHECK-NEXT: mov [[FINAL:v[0-9]+]].b[1], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[2]
-; CHECK-NEXT: mov [[FINAL]].b[2], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[3]
-; CHECK-NEXT: mov [[FINAL]].b[3], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[4]
-; CHECK-NEXT: mov [[FINAL]].b[4], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[5]
-; CHECK-NEXT: mov [[FINAL]].b[5], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[6]
-; CHECK-NEXT: mov [[FINAL]].b[6], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[7]
-; CHECK-NEXT: mov [[FINAL]].b[7], [[SCALAR]]
+; CHECK-NEXT: umov [[SCALAR0:w[0-9]+]], [[VEC:v[0-9]+]].h[0]
+; CHECK-NEXT: umov [[SCALAR1:w[0-9]+]], [[VEC]].h[1]
+; CHECK-NEXT: fmov s0, [[SCALAR0]]
+; CHECK-NEXT: umov [[SCALAR2:w[0-9]+]], [[VEC]].h[2]
+; CHECK-NEXT: mov [[FINAL:v[0-9]+]].b[1], [[SCALAR1]]
+; CHECK-NEXT: mov [[FINAL]].b[2], [[SCALAR2]]
+; CHECK-NEXT: umov [[SCALAR3:w[0-9]+]], [[VEC]].h[3]
+; CHECK-NEXT: mov [[FINAL]].b[3], [[SCALAR3]]
+; CHECK-NEXT: umov [[SCALAR4:w[0-9]+]], [[VEC]].h[4]
+; CHECK-NEXT: mov [[FINAL]].b[4], [[SCALAR4]]
+; CHECK-NEXT: umov [[SCALAR5:w[0-9]+]], [[VEC]].h[5]
+; CHECK-NEXT: mov [[FINAL]].b[5], [[SCALAR5]]
+; CHECK-NEXT: umov [[SCALAR6:w[0-9]+]], [[VEC]].h[6]
+; CHECK-NEXT: mov [[FINAL]].b[6], [[SCALAR6]]
+; CHECK-NEXT: umov [[SCALAR7:w[0-9]+]], [[VEC]].h[7]
+; CHECK-NEXT: mov [[FINAL]].b[7], [[SCALAR7]]
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v8i8:
+; VBITS_EQ_128:         sshll v1.8h, v1.8b, #0
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    sshll v0.8h, v0.8b, #0
+; VBITS_EQ_128-NEXT:    sunpkhi z2.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpkhi z3.s, z0.h
+; VBITS_EQ_128-NEXT:    sunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    sdivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z2.h
+; VBITS_EQ_128-NEXT:    xtn v0.8b, v0.8h
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <8 x i8> %op1, %op2
   ret <8 x i8> %res
 }
@@ -81,6 +94,30 @@ define <16 x i8> @sdiv_v16i8(<16 x i8> %op1, <16 x i8> %op2) #0 {
 ; VBITS_GE_512-NEXT: uzp1 [[RES1:z[0-9]+]].h, [[DIV]].h, [[DIV]].h
 ; VBITS_GE_512-NEXT: uzp1 [[RES2:z[0-9]+]].b, [[RES1]].b, [[RES1]].b
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v16i8:
+; VBITS_EQ_128:         sunpkhi z2.h, z1.b
+; VBITS_EQ_128-NEXT:    sunpkhi z3.h, z0.b
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    sunpklo z1.h, z1.b
+; VBITS_EQ_128-NEXT:    sunpkhi z4.s, z2.h
+; VBITS_EQ_128-NEXT:    sunpkhi z5.s, z3.h
+; VBITS_EQ_128-NEXT:    sunpklo z2.s, z2.h
+; VBITS_EQ_128-NEXT:    sunpklo z3.s, z3.h
+; VBITS_EQ_128-NEXT:    sunpklo z0.h, z0.b
+; VBITS_EQ_128-NEXT:    sdivr z4.s, p0/m, z4.s, z5.s
+; VBITS_EQ_128-NEXT:    sdivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    sunpkhi z3.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpkhi z5.s, z0.h
+; VBITS_EQ_128-NEXT:    sunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    sdivr z3.s, p0/m, z3.s, z5.s
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z1.h, z2.h, z4.h
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z3.h
+; VBITS_EQ_128-NEXT:    uzp1 z0.b, z0.b, z1.b
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <16 x i8> %op1, %op2
   ret <16 x i8> %res
 }
@@ -90,11 +127,11 @@ define void @sdiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_256: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
 ; VBITS_EQ_256-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_256-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
-; VBITS_EQ_256-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_256-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_256-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: sunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -116,11 +153,11 @@ define void @sdiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: sunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_512-NEXT: sunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_512-NEXT: sunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -133,11 +170,11 @@ define void @sdiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; QUARTER VECTOR OR SMALLER:
 ; VBITS_GE_1024: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_GE_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_GE_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_GE_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_1024-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_GE_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_1024-NEXT: sunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_GE_1024-NEXT: sunpklo [[OP1_LO_LO:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_GE_1024-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
@@ -157,11 +194,11 @@ define void @sdiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_512-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: sunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -183,11 +220,11 @@ define void @sdiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: sunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_1024-NEXT: sunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -200,11 +237,11 @@ define void @sdiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; QUARTER VECTOR OR SMALLER:
 ; VBITS_GE_2048: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_GE_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_GE_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_GE_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_2048-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_GE_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_2048-NEXT: sunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_GE_2048-NEXT: sunpklo [[OP1_LO_LO:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_GE_2048-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
@@ -224,11 +261,11 @@ define void @sdiv_v128i8(<128 x i8>* %a, <128 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].b, vl128
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_1024-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: sunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -250,11 +287,11 @@ define void @sdiv_v128i8(<128 x i8>* %a, <128 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_2048: ptrue [[PG1:p[0-9]+]].b, vl128
+; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: sunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_2048-NEXT: sunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -277,11 +314,11 @@ define void @sdiv_v256i8(<256 x i8>* %a, <256 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_2048: ptrue [[PG1:p[0-9]+]].b, vl256
+; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_2048-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: sunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -309,19 +346,30 @@ define void @sdiv_v256i8(<256 x i8>* %a, <256 x i8>* %b) #0 {
 }
 
 ; Vector vXi16 sdiv are not legal for NEON so use SVE when available.
+; FIXME: We should be able to improve the codegen for >= 256 bits here.
 define <4 x i16> @sdiv_v4i16(<4 x i16> %op1, <4 x i16> %op2) #0 {
 ; CHECK-LABEL: sdiv_v4i16:
 ; CHECK: sshll v1.4s, v1.4h, #0
-; CHECK-NEXT: sshll v0.4s, v0.4h, #0
 ; CHECK-NEXT: ptrue [[PG1:p[0-9]+]].s, vl4
-; CHECK-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP1:z[0-9]+]].s, [[OP2:z[0-9]+]].s
-; CHECK-NEXT: mov w8, v0.s[1]
-; CHECK-NEXT: mov w9, v0.s[2]
-; CHECK-NEXT: mov w10, v0.s[3]
+; CHECK-NEXT: sshll v0.4s, v0.4h, #0
+; CHECK-NEXT: sdivr [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP2:z[0-9]+]].s, [[OP1:z[0-9]+]].s
+; CHECK-NEXT: mov w8, v1.s[1]
+; CHECK-NEXT: mov w9, v1.s[2]
+; CHECK-NEXT: mov v0.16b, v1.16b
 ; CHECK-NEXT: mov v0.h[1], w8
+; CHECK-NEXT: mov w8, v1.s[3]
 ; CHECK-NEXT: mov v0.h[2], w9
-; CHECK-NEXT: mov v0.h[3], w10
+; CHECK-NEXT: mov v0.h[3], w8
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v4i16:
+; VBITS_EQ_128:         sshll v1.4s, v1.4h, #0
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    sshll v0.4s, v0.4h, #0
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    xtn v0.4h, v0.4s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <4 x i16> %op1, %op2
   ret <4 x i16> %res
 }
@@ -334,6 +382,18 @@ define <8 x i16> @sdiv_v8i16(<8 x i16> %op1, <8 x i16> %op2) #0 {
 ; CHECK-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; CHECK-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v8i16:
+; VBITS_EQ_128:         ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    sunpkhi z2.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpkhi z3.s, z0.h
+; VBITS_EQ_128-NEXT:    sunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    sunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    sdivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z2.h
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <8 x i16> %op1, %op2
   ret <8 x i16> %res
 }
@@ -343,11 +403,11 @@ define void @sdiv_v16i16(<16 x i16>* %a, <16 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_256: ptrue [[PG1:p[0-9]+]].h, vl16
+; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
 ; VBITS_EQ_256-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_256-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
-; VBITS_EQ_256-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_256-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_256-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: sdivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -357,11 +417,11 @@ define void @sdiv_v16i16(<16 x i16>* %a, <16 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_512: ptrue [[PG1:p[0-9]+]].h, vl16
+; VBITS_GE_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_GE_512-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_512-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_GE_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_512-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_512-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_512-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_512-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -378,11 +438,11 @@ define void @sdiv_v32i16(<32 x i16>* %a, <32 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].h, vl32
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_512-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_512-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: sdivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -392,11 +452,11 @@ define void @sdiv_v32i16(<32 x i16>* %a, <32 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_1024: ptrue [[PG1:p[0-9]+]].h, vl32
+; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_GE_1024-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_1024-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_GE_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_1024-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_1024-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_1024-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_1024-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -413,11 +473,11 @@ define void @sdiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].h, vl64
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_1024-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_1024-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: sdivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -427,11 +487,11 @@ define void @sdiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_2048: ptrue [[PG1:p[0-9]+]].h, vl64
+; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_GE_2048-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_2048-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_GE_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_2048-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_2048-NEXT: sdiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_2048-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_2048-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -446,11 +506,11 @@ define void @sdiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 define void @sdiv_v128i16(<128 x i16>* %a, <128 x i16>* %b) #0 {
 ; CHECK-LABEL: sdiv_v128i16:
 ; VBITS_EQ_2048: ptrue [[PG1:p[0-9]+]].h, vl128
+; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: sunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_2048-NEXT: sunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_2048-NEXT: sunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: sdivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -471,6 +531,12 @@ define <2 x i32> @sdiv_v2i32(<2 x i32> %op1, <2 x i32> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].s, vl2
 ; CHECK: sdiv z0.s, [[PG]]/m, z0.s, z1.s
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v2i32:
+; VBITS_EQ_128:         ptrue p0.s, vl2
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <2 x i32> %op1, %op2
   ret <2 x i32> %res
 }
@@ -481,6 +547,12 @@ define <4 x i32> @sdiv_v4i32(<4 x i32> %op1, <4 x i32> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].s, vl4
 ; CHECK: sdiv z0.s, [[PG]]/m, z0.s, z1.s
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v4i32:
+; VBITS_EQ_128:         ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    sdiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <4 x i32> %op1, %op2
   ret <4 x i32> %res
 }
@@ -551,6 +623,12 @@ define <1 x i64> @sdiv_v1i64(<1 x i64> %op1, <1 x i64> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].d, vl1
 ; CHECK: sdiv z0.d, [[PG]]/m, z0.d, z1.d
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v1i64:
+; VBITS_EQ_128:         ptrue p0.d, vl1
+; VBITS_EQ_128-NEXT:    sdiv z0.d, p0/m, z0.d, z1.d
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <1 x i64> %op1, %op2
   ret <1 x i64> %res
 }
@@ -561,6 +639,12 @@ define <2 x i64> @sdiv_v2i64(<2 x i64> %op1, <2 x i64> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].d, vl2
 ; CHECK: sdiv z0.d, [[PG]]/m, z0.d, z1.d
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: sdiv_v2i64:
+; VBITS_EQ_128:         ptrue p0.d, vl2
+; VBITS_EQ_128-NEXT:    sdiv z0.d, p0/m, z0.d, z1.d
+; VBITS_EQ_128-NEXT:    ret
+
   %res = sdiv <2 x i64> %op1, %op2
   ret <2 x i64> %res
 }
@@ -630,6 +714,7 @@ define void @sdiv_v32i64(<32 x i64>* %a, <32 x i64>* %b) #0 {
 ;
 
 ; Vector vXi8 udiv are not legal for NEON so use SVE when available.
+; FIXME: We should be able to improve the codegen for >= 256 bits here.
 define <8 x i8> @udiv_v8i8(<8 x i8> %op1, <8 x i8> %op2) #0 {
 ; CHECK-LABEL: udiv_v8i8:
 ; CHECK: ptrue [[PG0:p[0-9]+]].s, vl8
@@ -639,23 +724,38 @@ define <8 x i8> @udiv_v8i8(<8 x i8> %op1, <8 x i8> %op2) #0 {
 ; CHECK-NEXT: uunpklo [[OP1_LO_LO:z[0-9]+]].s, z0.h
 ; CHECK-NEXT: udiv [[DIV:z[0-9]+]].s, [[PG0]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
 ; CHECK-NEXT: uzp1 [[RES:z[0-9]+]].h, [[DIV]].h, [[DIV]].h
-; CHECK-NEXT: umov [[SCALAR:w[0-9]+]], [[VEC:v[0-9]+]].h[0]
-; CHECK-NEXT: fmov s0, [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[1]
-; CHECK-NEXT: mov [[FINAL:v[0-9]+]].b[1], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[2]
-; CHECK-NEXT: mov [[FINAL]].b[2], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[3]
-; CHECK-NEXT: mov [[FINAL]].b[3], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[4]
-; CHECK-NEXT: mov [[FINAL]].b[4], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[5]
-; CHECK-NEXT: mov [[FINAL]].b[5], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[6]
-; CHECK-NEXT: mov [[FINAL]].b[6], [[SCALAR]]
-; CHECK-NEXT: umov [[SCALAR]], [[VEC]].h[7]
-; CHECK-NEXT: mov [[FINAL]].b[7], [[SCALAR]]
+; CHECK-NEXT: umov [[SCALAR0:w[0-9]+]], [[VEC:v[0-9]+]].h[0]
+; CHECK-NEXT: umov [[SCALAR1:w[0-9]+]], [[VEC]].h[1]
+; CHECK-NEXT: fmov s0, [[SCALAR0]]
+; CHECK-NEXT: umov [[SCALAR2:w[0-9]+]], [[VEC]].h[2]
+; CHECK-NEXT: mov [[FINAL:v[0-9]+]].b[1], [[SCALAR1]]
+; CHECK-NEXT: mov [[FINAL]].b[2], [[SCALAR2]]
+; CHECK-NEXT: umov [[SCALAR3:w[0-9]+]], [[VEC]].h[3]
+; CHECK-NEXT: mov [[FINAL]].b[3], [[SCALAR3]]
+; CHECK-NEXT: umov [[SCALAR4:w[0-9]+]], [[VEC]].h[4]
+; CHECK-NEXT: mov [[FINAL]].b[4], [[SCALAR4]]
+; CHECK-NEXT: umov [[SCALAR5:w[0-9]+]], [[VEC]].h[5]
+; CHECK-NEXT: mov [[FINAL]].b[5], [[SCALAR5]]
+; CHECK-NEXT: umov [[SCALAR6:w[0-9]+]], [[VEC]].h[6]
+; CHECK-NEXT: mov [[FINAL]].b[6], [[SCALAR6]]
+; CHECK-NEXT: umov [[SCALAR7:w[0-9]+]], [[VEC]].h[7]
+; CHECK-NEXT: mov [[FINAL]].b[7], [[SCALAR7]]
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v8i8:
+; VBITS_EQ_128:         ushll v1.8h, v1.8b, #0
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    ushll v0.8h, v0.8b, #0
+; VBITS_EQ_128-NEXT:    uunpkhi z2.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpkhi z3.s, z0.h
+; VBITS_EQ_128-NEXT:    uunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    udivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z2.h
+; VBITS_EQ_128-NEXT:    xtn v0.8b, v0.8h
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <8 x i8> %op1, %op2
   ret <8 x i8> %res
 }
@@ -686,6 +786,30 @@ define <16 x i8> @udiv_v16i8(<16 x i8> %op1, <16 x i8> %op2) #0 {
 ; VBITS_GE_512-NEXT: uzp1 [[RES1:z[0-9]+]].h, [[DIV]].h, [[DIV]].h
 ; VBITS_GE_512-NEXT: uzp1 [[RES2:z[0-9]+]].b, [[RES1]].b, [[RES1]].b
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v16i8:
+; VBITS_EQ_128:         uunpkhi z2.h, z1.b
+; VBITS_EQ_128-NEXT:    uunpkhi z3.h, z0.b
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    uunpklo z1.h, z1.b
+; VBITS_EQ_128-NEXT:    uunpkhi z4.s, z2.h
+; VBITS_EQ_128-NEXT:    uunpkhi z5.s, z3.h
+; VBITS_EQ_128-NEXT:    uunpklo z2.s, z2.h
+; VBITS_EQ_128-NEXT:    uunpklo z3.s, z3.h
+; VBITS_EQ_128-NEXT:    uunpklo z0.h, z0.b
+; VBITS_EQ_128-NEXT:    udivr z4.s, p0/m, z4.s, z5.s
+; VBITS_EQ_128-NEXT:    udivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    uunpkhi z3.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpkhi z5.s, z0.h
+; VBITS_EQ_128-NEXT:    uunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    udivr z3.s, p0/m, z3.s, z5.s
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z1.h, z2.h, z4.h
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z3.h
+; VBITS_EQ_128-NEXT:    uzp1 z0.b, z0.b, z1.b
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <16 x i8> %op1, %op2
   ret <16 x i8> %res
 }
@@ -695,11 +819,11 @@ define void @udiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_256: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
 ; VBITS_EQ_256-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_256-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
-; VBITS_EQ_256-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_256-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_256-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_256-NEXT: uunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -721,11 +845,11 @@ define void @udiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: uunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_512-NEXT: uunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_512-NEXT: uunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -738,11 +862,11 @@ define void @udiv_v32i8(<32 x i8>* %a, <32 x i8>* %b) #0 {
 
 ; QUARTER VECTOR OR SMALLER:
 ; VBITS_GE_1024: ptrue [[PG1:p[0-9]+]].b, vl32
+; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_GE_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_GE_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_GE_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_1024-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_GE_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_1024-NEXT: uunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_GE_1024-NEXT: uunpklo [[OP1_LO_LO:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_GE_1024-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
@@ -762,11 +886,11 @@ define void @udiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_512-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_512-NEXT: uunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -788,11 +912,11 @@ define void @udiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: uunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_1024-NEXT: uunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -805,11 +929,11 @@ define void @udiv_v64i8(<64 x i8>* %a, <64 x i8>* %b) #0 {
 
 ; QUARTER VECTOR OR SMALLER:
 ; VBITS_GE_2048: ptrue [[PG1:p[0-9]+]].b, vl64
+; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_GE_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_GE_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_GE_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_2048-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_GE_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_GE_2048-NEXT: uunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_GE_2048-NEXT: uunpklo [[OP1_LO_LO:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_GE_2048-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO_LO]].s, [[OP2_LO_LO]].s
@@ -829,11 +953,11 @@ define void @udiv_v128i8(<128 x i8>* %a, <128 x i8>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].b, vl128
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_1024-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_1024-NEXT: uunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -855,11 +979,11 @@ define void @udiv_v128i8(<128 x i8>* %a, <128 x i8>* %b) #0 {
 
 ; HALF VECTOR:
 ; VBITS_EQ_2048: ptrue [[PG1:p[0-9]+]].b, vl128
+; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: uunpkhi [[OP2_LO_HI:z[0-9]+]].s, [[OP2_LO]].h
 ; VBITS_EQ_2048-NEXT: uunpkhi [[OP1_LO_HI:z[0-9]+]].s, [[OP1_LO]].h
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP2_LO_LO:z[0-9]+]].s, [[OP2_LO]].h
@@ -880,11 +1004,11 @@ define void @udiv_v128i8(<128 x i8>* %a, <128 x i8>* %b) #0 {
 define void @udiv_v256i8(<256 x i8>* %a, <256 x i8>* %b) #0 {
 ; CHECK-LABEL: udiv_v256i8:
 ; VBITS_EQ_2048: ptrue [[PG1:p[0-9]+]].b, vl256
+; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP1:z[0-9]+]].b }, [[PG1]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1b { [[OP2:z[0-9]+]].b }, [[PG1]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].h, [[OP2]].b
+; VBITS_EQ_2048-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP2_LO:z[0-9]+]].h, [[OP2]].b
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].h, [[OP1]].b
 ; VBITS_EQ_2048-NEXT: uunpkhi [[OP2_HI_HI:z[0-9]+]].s, [[OP2_HI]].h
@@ -912,19 +1036,30 @@ define void @udiv_v256i8(<256 x i8>* %a, <256 x i8>* %b) #0 {
 }
 
 ; Vector vXi16 udiv are not legal for NEON so use SVE when available.
+; FIXME: We should be able to improve the codegen for >= 256 bits here.
 define <4 x i16> @udiv_v4i16(<4 x i16> %op1, <4 x i16> %op2) #0 {
 ; CHECK-LABEL: udiv_v4i16:
 ; CHECK: ushll v1.4s, v1.4h, #0
-; CHECK-NEXT: ushll v0.4s, v0.4h, #0
 ; CHECK-NEXT: ptrue [[PG1:p[0-9]+]].s, vl4
-; CHECK-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP1:z[0-9]+]].s, [[OP2:z[0-9]+]].s
-; CHECK-NEXT: mov w8, v0.s[1]
-; CHECK-NEXT: mov w9, v0.s[2]
-; CHECK-NEXT: mov w10, v0.s[3]
+; CHECK-NEXT: ushll v0.4s, v0.4h, #0
+; CHECK-NEXT: udivr [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP2:z[0-9]+]].s, [[OP1:z[0-9]+]].s
+; CHECK-NEXT: mov w8, v1.s[1]
+; CHECK-NEXT: mov w9, v1.s[2]
+; CHECK-NEXT: mov v0.16b, v1.16b
 ; CHECK-NEXT: mov v0.h[1], w8
+; CHECK-NEXT: mov w8, v1.s[3]
 ; CHECK-NEXT: mov v0.h[2], w9
-; CHECK-NEXT: mov v0.h[3], w10
+; CHECK-NEXT: mov v0.h[3], w8
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v4i16:
+; VBITS_EQ_128:         ushll v1.4s, v1.4h, #0
+; VBITS_EQ_128-NEXT:    ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    ushll v0.4s, v0.4h, #0
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    xtn v0.4h, v0.4s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <4 x i16> %op1, %op2
   ret <4 x i16> %res
 }
@@ -937,6 +1072,18 @@ define <8 x i16> @udiv_v8i16(<8 x i16> %op1, <8 x i16> %op2) #0 {
 ; CHECK-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG1]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; CHECK-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v8i16:
+; VBITS_EQ_128:         ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    uunpkhi z2.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpkhi z3.s, z0.h
+; VBITS_EQ_128-NEXT:    uunpklo z1.s, z1.h
+; VBITS_EQ_128-NEXT:    uunpklo z0.s, z0.h
+; VBITS_EQ_128-NEXT:    udivr z2.s, p0/m, z2.s, z3.s
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    uzp1 z0.h, z0.h, z2.h
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <8 x i16> %op1, %op2
   ret <8 x i16> %res
 }
@@ -946,11 +1093,11 @@ define void @udiv_v16i16(<16 x i16>* %a, <16 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_256: ptrue [[PG1:p[0-9]+]].h, vl16
+; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
 ; VBITS_EQ_256-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_256-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_256-NEXT: ptrue [[PG2:p[0-9]+]].s, vl8
-; VBITS_EQ_256-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_256-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_256-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_256-NEXT: udivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -960,11 +1107,11 @@ define void @udiv_v16i16(<16 x i16>* %a, <16 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_512: ptrue [[PG1:p[0-9]+]].h, vl16
+; VBITS_GE_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_GE_512-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_512-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_GE_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_512-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_512-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_512-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_512-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -981,11 +1128,11 @@ define void @udiv_v32i16(<32 x i16>* %a, <32 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_512: ptrue [[PG1:p[0-9]+]].h, vl32
+; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
 ; VBITS_EQ_512-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_512-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_512-NEXT: ptrue [[PG2:p[0-9]+]].s, vl16
-; VBITS_EQ_512-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_512-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_512-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_512-NEXT: udivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -995,11 +1142,11 @@ define void @udiv_v32i16(<32 x i16>* %a, <32 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_1024: ptrue [[PG1:p[0-9]+]].h, vl32
+; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_GE_1024-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_1024-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_GE_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_1024-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_1024-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_1024-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_1024-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -1016,11 +1163,11 @@ define void @udiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 
 ; FULL VECTOR:
 ; VBITS_EQ_1024: ptrue [[PG1:p[0-9]+]].h, vl64
+; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
 ; VBITS_EQ_1024-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_EQ_1024-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_EQ_1024-NEXT: ptrue [[PG2:p[0-9]+]].s, vl32
-; VBITS_EQ_1024-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_1024-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_1024-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_1024-NEXT: udivr [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -1030,11 +1177,11 @@ define void @udiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 
 ; HALF VECTOR OR SMALLER:
 ; VBITS_GE_2048: ptrue [[PG1:p[0-9]+]].h, vl64
+; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
 ; VBITS_GE_2048-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG1]]/z, [x0]
 ; VBITS_GE_2048-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG1]]/z, [x1]
-; VBITS_GE_2048-NEXT: ptrue [[PG2:p[0-9]+]].s, vl64
-; VBITS_GE_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_2048-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
+; VBITS_GE_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_GE_2048-NEXT: udiv [[DIV1:z[0-9]+]].s, [[PG2]]/m, [[OP1_LO]].s, [[OP2_LO]].s
 ; VBITS_GE_2048-NEXT: uzp1 [[UZP1:z[0-9]+]].h, [[DIV1]].h, [[DIV1]].h
 ; VBITS_GE_2048-NEXT: st1h { [[UZP1:z[0-9]+]].h }, [[PG1]], [x0]
@@ -1049,11 +1196,11 @@ define void @udiv_v64i16(<64 x i16>* %a, <64 x i16>* %b) #0 {
 define void @udiv_v128i16(<128 x i16>* %a, <128 x i16>* %b) #0 {
 ; CHECK-LABEL: udiv_v128i16:
 ; VBITS_EQ_2048: ptrue [[PG:p[0-9]+]].h, vl128
+; VBITS_EQ_2048-NEXT: ptrue [[PG1:p[0-9]+]].s, vl64
 ; VBITS_EQ_2048-NEXT: ld1h { [[OP1:z[0-9]+]].h }, [[PG]]/z, [x0]
 ; VBITS_EQ_2048-NEXT: ld1h { [[OP2:z[0-9]+]].h }, [[PG]]/z, [x1]
-; VBITS_EQ_2048-NEXT: ptrue [[PG1:p[0-9]+]].s, vl64
-; VBITS_EQ_2048-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: uunpkhi [[OP2_HI:z[0-9]+]].s, [[OP2]].h
+; VBITS_EQ_2048-NEXT: uunpkhi [[OP1_HI:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP2_LO:z[0-9]+]].s, [[OP2]].h
 ; VBITS_EQ_2048-NEXT: uunpklo [[OP1_LO:z[0-9]+]].s, [[OP1]].h
 ; VBITS_EQ_2048-NEXT: udivr   [[RES_HI:z[0-9]+]].s, [[PG1]]/m, [[OP2_HI]].s, [[OP1_HI]].s
@@ -1074,6 +1221,12 @@ define <2 x i32> @udiv_v2i32(<2 x i32> %op1, <2 x i32> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].s, vl2
 ; CHECK: udiv z0.s, [[PG]]/m, z0.s, z1.s
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v2i32:
+; VBITS_EQ_128:         ptrue p0.s, vl2
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <2 x i32> %op1, %op2
   ret <2 x i32> %res
 }
@@ -1084,6 +1237,12 @@ define <4 x i32> @udiv_v4i32(<4 x i32> %op1, <4 x i32> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].s, vl4
 ; CHECK: udiv z0.s, [[PG]]/m, z0.s, z1.s
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v4i32:
+; VBITS_EQ_128:         ptrue p0.s, vl4
+; VBITS_EQ_128-NEXT:    udiv z0.s, p0/m, z0.s, z1.s
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <4 x i32> %op1, %op2
   ret <4 x i32> %res
 }
@@ -1096,6 +1255,7 @@ define void @udiv_v8i32(<8 x i32>* %a, <8 x i32>* %b) #0 {
 ; CHECK-NEXT: udiv [[RES:z[0-9]+]].s, [[PG]]/m, [[OP1]].s, [[OP2]].s
 ; CHECK-NEXT: st1w { [[RES]].s }, [[PG]], [x0]
 ; CHECK-NEXT: ret
+
   %op1 = load <8 x i32>, <8 x i32>* %a
   %op2 = load <8 x i32>, <8 x i32>* %b
   %res = udiv <8 x i32> %op1, %op2
@@ -1154,6 +1314,12 @@ define <1 x i64> @udiv_v1i64(<1 x i64> %op1, <1 x i64> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].d, vl1
 ; CHECK: udiv z0.d, [[PG]]/m, z0.d, z1.d
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v1i64:
+; VBITS_EQ_128:         ptrue p0.d, vl1
+; VBITS_EQ_128-NEXT:    udiv z0.d, p0/m, z0.d, z1.d
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <1 x i64> %op1, %op2
   ret <1 x i64> %res
 }
@@ -1164,6 +1330,12 @@ define <2 x i64> @udiv_v2i64(<2 x i64> %op1, <2 x i64> %op2) #0 {
 ; CHECK: ptrue [[PG:p[0-9]+]].d, vl2
 ; CHECK: udiv z0.d, [[PG]]/m, z0.d, z1.d
 ; CHECK: ret
+
+; VBITS_EQ_128-LABEL: udiv_v2i64:
+; VBITS_EQ_128:         ptrue p0.d, vl2
+; VBITS_EQ_128-NEXT:    udiv z0.d, p0/m, z0.d, z1.d
+; VBITS_EQ_128-NEXT:    ret
+
   %res = udiv <2 x i64> %op1, %op2
   ret <2 x i64> %res
 }
@@ -1233,8 +1405,8 @@ define void @udiv_v32i64(<32 x i64>* %a, <32 x i64>* %b) #0 {
 define void @udiv_constantsplat_v8i32(<8 x i32>* %a) #1 {
 ; CHECK-LABEL: udiv_constantsplat_v8i32:
 ; CHECK: ptrue [[PG:p[0-9]+]].s, vl8
-; CHECK-NEXT: ld1w { [[OP1:z[0-9]+]].s }, [[PG]]/z, [x0]
 ; CHECK-NEXT: mov [[OP2:z[0-9]+]].s, #95
+; CHECK-NEXT: ld1w { [[OP1:z[0-9]+]].s }, [[PG]]/z, [x0]
 ; CHECK-NEXT: udiv [[RES:z[0-9]+]].s, [[PG]]/m, [[OP1]].s, [[OP2]].s
 ; CHECK-NEXT: st1w { [[RES]].s }, [[PG]], [x0]
 ; CHECK-NEXT: ret

@@ -39,8 +39,8 @@ bool Preprocessor::isInPrimaryFile() const {
   // If there are any stacked lexers, we're in a #include.
   assert(IsFileLexer(IncludeMacroStack[0]) &&
          "Top level include stack isn't our primary lexer?");
-  return std::none_of(
-      IncludeMacroStack.begin() + 1, IncludeMacroStack.end(),
+  return llvm::none_of(
+      llvm::drop_begin(IncludeMacroStack),
       [&](const IncludeStackInfo &ISI) -> bool { return IsFileLexer(ISI); });
 }
 
@@ -66,8 +66,9 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.
-bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
-                                   SourceLocation Loc) {
+bool Preprocessor::EnterSourceFile(FileID FID, ConstSearchDirIterator CurDir,
+                                   SourceLocation Loc,
+                                   bool IsFirstIncludeOfFile) {
   assert(!CurTokenLexer && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
 
@@ -91,14 +92,15 @@ bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
         CodeCompletionFileLoc.getLocWithOffset(CodeCompletionOffset);
   }
 
-  EnterSourceFileWithLexer(new Lexer(FID, *InputFile, *this), CurDir);
+  EnterSourceFileWithLexer(
+      new Lexer(FID, *InputFile, *this, IsFirstIncludeOfFile), CurDir);
   return false;
 }
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack
 ///  and start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
-                                            const DirectoryLookup *CurDir) {
+                                            ConstSearchDirIterator CurDir) {
 
   // Add the current lexer to the include stack.
   if (CurPPLexer || CurTokenLexer)
@@ -377,7 +379,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, SourceLocation EndLoc,
               CurPPLexer->MIOpt.GetDefinedMacro()) {
           if (!isMacroDefined(ControllingMacro) &&
               DefinedMacro != ControllingMacro &&
-              HeaderInfo.FirstTimeLexingFile(FE)) {
+              CurLexer->isFirstTimeLexingFile()) {
 
             // If the edit distance between the two macros is more than 50%,
             // DefinedMacro may not be header guard, or can be header guard of

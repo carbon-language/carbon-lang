@@ -34,17 +34,23 @@ add_subdirectory(math)
 add_subdirectory(string)
 add_subdirectory(stdlib)
 
+if(${LIBC_TARGET_OS} STREQUAL "linux")
+  add_subdirectory(fcntl)
+  add_subdirectory(sys)
+  add_subdirectory(unistd)
+endif()
+
 if(NOT LLVM_LIBC_FULL_BUILD)
   return()
 endif()
 
-add_subdirectory(assert)
-add_subdirectory(signal)
+# The signal API is currently disabled as signal.h is incorrect.
+# since assert uses the signal API, we disable assert also.
+# add_subdirectory(assert)
+# add_subdirectory(signal)
 add_subdirectory(stdio)
-add_subdirectory(sys)
 add_subdirectory(threads)
 add_subdirectory(time)
-add_subdirectory(unistd)
 
 set(public_test ${CMAKE_CURRENT_BINARY_DIR}/public_integration_test.cpp)
 
@@ -90,7 +96,7 @@ set_target_properties(
 target_include_directories(
   libc-integration-test BEFORE
   PRIVATE
-    "${LIBC_SOURCE_DIR}/utils/CPP"
+    "${LIBC_SOURCE_DIR}/src/__support/CPP"
     "${LIBC_BUILD_DIR}/include"
 )
 target_compile_options(

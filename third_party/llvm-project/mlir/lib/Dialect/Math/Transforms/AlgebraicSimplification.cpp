@@ -12,9 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/Dialect/Math/Transforms/Passes.h"
-#include "mlir/Dialect/Vector/VectorOps.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/TypeUtilities.h"
@@ -40,13 +41,13 @@ LogicalResult
 PowFStrengthReduction::matchAndRewrite(math::PowFOp op,
                                        PatternRewriter &rewriter) const {
   Location loc = op.getLoc();
-  Value x = op.lhs();
+  Value x = op.getLhs();
 
   FloatAttr scalarExponent;
   DenseFPElementsAttr vectorExponent;
 
-  bool isScalar = matchPattern(op.rhs(), m_Constant(&scalarExponent));
-  bool isVector = matchPattern(op.rhs(), m_Constant(&vectorExponent));
+  bool isScalar = matchPattern(op.getRhs(), m_Constant(&scalarExponent));
+  bool isVector = matchPattern(op.getRhs(), m_Constant(&vectorExponent));
 
   // Returns true if exponent is a constant equal to `value`.
   auto isExponentValue = [&](double value) -> bool {
@@ -76,22 +77,23 @@ PowFStrengthReduction::matchAndRewrite(math::PowFOp op,
 
   // Replace `pow(x, 2.0)` with `x * x`.
   if (isExponentValue(2.0)) {
-    rewriter.replaceOpWithNewOp<MulFOp>(op, ValueRange({x, x}));
+    rewriter.replaceOpWithNewOp<arith::MulFOp>(op, ValueRange({x, x}));
     return success();
   }
 
   // Replace `pow(x, 3.0)` with `x * x * x`.
   if (isExponentValue(3.0)) {
-    Value square = rewriter.create<MulFOp>(op.getLoc(), ValueRange({x, x}));
-    rewriter.replaceOpWithNewOp<MulFOp>(op, ValueRange({x, square}));
+    Value square =
+        rewriter.create<arith::MulFOp>(op.getLoc(), ValueRange({x, x}));
+    rewriter.replaceOpWithNewOp<arith::MulFOp>(op, ValueRange({x, square}));
     return success();
   }
 
   // Replace `pow(x, -1.0)` with `1.0 / x`.
   if (isExponentValue(-1.0)) {
-    Value one = rewriter.create<ConstantOp>(
+    Value one = rewriter.create<arith::ConstantOp>(
         loc, rewriter.getFloatAttr(getElementTypeOrSelf(op.getType()), 1.0));
-    rewriter.replaceOpWithNewOp<DivFOp>(op, ValueRange({bcast(one), x}));
+    rewriter.replaceOpWithNewOp<arith::DivFOp>(op, ValueRange({bcast(one), x}));
     return success();
   }
 

@@ -25,13 +25,16 @@
 #include "toy/Passes.h"
 
 #include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
+#include "mlir/Conversion/ArithmeticToLLVM/ArithmeticToLLVM.h"
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
-#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVM.h"
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/SCF.h"
@@ -73,9 +76,10 @@ public:
     // Create a loop for each of the dimensions within the shape.
     SmallVector<Value, 4> loopIvs;
     for (unsigned i = 0, e = memRefShape.size(); i != e; ++i) {
-      auto lowerBound = rewriter.create<ConstantIndexOp>(loc, 0);
-      auto upperBound = rewriter.create<ConstantIndexOp>(loc, memRefShape[i]);
-      auto step = rewriter.create<ConstantIndexOp>(loc, 1);
+      auto lowerBound = rewriter.create<arith::ConstantIndexOp>(loc, 0);
+      auto upperBound =
+          rewriter.create<arith::ConstantIndexOp>(loc, memRefShape[i]);
+      auto step = rewriter.create<arith::ConstantIndexOp>(loc, 1);
       auto loop =
           rewriter.create<scf::ForOp>(loc, lowerBound, upperBound, step);
       for (Operation &nested : *loop.getBody())
@@ -157,7 +161,7 @@ private:
         globalPtr, ArrayRef<Value>({cst0, cst0}));
   }
 };
-} // end anonymous namespace
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // ToyToLLVMLoweringPass
@@ -171,7 +175,7 @@ struct ToyToLLVMLoweringPass
   }
   void runOnOperation() final;
 };
-} // end anonymous namespace
+} // namespace
 
 void ToyToLLVMLoweringPass::runOnOperation() {
   // The first thing to define is the conversion target. This will define the
@@ -197,8 +201,11 @@ void ToyToLLVMLoweringPass::runOnOperation() {
   // set of legal ones.
   RewritePatternSet patterns(&getContext());
   populateAffineToStdConversionPatterns(patterns);
-  populateLoopToStdConversionPatterns(patterns);
+  populateSCFToControlFlowConversionPatterns(patterns);
+  mlir::arith::populateArithmeticToLLVMConversionPatterns(typeConverter,
+                                                          patterns);
   populateMemRefToLLVMConversionPatterns(typeConverter, patterns);
+  cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
   populateStdToLLVMConversionPatterns(typeConverter, patterns);
 
   // The only remaining operation to lower from the `toy` dialect, is the

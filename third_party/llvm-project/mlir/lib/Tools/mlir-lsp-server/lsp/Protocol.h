@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains structs based on the LSP specification at
-// https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md
+// https://github.com/Microsoft/language-server-protocol/blob/main/protocol.md
 //
 // This is not meant to be a complete implementation, new interfaces are added
 // when they're needed.
@@ -30,6 +30,7 @@
 #include <bitset>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace mlir {
@@ -566,7 +567,7 @@ bool fromJSON(const llvm::json::Value &value, DocumentSymbolParams &result,
 /// diagnostics, e.g. when duplicating a symbol in a scope.
 struct DiagnosticRelatedInformation {
   DiagnosticRelatedInformation(Location location, std::string message)
-      : location(location), message(std::move(message)) {}
+      : location(std::move(location)), message(std::move(message)) {}
 
   /// The location of this related diagnostic information.
   Location location;
@@ -626,7 +627,7 @@ llvm::json::Value toJSON(const Diagnostic &diag);
 
 struct PublishDiagnosticsParams {
   PublishDiagnosticsParams(URIForFile uri, int64_t version)
-      : uri(uri), version(version) {}
+      : uri(std::move(uri)), version(version) {}
 
   /// The URI for which diagnostic information is reported.
   URIForFile uri;

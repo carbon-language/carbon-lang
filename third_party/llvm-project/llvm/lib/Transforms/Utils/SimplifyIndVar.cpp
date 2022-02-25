@@ -58,7 +58,7 @@ namespace {
     SCEVExpander     &Rewriter;
     SmallVectorImpl<WeakTrackingVH> &DeadInsts;
 
-    bool Changed;
+    bool Changed = false;
 
   public:
     SimplifyIndvar(Loop *Loop, ScalarEvolution *SE, DominatorTree *DT,
@@ -66,7 +66,7 @@ namespace {
                    SCEVExpander &Rewriter,
                    SmallVectorImpl<WeakTrackingVH> &Dead)
         : L(Loop), LI(LI), SE(SE), DT(DT), TTI(TTI), Rewriter(Rewriter),
-          DeadInsts(Dead), Changed(false) {
+          DeadInsts(Dead) {
       assert(LI && "IV simplification requires LoopInfo");
     }
 
@@ -942,6 +942,7 @@ bool simplifyLoopIVs(Loop *L, ScalarEvolution *SE, DominatorTree *DT,
 
 } // namespace llvm
 
+namespace {
 //===----------------------------------------------------------------------===//
 // Widen Induction Variables - Extend the width of an IV to cover its
 // widest uses.
@@ -1072,7 +1073,7 @@ protected:
 private:
   SmallVector<NarrowIVDefUse, 8> NarrowIVUsers;
 };
-
+} // namespace
 
 /// Determine the insertion point for this user. By default, insert immediately
 /// before the user. SCEVExpander or LICM will hoist loop invariants out of the

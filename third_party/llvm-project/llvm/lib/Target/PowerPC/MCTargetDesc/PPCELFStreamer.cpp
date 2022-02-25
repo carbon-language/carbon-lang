@@ -40,9 +40,8 @@ PPCELFStreamer::PPCELFStreamer(MCContext &Context,
                                std::unique_ptr<MCAsmBackend> MAB,
                                std::unique_ptr<MCObjectWriter> OW,
                                std::unique_ptr<MCCodeEmitter> Emitter)
-    : MCELFStreamer(Context, std::move(MAB), std::move(OW),
-                    std::move(Emitter)), LastLabel(NULL) {
-}
+    : MCELFStreamer(Context, std::move(MAB), std::move(OW), std::move(Emitter)),
+      LastLabel(nullptr) {}
 
 void PPCELFStreamer::emitPrefixedInstruction(const MCInst &Inst,
                                              const MCSubtargetInfo &STI) {
@@ -56,7 +55,7 @@ void PPCELFStreamer::emitPrefixedInstruction(const MCInst &Inst,
   // all of the nops required as part of the alignment operation. In the cases
   // when no nops are added then The fragment is still created but it remains
   // empty.
-  emitCodeAlignment(64, 4);
+  emitCodeAlignment(64, &STI, 4);
 
   // Emit the instruction.
   // Since the previous emit created a new fragment then adding this instruction

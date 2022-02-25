@@ -53,7 +53,7 @@ def PDLInterp_Dialect : Dialect {
 //===----------------------------------------------------------------------===//
 
 // Generic interpreter operation.
-class PDLInterp_Op<string mnemonic, list<OpTrait> traits = []> :
+class PDLInterp_Op<string mnemonic, list<Trait> traits = []> :
     Op<PDLInterp_Dialect, mnemonic, traits>;
 
 //===----------------------------------------------------------------------===//
@@ -61,7 +61,7 @@ class PDLInterp_Op<string mnemonic, list<OpTrait> traits = []> :
 
 // Check operations evaluate a predicate on a positional value and then
 // conditionally branch on the result.
-class PDLInterp_PredicateOp<string mnemonic, list<OpTrait> traits = []> :
+class PDLInterp_PredicateOp<string mnemonic, list<Trait> traits = []> :
     PDLInterp_Op<mnemonic, !listconcat([Terminator], traits)> {
   let successors = (successor AnySuccessor:$trueDest, AnySuccessor:$falseDest);
 }
@@ -71,23 +71,10 @@ class PDLInterp_PredicateOp<string mnemonic, list<OpTrait> traits = []> :
 
 // Switch operations evaluate a predicate on a positional value and then
 // conditionally branch on the result.
-class PDLInterp_SwitchOp<string mnemonic, list<OpTrait> traits = []> :
+class PDLInterp_SwitchOp<string mnemonic, list<Trait> traits = []> :
     PDLInterp_Op<mnemonic, !listconcat([Terminator], traits)> {
   let successors = (successor AnySuccessor:$defaultDest,
                               VariadicSuccessor<AnySuccessor>:$cases);
-
-  let verifier = [{
-    // Verify that the number of case destinations matches the number of case
-    // values.
-    size_t numDests = cases().size();
-    size_t numValues = caseValues().size();
-    if (numDests != numValues) {
-      return emitOpError("expected number of cases to match the number of case "
-                         "values, got ")
-          << numDests << " but expected " << numValues;
-    }
-    return success();
-  }];
 }
 
 //===----------------------------------------------------------------------===//
@@ -371,6 +358,29 @@ def PDLInterp_CheckTypesOp
 }
 
 //===----------------------------------------------------------------------===//
+// pdl_interp::ContinueOp
+//===----------------------------------------------------------------------===//
+
+def PDLInterp_ContinueOp
+    : PDLInterp_Op<"continue", [NoSideEffect, HasParent<"ForEachOp">,
+                               Terminator]> {
+  let summary = "Breaks the current iteration";
+  let description = [{
+    `pdl_interp.continue` operation breaks the current iteration within the
+    `pdl_interp.foreach` region and continues with the next iteration from
+    the beginning of the region.
+
+    Example:
+
+    ```mlir
+    pdl_interp.continue
+    ```
+  }];
+
+  let assemblyFormat = "attr-dict";
+}
+
+//===----------------------------------------------------------------------===//
 // pdl_interp::CreateAttributeOp
 //===----------------------------------------------------------------------===//
 
@@ -390,7 +400,7 @@ def PDLInterp_CreateAttributeOp
 
   let arguments = (ins AnyAttr:$value);
   let results = (outs PDL_Attribute:$attribute);
-  let assemblyFormat = "$value attr-dict";
+  let assemblyFormat = "$value attr-dict-with-keyword";
 
   let builders = [
     OpBuilder<(ins "Attribute":$value), [{
@@ -489,6 +499,13 @@ def PDLInterp_CreateTypesOp : PDLInterp_Op<"create_types", [NoSideEffect]> {
   let arguments = (ins TypeArrayAttr:$value);
   let results = (outs PDL_RangeOf<PDL_Type>:$result);
   let assemblyFormat = "$value attr-dict";
+
+  let builders = [
+    OpBuilder<(ins "ArrayAttr":$type), [{
+      build($_builder, $_state,
+            pdl::RangeType::get($_builder.getType<pdl::TypeType>()), type);
+    }]>
+  ];
 }
 
 //===----------------------------------------------------------------------===//
@@ -514,6 +531,42 @@ def PDLInterp_EraseOp : PDLInterp_Op<"erase"> {
 }
 
 //===----------------------------------------------------------------------===//
+// pdl_interp::ExtractOp
+//===----------------------------------------------------------------------===//
+
+def PDLInterp_ExtractOp
+    : PDLInterp_Op<"extract", [NoSideEffect,
+     TypesMatchWith<
+        "`range` is a PDL range whose element type matches type of `result`",
+        "result", "range", "pdl::RangeType::get($_self)">]> {
+  let summary = "Extract the item at the specified index in a range";
+  let description = [{
+    `pdl_interp.extract` operations are used to extract an item from a range
+    at the specified index. If the index is out of range, returns null.
+
+    Example:
+
+    ```mlir
+    // Extract the value at index 1 from a range of values.
+    %ops = pdl_interp.extract 1 of %values : !pdl.value
+    ```
+  }];
+
+  let arguments = (ins PDL_RangeOf<PDL_AnyType>:$range,
+                       Confined<I32Attr, [IntNonNegative]>:$index);
+  let results = (outs PDL_AnyType:$result);
+  let assemblyFormat = "$index `of` $range `:` type($result) attr-dict";
+
+  let builders = [
+    OpBuilder<(ins "Value":$range, "unsigned":$index), [{
+      build($_builder, $_state,
+            range.getType().cast<pdl::RangeType>().getElementType(),
+            range, index);
+    }]>,
+  ];
+}
+
+//===----------------------------------------------------------------------===//
 // pdl_interp::FinalizeOp
 //===----------------------------------------------------------------------===//
 
@@ -531,6 +584,47 @@ def PDLInterp_FinalizeOp
     ```
   }];
   let assemblyFormat = "attr-dict";
+}
+
+//===----------------------------------------------------------------------===//
+// pdl_interp::ForEachOp
+//===----------------------------------------------------------------------===//
+
+def PDLInterp_ForEachOp
+    : PDLInterp_Op<"foreach", [Terminator]> {
+  let summary = "Iterates over a range of values or ranges";
+  let description = [{
+    `pdl_interp.foreach` iteratively selects an element from a range of values
+    and executes the region until pdl.continue is reached.
+
+    In the bytecode interpreter, this operation is implemented by looping over
+    the values and, for each selection, running the bytecode until we reach
+    pdl.continue. This may result in multiple matches being reported. Note
+    that the input range is mutated (popped from).
+
+    Example:
+
+    ```mlir
+    pdl_interp.foreach %op : !pdl.operation in %ops {
+      pdl_interp.continue
+    } -> ^next
+    ```
+  }];
+
+  let arguments = (ins PDL_RangeOf<PDL_AnyType>:$values);
+  let regions = (region AnyRegion:$region);
+  let successors = (successor AnySuccessor:$successor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$range, "Block *":$successor, "bool":$initLoop)>
+  ];
+
+  let extraClassDeclaration = [{
+    /// Returns the loop variable.
+    BlockArgument getLoopVariable() { return region().getArgument(0); }
+  }];
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -751,6 +845,42 @@ def PDLInterp_GetResultsOp : PDLInterp_Op<"get_results", [NoSideEffect]> {
 }
 
 //===----------------------------------------------------------------------===//
+// pdl_interp::GetUsersOp
+//===----------------------------------------------------------------------===//
+
+def PDLInterp_GetUsersOp
+    : PDLInterp_Op<"get_users", [NoSideEffect]> {
+  let summary = "Get the users of a `Value`";
+  let description = [{
+    `pdl_interp.get_users` extracts the users that accept this value. In the
+    case of a range, the union of users of the all the values are returned,
+    similarly to ResultRange::getUsers.
+
+    Example:
+
+    ```mlir
+    // Get all the users of a single value.
+    %ops = pdl_interp.get_users of %value : !pdl.value
+
+    // Get all the users of the first value in a range.
+    %ops = pdl_interp.get_users of %values : !pdl.range<value>
+    ```
+  }];
+
+  let arguments = (ins PDL_InstOrRangeOf<PDL_Value>:$value);
+  let results = (outs PDL_RangeOf<PDL_Operation>:$operations);
+  let assemblyFormat = "`of` $value `:` type($value) attr-dict";
+
+  let builders = [
+    OpBuilder<(ins "Value":$value), [{
+      build($_builder, $_state,
+            pdl::RangeType::get($_builder.getType<pdl::OperationType>()),
+            value);
+    }]>,
+  ];
+}
+
+//===----------------------------------------------------------------------===//
 // pdl_interp::GetValueTypeOp
 //===----------------------------------------------------------------------===//
 
@@ -934,6 +1064,7 @@ def PDLInterp_SwitchAttributeOp
     build($_builder, $_state, attribute, $_builder.getArrayAttr(caseValues),
           defaultDest, dests);
   }]>];
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -967,6 +1098,7 @@ def PDLInterp_SwitchOperandCountOp
     build($_builder, $_state, operation, $_builder.getI32VectorAttr(counts),
           defaultDest, dests);
   }]>];
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1004,6 +1136,7 @@ def PDLInterp_SwitchOperationNameOp
             defaultDest, dests);
     }]>,
   ];
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1037,6 +1170,7 @@ def PDLInterp_SwitchResultCountOp
     build($_builder, $_state, operation, $_builder.getI32VectorAttr(counts),
           defaultDest, dests);
   }]>];
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1074,6 +1208,7 @@ def PDLInterp_SwitchTypeOp : PDLInterp_SwitchOp<"switch_type", [NoSideEffect]> {
   let extraClassDeclaration = [{
     auto getCaseTypes() { return caseValues().getAsValueRange<TypeAttr>(); }
   }];
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1115,6 +1250,7 @@ def PDLInterp_SwitchTypesOp : PDLInterp_SwitchOp<"switch_types",
   let extraClassDeclaration = [{
     auto getCaseTypes() { return caseValues().getAsRange<ArrayAttr>(); }
   }];
+  let hasVerifier = 1;
 }
 
 #endif // MLIR_DIALECT_PDLINTERP_IR_PDLINTERPOPS

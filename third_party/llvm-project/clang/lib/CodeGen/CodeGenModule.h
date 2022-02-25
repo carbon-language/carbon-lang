@@ -46,7 +46,6 @@ class GlobalValue;
 class DataLayout;
 class FunctionType;
 class LLVMContext;
-class OpenMPIRBuilder;
 class IndexedInstrProfReader;
 }
 
@@ -55,17 +54,13 @@ class ASTContext;
 class AtomicType;
 class FunctionDecl;
 class IdentifierInfo;
-class ObjCMethodDecl;
 class ObjCImplementationDecl;
-class ObjCCategoryImplDecl;
-class ObjCProtocolDecl;
 class ObjCEncodeExpr;
 class BlockExpr;
 class CharUnits;
 class Decl;
 class Expr;
 class Stmt;
-class InitListExpr;
 class StringLiteral;
 class NamedDecl;
 class ValueDecl;
@@ -78,13 +73,10 @@ class AnnotateAttr;
 class CXXDestructorDecl;
 class Module;
 class CoverageSourceInfo;
-class TargetAttr;
 class InitSegAttr;
-struct ParsedTargetAttr;
 
 namespace CodeGen {
 
-class CallArgList;
 class CodeGenFunction;
 class CodeGenTBAA;
 class CGCXXABI;
@@ -93,8 +85,6 @@ class CGObjCRuntime;
 class CGOpenCLRuntime;
 class CGOpenMPRuntime;
 class CGCUDARuntime;
-class BlockFieldFlags;
-class FunctionArgList;
 class CoverageMappingModuleGen;
 class TargetCodeGenInfo;
 
@@ -311,7 +301,7 @@ private:
   const TargetInfo &Target;
   std::unique_ptr<CGCXXABI> ABI;
   llvm::LLVMContext &VMContext;
-  std::string ModuleNameHash = "";
+  std::string ModuleNameHash;
 
   std::unique_ptr<CodeGenTBAA> TBAA;
 
@@ -345,7 +335,7 @@ private:
   /// for emission and therefore should only be output if they are actually
   /// used. If a decl is in this, then it is known to have not been referenced
   /// yet.
-  std::map<StringRef, GlobalDecl> DeferredDecls;
+  llvm::DenseMap<StringRef, GlobalDecl> DeferredDecls;
 
   /// This is a list of deferred decls which we have seen that *are* actually
   /// referenced. These get code generated when the module is done.
@@ -403,13 +393,6 @@ private:
   /// An ordered map of canonical GlobalDecls to their mangled names.
   llvm::MapVector<GlobalDecl, StringRef> MangledDeclNames;
   llvm::StringMap<GlobalDecl, llvm::BumpPtrAllocator> Manglings;
-
-  // An ordered map of canonical GlobalDecls paired with the cpu-index for
-  // cpu-specific name manglings.
-  llvm::MapVector<std::pair<GlobalDecl, unsigned>, StringRef>
-      CPUSpecificMangledDeclNames;
-  llvm::StringMap<std::pair<GlobalDecl, unsigned>, llvm::BumpPtrAllocator>
-      CPUSpecificManglings;
 
   /// Global annotations.
   std::vector<llvm::Constant*> Annotations;
@@ -880,6 +863,9 @@ public:
                                     bool DontDefer = false,
                                     ForDefinition_t IsForDefinition
                                       = NotForDefinition);
+
+  // Return the function body address of the given function.
+  llvm::Constant *GetFunctionStart(const ValueDecl *Decl);
 
   /// Get the address of the RTTI descriptor for the given type.
   llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty, bool ForEH = false);
@@ -1475,7 +1461,8 @@ private:
   llvm::Constant *GetOrCreateMultiVersionResolver(GlobalDecl GD,
                                                   llvm::Type *DeclTy,
                                                   const FunctionDecl *FD);
-  void UpdateMultiVersionNames(GlobalDecl GD, const FunctionDecl *FD);
+  void UpdateMultiVersionNames(GlobalDecl GD, const FunctionDecl *FD,
+                               StringRef &CurName);
 
   llvm::Constant *
   GetOrCreateLLVMGlobal(StringRef MangledName, llvm::Type *Ty, LangAS AddrSpace,
@@ -1500,6 +1487,7 @@ private:
   void EmitAliasDefinition(GlobalDecl GD);
   void emitIFuncDefinition(GlobalDecl GD);
   void emitCPUDispatchDefinition(GlobalDecl GD);
+  void EmitTargetClonesResolver(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);
 

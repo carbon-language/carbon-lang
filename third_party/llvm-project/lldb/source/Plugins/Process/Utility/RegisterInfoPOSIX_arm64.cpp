@@ -60,7 +60,7 @@
                               {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                dbg_##reg##i },                                 \
-                               NULL, NULL, NULL, 0
+                               NULL, NULL,         
 #define REG_CONTEXT_SIZE                                                       \
   (sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
    sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
@@ -178,10 +178,10 @@ static const lldb_private::RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
      g_sve_regnums_arm64}};
 
 static const lldb_private::RegisterSet g_reg_set_pauth_arm64 = {
-    "Pointer Authentication Registers", "pauth", k_num_pauth_register, NULL};
+    "Pointer Authentication Registers", "pauth", k_num_pauth_register, nullptr};
 
 static const lldb_private::RegisterSet g_reg_set_mte_arm64 = {
-    "MTE Control Register", "mte", k_num_mte_register, NULL};
+    "MTE Control Register", "mte", k_num_mte_register, nullptr};
 
 RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     const lldb_private::ArchSpec &target_arch, lldb_private::Flags opt_regsets)

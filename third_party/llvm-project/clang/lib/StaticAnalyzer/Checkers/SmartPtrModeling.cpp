@@ -23,6 +23,7 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CallDescription.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h"
@@ -102,12 +103,8 @@ static bool hasStdClassWithName(const CXXRecordDecl *RD,
                                 ArrayRef<llvm::StringLiteral> Names) {
   if (!RD || !RD->getDeclContext()->isStdNamespace())
     return false;
-  if (RD->getDeclName().isIdentifier()) {
-    StringRef Name = RD->getName();
-    return llvm::any_of(Names, [&Name](StringRef GivenName) -> bool {
-      return Name == GivenName;
-    });
-  }
+  if (RD->getDeclName().isIdentifier())
+    return llvm::is_contained(Names, RD->getName());
   return false;
 }
 
@@ -289,7 +286,7 @@ bool SmartPtrModeling::evalCall(const CallEvent &Call,
   if (ModelSmartPtrDereference && isStdOstreamOperatorCall(Call))
     return handleOstreamOperator(Call, C);
 
-  if (Call.isCalled(StdSwapCall)) {
+  if (StdSwapCall.matches(Call)) {
     // Check the first arg, if it is of std::unique_ptr type.
     assert(Call.getNumArgs() == 2 && "std::swap should have two arguments");
     const Expr *FirstArg = Call.getArgExpr(0);
@@ -298,8 +295,7 @@ bool SmartPtrModeling::evalCall(const CallEvent &Call,
     return handleSwap(State, Call.getArgSVal(0), Call.getArgSVal(1), C);
   }
 
-  if (Call.isCalled(StdMakeUniqueCall) ||
-      Call.isCalled(StdMakeUniqueForOverwriteCall)) {
+  if (matchesAny(Call, StdMakeUniqueCall, StdMakeUniqueForOverwriteCall)) {
     if (!ModelSmartPtrDereference)
       return false;
     

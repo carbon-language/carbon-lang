@@ -15,8 +15,10 @@
 
 #include "X86RecognizableInstr.h"
 #include "X86DisassemblerShared.h"
+#include "X86DisassemblerTables.h"
 #include "X86ModRMFilters.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/TableGen/Record.h"
 #include <string>
 
 using namespace llvm;
@@ -109,12 +111,12 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   // FIXME: Is there some better way to check for In64BitMode?
   std::vector<Record*> Predicates = Rec->getValueAsListOfDefs("Predicates");
   for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
-    if (Predicates[i]->getName().find("Not64Bit") != Name.npos ||
-        Predicates[i]->getName().find("In32Bit") != Name.npos) {
+    if (Predicates[i]->getName().contains("Not64Bit") ||
+        Predicates[i]->getName().contains("In32Bit")) {
       Is32Bit = true;
       break;
     }
-    if (Predicates[i]->getName().find("In64Bit") != Name.npos) {
+    if (Predicates[i]->getName().contains("In64Bit")) {
       Is64Bit = true;
       break;
     }
@@ -1065,11 +1067,6 @@ RecognizableInstr::rmRegisterEncodingFromString(const std::string &s,
   ENCODING("VK16",            ENCODING_RM)
   ENCODING("VK32",            ENCODING_RM)
   ENCODING("VK64",            ENCODING_RM)
-  ENCODING("VK1PAIR",         ENCODING_RM)
-  ENCODING("VK2PAIR",         ENCODING_RM)
-  ENCODING("VK4PAIR",         ENCODING_RM)
-  ENCODING("VK8PAIR",         ENCODING_RM)
-  ENCODING("VK16PAIR",        ENCODING_RM)
   ENCODING("BNDR",            ENCODING_RM)
   ENCODING("TILE",            ENCODING_RM)
   errs() << "Unhandled R/M register encoding " << s << "\n";
@@ -1148,11 +1145,6 @@ RecognizableInstr::vvvvRegisterEncodingFromString(const std::string &s,
   ENCODING("VK16",            ENCODING_VVVV)
   ENCODING("VK32",            ENCODING_VVVV)
   ENCODING("VK64",            ENCODING_VVVV)
-  ENCODING("VK1PAIR",         ENCODING_VVVV)
-  ENCODING("VK2PAIR",         ENCODING_VVVV)
-  ENCODING("VK4PAIR",         ENCODING_VVVV)
-  ENCODING("VK8PAIR",         ENCODING_VVVV)
-  ENCODING("VK16PAIR",        ENCODING_VVVV)
   ENCODING("TILE",            ENCODING_VVVV)
   errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
   llvm_unreachable("Unhandled VEX.vvvv register encoding");

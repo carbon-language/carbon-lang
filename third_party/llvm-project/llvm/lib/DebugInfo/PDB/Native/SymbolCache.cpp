@@ -1,20 +1,25 @@
 #include "llvm/DebugInfo/PDB/Native/SymbolCache.h"
 
-#include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
+#include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
+#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
+#include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeRecordHelpers.h"
+#include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
+#include "llvm/DebugInfo/PDB/Native/DbiModuleList.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
-#include "llvm/DebugInfo/PDB/Native/GlobalsStream.h"
-#include "llvm/DebugInfo/PDB/Native/ISectionContribVisitor.h"
+#include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
 #include "llvm/DebugInfo/PDB/Native/NativeCompilandSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumGlobals.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumLineNumbers.h"
-#include "llvm/DebugInfo/PDB/Native/NativeEnumSymbols.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumTypes.h"
 #include "llvm/DebugInfo/PDB/Native/NativeFunctionSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeInlineSiteSymbol.h"
+#include "llvm/DebugInfo/PDB/Native/NativeLineNumber.h"
 #include "llvm/DebugInfo/PDB/Native/NativePublicSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeRawSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeSession.h"
@@ -28,10 +33,12 @@
 #include "llvm/DebugInfo/PDB/Native/NativeTypeVTShape.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PublicsStream.h"
+#include "llvm/DebugInfo/PDB/Native/RawTypes.h"
 #include "llvm/DebugInfo/PDB/Native/SymbolStream.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 
 using namespace llvm;
@@ -518,8 +525,8 @@ SymbolCache::findLineTable(uint16_t Modi) const {
                            const std::vector<LineTableEntry> &RHS) {
     return LHS[0].Addr < RHS[0].Addr;
   });
-  for (size_t I = 0; I < EntryList.size(); ++I)
-    llvm::append_range(ModuleLineTable, EntryList[I]);
+  for (std::vector<LineTableEntry> &I : EntryList)
+    llvm::append_range(ModuleLineTable, I);
 
   return ModuleLineTable;
 }

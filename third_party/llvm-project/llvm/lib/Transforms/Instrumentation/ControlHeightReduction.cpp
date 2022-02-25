@@ -145,19 +145,19 @@ FunctionPass *llvm::createControlHeightReductionLegacyPass() {
 namespace {
 
 struct CHRStats {
-  CHRStats() : NumBranches(0), NumBranchesDelta(0),
-               WeightedNumBranchesDelta(0) {}
+  CHRStats() = default;
   void print(raw_ostream &OS) const {
     OS << "CHRStats: NumBranches " << NumBranches
        << " NumBranchesDelta " << NumBranchesDelta
        << " WeightedNumBranchesDelta " << WeightedNumBranchesDelta;
   }
-  uint64_t NumBranches;       // The original number of conditional branches /
-                              // selects
-  uint64_t NumBranchesDelta;  // The decrease of the number of conditional
-                              // branches / selects in the hot paths due to CHR.
-  uint64_t WeightedNumBranchesDelta; // NumBranchesDelta weighted by the profile
-                                     // count at the scope entry.
+  // The original number of conditional branches / selects
+  uint64_t NumBranches = 0;
+  // The decrease of the number of conditional branches / selects in the hot
+  // paths due to CHR.
+  uint64_t NumBranchesDelta = 0;
+  // NumBranchesDelta weighted by the profile count at the scope entry.
+  uint64_t WeightedNumBranchesDelta = 0;
 };
 
 // RegInfo - some properties of a Region.
@@ -1553,11 +1553,11 @@ static bool negateICmpIfUsedByBranchOrSelectOnly(ICmpInst *ICmp,
       SI->swapValues();
       SI->swapProfMetadata();
       if (Scope->TrueBiasedSelects.count(SI)) {
-        assert(Scope->FalseBiasedSelects.count(SI) == 0 &&
+        assert(!Scope->FalseBiasedSelects.contains(SI) &&
                "Must not be already in");
         Scope->FalseBiasedSelects.insert(SI);
       } else if (Scope->FalseBiasedSelects.count(SI)) {
-        assert(Scope->TrueBiasedSelects.count(SI) == 0 &&
+        assert(!Scope->TrueBiasedSelects.contains(SI) &&
                "Must not be already in");
         Scope->TrueBiasedSelects.insert(SI);
       }
@@ -1592,7 +1592,7 @@ static void insertTrivialPHIs(CHRScope *Scope,
       SmallVector<Instruction *, 8> Users;
       for (User *U : I.users()) {
         if (auto *UI = dyn_cast<Instruction>(U)) {
-          if (BlocksInScope.count(UI->getParent()) == 0 &&
+          if (!BlocksInScope.contains(UI->getParent()) &&
               // Unless there's already a phi for I at the exit block.
               !(isa<PHINode>(UI) && UI->getParent() == ExitBlock)) {
             CHR_DEBUG(dbgs() << "V " << I << "\n");
@@ -1752,7 +1752,7 @@ void CHR::transformScopes(CHRScope *Scope, DenseSet<PHINode *> &TrivialPHIs) {
   // Create the combined branch condition and constant-fold the branches/selects
   // in the hot path.
   fixupBranchesAndSelects(Scope, PreEntryBlock, MergedBr,
-                          ProfileCount ? ProfileCount.getValue() : 0);
+                          ProfileCount.getValueOr(0));
 }
 
 // A helper for transformScopes. Clone the blocks in the scope (excluding the

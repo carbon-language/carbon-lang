@@ -12,6 +12,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/NativeFormatting.h"
 #include <cctype>
 
 namespace llvm {
@@ -109,6 +110,7 @@ void Value::copyFrom(const Value &M) {
   case T_Boolean:
   case T_Double:
   case T_Integer:
+  case T_UINT64:
     memcpy(&Union, &M.Union, sizeof(Union));
     break;
   case T_StringRef:
@@ -133,6 +135,7 @@ void Value::moveFrom(const Value &&M) {
   case T_Boolean:
   case T_Double:
   case T_Integer:
+  case T_UINT64:
     memcpy(&Union, &M.Union, sizeof(Union));
     break;
   case T_StringRef:
@@ -159,6 +162,7 @@ void Value::destroy() {
   case T_Boolean:
   case T_Double:
   case T_Integer:
+  case T_UINT64:
     break;
   case T_StringRef:
     as<StringRef>().~StringRef();
@@ -750,6 +754,8 @@ void llvm::json::OStream::value(const Value &V) {
     valueBegin();
     if (V.Type == Value::T_Integer)
       OS << *V.getAsInteger();
+    else if (V.Type == Value::T_UINT64)
+      OS << *V.getAsUINT64();
     else
       OS << format("%.*g", std::numeric_limits<double>::max_digits10,
                    *V.getAsNumber());

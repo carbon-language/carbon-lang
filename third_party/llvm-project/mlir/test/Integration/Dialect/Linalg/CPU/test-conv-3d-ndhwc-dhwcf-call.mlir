@@ -1,21 +1,10 @@
-// RUN: mlir-opt %s -convert-linalg-to-loops -convert-scf-to-std -convert-linalg-to-llvm -lower-affine -convert-scf-to-std --convert-memref-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt %s -convert-linalg-to-loops -convert-scf-to-cf -convert-linalg-to-llvm -lower-affine -convert-scf-to-cf --convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e main -entry-point-result=void \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext \
 // RUN: | FileCheck %s
 
-// RUN: mlir-opt %s -linalg-tile="linalg-tile-sizes=0,5,5,5" -convert-linalg-to-loops -convert-scf-to-std \
-// RUN:   -convert-linalg-to-llvm -lower-affine -convert-scf-to-std --convert-memref-to-llvm -convert-std-to-llvm | \
-// RUN: mlir-cpu-runner -e main -entry-point-result=void \
-// RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext \
-// RUN: | FileCheck %s
-
-// RUN: mlir-opt %s -test-conv-vectorization="tile-sizes=1,1,1,1,1,3,3,3,3" -convert-linalg-to-llvm -lower-affine -convert-scf-to-std -convert-vector-to-llvm --convert-memref-to-llvm -convert-std-to-llvm | \
-// RUN: mlir-cpu-runner -e main -entry-point-result=void \
-// RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext \
-// RUN: | FileCheck %s
-
-// RUN: mlir-opt %s -linalg-tile="linalg-tile-sizes=0,5,5,5" \
-// RUN:   -test-conv-vectorization="tile-sizes=1,1,1,1,1,3,3,3,3" -convert-linalg-to-llvm -lower-affine -convert-scf-to-std -convert-vector-to-llvm --convert-memref-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt %s -linalg-tile="tile-sizes=0,5,5,5" -convert-linalg-to-loops -convert-scf-to-cf \
+// RUN:   -convert-linalg-to-llvm -lower-affine -convert-scf-to-cf --convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e main -entry-point-result=void \
 // RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext \
 // RUN: | FileCheck %s
@@ -39,14 +28,14 @@ func @conv_3d_ndhwc_dhwcf(%arg0: memref<?x?x?x?x?xf32>, %arg1: memref<?x?x?x?x?x
 
 
 func @main() {
-  %c0 = constant 0 : index
-  %c1 = constant 1 : index
-  %c3 = constant 3 : index
-  %c6 = constant 6 : index
-  %c8 = constant 8 : index
-  %f10 = constant 10.00000e+00 : f32
-  %val = constant 2.00000e+00 : f32
-  %zero = constant 0.00000e+00 : f32
+  %c0 = arith.constant 0 : index
+  %c1 = arith.constant 1 : index
+  %c3 = arith.constant 3 : index
+  %c6 = arith.constant 6 : index
+  %c8 = arith.constant 8 : index
+  %f10 = arith.constant 10.00000e+00 : f32
+  %val = arith.constant 2.00000e+00 : f32
+  %zero = arith.constant 0.00000e+00 : f32
 
   %filter3D_ndhwc = call @alloc_5d_filled_f32(%c3, %c3, %c3, %c1, %c1, %val) : (index, index, index, index, index, f32) -> (memref<?x?x?x?x?xf32>)
   %in3D_ndhwc = call @alloc_5d_filled_f32(%c1, %c8, %c8, %c8, %c1, %val) : (index, index, index, index, index, f32) -> (memref<?x?x?x?x?xf32>)

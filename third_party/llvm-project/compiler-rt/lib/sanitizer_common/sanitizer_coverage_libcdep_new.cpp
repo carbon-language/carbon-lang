@@ -10,11 +10,12 @@
 #include "sanitizer_platform.h"
 
 #if !SANITIZER_FUCHSIA
-#include "sancov_flags.h"
-#include "sanitizer_allocator_internal.h"
-#include "sanitizer_atomic.h"
-#include "sanitizer_common.h"
-#include "sanitizer_file.h"
+#  include "sancov_flags.h"
+#  include "sanitizer_allocator_internal.h"
+#  include "sanitizer_atomic.h"
+#  include "sanitizer_common.h"
+#  include "sanitizer_file.h"
+#  include "sanitizer_interface_internal.h"
 
 using namespace __sanitizer;
 
@@ -72,7 +73,7 @@ static void SanitizerDumpCoverage(const uptr* unsorted_pcs, uptr len) {
     const uptr pc = pcs[i];
     if (!pc) continue;
 
-    if (!__sanitizer_get_module_and_offset_for_pc(pc, nullptr, 0, &pcs[i])) {
+    if (!GetModuleAndOffsetForPc(pc, nullptr, 0, &pcs[i])) {
       Printf("ERROR: unknown pc 0x%zx (may happen if dlclose is used)\n", pc);
       continue;
     }
@@ -87,8 +88,7 @@ static void SanitizerDumpCoverage(const uptr* unsorted_pcs, uptr len) {
       last_base = module_base;
       module_start_idx = i;
       module_found = true;
-      __sanitizer_get_module_and_offset_for_pc(pc, module_name, kMaxPathLength,
-                                               &pcs[i]);
+      GetModuleAndOffsetForPc(pc, module_name, kMaxPathLength, &pcs[i]);
     }
   }
 
@@ -161,30 +161,41 @@ static TracePcGuardController pc_guard_controller;
 // flexibility.
 namespace SingletonCounterCoverage {
 
-static char *counters_start, *counters_end;
+static char *counters_beg, *counters_end;
+static const uptr *pcs_beg, *pcs_end;
 
 static void DumpCoverage() {
   const char* file_path = common_flags()->cov_8bit_counters_out;
-  if (!file_path || !internal_strlen(file_path))
-    return;
-  fd_t fd = OpenFile(file_path);
-  FileCloser file_closer(fd);
-  WriteToFile(fd, counters_start, counters_end - counters_start);
+  if (file_path && internal_strlen(file_path)) {
+    fd_t fd = OpenFile(file_path);
+    FileCloser file_closer(fd);
+    uptr size = counters_end - counters_beg;
+    WriteToFile(fd, counters_beg, size);
+    if (common_flags()->verbosity)
+      __sanitizer::Printf("cov_8bit_counters_out: written %zd bytes to %s\n",
+                          size, file_path);
+  }
+  file_path = common_flags()->cov_pcs_out;
+  if (file_path && internal_strlen(file_path)) {
+    fd_t fd = OpenFile(file_path);
+    FileCloser file_closer(fd);
+    uptr size = (pcs_end - pcs_beg) * sizeof(uptr);
+    WriteToFile(fd, pcs_beg, size);
+    if (common_flags()->verbosity)
+      __sanitizer::Printf("cov_pcs_out: written %zd bytes to %s\n", size,
+                          file_path);
+  }
 }
 
 static void Cov8bitCountersInit(char* beg, char* end) {
-  counters_start = beg;
+  counters_beg = beg;
   counters_end = end;
   Atexit(DumpCoverage);
 }
 
-static void CovPcsInit(const uptr* pcs_beg, const uptr* pcs_end) {
-  const char* file_path = common_flags()->cov_pcs_out;
-  if (!file_path || !internal_strlen(file_path))
-    return;
-  fd_t fd = OpenFile(file_path);
-  FileCloser file_closer(fd);
-  WriteToFile(fd, pcs_beg, (pcs_end - pcs_beg) * sizeof(uptr));
+static void CovPcsInit(const uptr* beg, const uptr* end) {
+  pcs_beg = beg;
+  pcs_end = end;
 }
 
 }  // namespace SingletonCounterCoverage

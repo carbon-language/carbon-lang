@@ -325,7 +325,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
       default: {
         errs() << "LowerFormalArguments Unhandled argument type: "
                << RegVT.getEVTString() << '\n';
-        llvm_unreachable(0);
+        llvm_unreachable(nullptr);
       }
       case MVT::i32:
       case MVT::i64:
@@ -822,7 +822,7 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     BuildMI(BB, DL, TII.get(NewCC)).addReg(LHS).addReg(RHS).addMBB(Copy1MBB);
   } else {
     int64_t imm32 = MI.getOperand(2).getImm();
-    // sanity check before we build J*_ri instruction.
+    // Check before we build J*_ri instruction.
     assert (isInt<32>(imm32));
     BuildMI(BB, DL, TII.get(NewCC))
         .addReg(LHS).addImm(imm32).addMBB(Copy1MBB);
@@ -858,4 +858,26 @@ EVT BPFTargetLowering::getSetCCResultType(const DataLayout &, LLVMContext &,
 MVT BPFTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
                                               EVT VT) const {
   return (getHasAlu32() && VT == MVT::i32) ? MVT::i32 : MVT::i64;
+}
+
+bool BPFTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                              const AddrMode &AM, Type *Ty,
+                                              unsigned AS,
+                                              Instruction *I) const {
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+
+  switch (AM.Scale) {
+  case 0: // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (!AM.HasBaseReg) // allow "r+i".
+      break;
+    return false; // disallow "r+r" or "r+r+i".
+  default:
+    return false;
+  }
+
+  return true;
 }

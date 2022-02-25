@@ -302,9 +302,8 @@ class SizeClassAllocator64 {
     UnmapWithCallbackOrDie((uptr)address_range.base(), address_range.size());
   }
 
-  static void FillMemoryProfile(uptr start, uptr rss, bool file, uptr *stats,
-                           uptr stats_size) {
-    for (uptr class_id = 0; class_id < stats_size; class_id++)
+  static void FillMemoryProfile(uptr start, uptr rss, bool file, uptr *stats) {
+    for (uptr class_id = 0; class_id < kNumClasses; class_id++)
       if (stats[class_id] == start)
         stats[class_id] = rss;
   }
@@ -330,7 +329,7 @@ class SizeClassAllocator64 {
     uptr rss_stats[kNumClasses];
     for (uptr class_id = 0; class_id < kNumClasses; class_id++)
       rss_stats[class_id] = SpaceBeg() + kRegionSize * class_id;
-    GetMemoryProfile(FillMemoryProfile, rss_stats, kNumClasses);
+    GetMemoryProfile(FillMemoryProfile, rss_stats);
 
     uptr total_mapped = 0;
     uptr total_rss = 0;
@@ -355,13 +354,13 @@ class SizeClassAllocator64 {
 
   // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
   // introspection API.
-  void ForceLock() NO_THREAD_SAFETY_ANALYSIS {
+  void ForceLock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
     for (uptr i = 0; i < kNumClasses; i++) {
       GetRegionInfo(i)->mutex.Lock();
     }
   }
 
-  void ForceUnlock() NO_THREAD_SAFETY_ANALYSIS {
+  void ForceUnlock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
     for (int i = (int)kNumClasses - 1; i >= 0; i--) {
       GetRegionInfo(i)->mutex.Unlock();
     }
@@ -625,7 +624,7 @@ class SizeClassAllocator64 {
 
   static const uptr kRegionSize = kSpaceSize / kNumClassesRounded;
   // FreeArray is the array of free-d chunks (stored as 4-byte offsets).
-  // In the worst case it may reguire kRegionSize/SizeClassMap::kMinSize
+  // In the worst case it may require kRegionSize/SizeClassMap::kMinSize
   // elements, but in reality this will not happen. For simplicity we
   // dedicate 1/8 of the region's virtual space to FreeArray.
   static const uptr kFreeArraySize = kRegionSize / 8;

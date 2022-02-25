@@ -11,6 +11,7 @@
 
 #include "Utils.h"
 
+#include "Debug.h"
 #include "Interface.h"
 #include "Mapping.h"
 
@@ -20,8 +21,12 @@ using namespace _OMP;
 
 namespace _OMP {
 /// Helper to keep code alive without introducing a performance penalty.
-__attribute__((used, weak, optnone)) void keepAlive() {
+__attribute__((used, retain, weak, optnone, cold)) void keepAlive() {
+  __kmpc_get_hardware_thread_id_in_block();
+  __kmpc_get_hardware_num_threads_in_block();
+  __kmpc_get_warp_size();
   __kmpc_barrier_simple_spmd(nullptr, 0);
+  __kmpc_barrier_simple_generic(nullptr, 0);
 }
 } // namespace _OMP
 
@@ -33,8 +38,9 @@ namespace impl {
 #pragma omp begin declare variant match(device = {arch(amdgcn)})
 
 void Unpack(uint64_t Val, uint32_t *LowBits, uint32_t *HighBits) {
-  *LowBits = (uint32_t)(Val & UINT64_C(0x00000000FFFFFFFF));
-  *HighBits = (uint32_t)((Val & UINT64_C(0xFFFFFFFF00000000)) >> 32);
+  static_assert(sizeof(unsigned long) == 8, "");
+  *LowBits = (uint32_t)(Val & 0x00000000FFFFFFFFUL);
+  *HighBits = (uint32_t)((Val & 0xFFFFFFFF00000000UL) >> 32);
 }
 
 uint64_t Pack(uint32_t LowBits, uint32_t HighBits) {
@@ -73,7 +79,7 @@ uint64_t Pack(uint32_t LowBits, uint32_t HighBits) {
 
 int32_t shuffle(uint64_t Mask, int32_t Var, int32_t SrcLane) {
   int Width = mapping::getWarpSize();
-  int Self = mapping::getgetThreadIdInWarp();
+  int Self = mapping::getThreadIdInWarp();
   int Index = SrcLane + (Self & ~(Width - 1));
   return __builtin_amdgcn_ds_bpermute(Index << 2, Var);
 }
@@ -126,10 +132,12 @@ int32_t utils::shuffleDown(uint64_t Mask, int32_t Var, uint32_t Delta,
 
 extern "C" {
 int32_t __kmpc_shuffle_int32(int32_t Val, int16_t Delta, int16_t SrcLane) {
+  FunctionTracingRAII();
   return impl::shuffleDown(lanes::All, Val, Delta, SrcLane);
 }
 
 int64_t __kmpc_shuffle_int64(int64_t Val, int16_t Delta, int16_t Width) {
+  FunctionTracingRAII();
   uint32_t lo, hi;
   utils::unpack(Val, lo, hi);
   hi = impl::shuffleDown(lanes::All, hi, Delta, Width);

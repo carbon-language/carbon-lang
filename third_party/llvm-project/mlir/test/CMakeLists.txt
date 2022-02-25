@@ -1,16 +1,9 @@
 add_subdirectory(CAPI)
 add_subdirectory(lib)
 
-llvm_canonicalize_cmake_booleans(
-  MLIR_ENABLE_BINDINGS_PYTHON
-  LLVM_BUILD_EXAMPLES
-  MLIR_ENABLE_CUDA_CONVERSIONS
-  MLIR_ENABLE_CUDA_RUNNER
-  MLIR_ENABLE_ROCM_CONVERSIONS
-  MLIR_ENABLE_ROCM_RUNNER
-  MLIR_ENABLE_SPIRV_CPU_RUNNER
-  MLIR_ENABLE_VULKAN_RUNNER
-  )
+if (MLIR_ENABLE_BINDINGS_PYTHON)
+  add_subdirectory(python)
+endif()
 
 # Passed to lit.site.cfg.py.so that the out of tree Standalone dialect test
 # can find MLIR's CMake configuration
@@ -36,14 +29,35 @@ if (MLIR_INCLUDE_INTEGRATION_TESTS)
   # Passed to lit.site.cfg.py.in to set up the path where to find the libraries.
   set(MLIR_INTEGRATION_TEST_DIR ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
+
+  # The native target may not be enabled when cross compiling, raise an error.
+  if(NOT TARGET ${LLVM_NATIVE_ARCH})
+    message(FATAL_ERROR "MLIR_INCLUDE_INTEGRATION_TESTS requires a native target")
+  endif()
+
   # Copy test data over.
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/mttkrp_b.tns
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test.mtx
+            ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test_symmetric.mtx
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/test.tns
             ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/wide.mtx
-            ${CMAKE_CURRENT_SOURCE_DIR}/Integration/data/zero.mtx
           DESTINATION ${MLIR_INTEGRATION_TEST_DIR}/data/)
 endif()
+
+llvm_canonicalize_cmake_booleans(
+  LLVM_BUILD_EXAMPLES
+  MLIR_ENABLE_BINDINGS_PYTHON
+  MLIR_ENABLE_CUDA_CONVERSIONS
+  MLIR_ENABLE_CUDA_RUNNER
+  MLIR_ENABLE_ROCM_CONVERSIONS
+  MLIR_ENABLE_ROCM_RUNNER
+  MLIR_ENABLE_SPIRV_CPU_RUNNER
+  MLIR_ENABLE_VULKAN_RUNNER
+  MLIR_INCLUDE_INTEGRATION_TESTS
+  MLIR_RUN_AMX_TESTS
+  MLIR_RUN_CUDA_TENSOR_CORE_TESTS
+  MLIR_RUN_X86VECTOR_TESTS
+  )
 
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
@@ -59,24 +73,35 @@ configure_lit_site_cfg(
   )
 
 set(MLIR_TEST_DEPENDS
-  FileCheck count not
-  mlir-capi-execution-engine-test
+  FileCheck count not split-file
   mlir-capi-ir-test
   mlir-capi-llvm-test
   mlir-capi-pass-test
   mlir-capi-sparse-tensor-test
-  mlir-cpu-runner
-  mlir-linalg-ods-gen
+  mlir-capi-quant-test
+  mlir-capi-pdl-test
   mlir-linalg-ods-yaml-gen
   mlir-lsp-server
   mlir-opt
+  mlir-pdll
   mlir-reduce
   mlir-tblgen
   mlir-translate
-  mlir_runner_utils
-  mlir_c_runner_utils
-  mlir_async_runtime
   )
+
+# The native target may not be enabled, in this case we won't
+# run tests that involves executing on the host: do not build
+# useless binaries.
+if(TARGET ${LLVM_NATIVE_ARCH})
+  list(APPEND MLIR_TEST_DEPENDS
+    mlir-cpu-runner
+    llc
+    mlir_async_runtime
+    mlir-capi-execution-engine-test
+    mlir_c_runner_utils
+    mlir_runner_utils
+  )
+endif()
 
 if (MLIR_INCLUDE_INTEGRATION_TESTS)
   list(APPEND MLIR_TEST_DEPENDS lli)
@@ -121,9 +146,16 @@ endif()
 if(MLIR_ENABLE_BINDINGS_PYTHON)
   list(APPEND MLIR_TEST_DEPENDS
     MLIRPythonModules
-    MLIRPythonTestModules
   )
 endif()
+
+# This target can be used to just build the dependencies
+# for the check-mlir target without executing the tests.
+# This is useful for bots when splitting the build step
+# from the testing step.
+add_custom_target(check-mlir-build-only
+  DEPENDS ${MLIR_TEST_DEPENDS}
+)
 
 add_lit_testsuite(check-mlir "Running the MLIR regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}

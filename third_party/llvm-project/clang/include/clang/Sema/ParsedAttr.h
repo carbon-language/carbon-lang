@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_ATTRIBUTELIST_H
-#define LLVM_CLANG_SEMA_ATTRIBUTELIST_H
+#ifndef LLVM_CLANG_SEMA_PARSEDATTR_H
+#define LLVM_CLANG_SEMA_PARSEDATTR_H
 
 #include "clang/Basic/AttrSubjectMatchRules.h"
 #include "clang/Basic/AttributeCommonInfo.h"
@@ -49,8 +49,12 @@ struct ParsedAttrInfo {
   unsigned NumArgs : 4;
   /// The number of optional arguments of this attributes.
   unsigned OptArgs : 4;
+  /// The number of non-fake arguments specified in the attribute definition.
+  unsigned NumArgMembers : 4;
   /// True if the parsing does not match the semantic content.
   unsigned HasCustomParsing : 1;
+  // True if this attribute accepts expression parameter pack expansions.
+  unsigned AcceptsExprPack : 1;
   /// True if this attribute is only available for certain targets.
   unsigned IsTargetSpecific : 1;
   /// True if this attribute applies to types.
@@ -106,6 +110,10 @@ struct ParsedAttrInfo {
   spellingIndexToSemanticSpelling(const ParsedAttr &Attr) const {
     return UINT_MAX;
   }
+  /// Returns true if the specified parameter index for this attribute in
+  /// Attr.td is an ExprArgument or VariadicExprArgument, or a subclass thereof;
+  /// returns false otherwise.
+  virtual bool isParamExpr(size_t N) const { return false; }
   /// Populate Rules with the match rules of this attribute.
   virtual void getPragmaAttributeMatchRules(
       llvm::SmallVectorImpl<std::pair<attr::SubjectMatchRule, bool>> &Rules,
@@ -601,9 +609,13 @@ public:
   bool isStmtAttr() const;
 
   bool hasCustomParsing() const;
+  bool acceptsExprPack() const;
+  bool isParamExpr(size_t N) const;
   unsigned getMinArgs() const;
   unsigned getMaxArgs() const;
+  unsigned getNumArgMembers() const;
   bool hasVariadicArg() const;
+  void handleAttrWithDelayedArgs(Sema &S, Decl *D) const;
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
   bool diagnoseAppertainsTo(class Sema &S, const Stmt *St) const;
   bool diagnoseMutualExclusion(class Sema &S, const Decl *D) const;
@@ -894,7 +906,7 @@ public:
                                                 ParsedAttr> {
     iterator() : iterator_adaptor_base(nullptr) {}
     iterator(VecTy::iterator I) : iterator_adaptor_base(I) {}
-    reference operator*() { return **I; }
+    reference operator*() const { return **I; }
     friend class ParsedAttributesView;
   };
   struct const_iterator
@@ -1080,7 +1092,7 @@ struct ParsedAttributesWithRange : ParsedAttributes {
   SourceRange Range;
 };
 struct ParsedAttributesViewWithRange : ParsedAttributesView {
-  ParsedAttributesViewWithRange() : ParsedAttributesView() {}
+  ParsedAttributesViewWithRange() {}
   void clearListOnly() {
     ParsedAttributesView::clearListOnly();
     Range = SourceRange();
@@ -1097,6 +1109,7 @@ enum AttributeArgumentNType {
   AANT_ArgumentString,
   AANT_ArgumentIdentifier,
   AANT_ArgumentConstantExpr,
+  AANT_ArgumentBuiltinFunction,
 };
 
 /// These constants match the enumerated choices of
@@ -1119,14 +1132,14 @@ enum AttributeDeclKind {
 
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
                                              const ParsedAttr &At) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(At.getAttrName()),
+  DB.AddTaggedVal(reinterpret_cast<uint64_t>(At.getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
 
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
                                              const ParsedAttr *At) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(At->getAttrName()),
+  DB.AddTaggedVal(reinterpret_cast<uint64_t>(At->getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
@@ -1141,7 +1154,7 @@ template <typename ACI,
               std::is_same<ACI, AttributeCommonInfo>::value, int> = 0>
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
                                            const ACI &CI) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(CI.getAttrName()),
+  DB.AddTaggedVal(reinterpret_cast<uint64_t>(CI.getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
@@ -1151,11 +1164,11 @@ template <typename ACI,
               std::is_same<ACI, AttributeCommonInfo>::value, int> = 0>
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
                                            const ACI* CI) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(CI->getAttrName()),
+  DB.AddTaggedVal(reinterpret_cast<uint64_t>(CI->getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
 
 } // namespace clang
 
-#endif // LLVM_CLANG_SEMA_ATTRIBUTELIST_H
+#endif // LLVM_CLANG_SEMA_PARSEDATTR_H

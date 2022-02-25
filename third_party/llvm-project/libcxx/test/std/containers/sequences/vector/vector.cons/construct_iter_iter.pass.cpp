@@ -26,13 +26,22 @@
 
 template <class C, class Iterator>
 void test(Iterator first, Iterator last) {
-  C c(first, last);
-  LIBCPP_ASSERT(c.__invariants());
-  assert(c.size() == static_cast<std::size_t>(std::distance(first, last)));
-  LIBCPP_ASSERT(is_contiguous_container_asan_correct(c));
-  for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e;
-       ++i, ++first)
+  {
+    C c(first, last);
+    LIBCPP_ASSERT(c.__invariants());
+    assert(c.size() == static_cast<std::size_t>(std::distance(first, last)));
+    LIBCPP_ASSERT(is_contiguous_container_asan_correct(c));
+    for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e;
+      ++i, ++first)
     assert(*i == *first);
+  }
+  // Test with an empty range
+  {
+    C c(first, first);
+    LIBCPP_ASSERT(c.__invariants());
+    assert(c.empty());
+    LIBCPP_ASSERT(is_contiguous_container_asan_correct(c));
+  }
 }
 
 static void basic_test_cases() {
@@ -156,14 +165,14 @@ void test_ctor_with_different_value_type() {
     // Make sure initialization is performed with each element value, not with
     // a memory blob.
     float array[3] = {0.0f, 1.0f, 2.0f};
-#ifdef TEST_COMPILER_C1XX
+#ifdef TEST_COMPILER_MSVC
     #pragma warning(push)
     #pragma warning(disable: 4244) // conversion from 'float' to 'int', possible loss of data
-#endif // TEST_COMPILER_C1XX
+#endif // TEST_COMPILER_MSVC
     std::vector<int> v(array, array + 3);
-#ifdef TEST_COMPILER_C1XX
+#ifdef TEST_COMPILER_MSVC
     #pragma warning(pop)
-#endif // TEST_COMPILER_C1XX
+#endif // TEST_COMPILER_MSVC
     assert(v[0] == 0);
     assert(v[1] == 1);
     assert(v[2] == 2);

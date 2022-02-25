@@ -15,7 +15,7 @@
 
 #include "DebugOptions.h"
 
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/STLArrayExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/CommandLine.h"
@@ -28,6 +28,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
@@ -87,8 +88,7 @@ static CallbackAndCookie CallBacksToRun[MaxSignalHandlerCallbacks];
 
 // Signal-safe.
 void sys::RunSignalHandlers() {
-  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
-    auto &RunMe = CallBacksToRun[I];
+  for (CallbackAndCookie &RunMe : CallBacksToRun) {
     auto Expected = CallbackAndCookie::Status::Initialized;
     auto Desired = CallbackAndCookie::Status::Executing;
     if (!RunMe.Flag.compare_exchange_strong(Expected, Desired))
@@ -103,8 +103,7 @@ void sys::RunSignalHandlers() {
 // Signal-safe.
 static void insertSignalHandler(sys::SignalHandlerCallback FnPtr,
                                 void *Cookie) {
-  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
-    auto &SetMe = CallBacksToRun[I];
+  for (CallbackAndCookie &SetMe : CallBacksToRun) {
     auto Expected = CallbackAndCookie::Status::Empty;
     auto Desired = CallbackAndCookie::Status::Initializing;
     if (!SetMe.Flag.compare_exchange_strong(Expected, Desired))

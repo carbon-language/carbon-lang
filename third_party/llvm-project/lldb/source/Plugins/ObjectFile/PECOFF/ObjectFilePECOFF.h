@@ -57,9 +57,9 @@ public:
 
   static void Terminate();
 
-  static lldb_private::ConstString GetPluginNameStatic();
+  static llvm::StringRef GetPluginNameStatic() { return "pe-coff"; }
 
-  static const char *GetPluginDescriptionStatic();
+  static llvm::StringRef GetPluginDescriptionStatic();
 
   static ObjectFile *
   CreateInstance(const lldb::ModuleSP &module_sp, lldb::DataBufferSP &data_sp,
@@ -107,7 +107,7 @@ public:
   //    virtual lldb_private::AddressClass
   //    GetAddressClass (lldb::addr_t file_addr);
 
-  lldb_private::Symtab *GetSymtab() override;
+  void ParseSymtab(lldb_private::Symtab &symtab) override;
 
   bool IsStripped() override;
 
@@ -130,9 +130,7 @@ public:
   ObjectFile::Strata CalculateStrata() override;
 
   // PluginInterface protocol
-  lldb_private::ConstString GetPluginName() override;
-
-  uint32_t GetPluginVersion() override;
+  llvm::StringRef GetPluginName() override { return GetPluginNameStatic(); }
 
   bool IsWindowsSubsystem();
 

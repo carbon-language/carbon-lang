@@ -60,7 +60,6 @@ if(APPLE)
   set(COMPILER_RT_USE_BUILTINS_LIBRARY ON CACHE BOOL "")
 
   set(LIBUNWIND_ENABLE_SHARED OFF CACHE BOOL "")
-  set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
   set(LIBUNWIND_USE_COMPILER_RT ON CACHE BOOL "")
   set(LIBCXXABI_ENABLE_SHARED OFF CACHE BOOL "")
   set(LIBCXXABI_ENABLE_STATIC_UNWINDER ON CACHE BOOL "")
@@ -71,10 +70,9 @@ if(APPLE)
   set(LIBCXX_ENABLE_SHARED OFF CACHE BOOL "")
   set(LIBCXX_ENABLE_STATIC_ABI_LIBRARY ON CACHE BOOL "")
   set(LIBCXX_ABI_VERSION 2 CACHE STRING "")
-  set(DARWIN_ios_ARCHS armv7;armv7s;arm64 CACHE STRING "")
-  set(DARWIN_iossim_ARCHS i386;x86_64 CACHE STRING "")
+  set(DARWIN_ios_ARCHS arm64 CACHE STRING "")
+  set(DARWIN_iossim_ARCHS arm64 CACHE STRING "")
   set(DARWIN_osx_ARCHS arm64;x86_64 CACHE STRING "")
-  set(SANITIZER_MIN_OSX_VERSION 10.7 CACHE STRING "")
 endif()
 
 if(WIN32)
@@ -121,9 +119,9 @@ foreach(target aarch64-unknown-linux-gnu;armv7-unknown-linux-gnueabihf;i386-unkn
     set(RUNTIMES_${target}_CMAKE_MODULE_LINKER_FLAGS "-fuse-ld=lld" CACHE STRING "")
     set(RUNTIMES_${target}_CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld" CACHE STRING "")
     set(RUNTIMES_${target}_COMPILER_RT_USE_BUILTINS_LIBRARY ON CACHE BOOL "")
+    set(RUNTIMES_${target}_COMPILER_RT_CAN_EXECUTE_TESTS ON CACHE BOOL "")
     set(RUNTIMES_${target}_LIBUNWIND_ENABLE_SHARED OFF CACHE BOOL "")
     set(RUNTIMES_${target}_LIBUNWIND_USE_COMPILER_RT ON CACHE BOOL "")
-    set(RUNTIMES_${target}_LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
     set(RUNTIMES_${target}_LIBCXXABI_USE_COMPILER_RT ON CACHE BOOL "")
     set(RUNTIMES_${target}_LIBCXXABI_ENABLE_SHARED OFF CACHE BOOL "")
     set(RUNTIMES_${target}_LIBCXXABI_USE_LLVM_UNWINDER ON CACHE BOOL "")
@@ -136,6 +134,12 @@ foreach(target aarch64-unknown-linux-gnu;armv7-unknown-linux-gnueabihf;i386-unkn
     set(RUNTIMES_${target}_LLVM_ENABLE_ASSERTIONS OFF CACHE BOOL "")
     set(RUNTIMES_${target}_SANITIZER_CXX_ABI "libc++" CACHE STRING "")
     set(RUNTIMES_${target}_SANITIZER_CXX_ABI_INTREE ON CACHE BOOL "")
+    set(RUNTIMES_${target}_SANITIZER_TEST_CXX "libc++" CACHE STRING "")
+    set(RUNTIMES_${target}_SANITIZER_TEST_CXX_INTREE ON CACHE BOOL "")
+    set(RUNTIMES_${target}_COMPILER_RT_TEST_COMPILER_CFLAGS "--unwindlib=libunwind -static-libgcc" CACHE STRING "")
+    set(RUNTIMES_${target}_SANITIZER_COMMON_TEST_TARGET_CFLAGS "--unwindlib=libunwind -static-libgcc" CACHE STRING "")
+    set(RUNTIMES_${target}_TSAN_TEST_TARGET_CFLAGS "--unwindlib=libunwind -static-libgcc" CACHE STRING "")
+    set(RUNTIMES_${target}_LLVM_TOOLS_DIR "${CMAKE_BINARY_DIR}/bin" CACHE BOOL "")
     set(RUNTIMES_${target}_LLVM_ENABLE_RUNTIMES "compiler-rt;libcxx;libcxxabi;libunwind" CACHE STRING "")
 
     # Use .build-id link.
@@ -267,12 +271,14 @@ set(LLVM_TOOLCHAIN_TOOLS
   llvm-ifs
   llvm-gsymutil
   llvm-lib
+  llvm-libtool-darwin
   llvm-lipo
   llvm-mt
   llvm-nm
   llvm-objcopy
   llvm-objdump
   llvm-otool
+  llvm-pdbutil
   llvm-profdata
   llvm-rc
   llvm-ranlib

@@ -92,9 +92,9 @@ bool RISCVExpandPseudo::expandMBB(MachineBasicBlock &MBB) {
 bool RISCVExpandPseudo::expandMI(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI,
                                  MachineBasicBlock::iterator &NextMBBI) {
-  // RISCVInstrInfo::getInstSizeInBytes hard-codes the number of expanded
-  // instructions for each pseudo, and must be updated when adding new pseudos
-  // or changing existing ones.
+  // RISCVInstrInfo::getInstSizeInBytes expects that the total size of the
+  // expanded instructions for each pseudo is correct in the Size field of the
+  // tablegen definition for the pseudo.
   switch (MBBI->getOpcode()) {
   case RISCV::PseudoLLA:
     return expandLoadLocalAddress(MBB, MBBI, NextMBBI);
@@ -105,6 +105,7 @@ bool RISCVExpandPseudo::expandMI(MachineBasicBlock &MBB,
   case RISCV::PseudoLA_TLS_GD:
     return expandLoadTLSGDAddress(MBB, MBBI, NextMBBI);
   case RISCV::PseudoVSETVLI:
+  case RISCV::PseudoVSETVLIX0:
   case RISCV::PseudoVSETIVLI:
     return expandVSetVL(MBB, MBBI);
   case RISCV::PseudoVMCLR_M_B1:
@@ -246,13 +247,14 @@ bool RISCVExpandPseudo::expandVSetVL(MachineBasicBlock &MBB,
   DebugLoc DL = MBBI->getDebugLoc();
 
   assert((MBBI->getOpcode() == RISCV::PseudoVSETVLI ||
+          MBBI->getOpcode() == RISCV::PseudoVSETVLIX0 ||
           MBBI->getOpcode() == RISCV::PseudoVSETIVLI) &&
          "Unexpected pseudo instruction");
   unsigned Opcode;
-  if (MBBI->getOpcode() == RISCV::PseudoVSETVLI)
-    Opcode = RISCV::VSETVLI;
-  else
+  if (MBBI->getOpcode() == RISCV::PseudoVSETIVLI)
     Opcode = RISCV::VSETIVLI;
+  else
+    Opcode = RISCV::VSETVLI;
   const MCInstrDesc &Desc = TII->get(Opcode);
   assert(Desc.getNumOperands() == 3 && "Unexpected instruction format");
 

@@ -20,8 +20,8 @@
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
-#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
@@ -30,9 +30,9 @@
 #include "llvm/Config/config.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 
 #define DEBUG_TYPE "instruction-select"
@@ -71,9 +71,10 @@ InstructionSelect::InstructionSelect()
 
 void InstructionSelect::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetPassConfig>();
+  AU.addRequired<GISelKnownBitsAnalysis>();
+  AU.addPreserved<GISelKnownBitsAnalysis>();
+
   if (OptLevel != CodeGenOpt::None) {
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
     AU.addRequired<ProfileSummaryInfoWrapperPass>();
     LazyBlockFrequencyInfoPass::getLazyBFIAnalysisUsage(AU);
   }
@@ -97,9 +98,8 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
   OptLevel = MF.getFunction().hasOptNone() ? CodeGenOpt::None
                                            : MF.getTarget().getOptLevel();
 
-  GISelKnownBits *KB = nullptr;
+  GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
   if (OptLevel != CodeGenOpt::None) {
-    KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
     PSI = &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
     if (PSI && PSI->hasProfileSummary())
       BFI = &getAnalysis<LazyBlockFrequencyInfoPass>().getBFI();
@@ -130,9 +130,12 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
   // Until then, keep track of the number of blocks to assert that we don't.
   const size_t NumBlocks = MF.size();
 #endif
+  // Keep track of selected blocks, so we can delete unreachable ones later.
+  DenseSet<MachineBasicBlock *> SelectedBlocks;
 
   for (MachineBasicBlock *MBB : post_order(&MF)) {
     ISel->CurMBB = MBB;
+    SelectedBlocks.insert(MBB);
     if (MBB->empty())
       continue;
 
@@ -160,7 +163,7 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
       // If so, erase it.
       if (isTriviallyDead(MI, MRI)) {
         LLVM_DEBUG(dbgs() << "Is dead; erasing.\n");
-        MI.eraseFromParentAndMarkDBGValuesForRemoval();
+        MI.eraseFromParent();
         continue;
       }
 
@@ -205,6 +208,15 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
     if (MBB.empty())
       continue;
 
+    if (!SelectedBlocks.contains(&MBB)) {
+      // This is an unreachable block and therefore hasn't been selected, since
+      // the main selection loop above uses a postorder block traversal.
+      // We delete all the instructions in this block since it's unreachable.
+      MBB.clear();
+      // Don't delete the block in case the block has it's address taken or is
+      // still being referenced by a phi somewhere.
+      continue;
+    }
     // Try to find redundant copies b/w vregs of the same register class.
     bool ReachedBegin = false;
     for (auto MII = std::prev(MBB.end()), Begin = MBB.begin(); !ReachedBegin;) {
@@ -243,8 +255,12 @@ bool InstructionSelect::runOnMachineFunction(MachineFunction &MF) {
     MachineInstr *MI = nullptr;
     if (!MRI.def_empty(VReg))
       MI = &*MRI.def_instr_begin(VReg);
-    else if (!MRI.use_empty(VReg))
+    else if (!MRI.use_empty(VReg)) {
       MI = &*MRI.use_instr_begin(VReg);
+      // Debug value instruction is permitted to use undefined vregs.
+      if (MI->isDebugValue())
+        continue;
+    }
     if (!MI)
       continue;
 

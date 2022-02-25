@@ -39,7 +39,7 @@ namespace LLVM {
 
 namespace detail {
 class DebugTranslation;
-} // end namespace detail
+} // namespace detail
 
 class LLVMFuncOp;
 
@@ -83,6 +83,9 @@ public:
     return valueMapping.lookup(value);
   }
 
+  /// Looks up remapped a list of remapped values.
+  SmallVector<llvm::Value *> lookupValues(ValueRange values);
+
   /// Stores the mapping between an MLIR block and LLVM IR basic block.
   void mapBlock(Block *mlir, llvm::BasicBlock *llvm) {
     auto result = blockMapping.try_emplace(mlir, llvm);
@@ -109,6 +112,10 @@ public:
   llvm::Instruction *lookupBranch(Operation *op) const {
     return branchMapping.lookup(op);
   }
+
+  /// Removes the mapping for blocks contained in the region and values defined
+  /// in these blocks.
+  void forgetMapping(Region &region);
 
   /// Returns the LLVM metadata corresponding to a reference to an mlir LLVM
   /// dialect access group operation.
@@ -141,9 +148,6 @@ public:
 
   /// Converts the type from MLIR LLVM dialect to LLVM.
   llvm::Type *convertType(Type type);
-
-  /// Looks up remapped a list of remapped values.
-  SmallVector<llvm::Value *, 8> lookupValues(ValueRange values);
 
   /// Returns the MLIR context of the module being translated.
   MLIRContext &getContext() { return *mlirModule->getContext(); }
@@ -187,7 +191,7 @@ public:
   /// Common CRTP base class for ModuleTranslation stack frames.
   class StackFrame {
   public:
-    virtual ~StackFrame() {}
+    virtual ~StackFrame() = default;
     TypeID getTypeID() const { return typeID; }
 
   protected:
@@ -217,7 +221,7 @@ public:
   /// translated makes the frame available when translating ops within that
   /// region.
   template <typename T, typename... Args>
-  void stackPush(Args &&... args) {
+  void stackPush(Args &&...args) {
     static_assert(
         std::is_base_of<StackFrame, T>::value,
         "can only push instances of StackFrame on ModuleTranslation stack");
@@ -355,14 +359,6 @@ llvm::Value *createIntrinsicCall(llvm::IRBuilderBase &builder,
                                  llvm::Intrinsic::ID intrinsic,
                                  ArrayRef<llvm::Value *> args = {},
                                  ArrayRef<llvm::Type *> tys = {});
-
-/// Creates a call to an LLVM IR intrinsic function with the given arguments
-/// for NVVM WMMA ops. Handles cases where the intrinsic name is overloaded
-/// using the types of arguments supplied. Selects the correct intrinsic
-/// by inspecting the argument types.
-llvm::Value *createNvvmIntrinsicCall(llvm::IRBuilderBase &builder,
-                                     llvm::Intrinsic::ID intrinsic,
-                                     ArrayRef<llvm::Value *> args = {});
 } // namespace detail
 
 } // namespace LLVM

@@ -19,9 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <numeric>
 #include <utility>
-#include <vector>
 
 using namespace llvm;
 using namespace llvm::itanium_demangle;
@@ -333,21 +331,21 @@ char *llvm::itaniumDemangle(const char *MangledName, char *Buf,
 
   int InternalStatus = demangle_success;
   Demangler Parser(MangledName, MangledName + std::strlen(MangledName));
-  OutputStream S;
+  OutputBuffer OB;
 
   Node *AST = Parser.parse();
 
   if (AST == nullptr)
     InternalStatus = demangle_invalid_mangled_name;
-  else if (!initializeOutputStream(Buf, N, S, 1024))
+  else if (!initializeOutputBuffer(Buf, N, OB, 1024))
     InternalStatus = demangle_memory_alloc_failure;
   else {
     assert(Parser.ForwardTemplateRefs.empty());
-    AST->print(S);
-    S += '\0';
+    AST->print(OB);
+    OB += '\0';
     if (N != nullptr)
-      *N = S.getCurrentPosition();
-    Buf = S.getBuffer();
+      *N = OB.getCurrentPosition();
+    Buf = OB.getBuffer();
   }
 
   if (Status)
@@ -385,14 +383,14 @@ bool ItaniumPartialDemangler::partialDemangle(const char *MangledName) {
 }
 
 static char *printNode(const Node *RootNode, char *Buf, size_t *N) {
-  OutputStream S;
-  if (!initializeOutputStream(Buf, N, S, 128))
+  OutputBuffer OB;
+  if (!initializeOutputBuffer(Buf, N, OB, 128))
     return nullptr;
-  RootNode->print(S);
-  S += '\0';
+  RootNode->print(OB);
+  OB += '\0';
   if (N != nullptr)
-    *N = S.getCurrentPosition();
-  return S.getBuffer();
+    *N = OB.getCurrentPosition();
+  return OB.getBuffer();
 }
 
 char *ItaniumPartialDemangler::getFunctionBaseName(char *Buf, size_t *N) const {
@@ -405,9 +403,6 @@ char *ItaniumPartialDemangler::getFunctionBaseName(char *Buf, size_t *N) const {
     switch (Name->getKind()) {
     case Node::KAbiTagAttr:
       Name = static_cast<const AbiTagAttr *>(Name)->Base;
-      continue;
-    case Node::KStdQualifiedName:
-      Name = static_cast<const StdQualifiedName *>(Name)->Child;
       continue;
     case Node::KNestedName:
       Name = static_cast<const NestedName *>(Name)->Name;
@@ -430,8 +425,8 @@ char *ItaniumPartialDemangler::getFunctionDeclContextName(char *Buf,
     return nullptr;
   const Node *Name = static_cast<const FunctionEncoding *>(RootNode)->getName();
 
-  OutputStream S;
-  if (!initializeOutputStream(Buf, N, S, 128))
+  OutputBuffer OB;
+  if (!initializeOutputBuffer(Buf, N, OB, 128))
     return nullptr;
 
  KeepGoingLocalFunction:
@@ -448,26 +443,23 @@ char *ItaniumPartialDemangler::getFunctionDeclContextName(char *Buf,
   }
 
   switch (Name->getKind()) {
-  case Node::KStdQualifiedName:
-    S += "std";
-    break;
   case Node::KNestedName:
-    static_cast<const NestedName *>(Name)->Qual->print(S);
+    static_cast<const NestedName *>(Name)->Qual->print(OB);
     break;
   case Node::KLocalName: {
     auto *LN = static_cast<const LocalName *>(Name);
-    LN->Encoding->print(S);
-    S += "::";
+    LN->Encoding->print(OB);
+    OB += "::";
     Name = LN->Entity;
     goto KeepGoingLocalFunction;
   }
   default:
     break;
   }
-  S += '\0';
+  OB += '\0';
   if (N != nullptr)
-    *N = S.getCurrentPosition();
-  return S.getBuffer();
+    *N = OB.getCurrentPosition();
+  return OB.getBuffer();
 }
 
 char *ItaniumPartialDemangler::getFunctionName(char *Buf, size_t *N) const {
@@ -483,17 +475,17 @@ char *ItaniumPartialDemangler::getFunctionParameters(char *Buf,
     return nullptr;
   NodeArray Params = static_cast<FunctionEncoding *>(RootNode)->getParams();
 
-  OutputStream S;
-  if (!initializeOutputStream(Buf, N, S, 128))
+  OutputBuffer OB;
+  if (!initializeOutputBuffer(Buf, N, OB, 128))
     return nullptr;
 
-  S += '(';
-  Params.printWithComma(S);
-  S += ')';
-  S += '\0';
+  OB += '(';
+  Params.printWithComma(OB);
+  OB += ')';
+  OB += '\0';
   if (N != nullptr)
-    *N = S.getCurrentPosition();
-  return S.getBuffer();
+    *N = OB.getCurrentPosition();
+  return OB.getBuffer();
 }
 
 char *ItaniumPartialDemangler::getFunctionReturnType(
@@ -501,18 +493,18 @@ char *ItaniumPartialDemangler::getFunctionReturnType(
   if (!isFunction())
     return nullptr;
 
-  OutputStream S;
-  if (!initializeOutputStream(Buf, N, S, 128))
+  OutputBuffer OB;
+  if (!initializeOutputBuffer(Buf, N, OB, 128))
     return nullptr;
 
   if (const Node *Ret =
           static_cast<const FunctionEncoding *>(RootNode)->getReturnType())
-    Ret->print(S);
+    Ret->print(OB);
 
-  S += '\0';
+  OB += '\0';
   if (N != nullptr)
-    *N = S.getCurrentPosition();
-  return S.getBuffer();
+    *N = OB.getCurrentPosition();
+  return OB.getBuffer();
 }
 
 char *ItaniumPartialDemangler::finishDemangle(char *Buf, size_t *N) const {
@@ -551,9 +543,6 @@ bool ItaniumPartialDemangler::isCtorOrDtor() const {
       break;
     case Node::KNestedName:
       N = static_cast<const NestedName *>(N)->Name;
-      break;
-    case Node::KStdQualifiedName:
-      N = static_cast<const StdQualifiedName *>(N)->Child;
       break;
     }
   }

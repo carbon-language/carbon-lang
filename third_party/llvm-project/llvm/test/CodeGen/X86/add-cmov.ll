@@ -136,9 +136,9 @@ define i64 @select_max32_2_i64(i64 %offset, i64 %x) {
 ; CHECK-LABEL: select_max32_2_i64:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    leaq 2(%rdi), %rax
-; CHECK-NEXT:    addq $2147483647, %rdi # imm = 0x7FFFFFFF
+; CHECK-NEXT:    leaq 2147483647(%rdi), %rcx
 ; CHECK-NEXT:    cmpq $41, %rsi
-; CHECK-NEXT:    cmovneq %rdi, %rax
+; CHECK-NEXT:    cmovneq %rcx, %rax
 ; CHECK-NEXT:    retq
   %b = icmp ne i64 %x, 41
   %s = select i1 %b, i64 2147483647, i64 2
@@ -209,10 +209,10 @@ define i32 @select_20_43_i32(i32 %offset, i64 %x) {
 ; CHECK-LABEL: select_20_43_i32:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    # kill: def $edi killed $edi def $rdi
-; CHECK-NEXT:    leal 43(%rdi), %eax
-; CHECK-NEXT:    addl $20, %edi
+; CHECK-NEXT:    leal 43(%rdi), %ecx
+; CHECK-NEXT:    leal 20(%rdi), %eax
 ; CHECK-NEXT:    cmpq $42, %rsi
-; CHECK-NEXT:    cmovgel %edi, %eax
+; CHECK-NEXT:    cmovll %ecx, %eax
 ; CHECK-NEXT:    retq
   %b = icmp sgt i64 %x, 41
   %s = select i1 %b, i32 20, i32 43
@@ -224,10 +224,10 @@ define i16 @select_n2_17_i16(i16 %offset, i1 %b) {
 ; CHECK-LABEL: select_n2_17_i16:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    # kill: def $edi killed $edi def $rdi
-; CHECK-NEXT:    leal 17(%rdi), %eax
-; CHECK-NEXT:    addl $65534, %edi # imm = 0xFFFE
+; CHECK-NEXT:    leal 17(%rdi), %ecx
+; CHECK-NEXT:    leal 65534(%rdi), %eax
 ; CHECK-NEXT:    testb $1, %sil
-; CHECK-NEXT:    cmovnel %edi, %eax
+; CHECK-NEXT:    cmovel %ecx, %eax
 ; CHECK-NEXT:    # kill: def $ax killed $ax killed $eax
 ; CHECK-NEXT:    retq
   %s = select i1 %b, i16 -2, i16 17
@@ -472,4 +472,99 @@ define void @complex_lea_alt8(i1 %b, i16* readnone %ptr, i64 %idx) {
   %dec = add i16 %ld, -1
   store i16 %dec, i16* %sel, align 4
   ret void
+}
+
+define i32 @loadfold_select_const_arms(i32* %x, i1 %y) {
+; CHECK-LABEL: loadfold_select_const_arms:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    movl $10, %ecx
+; CHECK-NEXT:    movl $-10, %eax
+; CHECK-NEXT:    cmovnel %ecx, %eax
+; CHECK-NEXT:    addl (%rdi), %eax
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 10, i32 -10
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  ret i32 %add
+}
+
+define void @rmw_add(i32* %x, i1 %y, i32 %z, i32 %w) {
+; CHECK-LABEL: rmw_add:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    cmovel %ecx, %edx
+; CHECK-NEXT:    addl %edx, (%rdi)
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 %z, i32 %w
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  store i32 %add, i32* %x, align 4
+  ret void
+}
+
+define void @rmw_add_select_const_arm(i32* %x, i1 %y, i32 %z) {
+; CHECK-LABEL: rmw_add_select_const_arm:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    movl $-10, %eax
+; CHECK-NEXT:    cmovnel %edx, %eax
+; CHECK-NEXT:    addl %eax, (%rdi)
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 %z, i32 -10
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  store i32 %add, i32* %x, align 4
+  ret void
+}
+
+define void @rmw_select_const_arms(i32* %x, i1 %y) {
+; CHECK-LABEL: rmw_select_const_arms:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    movl $10, %eax
+; CHECK-NEXT:    movl $-10, %ecx
+; CHECK-NEXT:    cmovnel %eax, %ecx
+; CHECK-NEXT:    addl %ecx, (%rdi)
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 10, i32 -10
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  store i32 %add, i32* %x, align 4
+  ret void
+}
+
+define i32 @rmw_select_const_arms_extra_load_use(i32* %x, i1 %y) {
+; CHECK-LABEL: rmw_select_const_arms_extra_load_use:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movl (%rdi), %eax
+; CHECK-NEXT:    leal -10(%rax), %ecx
+; CHECK-NEXT:    leal 10(%rax), %edx
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    cmovel %ecx, %edx
+; CHECK-NEXT:    movl %edx, (%rdi)
+; CHECK-NEXT:    # kill: def $eax killed $eax killed $rax
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 10, i32 -10
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  store i32 %add, i32* %x, align 4
+  ret i32 %t0
+}
+
+define i32 @rmw_select_const_arms_extra_add_use(i32* %x, i1 %y) {
+; CHECK-LABEL: rmw_select_const_arms_extra_add_use:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    testb $1, %sil
+; CHECK-NEXT:    movl $10, %ecx
+; CHECK-NEXT:    movl $-10, %eax
+; CHECK-NEXT:    cmovnel %ecx, %eax
+; CHECK-NEXT:    addl (%rdi), %eax
+; CHECK-NEXT:    movl %eax, (%rdi)
+; CHECK-NEXT:    retq
+  %cond = select i1 %y, i32 10, i32 -10
+  %t0 = load i32, i32* %x, align 4
+  %add = add nsw i32 %t0, %cond
+  store i32 %add, i32* %x, align 4
+  ret i32 %add
 }

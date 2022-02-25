@@ -157,6 +157,42 @@ class SOP1_1 <string opName, RegisterClass rc = SReg_64, list<dag> pattern=[]> :
   let has_sdst = 0;
 }
 
+class UniformUnaryFrag<SDPatternOperator Op> : PatFrag <
+  (ops node:$src0),
+  (Op $src0),
+  [{ return !N->isDivergent(); }]> {
+  // This check is unnecessary as it's captured by the result register
+  // bank constraint.
+  //
+  // FIXME: Should add a way for the emitter to recognize this is a
+  // trivially true predicate to eliminate the check.
+  let GISelPredicateCode = [{return true;}];
+}
+
+class UniformBinFrag<SDPatternOperator Op> : PatFrag <
+  (ops node:$src0, node:$src1),
+  (Op $src0, $src1),
+  [{ return !N->isDivergent(); }]> {
+  // This check is unnecessary as it's captured by the result register
+  // bank constraint.
+  //
+  // FIXME: Should add a way for the emitter to recognize this is a
+  // trivially true predicate to eliminate the check.
+  let GISelPredicateCode = [{return true;}];
+}
+
+class DivergentBinFrag<SDPatternOperator Op> : PatFrag <
+  (ops node:$src0, node:$src1),
+  (Op $src0, $src1),
+  [{ return N->isDivergent(); }]> {
+  // This check is unnecessary as it's captured by the result register
+  // bank constraint.
+  //
+  // FIXME: Should add a way for the emitter to recognize this is a
+  // trivially true predicate to eliminate the check.
+  let GISelPredicateCode = [{return true;}];
+}
+
 
 let isMoveImm = 1 in {
   let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
@@ -172,11 +208,11 @@ let isMoveImm = 1 in {
 
 let Defs = [SCC] in {
   def S_NOT_B32 : SOP1_32 <"s_not_b32",
-    [(set i32:$sdst, (not i32:$src0))]
+    [(set i32:$sdst, (UniformUnaryFrag<not> i32:$src0))]
   >;
 
   def S_NOT_B64 : SOP1_64 <"s_not_b64",
-    [(set i64:$sdst, (not i64:$src0))]
+    [(set i64:$sdst, (UniformUnaryFrag<not> i64:$src0))]
   >;
   def S_WQM_B32 : SOP1_32 <"s_wqm_b32">;
   def S_WQM_B64 : SOP1_64 <"s_wqm_b64">;
@@ -210,10 +246,10 @@ let Defs = [SCC] in {
 def S_BCNT0_I32_B32 : SOP1_32 <"s_bcnt0_i32_b32">;
 def S_BCNT0_I32_B64 : SOP1_32_64 <"s_bcnt0_i32_b64">;
 def S_BCNT1_I32_B32 : SOP1_32 <"s_bcnt1_i32_b32",
-  [(set i32:$sdst, (ctpop i32:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<ctpop> i32:$src0))]
 >;
 def S_BCNT1_I32_B64 : SOP1_32_64 <"s_bcnt1_i32_b64",
-  [(set i32:$sdst, (ctpop i64:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<ctpop> i64:$src0))]
 >;
 } // End Defs = [SCC]
 
@@ -221,29 +257,29 @@ let isReMaterializable = 1 in {
 def S_FF0_I32_B32 : SOP1_32 <"s_ff0_i32_b32">;
 def S_FF0_I32_B64 : SOP1_32_64 <"s_ff0_i32_b64">;
 def S_FF1_I32_B64 : SOP1_32_64 <"s_ff1_i32_b64",
-  [(set i32:$sdst, (AMDGPUffbl_b32 i64:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<AMDGPUffbl_b32> i64:$src0))]
 >;
 
 def S_FF1_I32_B32 : SOP1_32 <"s_ff1_i32_b32",
-  [(set i32:$sdst, (AMDGPUffbl_b32 i32:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<AMDGPUffbl_b32> i32:$src0))]
 >;
 
 def S_FLBIT_I32_B32 : SOP1_32 <"s_flbit_i32_b32",
-  [(set i32:$sdst, (AMDGPUffbh_u32 i32:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<AMDGPUffbh_u32> i32:$src0))]
 >;
 
 def S_FLBIT_I32_B64 : SOP1_32_64 <"s_flbit_i32_b64",
-  [(set i32:$sdst, (AMDGPUffbh_u32 i64:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<AMDGPUffbh_u32> i64:$src0))]
 >;
 def S_FLBIT_I32 : SOP1_32 <"s_flbit_i32",
-  [(set i32:$sdst, (AMDGPUffbh_i32 i32:$src0))]
+  [(set i32:$sdst, (UniformUnaryFrag<AMDGPUffbh_i32> i32:$src0))]
 >;
 def S_FLBIT_I32_I64 : SOP1_32_64 <"s_flbit_i32_i64">;
 def S_SEXT_I32_I8 : SOP1_32 <"s_sext_i32_i8",
-  [(set i32:$sdst, (sext_inreg i32:$src0, i8))]
+  [(set i32:$sdst, (UniformSextInreg<i8> i32:$src0))]
 >;
 def S_SEXT_I32_I16 : SOP1_32 <"s_sext_i32_i16",
-  [(set i32:$sdst, (sext_inreg i32:$src0, i16))]
+  [(set i32:$sdst, (UniformSextInreg<i16> i32:$src0))]
 >;
 } // End isReMaterializable = 1
 
@@ -265,6 +301,7 @@ def S_SETPC_B64 : SOP1_1  <"s_setpc_b64">;
 let isReturn = 1 in {
 // Define variant marked as return rather than branch.
 def S_SETPC_B64_return : SOP1_1<"", CCR_SGPR_64, [(AMDGPUret_flag i64:$src0)]>;
+def S_SETPC_B64_return_gfx : SOP1_1<"", Gfx_CCR_SGPR_64, [(AMDGPUret_gfx_flag i64:$src0)]>;
 }
 } // End isTerminator = 1, isBarrier = 1
 
@@ -304,7 +341,7 @@ def S_CBRANCH_JOIN : SOP1_0_32R <"s_cbranch_join">;
 
 let Defs = [SCC] in {
 def S_ABS_I32 : SOP1_32 <"s_abs_i32",
-    [(set i32:$sdst, (abs i32:$src0))]
+    [(set i32:$sdst, (UniformUnaryFrag<abs> i32:$src0))]
   >;
 } // End Defs = [SCC]
 
@@ -425,41 +462,6 @@ class SOP2_64_32_32 <string opName, list<dag> pattern=[]> : SOP2_Pseudo <
   "$sdst, $src0, $src1", pattern
 >;
 
-class UniformUnaryFrag<SDPatternOperator Op> : PatFrag <
-  (ops node:$src0),
-  (Op $src0),
-  [{ return !N->isDivergent(); }]> {
-  // This check is unnecessary as it's captured by the result register
-  // bank constraint.
-  //
-  // FIXME: Should add a way for the emitter to recognize this is a
-  // trivially true predicate to eliminate the check.
-  let GISelPredicateCode = [{return true;}];
-}
-
-class UniformBinFrag<SDPatternOperator Op> : PatFrag <
-  (ops node:$src0, node:$src1),
-  (Op $src0, $src1),
-  [{ return !N->isDivergent(); }]> {
-  // This check is unnecessary as it's captured by the result register
-  // bank constraint.
-  //
-  // FIXME: Should add a way for the emitter to recognize this is a
-  // trivially true predicate to eliminate the check.
-  let GISelPredicateCode = [{return true;}];
-}
-
-class DivergentBinFrag<SDPatternOperator Op> : PatFrag <
-  (ops node:$src0, node:$src1),
-  (Op $src0, $src1),
-  [{ return N->isDivergent(); }]> {
-  // This check is unnecessary as it's captured by the result register
-  // bank constraint.
-  //
-  // FIXME: Should add a way for the emitter to recognize this is a
-  // trivially true predicate to eliminate the check.
-  let GISelPredicateCode = [{return true;}];
-}
 
 let Defs = [SCC] in { // Carry out goes to SCC
 let isCommutable = 1 in {
@@ -484,19 +486,18 @@ def S_SUBB_U32 : SOP2_32 <"s_subb_u32",
   [(set i32:$sdst, (UniformBinFrag<sube> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]>;
 } // End Uses = [SCC]
 
-
 let isCommutable = 1 in {
 def S_MIN_I32 : SOP2_32 <"s_min_i32",
-  [(set i32:$sdst, (smin i32:$src0, i32:$src1))]
+  [(set i32:$sdst, (UniformBinFrag<smin> i32:$src0, i32:$src1))]
 >;
 def S_MIN_U32 : SOP2_32 <"s_min_u32",
-  [(set i32:$sdst, (umin i32:$src0, i32:$src1))]
+  [(set i32:$sdst, (UniformBinFrag<umin> i32:$src0, i32:$src1))]
 >;
 def S_MAX_I32 : SOP2_32 <"s_max_i32",
-  [(set i32:$sdst, (smax i32:$src0, i32:$src1))]
+  [(set i32:$sdst, (UniformBinFrag<smax> i32:$src0, i32:$src1))]
 >;
 def S_MAX_U32 : SOP2_32 <"s_max_u32",
-  [(set i32:$sdst, (umax i32:$src0, i32:$src1))]
+  [(set i32:$sdst, (UniformBinFrag<umax> i32:$src0, i32:$src1))]
 >;
 } // End isCommutable = 1
 } // End Defs = [SCC]
@@ -549,27 +550,27 @@ def S_XOR_B64 : SOP2_64 <"s_xor_b64",
 >;
 
 def S_XNOR_B32 : SOP2_32 <"s_xnor_b32",
-  [(set i32:$sdst, (not (xor_oneuse i32:$src0, i32:$src1)))]
+  [(set i32:$sdst, (UniformUnaryFrag<not> (xor_oneuse i32:$src0, i32:$src1)))]
 >;
 
 def S_XNOR_B64 : SOP2_64 <"s_xnor_b64",
-  [(set i64:$sdst, (not (xor_oneuse i64:$src0, i64:$src1)))]
+  [(set i64:$sdst, (UniformUnaryFrag<not> (xor_oneuse i64:$src0, i64:$src1)))]
 >;
 
 def S_NAND_B32 : SOP2_32 <"s_nand_b32",
-  [(set i32:$sdst, (not (and_oneuse i32:$src0, i32:$src1)))]
+  [(set i32:$sdst, (UniformUnaryFrag<not> (and_oneuse i32:$src0, i32:$src1)))]
 >;
 
 def S_NAND_B64 : SOP2_64 <"s_nand_b64",
-  [(set i64:$sdst, (not (and_oneuse i64:$src0, i64:$src1)))]
+  [(set i64:$sdst, (UniformUnaryFrag<not> (and_oneuse i64:$src0, i64:$src1)))]
 >;
 
 def S_NOR_B32 : SOP2_32 <"s_nor_b32",
-  [(set i32:$sdst, (not (or_oneuse i32:$src0, i32:$src1)))]
+  [(set i32:$sdst, (UniformUnaryFrag<not> (or_oneuse i32:$src0, i32:$src1)))]
 >;
 
 def S_NOR_B64 : SOP2_64 <"s_nor_b64",
-  [(set i64:$sdst, (not (or_oneuse i64:$src0, i64:$src1)))]
+  [(set i64:$sdst, (UniformUnaryFrag<not> (or_oneuse i64:$src0, i64:$src1)))]
 >;
 } // End isCommutable = 1
 
@@ -597,22 +598,22 @@ let AddedComplexity = 1 in {
 let Defs = [SCC] in {
 // TODO: b64 versions require VOP3 change since v_lshlrev_b64 is VOP3
 def S_LSHL_B32 : SOP2_32 <"s_lshl_b32",
-  [(set SReg_32:$sdst, (UniformBinFrag<shl> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_32:$sdst, (UniformBinFrag<cshl_32> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_LSHL_B64 : SOP2_64_32 <"s_lshl_b64",
-  [(set SReg_64:$sdst, (UniformBinFrag<shl> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_64:$sdst, (UniformBinFrag<cshl_64> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_LSHR_B32 : SOP2_32 <"s_lshr_b32",
-  [(set SReg_32:$sdst, (UniformBinFrag<srl> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_32:$sdst, (UniformBinFrag<csrl_32> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_LSHR_B64 : SOP2_64_32 <"s_lshr_b64",
-  [(set SReg_64:$sdst, (UniformBinFrag<srl> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_64:$sdst, (UniformBinFrag<csrl_64> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_ASHR_I32 : SOP2_32 <"s_ashr_i32",
-  [(set SReg_32:$sdst, (UniformBinFrag<sra> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_32:$sdst, (UniformBinFrag<csra_32> (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_ASHR_I64 : SOP2_64_32 <"s_ashr_i64",
-  [(set SReg_64:$sdst, (UniformBinFrag<sra> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
+  [(set SReg_64:$sdst, (UniformBinFrag<csra_64> (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 } // End Defs = [SCC]
 
@@ -621,9 +622,8 @@ def S_BFM_B32 : SOP2_32 <"s_bfm_b32",
   [(set i32:$sdst, (UniformBinFrag<AMDGPUbfm> i32:$src0, i32:$src1))]>;
 def S_BFM_B64 : SOP2_64_32_32 <"s_bfm_b64">;
 
-// TODO: S_MUL_I32 require V_MUL_LO_I32 from VOP3 change
 def S_MUL_I32 : SOP2_32 <"s_mul_i32",
-  [(set i32:$sdst, (mul i32:$src0, i32:$src1))]> {
+  [(set i32:$sdst, (UniformBinFrag<mul> i32:$src0, i32:$src1))]> {
   let isCommutable = 1;
 }
 } // End isReMaterializable = 1
@@ -713,7 +713,7 @@ class SOPK_Pseudo <string opName, dag outs, dag ins,
   bits<1> has_sdst = 1;
 }
 
-class SOPK_Real<bits<5> op, SOPK_Pseudo ps> :
+class SOPK_Real<SOPK_Pseudo ps> :
   InstSI <ps.OutOperandList, ps.InOperandList,
           ps.Mnemonic # " " # ps.AsmOperands, []> {
   let SALU = 1;
@@ -739,7 +739,7 @@ class SOPK_Real<bits<5> op, SOPK_Pseudo ps> :
 }
 
 class SOPK_Real32<bits<5> op, SOPK_Pseudo ps> :
-  SOPK_Real <op, ps>,
+  SOPK_Real <ps>,
   Enc32 {
   let Inst{15-0}  = simm16;
   let Inst{22-16} = !if(ps.has_sdst, sdst, ?);
@@ -748,7 +748,7 @@ class SOPK_Real32<bits<5> op, SOPK_Pseudo ps> :
 }
 
 class SOPK_Real64<bits<5> op, SOPK_Pseudo ps> :
-  SOPK_Real<op, ps>,
+  SOPK_Real<ps>,
   Enc64 {
   let Inst{15-0}  = simm16;
   let Inst{22-16} = !if(ps.has_sdst, sdst, ?);
@@ -869,7 +869,7 @@ def S_GETREG_B32 : SOPK_Pseudo <
 }
 } // End mayLoad = 1
 
-let mayLoad = 0, mayStore = 0, Defs = [MODE], Uses = [MODE] in {
+let Defs = [MODE], Uses = [MODE] in {
 
 // FIXME: Need to truncate immediate to 16-bits.
 class S_SETREG_B32_Pseudo <list<dag> pattern=[]> : SOPK_Pseudo <
@@ -913,7 +913,7 @@ def S_SETREG_IMM32_B32_mode : S_SETREG_IMM32_B32_Pseudo {
   let hasSideEffects = 0;
 }
 
-} // End mayLoad = 0, mayStore = 0, Defs = [MODE], Uses = [MODE]
+} // End Defs = [MODE], Uses = [MODE]
 
 class SOPK_WAITCNT<string opName, list<dag> pat=[]> :
     SOPK_Pseudo<
@@ -1107,7 +1107,7 @@ class SOPPRelaxTable <bit isRelaxed, string keyName, string gfxip> {
 }
 
 //spaces inserted in realname on instantiation of this record to allow s_endpgm to omit whitespace
-class SOPP_Real<bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> :
+class SOPP_Real<SOPP_Pseudo ps, string real_name = ps.Mnemonic> :
   InstSI <ps.OutOperandList, ps.InOperandList,
           real_name # ps.AsmOperands, []> {
   let SALU = 1;
@@ -1127,14 +1127,14 @@ class SOPP_Real<bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> :
   bits <16> simm16;
 }
 
-class SOPP_Real_32 <bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> : SOPP_Real<op, ps, real_name>,
+class SOPP_Real_32 <bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> : SOPP_Real<ps, real_name>,
 Enc32 {
   let Inst{15-0} = !if(ps.fixed_imm, ps.simm16, simm16);
   let Inst{22-16} = op;
   let Inst{31-23} = 0x17f;
 }
 
-class SOPP_Real_64 <bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> : SOPP_Real<op, ps, real_name>,
+class SOPP_Real_64 <bits<7> op, SOPP_Pseudo ps, string real_name = ps.Mnemonic> : SOPP_Real<ps, real_name>,
 Enc64 {
   // encoding
   let Inst{15-0} = !if(ps.fixed_imm, ps.simm16, simm16);
@@ -1263,7 +1263,7 @@ def S_WAKEUP : SOPP_Pseudo <"s_wakeup", (ins) > {
   let mayStore = 1;
 }
 
-let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
+let hasSideEffects = 1 in
 def S_WAITCNT : SOPP_Pseudo <"s_waitcnt" , (ins WAIT_FLAG:$simm16), "$simm16",
     [(int_amdgcn_s_waitcnt timm:$simm16)]>;
 def S_SETHALT : SOPP_Pseudo <"s_sethalt" , (ins i32imm:$simm16), "$simm16",
@@ -1277,8 +1277,6 @@ def S_SETKILL : SOPP_Pseudo <"s_setkill" , (ins i16imm:$simm16), "$simm16">;
 def S_SLEEP : SOPP_Pseudo <"s_sleep", (ins i32imm:$simm16),
   "$simm16", [(int_amdgcn_s_sleep timm:$simm16)]> {
   let hasSideEffects = 1;
-  let mayLoad = 0;
-  let mayStore = 0;
 }
 
 def S_SETPRIO : SOPP_Pseudo <"s_setprio" , (ins i16imm:$simm16), "$simm16">;
@@ -1304,14 +1302,10 @@ def S_ICACHE_INV : SOPP_Pseudo <"s_icache_inv", (ins)> {
 def S_INCPERFLEVEL : SOPP_Pseudo <"s_incperflevel", (ins i32imm:$simm16), "$simm16",
   [(int_amdgcn_s_incperflevel timm:$simm16)]> {
   let hasSideEffects = 1;
-  let mayLoad = 0;
-  let mayStore = 0;
 }
 def S_DECPERFLEVEL : SOPP_Pseudo <"s_decperflevel", (ins i32imm:$simm16), "$simm16",
   [(int_amdgcn_s_decperflevel timm:$simm16)]> {
   let hasSideEffects = 1;
-  let mayLoad = 0;
-  let mayStore = 0;
 }
 def S_TTRACEDATA : SOPP_Pseudo <"s_ttracedata", (ins)> {
   let simm16 = 0;
@@ -1376,14 +1370,14 @@ def : GCNPat <
 >;
 
 def : GCNPat <
-  (i64 (ctpop i64:$src)),
+  (i64 (UniformUnaryFrag<ctpop> i64:$src)),
     (i64 (REG_SEQUENCE SReg_64,
      (i32 (COPY_TO_REGCLASS (S_BCNT1_I32_B64 $src), SReg_32)), sub0,
      (S_MOV_B32 (i32 0)), sub1))
 >;
 
 def : GCNPat <
-  (i32 (smax i32:$x, (i32 (ineg i32:$x)))),
+  (i32 (UniformBinFrag<smax> i32:$x, (i32 (ineg i32:$x)))),
   (S_ABS_I32 SReg_32:$x)
 >;
 
@@ -1414,7 +1408,7 @@ def : GCNPat <
 // REG_SEQUENCE patterns don't support instructions with multiple
 // outputs.
 def : GCNPat<
-  (i64 (zext i16:$src)),
+  (i64 (UniformUnaryFrag<zext> i16:$src)),
     (REG_SEQUENCE SReg_64,
       (i32 (COPY_TO_REGCLASS (S_AND_B32 $src, (S_MOV_B32 (i32 0xffff))), SGPR_32)), sub0,
       (S_MOV_B32 (i32 0)), sub1)
@@ -1427,7 +1421,7 @@ def : GCNPat <
 >;
 
 def : GCNPat<
-  (i32 (zext i16:$src)),
+  (i32 (UniformUnaryFrag<zext> i16:$src)),
   (S_AND_B32 (S_MOV_B32 (i32 0xffff)), $src)
 >;
 

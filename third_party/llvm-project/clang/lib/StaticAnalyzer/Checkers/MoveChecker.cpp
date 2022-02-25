@@ -553,8 +553,8 @@ MoveChecker::classifyObject(const MemRegion *MR,
   // For the purposes of this checker, we classify move-safe STL types
   // as not-"STL" types, because that's how the checker treats them.
   MR = unwrapRValueReferenceIndirection(MR);
-  bool IsLocal =
-      MR && isa<VarRegion>(MR) && isa<StackSpaceRegion>(MR->getMemorySpace());
+  bool IsLocal = isa_and_nonnull<VarRegion>(MR) &&
+                 isa<StackSpaceRegion>(MR->getMemorySpace());
 
   if (!RD || !RD->getDeclContext()->isStdNamespace())
     return { IsLocal, SK_NonStd };
@@ -712,12 +712,9 @@ ProgramStateRef MoveChecker::checkRegionChanges(
     // directly, but not all of them end up being invalidated.
     // But when they do, they appear in the InvalidatedRegions array as well.
     for (const auto *Region : RequestedRegions) {
-      if (ThisRegion != Region) {
-        if (llvm::find(InvalidatedRegions, Region) !=
-            std::end(InvalidatedRegions)) {
-          State = removeFromState(State, Region);
-        }
-      }
+      if (ThisRegion != Region &&
+          llvm::is_contained(InvalidatedRegions, Region))
+        State = removeFromState(State, Region);
     }
   } else {
     // For invalidations that aren't caused by calls, assume nothing. In

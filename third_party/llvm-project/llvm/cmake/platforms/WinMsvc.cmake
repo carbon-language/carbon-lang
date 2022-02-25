@@ -84,6 +84,7 @@
 # up a VFS overlay for the SDK headers and case-correcting symlinks for the
 # libraries when running on a case-sensitive filesystem.
 
+include_guard(GLOBAL)
 
 # When configuring CMake with a toolchain file against a top-level CMakeLists.txt,
 # it will actually run CMake many times, once for each small test program used to
@@ -214,6 +215,14 @@ if(NOT EXISTS "${MSVC_BASE}" OR
           "system headers and libraries")
 endif()
 
+# Try lowercase `include`/`lib` used by xwin/msvc-wine
+if(NOT EXISTS "${WINSDK_INCLUDE}")
+  set(WINSDK_INCLUDE "${WINSDK_BASE}/include/${WINSDK_VER}")
+endif()
+if(NOT EXISTS "${WINSDK_LIB}")
+  set(WINSDK_LIB "${WINSDK_BASE}/lib/${WINSDK_VER}")
+endif()
+
 if(NOT EXISTS "${WINSDK_BASE}" OR
    NOT EXISTS "${WINSDK_INCLUDE}" OR
    NOT EXISTS "${WINSDK_LIB}")
@@ -243,12 +252,14 @@ list(APPEND _CTF_NATIVE_DEFAULT "-DCMAKE_ASM_COMPILER=${LLVM_NATIVE_TOOLCHAIN}/b
 list(APPEND _CTF_NATIVE_DEFAULT "-DCMAKE_C_COMPILER=${LLVM_NATIVE_TOOLCHAIN}/bin/clang")
 list(APPEND _CTF_NATIVE_DEFAULT "-DCMAKE_CXX_COMPILER=${LLVM_NATIVE_TOOLCHAIN}/bin/clang++")
 
+# These flags are used during build time. So if CFLAGS/CXXFLAGS/LDFLAGS is set
+# for the target, makes sure these are unset during build time.
 set(CROSS_TOOLCHAIN_FLAGS_NATIVE "${_CTF_NATIVE_DEFAULT}" CACHE STRING "")
 
 set(COMPILE_FLAGS
     -D_CRT_SECURE_NO_WARNINGS
     --target=${TRIPLE_ARCH}-windows-msvc
-    -fms-compatibility-version=19.14
+    -fms-compatibility-version=19.20
     -imsvc "${ATLMFC_INCLUDE}"
     -imsvc "${MSVC_INCLUDE}"
     -imsvc "${WINSDK_INCLUDE}/ucrt"
@@ -261,7 +272,7 @@ if(case_sensitive_filesystem)
   init_user_prop(winsdk_vfs_overlay_path)
   if(NOT winsdk_vfs_overlay_path)
     set(winsdk_vfs_overlay_path "${CMAKE_BINARY_DIR}/winsdk_vfs_overlay.yaml")
-    generate_winsdk_vfs_overlay("${WINSDK_BASE}/Include/${WINSDK_VER}" "${winsdk_vfs_overlay_path}")
+    generate_winsdk_vfs_overlay("${WINSDK_INCLUDE}" "${winsdk_vfs_overlay_path}")
     init_user_prop(winsdk_vfs_overlay_path)
   endif()
   list(APPEND COMPILE_FLAGS
@@ -269,18 +280,8 @@ if(case_sensitive_filesystem)
 endif()
 
 string(REPLACE ";" " " COMPILE_FLAGS "${COMPILE_FLAGS}")
-
-# We need to preserve any flags that were passed in by the user. However, we
-# can't append to CMAKE_C_FLAGS and friends directly, because toolchain files
-# will be re-invoked on each reconfigure and therefore need to be idempotent.
-# The assignments to the _INITIAL cache variables don't use FORCE, so they'll
-# only be populated on the initial configure, and their values won't change
-# afterward.
-set(_CMAKE_C_FLAGS_INITIAL "${CMAKE_C_FLAGS}" CACHE STRING "")
-set(CMAKE_C_FLAGS "${_CMAKE_C_FLAGS_INITIAL} ${COMPILE_FLAGS}" CACHE STRING "" FORCE)
-
-set(_CMAKE_CXX_FLAGS_INITIAL "${CMAKE_CXX_FLAGS}" CACHE STRING "")
-set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS_INITIAL} ${COMPILE_FLAGS}" CACHE STRING "" FORCE)
+string(APPEND CMAKE_C_FLAGS_INIT " ${COMPILE_FLAGS}")
+string(APPEND CMAKE_CXX_FLAGS_INIT " ${COMPILE_FLAGS}")
 
 set(LINK_FLAGS
     # Prevent CMake from attempting to invoke mt.exe. It only recognizes the slashed form and not the dashed form.
@@ -296,7 +297,7 @@ if(case_sensitive_filesystem)
   init_user_prop(winsdk_lib_symlinks_dir)
   if(NOT winsdk_lib_symlinks_dir)
     set(winsdk_lib_symlinks_dir "${CMAKE_BINARY_DIR}/winsdk_lib_symlinks")
-    generate_winsdk_lib_symlinks("${WINSDK_BASE}/Lib/${WINSDK_VER}/um/${WINSDK_ARCH}" "${winsdk_lib_symlinks_dir}")
+    generate_winsdk_lib_symlinks("${WINSDK_LIB}/um/${WINSDK_ARCH}" "${winsdk_lib_symlinks_dir}")
     init_user_prop(winsdk_lib_symlinks_dir)
   endif()
   list(APPEND LINK_FLAGS
@@ -304,16 +305,9 @@ if(case_sensitive_filesystem)
 endif()
 
 string(REPLACE ";" " " LINK_FLAGS "${LINK_FLAGS}")
-
-# See explanation for compiler flags above for the _INITIAL variables.
-set(_CMAKE_EXE_LINKER_FLAGS_INITIAL "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "")
-set(CMAKE_EXE_LINKER_FLAGS "${_CMAKE_EXE_LINKER_FLAGS_INITIAL} ${LINK_FLAGS}" CACHE STRING "" FORCE)
-
-set(_CMAKE_MODULE_LINKER_FLAGS_INITIAL "${CMAKE_MODULE_LINKER_FLAGS}" CACHE STRING "")
-set(CMAKE_MODULE_LINKER_FLAGS "${_CMAKE_MODULE_LINKER_FLAGS_INITIAL} ${LINK_FLAGS}" CACHE STRING "" FORCE)
-
-set(_CMAKE_SHARED_LINKER_FLAGS_INITIAL "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "")
-set(CMAKE_SHARED_LINKER_FLAGS "${_CMAKE_SHARED_LINKER_FLAGS_INITIAL} ${LINK_FLAGS}" CACHE STRING "" FORCE)
+string(APPEND CMAKE_EXE_LINKER_FLAGS_INIT " ${LINK_FLAGS}")
+string(APPEND CMAKE_MODULE_LINKER_FLAGS_INIT " ${LINK_FLAGS}")
+string(APPEND CMAKE_SHARED_LINKER_FLAGS_INIT " ${LINK_FLAGS}")
 
 # CMake populates these with a bunch of unnecessary libraries, which requires
 # extra case-correcting symlinks and what not. Instead, let projects explicitly

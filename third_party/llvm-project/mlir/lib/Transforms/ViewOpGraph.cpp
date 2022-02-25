@@ -6,6 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
+
 #include "mlir/Transforms/ViewOpGraph.h"
 #include "PassDetail.h"
 #include "mlir/IR/Block.h"
@@ -43,7 +45,9 @@ static std::string escapeString(std::string str) {
 }
 
 /// Put quotation marks around a given string.
-static std::string quoteString(std::string str) { return "\"" + str + "\""; }
+static std::string quoteString(const std::string &str) {
+  return "\"" + str + "\"";
+}
 
 using AttributeMap = llvm::StringMap<std::string>;
 
@@ -68,7 +72,7 @@ public:
 /// This pass generates a Graphviz dataflow visualization of an MLIR operation.
 /// Note: See https://www.graphviz.org/doc/info/lang.html for more information
 /// about the Graphviz DOT language.
-class PrintOpPass : public ViewOpGraphPassBase<PrintOpPass> {
+class PrintOpPass : public ViewOpGraphBase<PrintOpPass> {
 public:
   PrintOpPass(raw_ostream &os) : os(os) {}
   PrintOpPass(const PrintOpPass &o) : PrintOpPass(o.os.getOStream()) {}
@@ -104,7 +108,8 @@ private:
     os.indent();
     // Emit invisible anchor node from/to which arrows can be drawn.
     Node anchorNode = emitNodeStmt(" ", kShapeNone);
-    os << attrStmt("label", quoteString(escapeString(label))) << ";\n";
+    os << attrStmt("label", quoteString(escapeString(std::move(label))))
+       << ";\n";
     builder();
     os.unindent();
     os << "}\n";
@@ -167,7 +172,7 @@ private:
     // clipped at the boundary, but labels are not. This can lead to labels
     // floating around without any edge next to them.
     if (!n1.clusterId && !n2.clusterId)
-      attrs["label"] = quoteString(escapeString(label));
+      attrs["label"] = quoteString(escapeString(std::move(label)));
     // Use `ltail` and `lhead` to draw edges between clusters.
     if (n1.clusterId)
       attrs["ltail"] = "cluster_" + std::to_string(*n1.clusterId);
@@ -195,7 +200,7 @@ private:
   Node emitNodeStmt(std::string label, StringRef shape = kShapeNode) {
     int nodeId = ++counter;
     AttributeMap attrs;
-    attrs["label"] = quoteString(escapeString(label));
+    attrs["label"] = quoteString(escapeString(std::move(label)));
     attrs["shape"] = shape.str();
     os << llvm::format("v%i ", nodeId);
     emitAttrList(os, attrs);
@@ -221,8 +226,8 @@ private:
       if (printAttrs) {
         os << "\n";
         for (const NamedAttribute &attr : op->getAttrs()) {
-          os << '\n' << attr.first << ": ";
-          emitMlirAttr(os, attr.second);
+          os << '\n' << attr.getName().getValue() << ": ";
+          emitMlirAttr(os, attr.getValue());
         }
       }
     });

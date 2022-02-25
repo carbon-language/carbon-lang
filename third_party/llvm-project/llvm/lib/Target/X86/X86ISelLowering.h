@@ -249,9 +249,6 @@ namespace llvm {
     SCALEFS,
     SCALEFS_RND,
 
-    // Unsigned Integer average.
-    AVG,
-
     /// Integer horizontal add/sub.
     HADD,
     HSUB,
@@ -566,6 +563,27 @@ namespace llvm {
     FMADDSUB_RND,
     FMSUBADD_RND,
 
+    // AVX512-FP16 complex addition and multiplication.
+    VFMADDC,
+    VFMADDC_RND,
+    VFCMADDC,
+    VFCMADDC_RND,
+
+    VFMULC,
+    VFMULC_RND,
+    VFCMULC,
+    VFCMULC_RND,
+
+    VFMADDCSH,
+    VFMADDCSH_RND,
+    VFCMADDCSH,
+    VFCMADDCSH_RND,
+
+    VFMULCSH,
+    VFMULCSH_RND,
+    VFCMULCSH,
+    VFCMULCSH_RND,
+
     // Compress and expand.
     COMPRESS,
     EXPAND,
@@ -629,12 +647,8 @@ namespace llvm {
     // packed single precision.
     DPBF16PS,
 
-    // Save xmm argument registers to the stack, according to %al. An operator
-    // is needed so that this can be expanded with control flow.
-    VASTART_SAVE_XMM_REGS,
-
-    // Windows's _chkstk call to do stack probing.
-    WIN_ALLOCA,
+    // A stack checking function call. On Windows it's _chkstk call.
+    DYN_ALLOCA,
 
     // For allocating variable amounts of stack space when using
     // segmented stacks. Check if the current stacklet has enough space, and
@@ -850,6 +864,10 @@ namespace llvm {
     AESENCWIDE256KL,
     AESDECWIDE256KL,
 
+    // Save xmm argument registers to the stack, according to %al. An operator
+    // is needed so that this can be expanded with control flow.
+    VASTART_SAVE_XMM_REGS,
+
     // WARNING: Do not add anything in the end unless you want the node to
     // have memop! In fact, starting from FIRST_TARGET_MEMORY_OPCODE all
     // opcodes will be thought as target memory ops!
@@ -890,6 +908,25 @@ namespace llvm {
     /// as zero if AllowPartialUndefs is set, else we fail and return false.
     bool isConstantSplat(SDValue Op, APInt &SplatVal,
                          bool AllowPartialUndefs = true);
+
+    /// Check if Op is a load operation that could be folded into some other x86
+    /// instruction as a memory operand. Example: vpaddd (%rdi), %xmm0, %xmm0.
+    bool mayFoldLoad(SDValue Op, const X86Subtarget &Subtarget,
+                     bool AssumeSingleUse = false);
+
+    /// Check if Op is a load operation that could be folded into a vector splat
+    /// instruction as a memory operand. Example: vbroadcastss 16(%rdi), %xmm2.
+    bool mayFoldLoadIntoBroadcastFromMem(SDValue Op, MVT EltVT,
+                                         const X86Subtarget &Subtarget,
+                                         bool AssumeSingleUse = false);
+
+    /// Check if Op is a value that could be used to fold a store into some
+    /// other x86 instruction as a memory operand. Ex: pextrb $0, %xmm0, (%rdi).
+    bool mayFoldIntoStore(SDValue Op);
+
+    /// Check if Op is an operation that could be folded into a zero extend x86
+    /// instruction.
+    bool mayFoldIntoZeroExtend(SDValue Op);
   } // end namespace X86
 
   //===--------------------------------------------------------------------===//
@@ -925,7 +962,7 @@ namespace llvm {
     /// function arguments in the caller parameter area. For X86, aggregates
     /// that contains are placed at 16-byte boundaries while the rest are at
     /// 4-byte boundaries.
-    unsigned getByValTypeAlignment(Type *Ty,
+    uint64_t getByValTypeAlignment(Type *Ty,
                                    const DataLayout &DL) const override;
 
     EVT getOptimalMemOpType(const MemOp &Op,
@@ -1060,6 +1097,12 @@ namespace llvm {
 
     bool shouldSplatInsEltVarIndex(EVT VT) const override;
 
+    bool shouldConvertFpToSat(unsigned Op, EVT FPVT, EVT VT) const override {
+      // Converting to sat variants holds little benefit on X86 as we will just
+      // need to saturate the value back using fp arithmatic.
+      return Op != ISD::FP_TO_UINT_SAT && isOperationLegalOrCustom(Op, VT);
+    }
+
     bool convertSetCCLogicToBitwiseLogic(EVT VT) const override {
       return VT.isScalarInteger();
     }
@@ -1112,6 +1155,10 @@ namespace llvm {
     SDValue SimplifyMultipleUseDemandedBitsForTargetNode(
         SDValue Op, const APInt &DemandedBits, const APInt &DemandedElts,
         SelectionDAG &DAG, unsigned Depth) const override;
+
+    bool isSplatValueForTargetNode(SDValue Op, const APInt &DemandedElts,
+                                   APInt &UndefElts,
+                                   unsigned Depth) const override;
 
     const Constant *getTargetConstantFromLoad(LoadSDNode *LD) const override;
 
@@ -1237,6 +1284,9 @@ namespace llvm {
     /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
     /// from i32 to i8 but not from i32 to i16.
     bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
+
+    bool shouldFoldSelectWithIdentityConstant(unsigned BinOpcode,
+                                              EVT VT) const override;
 
     /// Given an intrinsic, checks if on the target the intrinsic will need to map
     /// to a MemIntrinsicNode (touches memory). If this is the case, it returns
@@ -1490,7 +1540,7 @@ namespace llvm {
     unsigned GetAlignedArgumentStackSize(unsigned StackSize,
                                          SelectionDAG &DAG) const;
 
-    unsigned getAddressSpace(void) const;
+    unsigned getAddressSpace() const;
 
     SDValue FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned,
                             SDValue &Chain) const;
@@ -1540,6 +1590,9 @@ namespace llvm {
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSET_ROUNDING(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerWin64_FP_TO_INT128(SDValue Op, SelectionDAG &DAG,
+                                    SDValue &Chain) const;
+    SDValue LowerWin64_INT128_TO_FP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGC_TRANSITION(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerFaddFsub(SDValue Op, SelectionDAG &DAG) const;

@@ -23,6 +23,7 @@ User Guide for AMDGPU Backend
    AMDGPUInstructionSyntax
    AMDGPUInstructionNotation
    AMDGPUDwarfExtensionsForHeterogeneousDebugging
+   AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack
 
 Introduction
 ============
@@ -373,7 +374,7 @@ Every processor supports every OS ABI (see :ref:`amdgpu-os`) with the following 
                                                                                                       - Ryzen 3 Pro 4350G
                                                                                                       - Ryzen 3 Pro 4350GE
 
-     **GCN GFX10 (RDNA 1)** [AMD-GCN-GFX10-RDNA1]_
+     **GCN GFX10.1 (RDNA 1)** [AMD-GCN-GFX10-RDNA1]_
      -----------------------------------------------------------------------------------------------------------------------
      ``gfx1010``                 ``amdgcn``   dGPU  - cumode          - Absolute      - *rocm-amdhsa* - Radeon RX 5700
                                                     - wavefrontsize64   flat          - *pal-amdhsa*  - Radeon RX 5700 XT
@@ -393,7 +394,7 @@ Every processor supports every OS ABI (see :ref:`amdgpu-os`) with the following 
                                                                                                         Add product
                                                                                                         names.
 
-     **GCN GFX10 (RDNA 2)** [AMD-GCN-GFX10-RDNA2]_
+     **GCN GFX10.3 (RDNA 2)** [AMD-GCN-GFX10-RDNA2]_
      -----------------------------------------------------------------------------------------------------------------------
      ``gfx1030``                 ``amdgcn``   dGPU  - cumode          - Absolute      - *rocm-amdhsa* - Radeon RX 6800
                                                     - wavefrontsize64   flat          - *pal-amdhsa*  - Radeon RX 6800 XT
@@ -493,7 +494,7 @@ For example:
                                                   code that can be loaded and executed in a process
                                                   with SRAMECC enabled.
 
-                                                  If not specified for code object V4, generate
+                                                  If not specified for code object V4 or above, generate
                                                   code that can be loaded and executed in a process
                                                   with either setting of SRAMECC.
 
@@ -515,7 +516,7 @@ For example:
                                                   code that can be loaded and executed in a process
                                                   with XNACK replay enabled.
 
-                                                  If not specified for code object V4, generate
+                                                  If not specified for code object V4 or above, generate
                                                   code that can be loaded and executed in a process
                                                   with either setting of XNACK replay.
 
@@ -523,10 +524,10 @@ For example:
                                                   page migration. If enabled in the device, then if
                                                   a page fault occurs the code may execute
                                                   incorrectly unless generated with XNACK replay
-                                                  enabled, or generated for code object V4 without
+                                                  enabled, or generated for code object V4 or above without
                                                   specifying XNACK replay. Executing code that was
                                                   generated with XNACK replay enabled, or generated
-                                                  for code object V4 without specifying XNACK replay,
+                                                  for code object V4 or above without specifying XNACK replay,
                                                   on a device that does not have XNACK replay
                                                   enabled will execute correctly but may be less
                                                   performant than code generated for XNACK replay
@@ -856,6 +857,8 @@ The AMDGPU backend supports the following LLVM IR attributes.
      "amdgpu-flat-work-group-size"="min,max" Specify the minimum and maximum flat work group sizes that
                                              will be specified when the kernel is dispatched. Generated
                                              by the ``amdgpu_flat_work_group_size`` CLANG attribute [CLANG-ATTR]_.
+                                             The implied default value is 1,1024.
+
      "amdgpu-implicitarg-num-bytes"="n"      Number of kernel argument bytes to add to the kernel
                                              argument block size for the implicit arguments. This
                                              varies by OS and language (for OpenCL see
@@ -866,7 +869,12 @@ The AMDGPU backend supports the following LLVM IR attributes.
                                              ``amdgpu_num_vgpr`` CLANG attribute [CLANG-ATTR]_.
      "amdgpu-waves-per-eu"="m,n"             Specify the minimum and maximum number of waves per
                                              execution unit. Generated by the ``amdgpu_waves_per_eu``
-                                             CLANG attribute [CLANG-ATTR]_.
+                                             CLANG attribute [CLANG-ATTR]_. This is an optimization hint,
+                                             and the backend may not be able to satisfy the request. If
+                                             the specified range is incompatible with the function's
+                                             "amdgpu-flat-work-group-size" value, the implied occupancy
+                                             bounds by the workgroup size takes precedence.
+
      "amdgpu-ieee" true/false.               Specify whether the function expects the IEEE field of the
                                              mode register to be set on entry. Overrides the default for
                                              the calling convention.
@@ -946,6 +954,7 @@ The AMDGPU backend uses the following ELF header:
      ``e_ident[EI_ABIVERSION]`` - ``ELFABIVERSION_AMDGPU_HSA_V2``
                                 - ``ELFABIVERSION_AMDGPU_HSA_V3``
                                 - ``ELFABIVERSION_AMDGPU_HSA_V4``
+                                - ``ELFABIVERSION_AMDGPU_HSA_V5``
                                 - ``ELFABIVERSION_AMDGPU_PAL``
                                 - ``ELFABIVERSION_AMDGPU_MESA3D``
      ``e_type``                 - ``ET_REL``
@@ -954,7 +963,7 @@ The AMDGPU backend uses the following ELF header:
      ``e_entry``                0
      ``e_flags``                See :ref:`amdgpu-elf-header-e_flags-v2-table`,
                                 :ref:`amdgpu-elf-header-e_flags-table-v3`,
-                                and :ref:`amdgpu-elf-header-e_flags-table-v4`
+                                and :ref:`amdgpu-elf-header-e_flags-table-v4-onwards`
      ========================== ===============================
 
 ..
@@ -973,6 +982,7 @@ The AMDGPU backend uses the following ELF header:
      ``ELFABIVERSION_AMDGPU_HSA_V2`` 0
      ``ELFABIVERSION_AMDGPU_HSA_V3`` 1
      ``ELFABIVERSION_AMDGPU_HSA_V4`` 2
+     ``ELFABIVERSION_AMDGPU_HSA_V5`` 3
      ``ELFABIVERSION_AMDGPU_PAL``    0
      ``ELFABIVERSION_AMDGPU_MESA3D`` 0
      =============================== =====
@@ -1010,12 +1020,16 @@ The AMDGPU backend uses the following ELF header:
 
   * ``ELFABIVERSION_AMDGPU_HSA_V3`` is used to specify the version of AMD HSA
     runtime ABI for code object V3. Specify using the Clang option
-    ``-mcode-object-version=3``. This is the default code object
-    version if not specified.
+    ``-mcode-object-version=3``.
 
   * ``ELFABIVERSION_AMDGPU_HSA_V4`` is used to specify the version of AMD HSA
     runtime ABI for code object V4. Specify using the Clang option
-    ``-mcode-object-version=4``.
+    ``-mcode-object-version=4``. This is the default code object
+    version if not specified.
+
+  * ``ELFABIVERSION_AMDGPU_HSA_V5`` is used to specify the version of AMD HSA
+    runtime ABI for code object V5. Specify using the Clang option
+    ``-mcode-object-version=5``.
 
   * ``ELFABIVERSION_AMDGPU_PAL`` is used to specify the version of AMD PAL
     runtime ABI.
@@ -1042,9 +1056,9 @@ The AMDGPU backend uses the following ELF header:
   :ref:`amdgpu-processor-table`). The specific processor is specified in the
   ``NT_AMD_HSA_ISA_VERSION`` note record for code object V2 (see
   :ref:`amdgpu-note-records-v2`) and in the ``EF_AMDGPU_MACH`` bit field of the
-  ``e_flags`` for code object V3 to V4 (see
+  ``e_flags`` for code object V3 and above (see
   :ref:`amdgpu-elf-header-e_flags-table-v3` and
-  :ref:`amdgpu-elf-header-e_flags-table-v4`).
+  :ref:`amdgpu-elf-header-e_flags-table-v4-onwards`).
 
 ``e_entry``
   The entry point is 0 as the entry points for individual kernels must be
@@ -1115,8 +1129,8 @@ The AMDGPU backend uses the following ELF header:
                                              :ref:`amdgpu-target-features`.
      ================================= ===== =============================
 
-  .. table:: AMDGPU ELF Header ``e_flags`` for Code Object V4
-     :name: amdgpu-elf-header-e_flags-table-v4
+  .. table:: AMDGPU ELF Header ``e_flags`` for Code Object V4 and After
+     :name: amdgpu-elf-header-e_flags-table-v4-onwards
 
      ============================================ ===== ===================================
      Name                                         Value      Description
@@ -1275,7 +1289,7 @@ Note Records
 The AMDGPU backend code object contains ELF note records in the ``.note``
 section. The set of generated notes and their semantics depend on the code
 object version; see :ref:`amdgpu-note-records-v2` and
-:ref:`amdgpu-note-records-v3-v4`.
+:ref:`amdgpu-note-records-v3-onwards`.
 
 As required by ``ELFCLASS32`` and ``ELFCLASS64``, minimal zero-byte padding
 must be generated after the ``name`` field to ensure the ``desc`` field is 4
@@ -1454,21 +1468,21 @@ are deprecated and should not be used.
      ``AMD:AMDGPU:9:0:12`` ``gfx90c:xnack-``
      ===================== ==========================
 
-.. _amdgpu-note-records-v3-v4:
+.. _amdgpu-note-records-v3-onwards:
 
-Code Object V3 to V4 Note Records
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Code Object V3 and Above Note Records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The AMDGPU backend code object uses the following ELF note record in the
-``.note`` section when compiling for code object V3 to V4.
+``.note`` section when compiling for code object V3 and above.
 
 The note record vendor field is "AMDGPU".
 
 Additional note records may be present, but any which are not documented here
 are deprecated and should not be used.
 
-  .. table:: AMDGPU Code Object V3 to V4 ELF Note Records
-     :name: amdgpu-elf-note-records-table-v3-v4
+  .. table:: AMDGPU Code Object V3 and Above ELF Note Records
+     :name: amdgpu-elf-note-records-table-v3-onwards
 
      ======== ============================== ======================================
      Name     Type                           Description
@@ -1479,8 +1493,8 @@ are deprecated and should not be used.
 
 ..
 
-  .. table:: AMDGPU Code Object V3 to V4 ELF Note Record Enumeration Values
-     :name: amdgpu-elf-note-record-enumeration-values-table-v3-v4
+  .. table:: AMDGPU Code Object V3 and Above ELF Note Record Enumeration Values
+     :name: amdgpu-elf-note-record-enumeration-values-table-v3-onwards
 
      ============================== =====
      Name                           Value
@@ -1492,8 +1506,9 @@ are deprecated and should not be used.
 ``NT_AMDGPU_METADATA``
   Specifies extensible metadata associated with an AMDGPU code object. It is
   encoded as a map in the Message Pack [MsgPack]_ binary data format. See
-  :ref:`amdgpu-amdhsa-code-object-metadata-v3` and
-  :ref:`amdgpu-amdhsa-code-object-metadata-v4` for the map keys defined for the
+  :ref:`amdgpu-amdhsa-code-object-metadata-v3`,
+  :ref:`amdgpu-amdhsa-code-object-metadata-v4` and
+  :ref:`amdgpu-amdhsa-code-object-metadata-v5` for the map keys defined for the
   ``amdhsa`` OS.
 
 .. _amdgpu-symbols:
@@ -1631,7 +1646,7 @@ Loaded Code Object Path Uniform Resource Identifier (URI)
 ---------------------------------------------------------
 
 The AMD GPU code object loader represents the path of the ELF shared object from
-which the code object was loaded as a textual Unifom Resource Identifier (URI).
+which the code object was loaded as a textual Uniform Resource Identifier (URI).
 Note that the code object is the in memory loaded relocated form of the ELF
 shared object.  Multiple code objects may be loaded at different memory
 addresses in the same process from the same ELF shared object.
@@ -2008,9 +2023,10 @@ Debugger Information Entry Attributes
 -------------------------------------
 
 This section describes how certain debugger information entry attributes are
-used by AMDGPU. See the sections in DWARF Version 5 section 2 which are updated
-by *DWARF Extensions For Heterogeneous Debugging* section
-:ref:`amdgpu-dwarf-debugging-information-entry-attributes`.
+used by AMDGPU. See the sections in DWARF Version 5 section 3.3.5 and 3.1.1
+which are updated by *DWARF Extensions For Heterogeneous Debugging* section
+:ref:`amdgpu-dwarf-low-level-information` and
+:ref:`amdgpu-dwarf-full-and-partial-compilation-unit-entries`.
 
 .. _amdgpu-dwarf-dw-at-llvm-lane-pc:
 
@@ -2539,8 +2555,9 @@ The code object metadata specifies extensible metadata associated with the code
 objects executed on HSA [HSA]_ compatible runtimes (see :ref:`amdgpu-os`). The
 encoding and semantics of this metadata depends on the code object version; see
 :ref:`amdgpu-amdhsa-code-object-metadata-v2`,
-:ref:`amdgpu-amdhsa-code-object-metadata-v3`, and
-:ref:`amdgpu-amdhsa-code-object-metadata-v4`.
+:ref:`amdgpu-amdhsa-code-object-metadata-v3`,
+:ref:`amdgpu-amdhsa-code-object-metadata-v4` and
+:ref:`amdgpu-amdhsa-code-object-metadata-v5`.
 
 Code object metadata is specified in a note record (see
 :ref:`amdgpu-note-records`) and is required when the target triple OS is
@@ -2981,8 +2998,12 @@ non-AMD key names should be prefixed by "*vendor-name*.".
 Code Object V3 Metadata
 +++++++++++++++++++++++
 
-Code object V3 to V4 metadata is specified by the ``NT_AMDGPU_METADATA`` note
-record (see :ref:`amdgpu-note-records-v3-v4`).
+.. warning::
+  Code object V3 is not the default code object version emitted by this version
+  of LLVM.
+
+Code object V3 and above metadata is specified by the ``NT_AMDGPU_METADATA`` note
+record (see :ref:`amdgpu-note-records-v3-onwards`).
 
 The metadata is represented as Message Pack formatted binary data (see
 [MsgPack]_). The top level is a Message Pack map that includes the
@@ -3164,6 +3185,10 @@ same *vendor-name*.
                                                                   if a higher numbered
                                                                   register is used
                                                                   explicitly.
+     ".agpr_count"                       integer        Required  Number of accumulator
+                                                                  registers required by
+                                                                  each work-item for
+                                                                  GFX90A, GFX908.
      ".max_flat_workgroup_size"          integer        Required  Maximum flat
                                                                   work-group size
                                                                   supported by the
@@ -3416,15 +3441,11 @@ same *vendor-name*.
 Code Object V4 Metadata
 +++++++++++++++++++++++
 
-.. warning::
-  Code object V4 is not the default code object version emitted by this version
-  of LLVM.
-
 Code object V4 metadata is the same as
 :ref:`amdgpu-amdhsa-code-object-metadata-v3` with the changes and additions
-defined in table :ref:`amdgpu-amdhsa-code-object-metadata-map-table-v3`.
+defined in table :ref:`amdgpu-amdhsa-code-object-metadata-map-table-v4`.
 
-  .. table:: AMDHSA Code Object V4 Metadata Map Changes from :ref:`amdgpu-amdhsa-code-object-metadata-v3`
+  .. table:: AMDHSA Code Object V4 Metadata Map Changes
      :name: amdgpu-amdhsa-code-object-metadata-map-table-v4
 
      ================= ============== ========= =======================================
@@ -3444,6 +3465,133 @@ defined in table :ref:`amdgpu-amdhsa-code-object-metadata-map-table-v3`.
                                                 used. See :ref:`amdgpu-target-triples`
                                                 and :ref:`amdgpu-target-id`.
      ================= ============== ========= =======================================
+
+.. _amdgpu-amdhsa-code-object-metadata-v5:
+
+Code Object V5 Metadata
++++++++++++++++++++++++
+
+.. warning::
+  Code object V5 is not the default code object version emitted by this version
+  of LLVM.
+
+
+Code object V5 metadata is the same as
+:ref:`amdgpu-amdhsa-code-object-metadata-v4` with the changes defined in table
+:ref:`amdgpu-amdhsa-code-object-metadata-map-table-v5` and table
+:ref:`amdgpu-amdhsa-code-object-kernel-argument-metadata-map-table-v5`.
+
+  .. table:: AMDHSA Code Object V5 Metadata Map Changes
+     :name: amdgpu-amdhsa-code-object-metadata-map-table-v5
+
+     ================= ============== ========= =======================================
+     String Key        Value Type     Required? Description
+     ================= ============== ========= =======================================
+     "amdhsa.version"  sequence of    Required  - The first integer is the major
+                       2 integers                 version. Currently 1.
+                                                - The second integer is the minor
+                                                  version. Currently 2.
+     ================= ============== ========= =======================================
+
+..
+
+  .. table:: AMDHSA Code Object V5 Kernel Argument Metadata Map Additions and Changes
+     :name: amdgpu-amdhsa-code-object-kernel-argument-metadata-map-table-v5
+
+     ====================== ============== ========= ================================
+     String Key             Value Type     Required? Description
+     ====================== ============== ========= ================================
+     ".value_kind"          string         Required  Kernel argument kind that
+                                                     specifies how to set up the
+                                                     corresponding argument.
+                                                     Values include:
+                                                     the same as code object V3 metadata
+                                                     (see :ref:`amdgpu-amdhsa-code-object-kernel-argument-metadata-map-table-v3`)
+                                                     with the following additions:
+
+                                                     "hidden_block_count_x"
+                                                       The grid dispatch work-group count for the X dimension
+                                                       is passed in the kernarg. Some languages, such as OpenCL,
+                                                       support a last work-group in each dimension being partial.
+                                                       This count only includes the non-partial work-group count.
+                                                       This is not the same as the value in the AQL dispatch packet,
+                                                       which has the grid size in work-items.
+
+                                                     "hidden_block_count_y"
+                                                       The grid dispatch work-group count for the Y dimension
+                                                       is passed in the kernarg. Some languages, such as OpenCL,
+                                                       support a last work-group in each dimension being partial.
+                                                       This count only includes the non-partial work-group count.
+                                                       This is not the same as the value in the AQL dispatch packet,
+                                                       which has the grid size in work-items. If the grid dimensionality
+                                                       is 1, then must be 1.
+
+                                                     "hidden_block_count_z"
+                                                       The grid dispatch work-group count for the Z dimension
+                                                       is passed in the kernarg. Some languages, such as OpenCL,
+                                                       support a last work-group in each dimension being partial.
+                                                       This count only includes the non-partial work-group count.
+                                                       This is not the same as the value in the AQL dispatch packet,
+                                                       which has the grid size in work-items. If the grid dimensionality
+                                                       is 1 or 2, then must be 1.
+
+                                                     "hidden_group_size_x"
+                                                       The grid dispatch work-group size for the X dimension is
+                                                       passed in the kernarg. This size only applies to the
+                                                       non-partial work-groups. This is the same value as the AQL
+                                                       dispatch packet work-group size.
+
+                                                     "hidden_group_size_y"
+                                                       The grid dispatch work-group size for the Y dimension is
+                                                       passed in the kernarg. This size only applies to the
+                                                       non-partial work-groups. This is the same value as the AQL
+                                                       dispatch packet work-group size. If the grid dimensionality
+                                                       is 1, then must be 1.
+
+                                                     "hidden_group_size_z"
+                                                       The grid dispatch work-group size for the Z dimension is
+                                                       passed in the kernarg. This size only applies to the
+                                                       non-partial work-groups. This is the same value as the AQL
+                                                       dispatch packet work-group size. If the grid dimensionality
+                                                       is 1 or 2, then must be 1.
+
+                                                     "hidden_remainder_x"
+                                                       The grid dispatch work group size of the the partial work group
+                                                       of the X dimension, if it exists. Must be zero if a partial
+                                                       work group does not exist in the X dimension.
+
+                                                     "hidden_remainder_y"
+                                                       The grid dispatch work group size of the the partial work group
+                                                       of the Y dimension, if it exists. Must be zero if a partial
+                                                       work group does not exist in the Y dimension.
+
+                                                     "hidden_remainder_z"
+                                                       The grid dispatch work group size of the the partial work group
+                                                       of the Z dimension, if it exists. Must be zero if a partial
+                                                       work group does not exist in the Z dimension.
+
+                                                     "hidden_grid_dims"
+                                                       The grid dispatch dimensionality. This is the same value
+                                                       as the AQL dispatch packet dimensionality. Must be a value
+                                                       between 1 and 3.
+
+                                                     "hidden_private_base"
+                                                       The high 32 bits of the flat addressing private aperture base.
+                                                       Only used by GFX8 to allow conversion between private segment
+                                                       and flat addresses. See :ref:`amdgpu-amdhsa-kernel-prolog-flat-scratch`.
+
+                                                     "hidden_shared_base"
+                                                       The high 32 bits of the flat addressing shared aperture base.
+                                                       Only used by GFX8 to allow conversion between shared segment
+                                                       and flat addresses. See :ref:`amdgpu-amdhsa-kernel-prolog-flat-scratch`.
+
+                                                     "hidden_queue_ptr"
+                                                       A global memory address space pointer to the ROCm runtime
+                                                       ``struct amd_queue_t`` structure for the HSA queue of the
+                                                       associated dispatch AQL packet. It is only required for pre-GFX9
+                                                       devices for the trap handler ABI (see :ref:`amdgpu-amdhsa-trap-handler-abi`).
+
+     ====================== ============== ========= ================================
 
 ..
 
@@ -3473,9 +3621,9 @@ CPU host program, or from an HSA kernel executing on a GPU.
    executed is obtained.
 2. A pointer to the kernel descriptor (see
    :ref:`amdgpu-amdhsa-kernel-descriptor`) of the kernel to execute is obtained.
-   It must be for a kernel that is contained in a code object that that was
-   loaded by an HSA compatible runtime on the kernel agent with which the AQL
-   queue is associated.
+   It must be for a kernel that is contained in a code object that was loaded
+   by an HSA compatible runtime on the kernel agent with which the AQL queue is
+   associated.
 3. Space is allocated for the kernel arguments using the HSA compatible runtime
    allocator for a memory region with the kernarg property for the kernel agent
    that will execute the kernel. It must be at least 16-byte aligned.
@@ -3576,7 +3724,7 @@ local apertures), that are outside the range of addressible global memory, to
 map from a flat address to a private or local address.
 
 FLAT instructions can take a flat address and access global, private (scratch)
-and group (LDS) memory depending in if the address is within one of the
+and group (LDS) memory depending on if the address is within one of the
 aperture ranges. Flat access to scratch requires hardware aperture setup and
 setup in the kernel prologue (see
 :ref:`amdgpu-amdhsa-kernel-prolog-flat-scratch`). Flat access to LDS requires
@@ -4105,9 +4253,10 @@ The fields used by CP for code objects before V3 also match those specified in
                                                      Used by CP to set up
                                                      ``COMPUTE_PGM_RSRC2.SCRATCH_EN``.
      5:1     5 bits  USER_SGPR_COUNT                 The total number of SGPR
-                                                     user data registers
-                                                     requested. This number must
-                                                     match the number of user
+                                                     user data
+                                                     registers requested. This
+                                                     number must be greater than
+                                                     or equal to the number of user
                                                      data registers enabled.
 
                                                      Used by CP to set up
@@ -5918,7 +6067,7 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx6-gfx9-table`.
      ------------------------------------------------------------------------------------
      load atomic  seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    load atomic acquire,
-                                              - generic  except must generated
+                                              - generic  except must generate
                                                          all instructions even
                                                          for OpenCL.*
      load atomic  seq_cst      - workgroup    - global   1. s_waitcnt lgkmcnt(0)
@@ -5984,12 +6133,12 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx6-gfx9-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      load atomic  seq_cst      - workgroup    - local    *Same as corresponding
                                                          load atomic acquire,
-                                                         except must generated
+                                                         except must generate
                                                          all instructions even
                                                          for OpenCL.*
 
@@ -6081,22 +6230,22 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx6-gfx9-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      store atomic seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    store atomic release,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      atomicrmw    seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    atomicrmw acq_rel,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      fence        seq_cst      - singlethread *none*     *Same as corresponding
                                - wavefront               fence acq_rel,
-                               - workgroup               except must generated
+                               - workgroup               except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      ============ ============ ============== ========== ================================
@@ -8281,7 +8430,7 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx90a-table`.
      ------------------------------------------------------------------------------------
      load atomic  seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    load atomic acquire,
-                                              - generic  except must generated
+                                              - generic  except must generate
                                                          all instructions even
                                                          for OpenCL.*
      load atomic  seq_cst      - workgroup    - global   1. s_waitcnt lgkm/vmcnt(0)
@@ -8366,7 +8515,7 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx90a-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      load atomic  seq_cst      - workgroup    - local    *If TgSplit execution mode,
@@ -8375,7 +8524,7 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx90a-table`.
 
                                                          *Same as corresponding
                                                          load atomic acquire,
-                                                         except must generated
+                                                         except must generate
                                                          all instructions even
                                                          for OpenCL.*
 
@@ -8469,22 +8618,22 @@ in table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx90a-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      store atomic seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    store atomic release,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      atomicrmw    seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    atomicrmw acq_rel,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      fence        seq_cst      - singlethread *none*     *Same as corresponding
                                - wavefront               fence acq_rel,
-                               - workgroup               except must generated
+                               - workgroup               except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      ============ ============ ============== ========== ================================
@@ -8564,6 +8713,9 @@ For GFX10:
   requirements of acquire, release and sequential consistency.
 * The L2 cache can be kept coherent with other agents on some targets, or ranges
   of virtual addresses can be set up to bypass it to ensure system coherence.
+* On GFX10.3 a memory attached last level (MALL) cache exists for GPU memory.
+  The MALL cache is fully coherent with GPU memory and has no impact on system
+  coherence. All agents (GPU and CPU) access GPU memory through the MALL cache.
 
 Scalar memory operations are only used to access memory that is proven to not
 change during the execution of the kernel dispatch. This includes constant
@@ -8666,13 +8818,13 @@ table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx10-table`.
                                               - constant
                                                          - !volatile & nontemporal
 
-                                                            1. buffer/global/flat_store
-                                                               slc=1
+                                                           1. buffer/global/flat_store
+                                                              glc=1 slc=1
 
                                                          - volatile
 
-                                                            1. buffer/global/flat_store
-                                                            2. s_waitcnt vscnt(0)
+                                                           1. buffer/global/flat_store
+                                                           2. s_waitcnt vscnt(0)
 
                                                             - Must happen before
                                                               any following volatile
@@ -10227,7 +10379,7 @@ table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx10-table`.
      ------------------------------------------------------------------------------------
      load atomic  seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    load atomic acquire,
-                                              - generic  except must generated
+                                              - generic  except must generate
                                                          all instructions even
                                                          for OpenCL.*
      load atomic  seq_cst      - workgroup    - global   1. s_waitcnt lgkmcnt(0) &
@@ -10337,7 +10489,7 @@ table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx10-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      load atomic  seq_cst      - workgroup    - local
@@ -10430,7 +10582,7 @@ table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx10-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
 
@@ -10538,25 +10690,27 @@ table :ref:`amdgpu-amdhsa-memory-model-code-sequences-gfx10-table`.
                                                             instructions same as
                                                             corresponding load
                                                             atomic acquire,
-                                                            except must generated
+                                                            except must generate
                                                             all instructions even
                                                             for OpenCL.*
      store atomic seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    store atomic release,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      atomicrmw    seq_cst      - singlethread - global   *Same as corresponding
                                - wavefront    - local    atomicrmw acq_rel,
-                               - workgroup    - generic  except must generated
+                               - workgroup    - generic  except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      fence        seq_cst      - singlethread *none*     *Same as corresponding
                                - wavefront               fence acq_rel,
-                               - workgroup               except must generated
+                               - workgroup               except must generate
                                - agent                   all instructions even
                                - system                  for OpenCL.*
      ============ ============ ============== ========== ================================
+
+.. _amdgpu-amdhsa-trap-handler-abi:
 
 Trap Handler ABI
 ~~~~~~~~~~~~~~~~
@@ -10567,7 +10721,7 @@ supports the ``s_trap`` instruction. For usage see:
 
 - :ref:`amdgpu-trap-handler-for-amdhsa-os-v2-table`
 - :ref:`amdgpu-trap-handler-for-amdhsa-os-v3-table`
-- :ref:`amdgpu-trap-handler-for-amdhsa-os-v4-table`
+- :ref:`amdgpu-trap-handler-for-amdhsa-os-v4-onwards-table`
 
   .. table:: AMDGPU Trap Handler for AMDHSA OS Code Object V2
      :name: amdgpu-trap-handler-for-amdhsa-os-v2-table
@@ -10651,8 +10805,8 @@ supports the ``s_trap`` instruction. For usage see:
 
 ..
 
-  .. table:: AMDGPU Trap Handler for AMDHSA OS Code Object V4
-     :name: amdgpu-trap-handler-for-amdhsa-os-v4-table
+  .. table:: AMDGPU Trap Handler for AMDHSA OS Code Object V4 and Above
+     :name: amdgpu-trap-handler-for-amdhsa-os-v4-onwards-table
 
      =================== =============== ================ ================= =======================================
      Usage               Code Sequence   GFX6-GFX8 Inputs GFX9-GFX10 Inputs Description
@@ -10835,6 +10989,7 @@ On exit from a function:
           registers are intermixed at regular intervals in order to keep a
           similar ratio independent of the number of allocated VGPRs.
 
+    * GFX90A: All AGPR registers except the clobbered registers AGPR0-31.
     * Lanes of all VGPRs that are inactive at the call site.
 
       For the AMDGPU backend, an inter-procedural register allocation (IPRA)
@@ -10849,8 +11004,6 @@ On exit from a function:
     function is available to the caller.
 
 .. TODO::
-
-  - On gfx908 are all ACC registers clobbered?
 
   - How are function results returned? The address of structured types is passed
     by reference, but what about other types?
@@ -11115,7 +11268,7 @@ Code Object Metadata
   was generated the version was 2.6.*
 
 Code object metadata is specified by the ``NT_AMDGPU_METADATA`` note
-record (see :ref:`amdgpu-note-records-v3-v4`).
+record (see :ref:`amdgpu-note-records-v3-onwards`).
 
 The metadata is represented as Message Pack formatted binary data (see
 [MsgPack]_). The top level is a Message Pack map that includes the keys
@@ -11282,6 +11435,7 @@ within a map that has been added by the same *vendor-name*.
      ".lds_size"                integer                  Local Data Share size in bytes.
      ".perf_data_buffer_size"   integer                  Performance data buffer size in bytes.
      ".vgpr_count"              integer                  Number of VGPRs used.
+     ".agpr_count"              integer                  Number of AGPRs used.
      ".sgpr_count"              integer                  Number of SGPRs used.
      ".vgpr_limit"              integer                  If non-zero, indicates the shader was compiled with a
                                                          directive to instruct the compiler to limit the VGPR usage to
@@ -11976,10 +12130,10 @@ Here is an example of a minimal assembly source file, defining one HSA kernel:
    .Lfunc_end0:
         .size   hello_world, .Lfunc_end0-hello_world
 
-.. _amdgpu-amdhsa-assembler-predefined-symbols-v3-v4:
+.. _amdgpu-amdhsa-assembler-predefined-symbols-v3-onwards:
 
-Code Object V3 to V4 Predefined Symbols
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Code Object V3 and Above Predefined Symbols
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The AMDGPU assembler defines and updates some symbols automatically. These
 symbols do not affect code generation.
@@ -12038,10 +12192,10 @@ May be used to set the `.amdhsa_next_free_spgr` directive in
 
 May be set at any time, e.g. manually set to zero at the start of each kernel.
 
-.. _amdgpu-amdhsa-assembler-directives-v3-v4:
+.. _amdgpu-amdhsa-assembler-directives-v3-onwards:
 
-Code Object V3 to V4 Directives
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Code Object V3 and Above Directives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directives which begin with ``.amdgcn`` are valid for all ``amdgcn``
 architecture processors, and are not OS-specific. Directives which begin with
@@ -12096,6 +12250,8 @@ terminated by an ``.end_amdhsa_kernel`` directive.
                                                                                                :ref:`amdgpu-amdhsa-kernel-descriptor-v3-table`.
      ``.amdhsa_kernarg_size``                                 0                   GFX6-GFX10   Controls KERNARG_SIZE in
                                                                                                :ref:`amdgpu-amdhsa-kernel-descriptor-v3-table`.
+     ``.amdhsa_user_sgpr_count``                              0                   GFX6-GFX10   Controls USER_SGPR_COUNT in COMPUTE_PGM_RSRC2
+                                                                                               :ref:`amdgpu-amdhsa-compute_pgm_rsrc2-gfx6-gfx10-table`
      ``.amdhsa_user_sgpr_private_segment_buffer``             0                   GFX6-GFX10   Controls ENABLE_SGPR_PRIVATE_SEGMENT_BUFFER in
                                                                                                :ref:`amdgpu-amdhsa-kernel-descriptor-v3-table`.
      ``.amdhsa_user_sgpr_dispatch_ptr``                       0                   GFX6-GFX10   Controls ENABLE_SGPR_DISPATCH_PTR in
@@ -12202,18 +12358,19 @@ terminated by an ``.end_amdhsa_kernel`` directive.
 ++++++++++++++++
 
 Optional directive which declares the contents of the ``NT_AMDGPU_METADATA``
-note record (see :ref:`amdgpu-elf-note-records-table-v3-v4`).
+note record (see :ref:`amdgpu-elf-note-records-table-v3-onwards`).
 
 The contents must be in the [YAML]_ markup format, with the same structure and
-semantics described in :ref:`amdgpu-amdhsa-code-object-metadata-v3` or
-:ref:`amdgpu-amdhsa-code-object-metadata-v4`.
+semantics described in :ref:`amdgpu-amdhsa-code-object-metadata-v3`,
+:ref:`amdgpu-amdhsa-code-object-metadata-v4` or
+:ref:`amdgpu-amdhsa-code-object-metadata-v5`.
 
 This directive is terminated by an ``.end_amdgpu_metadata`` directive.
 
-.. _amdgpu-amdhsa-assembler-example-v3-v4:
+.. _amdgpu-amdhsa-assembler-example-v3-onwards:
 
-Code Object V3 to V4 Example Source Code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Code Object V3 and Above Example Source Code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is an example of a minimal assembly source file, defining one HSA kernel:
 

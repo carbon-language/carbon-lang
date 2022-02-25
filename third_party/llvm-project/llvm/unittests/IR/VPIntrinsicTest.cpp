@@ -51,6 +51,11 @@ protected:
       Str << " declare <8 x float> @llvm.vp." << BinaryFPOpcode
           << ".v8f32(<8 x float>, <8 x float>, <8 x i1>, i32) ";
 
+    Str << " declare <8 x float> @llvm.vp.fneg.v8f32(<8 x float>, <8 x i1>, "
+           "i32)";
+    Str << " declare <8 x float> @llvm.vp.fma.v8f32(<8 x float>, <8 x float>, "
+           "<8 x float>, <8 x i1>, i32) ";
+
     Str << " declare void @llvm.vp.store.v8i32.p0v8i32(<8 x i32>, <8 x i32>*, "
            "<8 x i1>, i32) ";
     Str << " declare void @llvm.vp.scatter.v8i32.v8p0i32(<8 x i32>, <8 x "
@@ -67,6 +72,16 @@ protected:
     for (const char *ReductionOpcode : ReductionFPOpcodes)
       Str << " declare float @llvm.vp.reduce." << ReductionOpcode
           << ".v8f32(float, <8 x float>, <8 x i1>, i32) ";
+
+    Str << " declare <8 x i32> @llvm.vp.merge.v8i32(<8 x i1>, <8 x i32>, <8 x "
+           "i32>, i32)";
+    Str << " declare <8 x i32> @llvm.vp.select.v8i32(<8 x i1>, <8 x i32>, <8 x "
+           "i32>, i32)";
+    Str << " declare <8 x i32> @llvm.experimental.vp.splice.v8i32(<8 x "
+           "i32>, <8 x i32>, i32, <8 x i1>, i32, i32) ";
+
+    Str << " declare <8 x i32> @llvm.vp.fptosi.v8i32"
+        << ".v8f32(<8 x float>, <8 x i1>, i32) ";
 
     return parseAssemblyString(Str.str(), Err, C);
   }
@@ -267,7 +282,7 @@ TEST_F(VPIntrinsicTest, VPIntrinsicDeclarationForParams) {
 
     ASSERT_NE(F.getIntrinsicID(), Intrinsic::not_intrinsic);
     auto *NewDecl = VPIntrinsic::getDeclarationForParams(
-        OutM.get(), F.getIntrinsicID(), Values);
+        OutM.get(), F.getIntrinsicID(), FuncTy->getReturnType(), Values);
     ASSERT_TRUE(NewDecl);
 
     // Check that 'old decl' == 'new decl'.
@@ -287,7 +302,7 @@ TEST_F(VPIntrinsicTest, VPIntrinsicDeclarationForParams) {
 /// Check that the HANDLE_VP_TO_CONSTRAINEDFP maps to an existing intrinsic with
 /// the right amount of metadata args.
 TEST_F(VPIntrinsicTest, HandleToConstrainedFP) {
-#define HANDLE_VP_TO_CONSTRAINEDFP(HASROUND, HASEXCEPT, CFPID)                 \
+#define VP_PROPERTY_CONSTRAINEDFP(HASROUND, HASEXCEPT, CFPID)                  \
   {                                                                            \
     SmallVector<Intrinsic::IITDescriptor, 5> T;                                \
     Intrinsic::getIntrinsicInfoTableEntries(Intrinsic::CFPID, T);              \

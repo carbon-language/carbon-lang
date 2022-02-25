@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionValue.h"
+#include "lldb/Interpreter/OptionValueLanguage.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/OptionValueSInt64.h"
 #include "lldb/Interpreter/OptionValueString.h"
@@ -42,9 +43,11 @@
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Utility/AnsiTerminal.h"
 #include "lldb/Utility/Event.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Listener.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Reproducer.h"
+#include "lldb/Utility/ReproducerProvider.h"
 #include "lldb/Utility/State.h"
 #include "lldb/Utility/Stream.h"
 #include "lldb/Utility/StreamCallback.h"
@@ -74,6 +77,14 @@
 #include <set>
 #include <string>
 #include <system_error>
+
+// Includes for pipe()
+#if defined(_WIN32)
+#include <fcntl.h>
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 namespace lldb_private {
 class Address;
@@ -315,6 +326,20 @@ bool Debugger::SetScriptLanguage(lldb::ScriptLanguage script_lang) {
                                                           script_lang);
 }
 
+lldb::LanguageType Debugger::GetREPLLanguage() const {
+  const uint32_t idx = ePropertyREPLLanguage;
+  OptionValueLanguage *value =
+      m_collection_sp->GetPropertyAtIndexAsOptionValueLanguage(nullptr, idx);
+  if (value)
+    return value->GetCurrentValue();
+  return LanguageType();
+}
+
+bool Debugger::SetREPLLanguage(lldb::LanguageType repl_lang) {
+  const uint32_t idx = ePropertyREPLLanguage;
+  return m_collection_sp->SetPropertyAtIndexAsLanguage(nullptr, idx, repl_lang);
+}
+
 uint32_t Debugger::GetTerminalWidth() const {
   const uint32_t idx = ePropertyTerminalWidth;
   return m_collection_sp->GetPropertyAtIndexAsSInt64(
@@ -488,7 +513,7 @@ void Debugger::Terminate() {
          "Debugger::Terminate called without a matching Debugger::Initialize!");
 
   if (g_debugger_list_ptr && g_debugger_list_mutex_ptr) {
-    // Clear our master list of debugger objects
+    // Clear our global list of debugger objects
     {
       std::lock_guard<std::recursive_mutex> guard(*g_debugger_list_mutex_ptr);
       for (const auto &debugger : *g_debugger_list_ptr)
@@ -723,10 +748,10 @@ Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton)
   m_collection_sp->AppendProperty(
       ConstString("target"),
       ConstString("Settings specify to debugging targets."), true,
-      Target::GetGlobalProperties()->GetValueProperties());
+      Target::GetGlobalProperties().GetValueProperties());
   m_collection_sp->AppendProperty(
       ConstString("platform"), ConstString("Platform settings."), true,
-      Platform::GetGlobalPlatformProperties()->GetValueProperties());
+      Platform::GetGlobalPlatformProperties().GetValueProperties());
   m_collection_sp->AppendProperty(
       ConstString("symbols"), ConstString("Symbol lookup and cache settings."),
       true, ModuleList::GetGlobalModuleListProperties().GetValueProperties());
@@ -809,6 +834,86 @@ void Debugger::SetAsyncExecution(bool async_execution) {
 }
 
 repro::DataRecorder *Debugger::GetInputRecorder() { return m_input_recorder; }
+
+static inline int OpenPipe(int fds[2], std::size_t size) {
+#ifdef _WIN32
+  return _pipe(fds, size, O_BINARY);
+#else
+  (void)size;
+  return pipe(fds);
+#endif
+}
+
+Status Debugger::SetInputString(const char *data) {
+  Status result;
+  enum PIPES { READ, WRITE }; // Indexes for the read and write fds
+  int fds[2] = {-1, -1};
+
+  if (data == nullptr) {
+    result.SetErrorString("String data is null");
+    return result;
+  }
+
+  size_t size = strlen(data);
+  if (size == 0) {
+    result.SetErrorString("String data is empty");
+    return result;
+  }
+
+  if (OpenPipe(fds, size) != 0) {
+    result.SetErrorString(
+        "can't create pipe file descriptors for LLDB commands");
+    return result;
+  }
+
+  write(fds[WRITE], data, size);
+  // Close the write end of the pipe, so that the command interpreter will exit
+  // when it consumes all the data.
+  llvm::sys::Process::SafelyCloseFileDescriptor(fds[WRITE]);
+
+  // Open the read file descriptor as a FILE * that we can return as an input
+  // handle.
+  FILE *commands_file = fdopen(fds[READ], "rb");
+  if (commands_file == nullptr) {
+    result.SetErrorStringWithFormat("fdopen(%i, \"rb\") failed (errno = %i) "
+                                    "when trying to open LLDB commands pipe",
+                                    fds[READ], errno);
+    llvm::sys::Process::SafelyCloseFileDescriptor(fds[READ]);
+    return result;
+  }
+
+  return SetInputFile(
+      (FileSP)std::make_shared<NativeFile>(commands_file, true));
+}
+
+Status Debugger::SetInputFile(FileSP file_sp) {
+  Status error;
+  repro::DataRecorder *recorder = nullptr;
+  if (repro::Generator *g = repro::Reproducer::Instance().GetGenerator())
+    recorder = g->GetOrCreate<repro::CommandProvider>().GetNewRecorder();
+
+  static std::unique_ptr<repro::MultiLoader<repro::CommandProvider>> loader =
+      repro::MultiLoader<repro::CommandProvider>::Create(
+          repro::Reproducer::Instance().GetLoader());
+  if (loader) {
+    llvm::Optional<std::string> nextfile = loader->GetNextFile();
+    FILE *fh = nextfile ? FileSystem::Instance().Fopen(nextfile->c_str(), "r")
+                        : nullptr;
+    // FIXME Jonas Devlieghere: shouldn't this error be propagated out to the
+    // reproducer somehow if fh is NULL?
+    if (fh) {
+      file_sp = std::make_shared<NativeFile>(fh, true);
+    }
+  }
+
+  if (!file_sp || !file_sp->IsValid()) {
+    error.SetErrorString("invalid file");
+    return error;
+  }
+
+  SetInputFile(file_sp, recorder);
+  return error;
+}
 
 void Debugger::SetInputFile(FileSP file_sp, repro::DataRecorder *recorder) {
   assert(file_sp && file_sp->IsValid());
@@ -1423,10 +1528,9 @@ void Debugger::HandleProcessEvent(const EventSP &event_sp) {
               output_stream_sp->PutCString(content_stream.GetString());
             }
           } else {
-            error_stream_sp->Printf("Failed to print structured "
-                                    "data with plugin %s: %s",
-                                    plugin_sp->GetPluginName().AsCString(),
-                                    error.AsCString());
+            error_stream_sp->Format("Failed to print structured "
+                                    "data with plugin {0}: {1}",
+                                    plugin_sp->GetPluginName(), error);
           }
         }
       }
@@ -1589,8 +1693,7 @@ bool Debugger::StartEventHandlerThread() {
     if (event_handler_thread) {
       m_event_handler_thread = *event_handler_thread;
     } else {
-      LLDB_LOG(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST),
-               "failed to launch host thread: {}",
+      LLDB_LOG(GetLog(LLDBLog::Host), "failed to launch host thread: {}",
                llvm::toString(event_handler_thread.takeError()));
     }
 
@@ -1630,8 +1733,7 @@ bool Debugger::StartIOHandlerThread() {
     if (io_handler_thread) {
       m_io_handler_thread = *io_handler_thread;
     } else {
-      LLDB_LOG(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST),
-               "failed to launch host thread: {}",
+      LLDB_LOG(GetLog(LLDBLog::Host), "failed to launch host thread: {}",
                llvm::toString(io_handler_thread.takeError()));
     }
   }
@@ -1665,17 +1767,20 @@ Status Debugger::RunREPL(LanguageType language, const char *repl_options) {
   Status err;
   FileSpec repl_executable;
 
+  if (language == eLanguageTypeUnknown)
+    language = GetREPLLanguage();
+
   if (language == eLanguageTypeUnknown) {
     LanguageSet repl_languages = Language::GetLanguagesSupportingREPLs();
 
     if (auto single_lang = repl_languages.GetSingularLanguage()) {
       language = *single_lang;
     } else if (repl_languages.Empty()) {
-      err.SetErrorStringWithFormat(
+      err.SetErrorString(
           "LLDB isn't configured with REPL support for any languages.");
       return err;
     } else {
-      err.SetErrorStringWithFormat(
+      err.SetErrorString(
           "Multiple possible REPL languages.  Please specify a language.");
       return err;
     }

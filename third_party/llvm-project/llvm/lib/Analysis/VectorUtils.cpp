@@ -331,6 +331,12 @@ Value *llvm::findScalarElement(Value *V, unsigned EltNo) {
       if (Elt->isNullValue())
         return findScalarElement(Val, EltNo);
 
+  // If the vector is a splat then we can trivially find the scalar element.
+  if (isa<ScalableVectorType>(VTy))
+    if (Value *Splat = getSplatValue(V))
+      if (EltNo < VTy->getElementCount().getKnownMinValue())
+        return Splat;
+
   // Otherwise, we don't know.
   return nullptr;
 }
@@ -824,6 +830,23 @@ llvm::SmallVector<int, 16> llvm::createSequentialMask(unsigned Start,
   return Mask;
 }
 
+llvm::SmallVector<int, 16> llvm::createUnaryMask(ArrayRef<int> Mask,
+                                                 unsigned NumElts) {
+  // Avoid casts in the loop and make sure we have a reasonable number.
+  int NumEltsSigned = NumElts;
+  assert(NumEltsSigned > 0 && "Expected smaller or non-zero element count");
+
+  // If the mask chooses an element from operand 1, reduce it to choose from the
+  // corresponding element of operand 0. Undef mask elements are unchanged.
+  SmallVector<int, 16> UnaryMask;
+  for (int MaskElt : Mask) {
+    assert((MaskElt < NumEltsSigned * 2) && "Expected valid shuffle mask");
+    int UnaryElt = MaskElt >= NumEltsSigned ? MaskElt - NumEltsSigned : MaskElt;
+    UnaryMask.push_back(UnaryElt);
+  }
+  return UnaryMask;
+}
+
 /// A helper function for concatenating vectors. This function concatenates two
 /// vectors having the same element type. If the second vector has fewer
 /// elements than the first, it is padded with undefs.
@@ -940,7 +963,7 @@ APInt llvm::possiblyDemandedEltsInMask(Value *Mask) {
 
   const unsigned VWidth =
       cast<FixedVectorType>(Mask->getType())->getNumElements();
-  APInt DemandedElts = APInt::getAllOnesValue(VWidth);
+  APInt DemandedElts = APInt::getAllOnes(VWidth);
   if (auto *CV = dyn_cast<ConstantVector>(Mask))
     for (unsigned i = 0; i < VWidth; i++)
       if (CV->getAggregateElement(i)->isNullValue())
@@ -980,7 +1003,7 @@ void InterleavedAccessInfo::collectConstStrideAccesses(
       // wrap around the address space we would do a memory access at nullptr
       // even without the transformation. The wrapping checks are therefore
       // deferred until after we've formed the interleaved groups.
-      int64_t Stride = getPtrStride(PSE, Ptr, TheLoop, Strides,
+      int64_t Stride = getPtrStride(PSE, ElementTy, Ptr, TheLoop, Strides,
                                     /*Assume=*/true, /*ShouldCheckWrap=*/false);
 
       const SCEV *Scev = replaceSymbolicStrideSCEV(PSE, Strides, Ptr);
@@ -1199,8 +1222,9 @@ void InterleavedAccessInfo::analyzeInterleaving(
     Instruction *Member = Group->getMember(Index);
     assert(Member && "Group member does not exist");
     Value *MemberPtr = getLoadStorePointerOperand(Member);
-    if (getPtrStride(PSE, MemberPtr, TheLoop, Strides, /*Assume=*/false,
-                     /*ShouldCheckWrap=*/true))
+    Type *AccessTy = getLoadStoreType(Member);
+    if (getPtrStride(PSE, AccessTy, MemberPtr, TheLoop, Strides,
+                     /*Assume=*/false, /*ShouldCheckWrap=*/true))
       return false;
     LLVM_DEBUG(dbgs() << "LV: Invalidate candidate interleaved group due to "
                       << FirstOrLast

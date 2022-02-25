@@ -177,11 +177,11 @@ bool DerivedTypeSpec::IsForwardReferenced() const {
   return typeSymbol_.get<DerivedTypeDetails>().isForwardReferenced();
 }
 
-bool DerivedTypeSpec::HasDefaultInitialization() const {
+bool DerivedTypeSpec::HasDefaultInitialization(bool ignoreAllocatable) const {
   DirectComponentIterator components{*this};
   return bool{std::find_if(
       components.begin(), components.end(), [&](const Symbol &component) {
-        return IsInitialized(component, false, &typeSymbol());
+        return IsInitialized(component, true, ignoreAllocatable);
       })};
 }
 
@@ -199,17 +199,6 @@ bool DerivedTypeSpec::HasDestruction() const {
 ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
   return const_cast<ParamValue *>(
       const_cast<const DerivedTypeSpec *>(this)->FindParameter(target));
-}
-
-// Objects of derived types might be assignment compatible if they are equal
-// with respect to everything other than their instantiated type parameters
-// and their constant instantiated type parameters have the same values.
-bool DerivedTypeSpec::MightBeAssignmentCompatibleWith(
-    const DerivedTypeSpec &that) const {
-  if (!RawEquals(that)) {
-    return false;
-  }
-  return AreTypeParamCompatible(*this, that);
 }
 
 class InstantiateHelper {
@@ -533,9 +522,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const DerivedTypeSpec &x) {
 Bound::Bound(common::ConstantSubscript bound) : expr_{bound} {}
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const Bound &x) {
-  if (x.isAssumed()) {
+  if (x.isStar()) {
     o << '*';
-  } else if (x.isDeferred()) {
+  } else if (x.isColon()) {
     o << ':';
   } else if (x.expr_) {
     x.expr_->AsFortran(o);
@@ -546,15 +535,15 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const Bound &x) {
 }
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &o, const ShapeSpec &x) {
-  if (x.lb_.isAssumed()) {
-    CHECK(x.ub_.isAssumed());
+  if (x.lb_.isStar()) {
+    CHECK(x.ub_.isStar());
     o << "..";
   } else {
-    if (!x.lb_.isDeferred()) {
+    if (!x.lb_.isColon()) {
       o << x.lb_;
     }
     o << ':';
-    if (!x.ub_.isDeferred()) {
+    if (!x.ub_.isColon()) {
       o << x.ub_;
     }
   }
@@ -699,7 +688,14 @@ std::string DeclTypeSpec::AsFortran() const {
   case Character:
     return characterTypeSpec().AsFortran();
   case TypeDerived:
-    return "TYPE(" + derivedTypeSpec().AsFortran() + ')';
+    if (derivedTypeSpec()
+            .typeSymbol()
+            .get<DerivedTypeDetails>()
+            .isDECStructure()) {
+      return "RECORD" + derivedTypeSpec().typeSymbol().name().ToString();
+    } else {
+      return "TYPE(" + derivedTypeSpec().AsFortran() + ')';
+    }
   case ClassDerived:
     return "CLASS(" + derivedTypeSpec().AsFortran() + ')';
   case TypeStar:

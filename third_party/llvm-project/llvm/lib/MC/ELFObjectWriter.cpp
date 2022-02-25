@@ -13,10 +13,10 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -28,18 +28,18 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCFragment.h"
-#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/MCTargetOptions.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/Alignment.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -47,8 +47,6 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SMLoc.h"
-#include "llvm/Support/StringSaver.h"
-#include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -796,7 +794,7 @@ MCSectionELF *ELFWriter::createRelocationSection(MCContext &Ctx,
   else
     EntrySize = is64Bit() ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
 
-  unsigned Flags = 0;
+  unsigned Flags = ELF::SHF_INFO_LINK;
   if (Sec.getFlags() & ELF::SHF_GROUP)
     Flags = ELF::SHF_GROUP;
 
@@ -1311,6 +1309,7 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCAssembler &Asm,
   case MCSymbolRefExpr::VK_GOT:
   case MCSymbolRefExpr::VK_PLT:
   case MCSymbolRefExpr::VK_GOTPCREL:
+  case MCSymbolRefExpr::VK_GOTPCREL_NORELAX:
   case MCSymbolRefExpr::VK_PPC_GOT_LO:
   case MCSymbolRefExpr::VK_PPC_GOT_HI:
   case MCSymbolRefExpr::VK_PPC_GOT_HA:

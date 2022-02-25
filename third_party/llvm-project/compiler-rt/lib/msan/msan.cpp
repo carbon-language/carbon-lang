@@ -12,20 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+
 #include "msan_chained_origin_depot.h"
 #include "msan_origin.h"
+#include "msan_poisoning.h"
 #include "msan_report.h"
 #include "msan_thread.h"
-#include "msan_poisoning.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_flag_parser.h"
+#include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_interface_internal.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
-#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "ubsan/ubsan_flags.h"
 #include "ubsan/ubsan_init.h"
 
@@ -470,7 +472,7 @@ void __msan_init() {
 
   MsanThread *main_thread = MsanThread::Create(nullptr, nullptr);
   SetCurrentThread(main_thread);
-  main_thread->ThreadStart();
+  main_thread->Init();
 
 #if MSAN_CONTAINS_UBSAN
   __ubsan::InitAsPlugin();
@@ -515,6 +517,7 @@ void __msan_dump_shadow(const void *x, uptr size) {
   }
 
   unsigned char *s = (unsigned char*)MEM_TO_SHADOW(x);
+  Printf("%p[%p]  ", (void *)s, x);
   for (uptr i = 0; i < size; i++)
     Printf("%x%x ", s[i] >> 4, s[i] & 0xf);
   Printf("\n");

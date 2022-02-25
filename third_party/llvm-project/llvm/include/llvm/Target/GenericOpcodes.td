@@ -225,13 +225,6 @@ def G_FREEZE : GenericInstruction {
   let hasSideEffects = false;
 }
 
-// Generic opcode equivalent to the llvm.isnan intrinsic.
-def G_ISNAN: GenericInstruction {
-  let OutOperandList = (outs type0:$dst);
-  let InOperandList = (ins type1:$src);
-  let hasSideEffects = false;
-}
-
 def G_LROUND: GenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type1:$src);
@@ -972,6 +965,12 @@ def G_FNEARBYINT : GenericInstruction {
 //------------------------------------------------------------------------------
 // Opcodes for LLVM Intrinsics
 //------------------------------------------------------------------------------
+def G_INTRINSIC_FPTRUNC_ROUND : GenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type1:$src1, i32imm:$round_mode);
+  let hasSideEffects = false;
+}
+
 def G_INTRINSIC_TRUNC : GenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type0:$src1);
@@ -1439,5 +1438,12 @@ def G_ASSERT_ZEXT : GenericInstruction {
 def G_ASSERT_SEXT : GenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type0:$src, untyped_imm_0:$sz);
+  let hasSideEffects = false;
+}
+
+// Asserts that a value has at least the given alignment.
+def G_ASSERT_ALIGN : GenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src, untyped_imm_0:$align);
   let hasSideEffects = false;
 }

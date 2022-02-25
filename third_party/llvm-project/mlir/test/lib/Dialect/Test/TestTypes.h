@@ -16,6 +16,7 @@
 
 #include <tuple>
 
+#include "TestTraits.h"
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/DialectImplementation.h"
@@ -24,6 +25,7 @@
 #include "mlir/Interfaces/DataLayoutInterfaces.h"
 
 namespace test {
+class TestAttrWithFormatAttr;
 
 /// FieldInfo represents a field in the StructType data type. It is used as a
 /// parameter in TestTypeDefs.td.
@@ -37,7 +39,54 @@ struct FieldInfo {
   }
 };
 
+/// A custom type for a test type parameter.
+struct CustomParam {
+  int value;
+
+  bool operator==(const CustomParam &other) const {
+    return other.value == value;
+  }
+};
+
+inline llvm::hash_code hash_value(const test::CustomParam &param) {
+  return llvm::hash_value(param.value);
+}
+
 } // namespace test
+
+namespace mlir {
+template <>
+struct FieldParser<test::CustomParam> {
+  static FailureOr<test::CustomParam> parse(AsmParser &parser) {
+    auto value = FieldParser<int>::parse(parser);
+    if (failed(value))
+      return failure();
+    return test::CustomParam{value.getValue()};
+  }
+};
+
+inline mlir::AsmPrinter &operator<<(mlir::AsmPrinter &printer,
+                                    test::CustomParam param) {
+  return printer << param.value;
+}
+
+/// Overload the attribute parameter parser for optional integers.
+template <>
+struct FieldParser<Optional<int>> {
+  static FailureOr<Optional<int>> parse(AsmParser &parser) {
+    Optional<int> value;
+    value.emplace();
+    OptionalParseResult result = parser.parseOptionalInteger(*value);
+    if (result.hasValue()) {
+      if (succeeded(*result))
+        return value;
+      return failure();
+    }
+    value.reset();
+    return value;
+  }
+};
+} // namespace mlir
 
 #include "TestTypeInterfaces.h.inc"
 
@@ -51,17 +100,19 @@ namespace test {
 struct TestRecursiveTypeStorage : public ::mlir::TypeStorage {
   using KeyTy = ::llvm::StringRef;
 
-  explicit TestRecursiveTypeStorage(::llvm::StringRef key) : name(key), body(::mlir::Type()) {}
+  explicit TestRecursiveTypeStorage(::llvm::StringRef key)
+      : name(key), body(::mlir::Type()) {}
 
   bool operator==(const KeyTy &other) const { return name == other; }
 
-  static TestRecursiveTypeStorage *construct(::mlir::TypeStorageAllocator &allocator,
-                                             const KeyTy &key) {
+  static TestRecursiveTypeStorage *
+  construct(::mlir::TypeStorageAllocator &allocator, const KeyTy &key) {
     return new (allocator.allocate<TestRecursiveTypeStorage>())
         TestRecursiveTypeStorage(allocator.copyInto(key));
   }
 
-  ::mlir::LogicalResult mutate(::mlir::TypeStorageAllocator &allocator, ::mlir::Type newBody) {
+  ::mlir::LogicalResult mutate(::mlir::TypeStorageAllocator &allocator,
+                               ::mlir::Type newBody) {
     // Cannot set a different body than before.
     if (body && body != newBody)
       return ::mlir::failure();
@@ -78,11 +129,13 @@ struct TestRecursiveTypeStorage : public ::mlir::TypeStorage {
 /// type, potentially itself. This requires the body to be mutated separately
 /// from type creation.
 class TestRecursiveType
-    : public ::mlir::Type::TypeBase<TestRecursiveType, ::mlir::Type, TestRecursiveTypeStorage> {
+    : public ::mlir::Type::TypeBase<TestRecursiveType, ::mlir::Type,
+                                    TestRecursiveTypeStorage> {
 public:
   using Base::Base;
 
-  static TestRecursiveType get(::mlir::MLIRContext *ctx, ::llvm::StringRef name) {
+  static TestRecursiveType get(::mlir::MLIRContext *ctx,
+                               ::llvm::StringRef name) {
     return Base::get(ctx, name);
   }
 

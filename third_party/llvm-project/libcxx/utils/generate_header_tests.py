@@ -21,7 +21,6 @@ def get_libcxx_paths():
 script_name, source_root, include_path, libcxx_test_path = get_libcxx_paths()
 
 header_markup = {
-    "atomic": ["ifndef _LIBCPP_HAS_NO_THREADS"],
     "barrier": ["ifndef _LIBCPP_HAS_NO_THREADS"],
     "future": ["ifndef _LIBCPP_HAS_NO_THREADS"],
     "latch": ["ifndef _LIBCPP_HAS_NO_THREADS"],
@@ -30,7 +29,6 @@ header_markup = {
     "shared_mutex": ["ifndef _LIBCPP_HAS_NO_THREADS"],
     "thread": ["ifndef _LIBCPP_HAS_NO_THREADS"],
 
-    "experimental/filesystem": ["ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY"],
     "filesystem": ["ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY"],
     "format": ["ifndef _LIBCPP_HAS_NO_INCOMPLETE_FORMAT"],
 
@@ -50,7 +48,13 @@ header_markup = {
     "streambuf": ["ifndef _LIBCPP_HAS_NO_LOCALIZATION"],
     "strstream": ["ifndef _LIBCPP_HAS_NO_LOCALIZATION"],
 
-    "experimental/coroutine": ["if defined(__cpp_coroutines)"],
+    "wctype.h": ["ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS"],
+    "cwctype": ["ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS"],
+    "cwchar": ["ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS"],
+    "wchar.h": ["ifndef _LIBCPP_HAS_NO_WIDE_CHARACTERS"],
+
+    "experimental/coroutine": ["ifndef _LIBCPP_HAS_NO_EXPERIMENTAL_COROUTINES"],
+    "coroutine": ["ifndef _LIBCPP_HAS_NO_CXX20_COROUTINES"],
     "experimental/regex": ["ifndef _LIBCPP_HAS_NO_LOCALIZATION"],
 }
 
@@ -108,7 +112,7 @@ def should_keep_header(p, exclusions=None):
 
 def produce_include(relpath, indent_level, post_include=None):
     relpath = posixpath.join(*os.path.split(relpath))
-    template = "{preambule}#{indentation}include <{include}>{post_include}{postambule}"
+    template = "{preamble}#{indentation}include <{include}>{post_include}{postamble}"
 
     base_indentation = ' '*(indent_width * indent_level)
     next_indentation = base_indentation + ' '*(indent_width)
@@ -116,24 +120,24 @@ def produce_include(relpath, indent_level, post_include=None):
 
     markup = header_markup.get(relpath, None)
     if markup:
-        preambule = '#{indentation}{directive}\n'.format(
+        preamble = '#{indentation}{directive}\n'.format(
             directive=markup[0],
             indentation=base_indentation,
         )
-        postambule = '\n#{indentation}endif'.format(
+        postamble = '\n#{indentation}endif'.format(
             indentation=base_indentation,
         )
         indentation = next_indentation
     else:
-        preambule = ''
-        postambule = ''
+        preamble = ''
+        postamble = ''
         indentation = base_indentation
 
     return template.format(
         include=relpath,
         post_include=post_include,
-        preambule=preambule,
-        postambule=postambule,
+        preamble=preamble,
+        postamble=postamble,
         indentation=indentation,
     )
 
@@ -169,10 +173,10 @@ def replace_generated_headers(test_path, test_str):
     with open(test_path, 'r') as f:
         content = f.read()
 
-    preambule = begin_pattern + '\n// clang-format off\n\n' + warning_note
-    postambule = '\n// clang-format on\n\n' + end_pattern
+    preamble = begin_pattern + '\n// clang-format off\n\n' + warning_note
+    postamble = '\n// clang-format on\n\n' + end_pattern
     content = generated_part_pattern.sub(
-        preambule + test_str + postambule, content)
+        preamble + test_str + postamble, content)
 
     with open(test_path, 'w', newline='\n') as f:
         f.write(content)
@@ -197,11 +201,11 @@ def produce_test(test_filename, exclusions=None, post_include=None):
 
 
 def main():
+    produce_test('clang_tidy.sh.cpp')
     produce_test('double_include.sh.cpp')
-    produce_test('min_max_macros.compile.pass.cpp',
-                 post_include='TEST_MACROS();')
-    produce_test('no_assert_include.compile.pass.cpp',
-                 exclusions=['cassert'])
+    produce_test('min_max_macros.compile.pass.cpp', post_include='TEST_MACROS();')
+    produce_test('nasty_macros.compile.pass.cpp')
+    produce_test('no_assert_include.compile.pass.cpp', exclusions=['cassert'])
 
 
 if __name__ == '__main__':

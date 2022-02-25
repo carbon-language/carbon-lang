@@ -228,10 +228,11 @@ HANDLE_TARGET_OPCODE(ICALL_BRANCH_FUNNEL)
 /// generate code. These instructions only act as optimization hints.
 HANDLE_TARGET_OPCODE(G_ASSERT_SEXT)
 HANDLE_TARGET_OPCODE(G_ASSERT_ZEXT)
+HANDLE_TARGET_OPCODE(G_ASSERT_ALIGN)
 HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPTIMIZATION_HINT_START,
                             G_ASSERT_SEXT)
 HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPTIMIZATION_HINT_END,
-                            G_ASSERT_ZEXT)
+                            G_ASSERT_ALIGN)
 
 /// Generic ADD instruction. This is an integer add.
 HANDLE_TARGET_OPCODE(G_ADD)
@@ -320,6 +321,9 @@ HANDLE_TARGET_OPCODE(G_BITCAST)
 
 /// Generic freeze.
 HANDLE_TARGET_OPCODE(G_FREEZE)
+
+// INTRINSIC fptrunc_round intrinsic.
+HANDLE_TARGET_OPCODE(G_INTRINSIC_FPTRUNC_ROUND)
 
 /// INTRINSIC trunc intrinsic.
 HANDLE_TARGET_OPCODE(G_INTRINSIC_TRUNC)
@@ -772,12 +776,10 @@ HANDLE_TARGET_OPCODE(G_VECREDUCE_UMIN)
 HANDLE_TARGET_OPCODE(G_SBFX)
 HANDLE_TARGET_OPCODE(G_UBFX)
 
-HANDLE_TARGET_OPCODE(G_ISNAN)
-
 /// Marker for the end of the generic opcode.
 /// This is used to check if an opcode is in the range of the
 /// generic opcodes.
-HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPCODE_END, G_ISNAN)
+HANDLE_TARGET_OPCODE_MARKER(PRE_ISEL_GENERIC_OPCODE_END, G_UBFX)
 
 /// BUILTIN_OP_END - This must be the last enum value in this list.
 /// The target-specific post-isel opcode values start here.

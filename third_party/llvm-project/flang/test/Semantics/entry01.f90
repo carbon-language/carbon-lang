@@ -1,5 +1,4 @@
-! RUN: %S/test_errors.sh %s %t %flang_fc1
-! REQUIRES: shell
+! RUN: %python %S/test_errors.py %s %flang_fc1
 ! Tests valid and invalid ENTRY statements
 
 module m1
@@ -56,7 +55,6 @@ subroutine subr(goodarg1)
   common /badarg3/ x
   namelist /badarg4/ x
   !ERROR: A dummy argument must not be initialized
-  !ERROR: A dummy argument may not have the SAVE attribute
   integer :: badarg5 = 2
   entry okargs(goodarg1, goodarg2)
   !ERROR: RESULT(br1) may appear only in a function
@@ -141,11 +139,12 @@ subroutine externals
 end subroutine
 
 module m2
+  !ERROR: EXTERNAL attribute not allowed on 'm2entry2'
   external m2entry2
  contains
   subroutine m2subr1
     entry m2entry1 ! ok
-    entry m2entry2 ! ok
+    entry m2entry2 ! NOT ok
     entry m2entry3 ! ok
   end subroutine
 end module
@@ -172,6 +171,27 @@ module m3
   subroutine m3subr1
     !ERROR: 'm3entry1' is already declared in this scoping unit
     entry m3entry1
+  end subroutine
+end module
+
+module m4
+  interface generic1
+    module procedure m4entry1
+  end interface
+  interface generic2
+    module procedure m4entry2
+  end interface
+  interface generic3
+    module procedure m4entry3
+  end interface
+ contains
+  subroutine m4subr1
+    entry m4entry1 ! in implicit part
+    integer :: n = 0
+    entry m4entry2 ! in specification part
+    n = 123
+    entry m4entry3 ! in executable part
+    print *, n
   end subroutine
 end module
 

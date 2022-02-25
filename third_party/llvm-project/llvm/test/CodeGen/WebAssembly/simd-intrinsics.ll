@@ -1,5 +1,5 @@
-; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-wasm-fallthrough-return-opt -wasm-disable-explicit-locals -wasm-keep-registers -mattr=+simd128 | FileCheck %s --check-prefixes=CHECK,SLOW
-; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-wasm-fallthrough-return-opt -wasm-disable-explicit-locals -wasm-keep-registers -mattr=+simd128 -fast-isel | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-wasm-fallthrough-return-opt -wasm-disable-explicit-locals -wasm-keep-registers -mattr=+simd128,+relaxed-simd | FileCheck %s --check-prefixes=CHECK,SLOW
+; RUN: llc < %s -asm-verbose=false -verify-machineinstrs -disable-wasm-fallthrough-return-opt -wasm-disable-explicit-locals -wasm-keep-registers -mattr=+simd128,+relaxed-simd -fast-isel | FileCheck %s
 
 ; Test that SIMD128 intrinsics lower as expected. These intrinsics are
 ; only expected to lower successfully if the simd128 attribute is
@@ -180,6 +180,28 @@ define <16 x i8> @shuffle_undef_v16i8(<16 x i8> %x, <16 x i8> %y) {
   ret <16 x i8> %res
 }
 
+; CHECK-LABEL: laneselect_v16i8:
+; CHECK-NEXT: .functype laneselect_v16i8 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: i8x16.laneselect $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <16 x i8> @llvm.wasm.laneselect.v16i8(<16 x i8>, <16 x i8>, <16 x i8>)
+define <16 x i8> @laneselect_v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c) {
+  %v = call <16 x i8> @llvm.wasm.laneselect.v16i8(
+    <16 x i8> %a, <16 x i8> %b, <16 x i8> %c
+  )
+  ret <16 x i8> %v
+}
+
+; CHECK-LABEL: relaxed_swizzle_v16i8:
+; CHECK-NEXT: .functype relaxed_swizzle_v16i8 (v128, v128) -> (v128){{$}}
+; CHECK-NEXT: i8x16.relaxed_swizzle $push[[R:[0-9]+]]=, $0, $1{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <16 x i8> @llvm.wasm.relaxed.swizzle(<16 x i8>, <16 x i8>)
+define <16 x i8> @relaxed_swizzle_v16i8(<16 x i8> %x, <16 x i8> %y) {
+  %a = call <16 x i8> @llvm.wasm.relaxed.swizzle(<16 x i8> %x, <16 x i8> %y)
+  ret <16 x i8> %a
+}
+
 ; ==============================================================================
 ; 8 x i16
 ; ==============================================================================
@@ -334,6 +356,18 @@ define <8 x i16> @narrow_unsigned_v8i16(<4 x i32> %low, <4 x i32> %high) {
   ret <8 x i16> %a
 }
 
+; CHECK-LABEL: laneselect_v8i16:
+; CHECK-NEXT: .functype laneselect_v8i16 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: i16x8.laneselect $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <8 x i16> @llvm.wasm.laneselect.v8i16(<8 x i16>, <8 x i16>, <8 x i16>)
+define <8 x i16> @laneselect_v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c) {
+  %v = call <8 x i16> @llvm.wasm.laneselect.v8i16(
+    <8 x i16> %a, <8 x i16> %b, <8 x i16> %c
+  )
+  ret <8 x i16> %v
+}
+
 ; ==============================================================================
 ; 4 x i32
 ; ==============================================================================
@@ -480,6 +514,60 @@ define <4 x i32> @trunc_sat_zero_u_v4i32_2(<2 x double> %x) {
   ret <4 x i32> %a
 }
 
+; CHECK-LABEL: laneselect_v4i32:
+; CHECK-NEXT: .functype laneselect_v4i32 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: i32x4.laneselect $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x i32> @llvm.wasm.laneselect.v4i32(<4 x i32>, <4 x i32>, <4 x i32>)
+define <4 x i32> @laneselect_v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
+  %v = call <4 x i32> @llvm.wasm.laneselect.v4i32(
+    <4 x i32> %a, <4 x i32> %b, <4 x i32> %c
+  )
+  ret <4 x i32> %v
+}
+
+; CHECK-LABEL: relaxed_trunc_s:
+; NO-CHECK-NOT: f32x4
+; CHECK-NEXT: .functype relaxed_trunc_s (v128) -> (v128){{$}}
+; CHECK-NEXT: i32x4.relaxed_trunc_f32x4_s $push[[R:[0-9]+]]=, $0
+; CHECK-NEXT: return $pop[[R]]
+declare <4 x i32> @llvm.wasm.relaxed.trunc.signed(<4 x float>)
+define <4 x i32> @relaxed_trunc_s(<4 x float> %x) {
+  %a = call <4 x i32> @llvm.wasm.relaxed.trunc.signed(<4 x float> %x)
+  ret <4 x i32> %a
+}
+
+; CHECK-LABEL: relaxed_trunc_u:
+; NO-CHECK-NOT: f32x4
+; CHECK-NEXT: .functype relaxed_trunc_u (v128) -> (v128){{$}}
+; CHECK-NEXT: i32x4.relaxed_trunc_f32x4_u $push[[R:[0-9]+]]=, $0
+; CHECK-NEXT: return $pop[[R]]
+declare <4 x i32> @llvm.wasm.relaxed.trunc.unsigned(<4 x float>)
+define <4 x i32> @relaxed_trunc_u(<4 x float> %x) {
+  %a = call <4 x i32> @llvm.wasm.relaxed.trunc.unsigned(<4 x float> %x)
+  ret <4 x i32> %a
+}
+
+; CHECK-LABEL: relaxed_trunc_zero_s:
+; CHECK-NEXT: .functype relaxed_trunc_zero_s (v128) -> (v128){{$}}
+; CHECK-NEXT: i32x4.relaxed_trunc_f64x2_s_zero $push[[R:[0-9]+]]=, $0{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x i32> @llvm.wasm.relaxed.trunc.zero.signed(<2 x double>)
+define <4 x i32> @relaxed_trunc_zero_s(<2 x double> %x) {
+  %a = call <4 x i32> @llvm.wasm.relaxed.trunc.zero.signed(<2 x double> %x)
+  ret <4 x i32> %a
+}
+
+; CHECK-LABEL: relaxed_trunc_zero_u:
+; CHECK-NEXT: .functype relaxed_trunc_zero_u (v128) -> (v128){{$}}
+; CHECK-NEXT: i32x4.relaxed_trunc_f64x2_u_zero $push[[R:[0-9]+]]=, $0{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x i32> @llvm.wasm.relaxed.trunc.zero.unsigned(<2 x double>)
+define <4 x i32> @relaxed_trunc_zero_u(<2 x double> %x) {
+  %a = call <4 x i32> @llvm.wasm.relaxed.trunc.zero.unsigned(<2 x double> %x)
+  ret <4 x i32> %a
+}
+
 ; ==============================================================================
 ; 2 x i64
 ; ==============================================================================
@@ -523,6 +611,18 @@ define <2 x i64> @bitselect_v2i64(<2 x i64> %v1, <2 x i64> %v2, <2 x i64> %c) {
     <2 x i64> %v1, <2 x i64> %v2, <2 x i64> %c
   )
   ret <2 x i64> %a
+}
+
+; CHECK-LABEL: laneselect_v2i64:
+; CHECK-NEXT: .functype laneselect_v2i64 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: i64x2.laneselect $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <2 x i64> @llvm.wasm.laneselect.v2i64(<2 x i64>, <2 x i64>, <2 x i64>)
+define <2 x i64> @laneselect_v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) {
+  %v = call <2 x i64> @llvm.wasm.laneselect.v2i64(
+    <2 x i64> %a, <2 x i64> %b, <2 x i64> %c
+  )
+  ret <2 x i64> %v
 }
 
 ; ==============================================================================
@@ -600,6 +700,54 @@ define <4 x float> @nearest_v4f32(<4 x float> %a) {
   ret <4 x float> %v
 }
 
+; CHECK-LABEL: fma_v4f32:
+; CHECK-NEXT: .functype fma_v4f32 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f32x4.fma $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x float> @llvm.wasm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>)
+define <4 x float> @fma_v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c) {
+  %v = call <4 x float> @llvm.wasm.fma.v4f32(
+    <4 x float> %a, <4 x float> %b, <4 x float> %c
+  )
+  ret <4 x float> %v
+}
+
+; CHECK-LABEL: fms_v4f32:
+; CHECK-NEXT: .functype fms_v4f32 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f32x4.fms $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x float> @llvm.wasm.fms.v4f32(<4 x float>, <4 x float>, <4 x float>)
+define <4 x float> @fms_v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c) {
+  %v = call <4 x float> @llvm.wasm.fms.v4f32(
+    <4 x float> %a, <4 x float> %b, <4 x float> %c
+  )
+  ret <4 x float> %v
+}
+
+; CHECK-LABEL: relaxed_min_v4f32:
+; CHECK-NEXT: .functype relaxed_min_v4f32 (v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f32x4.relaxed_min $push[[R:[0-9]+]]=, $0, $1{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x float> @llvm.wasm.relaxed.min.v4f32(<4 x float>, <4 x float>)
+define <4 x float> @relaxed_min_v4f32(<4 x float> %a, <4 x float> %b) {
+  %v = call <4 x float> @llvm.wasm.relaxed.min.v4f32(
+    <4 x float> %a, <4 x float> %b
+  )
+  ret <4 x float> %v
+}
+
+; CHECK-LABEL: relaxed_max_v4f32:
+; CHECK-NEXT: .functype relaxed_max_v4f32 (v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f32x4.relaxed_max $push[[R:[0-9]+]]=, $0, $1{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <4 x float> @llvm.wasm.relaxed.max.v4f32(<4 x float>, <4 x float>)
+define <4 x float> @relaxed_max_v4f32(<4 x float> %a, <4 x float> %b) {
+  %v = call <4 x float> @llvm.wasm.relaxed.max.v4f32(
+    <4 x float> %a, <4 x float> %b
+  )
+  ret <4 x float> %v
+}
+
 ; ==============================================================================
 ; 2 x f64
 ; ==============================================================================
@@ -672,5 +820,53 @@ define <2 x double> @trunc_v2f64(<2 x double> %a) {
 declare <2 x double> @llvm.nearbyint.v2f64(<2 x double>)
 define <2 x double> @nearest_v2f64(<2 x double> %a) {
   %v = call <2 x double> @llvm.nearbyint.v2f64(<2 x double> %a)
+  ret <2 x double> %v
+}
+
+; CHECK-LABEL: fma_v2f64:
+; CHECK-NEXT: .functype fma_v2f64 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f64x2.fma $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <2 x double> @llvm.wasm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>)
+define <2 x double> @fma_v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
+  %v = call <2 x double> @llvm.wasm.fma.v2f64(
+    <2 x double> %a, <2 x double> %b, <2 x double> %c
+  )
+  ret <2 x double> %v
+}
+
+; CHECK-LABEL: fms_v2f64:
+; CHECK-NEXT: .functype fms_v2f64 (v128, v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f64x2.fms $push[[R:[0-9]+]]=, $0, $1, $2{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <2 x double> @llvm.wasm.fms.v2f64(<2 x double>, <2 x double>, <2 x double>)
+define <2 x double> @fms_v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
+  %v = call <2 x double> @llvm.wasm.fms.v2f64(
+    <2 x double> %a, <2 x double> %b, <2 x double> %c
+  )
+  ret <2 x double> %v
+}
+
+; CHECK-LABEL: relaxed_min_v2f64:
+; CHECK-NEXT: .functype relaxed_min_v2f64 (v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f64x2.relaxed_min $push[[R:[0-9]+]]=, $0, $1{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <2 x double> @llvm.wasm.relaxed.min.v2f64(<2 x double>, <2 x double>)
+define <2 x double> @relaxed_min_v2f64(<2 x double> %a, <2 x double> %b) {
+  %v = call <2 x double> @llvm.wasm.relaxed.min.v2f64(
+    <2 x double> %a, <2 x double> %b
+  )
+  ret <2 x double> %v
+}
+
+; CHECK-LABEL: relaxed_max_v2f64:
+; CHECK-NEXT: .functype relaxed_max_v2f64 (v128, v128) -> (v128){{$}}
+; CHECK-NEXT: f64x2.relaxed_max $push[[R:[0-9]+]]=, $0, $1{{$}}
+; CHECK-NEXT: return $pop[[R]]{{$}}
+declare <2 x double> @llvm.wasm.relaxed.max.v2f64(<2 x double>, <2 x double>)
+define <2 x double> @relaxed_max_v2f64(<2 x double> %a, <2 x double> %b) {
+  %v = call <2 x double> @llvm.wasm.relaxed.max.v2f64(
+    <2 x double> %a, <2 x double> %b
+  )
   ret <2 x double> %v
 }

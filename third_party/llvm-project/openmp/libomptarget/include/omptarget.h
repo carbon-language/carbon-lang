@@ -28,6 +28,18 @@
 // Don't format out enums and structs.
 // clang-format off
 
+/// return flags of __tgt_target_XXX public APIs
+enum __tgt_target_return_t : int {
+  /// successful offload executed on a target device
+  OMP_TGT_SUCCESS = 0,
+  /// offload may not execute on the requested target device
+  /// this scenario can be caused by the device not available or unsupported
+  /// as described in the Execution Model in the specifcation
+  /// this status may not be used for target device execution failure
+  /// which should be handled internally in libomptarget
+  OMP_TGT_FAIL = ~0
+};
+
 /// Data attributes for each data reference used in an OpenMP target region.
 enum tgt_map_type {
   // No flags
@@ -56,6 +68,10 @@ enum tgt_map_type {
   OMP_TGT_MAPTYPE_CLOSE           = 0x400,
   // runtime error if not already allocated
   OMP_TGT_MAPTYPE_PRESENT         = 0x1000,
+  // use a separate reference counter so that the data cannot be unmapped within
+  // the structured region
+  // This is an OpenMP extension for the sake of OpenACC support.
+  OMP_TGT_MAPTYPE_OMPX_HOLD       = 0x2000,
   // descriptor for non-contiguous target-update
   OMP_TGT_MAPTYPE_NON_CONTIG      = 0x100000000000,
   // member of struct, member given by [16 MSBs] - 1
@@ -176,6 +192,11 @@ struct __tgt_target_non_contig {
   uint64_t Stride;
 };
 
+struct __tgt_device_info {
+  void *Context = nullptr;
+  void *Device = nullptr;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -203,6 +224,9 @@ int omp_target_disassociate_ptr(const void *host_ptr, int device_num);
 void *llvm_omp_target_alloc_device(size_t size, int device_num);
 void *llvm_omp_target_alloc_host(size_t size, int device_num);
 void *llvm_omp_target_alloc_shared(size_t size, int device_num);
+
+/// Dummy target so we have a symbol for generating host fallback.
+void *llvm_omp_get_dynamic_shared();
 
 /// add the clauses of the requires directives in a given file
 void __tgt_register_requires(int64_t flags);

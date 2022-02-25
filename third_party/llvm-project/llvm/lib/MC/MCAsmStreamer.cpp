@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -30,14 +29,14 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbolXCOFF.h"
+#include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/TargetRegistry.h"
-#include <cctype>
 
 using namespace llvm;
 
@@ -168,9 +167,14 @@ public:
                       unsigned Update, VersionTuple SDKVersion) override;
   void emitBuildVersion(unsigned Platform, unsigned Major, unsigned Minor,
                         unsigned Update, VersionTuple SDKVersion) override;
+  void emitDarwinTargetVariantBuildVersion(unsigned Platform, unsigned Major,
+                                           unsigned Minor, unsigned Update,
+                                           VersionTuple SDKVersion) override;
   void emitThumbFunc(MCSymbol *Func) override;
 
   void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
+  void emitConditionalAssignment(MCSymbol *Symbol,
+                                 const MCExpr *Value) override;
   void emitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) override;
   bool emitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
 
@@ -192,6 +196,8 @@ public:
                                             MCSymbolAttr Visibility) override;
   void emitXCOFFRenameDirective(const MCSymbol *Name,
                                 StringRef Rename) override;
+
+  void emitXCOFFRefDirective(StringRef Name) override;
 
   void emitELFSize(MCSymbol *Symbol, const MCExpr *Value) override;
   void emitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
@@ -245,7 +251,7 @@ public:
                             unsigned ValueSize = 1,
                             unsigned MaxBytesToEmit = 0) override;
 
-  void emitCodeAlignment(unsigned ByteAlignment,
+  void emitCodeAlignment(unsigned ByteAlignment, const MCSubtargetInfo *STI,
                          unsigned MaxBytesToEmit = 0) override;
 
   void emitValueToOffset(const MCExpr *Offset,
@@ -615,6 +621,8 @@ void MCAsmStreamer::emitVersionMin(MCVersionMinType Type, unsigned Major,
 
 static const char *getPlatformName(MachO::PlatformType Type) {
   switch (Type) {
+  case MachO::PLATFORM_UNKNOWN: /* silence warning*/
+    break;
   case MachO::PLATFORM_MACOS:            return "macos";
   case MachO::PLATFORM_IOS:              return "ios";
   case MachO::PLATFORM_TVOS:             return "tvos";
@@ -638,6 +646,12 @@ void MCAsmStreamer::emitBuildVersion(unsigned Platform, unsigned Major,
     OS << ", " << Update;
   EmitSDKVersionSuffix(OS, SDKVersion);
   EmitEOL();
+}
+
+void MCAsmStreamer::emitDarwinTargetVariantBuildVersion(
+    unsigned Platform, unsigned Major, unsigned Minor, unsigned Update,
+    VersionTuple SDKVersion) {
+  emitBuildVersion(Platform, Major, Minor, Update, SDKVersion);
 }
 
 void MCAsmStreamer::emitThumbFunc(MCSymbol *Func) {
@@ -668,6 +682,15 @@ void MCAsmStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   }
 
   MCStreamer::emitAssignment(Symbol, Value);
+}
+
+void MCAsmStreamer::emitConditionalAssignment(MCSymbol *Symbol,
+                                              const MCExpr *Value) {
+  OS << ".lto_set_conditional ";
+  Symbol->print(OS, MAI);
+  OS << ", ";
+  Value->print(OS, MAI);
+  EmitEOL();
 }
 
 void MCAsmStreamer::emitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
@@ -766,7 +789,7 @@ void MCAsmStreamer::emitSyntaxDirective() {
 }
 
 void MCAsmStreamer::BeginCOFFSymbolDef(const MCSymbol *Symbol) {
-  OS << "\t.def\t ";
+  OS << "\t.def\t";
   Symbol->print(OS, MAI);
   OS << ';';
   EmitEOL();
@@ -906,6 +929,11 @@ void MCAsmStreamer::emitXCOFFRenameDirective(const MCSymbol *Name,
     OS << C;
   }
   OS << DQ;
+  EmitEOL();
+}
+
+void MCAsmStreamer::emitXCOFFRefDirective(StringRef Name) {
+  OS << "\t.ref " << Name;
   EmitEOL();
 }
 
@@ -1069,16 +1097,14 @@ void MCAsmStreamer::PrintQuotedString(StringRef Data, raw_ostream &OS) const {
   OS << '"';
 
   if (MAI->hasPairedDoubleQuoteStringConstants()) {
-    for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-      unsigned char C = Data[i];
+    for (unsigned char C : Data) {
       if (C == '"')
         OS << "\"\"";
       else
         OS << (char)C;
     }
   } else {
-    for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-      unsigned char C = Data[i];
+    for (unsigned char C : Data) {
       if (C == '"' || C == '\\') {
         OS << '\\' << (char)C;
         continue;
@@ -1429,6 +1455,7 @@ void MCAsmStreamer::emitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 }
 
 void MCAsmStreamer::emitCodeAlignment(unsigned ByteAlignment,
+                                      const MCSubtargetInfo *STI,
                                       unsigned MaxBytesToEmit) {
   // Emit with a text fill value.
   emitValueToAlignment(ByteAlignment, MAI->getTextAlignFillValue(),

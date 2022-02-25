@@ -54,10 +54,8 @@ namespace clangd {
 namespace {
 
 using ::testing::AllOf;
-using ::testing::Contains;
 using ::testing::ElementsAre;
 using ::testing::Field;
-using ::testing::Gt;
 using ::testing::IsEmpty;
 using ::testing::Pair;
 using ::testing::SizeIs;
@@ -214,7 +212,7 @@ TEST(ClangdServerTest, ParseWithHeader) {
   parseSourceAndDumpAST("foo.cpp", "#include \"foo.h\"", {{"foo.h", ""}},
                         /*ExpectErrors=*/false);
 
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 #include "foo.h"
 int b = a;
 )cpp";
@@ -230,7 +228,7 @@ TEST(ClangdServerTest, Reparse) {
   MockCompilationDatabase CDB;
   ClangdServer Server(CDB, FS, ClangdServer::optsForTest(), &DiagConsumer);
 
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 #include "foo.h"
 int b = a;
 )cpp";
@@ -265,7 +263,7 @@ TEST(ClangdServerTest, ReparseOnHeaderChange) {
   MockCompilationDatabase CDB;
   ClangdServer Server(CDB, FS, ClangdServer::optsForTest(), &DiagConsumer);
 
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 #include "foo.h"
 int b = a;
 )cpp";
@@ -422,7 +420,7 @@ TEST(ClangdServerTest, SearchLibDir) {
   FS.Files[StringPath] = "class mock_string {};";
 
   auto FooCpp = testPath("foo.cpp");
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 #include <string>
 mock_string x;
 )cpp";
@@ -431,7 +429,7 @@ mock_string x;
   runAddDocument(Server, FooCpp, SourceContents);
   EXPECT_FALSE(DiagConsumer.hadErrorInLastDiags());
 
-  const auto SourceContentsWithError = R"cpp(
+  const auto *SourceContentsWithError = R"cpp(
 #include <string>
 std::string x;
 )cpp";
@@ -447,11 +445,11 @@ TEST(ClangdServerTest, ForceReparseCompileCommand) {
   ClangdServer Server(CDB, FS, ClangdServer::optsForTest(), &DiagConsumer);
 
   auto FooCpp = testPath("foo.cpp");
-  const auto SourceContents1 = R"cpp(
+  const auto *SourceContents1 = R"cpp(
 template <class T>
 struct foo { T x; };
 )cpp";
-  const auto SourceContents2 = R"cpp(
+  const auto *SourceContents2 = R"cpp(
 template <class T>
 struct bar { T x; };
 )cpp";
@@ -483,7 +481,7 @@ TEST(ClangdServerTest, ForceReparseCompileCommandDefines) {
   ClangdServer Server(CDB, FS, ClangdServer::optsForTest(), &DiagConsumer);
 
   auto FooCpp = testPath("foo.cpp");
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 #ifdef WITH_ERROR
 this
 #endif
@@ -587,7 +585,7 @@ TEST(ClangdServerTest, FileStats) {
   ClangdServer Server(CDB, FS, ClangdServer::optsForTest(), &DiagConsumer);
 
   Path FooCpp = testPath("foo.cpp");
-  const auto SourceContents = R"cpp(
+  const auto *SourceContents = R"cpp(
 struct Something {
   int method();
 };
@@ -635,7 +633,8 @@ TEST(ClangdServerTest, InvalidCompileCommand) {
   EXPECT_ERROR(runFindDocumentHighlights(Server, FooCpp, Position()));
   EXPECT_ERROR(runRename(Server, FooCpp, Position(), "new_name",
                          clangd::RenameOptions()));
-  EXPECT_ERROR(runSignatureHelp(Server, FooCpp, Position()));
+  EXPECT_ERROR(
+      runSignatureHelp(Server, FooCpp, Position(), MarkupKind::PlainText));
   // Identifier-based fallback completion.
   EXPECT_THAT(cantFail(runCodeComplete(Server, FooCpp, Position(),
                                        clangd::CodeCompleteOptions()))
@@ -653,14 +652,14 @@ TEST(ClangdThreadingTest, StressTest) {
   // BlockingRequestInterval-request will be a blocking one.
   const unsigned BlockingRequestInterval = 40;
 
-  const auto SourceContentsWithoutErrors = R"cpp(
+  const auto *SourceContentsWithoutErrors = R"cpp(
 int a;
 int b;
 int c;
 int d;
 )cpp";
 
-  const auto SourceContentsWithErrors = R"cpp(
+  const auto *SourceContentsWithErrors = R"cpp(
 int a = x;
 int b;
 int c;
@@ -893,14 +892,14 @@ TEST(ClangdThreadingTest, NoConcurrentDiagnostics) {
     std::promise<void> StartSecondReparse;
   };
 
-  const auto SourceContentsWithoutErrors = R"cpp(
+  const auto *SourceContentsWithoutErrors = R"cpp(
 int a;
 int b;
 int c;
 int d;
 )cpp";
 
-  const auto SourceContentsWithErrors = R"cpp(
+  const auto *SourceContentsWithErrors = R"cpp(
 int a = x;
 int b;
 int c;

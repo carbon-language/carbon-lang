@@ -46,9 +46,9 @@ class Value;
 /// instruction. If \p Updates is specified, collect all necessary DT updates
 /// into this vector. If \p KeepOneInputPHIs is true, one-input Phis in
 /// successors of blocks being deleted will be preserved.
-void DetatchDeadBlocks(ArrayRef <BasicBlock *> BBs,
-                       SmallVectorImpl<DominatorTree::UpdateType> *Updates,
-                       bool KeepOneInputPHIs = false);
+void detachDeadBlocks(ArrayRef <BasicBlock *> BBs,
+                      SmallVectorImpl<DominatorTree::UpdateType> *Updates,
+                      bool KeepOneInputPHIs = false);
 
 /// Delete the specified block, which must have no predecessors.
 void DeleteDeadBlock(BasicBlock *BB, DomTreeUpdater *DTU = nullptr,
@@ -128,6 +128,13 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 /// Replace the instruction specified by From with the instruction specified by
 /// To. Copies DebugLoc from BI to I, if I doesn't already have a DebugLoc.
 void ReplaceInstWithInst(Instruction *From, Instruction *To);
+
+/// Check if we can prove that all paths starting from this block converge
+/// to a block that either has a @llvm.experimental.deoptimize call
+/// prior to its terminating return instruction or is terminated by unreachable.
+/// All blocks in the traversed sequence must have an unique successor, maybe
+/// except for the last one.
+bool IsBlockFollowedByDeoptOrUnreachable(const BasicBlock *BB);
 
 /// Option class for critical edge splitting.
 ///

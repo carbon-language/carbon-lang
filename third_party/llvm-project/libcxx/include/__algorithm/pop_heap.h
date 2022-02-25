@@ -9,15 +9,15 @@
 #ifndef _LIBCPP___ALGORITHM_POP_HEAP_H
 #define _LIBCPP___ALGORITHM_POP_HEAP_H
 
-#include <__config>
 #include <__algorithm/comp.h>
 #include <__algorithm/comp_ref_type.h>
 #include <__algorithm/sift_down.h>
+#include <__config>
 #include <__iterator/iterator_traits.h>
 #include <__utility/swap.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -31,7 +31,7 @@ __pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare
     if (__len > 1)
     {
         swap(*__first, *--__last);
-        _VSTD::__sift_down<_Compare>(__first, __last, __comp, __len - 1, __first);
+        _VSTD::__sift_down<_Compare>(__first, __comp, __len - 1, __first);
     }
 }
 

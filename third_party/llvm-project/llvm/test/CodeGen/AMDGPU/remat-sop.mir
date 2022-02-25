@@ -52,7 +52,7 @@ body:             |
     S_ENDPGM 0
 ...
 # The liverange of %0 covers a point of rematerialization, source value is
-# availabe.
+# available.
 ---
 name:            test_remat_s_mov_b32_vreg_src_long_lr
 tracksRegLiveness: true
@@ -81,7 +81,7 @@ body:             |
     S_ENDPGM 0
 ...
 # The liverange of %0 does not cover a point of rematerialization, source value is
-# unavailabe and we do not want to artificially extend the liverange.
+# unavailable and we do not want to artificially extend the liverange.
 ---
 name:            test_no_remat_s_mov_b32_vreg_src_short_lr
 tracksRegLiveness: true

@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: LIBCXX-DEBUG-FIXME
-
 // <string>
 
 // template<> struct char_traits<wchar_t>
 
 // static char_type* copy(char_type* s1, const char_type* s2, size_t n);
+
+// UNSUPPORTED: libcpp-has-no-wide-characters
 
 #include <string>
 #include <cassert>

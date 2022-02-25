@@ -319,6 +319,71 @@ A better way to write the test above would be using LLDB's testing function
     # Good. Will print expected_string and the contents of list_of_results.
     self.assertIn(expected_string, list_of_results)
 
+**Do not use hard-coded line numbers in your test case.**
+
+Instead, try to tag the line with some distinguishing pattern, and use the function line_number() defined in lldbtest.py which takes
+filename and string_to_match as arguments and returns the line number.
+
+As an example, take a look at test/API/functionalities/breakpoint/breakpoint_conditions/main.c which has these
+two lines:
+
+.. code-block:: c
+
+        return c(val); // Find the line number of c's parent call here.
+
+and
+
+.. code-block:: c
+
+    return val + 3; // Find the line number of function "c" here.
+
+The Python test case TestBreakpointConditions.py uses the comment strings to find the line numbers during setUp(self) and use them
+later on to verify that the correct breakpoint is being stopped on and that its parent frame also has the correct line number as
+intended through the breakpoint condition.
+
+**Take advantage of the unittest framework's decorator features.**
+
+These features can be use to properly mark your test class or method for platform-specific tests, compiler specific, version specific.
+
+As an example, take a look at test/API/lang/c/forward/TestForwardDeclaration.py which has these lines:
+
+.. code-block:: python
+
+    @no_debug_info_test
+    @skipIfDarwin
+    @skipIf(compiler=no_match("clang"))
+    @skipIf(compiler_version=["<", "8.0"])
+    @expectedFailureAll(oslist=["windows"])
+    def test_debug_names(self):
+        """Test that we are able to find complete types when using DWARF v5
+        accelerator tables"""
+        self.do_test(dict(CFLAGS_EXTRAS="-gdwarf-5 -gpubnames"))
+
+This tells the test harness that unless we are running "linux" and clang version equal & above 8.0, the test should be skipped.
+
+**Class-wise cleanup after yourself.**
+
+TestBase.tearDownClass(cls) provides a mechanism to invoke the platform-specific cleanup after finishing with a test class. A test
+class can have more than one test methods, so the tearDownClass(cls) method gets run after all the test methods have been executed by
+the test harness.
+
+The default cleanup action performed by the packages/Python/lldbsuite/test/lldbtest.py module invokes the "make clean" os command.
+
+If this default cleanup is not enough, individual class can provide an extra cleanup hook with a class method named classCleanup ,
+for example, in test/API/terminal/TestSTTYBeforeAndAfter.py:
+
+.. code-block:: python
+
+    @classmethod
+    def classCleanup(cls):
+        """Cleanup the test byproducts."""
+        cls.RemoveTempFile("child_send1.txt")
+
+
+The 'child_send1.txt' file gets generated during the test run, so it makes sense to explicitly spell out the action in the same
+TestSTTYBeforeAndAfter.py file to do the cleanup instead of artificially adding it as part of the default cleanup action which serves to
+cleanup those intermediate and a.out files.
+
 Running The Tests
 -----------------
 
@@ -534,7 +599,7 @@ A quick guide to getting started with PTVS is as follows:
     #. Right click the Project node in Solution Explorer.
     #. In the General tab, Make sure Python 3.5 Debug is the selected Interpreter.
     #. In Debug/Search Paths, enter the path to your ninja/lib/site-packages directory.
-    #. In Debug/Environment Variables, enter ``VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\``.
+    #. In Debug/Environment Variables, enter ``VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\``.
     #. If you want to enabled mixed mode debugging, check Enable native code debugging (this slows down debugging, so enable it only on an as-needed basis.)
 #. Set the command line for the test suite to run.
     #. Right click the project in solution explorer and choose the Debug tab.

@@ -2041,7 +2041,7 @@ void InitListChecker::CheckStructUnionTypes(
   RecordDecl *structDecl = DeclType->castAs<RecordType>()->getDecl();
 
   // If the record is invalid, some of it's members are invalid. To avoid
-  // confusion, we forgo checking the intializer for the entire record.
+  // confusion, we forgo checking the initializer for the entire record.
   if (structDecl->isInvalidDecl()) {
     // Assume it was supposed to consume a single initializer.
     ++Index;
@@ -3501,10 +3501,10 @@ void InitializationSequence::Step::Destroy() {
 
 bool InitializationSequence::isDirectReferenceBinding() const {
   // There can be some lvalue adjustments after the SK_BindReference step.
-  for (auto I = Steps.rbegin(); I != Steps.rend(); ++I) {
-    if (I->Kind == SK_BindReference)
+  for (const Step &S : llvm::reverse(Steps)) {
+    if (S.Kind == SK_BindReference)
       return true;
-    if (I->Kind == SK_BindReferenceToTemporary)
+    if (S.Kind == SK_BindReferenceToTemporary)
       return false;
   }
   return false;
@@ -6932,10 +6932,10 @@ static void handleGslAnnotatedTypes(IndirectLocalPath &Path, Expr *Call,
       return;
     // Once we initialized a value with a reference, it can no longer dangle.
     if (!Value) {
-      for (auto It = Path.rbegin(), End = Path.rend(); It != End; ++It) {
-        if (It->Kind == IndirectLocalPathEntry::GslReferenceInit)
+      for (const IndirectLocalPathEntry &PE : llvm::reverse(Path)) {
+        if (PE.Kind == IndirectLocalPathEntry::GslReferenceInit)
           continue;
-        if (It->Kind == IndirectLocalPathEntry::GslPointerInit)
+        if (PE.Kind == IndirectLocalPathEntry::GslPointerInit)
           return;
         break;
       }
@@ -8252,7 +8252,7 @@ ExprResult InitializationSequence::Perform(Sema &S,
 
       // When this is an incomplete array type (such as when this is
       // initializing an array of unknown bounds from an init list), use THAT
-      // type instead so that we propogate the array bounds.
+      // type instead so that we propagate the array bounds.
       if (MTETy->isIncompleteArrayType() &&
           !CurInit.get()->getType()->isIncompleteArrayType() &&
           S.Context.hasSameType(
@@ -8914,12 +8914,16 @@ static void emitBadConversionNotes(Sema &S, const InitializedEntity &entity,
       S.EmitRelatedResultTypeNoteForReturn(destType);
   }
   QualType fromType = op->getType();
-  auto *fromDecl = fromType.getTypePtr()->getPointeeCXXRecordDecl();
-  auto *destDecl = destType.getTypePtr()->getPointeeCXXRecordDecl();
+  QualType fromPointeeType = fromType.getCanonicalType()->getPointeeType();
+  QualType destPointeeType = destType.getCanonicalType()->getPointeeType();
+  auto *fromDecl = fromType->getPointeeCXXRecordDecl();
+  auto *destDecl = destType->getPointeeCXXRecordDecl();
   if (fromDecl && destDecl && fromDecl->getDeclKind() == Decl::CXXRecord &&
       destDecl->getDeclKind() == Decl::CXXRecord &&
       !fromDecl->isInvalidDecl() && !destDecl->isInvalidDecl() &&
-      !fromDecl->hasDefinition())
+      !fromDecl->hasDefinition() &&
+      destPointeeType.getQualifiers().compatiblyIncludes(
+          fromPointeeType.getQualifiers()))
     S.Diag(fromDecl->getLocation(), diag::note_forward_class_conversion)
         << S.getASTContext().getTagDeclType(fromDecl)
         << S.getASTContext().getTagDeclType(destDecl);
@@ -9911,8 +9915,7 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
   const bool ShouldTrackCopy =
       Entity.isParameterKind() && Seq.isConstructorInitialization();
   if (ShouldTrackCopy) {
-    if (llvm::find(CurrentParameterCopyTypes, Entity.getType()) !=
-        CurrentParameterCopyTypes.end()) {
+    if (llvm::is_contained(CurrentParameterCopyTypes, Entity.getType())) {
       Seq.SetOverloadFailure(
           InitializationSequence::FK_ConstructorOverloadFailed,
           OR_No_Viable_Function);
@@ -9969,7 +9972,7 @@ QualType Sema::DeduceTemplateSpecializationFromInitializer(
 
   auto TemplateName = DeducedTST->getTemplateName();
   if (TemplateName.isDependent())
-    return SubstAutoType(TSInfo->getType(), Context.DependentTy);
+    return SubstAutoTypeDependent(TSInfo->getType());
 
   // We can only perform deduction for class templates.
   auto *Template =
@@ -9988,7 +9991,7 @@ QualType Sema::DeduceTemplateSpecializationFromInitializer(
     Diag(TSInfo->getTypeLoc().getBeginLoc(),
          diag::warn_cxx14_compat_class_template_argument_deduction)
         << TSInfo->getTypeLoc().getSourceRange() << 0;
-    return SubstAutoType(TSInfo->getType(), Context.DependentTy);
+    return SubstAutoTypeDependent(TSInfo->getType());
   }
 
   // FIXME: Perform "exact type" matching first, per CWG discussion?

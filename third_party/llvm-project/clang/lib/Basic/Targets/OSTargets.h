@@ -148,9 +148,7 @@ public:
       return 64;
     }
 
-    unsigned Major, Minor, Micro;
-    T.getOSVersion(Major, Minor, Micro);
-    if (llvm::VersionTuple(Major, Minor, Micro) < MinVersion)
+    if (T.getOSVersion() < MinVersion)
       return 64;
     return OSTargetInfo<Target>::getExnObjectAlignment();
   }
@@ -179,6 +177,8 @@ protected:
     Builder.defineMacro("__KPRINTF_ATTRIBUTE__");
     Builder.defineMacro("__tune_i386__");
     DefineStd(Builder, "unix", Opts);
+    if (this->HasFloat128)
+      Builder.defineMacro("__FLOAT128__");
   }
 
 public:
@@ -188,6 +188,7 @@ public:
     default:
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
+      this->HasFloat128 = true;
       this->MCountName = ".mcount";
       break;
     }
@@ -291,7 +292,7 @@ protected:
     Builder.defineMacro("__HAIKU__");
     Builder.defineMacro("__ELF__");
     DefineStd(Builder, "unix", Opts);
-    if (this->HasFloat128) 
+    if (this->HasFloat128)
       Builder.defineMacro("__FLOAT128__");
   }
 
@@ -373,10 +374,9 @@ protected:
     Builder.defineMacro("__ELF__");
     if (Triple.isAndroid()) {
       Builder.defineMacro("__ANDROID__", "1");
-      unsigned Maj, Min, Rev;
-      Triple.getEnvironmentVersion(Maj, Min, Rev);
       this->PlatformName = "android";
-      this->PlatformMinVersion = VersionTuple(Maj, Min, Rev);
+      this->PlatformMinVersion = Triple.getEnvironmentVersion();
+      const unsigned Maj = this->PlatformMinVersion.getMajor();
       if (Maj) {
         Builder.defineMacro("__ANDROID_MIN_SDK_VERSION__", Twine(Maj));
         // This historical but ambiguous name for the minSdkVersion macro. Keep
@@ -460,6 +460,9 @@ protected:
       Builder.defineMacro("_REENTRANT");
     if (this->HasFloat128)
       Builder.defineMacro("__FLOAT128__");
+
+    if (Opts.C11)
+      Builder.defineMacro("__STDC_NO_THREADS__");
   }
 
 public:
@@ -687,23 +690,32 @@ protected:
     if (Opts.EnableAIXExtendedAltivecABI)
       Builder.defineMacro("__EXTABI__");
 
-    unsigned Major, Minor, Micro;
-    Triple.getOSVersion(Major, Minor, Micro);
+    VersionTuple OsVersion = Triple.getOSVersion();
 
     // Define AIX OS-Version Macros.
     // Includes logic for legacy versions of AIX; no specific intent to support.
-    std::pair<int, int> OsVersion = {Major, Minor};
-    if (OsVersion >= std::make_pair(3, 2)) Builder.defineMacro("_AIX32");
-    if (OsVersion >= std::make_pair(4, 1)) Builder.defineMacro("_AIX41");
-    if (OsVersion >= std::make_pair(4, 3)) Builder.defineMacro("_AIX43");
-    if (OsVersion >= std::make_pair(5, 0)) Builder.defineMacro("_AIX50");
-    if (OsVersion >= std::make_pair(5, 1)) Builder.defineMacro("_AIX51");
-    if (OsVersion >= std::make_pair(5, 2)) Builder.defineMacro("_AIX52");
-    if (OsVersion >= std::make_pair(5, 3)) Builder.defineMacro("_AIX53");
-    if (OsVersion >= std::make_pair(6, 1)) Builder.defineMacro("_AIX61");
-    if (OsVersion >= std::make_pair(7, 1)) Builder.defineMacro("_AIX71");
-    if (OsVersion >= std::make_pair(7, 2)) Builder.defineMacro("_AIX72");
-    if (OsVersion >= std::make_pair(7, 3)) Builder.defineMacro("_AIX73");
+    if (OsVersion >= VersionTuple(3, 2))
+      Builder.defineMacro("_AIX32");
+    if (OsVersion >= VersionTuple(4, 1))
+      Builder.defineMacro("_AIX41");
+    if (OsVersion >= VersionTuple(4, 3))
+      Builder.defineMacro("_AIX43");
+    if (OsVersion >= VersionTuple(5, 0))
+      Builder.defineMacro("_AIX50");
+    if (OsVersion >= VersionTuple(5, 1))
+      Builder.defineMacro("_AIX51");
+    if (OsVersion >= VersionTuple(5, 2))
+      Builder.defineMacro("_AIX52");
+    if (OsVersion >= VersionTuple(5, 3))
+      Builder.defineMacro("_AIX53");
+    if (OsVersion >= VersionTuple(6, 1))
+      Builder.defineMacro("_AIX61");
+    if (OsVersion >= VersionTuple(7, 1))
+      Builder.defineMacro("_AIX71");
+    if (OsVersion >= VersionTuple(7, 2))
+      Builder.defineMacro("_AIX72");
+    if (OsVersion >= VersionTuple(7, 3))
+      Builder.defineMacro("_AIX73");
 
     // FIXME: Do not define _LONG_LONG when -fno-long-long is specified.
     Builder.defineMacro("_LONG_LONG");
@@ -737,8 +749,7 @@ public:
   }
 
   // AIX sets FLT_EVAL_METHOD to be 1.
-  int getFPEvalMethod() const override { return 1; }
-  bool hasInt128Type() const override { return false; }
+  unsigned getFloatEvalMethod() const override { return 1; }
 
   bool defaultsToAIXPowerAlignment() const override { return true; }
 };
@@ -885,6 +896,9 @@ protected:
     // Required by the libc++ locale support.
     if (Opts.CPlusPlus)
       Builder.defineMacro("_GNU_SOURCE");
+    Builder.defineMacro("__Fuchsia_API_level__", Twine(Opts.FuchsiaAPILevel));
+    this->PlatformName = "fuchsia";
+    this->PlatformMinVersion = VersionTuple(Opts.FuchsiaAPILevel);
   }
 
 public:

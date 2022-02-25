@@ -10,6 +10,8 @@
 #define DIALECT_GPU_TRANSFORMS_PASSDETAIL_H_
 
 #include "mlir/Dialect/Async/IR/Async.h"
+#include "mlir/Dialect/DLTI/DLTI.h"
+#include "mlir/Dialect/GPU/GPUDialect.h"
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
@@ -17,6 +19,6 @@ namespace mlir {
 #define GEN_PASS_CLASSES
 #include "mlir/Dialect/GPU/Passes.h.inc"
 
-} // end namespace mlir
+} // namespace mlir
 
 #endif // DIALECT_GPU_TRANSFORMS_PASSDETAIL_H_

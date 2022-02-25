@@ -33,6 +33,7 @@
 
 namespace clang {
 
+class AnalyzerOptions;
 class BlockDecl;
 class CXXBoolLiteralExpr;
 class CXXMethodDecl;
@@ -66,6 +67,8 @@ protected:
 
   ProgramStateManager &StateMgr;
 
+  const AnalyzerOptions &AnOpts;
+
   /// The scalar type to use for array indices.
   const QualType ArrayIndexTy;
 
@@ -93,28 +96,23 @@ protected:
                        QualType OriginalTy);
   SVal evalCastSubKind(nonloc::PointerToMember V, QualType CastTy,
                        QualType OriginalTy);
+  /// Reduce cast expression by removing redundant intermediate casts.
+  /// E.g.
+  /// - (char)(short)(int x) -> (char)(int x)
+  /// - (int)(int x) -> int x
+  ///
+  /// \param V -- SymbolVal, which pressumably contains SymbolCast or any symbol
+  /// that is applicable for cast operation.
+  /// \param CastTy -- QualType, which `V` shall be cast to.
+  /// \return SVal with simplified cast expression.
+  /// \note: Currently only support integral casts.
+  SVal simplifySymbolCast(nonloc::SymbolVal V, QualType CastTy);
 
 public:
   SValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
-              ProgramStateManager &stateMgr)
-      : Context(context), BasicVals(context, alloc),
-        SymMgr(context, BasicVals, alloc), MemMgr(context, alloc),
-        StateMgr(stateMgr), ArrayIndexTy(context.LongLongTy),
-        ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {}
+              ProgramStateManager &stateMgr);
 
   virtual ~SValBuilder() = default;
-
-  bool haveSameType(const SymExpr *Sym1, const SymExpr *Sym2) {
-    return haveSameType(Sym1->getType(), Sym2->getType());
-  }
-
-  bool haveSameType(QualType Ty1, QualType Ty2) {
-    // FIXME: Remove the second disjunct when we support symbolic
-    // truncation/extension.
-    return (Context.getCanonicalType(Ty1) == Context.getCanonicalType(Ty2) ||
-            (Ty1->isIntegralOrEnumerationType() &&
-             Ty2->isIntegralOrEnumerationType()));
-  }
 
   SVal evalCast(SVal V, QualType CastTy, QualType OriginalTy);
 
@@ -187,6 +185,8 @@ public:
 
   MemRegionManager &getRegionManager() { return MemMgr; }
   const MemRegionManager &getRegionManager() const { return MemMgr; }
+
+  const AnalyzerOptions &getAnalyzerOptions() const { return AnOpts; }
 
   // Forwarding methods to SymbolManager.
 

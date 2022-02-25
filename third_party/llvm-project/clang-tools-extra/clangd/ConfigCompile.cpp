@@ -196,6 +196,8 @@ struct FragmentCompiler {
     compile(std::move(F.Index));
     compile(std::move(F.Diagnostics));
     compile(std::move(F.Completion));
+    compile(std::move(F.Hover));
+    compile(std::move(F.InlayHints));
   }
 
   void compile(Fragment::IfBlock &&F) {
@@ -252,6 +254,16 @@ struct FragmentCompiler {
   }
 
   void compile(Fragment::CompileFlagsBlock &&F) {
+    if (F.Compiler)
+      Out.Apply.push_back(
+          [Compiler(std::move(**F.Compiler))](const Params &, Config &C) {
+            C.CompileFlags.Edits.push_back(
+                [Compiler](std::vector<std::string> &Args) {
+                  if (!Args.empty())
+                    Args.front() = Compiler;
+                });
+          });
+
     if (!F.Remove.empty()) {
       auto Remove = std::make_shared<ArgStripper>();
       for (auto &A : F.Remove)
@@ -414,6 +426,16 @@ struct FragmentCompiler {
               C.Diagnostics.Suppress.insert(N);
           });
 
+    if (F.UnusedIncludes)
+      if (auto Val = compileEnum<Config::UnusedIncludesPolicy>(
+                         "UnusedIncludes", **F.UnusedIncludes)
+                         .map("Strict", Config::UnusedIncludesPolicy::Strict)
+                         .map("None", Config::UnusedIncludesPolicy::None)
+                         .value())
+        Out.Apply.push_back([Val](const Params &, Config &C) {
+          C.Diagnostics.UnusedIncludes = *Val;
+        });
+
     compile(std::move(F.ClangTidy));
   }
 
@@ -495,6 +517,34 @@ struct FragmentCompiler {
             C.Completion.AllScopes = AllScopes;
           });
     }
+  }
+
+  void compile(Fragment::HoverBlock &&F) {
+    if (F.ShowAKA) {
+      Out.Apply.push_back([ShowAKA(**F.ShowAKA)](const Params &, Config &C) {
+        C.Hover.ShowAKA = ShowAKA;
+      });
+    }
+  }
+
+  void compile(Fragment::InlayHintsBlock &&F) {
+    if (F.Enabled)
+      Out.Apply.push_back([Value(**F.Enabled)](const Params &, Config &C) {
+        C.InlayHints.Enabled = Value;
+      });
+    if (F.ParameterNames)
+      Out.Apply.push_back(
+          [Value(**F.ParameterNames)](const Params &, Config &C) {
+            C.InlayHints.Parameters = Value;
+          });
+    if (F.DeducedTypes)
+      Out.Apply.push_back([Value(**F.DeducedTypes)](const Params &, Config &C) {
+        C.InlayHints.DeducedTypes = Value;
+      });
+    if (F.Designators)
+      Out.Apply.push_back([Value(**F.Designators)](const Params &, Config &C) {
+        C.InlayHints.Designators = Value;
+      });
   }
 
   constexpr static llvm::SourceMgr::DiagKind Error = llvm::SourceMgr::DK_Error;

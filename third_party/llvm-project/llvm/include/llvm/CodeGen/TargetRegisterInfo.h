@@ -57,6 +57,8 @@ public:
   /// Classes with a higher priority value are assigned first by register
   /// allocators using a greedy heuristic. The value is in the range [0,63].
   const uint8_t AllocationPriority;
+  /// Configurable target specific flags.
+  const uint8_t TSFlags;
   /// Whether the class supports two (or more) disjunct subregister indices.
   const bool HasDisjunctSubRegs;
   /// Whether a combination of subregisters can cover every register in the
@@ -413,19 +415,11 @@ public:
 
   /// Returns true if the two registers are equal or alias each other.
   /// The registers may be virtual registers.
-  bool regsOverlap(Register regA, Register regB) const {
-    if (regA == regB) return true;
-    if (!regA.isPhysical() || !regB.isPhysical())
-      return false;
-
-    // Regunits are numerically ordered. Find a common unit.
-    MCRegUnitIterator RUA(regA.asMCReg(), this);
-    MCRegUnitIterator RUB(regB.asMCReg(), this);
-    do {
-      if (*RUA == *RUB) return true;
-      if (*RUA < *RUB) ++RUA;
-      else             ++RUB;
-    } while (RUA.isValid() && RUB.isValid());
+  bool regsOverlap(Register RegA, Register RegB) const {
+    if (RegA == RegB)
+      return true;
+    if (RegA.isPhysical() && RegB.isPhysical())
+      return MCRegisterInfo::regsOverlap(RegA.asMCReg(), RegB.asMCReg());
     return false;
   }
 
@@ -564,6 +558,24 @@ public:
   /// Return true if the register is preserved after the call.
   virtual bool isCalleeSavedPhysReg(MCRegister PhysReg,
                                     const MachineFunction &MF) const;
+
+  /// Returns true if PhysReg can be used as an argument to a function.
+  virtual bool isArgumentRegister(const MachineFunction &MF,
+                                  MCRegister PhysReg) const {
+    return false;
+  }
+
+  /// Returns true if PhysReg is a fixed register.
+  virtual bool isFixedRegister(const MachineFunction &MF,
+                               MCRegister PhysReg) const {
+    return false;
+  }
+
+  /// Returns true if PhysReg is a general purpose register.
+  virtual bool isGeneralPurposeRegister(const MachineFunction &MF,
+                                        MCRegister PhysReg) const {
+    return false;
+  }
 
   /// Prior to adding the live-out mask to a stackmap or patchpoint
   /// instruction, provide the target the opportunity to adjust it (mainly to
@@ -1091,6 +1103,13 @@ public:
   /// exist.
   inline MCRegister getSubReg(MCRegister Reg, unsigned Idx) const {
     return static_cast<const MCRegisterInfo *>(this)->getSubReg(Reg, Idx);
+  }
+
+  /// Some targets have non-allocatable registers that aren't technically part
+  /// of the explicit callee saved register list, but should be handled as such
+  /// in certain cases.
+  virtual bool isNonallocatableRegisterCalleeSave(MCRegister Reg) const {
+    return false;
   }
 };
 

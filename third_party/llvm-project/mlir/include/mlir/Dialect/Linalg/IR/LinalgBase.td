@@ -33,28 +33,22 @@ def Linalg_Dialect : Dialect {
   }];
   let cppNamespace = "::mlir::linalg";
   let dependentDialects = [
-    "AffineDialect", "math::MathDialect", "memref::MemRefDialect",
-    "StandardOpsDialect", "tensor::TensorDialect"
+    "arith::ArithmeticDialect",
+    "AffineDialect",
+    "math::MathDialect",
+    "memref::MemRefDialect",
+    "tensor::TensorDialect",
   ];
   let hasCanonicalizer = 1;
   let hasOperationAttrVerify = 1;
+  let hasConstantMaterializer = 1;
   let extraClassDeclaration = [{
     /// Attribute name used to to memoize indexing maps for named ops.
     constexpr const static ::llvm::StringLiteral
         kMemoizedIndexingMapsAttrName = "linalg.memoized_indexing_maps";
 
-    /// Attribute name used to mark region arguments that can be bufferized
-    /// in-place during linalg comprehensive bufferization.
-    constexpr const static ::llvm::StringLiteral
-      kInplaceableAttrName = "linalg.inplaceable";
-
-    /// Attribute name used to mark the bufferization layout for region
-    /// arguments during linalg comprehensive bufferization.
-    constexpr const static ::llvm::StringLiteral
-      kBufferLayoutAttrName = "linalg.buffer_layout";
-
-    using RegionBuilderFunType =
-      llvm::function_ref<void(ImplicitLocOpBuilder &b, Block &)>;
+    using RegionBuilderFunType = llvm::function_ref<
+      void(ImplicitLocOpBuilder &b, Block &, ArrayRef<NamedAttribute>)>;
     RegionBuilderFunType getRegionBuilder(StringRef name) {
       return namedStructuredOpRegionBuilders.lookup(name);
     }
@@ -62,9 +56,5 @@ def Linalg_Dialect : Dialect {
       llvm::StringMap<RegionBuilderFunType> namedStructuredOpRegionBuilders;
   }];
 }
-
-// Whether a type is a RangeType.
-def LinalgIsRangeTypePred : CPred<"$_self.isa<RangeType>()">;
-def Range : DialectType<Linalg_Dialect, LinalgIsRangeTypePred, "range">;
 
 #endif // LINALG_BASE

@@ -198,7 +198,6 @@ enum class dim {
 };
 
 } // namespace isl
-
 #include <isl/id.h>
 #include <isl/space.h>
 #include <isl/val.h>
@@ -629,7 +628,7 @@ public:
 private:
   template <typename T,
           typename = typename std::enable_if<std::is_same<
-                  const decltype(isl_ast_expr_get_type(NULL)),
+                  const decltype(isl_ast_expr_get_type(nullptr)),
                   const T>::value>::type>
   inline boolean isa_type(T subtype) const;
 public:
@@ -712,7 +711,7 @@ public:
 private:
   template <typename T,
           typename = typename std::enable_if<std::is_same<
-                  const decltype(isl_ast_expr_op_get_type(NULL)),
+                  const decltype(isl_ast_expr_op_get_type(nullptr)),
                   const T>::value>::type>
   inline boolean isa_type(T subtype) const;
 public:
@@ -1246,7 +1245,7 @@ public:
 private:
   template <typename T,
           typename = typename std::enable_if<std::is_same<
-                  const decltype(isl_ast_node_get_type(NULL)),
+                  const decltype(isl_ast_node_get_type(nullptr)),
                   const T>::value>::type>
   inline boolean isa_type(T subtype) const;
 public:
@@ -3558,7 +3557,7 @@ public:
 private:
   template <typename T,
           typename = typename std::enable_if<std::is_same<
-                  const decltype(isl_schedule_node_get_type(NULL)),
+                  const decltype(isl_schedule_node_get_type(nullptr)),
                   const T>::value>::type>
   inline boolean isa_type(T subtype) const;
 public:

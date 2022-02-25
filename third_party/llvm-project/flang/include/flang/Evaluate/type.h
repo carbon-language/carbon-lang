@@ -50,8 +50,10 @@ template <TypeCategory CATEGORY, int KIND = 0> class Type;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using CInteger = Type<TypeCategory::Integer, 4>;
+using LargestInt = Type<TypeCategory::Integer, 16>;
 using LogicalResult = Type<TypeCategory::Logical, 4>;
 using LargestReal = Type<TypeCategory::Real, 16>;
+using Ascii = Type<TypeCategory::Character, 1>;
 
 // A predicate that is true when a kind value is a kind that could possibly
 // be supported for an intrinsic type category on some target instruction
@@ -335,8 +337,10 @@ using LogicalTypes = CategoryTypes<TypeCategory::Logical>;
 
 using FloatingTypes = common::CombineTuples<RealTypes, ComplexTypes>;
 using NumericTypes = common::CombineTuples<IntegerTypes, FloatingTypes>;
-using RelationalTypes = common::CombineTuples<NumericTypes, CharacterTypes>;
-using AllIntrinsicTypes = common::CombineTuples<RelationalTypes, LogicalTypes>;
+using RelationalTypes =
+    common::CombineTuples<IntegerTypes, RealTypes, CharacterTypes>;
+using AllIntrinsicTypes =
+    common::CombineTuples<NumericTypes, CharacterTypes, LogicalTypes>;
 using LengthlessIntrinsicTypes =
     common::CombineTuples<NumericTypes, LogicalTypes>;
 

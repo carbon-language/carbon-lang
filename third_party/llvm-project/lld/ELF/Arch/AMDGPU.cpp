@@ -6,11 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InputFiles.h"
 #include "Symbols.h"
 #include "Target.h"
 #include "lld/Common/ErrorHandler.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
@@ -40,7 +39,6 @@ public:
 AMDGPU::AMDGPU() {
   relativeRel = R_AMDGPU_RELATIVE64;
   gotRel = R_AMDGPU_ABS64;
-  noneRel = R_AMDGPU_NONE;
   symbolicRel = R_AMDGPU_ABS64;
 }
 

@@ -22,7 +22,7 @@
 // Windows (from within the clang\docs directory):
 //   make.bat html
 // Non-Windows (from within the clang\docs directory):
-//   make -f Makefile.sphinx html
+//   sphinx-build -b html _build/html
 
 def GlobalDocumentation {
   code Intro =[{..
@@ -186,6 +186,10 @@ under the ``-fdeclspec`` flag for compatibility with various compilers. The
 primary use is for COFF object files which explicitly specify what interfaces
 are imported from external modules. See the dllimport_ documentation on MSDN
 for more information.
+
+Note that a dllimport function may still be inlined, if its definition is
+available and it doesn't reference any non-dllimport functions or global
+variables.
 
 .. _dllimport: https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
   }];
@@ -405,6 +409,71 @@ The SYCL kernel in the previous code sample meets these expectations.
   }];
 }
 
+def SYCLSpecialClassDocs : Documentation {
+  let Category = DocCatStmt;
+  let Content = [{
+SYCL defines some special classes (accessor, sampler, and stream) which require
+specific handling during the generation of the SPIR entry point.
+The ``__attribute__((sycl_special_class))`` attribute is used in SYCL
+headers to indicate that a class or a struct needs a specific handling when
+it is passed from host to device.
+Special classes will have a mandatory ``__init`` method and an optional
+``__finalize`` method (the ``__finalize`` method is used only with the
+``stream`` type). Kernel parameters types are extract from the ``__init`` method
+parameters. The kernel function arguments list is derived from the
+arguments of the ``__init`` method. The arguments of the ``__init`` method are
+copied into the kernel function argument list and the ``__init`` and
+``__finalize`` methods are called at the beginning and the end of the kernel,
+respectively.
+The ``__init`` and ``__finalize`` methods must be defined inside the
+special class.
+Please note that this is an attribute that is used as an internal
+implementation detail and not intended to be used by external users.
+
+The syntax of the attribute is as follows:
+
+.. code-block:: text
+
+  class __attribute__((sycl_special_class)) accessor {};
+  class [[clang::sycl_special_class]] accessor {};
+
+This is a code example that illustrates the use of the attribute:
+
+.. code-block:: c++
+
+  class __attribute__((sycl_special_class)) SpecialType {
+    int F1;
+    int F2;
+    void __init(int f1) {
+      F1 = f1;
+      F2 = f1;
+    }
+    void __finalize() {}
+  public:
+    SpecialType() = default;
+    int getF2() const { return F2; }
+  };
+
+  int main () {
+    SpecialType T;
+    cgh.single_task([=] {
+      T.getF2();
+    });
+  }
+
+This would trigger the following kernel entry point in the AST:
+
+.. code-block:: c++
+
+  void __sycl_kernel(int f1) {
+    SpecialType T;
+    T.__init(f1);
+    ...
+    T.__finalize()
+  }
+  }];
+}
+
 def C11NoReturnDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
@@ -418,10 +487,14 @@ pointer type.
 
 def CXX11NoReturnDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "noreturn, _Noreturn";
   let Content = [{
 A function declared as ``[[noreturn]]`` shall not return to its caller. The
 compiler will generate a diagnostic for a function declared as ``[[noreturn]]``
 that appears to be capable of returning to its caller.
+
+The ``[[_Noreturn]]`` spelling is deprecated and only exists to ease code
+migration for code using ``[[noreturn]]`` after including ``<stdnoreturn.h>``.
   }];
 }
 
@@ -2011,14 +2084,32 @@ preserving struct or union member access debuginfo indices of this
 struct or union, similar to clang ``__builtin_preserve_access_index()``.
   }];
 }
-def BTFTagDocs : Documentation {
+def BTFDeclTagDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
-Clang supports the ``__attribute__((btf_tag("ARGUMENT")))`` attribute for all
-targets. This attribute may be attached to a struct/union, struct/union field,
-function, function parameter or variable declaration. If -g is specified,
-the ``ARGUMENT`` info will be preserved in IR and be emitted to dwarf.
-For BPF targets, the ``ARGUMENT`` info will be emitted to .BTF ELF section too.
+Clang supports the ``__attribute__((btf_decl_tag("ARGUMENT")))`` attribute for
+all targets. This attribute may be attached to a struct/union, struct/union
+field, function, function parameter, variable or typedef declaration. If -g is
+specified, the ``ARGUMENT`` info will be preserved in IR and be emitted to
+dwarf. For BPF targets, the ``ARGUMENT`` info will be emitted to .BTF ELF
+section too.
+  }];
+}
+
+def BTFTypeTagDocs : Documentation {
+  let Category = DocCatType;
+  let Content = [{
+Clang supports the ``__attribute__((btf_type_tag("ARGUMENT")))`` attribute for
+all targets. It only has effect when ``-g`` is specified on the command line and
+is currently silently ignored when not applied to a pointer type (note: this
+scenario may be diagnosed in the future).
+
+The ``ARGUMENT`` string will be preserved in IR and emitted to DWARF for the
+types used in variable declarations, function declarations, or typedef
+declarations.
+
+For BPF targets, the ``ARGUMENT`` string will also be emitted to .BTF ELF
+section.
   }];
 }
 
@@ -2212,6 +2303,40 @@ example:
 All multiversioned functions must contain a ``default`` (fallback)
 implementation, otherwise usages of the function are considered invalid.
 Additionally, a function may not become multiversioned after its first use.
+}];
+}
+
+def TargetClonesDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Clang supports the ``target_clones("OPTIONS")`` attribute. This attribute may be
+attached to a function declaration and causes function multiversioning, where
+multiple versions of the function will be emitted with different code
+generation options.  Additionally, these versions will be resolved at runtime
+based on the priority of their attribute options. All ``target_clone`` functions
+are considered multiversioned functions.
+
+All multiversioned functions must contain a ``default`` (fallback)
+implementation, otherwise usages of the function are considered invalid.
+Additionally, a function may not become multiversioned after its first use.
+
+The options to ``target_clones`` can either be a target-specific architecture
+(specified as ``arch=CPU``), or one of a list of subtarget features.
+
+Example "subtarget features" from the x86 backend include: "mmx", "sse", "sse4.2",
+"avx", "xop" and largely correspond to the machine specific options handled by
+the front end.
+
+The versions can either be listed as a comma-separated sequence of string
+literals or as a single string literal containing a comma-separated list of
+versions.  For compatibility with GCC, the two formats can be mixed.  For
+example, the following will emit 4 versions of the function:
+
+  .. code-block:: c++
+
+    __attribute__((target_clones("arch=atom,avx2","arch=ivybridge","default")))
+    void foo() {}
+
 }];
 }
 
@@ -3174,6 +3299,9 @@ If a type is trivial for the purposes of calls, has a non-trivial destructor,
 and is passed as an argument by value, the convention is that the callee will
 destroy the object before returning.
 
+If a type is trivial for the purpose of calls, it is assumed to be trivially
+relocatable for the purpose of ``__is_trivially_relocatable``.
+
 Attribute ``trivial_abi`` has no effect in the following cases:
 
 - The class directly declares a virtual base or virtual methods.
@@ -3692,10 +3820,10 @@ completion handler in a Swift async method. For instance, here:
 This method asynchronously calls ``completionHandler`` when the data is
 available, or calls it with an error. ``_Nullable_result`` indicates to the
 Swift importer that this is the uncommon case where ``result`` can get ``nil``
-even if no error has occured, and will therefore import it as a Swift optional
+even if no error has occurred, and will therefore import it as a Swift optional
 type. Otherwise, if ``result`` was annotated with ``_Nullable``, the Swift
 importer will assume that ``result`` will always be non-nil unless an error
-occured.
+occurred.
 }];
 }
 
@@ -5928,6 +6056,51 @@ attribute requires a string literal argument to identify the handle being releas
   }];
 }
 
+def DiagnoseAsBuiltinDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``diagnose_as_builtin`` attribute indicates that Fortify diagnostics are to
+be applied to the declared function as if it were the function specified by the
+attribute. The builtin function whose diagnostics are to be mimicked should be
+given. In addition, the order in which arguments should be applied must also
+be given.
+
+For example, the attribute can be used as follows.
+
+.. code-block:: c
+
+  __attribute__((diagnose_as_builtin(__builtin_memset, 3, 2, 1)))
+  void *mymemset(int n, int c, void *s) {
+    // ...
+  }
+
+This indicates that calls to ``mymemset`` should be diagnosed as if they were
+calls to ``__builtin_memset``. The arguments ``3, 2, 1`` indicate by index the
+order in which arguments of ``mymemset`` should be applied to
+``__builtin_memset``. The third argument should be applied first, then the
+second, and then the first. Thus (when Fortify warnings are enabled) the call
+``mymemset(n, c, s)`` will diagnose overflows as if it were the call
+``__builtin_memset(s, c, n)``.
+
+For variadic functions, the variadic arguments must come in the same order as
+they would to the builtin function, after all normal arguments. For instance,
+to diagnose a new function as if it were `sscanf`, we can use the attribute as
+follows.
+
+.. code-block:: c
+
+  __attribute__((diagnose_as_builtin(sscanf, 1, 2)))
+  int mysscanf(const char *str, const char *format, ...)  {
+    // ...
+  }
+
+Then the call `mysscanf("abc def", "%4s %4s", buf1, buf2)` will be diagnosed as
+if it were the call `sscanf("abc def", "%4s %4s", buf1, buf2)`.
+
+This attribute cannot be applied to non-static member functions.
+}];
+}
+
 def ArmSveVectorBitsDocs : Documentation {
   let Category = DocCatType;
   let Content = [{
@@ -6036,6 +6209,10 @@ optimization level.
 
 Does not guarantee that inline substitution actually occurs.
 
+<ins>Note: applying this attribute to a coroutine at the `-O0` optimization level
+has no effect; other optimization levels may only partially inline and result in a
+diagnostic.</ins>
+
 See also `the Microsoft Docs on Inline Functions`_, `the GCC Common Function
 Attribute docs`_, and `the GCC Inline docs`_.
 
@@ -6095,5 +6272,43 @@ pointing to precise locations of the call site in the source.
       dontcall(); // No Warning
     sizeof(dontcall()); // No Warning
   }
+  }];
+}
+
+def ZeroCallUsedRegsDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+This attribute, when attached to a function, causes the compiler to zero a
+subset of all call-used registers before the function returns. It's used to
+increase program security by either mitigating `Return-Oriented Programming`_
+(ROP) attacks or preventing information leakage through registers.
+
+The term "call-used" means registers which are not guaranteed to be preserved
+unchanged for the caller by the current calling convention. This could also be
+described as "caller-saved" or "not callee-saved".
+
+The `choice` parameters gives the programmer flexibility to choose the subset
+of the call-used registers to be zeroed:
+
+- ``skip`` doesn't zero any call-used registers. This choice overrides any
+  command-line arguments.
+- ``used`` only zeros call-used registers used in the function. By ``used``, we
+  mean a register whose contents have been set or referenced in the function.
+- ``used-gpr`` only zeros call-used GPR registers used in the funciton.
+- ``used-arg`` only zeros call-used registers used to pass arguments to the
+  function.
+- ``used-gpr-arg`` only zeros call-used GPR registers used to pass arguments to
+  the function.
+- ``all`` zeros all call-used registers.
+- ``all-gpr`` zeros all call-used GPR registers.
+- ``all-arg`` zeros all call-used registers used to pass arguments to the
+  function.
+- ``all-gpr-arg`` zeros all call-used GPR registers used to pass arguments to
+  the function.
+
+The default for the attribute is contolled by the ``-fzero-call-used-regs``
+flag.
+
+.. _Return-Oriented Programming: https://en.wikipedia.org/wiki/Return-oriented_programming
   }];
 }

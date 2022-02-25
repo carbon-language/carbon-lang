@@ -10,6 +10,7 @@
 
 #include "AST.h"
 #include "CodeCompletionStrings.h"
+#include "Config.h"
 #include "FindTarget.h"
 #include "ParsedAST.h"
 #include "Selection.h"
@@ -18,6 +19,7 @@
 #include "support/Logger.h"
 #include "support/Markup.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
@@ -46,6 +48,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 
@@ -74,7 +77,7 @@ std::string getLocalScope(const Decl *D) {
   // - Classes, categories, and protocols: "MyClass(Category)"
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC))
     return printObjCMethod(*MD);
-  else if (const ObjCContainerDecl *CD = dyn_cast<ObjCContainerDecl>(DC))
+  if (const ObjCContainerDecl *CD = dyn_cast<ObjCContainerDecl>(DC))
     return printObjCContainer(*CD);
 
   auto GetName = [](const TypeDecl *D) {
@@ -83,7 +86,7 @@ std::string getLocalScope(const Decl *D) {
       Policy.SuppressScope = true;
       return declaredType(D).getAsString(Policy);
     }
-    if (auto RD = dyn_cast<RecordDecl>(D))
+    if (auto *RD = dyn_cast<RecordDecl>(D))
       return ("(anonymous " + RD->getKindName() + ")").str();
     return std::string("");
   };
@@ -123,7 +126,17 @@ std::string getNamespaceScope(const Decl *D) {
   return "";
 }
 
-std::string printDefinition(const Decl *D, const PrintingPolicy &PP) {
+std::string printDefinition(const Decl *D, PrintingPolicy PP,
+                            const syntax::TokenBuffer &TB) {
+  if (auto *VD = llvm::dyn_cast<VarDecl>(D)) {
+    if (auto *IE = VD->getInit()) {
+      // Initializers might be huge and result in lots of memory allocations in
+      // some catostrophic cases. Such long lists are not useful in hover cards
+      // anyway.
+      if (200 < TB.expandedTokens(IE->getSourceRange()).size())
+        PP.SuppressInitializers = true;
+    }
+  }
   std::string Definition;
   llvm::raw_string_ostream OS(Definition);
   D->print(OS, PP);
@@ -131,14 +144,22 @@ std::string printDefinition(const Decl *D, const PrintingPolicy &PP) {
   return Definition;
 }
 
-std::string printType(QualType QT, const PrintingPolicy &PP) {
+const char *getMarkdownLanguage(const ASTContext &Ctx) {
+  const auto &LangOpts = Ctx.getLangOpts();
+  if (LangOpts.ObjC && LangOpts.CPlusPlus)
+    return "objective-cpp";
+  return LangOpts.ObjC ? "objective-c" : "cpp";
+}
+
+HoverInfo::PrintedType printType(QualType QT, ASTContext &ASTCtx,
+                                 const PrintingPolicy &PP) {
   // TypePrinter doesn't resolve decltypes, so resolve them here.
   // FIXME: This doesn't handle composite types that contain a decltype in them.
   // We should rather have a printing policy for that.
   while (!QT.isNull() && QT->isDecltypeType())
-    QT = QT->getAs<DecltypeType>()->getUnderlyingType();
-  std::string Result;
-  llvm::raw_string_ostream OS(Result);
+    QT = QT->castAs<DecltypeType>()->getUnderlyingType();
+  HoverInfo::PrintedType Result;
+  llvm::raw_string_ostream OS(Result.Type);
   // Special case: if the outer type is a tag type without qualifiers, then
   // include the tag for extra clarity.
   // This isn't very idiomatic, so don't attempt it for complex cases, including
@@ -147,46 +168,59 @@ std::string printType(QualType QT, const PrintingPolicy &PP) {
     if (auto *TT = llvm::dyn_cast<TagType>(QT.getTypePtr()))
       OS << TT->getDecl()->getKindName() << " ";
   }
-  OS.flush();
   QT.print(OS, PP);
+  OS.flush();
+
+  const Config &Cfg = Config::current();
+  if (!QT.isNull() && Cfg.Hover.ShowAKA) {
+    bool ShouldAKA = false;
+    QualType DesugaredTy = clang::desugarForDiagnostic(ASTCtx, QT, ShouldAKA);
+    if (ShouldAKA)
+      Result.AKA = DesugaredTy.getAsString(PP);
+  }
   return Result;
 }
 
-std::string printType(const TemplateTypeParmDecl *TTP) {
-  std::string Res = TTP->wasDeclaredWithTypename() ? "typename" : "class";
+HoverInfo::PrintedType printType(const TemplateTypeParmDecl *TTP) {
+  HoverInfo::PrintedType Result;
+  Result.Type = TTP->wasDeclaredWithTypename() ? "typename" : "class";
   if (TTP->isParameterPack())
-    Res += "...";
-  return Res;
+    Result.Type += "...";
+  return Result;
 }
 
-std::string printType(const NonTypeTemplateParmDecl *NTTP,
-                      const PrintingPolicy &PP) {
-  std::string Res = printType(NTTP->getType(), PP);
-  if (NTTP->isParameterPack())
-    Res += "...";
-  return Res;
+HoverInfo::PrintedType printType(const NonTypeTemplateParmDecl *NTTP,
+                                 const PrintingPolicy &PP) {
+  auto PrintedType = printType(NTTP->getType(), NTTP->getASTContext(), PP);
+  if (NTTP->isParameterPack()) {
+    PrintedType.Type += "...";
+    if (PrintedType.AKA)
+      *PrintedType.AKA += "...";
+  }
+  return PrintedType;
 }
 
-std::string printType(const TemplateTemplateParmDecl *TTP,
-                      const PrintingPolicy &PP) {
-  std::string Res;
-  llvm::raw_string_ostream OS(Res);
+HoverInfo::PrintedType printType(const TemplateTemplateParmDecl *TTP,
+                                 const PrintingPolicy &PP) {
+  HoverInfo::PrintedType Result;
+  llvm::raw_string_ostream OS(Result.Type);
   OS << "template <";
   llvm::StringRef Sep = "";
   for (const Decl *Param : *TTP->getTemplateParameters()) {
     OS << Sep;
     Sep = ", ";
     if (const auto *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
-      OS << printType(TTP);
+      OS << printType(TTP).Type;
     else if (const auto *NTTP = dyn_cast<NonTypeTemplateParmDecl>(Param))
-      OS << printType(NTTP, PP);
+      OS << printType(NTTP, PP).Type;
     else if (const auto *TTPD = dyn_cast<TemplateTemplateParmDecl>(Param))
-      OS << printType(TTPD, PP);
+      OS << printType(TTPD, PP).Type;
   }
   // FIXME: TemplateTemplateParameter doesn't store the info on whether this
   // param was a "typename" or "class".
   OS << "> class";
-  return OS.str();
+  OS.flush();
+  return Result;
 }
 
 std::vector<HoverInfo::Param>
@@ -255,24 +289,30 @@ const FunctionDecl *getUnderlyingFunction(const Decl *D) {
 // Returns the decl that should be used for querying comments, either from index
 // or AST.
 const NamedDecl *getDeclForComment(const NamedDecl *D) {
+  const NamedDecl *DeclForComment = D;
   if (const auto *TSD = llvm::dyn_cast<ClassTemplateSpecializationDecl>(D)) {
     // Template may not be instantiated e.g. if the type didn't need to be
     // complete; fallback to primary template.
     if (TSD->getTemplateSpecializationKind() == TSK_Undeclared)
-      return TSD->getSpecializedTemplate();
-    if (const auto *TIP = TSD->getTemplateInstantiationPattern())
-      return TIP;
-  }
-  if (const auto *TSD = llvm::dyn_cast<VarTemplateSpecializationDecl>(D)) {
+      DeclForComment = TSD->getSpecializedTemplate();
+    else if (const auto *TIP = TSD->getTemplateInstantiationPattern())
+      DeclForComment = TIP;
+  } else if (const auto *TSD =
+                 llvm::dyn_cast<VarTemplateSpecializationDecl>(D)) {
     if (TSD->getTemplateSpecializationKind() == TSK_Undeclared)
-      return TSD->getSpecializedTemplate();
-    if (const auto *TIP = TSD->getTemplateInstantiationPattern())
-      return TIP;
-  }
-  if (const auto *FD = D->getAsFunction())
+      DeclForComment = TSD->getSpecializedTemplate();
+    else if (const auto *TIP = TSD->getTemplateInstantiationPattern())
+      DeclForComment = TIP;
+  } else if (const auto *FD = D->getAsFunction())
     if (const auto *TIP = FD->getTemplateInstantiationPattern())
-      return TIP;
-  return D;
+      DeclForComment = TIP;
+  // Ensure that getDeclForComment(getDeclForComment(X)) = getDeclForComment(X).
+  // This is usually not needed, but in strange cases of comparision operators
+  // being instantiated from spasceship operater, which itself is a template
+  // instantiation the recursrive call is necessary.
+  if (D != DeclForComment)
+    DeclForComment = getDeclForComment(DeclForComment);
+  return DeclForComment;
 }
 
 // Look up information about D from the index, and add it to Hover.
@@ -316,7 +356,7 @@ const Expr *getDefaultArg(const ParmVarDecl *PVD) {
 HoverInfo::Param toHoverInfoParam(const ParmVarDecl *PVD,
                                   const PrintingPolicy &PP) {
   HoverInfo::Param Out;
-  Out.Type = printType(PVD->getType(), PP);
+  Out.Type = printType(PVD->getType(), PVD->getASTContext(), PP);
   if (!PVD->getName().empty())
     Out.Name = PVD->getNameAsString();
   if (const Expr *DefArg = getDefaultArg(PVD)) {
@@ -343,11 +383,11 @@ void fillFunctionTypeAndParams(HoverInfo &HI, const Decl *D,
       NK == DeclarationName::CXXConversionFunctionName)
     return;
 
-  HI.ReturnType = printType(FD->getReturnType(), PP);
+  HI.ReturnType = printType(FD->getReturnType(), FD->getASTContext(), PP);
   QualType QT = FD->getType();
   if (const VarDecl *VD = llvm::dyn_cast<VarDecl>(D)) // Lambdas
     QT = VD->getType().getDesugaredType(D->getASTContext());
-  HI.Type = printType(QT, PP);
+  HI.Type = printType(QT, D->getASTContext(), PP);
   // FIXME: handle variadics.
 }
 
@@ -538,7 +578,8 @@ std::string synthesizeDocumentation(const NamedDecl *ND) {
 
 /// Generate a \p Hover object given the declaration \p D.
 HoverInfo getHoverContents(const NamedDecl *D, const PrintingPolicy &PP,
-                           const SymbolIndex *Index) {
+                           const SymbolIndex *Index,
+                           const syntax::TokenBuffer &TB) {
   HoverInfo HI;
   const ASTContext &Ctx = D->getASTContext();
 
@@ -576,11 +617,19 @@ HoverInfo getHoverContents(const NamedDecl *D, const PrintingPolicy &PP,
   if (const FunctionDecl *FD = getUnderlyingFunction(D))
     fillFunctionTypeAndParams(HI, D, FD, PP);
   else if (const auto *VD = dyn_cast<ValueDecl>(D))
-    HI.Type = printType(VD->getType(), PP);
+    HI.Type = printType(VD->getType(), VD->getASTContext(), PP);
   else if (const auto *TTP = dyn_cast<TemplateTypeParmDecl>(D))
     HI.Type = TTP->wasDeclaredWithTypename() ? "typename" : "class";
   else if (const auto *TTP = dyn_cast<TemplateTemplateParmDecl>(D))
     HI.Type = printType(TTP, PP);
+  else if (const auto *VT = dyn_cast<VarTemplateDecl>(D))
+    HI.Type =
+        printType(VT->getTemplatedDecl()->getType(), VT->getASTContext(), PP);
+  else if (const auto *TN = dyn_cast<TypedefNameDecl>(D))
+    HI.Type = printType(TN->getUnderlyingType(), TN->getASTContext(), PP);
+  else if (const auto *TAT = dyn_cast<TypeAliasTemplateDecl>(D))
+    HI.Type = printType(TAT->getTemplatedDecl()->getUnderlyingType(),
+                        TAT->getASTContext(), PP);
 
   // Fill in value with evaluated initializer if possible.
   if (const auto *Var = dyn_cast<VarDecl>(D)) {
@@ -592,7 +641,7 @@ HoverInfo getHoverContents(const NamedDecl *D, const PrintingPolicy &PP,
       HI.Value = toString(ECD->getInitVal(), 10);
   }
 
-  HI.Definition = printDefinition(D, PP);
+  HI.Definition = printDefinition(D, PP, TB);
   return HI;
 }
 
@@ -631,6 +680,16 @@ HoverInfo getHoverContents(const DefinedMacro &Macro, ParsedAST &AST) {
   return HI;
 }
 
+std::string typeAsDefinition(const HoverInfo::PrintedType &PType) {
+  std::string Result;
+  llvm::raw_string_ostream OS(Result);
+  OS << PType.Type;
+  if (PType.AKA)
+    OS << " // aka: " << *PType.AKA;
+  OS.flush();
+  return Result;
+}
+
 llvm::Optional<HoverInfo> getThisExprHoverContents(const CXXThisExpr *CTE,
                                                    ASTContext &ASTCtx,
                                                    const PrintingPolicy &PP) {
@@ -645,7 +704,7 @@ llvm::Optional<HoverInfo> getThisExprHoverContents(const CXXThisExpr *CTE,
 
   HoverInfo HI;
   HI.Name = "this";
-  HI.Definition = printType(PrettyThisType, PP);
+  HI.Definition = typeAsDefinition(printType(PrettyThisType, ASTCtx, PP));
   return HI;
 }
 
@@ -662,7 +721,7 @@ HoverInfo getDeducedTypeHoverContents(QualType QT, const syntax::Token &Tok,
   if (QT->isUndeducedAutoType()) {
     HI.Definition = "/* not deduced */";
   } else {
-    HI.Definition = printType(QT, PP);
+    HI.Definition = typeAsDefinition(printType(QT, ASTCtx, PP));
 
     if (const auto *D = QT->getAsTagDecl()) {
       const auto *CommentD = getDeclForComment(D);
@@ -677,7 +736,7 @@ HoverInfo getDeducedTypeHoverContents(QualType QT, const syntax::Token &Tok,
 bool isLiteral(const Expr *E) {
   // Unfortunately there's no common base Literal classes inherits from
   // (apart from Expr), therefore these exclusions.
-  return llvm::isa<CharacterLiteral>(E) || llvm::isa<CompoundLiteralExpr>(E) ||
+  return llvm::isa<CompoundLiteralExpr>(E) ||
          llvm::isa<CXXBoolLiteralExpr>(E) ||
          llvm::isa<CXXNullPtrLiteralExpr>(E) ||
          llvm::isa<FixedPointLiteral>(E) || llvm::isa<FloatingLiteral>(E) ||
@@ -713,7 +772,7 @@ llvm::Optional<HoverInfo> getHoverContents(const Expr *E, ParsedAST &AST,
   // For expressions we currently print the type and the value, iff it is
   // evaluatable.
   if (auto Val = printExprValue(E, AST.getASTContext())) {
-    HI.Type = printType(E->getType(), PP);
+    HI.Type = printType(E->getType(), AST.getASTContext(), PP);
     HI.Value = *Val;
     HI.Name = std::string(getNameForExpr(E));
     return HI;
@@ -904,7 +963,7 @@ void maybeAddCalleeArgInfo(const SelectionTree::Node *N, HoverInfo &HI,
 } // namespace
 
 llvm::Optional<HoverInfo> getHover(ParsedAST &AST, Position Pos,
-                                   format::FormatStyle Style,
+                                   const format::FormatStyle &Style,
                                    const SymbolIndex *Index) {
   PrintingPolicy PP =
       getPrintingPolicy(AST.getASTContext().getPrintingPolicy());
@@ -975,13 +1034,12 @@ llvm::Optional<HoverInfo> getHover(ParsedAST &AST, Position Pos,
     // So our selection tree should be biased right. (Tested with VSCode).
     SelectionTree ST =
         SelectionTree::createRight(AST.getASTContext(), TB, Offset, Offset);
-    std::vector<const Decl *> Result;
     if (const SelectionTree::Node *N = ST.commonAncestor()) {
       // FIXME: Fill in HighlightRange with range coming from N->ASTNode.
       auto Decls = explicitReferenceTargets(N->ASTNode, DeclRelation::Alias,
                                             AST.getHeuristicResolver());
       if (!Decls.empty()) {
-        HI = getHoverContents(Decls.front(), PP, Index);
+        HI = getHoverContents(Decls.front(), PP, Index, TB);
         // Layout info only shown when hovering on the field/class itself.
         if (Decls.front() == N->ASTNode.get<Decl>())
           addLayoutInfo(*Decls.front(), *HI);
@@ -1007,6 +1065,7 @@ llvm::Optional<HoverInfo> getHover(ParsedAST &AST, Position Pos,
   if (auto Formatted =
           tooling::applyAllReplacements(HI->Definition, Replacements))
     HI->Definition = *Formatted;
+  HI->DefinitionLanguage = getMarkdownLanguage(AST.getASTContext());
   HI->SymRange = halfOpenToRange(SM, HighlightRange);
 
   return HI;
@@ -1043,20 +1102,22 @@ markup::Document HoverInfo::present() const {
     // Parameters:
     // - `bool param1`
     // - `int param2 = 5`
-    Output.addParagraph().appendText("→ ").appendCode(*ReturnType);
-    if (Parameters && !Parameters->empty()) {
-      Output.addParagraph().appendText("Parameters: ");
-      markup::BulletList &L = Output.addBulletList();
-      for (const auto &Param : *Parameters) {
-        std::string Buffer;
-        llvm::raw_string_ostream OS(Buffer);
-        OS << Param;
-        L.addItem().addParagraph().appendCode(std::move(OS.str()));
-      }
-    }
-  } else if (Type) {
-    Output.addParagraph().appendText("Type: ").appendCode(*Type);
+    Output.addParagraph().appendText("→ ").appendCode(
+        llvm::to_string(*ReturnType));
   }
+
+  if (Parameters && !Parameters->empty()) {
+    Output.addParagraph().appendText("Parameters: ");
+    markup::BulletList &L = Output.addBulletList();
+    for (const auto &Param : *Parameters)
+      L.addItem().addParagraph().appendCode(llvm::to_string(Param));
+  }
+
+  // Don't print Type after Parameters or ReturnType as this will just duplicate
+  // the information
+  if (Type && !ReturnType && !Parameters)
+    Output.addParagraph().appendText("Type: ").appendCode(
+        llvm::to_string(*Type));
 
   if (Value) {
     markup::Paragraph &P = Output.addParagraph();
@@ -1089,7 +1150,7 @@ markup::Document HoverInfo::present() const {
     if (CalleeArgInfo->Name)
       OS << "as " << CalleeArgInfo->Name;
     if (CallPassType->Converted && CalleeArgInfo->Type)
-      OS << " (converted to " << CalleeArgInfo->Type << ")";
+      OS << " (converted to " << CalleeArgInfo->Type->Type << ")";
     Output.addParagraph().appendText(OS.str());
   }
 
@@ -1198,15 +1259,23 @@ void parseDocumentation(llvm::StringRef Input, markup::Document &Output) {
 }
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                              const HoverInfo::PrintedType &T) {
+  OS << T.Type;
+  if (T.AKA)
+    OS << " (aka " << *T.AKA << ")";
+  return OS;
+}
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                               const HoverInfo::Param &P) {
-  std::vector<llvm::StringRef> Output;
   if (P.Type)
-    Output.push_back(*P.Type);
+    OS << P.Type->Type;
   if (P.Name)
-    Output.push_back(*P.Name);
-  OS << llvm::join(Output, " ");
+    OS << " " << *P.Name;
   if (P.Default)
     OS << " = " << *P.Default;
+  if (P.Type && P.Type->AKA)
+    OS << " (aka " << *P.Type->AKA << ")";
   return OS;
 }
 

@@ -81,12 +81,7 @@ public:
   void writeRelocations(llvm::raw_ostream &os) const;
   void generateRelocationCode(raw_ostream &os) const;
 
-  bool isTLS() const {
-    // Older object files don't include WASM_SEG_FLAG_TLS and instead
-    // relied on the naming convention.
-    return flags & llvm::wasm::WASM_SEG_FLAG_TLS || name.startswith(".tdata") ||
-           name.startswith(".tbss");
-  }
+  bool isTLS() const { return flags & llvm::wasm::WASM_SEG_FLAG_TLS; }
 
   ObjFile *file;
   OutputSection *outputSec = nullptr;

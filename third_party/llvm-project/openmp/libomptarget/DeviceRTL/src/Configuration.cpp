@@ -12,33 +12,44 @@
 //===----------------------------------------------------------------------===//
 
 #include "Configuration.h"
+#include "DeviceEnvironment.h"
 #include "State.h"
 #include "Types.h"
 
 using namespace _OMP;
 
-struct DeviceEnvironmentTy {
-  int32_t DebugLevel;
-};
-
 #pragma omp declare target
 
-// TOOD: We want to change the name as soon as the old runtime is gone.
-DeviceEnvironmentTy CONSTANT(omptarget_device_environment)
-    __attribute__((used));
+// defined by CGOpenMPRuntimeGPU
+extern uint32_t __omp_rtl_debug_kind;
+extern uint32_t __omp_rtl_assume_no_thread_state;
 
-int32_t config::getDebugLevel() {
-  // TODO: Implement libomptarget initialization of DeviceEnvironmentTy
-  return 0;
+// TODO: We want to change the name as soon as the old runtime is gone.
+// This variable should be visibile to the plugin so we override the default
+// hidden visibility.
+DeviceEnvironmentTy CONSTANT(omptarget_device_environment)
+    __attribute__((used, retain, weak, visibility("protected")));
+
+uint32_t config::getDebugKind() {
+  return __omp_rtl_debug_kind & omptarget_device_environment.DebugKind;
 }
 
 uint32_t config::getNumDevices() {
-  // TODO: Implement libomptarget initialization of DeviceEnvironmentTy
-  return 1;
+  return omptarget_device_environment.NumDevices;
 }
 
-bool config::isDebugMode(config::DebugLevel Level) {
-  return config::getDebugLevel() > Level;
+uint32_t config::getDeviceNum() {
+  return omptarget_device_environment.DeviceNum;
 }
+
+uint64_t config::getDynamicMemorySize() {
+  return omptarget_device_environment.DynamicMemSize;
+}
+
+bool config::isDebugMode(config::DebugKind Kind) {
+  return config::getDebugKind() & Kind;
+}
+
+bool config::mayUseThreadStates() { return !__omp_rtl_assume_no_thread_state; }
 
 #pragma omp end declare target

@@ -53,6 +53,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Delinearization.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -77,6 +78,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -328,18 +330,20 @@ static bool doesStringMatchAnyRegex(StringRef Str,
 
     std::string Err;
     if (!R.isValid(Err))
-      report_fatal_error("invalid regex given as input to polly: " + Err, true);
+      report_fatal_error(Twine("invalid regex given as input to polly: ") + Err,
+                         true);
 
     if (R.match(Str))
       return true;
   }
   return false;
 }
+
 //===----------------------------------------------------------------------===//
 // ScopDetection.
 
 ScopDetection::ScopDetection(const DominatorTree &DT, ScalarEvolution &SE,
-                             LoopInfo &LI, RegionInfo &RI, AliasAnalysis &AA,
+                             LoopInfo &LI, RegionInfo &RI, AAResults &AA,
                              OptimizationRemarkEmitter &ORE)
     : DT(DT), SE(SE), LI(LI), RI(RI), AA(AA), ORE(ORE) {}
 
@@ -727,7 +731,7 @@ bool ScopDetection::isValidCallInst(CallInst &CI,
     case FMRB_OnlyReadsArgumentPointees:
     case FMRB_OnlyAccessesArgumentPointees:
     case FMRB_OnlyWritesArgumentPointees:
-      for (const auto &Arg : CI.arg_operands()) {
+      for (const auto &Arg : CI.args()) {
         if (!Arg->getType()->isPointerTy())
           continue;
 
@@ -895,7 +899,7 @@ ScopDetection::getDelinearizationTerms(DetectionContext &Context,
     if (auto *AF = dyn_cast<SCEVAddExpr>(Pair.second)) {
       for (auto Op : AF->operands()) {
         if (auto *AF2 = dyn_cast<SCEVAddRecExpr>(Op))
-          SE.collectParametricTerms(AF2, Terms);
+          collectParametricTerms(SE, AF2, Terms);
         if (auto *AF2 = dyn_cast<SCEVMulExpr>(Op)) {
           SmallVector<const SCEV *, 0> Operands;
 
@@ -918,7 +922,7 @@ ScopDetection::getDelinearizationTerms(DetectionContext &Context,
       }
     }
     if (Terms.empty())
-      SE.collectParametricTerms(Pair.second, Terms);
+      collectParametricTerms(SE, Pair.second, Terms);
   }
   return Terms;
 }
@@ -1012,8 +1016,8 @@ bool ScopDetection::computeAccessFunctions(
       if (Shape->DelinearizedSizes.size() == 0) {
         Acc->DelinearizedSubscripts.push_back(AF);
       } else {
-        SE.computeAccessFunctions(AF, Acc->DelinearizedSubscripts,
-                                  Shape->DelinearizedSizes);
+        llvm::computeAccessFunctions(SE, AF, Acc->DelinearizedSubscripts,
+                                     Shape->DelinearizedSizes);
         if (Acc->DelinearizedSubscripts.size() == 0)
           IsNonAffine = true;
       }
@@ -1047,8 +1051,8 @@ bool ScopDetection::hasBaseAffineAccesses(DetectionContext &Context,
 
   auto Terms = getDelinearizationTerms(Context, BasePointer);
 
-  SE.findArrayDimensions(Terms, Shape->DelinearizedSizes,
-                         Context.ElementSize[BasePointer]);
+  findArrayDimensions(SE, Terms, Shape->DelinearizedSizes,
+                      Context.ElementSize[BasePointer]);
 
   if (!hasValidArraySizes(Context, Shape->DelinearizedSizes, BasePointer,
                           Scope))
@@ -1133,7 +1137,7 @@ bool ScopDetection::isValidAccess(Instruction *Inst, const SCEV *AF,
   } else if (PollyDelinearize && !IsVariantInNonAffineLoop) {
     Context.Accesses[BP].push_back({Inst, AF});
 
-    if (!IsAffine || hasIVParams(AF))
+    if (!IsAffine)
       Context.NonAffineAccesses.insert(
           std::make_pair(BP, LI.getLoopFor(Inst->getParent())));
   } else if (!AllowNonAffine && !IsAffine) {
@@ -1146,8 +1150,7 @@ bool ScopDetection::isValidAccess(Instruction *Inst, const SCEV *AF,
 
   // Check if the base pointer of the memory access does alias with
   // any other pointer. This cannot be handled at the moment.
-  AAMDNodes AATags;
-  Inst->getAAMetadata(AATags);
+  AAMDNodes AATags = Inst->getAAMetadata();
   AliasSet &AS = Context.AST.getAliasSetFor(
       MemoryLocation::getBeforeOrAfter(BP->getValue(), AATags));
 
@@ -1165,7 +1168,7 @@ bool ScopDetection::isValidAccess(Instruction *Inst, const SCEV *AF,
       // as invariant, we use fixed-point iteration method here i.e we iterate
       // over the alias set for arbitrary number of times until it is safe to
       // assume that all the invariant loads have been detected
-      while (1) {
+      while (true) {
         const unsigned int VariantSize = VariantLS.size(),
                            InvariantSize = InvariantLS.size();
 
@@ -1469,7 +1472,7 @@ bool ScopDetection::isErrorBlock(llvm::BasicBlock &BB, const llvm::Region &R) {
   if (!PollyAllowErrorBlocks)
     return false;
 
-  auto It = ErrorBlockCache.insert({{&BB, &R}, false});
+  auto It = ErrorBlockCache.insert({std::make_pair(&BB, &R), false});
   if (!It.second)
     return It.first->getSecond();
 
@@ -1751,10 +1754,17 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) {
   if (!OnlyRegion.empty() &&
       !CurRegion.getEntry()->getName().count(OnlyRegion)) {
     LLVM_DEBUG({
-      dbgs() << "Region entry does not match -polly-region-only";
+      dbgs() << "Region entry does not match -polly-only-region";
       dbgs() << "\n";
     });
     return false;
+  }
+
+  for (BasicBlock *Pred : predecessors(CurRegion.getEntry())) {
+    Instruction *PredTerm = Pred->getTerminator();
+    if (isa<IndirectBrInst>(PredTerm) || isa<CallBrInst>(PredTerm))
+      return invalid<ReportIndirectPredecessor>(
+          Context, /*Assert=*/true, PredTerm, PredTerm->getDebugLoc());
   }
 
   // SCoP cannot contain the entry block of the function, because we need

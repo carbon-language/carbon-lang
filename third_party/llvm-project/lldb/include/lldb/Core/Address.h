@@ -116,7 +116,7 @@ public:
   ///
   /// Initialize with a invalid section (NULL) and an invalid offset
   /// (LLDB_INVALID_ADDRESS).
-  Address() : m_section_wp() {}
+  Address() {}
 
   /// Copy constructor
   ///
@@ -209,6 +209,10 @@ public:
       return Address::CompareModulePointerAndOffset(a, b) < 0;
     }
   };
+
+  /// Write a description of this object to a Stream.
+  bool GetDescription(Stream &s, Target &target,
+                      lldb::DescriptionLevel level) const;
 
   /// Dump a description of this object to a Stream.
   ///

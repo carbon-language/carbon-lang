@@ -21,7 +21,6 @@
 namespace llvm {
 
 class GCNTargetMachine;
-class LLVMContext;
 class GCNSubtarget;
 class MachineIRBuilder;
 
@@ -109,8 +108,8 @@ public:
                                      Register Den) const;
 
   void legalizeUnsignedDIV_REM64Impl(MachineIRBuilder &B, Register DstDivReg,
-                                     Register DstRemReg, Register Numer,
-                                     Register Denom) const;
+                                     Register DstRemReg, Register Num,
+                                     Register Den) const;
 
   bool legalizeSignedDIV_REM(MachineInstr &MI, MachineRegisterInfo &MRI,
                              MachineIRBuilder &B) const;
@@ -169,6 +168,8 @@ public:
                             Intrinsic::ID IID) const;
 
   bool legalizeBVHIntrinsic(MachineInstr &MI, MachineIRBuilder &B) const;
+
+  bool legalizeFPTruncRound(MachineInstr &MI, MachineIRBuilder &B) const;
 
   bool legalizeImageIntrinsic(
       MachineInstr &MI, MachineIRBuilder &B,

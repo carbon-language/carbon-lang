@@ -138,9 +138,9 @@ TEST(JSONTest, Object) {
   EXPECT_FALSE(O.try_emplace("a", 4).second);
 
   auto D = O.find("d");
-  EXPECT_FALSE(D == O.end());
+  EXPECT_NE(D, O.end());
   auto E = O.find("e");
-  EXPECT_TRUE(E == O.end());
+  EXPECT_EQ(E, O.end());
 
   O.erase("b");
   O.erase(D);
@@ -354,6 +354,27 @@ TEST(JSONTest, Integers) {
     EXPECT_EQ(T.Val, *Doc) << T.Desc;
     EXPECT_EQ(T.Str, s(*Doc)) << T.Desc;
   }
+}
+
+// Verify uint64_t type.
+TEST(JSONTest, U64Integers) {
+  Value Val = uint64_t{3100100100};
+  uint64_t Var = 3100100100;
+  EXPECT_EQ(Val, Var);
+
+  // Test the parse() part.
+  const char *Str = "4611686018427387905";
+  llvm::Expected<Value> Doc = parse(Str);
+
+  EXPECT_TRUE(!!Doc);
+  EXPECT_EQ(Doc->getAsInteger(), int64_t{4611686018427387905});
+  EXPECT_EQ(Doc->getAsUINT64(), uint64_t{4611686018427387905});
+
+  const char *Str2 = "-78278238238328222";
+  llvm::Expected<Value> Doc2 = parse(Str2);
+  EXPECT_TRUE(!!Doc2);
+  EXPECT_EQ(Doc2->getAsInteger(), int64_t{-78278238238328222});
+  EXPECT_EQ(Doc2->getAsUINT64(), llvm::None);
 }
 
 // Sample struct with typical JSON-mapping rules.

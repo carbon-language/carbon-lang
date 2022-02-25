@@ -4,10 +4,11 @@
 // taskwait with depend clause was introduced with gcc-9
 // UNSUPPORTED: gcc-4, gcc-5, gcc-6, gcc-7, gcc-8
 
-// clang does not yet support taskwait with depend clause
-// clang-12 introduced parsing, but no codegen
-// update expected result when codegen in clang was added
-// XFAIL: clang
+// icc does not yet support taskwait with depend clause
+// XFAIL: icc
+
+// support for taskwait with depend clause introduced in clang-14
+// UNSUPPORTED: clang-5, clang-6, clang-6, clang-8, clang-9, clang-10, clang-11, clang-12, clang-13
 
 #include "callback.h"
 #include <omp.h>

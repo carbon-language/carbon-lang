@@ -88,6 +88,9 @@ public:
   constexpr bool IsSubnormal() const {
     return Exponent() == 0 && !GetSignificand().IsZero();
   }
+  constexpr bool IsNormal() const {
+    return !(IsInfinite() || IsNotANumber() || IsSubnormal());
+  }
 
   constexpr Real ABS() const { // non-arithmetic, no flags returned
     return {word_.IBCLR(bits - 1)};
@@ -115,23 +118,27 @@ public:
   ValueWithRealFlags<Real> Divide(
       const Real &, Rounding rounding = defaultRounding) const;
 
-  // SQRT(x**2 + y**2) but computed so as to avoid spurious overflow
-  // TODO: not yet implemented; needed for CABS
+  ValueWithRealFlags<Real> SQRT(Rounding rounding = defaultRounding) const;
+
+  // HYPOT(x,y)=SQRT(x**2 + y**2) computed so as to avoid spurious
+  // intermediate overflows.
   ValueWithRealFlags<Real> HYPOT(
       const Real &, Rounding rounding = defaultRounding) const;
 
   template <typename INT> constexpr INT EXPONENT() const {
     if (Exponent() == maxExponent) {
       return INT::HUGE();
+    } else if (IsZero()) {
+      return {0};
     } else {
-      return {UnbiasedExponent()};
+      return {UnbiasedExponent() + 1};
     }
   }
 
   static constexpr Real EPSILON() {
     Real epsilon;
     epsilon.Normalize(
-        false, exponentBias - binaryPrecision, Fraction::MASKL(1));
+        false, exponentBias + 1 - binaryPrecision, Fraction::MASKL(1));
     return epsilon;
   }
   static constexpr Real HUGE() {
@@ -148,8 +155,28 @@ public:
   static constexpr int DIGITS{binaryPrecision};
   static constexpr int PRECISION{Details::decimalPrecision};
   static constexpr int RANGE{Details::decimalRange};
-  static constexpr int MAXEXPONENT{maxExponent - 1 - exponentBias};
-  static constexpr int MINEXPONENT{1 - exponentBias};
+  static constexpr int MAXEXPONENT{maxExponent - exponentBias};
+  static constexpr int MINEXPONENT{2 - exponentBias};
+
+  // SCALE(); also known as IEEE_SCALB and (in IEEE-754 '08) ScaleB.
+  template <typename INT>
+  ValueWithRealFlags<Real> SCALE(
+      const INT &by, Rounding rounding = defaultRounding) const {
+    auto expo{exponentBias + by.ToInt64()};
+    if (IsZero()) {
+      expo = exponentBias; // ignore by, don't overflow
+    } else if (by > INT{maxExponent}) {
+      expo = maxExponent;
+    } else if (by < INT{-exponentBias}) {
+      expo = -1;
+    }
+    Real twoPow;
+    RealFlags flags{
+        twoPow.Normalize(false, static_cast<int>(expo), Fraction::MASKL(1))};
+    ValueWithRealFlags<Real> result{Multiply(twoPow, rounding)};
+    result.flags |= flags;
+    return result;
+  }
 
   constexpr Real FlushSubnormalToZero() const {
     if (IsSubnormal()) {
@@ -219,21 +246,26 @@ public:
       return result;
     }
     ValueWithRealFlags<Real> intPart{ToWholeNumber(mode)};
-    int exponent{intPart.value.Exponent()};
-    result.flags.set(
-        RealFlag::Overflow, exponent >= exponentBias + result.value.bits);
     result.flags |= intPart.flags;
-    int shift{
-        exponent - exponentBias - binaryPrecision + 1}; // positive -> left
-    result.value =
-        result.value.ConvertUnsigned(intPart.value.GetFraction().SHIFTR(-shift))
-            .value.SHIFTL(shift);
+    int exponent{intPart.value.Exponent()};
+    // shift positive -> left shift, negative -> right shift
+    int shift{exponent - exponentBias - binaryPrecision + 1};
+    // Apply any right shift before moving to the result type
+    auto rshifted{intPart.value.GetFraction().SHIFTR(-shift)};
+    auto converted{result.value.ConvertUnsigned(rshifted)};
+    if (converted.overflow) {
+      result.flags.set(RealFlag::Overflow);
+    }
+    result.value = converted.value.SHIFTL(shift);
+    if (converted.value.CompareUnsigned(result.value.SHIFTR(shift)) !=
+        Ordering::Equal) {
+      result.flags.set(RealFlag::Overflow);
+    }
     if (IsSignBitSet()) {
-      auto negated{result.value.Negate()};
-      result.value = negated.value;
-      if (negated.overflow) {
-        result.flags.set(RealFlag::Overflow);
-      }
+      result.value = result.value.Negate().value;
+    }
+    if (IsSignBitSet() != result.value.IsNegative()) {
+      result.flags.set(RealFlag::Overflow);
     }
     if (result.flags.test(RealFlag::Overflow)) {
       result.value =
@@ -301,6 +333,8 @@ public:
 
   // Extracts unbiased exponent value.
   // Corrects the exponent value of a subnormal number.
+  // Note that the result is one less than the EXPONENT intrinsic;
+  // UnbiasedExponent(1.0) is 0, not 1.
   constexpr int UnbiasedExponent() const {
     int exponent{Exponent() - exponentBias};
     if (IsSubnormal()) {

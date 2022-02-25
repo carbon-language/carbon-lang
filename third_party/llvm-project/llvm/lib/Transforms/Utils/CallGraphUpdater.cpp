@@ -14,14 +14,14 @@
 
 #include "llvm/Transforms/Utils/CallGraphUpdater.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 
 using namespace llvm;
 
 bool CallGraphUpdater::finalize() {
   if (!DeadFunctionsInComdats.empty()) {
-    filterDeadComdatFunctions(*DeadFunctionsInComdats.front()->getParent(),
-                              DeadFunctionsInComdats);
+    filterDeadComdatFunctions(DeadFunctionsInComdats);
     DeadFunctions.append(DeadFunctionsInComdats.begin(),
                          DeadFunctionsInComdats.end());
   }

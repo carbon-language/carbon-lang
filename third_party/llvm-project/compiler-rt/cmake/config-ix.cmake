@@ -1,4 +1,5 @@
 include(CMakePushCheckState)
+include(LLVMCheckCompilerLinkerFlag)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFiles)
@@ -6,17 +7,11 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(TestBigEndian)
 
-function(compiler_rt_check_linker_flag flag out_var)
-  cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
-  check_cxx_compiler_flag("" ${out_var})
-  cmake_pop_check_state()
-endfunction()
-
 check_library_exists(c fopen "" COMPILER_RT_HAS_LIBC)
 if (COMPILER_RT_USE_BUILTINS_LIBRARY)
   include(HandleCompilerRT)
-  find_compiler_rt_library(builtins "" COMPILER_RT_BUILTINS_LIBRARY)
+  find_compiler_rt_library(builtins COMPILER_RT_BUILTINS_LIBRARY
+                           FLAGS ${SANITIZER_COMMON_FLAGS})
   # TODO(PR51389): We should check COMPILER_RT_BUILTINS_LIBRARY and report an
   # error if the value is NOTFOUND rather than silenty continuing but we first
   # need to fix find_compiler_rt_library on Darwin.
@@ -61,7 +56,9 @@ endif ()
 
 # CodeGen options.
 check_c_compiler_flag(-ffreestanding         COMPILER_RT_HAS_FFREESTANDING_FLAG)
+check_c_compiler_flag(-fomit-frame-pointer   COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG)
 check_c_compiler_flag(-std=c11               COMPILER_RT_HAS_STD_C11_FLAG)
+check_c_compiler_flag(-fcf-protection=full   COMPILER_RT_HAS_FCF_PROTECTION_FLAG)
 check_cxx_compiler_flag(-fPIC                COMPILER_RT_HAS_FPIC_FLAG)
 check_cxx_compiler_flag(-fPIE                COMPILER_RT_HAS_FPIE_FLAG)
 check_cxx_compiler_flag(-fno-builtin         COMPILER_RT_HAS_FNO_BUILTIN_FLAG)
@@ -80,6 +77,7 @@ check_cxx_compiler_flag(-fno-lto             COMPILER_RT_HAS_FNO_LTO_FLAG)
 check_cxx_compiler_flag(-fno-profile-generate COMPILER_RT_HAS_FNO_PROFILE_GENERATE_FLAG)
 check_cxx_compiler_flag(-fno-profile-instr-generate COMPILER_RT_HAS_FNO_PROFILE_INSTR_GENERATE_FLAG)
 check_cxx_compiler_flag(-fno-profile-instr-use COMPILER_RT_HAS_FNO_PROFILE_INSTR_USE_FLAG)
+check_cxx_compiler_flag(-fno-coverage-mapping COMPILER_RT_HAS_FNO_COVERAGE_MAPPING_FLAG)
 check_cxx_compiler_flag("-Werror -msse3" COMPILER_RT_HAS_MSSE3_FLAG)
 check_cxx_compiler_flag("-Werror -msse4.2"   COMPILER_RT_HAS_MSSE4_2_FLAG)
 check_cxx_compiler_flag(--sysroot=.          COMPILER_RT_HAS_SYSROOT_FLAG)
@@ -117,9 +115,12 @@ check_cxx_compiler_flag(-Wno-pedantic COMPILER_RT_HAS_WNO_PEDANTIC)
 check_cxx_compiler_flag(-Wno-format COMPILER_RT_HAS_WNO_FORMAT)
 check_cxx_compiler_flag(-Wno-format-pedantic COMPILER_RT_HAS_WNO_FORMAT_PEDANTIC)
 
+check_cxx_compiler_flag("/experimental:external /external:W0" COMPILER_RT_HAS_EXTERNAL_FLAG)
+
 check_cxx_compiler_flag(/W4 COMPILER_RT_HAS_W4_FLAG)
 check_cxx_compiler_flag(/WX COMPILER_RT_HAS_WX_FLAG)
 check_cxx_compiler_flag(/wd4146 COMPILER_RT_HAS_WD4146_FLAG)
+check_cxx_compiler_flag(/wd4206 COMPILER_RT_HAS_WD4206_FLAG)
 check_cxx_compiler_flag(/wd4291 COMPILER_RT_HAS_WD4291_FLAG)
 check_cxx_compiler_flag(/wd4221 COMPILER_RT_HAS_WD4221_FLAG)
 check_cxx_compiler_flag(/wd4391 COMPILER_RT_HAS_WD4391_FLAG)
@@ -164,11 +165,13 @@ check_library_exists(c++ __cxa_throw "" COMPILER_RT_HAS_LIBCXX)
 check_library_exists(stdc++ __cxa_throw "" COMPILER_RT_HAS_LIBSTDCXX)
 
 # Linker flags.
-compiler_rt_check_linker_flag("-Wl,-z,text" COMPILER_RT_HAS_Z_TEXT)
-compiler_rt_check_linker_flag("-fuse-ld=lld" COMPILER_RT_HAS_FUSE_LD_LLD_FLAG)
+llvm_check_compiler_linker_flag(CXX "-Wl,-z,text" COMPILER_RT_HAS_Z_TEXT)
+llvm_check_compiler_linker_flag(CXX "-fuse-ld=lld" COMPILER_RT_HAS_FUSE_LD_LLD_FLAG)
 
-set(VERS_COMPAT_OPTION "-Wl,-z,gnu-version-script-compat")
-compiler_rt_check_linker_flag("${VERS_COMPAT_OPTION}" COMPILER_RT_HAS_GNU_VERSION_SCRIPT_COMPAT)
+if(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  set(VERS_COMPAT_OPTION "-Wl,-z,gnu-version-script-compat")
+  llvm_check_compiler_linker_flag(CXX "${VERS_COMPAT_OPTION}" COMPILER_RT_HAS_GNU_VERSION_SCRIPT_COMPAT)
+endif()
 
 set(DUMMY_VERS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/dummy.vers)
 file(WRITE ${DUMMY_VERS} "{};")
@@ -178,10 +181,10 @@ if(COMPILER_RT_HAS_GNU_VERSION_SCRIPT_COMPAT)
   # -z gnu-version-script-compat.
   string(APPEND VERS_OPTION " ${VERS_COMPAT_OPTION}")
 endif()
-compiler_rt_check_linker_flag("${VERS_OPTION}" COMPILER_RT_HAS_VERSION_SCRIPT)
+llvm_check_compiler_linker_flag(CXX "${VERS_OPTION}" COMPILER_RT_HAS_VERSION_SCRIPT)
 
 if(ANDROID)
-  compiler_rt_check_linker_flag("-Wl,-z,global" COMPILER_RT_HAS_Z_GLOBAL)
+  llvm_check_compiler_linker_flag(CXX "-Wl,-z,global" COMPILER_RT_HAS_Z_GLOBAL)
   check_library_exists(log __android_log_write "" COMPILER_RT_HAS_LIBLOG)
 endif()
 
@@ -223,6 +226,19 @@ function(get_target_flags_for_arch arch out_var)
   endif()
 endfunction()
 
+# Returns a list of architecture specific target ldflags in @out_var list.
+function(get_target_link_flags_for_arch arch out_var)
+  list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
+  if(ARCH_INDEX EQUAL -1)
+    message(FATAL_ERROR "Unsupported architecture: ${arch}")
+  else()
+    # Workaround for direct calls to __tls_get_addr on Solaris/amd64.
+    if(OS_NAME MATCHES "SunOS" AND ${arch} MATCHES x86_64)
+      set(${out_var} "-Wl,-z,relax=transtls" PARENT_SCOPE)
+    endif()
+  endif()
+endfunction()
+
 # Returns a compiler and CFLAGS that should be used to run tests for the
 # specific architecture.  When cross-compiling, this is controled via
 # COMPILER_RT_TEST_COMPILER and COMPILER_RT_TEST_COMPILER_CFLAGS.
@@ -250,7 +266,35 @@ function(get_test_cflags_for_apple_platform platform arch cflags_out)
   endif()
   set(test_cflags "")
   get_target_flags_for_arch(${arch} test_cflags)
-  list(APPEND test_cflags ${DARWIN_${platform}_CFLAGS})
+
+  if (NOT "${arch}" STREQUAL "arm64e")
+    list(APPEND test_cflags ${DARWIN_${platform}_CFLAGS})
+  else()
+    # arm64e is not currently ABI stable so we need to build for the
+    # OS version being tested. Rather than querying the device under test
+    # we use the SDK version which "should" be the same as the
+    # device under test (it is a configuration error for these not to match).
+    # FIXME(dliew): We can remove this if we build the runtimes with the appropriate
+    # deployment target for arm64e.
+    foreach (flag ${DARWIN_${platform}_CFLAGS})
+      if ("${flag}" MATCHES "^${DARWIN_${platform}_MIN_VER_FLAG}=.+")
+        # Find the SDK version
+        get_xcrun_platform_from_apple_platform("${platform}" xcrun_platform_name)
+        # TODO(dliew): Remove this check once get_xcrun_platform_from_apple_platform
+        # emits a fatal error for unrecognised platforms.
+        if (NOT "${xcrun_platform_name}" STREQUAL "")
+          find_darwin_sdk_version(platform_sdk_version "${xcrun_platform_name}")
+          # Patch flag with correct deployment target
+          set(replacement_flag "${DARWIN_${platform}_MIN_VER_FLAG}=${platform_sdk_version}")
+          list(APPEND test_cflags "${replacement_flag}")
+        endif()
+      else()
+        # Copy through
+        list(APPEND test_cflags "${flag}")
+      endif()
+    endforeach()
+  endif()
+
   string(REPLACE ";" " " test_cflags_str "${test_cflags}")
   string(APPEND test_cflags_str "${COMPILER_RT_TEST_COMPILER_CFLAGS}")
   set(${cflags_out} "${test_cflags_str}" PARENT_SCOPE)
@@ -277,6 +321,31 @@ function(is_valid_apple_platform platform is_valid_out)
     set(is_valid TRUE)
   endif()
   set(${is_valid_out} ${is_valid} PARENT_SCOPE)
+endfunction()
+
+# Maps the Apple platform name used in Compiler-rt's CMake code
+# to the name recognised by xcrun's `--sdk` argument
+function(get_xcrun_platform_from_apple_platform platform out_var)
+  set(xcrun_platform "")
+  if ("${platform}" STREQUAL "osx")
+    set(xcrun_platform "macosx")
+  elseif ("${platform}" STREQUAL "iossim")
+    set(xcrun_platform "iphonesimulator")
+  elseif ("${platform}" STREQUAL "ios")
+    set(xcrun_platform "iphoneos")
+  elseif ("${platform}" STREQUAL "watchossim")
+    set(xcrun_platform "watchsimulator")
+  elseif ("${platform}" STREQUAL "watchos")
+    set(xcrun_platform "watchos")
+  elseif ("${platform}" STREQUAL "tvossim")
+    set(xcrun_platform "appletvsimulator")
+  elseif ("${platform}" STREQUAL "tvos")
+    set(xcrun_platform "appletvos")
+  else()
+    # TODO(dliew): Make this an error.
+    message(WARNING "\"${platform}\" is not a handled apple platform")
+  endif()
+  set(${out_var} ${xcrun_platform} PARENT_SCOPE)
 endfunction()
 
 include(AllSupportedArchDefs)
@@ -338,6 +407,9 @@ if(APPLE)
   set(XRAY_SUPPORTED_OS osx)
   set(FUZZER_SUPPORTED_OS osx)
   set(ORC_SUPPORTED_OS osx)
+  set(UBSAN_SUPPORTED_OS osx)
+  set(LSAN_SUPPORTED_OS osx)
+  set(STATS_SUPPORTED_OS osx)
 
   # Note: In order to target x86_64h on OS X the minimum deployment target must
   # be 10.8 or higher.
@@ -371,7 +443,7 @@ if(APPLE)
     -lc++
     -lc++abi)
 
-  compiler_rt_check_linker_flag("-fapplication-extension" COMPILER_RT_HAS_APP_EXTENSION)
+  llvm_check_compiler_linker_flag(CXX "-fapplication-extension" COMPILER_RT_HAS_APP_EXTENSION)
   if(COMPILER_RT_HAS_APP_EXTENSION)
     list(APPEND DARWIN_COMMON_LINK_FLAGS "-fapplication-extension")
   endif()
@@ -423,6 +495,10 @@ if(APPLE)
           list(APPEND PROFILE_SUPPORTED_OS ${platform}sim)
           list(APPEND TSAN_SUPPORTED_OS ${platform}sim)
           list(APPEND FUZZER_SUPPORTED_OS ${platform}sim)
+          list(APPEND ORC_SUPPORTED_OS ${platform}sim)
+          list(APPEND UBSAN_SUPPORTED_OS ${platform}sim)
+          list(APPEND LSAN_SUPPORTED_OS ${platform}sim)
+          list(APPEND STATS_SUPPORTED_OS ${platform}sim)
         endif()
         foreach(arch ${DARWIN_${platform}sim_ARCHS})
           list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
@@ -453,6 +529,10 @@ if(APPLE)
             list(APPEND TSAN_SUPPORTED_OS ${platform})
           endif()
           list(APPEND FUZZER_SUPPORTED_OS ${platform})
+          list(APPEND ORC_SUPPORTED_OS ${platform})
+          list(APPEND UBSAN_SUPPORTED_OS ${platform})
+          list(APPEND LSAN_SUPPORTED_OS ${platform})
+          list(APPEND STATS_SUPPORTED_OS ${platform})
         endif()
         foreach(arch ${DARWIN_${platform}_ARCHS})
           list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
@@ -462,7 +542,7 @@ if(APPLE)
     endforeach()
   endif()
 
-  # Explictly disable unsupported Sanitizer configurations.
+  # Explicitly disable unsupported Sanitizer configurations.
   list(REMOVE_ITEM FUZZER_SUPPORTED_OS "watchos")
   list(REMOVE_ITEM FUZZER_SUPPORTED_OS "watchossim")
 
@@ -564,8 +644,19 @@ else()
 endif()
 
 if (MSVC)
+  # Allow setting clang-cl's /winsysroot flag.
+  set(LLVM_WINSYSROOT "" CACHE STRING
+    "If set, argument to clang-cl's /winsysroot")
+
+  if (LLVM_WINSYSROOT)
+    set(MSVC_DIA_SDK_DIR "${LLVM_WINSYSROOT}/DIA SDK" CACHE PATH
+        "Path to the DIA SDK")
+  else()
+    set(MSVC_DIA_SDK_DIR "$ENV{VSINSTALLDIR}DIA SDK" CACHE PATH
+        "Path to the DIA SDK")
+  endif()
+
   # See if the DIA SDK is available and usable.
-  set(MSVC_DIA_SDK_DIR "$ENV{VSINSTALLDIR}DIA SDK")
   if (IS_DIRECTORY ${MSVC_DIA_SDK_DIR})
     set(CAN_SYMBOLIZE 1)
   else()
@@ -665,11 +756,22 @@ else()
   set(COMPILER_RT_HAS_PROFILE FALSE)
 endif()
 
-if (COMPILER_RT_HAS_SANITIZER_COMMON AND TSAN_SUPPORTED_ARCH AND
-    OS_NAME MATCHES "Darwin|Linux|FreeBSD|Android|NetBSD")
-  set(COMPILER_RT_HAS_TSAN TRUE)
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND TSAN_SUPPORTED_ARCH)
+  if (OS_NAME MATCHES "Linux|Darwin|FreeBSD|NetBSD")
+    set(COMPILER_RT_HAS_TSAN TRUE)
+  elseif (OS_NAME MATCHES "Android" AND ANDROID_PLATFORM_LEVEL GREATER 23)
+    set(COMPILER_RT_HAS_TSAN TRUE)
+  else()
+    set(COMPILER_RT_HAS_TSAN FALSE)
+  endif()
 else()
   set(COMPILER_RT_HAS_TSAN FALSE)
+endif()
+
+if (OS_NAME MATCHES "Linux|FreeBSD|Windows|NetBSD|SunOS")
+  set(COMPILER_RT_TSAN_HAS_STATIC_RUNTIME TRUE)
+else()
+  set(COMPILER_RT_TSAN_HAS_STATIC_RUNTIME FALSE)
 endif()
 
 if (COMPILER_RT_HAS_SANITIZER_COMMON AND UBSAN_SUPPORTED_ARCH AND

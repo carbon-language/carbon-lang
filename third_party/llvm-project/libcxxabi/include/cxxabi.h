@@ -1,4 +1,4 @@
-//===--------------------------- cxxabi.h ---------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -19,7 +19,7 @@
 
 #include <__cxxabi_config.h>
 
-#define _LIBCPPABI_VERSION 1002
+#define _LIBCPPABI_VERSION 15000
 #define _LIBCXXABI_NORETURN  __attribute__((noreturn))
 #define _LIBCXXABI_ALWAYS_COLD __attribute__((cold))
 

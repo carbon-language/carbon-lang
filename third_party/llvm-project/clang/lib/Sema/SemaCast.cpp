@@ -1313,7 +1313,9 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
   // conversions, subject to further restrictions.
   // Also, C++ 5.2.9p1 forbids casting away constness, which makes reversal
-  // of qualification conversions impossible.
+  // of qualification conversions impossible. (In C++20, adding an array bound
+  // would be the reverse of a qualification conversion, but adding permission
+  // to add an array bound in a static_cast is a wording oversight.)
   // In the CStyle case, the earlier attempt to const_cast should have taken
   // care of reverse qualification conversions.
 
@@ -1354,7 +1356,7 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
     if (SrcType->isIntegralOrEnumerationType()) {
       // [expr.static.cast]p10 If the enumeration type has a fixed underlying
       // type, the value is first converted to that type by integral conversion
-      const EnumType *Enum = DestType->getAs<EnumType>();
+      const EnumType *Enum = DestType->castAs<EnumType>();
       Kind = Enum->getDecl()->isFixed() &&
                      Enum->getDecl()->getIntegerType()->isBooleanType()
                  ? CK_IntegralToBoolean
@@ -2543,7 +2545,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
                                          QualType DestType, bool CStyle,
                                          unsigned &msg, CastKind &Kind) {
-  if (!Self.getLangOpts().OpenCL)
+  if (!Self.getLangOpts().OpenCL && !Self.getLangOpts().SYCLIsDevice)
     // FIXME: As compiler doesn't have any information about overlapping addr
     // spaces at the moment we have to be permissive here.
     return TC_NotApplicable;

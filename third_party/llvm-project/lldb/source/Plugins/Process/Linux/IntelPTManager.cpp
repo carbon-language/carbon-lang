@@ -145,7 +145,11 @@ static Error CheckPsbPeriod(size_t psb_period) {
 }
 
 size_t IntelPTThreadTrace::GetTraceBufferSize() const {
+#ifndef PERF_ATTR_SIZE_VER5
+  llvm_unreachable("Intel PT Linux perf event not supported");
+#else
   return m_mmap_meta->aux_size;
+#endif
 }
 
 static Expected<uint64_t>
@@ -178,7 +182,7 @@ Error IntelPTThreadTrace::StartTrace(lldb::pid_t pid, lldb::tid_t tid,
 #ifndef PERF_ATTR_SIZE_VER5
   llvm_unreachable("Intel PT Linux perf event not supported");
 #else
-  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
+  Log *log = GetLog(POSIXLog::Ptrace);
 
   m_tid = tid;
   LLDB_LOG(log, "called thread id {0}", tid);
@@ -344,7 +348,7 @@ IntelPTThreadTrace::ReadPerfTraceAux(llvm::MutableArrayRef<uint8_t> &buffer,
   // in the man page of perf_event_open.
   ioctl(*m_fd, PERF_EVENT_IOC_DISABLE);
 
-  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
+  Log *log = GetLog(POSIXLog::Ptrace);
   Status error;
   uint64_t head = m_mmap_meta->aux_head;
 
@@ -377,7 +381,7 @@ IntelPTThreadTrace::ReadPerfTraceData(llvm::MutableArrayRef<uint8_t> &buffer,
 #ifndef PERF_ATTR_SIZE_VER5
   llvm_unreachable("perf event not supported");
 #else
-  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
+  Log *log = GetLog(POSIXLog::Ptrace);
   uint64_t bytes_remaining = buffer.size();
   Status error;
 
@@ -423,7 +427,7 @@ void IntelPTThreadTrace::ReadCyclicBuffer(llvm::MutableArrayRef<uint8_t> &dst,
                                           llvm::MutableArrayRef<uint8_t> src,
                                           size_t src_cyc_index, size_t offset) {
 
-  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_PTRACE));
+  Log *log = GetLog(POSIXLog::Ptrace);
 
   if (dst.empty() || src.empty()) {
     dst = dst.drop_back(dst.size());

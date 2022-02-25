@@ -50,7 +50,7 @@ public:
   virtual ~Dialect();
 
   /// Utility function that returns if the given string is a valid dialect
-  /// namespace.
+  /// namespace
   static bool isValidNamespace(StringRef str);
 
   MLIRContext *getContext() const { return context; }
@@ -114,15 +114,15 @@ public:
 
   /// Return the hook to parse an operation registered to this dialect, if any.
   /// By default this will lookup for registered operations and return the
-  /// `parse()` method registered on the AbstractOperation. Dialects can
+  /// `parse()` method registered on the RegisteredOperationName. Dialects can
   /// override this behavior and handle unregistered operations as well.
   virtual Optional<ParseOpHook> getParseOperationHook(StringRef opName) const;
 
   /// Print an operation registered to this dialect.
   /// This hook is invoked for registered operation which don't override the
   /// `print()` method to define their own custom assembly.
-  virtual LogicalResult printOperation(Operation *op,
-                                       OpAsmPrinter &printer) const;
+  virtual llvm::unique_function<void(Operation *, OpAsmPrinter &printer)>
+  getOperationPrinter(Operation *op) const;
 
   //===--------------------------------------------------------------------===//
   // Verification Hooks
@@ -194,7 +194,7 @@ protected:
   ///
   template <typename... Args> void addOperations() {
     (void)std::initializer_list<int>{
-        0, (AbstractOperation::insert<Args>(*this), 0)...};
+        0, (RegisteredOperationName::insert<Args>(*this), 0)...};
   }
 
   /// Register a set of type classes with this dialect.
@@ -297,8 +297,7 @@ class DialectRegistry {
 public:
   explicit DialectRegistry();
 
-  template <typename ConcreteDialect>
-  void insert() {
+  template <typename ConcreteDialect> void insert() {
     insert(TypeID::get<ConcreteDialect>(),
            ConcreteDialect::getDialectNamespace(),
            static_cast<DialectAllocatorFunction>(([](MLIRContext *ctx) {
@@ -318,7 +317,8 @@ public:
   /// Add a new dialect constructor to the registry. The constructor must be
   /// calling MLIRContext::getOrLoadDialect in order for the context to take
   /// ownership of the dialect and for delayed interface registration to happen.
-  void insert(TypeID typeID, StringRef name, DialectAllocatorFunction ctor);
+  void insert(TypeID typeID, StringRef name,
+              const DialectAllocatorFunction &ctor);
 
   /// Return an allocation function for constructing the dialect identified by
   /// its namespace, or nullptr if the namespace is not in this registry.
@@ -331,7 +331,22 @@ public:
       destination.insert(nameAndRegistrationIt.second.first,
                          nameAndRegistrationIt.first,
                          nameAndRegistrationIt.second.second);
-    destination.interfaces.insert(interfaces.begin(), interfaces.end());
+    // Merge interfaces.
+    for (auto it : interfaces) {
+      TypeID dialect = it.first;
+      auto destInterfaces = destination.interfaces.find(dialect);
+      if (destInterfaces == destination.interfaces.end()) {
+        destination.interfaces[dialect] = it.second;
+        continue;
+      }
+      // The destination already has delayed interface registrations for this
+      // dialect. Merge registrations into the destination registry.
+      destInterfaces->second.dialectInterfaces.append(
+          it.second.dialectInterfaces.begin(),
+          it.second.dialectInterfaces.end());
+      destInterfaces->second.objectInterfaces.append(
+          it.second.objectInterfaces.begin(), it.second.objectInterfaces.end());
+    }
   }
 
   /// Return the names of dialects known to this registry.
@@ -364,8 +379,7 @@ public:
   /// Add an external op interface model for an op that belongs to a dialect,
   /// both provided as template parameters. The dialect must be present in the
   /// registry.
-  template <typename OpTy, typename ModelTy>
-  void addOpInterface() {
+  template <typename OpTy, typename ModelTy> void addOpInterface() {
     StringRef opName = OpTy::getOperationName();
     StringRef dialectName = opName.split('.').first;
     addObjectInterface(dialectName, TypeID::get<OpTy>(),
@@ -399,13 +413,13 @@ private:
   /// Add an interface constructed with the given allocation function to the
   /// dialect identified by its namespace.
   void addDialectInterface(StringRef dialectName, TypeID interfaceTypeID,
-                           DialectInterfaceAllocatorFunction allocator);
+                           const DialectInterfaceAllocatorFunction &allocator);
 
   /// Add an attribute/operation/type interface constructible with the given
   /// allocation function to the dialect identified by its namespace.
   void addObjectInterface(StringRef dialectName, TypeID objectID,
                           TypeID interfaceTypeID,
-                          ObjectInterfaceAllocatorFunction allocator);
+                          const ObjectInterfaceAllocatorFunction &allocator);
 
   /// Add an external model for an attribute/type interface to the dialect
   /// identified by its namespace.
@@ -427,11 +441,57 @@ private:
 namespace llvm {
 /// Provide isa functionality for Dialects.
 template <typename T>
-struct isa_impl<T, ::mlir::Dialect> {
+struct isa_impl<T, ::mlir::Dialect,
+                std::enable_if_t<std::is_base_of<::mlir::Dialect, T>::value>> {
   static inline bool doit(const ::mlir::Dialect &dialect) {
     return mlir::TypeID::get<T>() == dialect.getTypeID();
   }
 };
+template <typename T>
+struct isa_impl<
+    T, ::mlir::Dialect,
+    std::enable_if_t<std::is_base_of<::mlir::DialectInterface, T>::value>> {
+  static inline bool doit(const ::mlir::Dialect &dialect) {
+    return const_cast<::mlir::Dialect &>(dialect).getRegisteredInterface<T>();
+  }
+};
+template <typename T>
+struct cast_retty_impl<T, ::mlir::Dialect *> {
+  using ret_type =
+      std::conditional_t<std::is_base_of<::mlir::Dialect, T>::value, T *,
+                         const T *>;
+};
+template <typename T>
+struct cast_retty_impl<T, ::mlir::Dialect> {
+  using ret_type =
+      std::conditional_t<std::is_base_of<::mlir::Dialect, T>::value, T &,
+                         const T &>;
+};
+
+template <typename T>
+struct cast_convert_val<T, ::mlir::Dialect, ::mlir::Dialect> {
+  template <typename To>
+  static std::enable_if_t<std::is_base_of<::mlir::Dialect, To>::value, To &>
+  doitImpl(::mlir::Dialect &dialect) {
+    return static_cast<To &>(dialect);
+  }
+  template <typename To>
+  static std::enable_if_t<std::is_base_of<::mlir::DialectInterface, To>::value,
+                          const To &>
+  doitImpl(::mlir::Dialect &dialect) {
+    return *dialect.getRegisteredInterface<To>();
+  }
+
+  static auto &doit(::mlir::Dialect &dialect) { return doitImpl<T>(dialect); }
+};
+template <class T>
+struct cast_convert_val<T, ::mlir::Dialect *, ::mlir::Dialect *> {
+  static auto doit(::mlir::Dialect *dialect) {
+    return &cast_convert_val<T, ::mlir::Dialect, ::mlir::Dialect>::doit(
+        *dialect);
+  }
+};
+
 } // namespace llvm
 
 #endif

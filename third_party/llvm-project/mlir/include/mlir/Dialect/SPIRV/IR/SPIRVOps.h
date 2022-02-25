@@ -19,18 +19,19 @@
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
+#include "mlir/Interfaces/InferTypeOpInterface.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
+
+// TableGen'erated operation interfaces for querying versions, extensions, and
+// capabilities.
+#include "mlir/Dialect/SPIRV/IR/SPIRVAvailability.h.inc"
 
 namespace mlir {
 class OpBuilder;
 
 namespace spirv {
 class VerCapExtAttr;
-
-// TableGen'erated operation interfaces for querying versions, extensions, and
-// capabilities.
-#include "mlir/Dialect/SPIRV/IR/SPIRVAvailability.h.inc"
 } // namespace spirv
 } // namespace mlir
 
@@ -40,36 +41,17 @@ class VerCapExtAttr;
 
 namespace llvm {
 
-/// spirv::Function ops hash just like pointers.
-template <>
-struct DenseMapInfo<mlir::spirv::FuncOp> {
-  static mlir::spirv::FuncOp getEmptyKey() {
-    auto pointer = llvm::DenseMapInfo<void *>::getEmptyKey();
-    return mlir::spirv::FuncOp::getFromOpaquePointer(pointer);
-  }
-  static mlir::spirv::FuncOp getTombstoneKey() {
-    auto pointer = llvm::DenseMapInfo<void *>::getTombstoneKey();
-    return mlir::spirv::FuncOp::getFromOpaquePointer(pointer);
-  }
-  static unsigned getHashValue(mlir::spirv::FuncOp val) {
-    return hash_value(val.getAsOpaquePointer());
-  }
-  static bool isEqual(mlir::spirv::FuncOp LHS, mlir::spirv::FuncOp RHS) {
-    return LHS == RHS;
-  }
-};
-
 /// Allow stealing the low bits of spirv::Function ops.
 template <>
 struct PointerLikeTypeTraits<mlir::spirv::FuncOp> {
 public:
-  static inline void *getAsVoidPointer(mlir::spirv::FuncOp I) {
-    return const_cast<void *>(I.getAsOpaquePointer());
+  static inline void *getAsVoidPointer(mlir::spirv::FuncOp i) {
+    return const_cast<void *>(i.getAsOpaquePointer());
   }
-  static inline mlir::spirv::FuncOp getFromVoidPointer(void *P) {
-    return mlir::spirv::FuncOp::getFromOpaquePointer(P);
+  static inline mlir::spirv::FuncOp getFromVoidPointer(void *p) {
+    return mlir::spirv::FuncOp::getFromOpaquePointer(p);
   }
-  static constexpr int NumLowBitsAvailable = 3;
+  static constexpr int numLowBitsAvailable = 3;
 };
 
 } // namespace llvm

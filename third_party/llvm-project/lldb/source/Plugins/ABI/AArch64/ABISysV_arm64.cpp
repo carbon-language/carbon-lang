@@ -23,6 +23,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/ConstString.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/Utility/Scalar.h"
@@ -65,7 +66,7 @@ bool ABISysV_arm64::PrepareTrivialCall(Thread &thread, addr_t sp,
   if (!reg_ctx)
     return false;
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+  Log *log = GetLog(LLDBLog::Expressions);
 
   if (log) {
     StreamString s;
@@ -845,14 +846,3 @@ void ABISysV_arm64::Initialize() {
 void ABISysV_arm64::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
-
-lldb_private::ConstString ABISysV_arm64::GetPluginNameStatic() {
-  static ConstString g_name("SysV-arm64");
-  return g_name;
-}
-
-// PluginInterface protocol
-
-ConstString ABISysV_arm64::GetPluginName() { return GetPluginNameStatic(); }
-
-uint32_t ABISysV_arm64::GetPluginVersion() { return 1; }

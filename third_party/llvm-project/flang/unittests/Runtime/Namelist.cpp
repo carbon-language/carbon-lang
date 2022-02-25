@@ -9,8 +9,8 @@
 #include "../../runtime/namelist.h"
 #include "CrashHandlerFixture.h"
 #include "tools.h"
-#include "../../runtime/descriptor.h"
-#include "../../runtime/io-api.h"
+#include "flang/Runtime/descriptor.h"
+#include "flang/Runtime/io-api.h"
 #include <algorithm>
 #include <cinttypes>
 #include <complex>
@@ -135,9 +135,9 @@ TEST(NamelistTests, Subscripts) {
   aDesc->GetDimension(1).SetBounds(-1, 1);
   const NamelistGroup::Item items[]{{"a", *aDesc}};
   const NamelistGroup group{"justa", 1, items};
-  static char t1[]{"&justa A(0,1:-1:-2)=1 2/"};
-  StaticDescriptor<1, true> statDescs[2];
-  Descriptor &internalDesc{statDescs[0].descriptor()};
+  static char t1[]{"&justa A(0,+1:-1:-2)=1 2/"};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
   internalDesc.Establish(TypeCode{CFI_type_char},
       /*elementBytes=*/std::strlen(t1), t1, 0, nullptr, CFI_attribute_pointer);
   auto inCookie{IONAME(BeginInternalArrayListInput)(
@@ -158,6 +158,150 @@ TEST(NamelistTests, Subscripts) {
       << static_cast<int>(outStatus);
   std::string got{out, sizeof out};
   static const std::string expect{"&JUSTA A= 0 2 0 0 0 1/                  "};
+  EXPECT_EQ(got, expect);
+}
+
+TEST(NamelistTests, ShortArrayInput) {
+  OwningPtr<Descriptor> aDesc{
+      MakeArray<TypeCategory::Integer, static_cast<int>(sizeof(int))>(
+          std::vector<int>{2}, std::vector<int>(2, -1))};
+  OwningPtr<Descriptor> bDesc{
+      MakeArray<TypeCategory::Integer, static_cast<int>(sizeof(int))>(
+          std::vector<int>{2}, std::vector<int>(2, -2))};
+  const NamelistGroup::Item items[]{{"a", *aDesc}, {"b", *bDesc}};
+  const NamelistGroup group{"nl", 2, items};
+  // Two 12-character lines of internal input
+  static char t1[]{"&nl a = 1 b "
+                   " = 2 /      "};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  SubscriptValue shape{2};
+  internalDesc.Establish(1, 12, t1, 1, &shape, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  auto inStatus{IONAME(EndIoStatement)(inCookie)};
+  ASSERT_EQ(inStatus, 0) << "Failed namelist input subscripts, status "
+                         << static_cast<int>(inStatus);
+  EXPECT_EQ(*aDesc->ZeroBasedIndexedElement<int>(0), 1);
+  EXPECT_EQ(*aDesc->ZeroBasedIndexedElement<int>(1), -1);
+  EXPECT_EQ(*bDesc->ZeroBasedIndexedElement<int>(0), 2);
+  EXPECT_EQ(*bDesc->ZeroBasedIndexedElement<int>(1), -2);
+}
+
+TEST(NamelistTests, ScalarSubstring) {
+  OwningPtr<Descriptor> scDesc{MakeArray<TypeCategory::Character, 1>(
+      std::vector<int>{}, std::vector<std::string>{"abcdefgh"}, 8)};
+  const NamelistGroup::Item items[]{{"a", *scDesc}};
+  const NamelistGroup group{"justa", 1, items};
+  static char t1[]{"&justa A(2:5)='BCDE'/"};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  internalDesc.Establish(TypeCode{CFI_type_char},
+      /*elementBytes=*/std::strlen(t1), t1, 0, nullptr, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(inCookie), IostatOk)
+      << "namelist scalar substring input";
+  char out[32];
+  internalDesc.Establish(TypeCode{CFI_type_char}, /*elementBytes=*/sizeof out,
+      out, 0, nullptr, CFI_attribute_pointer);
+  auto outCookie{IONAME(BeginInternalArrayListOutput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(SetDelim)(outCookie, "apostrophe", 10));
+  ASSERT_TRUE(IONAME(OutputNamelist)(outCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(outCookie), IostatOk) << "namelist output";
+  std::string got{out, sizeof out};
+  static const std::string expect{"&JUSTA A= 'aBCDEfgh'/           "};
+  EXPECT_EQ(got, expect);
+}
+
+TEST(NamelistTests, ArraySubstring) {
+  OwningPtr<Descriptor> scDesc{
+      MakeArray<TypeCategory::Character, 1>(std::vector<int>{2},
+          std::vector<std::string>{"abcdefgh", "ijklmnop"}, 8)};
+  const NamelistGroup::Item items[]{{"a", *scDesc}};
+  const NamelistGroup group{"justa", 1, items};
+  static char t1[]{"&justa A(:)(2:+5)='BCDE' 'JKLM'/"};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  internalDesc.Establish(TypeCode{CFI_type_char},
+      /*elementBytes=*/std::strlen(t1), t1, 0, nullptr, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(inCookie), IostatOk)
+      << "namelist scalar substring input";
+  char out[40];
+  internalDesc.Establish(TypeCode{CFI_type_char}, /*elementBytes=*/sizeof out,
+      out, 0, nullptr, CFI_attribute_pointer);
+  auto outCookie{IONAME(BeginInternalArrayListOutput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(SetDelim)(outCookie, "apostrophe", 10));
+  ASSERT_TRUE(IONAME(OutputNamelist)(outCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(outCookie), IostatOk) << "namelist output";
+  std::string got{out, sizeof out};
+  static const std::string expect{"&JUSTA A= 'aBCDEfgh' 'iJKLMnop'/        "};
+  EXPECT_EQ(got, expect);
+}
+
+TEST(NamelistTests, Skip) {
+  OwningPtr<Descriptor> scDesc{
+      MakeArray<TypeCategory::Integer, static_cast<int>(sizeof(int))>(
+          std::vector<int>{}, std::vector<int>{-1})};
+  const NamelistGroup::Item items[]{{"j", *scDesc}};
+  const NamelistGroup group{"nml", 1, items};
+  static char t1[]{"&skip a='str''ing'/&nml j=123/"};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  internalDesc.Establish(TypeCode{CFI_type_char},
+      /*elementBytes=*/std::strlen(t1), t1, 0, nullptr, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(inCookie), IostatOk)
+      << "namelist input with skipping";
+  char out[20];
+  internalDesc.Establish(TypeCode{CFI_type_char}, /*elementBytes=*/sizeof out,
+      out, 0, nullptr, CFI_attribute_pointer);
+  auto outCookie{IONAME(BeginInternalArrayListOutput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(OutputNamelist)(outCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(outCookie), IostatOk) << "namelist output";
+  std::string got{out, sizeof out};
+  static const std::string expect{"&NML J= 123/        "};
+  EXPECT_EQ(got, expect);
+}
+
+// Tests DECIMAL=COMMA mode
+TEST(NamelistTests, Comma) {
+  OwningPtr<Descriptor> scDesc{
+      MakeArray<TypeCategory::Complex, static_cast<int>(sizeof(float))>(
+          std::vector<int>{2}, std::vector<std::complex<float>>{{}, {}})};
+  const NamelistGroup::Item items[]{{"z", *scDesc}};
+  const NamelistGroup group{"nml", 1, items};
+  static char t1[]{"&nml z=(-1,0;2,0);(-3,0;0,5)/"};
+  StaticDescriptor<1, true> statDesc;
+  Descriptor &internalDesc{statDesc.descriptor()};
+  internalDesc.Establish(TypeCode{CFI_type_char},
+      /*elementBytes=*/std::strlen(t1), t1, 0, nullptr, CFI_attribute_pointer);
+  auto inCookie{IONAME(BeginInternalArrayListInput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(SetDecimal)(inCookie, "COMMA", 5));
+  ASSERT_TRUE(IONAME(InputNamelist)(inCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(inCookie), IostatOk)
+      << "namelist input with skipping";
+  char out[30];
+  internalDesc.Establish(TypeCode{CFI_type_char}, /*elementBytes=*/sizeof out,
+      out, 0, nullptr, CFI_attribute_pointer);
+  auto outCookie{IONAME(BeginInternalArrayListOutput)(
+      internalDesc, nullptr, 0, __FILE__, __LINE__)};
+  ASSERT_TRUE(IONAME(SetDecimal)(outCookie, "COMMA", 5));
+  ASSERT_TRUE(IONAME(OutputNamelist)(outCookie, group));
+  ASSERT_EQ(IONAME(EndIoStatement)(outCookie), IostatOk) << "namelist output";
+  std::string got{out, sizeof out};
+  static const std::string expect{"&NML Z= (-1,;2,) (-3,;,5)/    "};
   EXPECT_EQ(got, expect);
 }
 

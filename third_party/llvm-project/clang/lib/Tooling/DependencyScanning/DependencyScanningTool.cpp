@@ -24,8 +24,6 @@ std::vector<std::string> FullDependencies::getAdditionalArgs(
       ClangModuleDeps, LookupPCMPath, LookupModuleDeps, PCMPaths, ModMapPaths);
   for (const std::string &PCMPath : PCMPaths)
     Ret.push_back("-fmodule-file=" + PCMPath);
-  for (const std::string &ModMapPath : ModMapPaths)
-    Ret.push_back("-fmodule-map-file=" + ModMapPath);
 
   return Ret;
 }
@@ -37,10 +35,8 @@ FullDependencies::getAdditionalArgsWithoutModulePaths() const {
       "-fno-implicit-module-maps",
   };
 
-  for (const PrebuiltModuleDep &PMD : PrebuiltModuleDeps) {
-    Args.push_back("-fmodule-file=" + PMD.ModuleName + "=" + PMD.PCMFile);
-    Args.push_back("-fmodule-map-file=" + PMD.ModuleMapFile);
-  }
+  for (const PrebuiltModuleDep &PMD : PrebuiltModuleDeps)
+    Args.push_back("-fmodule-file=" + PMD.PCMFile);
 
   return Args;
 }
@@ -50,7 +46,8 @@ DependencyScanningTool::DependencyScanningTool(
     : Worker(Service) {}
 
 llvm::Expected<std::string> DependencyScanningTool::getDependencyFile(
-    const tooling::CompilationDatabase &Compilations, StringRef CWD) {
+    const std::vector<std::string> &CommandLine, StringRef CWD,
+    llvm::Optional<StringRef> ModuleName) {
   /// Prints out all of the gathered dependencies into a string.
   class MakeDependencyPrinterConsumer : public DependencyConsumer {
   public:
@@ -102,17 +99,9 @@ llvm::Expected<std::string> DependencyScanningTool::getDependencyFile(
     std::vector<std::string> Dependencies;
   };
 
-  // We expect a single command here because if a source file occurs multiple
-  // times in the original CDB, then `computeDependencies` would run the
-  // `DependencyScanningAction` once for every time the input occured in the
-  // CDB. Instead we split up the CDB into single command chunks to avoid this
-  // behavior.
-  assert(Compilations.getAllCompileCommands().size() == 1 &&
-         "Expected a compilation database with a single command!");
-  std::string Input = Compilations.getAllCompileCommands().front().Filename;
-
   MakeDependencyPrinterConsumer Consumer;
-  auto Result = Worker.computeDependencies(Input, CWD, Compilations, Consumer);
+  auto Result =
+      Worker.computeDependencies(CWD, CommandLine, Consumer, ModuleName);
   if (Result)
     return std::move(Result);
   std::string Output;
@@ -122,8 +111,9 @@ llvm::Expected<std::string> DependencyScanningTool::getDependencyFile(
 
 llvm::Expected<FullDependenciesResult>
 DependencyScanningTool::getFullDependencies(
-    const tooling::CompilationDatabase &Compilations, StringRef CWD,
-    const llvm::StringSet<> &AlreadySeen) {
+    const std::vector<std::string> &CommandLine, StringRef CWD,
+    const llvm::StringSet<> &AlreadySeen,
+    llvm::Optional<StringRef> ModuleName) {
   class FullDependencyPrinterConsumer : public DependencyConsumer {
   public:
     FullDependencyPrinterConsumer(const llvm::StringSet<> &AlreadySeen)
@@ -186,18 +176,9 @@ DependencyScanningTool::getFullDependencies(
     const llvm::StringSet<> &AlreadySeen;
   };
 
-  // We expect a single command here because if a source file occurs multiple
-  // times in the original CDB, then `computeDependencies` would run the
-  // `DependencyScanningAction` once for every time the input occured in the
-  // CDB. Instead we split up the CDB into single command chunks to avoid this
-  // behavior.
-  assert(Compilations.getAllCompileCommands().size() == 1 &&
-         "Expected a compilation database with a single command!");
-  std::string Input = Compilations.getAllCompileCommands().front().Filename;
-
   FullDependencyPrinterConsumer Consumer(AlreadySeen);
   llvm::Error Result =
-      Worker.computeDependencies(Input, CWD, Compilations, Consumer);
+      Worker.computeDependencies(CWD, CommandLine, Consumer, ModuleName);
   if (Result)
     return std::move(Result);
   return Consumer.getFullDependencies();

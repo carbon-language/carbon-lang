@@ -36,7 +36,7 @@ and software you will need.
 
 Hardware
 --------
-Any system that can adequately run Visual Studio 2017 is fine. The LLVM
+Any system that can adequately run Visual Studio 2019 is fine. The LLVM
 source tree including the git index consumes approximately 3GB.
 Object files, libraries and executables consume approximately 5GB in
 Release mode and much more in Debug mode. SSD drive and >16GB RAM are
@@ -45,13 +45,14 @@ recommended.
 
 Software
 --------
-You will need `Visual Studio <https://visualstudio.microsoft.com/>`_ 2017 or
-higher, with the latest Update installed. Visual Studio Community Edition
+You will need `Visual Studio <https://visualstudio.microsoft.com/>`_ 2019 or
+later, with the latest Update installed. Visual Studio Community Edition
 suffices.
 
 You will also need the `CMake <http://www.cmake.org/>`_ build system since it
 generates the project files you will use to build with. CMake is bundled with
-Visual Studio 2019 so seperate installation is not required.
+Visual Studio 2019 so separate installation is not required. If you do install
+CMake separately, Visual Studio 2022 will require CMake Version 3.21 or later.
 
 If you would like to run the LLVM tests you will need `Python
 <http://www.python.org/>`_. Version 3.6 and newer are known to work. You can
@@ -112,7 +113,7 @@ These instruction were tested with Visual Studio 2019 and Python 3.9.6:
 
      pip install psutil
      git clone https://github.com/llvm/llvm-project.git llvm
- 
+
  Instead of ``git clone`` you may download a compressed source distribution
  from the `releases page <https://github.com/llvm/llvm-project/releases>`_.
  Select the last link: ``Source code (zip)`` and unpack the downloaded file using
@@ -170,7 +171,7 @@ These instruction were tested with Visual Studio 2019 and Python 3.9.6:
    You can run LLVM tests by merely building the project "check-all". The test
    results will be shown in the VS output window. Once the build succeeds, you
    have verified a working LLVM development environment!
-   
+
    You should not see any unexpected failures, but will see many unsupported
    tests and expected failures:
 
@@ -195,10 +196,10 @@ run these commands in an admin shell to install the required tools:
    choco install -y git cmake python3
    pip3 install psutil
 
-There is also a Windows 
-`Dockerfile <https://github.com/llvm/llvm-zorg/blob/main/buildbot/google/docker/windows-base-vscode2019/Dockerfile>`_ 
+There is also a Windows
+`Dockerfile <https://github.com/llvm/llvm-zorg/blob/main/buildbot/google/docker/windows-base-vscode2019/Dockerfile>`_
 with the entire build tool chain. This can be used to test the build with a
-tool chain different from your host installation or to create build servers. 
+tool chain different from your host installation or to create build servers.
 
 Next steps
 ==========

@@ -42,8 +42,8 @@
 #include "lldb/Utility/DataBuffer.h"
 #include "lldb/Utility/DataBufferHeap.h"
 #include "lldb/Utility/Flags.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
-#include "lldb/Utility/Logging.h"
 #include "lldb/Utility/Scalar.h"
 #include "lldb/Utility/Stream.h"
 #include "lldb/Utility/StreamString.h"
@@ -200,7 +200,7 @@ bool ValueObject::UpdateValueIfNeeded(bool update_format) {
 }
 
 bool ValueObject::UpdateFormatsIfNeeded() {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+  Log *log = GetLog(LLDBLog::DataFormatters);
   LLDB_LOGF(log,
             "[%s %p] checking for FormatManager revisions. ValueObject "
             "rev: %d - Global rev: %d",
@@ -849,8 +849,10 @@ bool ValueObject::SetData(DataExtractor &data, Status &error) {
 
 static bool CopyStringDataToBufferSP(const StreamString &source,
                                      lldb::DataBufferSP &destination) {
-  destination = std::make_shared<DataBufferHeap>(source.GetSize() + 1, 0);
-  memcpy(destination->GetBytes(), source.GetString().data(), source.GetSize());
+  llvm::StringRef src = source.GetString();
+  src.consume_back(llvm::StringRef("\0", 1));
+  destination = std::make_shared<DataBufferHeap>(src.size(), 0);
+  memcpy(destination->GetBytes(), src.data(), src.size());
   return true;
 }
 
@@ -912,8 +914,8 @@ ValueObject::ReadPointedString(lldb::DataBufferSP &buffer_sp, Status &error,
           CopyStringDataToBufferSP(s, buffer_sp);
           return {0, was_capped};
         }
-        buffer_sp = std::make_shared<DataBufferHeap>(cstr_len, 0);
-        memcpy(buffer_sp->GetBytes(), cstr, cstr_len);
+        s << llvm::StringRef(cstr, cstr_len);
+        CopyStringDataToBufferSP(s, buffer_sp);
         return {cstr_len, was_capped};
       } else {
         s << "<invalid address>";
@@ -1196,6 +1198,7 @@ bool ValueObject::DumpPrintableRepresentation(
         options.SetQuote('"');
         options.SetSourceSize(buffer_sp->GetByteSize());
         options.SetIsTruncated(read_string.second);
+        options.SetBinaryZeroIsTerminator(custom_format != eFormatVectorOfChar);
         formatters::StringPrinter::ReadBufferAndDumpToStream<
             lldb_private::formatters::StringPrinter::StringElementType::ASCII>(
             options);

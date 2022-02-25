@@ -71,28 +71,16 @@ class PythonDictionary;
 class PythonInteger;
 class PythonException;
 
-class StructuredPythonObject : public StructuredData::Generic {
+class GIL {
 public:
-  StructuredPythonObject() : StructuredData::Generic() {}
-
-  StructuredPythonObject(void *obj) : StructuredData::Generic(obj) {
-    Py_XINCREF(GetValue());
+  GIL() {
+    m_state = PyGILState_Ensure();
+    assert(!PyErr_Occurred());
   }
+  ~GIL() { PyGILState_Release(m_state); }
 
-  ~StructuredPythonObject() override {
-    if (Py_IsInitialized())
-      Py_XDECREF(GetValue());
-    SetValue(nullptr);
-  }
-
-  bool IsValid() const override { return GetValue() && GetValue() != Py_None; }
-
-  void Serialize(llvm::json::OStream &s) const override;
-
-private:
-  StructuredPythonObject(const StructuredPythonObject &) = delete;
-  const StructuredPythonObject &
-  operator=(const StructuredPythonObject &) = delete;
+protected:
+  PyGILState_STATE m_state;
 };
 
 enum class PyObjectType {
@@ -251,11 +239,7 @@ public:
 
   ~PythonObject() { Reset(); }
 
-  void Reset() {
-    if (m_py_obj && Py_IsInitialized())
-      Py_DECREF(m_py_obj);
-    m_py_obj = nullptr;
-  }
+  void Reset();
 
   void Dump() const {
     if (m_py_obj)
@@ -753,6 +737,30 @@ public:
       return std::move(error);
     return function.Call(std::forward<Args>(args)...);
   }
+};
+
+class StructuredPythonObject : public StructuredData::Generic {
+public:
+  StructuredPythonObject() : StructuredData::Generic() {}
+
+  // Take ownership of the object we received.
+  StructuredPythonObject(PythonObject obj)
+      : StructuredData::Generic(obj.release()) {}
+
+  ~StructuredPythonObject() override {
+    // Hand ownership back to a (temporary) PythonObject instance and let it
+    // take care of releasing it.
+    PythonObject(PyRefType::Owned, static_cast<PyObject *>(GetValue()));
+  }
+
+  bool IsValid() const override { return GetValue() && GetValue() != Py_None; }
+
+  void Serialize(llvm::json::OStream &s) const override;
+
+private:
+  StructuredPythonObject(const StructuredPythonObject &) = delete;
+  const StructuredPythonObject &
+  operator=(const StructuredPythonObject &) = delete;
 };
 
 } // namespace python

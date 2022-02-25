@@ -34,12 +34,14 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -345,8 +347,7 @@ struct LoadModifier: public Modifier {
   void Act() override {
     // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
-    PointerType *Tp = cast<PointerType>(Ptr->getType());
-    Value *V = new LoadInst(Tp->getElementType(), Ptr, "L",
+    Value *V = new LoadInst(Ptr->getType()->getPointerElementType(), Ptr, "L",
                             BB->getTerminator());
     PT->push_back(V);
   }
@@ -359,8 +360,7 @@ struct StoreModifier: public Modifier {
   void Act() override {
     // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
-    PointerType *Tp = cast<PointerType>(Ptr->getType());
-    Value *Val = getRandomValue(Tp->getElementType());
+    Value *Val = getRandomValue(Ptr->getType()->getPointerElementType());
     Type  *ValTy = Val->getType();
 
     // Do not store vectors of i1s because they are unsupported
@@ -452,10 +452,10 @@ struct ConstModifier: public Modifier {
       switch (getRandom() % 7) {
       case 0:
         return PT->push_back(ConstantInt::get(
-            Ty, APInt::getAllOnesValue(Ty->getPrimitiveSizeInBits())));
+            Ty, APInt::getAllOnes(Ty->getPrimitiveSizeInBits())));
       case 1:
-        return PT->push_back(ConstantInt::get(
-            Ty, APInt::getNullValue(Ty->getPrimitiveSizeInBits())));
+        return PT->push_back(
+            ConstantInt::get(Ty, APInt::getZero(Ty->getPrimitiveSizeInBits())));
       case 2:
       case 3:
       case 4:

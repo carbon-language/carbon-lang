@@ -66,6 +66,15 @@ static cl::opt<bool>
 
 namespace {
 
+BasicBlock::iterator skipPastPhiNodesAndDbg(BasicBlock::iterator Itr) {
+  BasicBlock *BB = Itr->getParent();
+  if (isa<PHINode>(Itr))
+    Itr = BB->getFirstInsertionPt();
+  if (Itr != BB->end())
+    Itr = skipDebugIntrinsics(Itr);
+  return Itr;
+}
+
 // Used to store the scattered form of a vector.
 using ValueVector = SmallVector<Value *, 8>;
 
@@ -261,7 +270,7 @@ Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
   Type *Ty = V->getType();
   PtrTy = dyn_cast<PointerType>(Ty);
   if (PtrTy)
-    Ty = PtrTy->getElementType();
+    Ty = PtrTy->getPointerElementType();
   Size = cast<FixedVectorType>(Ty)->getNumElements();
   if (!CachePtr)
     Tmp.resize(Size, nullptr);
@@ -279,7 +288,8 @@ Value *Scatterer::operator[](unsigned I) {
     return CV[I];
   IRBuilder<> Builder(BB, BBI);
   if (PtrTy) {
-    Type *ElTy = cast<VectorType>(PtrTy->getElementType())->getElementType();
+    Type *ElTy =
+        cast<VectorType>(PtrTy->getPointerElementType())->getElementType();
     if (!CV[0]) {
       Type *NewPtrTy = PointerType::get(ElTy, PtrTy->getAddressSpace());
       CV[0] = Builder.CreateBitCast(V, NewPtrTy, V->getName() + ".i0");
@@ -371,10 +381,11 @@ Scatterer ScalarizerVisitor::scatter(Instruction *Point, Value *V) {
       return Scatterer(Point->getParent(), Point->getIterator(),
                        UndefValue::get(V->getType()));
     // Put the scattered form of an instruction directly after the
-    // instruction.
+    // instruction, skipping over PHI nodes and debug intrinsics.
     BasicBlock *BB = VOp->getParent();
-    return Scatterer(BB, std::next(BasicBlock::iterator(VOp)),
-                     V, &Scattered[V]);
+    return Scatterer(
+        BB, skipPastPhiNodesAndDbg(std::next(BasicBlock::iterator(VOp))), V,
+        &Scattered[V]);
   }
   // In the fallback case, just put the scattered before Point and
   // keep the result local to Point.
@@ -530,7 +541,7 @@ bool ScalarizerVisitor::splitCall(CallInst &CI) {
     return false;
 
   unsigned NumElems = cast<FixedVectorType>(VT)->getNumElements();
-  unsigned NumArgs = CI.getNumArgOperands();
+  unsigned NumArgs = CI.arg_size();
 
   ValueVector ScalarOperands(NumArgs);
   SmallVector<Scatterer, 8> Scattered(NumArgs);

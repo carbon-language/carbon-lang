@@ -7,9 +7,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/SMLoc.h"
+namespace llvm {
+class MCContext;
+class MCExpr;
+class MCSection;
+class MCSymbol;
+} // namespace llvm
 
 using namespace llvm;
 
@@ -40,6 +46,9 @@ namespace {
     void EmitCOFFSymbolStorageClass(int StorageClass) override {}
     void EmitCOFFSymbolType(int Type) override {}
     void EndCOFFSymbolDef() override {}
+    void
+    emitXCOFFSymbolLinkageWithVisibility(MCSymbol *Symbol, MCSymbolAttr Linkage,
+                                         MCSymbolAttr Visibility) override {}
   };
 
 }

@@ -28,6 +28,12 @@ using IndexList = std::vector<std::pair<parser::CharBlock, parser::CharBlock>>;
 // A ProxyForScope is an integral proxy for a Fortran scope. This is required
 // because the parse tree does not actually have the scopes required.
 using ProxyForScope = unsigned;
+// Minimal scope information
+struct ScopeInfo {
+  ProxyForScope parent{};
+  bool isExteriorGotoFatal{false};
+  int depth{0};
+};
 struct LabeledStatementInfoTuplePOD {
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
@@ -60,7 +66,7 @@ constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
       std::is_same_v<A, parser::EndWhereStmt>) {
     // Executable construct end statements are also supported as
     // an extension but they need special care because the associated
-    // construct create there own scope.
+    // construct create their own scope.
     return Legality::formerly;
   } else {
     return Legality::never;
@@ -153,14 +159,14 @@ static unsigned SayLabel(parser::Label label) {
 }
 
 struct UnitAnalysis {
-  UnitAnalysis() { scopeModel.push_back(0); }
+  UnitAnalysis() { scopeModel.emplace_back(); }
 
   SourceStmtList doStmtSources;
   SourceStmtList formatStmtSources;
   SourceStmtList otherStmtSources;
   SourceStmtList assignStmtSources;
   TargetStmtMap targetStmts;
-  std::vector<ProxyForScope> scopeModel;
+  std::vector<ScopeInfo> scopeModel;
 };
 
 // Some parse tree record for statements simply wrap construct names;
@@ -223,11 +229,12 @@ public:
     using LabeledConstructStmts = std::tuple<parser::AssociateStmt,
         parser::BlockStmt, parser::ChangeTeamStmt, parser::CriticalStmt,
         parser::IfThenStmt, parser::NonLabelDoStmt, parser::SelectCaseStmt,
-        parser::SelectRankStmt, parser::SelectTypeStmt>;
-    using LabeledConstructEndStmts =
-        std::tuple<parser::EndAssociateStmt, parser::EndBlockStmt,
-            parser::EndChangeTeamStmt, parser::EndCriticalStmt,
-            parser::EndDoStmt, parser::EndIfStmt, parser::EndSelectStmt>;
+        parser::SelectRankStmt, parser::SelectTypeStmt,
+        parser::WhereConstructStmt>;
+    using LabeledConstructEndStmts = std::tuple<parser::EndAssociateStmt,
+        parser::EndBlockStmt, parser::EndChangeTeamStmt,
+        parser::EndCriticalStmt, parser::EndDoStmt, parser::EndForallStmt,
+        parser::EndIfStmt, parser::EndSelectStmt, parser::EndWhereStmt>;
     using LabeledProgramUnitEndStmts =
         std::tuple<parser::EndFunctionStmt, parser::EndMpSubprogramStmt,
             parser::EndProgramStmt, parser::EndSubroutineStmt>;
@@ -294,10 +301,10 @@ public:
     return SwitchToNewScope();
   }
   bool Pre(const parser::WhereConstruct &whereConstruct) {
-    return PushConstructNameWithoutBlock(whereConstruct);
+    return PushConstructName(whereConstruct);
   }
   bool Pre(const parser::ForallConstruct &forallConstruct) {
-    return PushConstructNameWithoutBlock(forallConstruct);
+    return PushConstructName(forallConstruct);
   }
 
   void Post(const parser::AssociateConstruct &associateConstruct) {
@@ -327,12 +334,11 @@ public:
   void Post(const parser::SelectTypeConstruct &selectTypeConstruct) {
     PopConstructName(selectTypeConstruct);
   }
-
   void Post(const parser::WhereConstruct &whereConstruct) {
-    PopConstructNameWithoutBlock(whereConstruct);
+    PopConstructName(whereConstruct);
   }
   void Post(const parser::ForallConstruct &forallConstruct) {
-    PopConstructNameWithoutBlock(forallConstruct);
+    PopConstructName(forallConstruct);
   }
 
   // Checks for missing or mismatching names on various constructs (e.g., IF)
@@ -346,17 +352,11 @@ public:
       const auto &firstStmt{std::get<parser::Statement<FIRST>>(a.t)};
       if (const parser::CharBlock * firstName{GetStmtName(firstStmt)}) {
         if (*firstName != *name) {
-          context_
-              .Say(*name,
-                  parser::MessageFormattedText{
-                      "%s name mismatch"_err_en_US, constructTag})
+          context_.Say(*name, "%s name mismatch"_err_en_US, constructTag)
               .Attach(*firstName, "should be"_en_US);
         }
       } else {
-        context_
-            .Say(*name,
-                parser::MessageFormattedText{
-                    "%s name not allowed"_err_en_US, constructTag})
+        context_.Say(*name, "%s name not allowed"_err_en_US, constructTag)
             .Attach(firstStmt.source, "in unnamed %s"_en_US, constructTag);
       }
     }
@@ -383,32 +383,51 @@ public:
 
   // C1502
   void Post(const parser::InterfaceBlock &interfaceBlock) {
-    auto &interfaceStmt{
-        std::get<parser::Statement<parser::InterfaceStmt>>(interfaceBlock.t)};
-    if (const auto *optionalGenericSpecPointer{
-            std::get_if<std::optional<parser::GenericSpec>>(
-                &interfaceStmt.statement.u)}) {
-      if (*optionalGenericSpecPointer) {
-        if (const auto *namePointer{
-                std::get_if<parser::Name>(&(*optionalGenericSpecPointer)->u)}) {
-          auto &optionalGenericSpec{
-              std::get<parser::Statement<parser::EndInterfaceStmt>>(
-                  interfaceBlock.t)
-                  .statement.v};
-          if (optionalGenericSpec) {
-            if (const auto *otherPointer{
-                    std::get_if<parser::Name>(&optionalGenericSpec->u)}) {
-              if (namePointer->source != otherPointer->source) {
-                context_
-                    .Say(currentPosition_,
-                        parser::MessageFormattedText{
-                            "INTERFACE generic-name (%s) mismatch"_err_en_US,
-                            namePointer->source})
-                    .Attach(interfaceStmt.source, "mismatched INTERFACE"_en_US);
-              }
-            }
+    if (const auto &endGenericSpec{
+            std::get<parser::Statement<parser::EndInterfaceStmt>>(
+                interfaceBlock.t)
+                .statement.v}) {
+      const auto &interfaceStmt{
+          std::get<parser::Statement<parser::InterfaceStmt>>(interfaceBlock.t)};
+      if (std::holds_alternative<parser::Abstract>(interfaceStmt.statement.u)) {
+        context_
+            .Say(endGenericSpec->source,
+                "END INTERFACE generic name (%s) may not appear for ABSTRACT INTERFACE"_err_en_US,
+                endGenericSpec->source)
+            .Attach(
+                interfaceStmt.source, "corresponding ABSTRACT INTERFACE"_en_US);
+      } else if (const auto &genericSpec{
+                     std::get<std::optional<parser::GenericSpec>>(
+                         interfaceStmt.statement.u)}) {
+        bool ok{genericSpec->source == endGenericSpec->source};
+        if (!ok) {
+          // Accept variant spellings of .LT. &c.
+          const auto *endOp{
+              std::get_if<parser::DefinedOperator>(&endGenericSpec->u)};
+          const auto *op{std::get_if<parser::DefinedOperator>(&genericSpec->u)};
+          if (endOp && op) {
+            const auto *endIntrin{
+                std::get_if<parser::DefinedOperator::IntrinsicOperator>(
+                    &endOp->u)};
+            const auto *intrin{
+                std::get_if<parser::DefinedOperator::IntrinsicOperator>(
+                    &op->u)};
+            ok = endIntrin && intrin && *endIntrin == *intrin;
           }
         }
+        if (!ok) {
+          context_
+              .Say(endGenericSpec->source,
+                  "END INTERFACE generic name (%s) does not match generic INTERFACE (%s)"_err_en_US,
+                  endGenericSpec->source, genericSpec->source)
+              .Attach(genericSpec->source, "corresponding INTERFACE"_en_US);
+        }
+      } else {
+        context_
+            .Say(endGenericSpec->source,
+                "END INTERFACE generic name (%s) may not appear for non-generic INTERFACE"_err_en_US,
+                endGenericSpec->source)
+            .Attach(interfaceStmt.source, "corresponding INTERFACE"_en_US);
       }
     }
   }
@@ -441,8 +460,7 @@ public:
         }
       } else {
         context_.Say(*endName,
-            parser::MessageFormattedText{
-                "END PROGRAM has name without PROGRAM statement"_err_en_US});
+            "END PROGRAM has name without PROGRAM statement"_err_en_US);
       }
     }
   }
@@ -521,25 +539,34 @@ public:
   SemanticsContext &ErrorHandler() { return context_; }
 
 private:
-  bool PushSubscope() {
-    programUnits_.back().scopeModel.push_back(currentScope_);
-    currentScope_ = programUnits_.back().scopeModel.size() - 1;
-    return true;
+  ScopeInfo &PushScope() {
+    auto &model{programUnits_.back().scopeModel};
+    int newDepth{model.empty() ? 1 : model[currentScope_].depth + 1};
+    ScopeInfo &result{model.emplace_back()};
+    result.parent = currentScope_;
+    result.depth = newDepth;
+    currentScope_ = model.size() - 1;
+    return result;
   }
   bool InitializeNewScopeContext() {
     programUnits_.emplace_back(UnitAnalysis{});
     currentScope_ = 0u;
-    return PushSubscope();
+    PushScope();
+    return true;
   }
-  void PopScope() {
-    currentScope_ = programUnits_.back().scopeModel[currentScope_];
+  ScopeInfo &PopScope() {
+    ScopeInfo &result{programUnits_.back().scopeModel[currentScope_]};
+    currentScope_ = result.parent;
+    return result;
   }
   ProxyForScope ParentScope() {
-    return programUnits_.back().scopeModel[currentScope_];
+    return programUnits_.back().scopeModel[currentScope_].parent;
   }
   bool SwitchToNewScope() {
-    PopScope();
-    return PushSubscope();
+    ScopeInfo &oldScope{PopScope()};
+    bool isExteriorGotoFatal{oldScope.isExteriorGotoFatal};
+    PushScope().isExteriorGotoFatal = isExteriorGotoFatal;
+    return true;
   }
 
   template <typename A> bool PushConstructName(const A &a) {
@@ -547,7 +574,13 @@ private:
     if (optionalName) {
       constructNames_.emplace_back(optionalName->ToString());
     }
-    return PushSubscope();
+    // Gotos into this construct from outside it are diagnosed, and
+    // are fatal unless the construct is a DO, IF, or SELECT CASE.
+    PushScope().isExteriorGotoFatal =
+        !(std::is_same_v<A, parser::DoConstruct> ||
+            std::is_same_v<A, parser::IfConstruct> ||
+            std::is_same_v<A, parser::CaseConstruct>);
+    return true;
   }
   bool PushConstructName(const parser::BlockConstruct &blockConstruct) {
     const auto &optionalName{
@@ -556,19 +589,8 @@ private:
     if (optionalName) {
       constructNames_.emplace_back(optionalName->ToString());
     }
-    return PushSubscope();
-  }
-  template <typename A> bool PushConstructNameWithoutBlock(const A &a) {
-    const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (optionalName) {
-      constructNames_.emplace_back(optionalName->ToString());
-    }
+    PushScope().isExteriorGotoFatal = true;
     return true;
-  }
-
-  template <typename A> void PopConstructNameWithoutBlock(const A &a) {
-    CheckName(a);
-    PopConstructNameIfPresent(a);
   }
   template <typename A> void PopConstructNameIfPresent(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
@@ -640,24 +662,20 @@ private:
       if (endName) {
         if (*constructName != *endName) {
           context_
-              .Say(*endName,
-                  parser::MessageFormattedText{
-                      "%s construct name mismatch"_err_en_US, constructTag})
+              .Say(*endName, "%s construct name mismatch"_err_en_US,
+                  constructTag)
               .Attach(*constructName, "should be"_en_US);
         }
       } else {
         context_
             .Say(endStmt.source,
-                parser::MessageFormattedText{
-                    "%s construct name required but missing"_err_en_US,
-                    constructTag})
+                "%s construct name required but missing"_err_en_US,
+                constructTag)
             .Attach(*constructName, "should be"_en_US);
       }
     } else if (endName) {
       context_
-          .Say(*endName,
-              parser::MessageFormattedText{
-                  "%s construct name unexpected"_err_en_US, constructTag})
+          .Say(*endName, "%s construct name unexpected"_err_en_US, constructTag)
           .Attach(
               constructStmt.source, "unnamed %s statement"_en_US, constructTag);
     }
@@ -737,18 +755,16 @@ private:
     const auto iter{std::find(constructNames_.crbegin(),
         constructNames_.crend(), constructName.ToString())};
     if (iter == constructNames_.crend()) {
-      context_.Say(constructName,
-          parser::MessageFormattedText{
-              "%s construct-name is not in scope"_err_en_US, stmtString});
+      context_.Say(constructName, "%s construct-name is not in scope"_err_en_US,
+          stmtString);
     }
   }
 
   // 6.2.5, paragraph 2
   void CheckLabelInRange(parser::Label label) {
     if (label < 1 || label > 99999) {
-      context_.Say(currentPosition_,
-          parser::MessageFormattedText{
-              "Label '%u' is out of range"_err_en_US, SayLabel(label)});
+      context_.Say(currentPosition_, "Label '%u' is out of range"_err_en_US,
+          SayLabel(label));
     }
   }
 
@@ -761,9 +777,8 @@ private:
         LabeledStatementInfoTuplePOD{scope, currentPosition_,
             labeledStmtClassificationSet, isExecutableConstructEndStmt})};
     if (!pair.second) {
-      context_.Say(currentPosition_,
-          parser::MessageFormattedText{
-              "Label '%u' is not distinct"_err_en_US, SayLabel(label)});
+      context_.Say(currentPosition_, "Label '%u' is not distinct"_err_en_US,
+          SayLabel(label));
     }
   }
 
@@ -799,14 +814,14 @@ private:
 
   std::vector<UnitAnalysis> programUnits_;
   SemanticsContext &context_;
-  parser::CharBlock currentPosition_{nullptr};
+  parser::CharBlock currentPosition_;
   ProxyForScope currentScope_;
   std::vector<std::string> constructNames_;
 };
 
-bool InInclusiveScope(const std::vector<ProxyForScope> &scopes,
-    ProxyForScope tail, ProxyForScope head) {
-  for (; tail != head; tail = scopes[tail]) {
+bool InInclusiveScope(const std::vector<ScopeInfo> &scopes, ProxyForScope tail,
+    ProxyForScope head) {
+  for (; tail != head; tail = scopes[tail].parent) {
     if (!HasScope(tail)) {
       return false;
     }
@@ -889,13 +904,13 @@ parser::CharBlock SkipLabel(const parser::CharBlock &position) {
 }
 
 ProxyForScope ParentScope(
-    const std::vector<ProxyForScope> &scopes, ProxyForScope scope) {
-  return scopes[scope];
+    const std::vector<ScopeInfo> &scopes, ProxyForScope scope) {
+  return scopes[scope].parent;
 }
 
 void CheckLabelDoConstraints(const SourceStmtList &dos,
     const SourceStmtList &branches, const TargetStmtMap &labels,
-    const std::vector<ProxyForScope> &scopes, SemanticsContext &context) {
+    const std::vector<ScopeInfo> &scopes, SemanticsContext &context) {
   IndexList loopBodies;
   for (const auto &stmt : dos) {
     const auto &label{stmt.parserLabel};
@@ -904,15 +919,13 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
     auto doTarget{GetLabel(labels, label)};
     if (!HasScope(doTarget.proxyForScope)) {
       // C1133
-      context.Say(position,
-          parser::MessageFormattedText{
-              "Label '%u' cannot be found"_err_en_US, SayLabel(label)});
+      context.Say(
+          position, "Label '%u' cannot be found"_err_en_US, SayLabel(label));
     } else if (doTarget.parserCharBlock.begin() < position.begin()) {
       // R1119
       context.Say(position,
-          parser::MessageFormattedText{
-              "Label '%u' doesn't lexically follow DO stmt"_err_en_US,
-              SayLabel(label)});
+          "Label '%u' doesn't lexically follow DO stmt"_err_en_US,
+          SayLabel(label));
 
     } else if ((InInclusiveScope(scopes, scope, doTarget.proxyForScope) &&
                    doTarget.labeledStmtClassificationSet.test(
@@ -924,20 +937,17 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               common::LanguageFeature::OldLabelDoEndStatements)) {
         context
             .Say(position,
-                parser::MessageFormattedText{
-                    "A DO loop should terminate with an END DO or CONTINUE"_en_US})
+                "A DO loop should terminate with an END DO or CONTINUE"_en_US)
             .Attach(doTarget.parserCharBlock,
                 "DO loop currently ends at statement:"_en_US);
       }
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
-      context.Say(position,
-          parser::MessageFormattedText{
-              "Label '%u' is not in DO loop scope"_err_en_US, SayLabel(label)});
+      context.Say(position, "Label '%u' is not in DO loop scope"_err_en_US,
+          SayLabel(label));
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
       context.Say(doTarget.parserCharBlock,
-          parser::MessageFormattedText{
-              "A DO loop should terminate with an END DO or CONTINUE"_err_en_US});
+          "A DO loop should terminate with an END DO or CONTINUE"_err_en_US);
     } else {
       loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
     }
@@ -949,7 +959,7 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
 
 // 6.2.5
 void CheckScopeConstraints(const SourceStmtList &stmts,
-    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
+    const TargetStmtMap &labels, const std::vector<ScopeInfo> &scopes,
     SemanticsContext &context) {
   for (const auto &stmt : stmts) {
     const auto &label{stmt.parserLabel};
@@ -957,19 +967,34 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
     const auto &position{stmt.parserCharBlock};
     auto target{GetLabel(labels, label)};
     if (!HasScope(target.proxyForScope)) {
-      context.Say(position,
-          parser::MessageFormattedText{
-              "Label '%u' was not found"_err_en_US, SayLabel(label)});
+      context.Say(
+          position, "Label '%u' was not found"_err_en_US, SayLabel(label));
     } else if (!InInclusiveScope(scopes, scope, target.proxyForScope)) {
       // Clause 11.1.2.1 prohibits transfer of control to the interior of a
       // block from outside the block, but this does not apply to formats.
+      // C1038 and C1034 forbid statements in FORALL and WHERE constructs
+      // (resp.) from being branch targets.
       if (target.labeledStmtClassificationSet.test(
               TargetStatementEnum::Format)) {
         continue;
       }
+      bool isFatal{false};
+      ProxyForScope fromScope{scope};
+      for (ProxyForScope toScope{target.proxyForScope}; fromScope != toScope;
+           toScope = scopes[toScope].parent) {
+        if (scopes[toScope].isExteriorGotoFatal) {
+          isFatal = true;
+          break;
+        }
+        if (scopes[toScope].depth == scopes[fromScope].depth) {
+          fromScope = scopes[fromScope].parent;
+        }
+      }
       context.Say(position,
-          parser::MessageFormattedText{
-              "Label '%u' is not in scope"_en_US, SayLabel(label)});
+          isFatal
+              ? "Label '%u' is in a construct that prevents its use as a branch target here"_err_en_US
+              : "Label '%u' is in a construct that prevents its use as a branch target here"_en_US,
+          SayLabel(label));
     }
   }
 }
@@ -986,28 +1011,23 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
               TargetStatementEnum::CompatibleBranch)) { // error
         context
             .Say(branchTarget.parserCharBlock,
-                parser::MessageFormattedText{
-                    "Label '%u' is not a branch target"_err_en_US,
-                    SayLabel(label)})
-            .Attach(stmt.parserCharBlock,
-                parser::MessageFormattedText{
-                    "Control flow use of '%u'"_en_US, SayLabel(label)});
+                "Label '%u' is not a branch target"_err_en_US, SayLabel(label))
+            .Attach(stmt.parserCharBlock, "Control flow use of '%u'"_en_US,
+                SayLabel(label));
       } else if (!branchTarget.labeledStmtClassificationSet.test(
                      TargetStatementEnum::Branch)) { // warning
         context
             .Say(branchTarget.parserCharBlock,
-                parser::MessageFormattedText{
-                    "Label '%u' is not a branch target"_en_US, SayLabel(label)})
-            .Attach(stmt.parserCharBlock,
-                parser::MessageFormattedText{
-                    "Control flow use of '%u'"_en_US, SayLabel(label)});
+                "Label '%u' is not a branch target"_en_US, SayLabel(label))
+            .Attach(stmt.parserCharBlock, "Control flow use of '%u'"_en_US,
+                SayLabel(label));
       }
     }
   }
 }
 
 void CheckBranchConstraints(const SourceStmtList &branches,
-    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
+    const TargetStmtMap &labels, const std::vector<ScopeInfo> &scopes,
     SemanticsContext &context) {
   CheckScopeConstraints(branches, labels, scopes, context);
   CheckBranchTargetConstraints(branches, labels, context);
@@ -1022,19 +1042,17 @@ void CheckDataXferTargetConstraints(const SourceStmtList &stmts,
       if (!ioTarget.labeledStmtClassificationSet.test(
               TargetStatementEnum::Format)) {
         context
-            .Say(ioTarget.parserCharBlock,
-                parser::MessageFormattedText{
-                    "'%u' not a FORMAT"_err_en_US, SayLabel(label)})
-            .Attach(stmt.parserCharBlock,
-                parser::MessageFormattedText{
-                    "data transfer use of '%u'"_en_US, SayLabel(label)});
+            .Say(ioTarget.parserCharBlock, "'%u' not a FORMAT"_err_en_US,
+                SayLabel(label))
+            .Attach(stmt.parserCharBlock, "data transfer use of '%u'"_en_US,
+                SayLabel(label));
       }
     }
   }
 }
 
 void CheckDataTransferConstraints(const SourceStmtList &dataTransfers,
-    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
+    const TargetStmtMap &labels, const std::vector<ScopeInfo> &scopes,
     SemanticsContext &context) {
   CheckScopeConstraints(dataTransfers, labels, scopes, context);
   CheckDataXferTargetConstraints(dataTransfers, labels, context);
@@ -1064,7 +1082,7 @@ void CheckAssignTargetConstraints(const SourceStmtList &stmts,
 }
 
 void CheckAssignConstraints(const SourceStmtList &assigns,
-    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
+    const TargetStmtMap &labels, const std::vector<ScopeInfo> &scopes,
     SemanticsContext &context) {
   CheckScopeConstraints(assigns, labels, scopes, context);
   CheckAssignTargetConstraints(assigns, labels, context);

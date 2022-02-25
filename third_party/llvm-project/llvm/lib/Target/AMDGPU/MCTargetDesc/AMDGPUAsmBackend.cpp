@@ -10,13 +10,16 @@
 #include "MCTargetDesc/AMDGPUFixupKinds.h"
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "Utils/AMDGPUBaseInfo.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/EndianStream.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetParser.h"
 
 using namespace llvm;
 using namespace llvm::AMDGPU;
@@ -44,7 +47,8 @@ public:
                          const MCSubtargetInfo &STI) const override;
 
   unsigned getMinimumNopSize() const override;
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
+  bool writeNopData(raw_ostream &OS, uint64_t Count,
+                    const MCSubtargetInfo *STI) const override;
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
 };
@@ -169,7 +173,8 @@ unsigned AMDGPUAsmBackend::getMinimumNopSize() const {
   return 4;
 }
 
-bool AMDGPUAsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
+bool AMDGPUAsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
+                                    const MCSubtargetInfo *STI) const {
   // If the count is not 4-byte aligned, we must be writing data into the text
   // section (otherwise we have unaligned instructions, and thus have far
   // bigger problems), so just write zeros instead.

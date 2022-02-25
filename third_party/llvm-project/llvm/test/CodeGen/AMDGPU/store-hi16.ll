@@ -1,7 +1,7 @@
 ; RUN: llc -march=amdgcn -mcpu=gfx900 -amdgpu-sroa=0 -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefixes=GCN,GFX900,GFX9,GFX900-MUBUF %s
 ; RUN: llc -march=amdgcn -mcpu=gfx906 -amdgpu-sroa=0 -mattr=-promote-alloca,+sram-ecc -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefixes=GCN,GFX906,GFX9,NO-D16-HI %s
 ; RUN: llc -march=amdgcn -mcpu=fiji -amdgpu-sroa=0 -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefixes=GCN,GFX803,NO-D16-HI %s
-; RUN: llc -march=amdgcn -mcpu=gfx900 -amdgpu-sroa=0 -mattr=-promote-alloca -amdgpu-enable-flat-scratch -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefixes=GCN,GFX900,GFX9,GFX900-FLATSCR %s
+; RUN: llc -march=amdgcn -mcpu=gfx900 -amdgpu-sroa=0 -mattr=-promote-alloca -mattr=+enable-flat-scratch -verify-machineinstrs < %s | FileCheck -allow-deprecated-dag-overlap -check-prefixes=GCN,GFX900,GFX9,GFX900-FLATSCR %s
 
 ; GCN-LABEL: {{^}}store_global_hi_v2i16:
 ; GCN: s_waitcnt
@@ -647,15 +647,14 @@ entry:
 ; GCN: s_waitcnt
 ; GFX900-MUBUF:        buffer_store_dword
 ; GFX900-MUBUF-NEXT:   s_waitcnt vmcnt(0)
-; GFX900-MUBUF-NEXT:   buffer_store_short_d16_hi v0, off, s[0:3], s32 offset:4094
+; GFX900-MUBUF-NEXT:   buffer_store_short_d16_hi v0, off, s[0:3], s32 offset:4058
 ; GFX900-MUBUF-NEXT:   s_waitcnt vmcnt(0)
 ; GFX900-FLATSCR:      scratch_store_dword
 ; GFX900-FLATSCR-NEXT: s_waitcnt vmcnt(0)
-; GFX900-FLATSCR-NEXT: scratch_store_short_d16_hi off, v0, s32 offset:4094
+; GFX900-FLATSCR-NEXT: scratch_store_short_d16_hi off, v0, s32 offset:4058
 ; GFX900-FLATSCR-NEXT: s_waitcnt vmcnt(0)
-define void @store_private_hi_v2i16_to_offset(i32 %arg) #0 {
+define void @store_private_hi_v2i16_to_offset(i32 %arg, [10 x i32] addrspace(5)* %obj0) #0 {
 entry:
-  %obj0 = alloca [10 x i32], align 4, addrspace(5)
   %obj1 = alloca [4096 x i16], align 2, addrspace(5)
   %bc = bitcast [10 x i32] addrspace(5)* %obj0 to i32 addrspace(5)*
   store volatile i32 123, i32 addrspace(5)* %bc
@@ -670,14 +669,13 @@ entry:
 ; GCN: s_waitcnt
 ; GFX900-MUBUF:        buffer_store_dword
 ; GFX900-MUBUF-NEXT:   s_waitcnt vmcnt(0)
-; GFX900-MUBUF-NEXT:   buffer_store_byte_d16_hi v0, off, s[0:3], s32 offset:4095
+; GFX900-MUBUF-NEXT:   buffer_store_byte_d16_hi v0, off, s[0:3], s32 offset:4059
 ; GFX900-FLATSCR:      scratch_store_dword
 ; GFX900-FLATSCR-NEXT: s_waitcnt vmcnt(0)
-; GFX900-FLATSCR-NEXT: scratch_store_byte_d16_hi off, v0, s32 offset:4095
+; GFX900-FLATSCR-NEXT: scratch_store_byte_d16_hi off, v0, s32 offset:4059
 ; GFX900-FLATSCR-NEXT: s_waitcnt vmcnt(0)
-define void @store_private_hi_v2i16_i8_to_offset(i32 %arg) #0 {
+define void @store_private_hi_v2i16_i8_to_offset(i32 %arg, [10 x i32] addrspace(5)* %obj0) #0 {
 entry:
-  %obj0 = alloca [10 x i32], align 4, addrspace(5)
   %obj1 = alloca [4096 x i8], align 2, addrspace(5)
   %bc = bitcast [10 x i32] addrspace(5)* %obj0 to i32 addrspace(5)*
   store volatile i32 123, i32 addrspace(5)* %bc

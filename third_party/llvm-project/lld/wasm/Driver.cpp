@@ -81,18 +81,15 @@ private:
 };
 } // anonymous namespace
 
-bool link(ArrayRef<const char *> args, bool canExitEarly, raw_ostream &stdoutOS,
-          raw_ostream &stderrOS) {
-  lld::stdoutOS = &stdoutOS;
-  lld::stderrOS = &stderrOS;
+bool link(ArrayRef<const char *> args, llvm::raw_ostream &stdoutOS,
+          llvm::raw_ostream &stderrOS, bool exitEarly, bool disableOutput) {
+  // This driver-specific context will be freed later by lldMain().
+  auto *ctx = new CommonLinkerContext;
 
-  errorHandler().cleanupCallback = []() { freeArena(); };
-
-  errorHandler().logName = args::getFilenameWithoutExe(args[0]);
-  errorHandler().errorLimitExceededMsg =
-      "too many errors emitted, stopping now (use "
-      "-error-limit=0 to see all errors)";
-  stderrOS.enable_colors(stderrOS.has_colors());
+  ctx->e.initialize(stdoutOS, stderrOS, exitEarly, disableOutput);
+  ctx->e.logName = args::getFilenameWithoutExe(args[0]);
+  ctx->e.errorLimitExceededMsg = "too many errors emitted, stopping now (use "
+                                 "-error-limit=0 to see all errors)";
 
   config = make<Configuration>();
   symtab = make<SymbolTable>();
@@ -100,13 +97,7 @@ bool link(ArrayRef<const char *> args, bool canExitEarly, raw_ostream &stdoutOS,
   initLLVM();
   LinkerDriver().linkerMain(args);
 
-  // Exit immediately if we don't need to return to the caller.
-  // This saves time because the overhead of calling destructors
-  // for all globally-allocated objects is not negligible.
-  if (canExitEarly)
-    exitLld(errorCount() ? 1 : 0);
-
-  return !errorCount();
+  return errorCount() == 0;
 }
 
 // Create prefix string literals used in Options.td
@@ -189,7 +180,7 @@ opt::InputArgList WasmOptTable::parse(ArrayRef<const char *> argv) {
 
   // Expand response files (arguments in the form of @<filename>)
   // and then parse the argument again.
-  cl::ExpandResponseFiles(saver, getQuotingStyle(args), vec);
+  cl::ExpandResponseFiles(saver(), getQuotingStyle(args), vec);
   args = this->ParseArgs(vec, missingIndex, missingCount);
 
   handleColorDiagnostics(args);
@@ -366,8 +357,6 @@ static void readConfigs(opt::InputArgList &args) {
   config->exportAll = args.hasArg(OPT_export_all);
   config->exportTable = args.hasArg(OPT_export_table);
   config->growableTable = args.hasArg(OPT_growable_table);
-  errorHandler().fatalWarnings =
-      args.hasFlag(OPT_fatal_warnings, OPT_no_fatal_warnings, false);
   config->importMemory = args.hasArg(OPT_import_memory);
   config->sharedMemory = args.hasArg(OPT_shared_memory);
   config->importTable = args.hasArg(OPT_import_table);
@@ -483,7 +472,6 @@ static void setConfigs() {
   if (config->shared) {
     config->importMemory = true;
     config->importUndefined = true;
-    config->unresolvedSymbols = UnresolvedPolicy::Ignore;
   }
 }
 
@@ -632,7 +620,7 @@ static void createSyntheticSymbols() {
     // __table_base) from the environment and use these as the offset at
     // which to load our static data and function table.
     // See:
-    // https://github.com/WebAssembly/tool-conventions/blob/master/DynamicLinking.md
+    // https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
     auto *globalType = is64 ? &globalTypeI64 : &globalTypeI32;
     WasmSym::memoryBase = createUndefinedGlobal("__memory_base", globalType);
     WasmSym::tableBase = createUndefinedGlobal("__table_base", globalType);
@@ -651,7 +639,7 @@ static void createSyntheticSymbols() {
     WasmSym::stackPointer->markLive();
   }
 
-  if (config->sharedMemory && !config->relocatable) {
+  if (config->sharedMemory) {
     WasmSym::tlsBase = createGlobalVariable("__tls_base", true);
     WasmSym::tlsSize = createGlobalVariable("__tls_size", false);
     WasmSym::tlsAlign = createGlobalVariable("__tls_align", false);
@@ -684,7 +672,7 @@ static void createOptionalSymbols() {
 
   // For non-shared memory programs we still need to define __tls_base since we
   // allow object files built with TLS to be linked into single threaded
-  // programs, and such object files can contains refernced to this symbol.
+  // programs, and such object files can contain references to this symbol.
   //
   // However, in this case __tls_base is immutable and points directly to the
   // start of the `.tdata` static segment.
@@ -760,8 +748,8 @@ static std::vector<WrappedSymbol> addWrappedSymbols(opt::InputArgList &args) {
     if (!sym)
       continue;
 
-    Symbol *real = addUndefined(saver.save("__real_" + name));
-    Symbol *wrap = addUndefined(saver.save("__wrap_" + name));
+    Symbol *real = addUndefined(saver().save("__real_" + name));
+    Symbol *wrap = addUndefined(saver().save("__wrap_" + name));
     v.push_back({sym, real, wrap});
 
     // We want to tell LTO not to inline symbols to be overwritten
@@ -818,9 +806,27 @@ static void splitSections() {
   });
 }
 
+static bool isKnownZFlag(StringRef s) {
+  // For now, we only support a very limited set of -z flags
+  return s.startswith("stack-size=");
+}
+
+// Report a warning for an unknown -z option.
+static void checkZOptions(opt::InputArgList &args) {
+  for (auto *arg : args.filtered(OPT_z))
+    if (!isKnownZFlag(arg->getValue()))
+      warn("unknown -z value: " + StringRef(arg->getValue()));
+}
+
 void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
   WasmOptTable parser;
   opt::InputArgList args = parser.parse(argsArr.slice(1));
+
+  // Interpret these flags early because error()/warn() depend on them.
+  errorHandler().errorLimit = args::getInteger(args, OPT_error_limit, 20);
+  errorHandler().fatalWarnings =
+      args.hasFlag(OPT_fatal_warnings, OPT_no_fatal_warnings, false);
+  checkZOptions(args);
 
   // Handle --help
   if (args.hasArg(OPT_help)) {
@@ -857,8 +863,6 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
     v.push_back(arg->getValue());
   cl::ResetAllOptionOccurrences();
   cl::ParseCommandLineOptions(v.size(), v.data());
-
-  errorHandler().errorLimit = args::getInteger(args, OPT_error_limit, 20);
 
   readConfigs(args);
 
@@ -947,8 +951,6 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
     }
   }
 
-  createOptionalSymbols();
-
   if (errorCount())
     return;
 
@@ -972,9 +974,11 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
 
   // Do link-time optimization if given files are LLVM bitcode files.
   // This compiles bitcode files into real object files.
-  symtab->addCombinedLTOObject();
+  symtab->compileBitcodeFiles();
   if (errorCount())
     return;
+
+  createOptionalSymbols();
 
   // Resolve any variant symbols that were created due to signature
   // mismatchs.

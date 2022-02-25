@@ -58,7 +58,7 @@ struct SubtreeReferences {
 ///                         SubtreeReferences structure.
 /// @param CreateScalarRefs Should the result include allocas of scalar
 ///                         references?
-void addReferencesFromStmt(const ScopStmt *Stmt, void *UserPtr,
+void addReferencesFromStmt(ScopStmt *Stmt, void *UserPtr,
                            bool CreateScalarRefs = true);
 
 class IslNodeBuilder {
@@ -77,13 +77,6 @@ public:
   virtual ~IslNodeBuilder() = default;
 
   void addParameters(__isl_take isl_set *Context);
-
-  /// Create Values which hold the sizes of the outermost dimension of all
-  /// Fortran arrays in the current scop.
-  ///
-  /// @returns False, if a problem occurred and a Fortran array was not
-  /// materialized. True otherwise.
-  bool materializeFortranArrayOutermostDimension();
 
   /// Generate code that evaluates @p Condition at run-time.
   ///

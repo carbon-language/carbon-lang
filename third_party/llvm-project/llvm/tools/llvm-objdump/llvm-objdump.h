@@ -21,21 +21,13 @@ class StringRef;
 class Twine;
 
 namespace object {
-class ELFObjectFileBase;
-class ELFSectionRef;
-class MachOObjectFile;
-class MachOUniversalBinary;
 class RelocationRef;
 struct VersionEntry;
 } // namespace object
 
 namespace objdump {
 
-enum DebugVarsFormat {
-  DVDisabled,
-  DVUnicode,
-  DVASCII,
-};
+enum DebugVarsFormat { DVDisabled, DVUnicode, DVASCII, DVInvalid };
 
 extern bool ArchiveHeaders;
 extern int DbgIndent;

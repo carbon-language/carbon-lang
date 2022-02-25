@@ -14,8 +14,8 @@ define i32 @s_add_co_select_user() {
 ; GFX7-NEXT:    s_or_b32 s4, s4, s5
 ; GFX7-NEXT:    s_cmp_lg_u32 s4, 0
 ; GFX7-NEXT:    s_addc_u32 s4, s6, 0
-; GFX7-NEXT:    s_cselect_b64 vcc, 1, 0
 ; GFX7-NEXT:    v_mov_b32_e32 v1, s4
+; GFX7-NEXT:    s_cselect_b64 vcc, -1, 0
 ; GFX7-NEXT:    s_cmp_gt_u32 s6, 31
 ; GFX7-NEXT:    v_cndmask_b32_e32 v1, 0, v1, vcc
 ; GFX7-NEXT:    s_cselect_b64 vcc, -1, 0
@@ -31,8 +31,8 @@ define i32 @s_add_co_select_user() {
 ; GFX9-NEXT:    v_add_co_u32_e64 v0, s[4:5], s6, s6
 ; GFX9-NEXT:    s_cmp_lg_u64 s[4:5], 0
 ; GFX9-NEXT:    s_addc_u32 s4, s6, 0
-; GFX9-NEXT:    s_cselect_b64 vcc, 1, 0
 ; GFX9-NEXT:    v_mov_b32_e32 v1, s4
+; GFX9-NEXT:    s_cselect_b64 vcc, -1, 0
 ; GFX9-NEXT:    s_cmp_gt_u32 s6, 31
 ; GFX9-NEXT:    v_cndmask_b32_e32 v1, 0, v1, vcc
 ; GFX9-NEXT:    s_cselect_b64 vcc, -1, 0
@@ -49,7 +49,7 @@ define i32 @s_add_co_select_user() {
 ; GFX10-NEXT:    v_add_co_u32 v0, s5, s4, s4
 ; GFX10-NEXT:    s_cmpk_lg_u32 s5, 0x0
 ; GFX10-NEXT:    s_addc_u32 s5, s4, 0
-; GFX10-NEXT:    s_cselect_b32 s6, 1, 0
+; GFX10-NEXT:    s_cselect_b32 s6, -1, 0
 ; GFX10-NEXT:    s_cmp_gt_u32 s4, 31
 ; GFX10-NEXT:    v_cndmask_b32_e64 v1, 0, s5, s6
 ; GFX10-NEXT:    s_cselect_b32 vcc_lo, -1, 0
@@ -83,14 +83,14 @@ define amdgpu_kernel void @s_add_co_br_user(i32 %i) {
 ; GFX7-NEXT:    s_addc_u32 s0, s2, 0
 ; GFX7-NEXT:    v_cmp_ge_u32_e32 vcc, s0, v0
 ; GFX7-NEXT:    s_and_b64 vcc, exec, vcc
-; GFX7-NEXT:    s_cbranch_vccnz BB1_2
+; GFX7-NEXT:    s_cbranch_vccnz .LBB1_2
 ; GFX7-NEXT:  ; %bb.1: ; %bb0
 ; GFX7-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX7-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX7-NEXT:    v_mov_b32_e32 v2, 9
 ; GFX7-NEXT:    flat_store_dword v[0:1], v2
 ; GFX7-NEXT:    s_waitcnt vmcnt(0)
-; GFX7-NEXT:  BB1_2: ; %bb1
+; GFX7-NEXT:  .LBB1_2: ; %bb1
 ; GFX7-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX7-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX7-NEXT:    v_mov_b32_e32 v2, 10
@@ -110,14 +110,14 @@ define amdgpu_kernel void @s_add_co_br_user(i32 %i) {
 ; GFX9-NEXT:    s_addc_u32 s0, s2, 0
 ; GFX9-NEXT:    v_cmp_ge_u32_e32 vcc, s0, v0
 ; GFX9-NEXT:    s_and_b64 vcc, exec, vcc
-; GFX9-NEXT:    s_cbranch_vccnz BB1_2
+; GFX9-NEXT:    s_cbranch_vccnz .LBB1_2
 ; GFX9-NEXT:  ; %bb.1: ; %bb0
 ; GFX9-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX9-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX9-NEXT:    v_mov_b32_e32 v2, 9
 ; GFX9-NEXT:    global_store_dword v[0:1], v2, off
 ; GFX9-NEXT:    s_waitcnt vmcnt(0)
-; GFX9-NEXT:  BB1_2: ; %bb1
+; GFX9-NEXT:  .LBB1_2: ; %bb1
 ; GFX9-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX9-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX9-NEXT:    v_mov_b32_e32 v2, 10
@@ -137,14 +137,14 @@ define amdgpu_kernel void @s_add_co_br_user(i32 %i) {
 ; GFX10-NEXT:    s_addc_u32 s0, s0, 0
 ; GFX10-NEXT:    v_cmp_ge_u32_e32 vcc_lo, s0, v0
 ; GFX10-NEXT:    s_and_b32 vcc_lo, exec_lo, vcc_lo
-; GFX10-NEXT:    s_cbranch_vccnz BB1_2
+; GFX10-NEXT:    s_cbranch_vccnz .LBB1_2
 ; GFX10-NEXT:  ; %bb.1: ; %bb0
 ; GFX10-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX10-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX10-NEXT:    v_mov_b32_e32 v2, 9
 ; GFX10-NEXT:    global_store_dword v[0:1], v2, off
 ; GFX10-NEXT:    s_waitcnt_vscnt null, 0x0
-; GFX10-NEXT:  BB1_2: ; %bb1
+; GFX10-NEXT:  .LBB1_2: ; %bb1
 ; GFX10-NEXT:    v_mov_b32_e32 v0, 0
 ; GFX10-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX10-NEXT:    v_mov_b32_e32 v2, 10

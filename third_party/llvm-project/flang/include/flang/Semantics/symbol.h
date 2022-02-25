@@ -107,7 +107,7 @@ private:
 };
 
 // For SubprogramNameDetails, the kind indicates whether it is the name
-// of a module subprogram or internal subprogram.
+// of a module subprogram or an internal subprogram or ENTRY.
 ENUM_CLASS(SubprogramKind, Module, Internal)
 
 // Symbol with SubprogramNameDetails is created when we scan for module and
@@ -121,10 +121,16 @@ public:
   SubprogramNameDetails() = delete;
   SubprogramKind kind() const { return kind_; }
   ProgramTree &node() const { return *node_; }
+  bool isEntryStmt() const { return isEntryStmt_; }
+  SubprogramNameDetails &set_isEntryStmt(bool yes = true) {
+    isEntryStmt_ = yes;
+    return *this;
+  }
 
 private:
   SubprogramKind kind_;
   common::Reference<ProgramTree> node_;
+  bool isEntryStmt_{false};
 };
 
 // A name from an entity-decl -- could be object or function.
@@ -188,11 +194,11 @@ public:
   }
   bool IsArray() const { return !shape_.empty(); }
   bool IsCoarray() const { return !coshape_.empty(); }
-  bool IsAssumedShape() const { return isDummy() && shape_.IsAssumedShape(); }
-  bool IsDeferredShape() const {
-    return !isDummy() && shape_.IsDeferredShape();
+  bool CanBeAssumedShape() const {
+    return isDummy() && shape_.CanBeAssumedShape();
   }
-  bool IsAssumedSize() const { return isDummy() && shape_.IsAssumedSize(); }
+  bool CanBeDeferredShape() const { return shape_.CanBeDeferredShape(); }
+  bool IsAssumedSize() const { return isDummy() && shape_.CanBeAssumedSize(); }
   bool IsAssumedRank() const { return isDummy() && shape_.IsAssumedRank(); }
 
 private:
@@ -255,6 +261,7 @@ public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
   const SymbolVector &paramDecls() const { return paramDecls_; }
   bool sequence() const { return sequence_; }
+  bool isDECStructure() const { return isDECStructure_; }
   std::map<SourceName, SymbolRef> &finals() { return finals_; }
   const std::map<SourceName, SymbolRef> &finals() const { return finals_; }
   bool isForwardReferenced() const { return isForwardReferenced_; }
@@ -262,6 +269,7 @@ public:
   void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(symbol); }
   void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
+  void set_isDECStructure(bool x = true) { isDECStructure_ = x; }
   void set_isForwardReferenced(bool value) { isForwardReferenced_ = value; }
   const std::list<SourceName> &componentNames() const {
     return componentNames_;
@@ -292,6 +300,7 @@ private:
   std::list<SourceName> componentNames_;
   std::map<SourceName, SymbolRef> finals_; // FINAL :: subr
   bool sequence_{false};
+  bool isDECStructure_{false};
   bool isForwardReferenced_{false};
   friend llvm::raw_ostream &operator<<(
       llvm::raw_ostream &, const DerivedTypeDetails &);
@@ -495,8 +504,12 @@ public:
       LocalityLocal, // named in LOCAL locality-spec
       LocalityLocalInit, // named in LOCAL_INIT locality-spec
       LocalityShared, // named in SHARED locality-spec
-      InDataStmt, // initialized in a DATA statement
-      InNamelist, // flag is set if the symbol is in Namelist statement
+      InDataStmt, // initialized in a DATA statement, =>object, or /init/
+      InNamelist, // in a Namelist group
+      CompilerCreated, // A compiler created symbol
+      // For compiler created symbols that are constant but cannot legally have
+      // the PARAMETER attribute.
+      ReadOnly,
       // OpenACC data-sharing attribute
       AccPrivate, AccFirstPrivate, AccShared,
       // OpenACC data-mapping attribute
@@ -510,7 +523,7 @@ public:
       // OpenMP data-copying attribute
       OmpCopyIn, OmpCopyPrivate,
       // OpenMP miscellaneous flags
-      OmpCommonBlock, OmpReduction, OmpAligned, OmpAllocate,
+      OmpCommonBlock, OmpReduction, OmpAligned, OmpNontemporal, OmpAllocate,
       OmpDeclarativeAllocateDirective, OmpExecutableAllocateDirective,
       OmpDeclareSimd, OmpDeclareTarget, OmpThreadprivate, OmpDeclareReduction,
       OmpFlushed, OmpCriticalLock, OmpIfSpecified, OmpNone, OmpPreDetermined);
@@ -655,7 +668,15 @@ public:
   // for a parameterized derived type instantiation with the instance's scope.
   const DerivedTypeSpec *GetParentTypeSpec(const Scope * = nullptr) const;
 
+  // If a derived type's symbol refers to an extended derived type,
+  // return the parent component's symbol.  The scope of the derived type
+  // can be overridden.
+  const Symbol *GetParentComponent(const Scope * = nullptr) const;
+
   SemanticsContext &GetSemanticsContext() const;
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+  LLVM_DUMP_METHOD void dump() const;
+#endif
 
 private:
   const Scope *owner_;
@@ -673,13 +694,8 @@ private:
   friend llvm::raw_ostream &DumpForUnparse(
       llvm::raw_ostream &, const Symbol &, bool);
 
-  // If a derived type's symbol refers to an extended derived type,
-  // return the parent component's symbol.  The scope of the derived type
-  // can be overridden.
-  const Symbol *GetParentComponent(const Scope * = nullptr) const;
-
   template <std::size_t> friend class Symbols;
-  template <class, std::size_t> friend struct std::array;
+  template <class, std::size_t> friend class std::array;
 };
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &, Symbol::Flag);
@@ -779,7 +795,7 @@ struct SymbolAddressCompare {
   }
 };
 
-// Symbol comparison is based on the order of cooked source
+// Symbol comparison is usually based on the order of cooked source
 // stream creation and, when both are from the same cooked source,
 // their positions in that cooked source stream.
 // Don't use this comparator or OrderedSymbolSet to hold
@@ -791,12 +807,17 @@ struct SymbolSourcePositionCompare {
   bool operator()(const MutableSymbolRef &, const MutableSymbolRef &) const;
 };
 
+struct SymbolOffsetCompare {
+  bool operator()(const SymbolRef &, const SymbolRef &) const;
+  bool operator()(const MutableSymbolRef &, const MutableSymbolRef &) const;
+};
+
 using UnorderedSymbolSet = std::set<SymbolRef, SymbolAddressCompare>;
-using OrderedSymbolSet = std::set<SymbolRef, SymbolSourcePositionCompare>;
+using SourceOrderedSymbolSet = std::set<SymbolRef, SymbolSourcePositionCompare>;
 
 template <typename A>
-OrderedSymbolSet OrderBySourcePosition(const A &container) {
-  OrderedSymbolSet result;
+SourceOrderedSymbolSet OrderBySourcePosition(const A &container) {
+  SourceOrderedSymbolSet result;
   for (SymbolRef x : container) {
     result.emplace(x);
   }

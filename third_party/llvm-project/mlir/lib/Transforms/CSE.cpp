@@ -15,7 +15,6 @@
 #include "mlir/IR/Dominance.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/Passes.h"
-#include "mlir/Transforms/Utils.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
@@ -49,7 +48,7 @@ struct SimpleOperationInfo : public llvm::DenseMapInfo<Operation *> {
         OperationEquivalence::IgnoreLocations);
   }
 };
-} // end anonymous namespace
+} // namespace
 
 namespace {
 /// Simple common sub-expression elimination.
@@ -91,7 +90,7 @@ private:
   std::vector<Operation *> opsToErase;
   DominanceInfo *domInfo = nullptr;
 };
-} // end anonymous namespace
+} // namespace
 
 /// Attempt to eliminate a redundant operation.
 LogicalResult CSE::simplifyOperation(ScopedMapTy &knownValues, Operation *op,

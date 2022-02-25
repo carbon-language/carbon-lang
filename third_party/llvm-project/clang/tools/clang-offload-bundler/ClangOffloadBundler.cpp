@@ -14,6 +14,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/Cuda.h"
 #include "clang/Basic/Version.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -134,21 +135,28 @@ static std::string BundlerExecutable;
 ///  * Offload Kind - Host, OpenMP, or HIP
 ///  * Triple - Standard LLVM Triple
 ///  * GPUArch (Optional) - Processor name, like gfx906 or sm_30
-/// In presence of Proc, the Triple should contain separator "-" for all
-/// standard four components, even if they are empty.
+
 struct OffloadTargetInfo {
   StringRef OffloadKind;
   llvm::Triple Triple;
   StringRef GPUArch;
 
   OffloadTargetInfo(const StringRef Target) {
-    SmallVector<StringRef, 6> Components;
-    Target.split(Components, '-', 5);
-    Components.resize(6);
-    this->OffloadKind = Components[0];
-    this->Triple = llvm::Triple(Components[1], Components[2], Components[3],
-                                Components[4]);
-    this->GPUArch = Components[5];
+    auto TargetFeatures = Target.split(':');
+    auto TripleOrGPU = TargetFeatures.first.rsplit('-');
+
+    if (clang::StringToCudaArch(TripleOrGPU.second) !=
+        clang::CudaArch::UNKNOWN) {
+      auto KindTriple = TripleOrGPU.first.split('-');
+      this->OffloadKind = KindTriple.first;
+      this->Triple = llvm::Triple(KindTriple.second);
+      this->GPUArch = Target.substr(Target.find(TripleOrGPU.second));
+    } else {
+      auto KindTriple = TargetFeatures.first.split('-');
+      this->OffloadKind = KindTriple.first;
+      this->Triple = llvm::Triple(KindTriple.second);
+      this->GPUArch = "";
+    }
   }
 
   bool hasHostKind() const { return this->OffloadKind == "host"; }
@@ -171,6 +179,26 @@ struct OffloadTargetInfo {
     return Twine(OffloadKind + "-" + Triple.str() + "-" + GPUArch).str();
   }
 };
+
+static StringRef getDeviceFileExtension(StringRef Device,
+                                        StringRef BundleFileName) {
+  if (Device.contains("gfx"))
+    return ".bc";
+  if (Device.contains("sm_"))
+    return ".cubin";
+  return sys::path::extension(BundleFileName);
+}
+
+static std::string getDeviceLibraryFileName(StringRef BundleFileName,
+                                            StringRef Device) {
+  StringRef LibName = sys::path::stem(BundleFileName);
+  StringRef Extension = getDeviceFileExtension(Device, BundleFileName);
+
+  std::string Result;
+  Result += LibName;
+  Result += Extension;
+  return Result;
+}
 
 /// Generic file handler interface.
 class FileHandler {
@@ -328,7 +356,7 @@ class BinaryFileHandler final : public FileHandler {
   std::string CurWriteBundleTarget;
 
 public:
-  BinaryFileHandler() : FileHandler() {}
+  BinaryFileHandler() {}
 
   ~BinaryFileHandler() final {}
 
@@ -548,8 +576,7 @@ class ObjectFileHandler final : public FileHandler {
 
 public:
   ObjectFileHandler(std::unique_ptr<ObjectFile> ObjIn)
-      : FileHandler(), Obj(std::move(ObjIn)),
-        CurrentSection(Obj->section_begin()),
+      : Obj(std::move(ObjIn)), CurrentSection(Obj->section_begin()),
         NextSection(Obj->section_begin()) {}
 
   ~ObjectFileHandler() final {}
@@ -785,8 +812,7 @@ protected:
   }
 
 public:
-  TextFileHandler(StringRef Comment)
-      : FileHandler(), Comment(Comment), ReadChars(0) {
+  TextFileHandler(StringRef Comment) : Comment(Comment), ReadChars(0) {
     BundleStartString =
         "\n" + Comment.str() + " " OFFLOAD_BUNDLER_MAGIC_STR "__START__ ";
     BundleEndString =
@@ -1063,9 +1089,10 @@ bool isCodeObjectCompatible(OffloadTargetInfo &CodeObjectInfo,
 
   // Compatible in case of exact match.
   if (CodeObjectInfo == TargetInfo) {
-    DEBUG_WITH_TYPE(
-        "CodeObjectCompatibility",
-        dbgs() << "Compatible: Exact match: " << CodeObjectInfo.str() << "\n");
+    DEBUG_WITH_TYPE("CodeObjectCompatibility",
+                    dbgs() << "Compatible: Exact match: \t[CodeObject: "
+                           << CodeObjectInfo.str()
+                           << "]\t:\t[Target: " << TargetInfo.str() << "]\n");
     return true;
   }
 
@@ -1220,7 +1247,9 @@ static Error UnbundleArchive() {
           BundledObjectFileName.assign(BundledObjectFile);
           auto OutputBundleName =
               Twine(llvm::sys::path::stem(BundledObjectFileName) + "-" +
-                    CodeObject)
+                    CodeObject +
+                    getDeviceLibraryFileName(BundledObjectFileName,
+                                             CodeObjectInfo.GPUArch))
                   .str();
           // Replace ':' in optional target feature list with '_' to ensure
           // cross-platform validity.
@@ -1261,7 +1290,7 @@ static Error UnbundleArchive() {
     } // End of processing of all bundle entries of this child of input archive.
   }   // End of while over children of input archive.
 
-  assert(!ArchiveErr && "Error occured while reading archive!");
+  assert(!ArchiveErr && "Error occurred while reading archive!");
 
   /// Write out an archive for each target
   for (auto &Target : TargetNames) {
@@ -1276,9 +1305,19 @@ static Error UnbundleArchive() {
     } else if (!AllowMissingBundles) {
       std::string ErrMsg =
           Twine("no compatible code object found for the target '" + Target +
-                "' in heterogenous archive library: " + IFName)
+                "' in heterogeneous archive library: " + IFName)
               .str();
       return createStringError(inconvertibleErrorCode(), ErrMsg);
+    } else { // Create an empty archive file if no compatible code object is
+             // found and "allow-missing-bundles" is enabled. It ensures that
+             // the linker using output of this step doesn't complain about
+             // the missing input file.
+      std::vector<llvm::NewArchiveMember> EmptyArchive;
+      EmptyArchive.clear();
+      if (Error WriteErr = writeArchive(FileName, EmptyArchive, true,
+                                        getDefaultArchiveKindForHost(), true,
+                                        false, nullptr))
+        return WriteErr;
     }
   }
 

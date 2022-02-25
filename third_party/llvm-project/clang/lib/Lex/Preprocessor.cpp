@@ -549,7 +549,7 @@ void Preprocessor::EnterMainSourceFile() {
     // Tell the header info that the main file was entered.  If the file is later
     // #imported, it won't be re-entered.
     if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
-      HeaderInfo.IncrementIncludeCount(FE);
+      markIncluded(FE);
   }
 
   // Preprocess Predefines to populate the initial preprocessor state.
@@ -566,11 +566,10 @@ void Preprocessor::EnterMainSourceFile() {
   if (!PPOpts->PCHThroughHeader.empty()) {
     // Lookup and save the FileID for the through header. If it isn't found
     // in the search path, it's a fatal error.
-    const DirectoryLookup *CurDir;
     Optional<FileEntryRef> File = LookupFile(
         SourceLocation(), PPOpts->PCHThroughHeader,
-        /*isAngled=*/false, /*FromDir=*/nullptr, /*FromFile=*/nullptr, CurDir,
-        /*SearchPath=*/nullptr, /*RelativePath=*/nullptr,
+        /*isAngled=*/false, /*FromDir=*/nullptr, /*FromFile=*/nullptr,
+        /*CurDir=*/nullptr, /*SearchPath=*/nullptr, /*RelativePath=*/nullptr,
         /*SuggestedModule=*/nullptr, /*IsMapped=*/nullptr,
         /*IsFrameworkFound=*/nullptr);
     if (!File) {
@@ -1383,7 +1382,7 @@ bool Preprocessor::parseSimpleIntegerLiteral(Token &Tok, uint64_t &Value) {
 
 void Preprocessor::addCommentHandler(CommentHandler *Handler) {
   assert(Handler && "NULL comment handler");
-  assert(llvm::find(CommentHandlers, Handler) == CommentHandlers.end() &&
+  assert(!llvm::is_contained(CommentHandlers, Handler) &&
          "Comment handler already registered");
   CommentHandlers.push_back(Handler);
 }
@@ -1409,25 +1408,46 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
   return true;
 }
 
-void Preprocessor::emitMacroDeprecationWarning(const Token &Identifier) {
-  auto DepMsg = getMacroDeprecationMsg(Identifier.getIdentifierInfo());
-  if (!DepMsg)
+void Preprocessor::emitMacroDeprecationWarning(const Token &Identifier) const {
+  const MacroAnnotations &A =
+      getMacroAnnotations(Identifier.getIdentifierInfo());
+  assert(A.DeprecationInfo &&
+         "Macro deprecation warning without recorded annotation!");
+  const MacroAnnotationInfo &Info = *A.DeprecationInfo;
+  if (Info.Message.empty())
     Diag(Identifier, diag::warn_pragma_deprecated_macro_use)
         << Identifier.getIdentifierInfo() << 0;
   else
     Diag(Identifier, diag::warn_pragma_deprecated_macro_use)
-        << Identifier.getIdentifierInfo() << 1 << *DepMsg;
+        << Identifier.getIdentifierInfo() << 1 << Info.Message;
+  Diag(Info.Location, diag::note_pp_macro_annotation) << 0;
 }
 
-void Preprocessor::emitMacroUnsafeHeaderWarning(const Token &Identifier) {
-  auto DepMsg = getRestrictExpansionMsg(Identifier.getIdentifierInfo());
-  if (DepMsg.first.empty())
+void Preprocessor::emitRestrictExpansionWarning(const Token &Identifier) const {
+  const MacroAnnotations &A =
+      getMacroAnnotations(Identifier.getIdentifierInfo());
+  assert(A.RestrictExpansionInfo &&
+         "Macro restricted expansion warning without recorded annotation!");
+  const MacroAnnotationInfo &Info = *A.RestrictExpansionInfo;
+  if (Info.Message.empty())
     Diag(Identifier, diag::warn_pragma_restrict_expansion_macro_use)
         << Identifier.getIdentifierInfo() << 0;
   else
     Diag(Identifier, diag::warn_pragma_restrict_expansion_macro_use)
-        << Identifier.getIdentifierInfo() << 1 << DepMsg.first;
-  Diag(DepMsg.second, diag::note_pp_macro_annotation) << 1;
+        << Identifier.getIdentifierInfo() << 1 << Info.Message;
+  Diag(Info.Location, diag::note_pp_macro_annotation) << 1;
+}
+
+void Preprocessor::emitFinalMacroWarning(const Token &Identifier,
+                                         bool IsUndef) const {
+  const MacroAnnotations &A =
+      getMacroAnnotations(Identifier.getIdentifierInfo());
+  assert(A.FinalAnnotationLoc &&
+         "Final macro warning without recorded annotation!");
+
+  Diag(Identifier, diag::warn_pragma_final_macro)
+      << Identifier.getIdentifierInfo() << (IsUndef ? 0 : 1);
+  Diag(*A.FinalAnnotationLoc, diag::note_pp_macro_annotation) << 2;
 }
 
 ModuleLoader::~ModuleLoader() = default;

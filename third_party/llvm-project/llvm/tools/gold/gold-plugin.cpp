@@ -19,11 +19,11 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticPrinter.h"
-#include "llvm/LTO/Caching.h"
 #include "llvm/LTO/LTO.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Remarks/HotnessThresholdParser.h"
 #include "llvm/Support/CachePruning.h"
+#include "llvm/Support/Caching.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -995,7 +995,7 @@ static void writeEmptyDistributedBuildOutputs(const std::string &ModulePath,
     if (SkipModule) {
       ModuleSummaryIndex Index(/*HaveGVs*/ false);
       Index.setSkipModuleByDistributedBackend();
-      WriteIndexToFile(Index, OS, nullptr);
+      writeIndexToFile(Index, OS, nullptr);
     }
   }
   if (options::thinlto_emit_imports_files) {
@@ -1081,12 +1081,11 @@ static std::vector<std::pair<SmallString<128>, bool>> runLTO() {
   size_t MaxTasks = Lto->getMaxTasks();
   std::vector<std::pair<SmallString<128>, bool>> Files(MaxTasks);
 
-  auto AddStream =
-      [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
+  auto AddStream = [&](size_t Task) -> std::unique_ptr<CachedFileStream> {
     Files[Task].second = !SaveTemps;
     int FD = getOutputFileName(Filename, /* TempOutFile */ !SaveTemps,
                                Files[Task].first, Task);
-    return std::make_unique<lto::NativeObjectStream>(
+    return std::make_unique<CachedFileStream>(
         std::make_unique<llvm::raw_fd_ostream>(FD, true));
   };
 
@@ -1094,9 +1093,9 @@ static std::vector<std::pair<SmallString<128>, bool>> runLTO() {
     *AddStream(Task)->OS << MB->getBuffer();
   };
 
-  NativeObjectCache Cache;
+  FileCache Cache;
   if (!options::cache_dir.empty())
-    Cache = check(localCache(options::cache_dir, AddBuffer));
+    Cache = check(localCache("ThinLTO", "Thin", options::cache_dir, AddBuffer));
 
   check(Lto->run(AddStream, Cache));
 

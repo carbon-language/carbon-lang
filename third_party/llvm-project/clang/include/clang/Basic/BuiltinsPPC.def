@@ -74,8 +74,8 @@ BUILTIN(__builtin_ppc_fetch_and_swap, "UiUiD*Ui", "")
 BUILTIN(__builtin_ppc_fetch_and_swaplp, "ULiULiD*ULi", "")
 BUILTIN(__builtin_ppc_ldarx, "LiLiD*", "")
 BUILTIN(__builtin_ppc_lwarx, "iiD*", "")
-BUILTIN(__builtin_ppc_lharx, "isD*", "")
-BUILTIN(__builtin_ppc_lbarx, "UiUcD*", "")
+BUILTIN(__builtin_ppc_lharx, "ssD*", "")
+BUILTIN(__builtin_ppc_lbarx, "ccD*", "")
 BUILTIN(__builtin_ppc_stdcx, "iLiD*Li", "")
 BUILTIN(__builtin_ppc_stwcx, "iiD*i", "")
 BUILTIN(__builtin_ppc_sthcx, "isD*s", "")
@@ -96,6 +96,13 @@ BUILTIN(__builtin_ppc_swdiv_nochk, "ddd", "")
 BUILTIN(__builtin_ppc_swdivs_nochk, "fff", "")
 BUILTIN(__builtin_ppc_alignx, "vIivC*", "nc")
 BUILTIN(__builtin_ppc_rdlam, "UWiUWiUWiUWIi", "nc")
+BUILTIN(__builtin_ppc_compare_exp_uo, "idd", "")
+BUILTIN(__builtin_ppc_compare_exp_lt, "idd", "")
+BUILTIN(__builtin_ppc_compare_exp_gt, "idd", "")
+BUILTIN(__builtin_ppc_compare_exp_eq, "idd", "")
+BUILTIN(__builtin_ppc_test_data_class, "idIi", "t")
+BUILTIN(__builtin_ppc_swdiv, "ddd", "")
+BUILTIN(__builtin_ppc_swdivs, "fff", "")
 // Compare
 BUILTIN(__builtin_ppc_cmpeqb, "LLiLLiLLi", "")
 BUILTIN(__builtin_ppc_cmprb, "iCIiii", "")
@@ -110,11 +117,11 @@ BUILTIN(__builtin_ppc_maddhd, "LLiLLiLLiLLi", "")
 BUILTIN(__builtin_ppc_maddhdu, "ULLiULLiULLiULLi", "")
 BUILTIN(__builtin_ppc_maddld, "LLiLLiLLiLLi", "")
 // Rotate
-BUILTIN(__builtin_ppc_rlwnm, "UiUiIUiIUi", "")
+BUILTIN(__builtin_ppc_rlwnm, "UiUiUiIUi", "")
 BUILTIN(__builtin_ppc_rlwimi, "UiUiUiIUiIUi", "")
 BUILTIN(__builtin_ppc_rldimi, "ULLiULLiULLiIUiIULLi", "")
 // load
-BUILTIN(__builtin_ppc_load2r, "UiUs*", "")
+BUILTIN(__builtin_ppc_load2r, "UsUs*", "")
 BUILTIN(__builtin_ppc_load4r, "UiUi*", "")
 BUILTIN(__builtin_ppc_load8r, "ULLiULLi*", "")
 // store
@@ -392,10 +399,12 @@ BUILTIN(__builtin_altivec_vcmpgtfp_p, "iiV4fV4f", "")
 
 BUILTIN(__builtin_altivec_vgbbd, "V16UcV16Uc", "")
 BUILTIN(__builtin_altivec_vbpermq, "V2ULLiV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vbpermd, "V2ULLiV2ULLiV16Uc", "")
 
 // P8 Crypto built-ins.
 BUILTIN(__builtin_altivec_crypto_vsbox, "V2ULLiV2ULLi", "")
 BUILTIN(__builtin_altivec_crypto_vpermxor, "V16UcV16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_crypto_vpermxor_be, "V16UcV16UcV16UcV16Uc", "")
 BUILTIN(__builtin_altivec_crypto_vshasigmaw, "V4UiV4UiIiIi", "")
 BUILTIN(__builtin_altivec_crypto_vshasigmad, "V2ULLiV2ULLiIiIi", "")
 BUILTIN(__builtin_altivec_crypto_vcipher, "V2ULLiV2ULLiV2ULLi", "")
@@ -415,6 +424,12 @@ BUILTIN(__builtin_altivec_vctzb, "V16UcV16Uc", "")
 BUILTIN(__builtin_altivec_vctzh, "V8UsV8Us", "")
 BUILTIN(__builtin_altivec_vctzw, "V4UiV4Ui", "")
 BUILTIN(__builtin_altivec_vctzd, "V2ULLiV2ULLi", "")
+
+// P8 BCD builtins.
+BUILTIN(__builtin_ppc_bcdadd, "V16UcV16UcV16UcIi", "")
+BUILTIN(__builtin_ppc_bcdsub, "V16UcV16UcV16UcIi", "")
+BUILTIN(__builtin_ppc_bcdadd_p, "iiV16UcV16Uc", "")
+BUILTIN(__builtin_ppc_bcdsub_p, "iiV16UcV16Uc", "")
 
 BUILTIN(__builtin_altivec_vclzlsbb, "SiV16Uc", "")
 BUILTIN(__builtin_altivec_vctzlsbb, "SiV16Uc", "")
@@ -772,6 +787,10 @@ BUILTIN(__builtin_cfuged, "ULLiULLiULLi", "")
 BUILTIN(__builtin_cntlzdm, "ULLiULLiULLi", "")
 BUILTIN(__builtin_cnttzdm, "ULLiULLiULLi", "")
 
+// Double-double (un)pack
+BUILTIN(__builtin_unpack_longdouble, "dLdIi", "")
+BUILTIN(__builtin_pack_longdouble, "Lddd", "")
+
 // Generate random number
 BUILTIN(__builtin_darn, "LLi", "")
 BUILTIN(__builtin_darn_raw, "LLi", "")
@@ -813,18 +832,20 @@ BUILTIN(__builtin_dcbf, "vvC*", "")
 // its given accumulator.
 
 // Provided builtins with _mma_ prefix for compatibility.
-CUSTOM_BUILTIN(mma_lxvp, vsx_lxvp, "W256SLLiW256C*", false)
-CUSTOM_BUILTIN(mma_stxvp, vsx_stxvp, "vW256SLLiW256C*", false)
+CUSTOM_BUILTIN(mma_lxvp, vsx_lxvp, "W256SLiW256C*", false)
+CUSTOM_BUILTIN(mma_stxvp, vsx_stxvp, "vW256SLiW256C*", false)
 CUSTOM_BUILTIN(mma_assemble_pair, vsx_assemble_pair, "vW256*VV", false)
 CUSTOM_BUILTIN(mma_disassemble_pair, vsx_disassemble_pair, "vv*W256*", false)
+CUSTOM_BUILTIN(vsx_build_pair, vsx_assemble_pair,  "vW256*VV", false)
+CUSTOM_BUILTIN(mma_build_acc, mma_assemble_acc, "vW512*VVVV", false)
 
 // UNALIASED_CUSTOM_BUILTIN macro is used for built-ins that have
 // the same name as that of the intrinsic they generate, i.e. the
 // ID and INTR are the same.
 // This avoids repeating the ID and INTR in the macro expression.
 
-UNALIASED_CUSTOM_BUILTIN(vsx_lxvp, "W256SLLiW256C*", false)
-UNALIASED_CUSTOM_BUILTIN(vsx_stxvp, "vW256SLLiW256C*", false)
+UNALIASED_CUSTOM_BUILTIN(vsx_lxvp, "W256SLiW256C*", false)
+UNALIASED_CUSTOM_BUILTIN(vsx_stxvp, "vW256SLiW256C*", false)
 UNALIASED_CUSTOM_BUILTIN(vsx_assemble_pair, "vW256*VV", false)
 UNALIASED_CUSTOM_BUILTIN(vsx_disassemble_pair, "vv*W256*", false)
 

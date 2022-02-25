@@ -117,11 +117,10 @@ public:
                                          const MachineFunction &MF) const;
 
   /// Return true if the instruction is trivially rematerializable, meaning it
-  /// has no side effects. Uses of constants and unallocatable physical
-  /// registers are always trivial to rematerialize so that the instructions
-  /// result is independent of the place in the function. Uses of virtual
-  /// registers are allowed but it is caller's responsility to ensure these
-  /// operands are valid at the point the instruction is beeing moved.
+  /// has no side effects and requires no operands that aren't always available.
+  /// This means the only allowed uses are constants and unallocatable physical
+  /// registers so that the instructions result is independent of the place
+  /// in the function.
   bool isTriviallyReMaterializable(const MachineInstr &MI,
                                    AAResults *AA = nullptr) const {
     return MI.getOpcode() == TargetOpcode::IMPLICIT_DEF ||
@@ -131,7 +130,7 @@ public:
   }
 
   /// Given \p MO is a PhysReg use return if it can be ignored for the purpose
-  /// of instruction rematerialization.
+  /// of instruction rematerialization or sinking.
   virtual bool isIgnorableUse(const MachineOperand &MO) const {
     return false;
   }
@@ -141,7 +140,8 @@ protected:
   /// set, this hook lets the target specify whether the instruction is actually
   /// trivially rematerializable, taking into consideration its operands. This
   /// predicate must return false if the instruction has any side effects other
-  /// than producing a value.
+  /// than producing a value, or if it requres any address registers that are
+  /// not always available.
   /// Requirements must be check as stated in isTriviallyReMaterializable() .
   virtual bool isReallyTriviallyReMaterializable(const MachineInstr &MI,
                                                  AAResults *AA) const {
@@ -382,6 +382,17 @@ public:
   /// to which instructions should be sunk.
   virtual bool shouldSink(const MachineInstr &MI) const { return true; }
 
+  /// Return false if the instruction should not be hoisted by MachineLICM.
+  ///
+  /// MachineLICM determines on its own whether the instruction is safe to
+  /// hoist; this gives the target a hook to extend this assessment and prevent
+  /// an instruction being hoisted from a given loop for target specific
+  /// reasons.
+  virtual bool shouldHoist(const MachineInstr &MI,
+                           const MachineLoop *FromLoop) const {
+    return true;
+  }
+
   /// Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by
@@ -411,9 +422,12 @@ public:
   /// This method returns a null pointer if the transformation cannot be
   /// performed, otherwise it returns the last new instruction.
   ///
-  virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
-                                              MachineInstr &MI,
-                                              LiveVariables *LV) const {
+  /// If \p LIS is not nullptr, the LiveIntervals info should be updated for
+  /// replacing \p MI with new instructions, even though this function does not
+  /// remove MI.
+  virtual MachineInstr *convertToThreeAddress(MachineInstr &MI,
+                                              LiveVariables *LV,
+                                              LiveIntervals *LIS) const {
     return nullptr;
   }
 
@@ -583,15 +597,14 @@ public:
   }
 
   /// Insert an unconditional indirect branch at the end of \p MBB to \p
-  /// NewDestBB.  \p BrOffset indicates the offset of \p NewDestBB relative to
+  /// NewDestBB. Optionally, insert the clobbered register restoring in \p
+  /// RestoreBB. \p BrOffset indicates the offset of \p NewDestBB relative to
   /// the offset of the position to insert the new branch.
-  ///
-  /// \returns The number of bytes added to the block.
-  virtual unsigned insertIndirectBranch(MachineBasicBlock &MBB,
-                                        MachineBasicBlock &NewDestBB,
-                                        const DebugLoc &DL,
-                                        int64_t BrOffset = 0,
-                                        RegScavenger *RS = nullptr) const {
+  virtual void insertIndirectBranch(MachineBasicBlock &MBB,
+                                    MachineBasicBlock &NewDestBB,
+                                    MachineBasicBlock &RestoreBB,
+                                    const DebugLoc &DL, int64_t BrOffset = 0,
+                                    RegScavenger *RS = nullptr) const {
     llvm_unreachable("target did not implement");
   }
 
@@ -1188,8 +1201,6 @@ public:
                                      MachineInstr &NewMI1,
                                      MachineInstr &NewMI2) const {}
 
-  virtual void setSpecialOperandAttr(MachineInstr &MI, uint16_t Flags) const {}
-
   /// Return true when a target supports MachineCombiner.
   virtual bool useMachineCombiner() const { return false; }
 
@@ -1537,7 +1548,8 @@ public:
   /// compares against in CmpValue. Return true if the comparison instruction
   /// can be analyzed.
   virtual bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                              Register &SrcReg2, int &Mask, int &Value) const {
+                              Register &SrcReg2, int64_t &Mask,
+                              int64_t &Value) const {
     return false;
   }
 
@@ -1545,7 +1557,8 @@ public:
   /// into something more efficient. E.g., on ARM most instructions can set the
   /// flags register, obviating the need for a separate CMP.
   virtual bool optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
-                                    Register SrcReg2, int Mask, int Value,
+                                    Register SrcReg2, int64_t Mask,
+                                    int64_t Value,
                                     const MachineRegisterInfo *MRI) const {
     return false;
   }
@@ -1909,6 +1922,12 @@ public:
         "Target didn't implement TargetInstrInfo::getOutliningCandidateInfo!");
   }
 
+  /// Optional target hook to create the LLVM IR attributes for the outlined
+  /// function. If overridden, the overriding function must call the default
+  /// implementation.
+  virtual void mergeOutliningCandidateAttributes(
+      Function &F, std::vector<outliner::Candidate> &Candidates) const;
+
   /// Returns how or if \p MI should be outlined.
   virtual outliner::InstrType
   getOutliningType(MachineBasicBlock::iterator &MIT, unsigned Flags) const {
@@ -1919,8 +1938,25 @@ public:
   /// Optional target hook that returns true if \p MBB is safe to outline from,
   /// and returns any target-specific information in \p Flags.
   virtual bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
-                                      unsigned &Flags) const {
-    return true;
+                                      unsigned &Flags) const;
+
+  /// Optional target hook which partitions \p MBB into outlinable ranges for
+  /// instruction mapping purposes. Each range is defined by two iterators:
+  /// [start, end).
+  ///
+  /// Ranges are expected to be ordered top-down. That is, ranges closer to the
+  /// top of the block should come before ranges closer to the end of the block.
+  ///
+  /// Ranges cannot overlap.
+  ///
+  /// If an entire block is mappable, then its range is [MBB.begin(), MBB.end())
+  ///
+  /// All instructions not present in an outlinable range are considered
+  /// illegal.
+  virtual SmallVector<
+      std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>>
+  getOutlinableRanges(MachineBasicBlock &MBB, unsigned &Flags) const {
+    return {std::make_pair(MBB.begin(), MBB.end())};
   }
 
   /// Insert a custom frame for outlined functions.
@@ -1936,7 +1972,7 @@ public:
   virtual MachineBasicBlock::iterator
   insertOutlinedCall(Module &M, MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator &It, MachineFunction &MF,
-                     const outliner::Candidate &C) const {
+                     outliner::Candidate &C) const {
     llvm_unreachable(
         "Target didn't implement TargetInstrInfo::insertOutlinedCall!");
   }

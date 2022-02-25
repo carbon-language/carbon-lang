@@ -10,13 +10,11 @@
 #define LLVM_CLANG_FRONTEND_FRONTENDACTIONS_H
 
 #include "clang/Frontend/FrontendAction.h"
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace clang {
-
-class Module;
-class FileEntry;
 
 //===----------------------------------------------------------------------===//
 // Custom Consumer Actions
@@ -273,6 +271,12 @@ protected:
   bool usesPreprocessorOnly() const override { return true; }
 };
 
+class ExtractAPIAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
+};
+
 //===----------------------------------------------------------------------===//
 // Preprocessor Actions
 //===----------------------------------------------------------------------===//
@@ -297,6 +301,15 @@ protected:
   void ExecuteAction() override;
 
   bool hasPCHSupport() const override { return true; }
+};
+
+class GetDependenciesByModuleNameAction : public PreprocessOnlyAction {
+  StringRef ModuleName;
+  void ExecuteAction() override;
+
+public:
+  GetDependenciesByModuleNameAction(StringRef ModuleName)
+      : ModuleName(ModuleName) {}
 };
 
 }  // end namespace clang

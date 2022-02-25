@@ -117,23 +117,17 @@ enum NodeType : unsigned {
   // MachineMemOperands rather than one.
   MVC,
 
-  // Like MVC, but implemented as a loop that handles X*256 bytes
-  // followed by straight-line code to handle the rest (if any).
-  // The value of X is passed as an additional operand.
-  MVC_LOOP,
-
-  // Similar to MVC and MVC_LOOP, but for logic operations (AND, OR, XOR).
+  // Similar to MVC, but for logic operations (AND, OR, XOR).
   NC,
-  NC_LOOP,
   OC,
-  OC_LOOP,
   XC,
-  XC_LOOP,
 
   // Use CLC to compare two blocks of memory, with the same comments
-  // as for MVC and MVC_LOOP.
+  // as for MVC.
   CLC,
-  CLC_LOOP,
+
+  // Use MVC to set a block of memory after storing the first byte.
+  MEMSET_MVC,
 
   // Use an MVST-based sequence to implement stpcpy().
   STPCPY,
@@ -387,7 +381,6 @@ enum {
 } // end namespace SystemZICMP
 
 class SystemZSubtarget;
-class SystemZTargetMachine;
 
 class SystemZTargetLowering : public TargetLowering {
 public:
@@ -450,6 +443,11 @@ public:
                                   EVT VT) const override;
   bool isFPImmLegal(const APFloat &Imm, EVT VT,
                     bool ForCodeSize) const override;
+  bool ShouldShrinkFPConstant(EVT VT) const override {
+    // Do not shrink 64-bit FP constpool entries since LDEB is slower than
+    // LD, and having the full constant in memory enables reg/mem opcodes.
+    return VT != MVT::f64;
+  }
   bool hasInlineStackProbe(MachineFunction &MF) const override;
   bool isLegalICmpImmediate(int64_t Imm) const override;
   bool isLegalAddImmediate(int64_t Imm) const override;
@@ -555,6 +553,12 @@ public:
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
 
+  std::pair<SDValue, SDValue>
+  makeExternalCall(SDValue Chain, SelectionDAG &DAG, const char *CalleeName,
+                   EVT RetVT, ArrayRef<SDValue> Ops, CallingConv::ID CallConv,
+                   bool IsSigned, SDLoc DL, bool DoesNotReturn,
+                   bool IsReturnValueUsed) const;
+
   bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
                       bool isVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -624,8 +628,12 @@ private:
   SDValue lowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerVASTART_ELF(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerVASTART_XPLINK(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVACOPY(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerDYNAMIC_STACKALLOC_ELF(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerDYNAMIC_STACKALLOC_XPLINK(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerGET_DYNAMIC_AREA_OFFSET(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
@@ -718,7 +726,8 @@ private:
   MachineBasicBlock *emitAtomicCmpSwapW(MachineInstr &MI,
                                         MachineBasicBlock *BB) const;
   MachineBasicBlock *emitMemMemWrapper(MachineInstr &MI, MachineBasicBlock *BB,
-                                       unsigned Opcode) const;
+                                       unsigned Opcode,
+                                       bool IsMemset = false) const;
   MachineBasicBlock *emitStringWrapper(MachineInstr &MI, MachineBasicBlock *BB,
                                        unsigned Opcode) const;
   MachineBasicBlock *emitTransactionBegin(MachineInstr &MI,

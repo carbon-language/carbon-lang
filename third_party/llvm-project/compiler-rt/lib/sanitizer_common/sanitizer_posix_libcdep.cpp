@@ -151,6 +151,8 @@ int Atexit(void (*function)(void)) {
 #endif
 }
 
+bool CreateDir(const char *pathname) { return mkdir(pathname, 0755) == 0; }
+
 bool SupportsColoredOutput(fd_t fd) {
   return isatty(fd) != 0;
 }
@@ -288,7 +290,7 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
   return result;
 }
 
-void PlatformPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
+void PlatformPrepareForSandboxing(void *args) {
   // Some kinds of sandboxes may forbid filesystem access, so we won't be able
   // to read the file mappings from /proc/self/maps. Luckily, neither the
   // process will be able to load additional libraries, so it's fine to use the

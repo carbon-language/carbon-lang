@@ -8,17 +8,11 @@ if (DEFINED LLVM_HAVE_TF_AOT OR DEFINED LLVM_HAVE_TF_API)
   set(LLVM_INLINER_MODEL_CURRENT_URL "https://github.com/google/ml-compiler-opt/releases/download/inlining-Oz-v1.1/inlining-Oz-99f0063-v1.1.tar.gz")
 
   if (DEFINED LLVM_HAVE_TF_AOT)
-    # If the path is empty, autogenerate the model
-    if (NOT DEFINED LLVM_INLINER_MODEL_PATH OR "${LLVM_INLINER_MODEL_PATH}" STREQUAL "")
-      set(LLVM_INLINER_MODEL_PATH "autogenerate")
-      message(WARNING "LLVM_INLINER_MODEL_PATH was not set: autogenerating a model to finish the build.")
-    endif()
-
     tf_find_and_compile(
       ${LLVM_INLINER_MODEL_PATH}
       ${LLVM_INLINER_MODEL_CURRENT_URL}
       ${LLVM_INLINER_MODEL_PATH_DEFAULT}
-      "models/inlining/config.py"
+      "models/gen-inline-oz-test-model.py"
       serve
       action
       InlinerSizeModel
@@ -56,6 +50,7 @@ add_llvm_component_library(LLVMAnalysis
   CostModel.cpp
   CodeMetrics.cpp
   ConstantFolding.cpp
+  CycleAnalysis.cpp
   DDG.cpp
   DDGPrinter.cpp
   ConstraintSystem.cpp
@@ -108,9 +103,11 @@ add_llvm_component_library(LLVMAnalysis
   MemoryLocation.cpp
   MemorySSA.cpp
   MemorySSAUpdater.cpp
+  ModelUnderTrainingRunner.cpp
   ModuleDebugInfoPrinter.cpp
   ModuleSummaryAnalysis.cpp
   MustExecute.cpp
+  NoInferenceModelRunner.cpp
   ObjCARCAliasAnalysis.cpp
   ObjCARCAnalysisUtils.cpp
   ObjCARCInstKind.cpp
@@ -124,7 +121,6 @@ add_llvm_component_library(LLVMAnalysis
   RegionInfo.cpp
   RegionPass.cpp
   RegionPrinter.cpp
-  ReleaseModeModelRunner.cpp
   ReplayInlineAdvisor.cpp
   ScalarEvolution.cpp
   ScalarEvolutionAliasAnalysis.cpp

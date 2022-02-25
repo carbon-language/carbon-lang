@@ -22,7 +22,7 @@
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/LLVMIR/ROCDLDialect.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
-#include "mlir/Dialect/Vector/VectorOps.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 
@@ -30,7 +30,7 @@ using namespace mlir;
 using namespace mlir::vector;
 
 static LogicalResult replaceTransferOpWithMubuf(
-    ConversionPatternRewriter &rewriter, ArrayRef<Value> operands,
+    ConversionPatternRewriter &rewriter, ValueRange operands,
     LLVMTypeConverter &typeConverter, Location loc, TransferReadOp xferOp,
     Type &vecTy, Value &dwordConfig, Value &vindex, Value &offsetSizeInBytes,
     Value &glc, Value &slc) {
@@ -40,7 +40,7 @@ static LogicalResult replaceTransferOpWithMubuf(
 }
 
 static LogicalResult replaceTransferOpWithMubuf(
-    ConversionPatternRewriter &rewriter, ArrayRef<Value> operands,
+    ConversionPatternRewriter &rewriter, ValueRange operands,
     LLVMTypeConverter &typeConverter, Location loc, TransferWriteOp xferOp,
     Type &vecTy, Value &dwordConfig, Value &vindex, Value &offsetSizeInBytes,
     Value &glc, Value &slc) {
@@ -62,9 +62,11 @@ public:
   using ConvertOpToLLVMPattern<ConcreteOp>::ConvertOpToLLVMPattern;
 
   LogicalResult
-  matchAndRewrite(ConcreteOp xferOp, ArrayRef<Value> operands,
+  matchAndRewrite(ConcreteOp xferOp, typename ConcreteOp::Adaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
-    typename ConcreteOp::Adaptor adaptor(operands, xferOp->getAttrDictionary());
+    // TODO: support 0-d corner case.
+    if (xferOp.getTransferRank() == 0)
+      return failure();
 
     if (xferOp.getVectorType().getRank() > 1 ||
         llvm::size(xferOp.indices()) == 0)
@@ -139,11 +141,11 @@ public:
         loc, toLLVMTy(i32Ty),
         rewriter.getIntegerAttr(rewriter.getIntegerType(32), 0));
     return replaceTransferOpWithMubuf(
-        rewriter, operands, *this->getTypeConverter(), loc, xferOp, vecTy,
-        dwordConfig, int32Zero, int32Zero, int1False, int1False);
+        rewriter, adaptor.getOperands(), *this->getTypeConverter(), loc, xferOp,
+        vecTy, dwordConfig, int32Zero, int32Zero, int1False, int1False);
   }
 };
-} // end anonymous namespace
+} // namespace
 
 void mlir::populateVectorToROCDLConversionPatterns(
     LLVMTypeConverter &converter, RewritePatternSet &patterns) {

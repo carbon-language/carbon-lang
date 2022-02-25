@@ -31,7 +31,7 @@ using namespace mlir;
 namespace mlir {
 void registerConvertToTargetEnvPass();
 void registerPassManagerTestPass();
-void registerPrintOpAvailabilityPass();
+void registerPrintSpirvAvailabilityPass();
 void registerShapeFunctionTestPasses();
 void registerSideEffectTestPasses();
 void registerSliceAnalysisTestPass();
@@ -62,9 +62,9 @@ void registerPatternsTestPass();
 void registerSimpleParametricTilingPass();
 void registerTestAffineLoopParametricTilingPass();
 void registerTestAliasAnalysisPass();
+void registerTestBuiltinAttributeInterfaces();
 void registerTestCallGraphPass();
 void registerTestConstantFold();
-void registerTestConvVectorization();
 void registerTestGpuSerializeToCubinPass();
 void registerTestGpuSerializeToHsacoPass();
 void registerTestDataLayoutQuery();
@@ -76,12 +76,12 @@ void registerTestExpandTanhPass();
 void registerTestComposeSubView();
 void registerTestGpuParallelLoopMappingPass();
 void registerTestIRVisitorsPass();
+void registerTestGenericIRVisitorsPass();
+void registerTestGenericIRVisitorsInterruptPass();
 void registerTestInterfaces();
 void registerTestLinalgCodegenStrategy();
-void registerTestLinalgControlFuseByExpansion();
 void registerTestLinalgDistribution();
 void registerTestLinalgElementwiseFusion();
-void registerTestPushExpandingReshape();
 void registerTestLinalgFusionTransforms();
 void registerTestLinalgTensorFusionTransforms();
 void registerTestLinalgTiledLoopFusionTransforms();
@@ -93,18 +93,20 @@ void registerTestLivenessPass();
 void registerTestLoopFusion();
 void registerTestLoopMappingPass();
 void registerTestLoopUnrollingPass();
+void registerTestMatchReductionPass();
 void registerTestMathAlgebraicSimplificationPass();
 void registerTestMathPolynomialApproximationPass();
 void registerTestMemRefDependenceCheck();
 void registerTestMemRefStrideCalculation();
-void registerTestNumberOfBlockExecutionsPass();
-void registerTestNumberOfOperationExecutionsPass();
 void registerTestOpaqueLoc();
+void registerTestPadFusion();
 void registerTestPDLByteCodePass();
 void registerTestPreparationPassWithAllowedMemrefResults();
 void registerTestRecursiveTypesPass();
 void registerTestSCFUtilsPass();
-void registerTestVectorConversions();
+void registerTestSliceAnalysisPass();
+void registerTestTensorTransforms();
+void registerTestVectorLowerings();
 } // namespace test
 } // namespace mlir
 
@@ -116,7 +118,7 @@ void registerTestDialect(DialectRegistry &);
 void registerTestPasses() {
   registerConvertToTargetEnvPass();
   registerPassManagerTestPass();
-  registerPrintOpAvailabilityPass();
+  registerPrintSpirvAvailabilityPass();
   registerShapeFunctionTestPasses();
   registerSideEffectTestPasses();
   registerSliceAnalysisTestPass();
@@ -146,6 +148,7 @@ void registerTestPasses() {
   mlir::test::registerSimpleParametricTilingPass();
   mlir::test::registerTestAffineLoopParametricTilingPass();
   mlir::test::registerTestAliasAnalysisPass();
+  mlir::test::registerTestBuiltinAttributeInterfaces();
   mlir::test::registerTestCallGraphPass();
   mlir::test::registerTestConstantFold();
   mlir::test::registerTestDiagnosticsPass();
@@ -155,7 +158,6 @@ void registerTestPasses() {
 #if MLIR_ROCM_CONVERSIONS_ENABLED
   mlir::test::registerTestGpuSerializeToHsacoPass();
 #endif
-  mlir::test::registerTestConvVectorization();
   mlir::test::registerTestDecomposeCallGraphTypes();
   mlir::test::registerTestDataLayoutQuery();
   mlir::test::registerTestDominancePass();
@@ -164,12 +166,11 @@ void registerTestPasses() {
   mlir::test::registerTestComposeSubView();
   mlir::test::registerTestGpuParallelLoopMappingPass();
   mlir::test::registerTestIRVisitorsPass();
+  mlir::test::registerTestGenericIRVisitorsPass();
   mlir::test::registerTestInterfaces();
   mlir::test::registerTestLinalgCodegenStrategy();
-  mlir::test::registerTestLinalgControlFuseByExpansion();
   mlir::test::registerTestLinalgDistribution();
   mlir::test::registerTestLinalgElementwiseFusion();
-  mlir::test::registerTestPushExpandingReshape();
   mlir::test::registerTestLinalgFusionTransforms();
   mlir::test::registerTestLinalgTensorFusionTransforms();
   mlir::test::registerTestLinalgTiledLoopFusionTransforms();
@@ -181,17 +182,19 @@ void registerTestPasses() {
   mlir::test::registerTestLoopFusion();
   mlir::test::registerTestLoopMappingPass();
   mlir::test::registerTestLoopUnrollingPass();
+  mlir::test::registerTestMatchReductionPass();
   mlir::test::registerTestMathAlgebraicSimplificationPass();
   mlir::test::registerTestMathPolynomialApproximationPass();
   mlir::test::registerTestMemRefDependenceCheck();
   mlir::test::registerTestMemRefStrideCalculation();
-  mlir::test::registerTestNumberOfBlockExecutionsPass();
-  mlir::test::registerTestNumberOfOperationExecutionsPass();
   mlir::test::registerTestOpaqueLoc();
+  mlir::test::registerTestPadFusion();
   mlir::test::registerTestPDLByteCodePass();
   mlir::test::registerTestRecursiveTypesPass();
   mlir::test::registerTestSCFUtilsPass();
-  mlir::test::registerTestVectorConversions();
+  mlir::test::registerTestSliceAnalysisPass();
+  mlir::test::registerTestTensorTransforms();
+  mlir::test::registerTestVectorLowerings();
 }
 #endif
 

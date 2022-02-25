@@ -60,18 +60,18 @@ public:
   bool ModuleIsExcludedForUnconstrainedSearches(
       lldb_private::Target &target, const lldb::ModuleSP &module_sp) override;
 
-  bool ARMGetSupportedArchitectureAtIndex(uint32_t idx,
-                                          lldb_private::ArchSpec &arch);
+  void
+  ARMGetSupportedArchitectures(std::vector<lldb_private::ArchSpec> &archs,
+                               llvm::Optional<llvm::Triple::OSType> os = {});
 
-  bool x86GetSupportedArchitectureAtIndex(uint32_t idx,
-                                          lldb_private::ArchSpec &arch);
+  void x86GetSupportedArchitectures(std::vector<lldb_private::ArchSpec> &archs);
 
   uint32_t GetResumeCountForLaunchInfo(
       lldb_private::ProcessLaunchInfo &launch_info) override;
 
   lldb::ProcessSP DebugProcess(lldb_private::ProcessLaunchInfo &launch_info,
                                lldb_private::Debugger &debugger,
-                               lldb_private::Target *target,
+                               lldb_private::Target &target,
                                lldb_private::Status &error) override;
 
   void CalculateTrapHandlerSymbolNames() override;
@@ -103,6 +103,9 @@ public:
   static lldb_private::FileSpec GetCurrentCommandLineToolsDirectory();
 
 protected:
+  static const char *GetCompatibleArch(lldb_private::ArchSpec::Core core,
+                                       size_t idx);
+
   struct CrashInfoAnnotations {
     uint64_t version;          // unsigned long
     uint64_t message;          // char *
@@ -139,6 +142,8 @@ protected:
       const lldb_private::ModuleSpec &module_spec, lldb::ModuleSP &module_sp,
       const lldb_private::FileSpecList *module_search_paths_ptr,
       llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules, bool *did_create_ptr);
+
+  virtual bool CheckLocalSharedCache() const { return IsHost(); }
 
   struct SDKEnumeratorInfo {
     lldb_private::FileSpec found_path;

@@ -27,7 +27,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Unicode.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -1876,8 +1875,8 @@ document_iterator Stream::end() {
 }
 
 void Stream::skip() {
-  for (document_iterator i = begin(), e = end(); i != e; ++i)
-    i->skip();
+  for (Document &Doc : *this)
+    Doc.skip();
 }
 
 Node::Node(unsigned int Type, std::unique_ptr<Document> &D, StringRef A,

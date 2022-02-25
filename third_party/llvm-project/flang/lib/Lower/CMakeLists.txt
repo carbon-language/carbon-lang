@@ -1,27 +1,32 @@
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 
 add_flang_library(FortranLower
-  CharacterExpr.cpp
-  CharacterRuntime.cpp
+  Bridge.cpp
+  CallInterface.cpp
   Coarray.cpp
-  ComplexExpr.cpp
-  ConvertType.cpp
   ConvertExpr.cpp
-  DoLoopHelper.cpp
-  FIRBuilder.cpp
+  ConvertType.cpp
+  ConvertVariable.cpp
   IntrinsicCall.cpp
-  IO.cpp
   Mangler.cpp
   OpenACC.cpp
   OpenMP.cpp
   PFTBuilder.cpp
+  Runtime.cpp
+  SymbolMap.cpp
 
   DEPENDS
-  FIROptimizer
+  FIRDialect
+  FIRBuilder
+  FIRSupport
+  FIRTransforms
   ${dialect_libs}
 
   LINK_LIBS
-  FIROptimizer
+  FIRDialect
+  FIRBuilder
+  FIRSupport
+  FIRTransforms
   ${dialect_libs}
   FortranCommon
   FortranParser
@@ -29,7 +34,7 @@ add_flang_library(FortranLower
   FortranSemantics
   MLIRAffineToStandard
   MLIRLLVMIR
-  MLIRSCFToStandard
+  MLIRSCFToControlFlow
   MLIRStandard
 
   LINK_COMPONENTS

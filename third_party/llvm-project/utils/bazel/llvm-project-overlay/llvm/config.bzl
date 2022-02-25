@@ -25,15 +25,17 @@ posix_defines = [
     r'LTDL_SHLIB_EXT=\".so\"',
     r'LLVM_PLUGIN_EXT=\".so\"',
     "LLVM_ENABLE_THREADS=1",
-    "HAVE_SYSEXITS_H=1",
-    "HAVE_UNISTD_H=1",
-    "HAVE_STRERROR_R=1",
+    "HAVE_DEREGISTER_FRAME=1",
     "HAVE_LIBPTHREAD=1",
     "HAVE_PTHREAD_GETNAME_NP=1",
-    "HAVE_PTHREAD_SETNAME_NP=1",
     "HAVE_PTHREAD_GETSPECIFIC=1",
+    "HAVE_PTHREAD_H=1",
+    "HAVE_PTHREAD_SETNAME_NP=1",
     "HAVE_REGISTER_FRAME=1",
-    "HAVE_DEREGISTER_FRAME=1",
+    "HAVE_SETENV_R=1",
+    "HAVE_STRERROR_R=1",
+    "HAVE_SYSEXITS_H=1",
+    "HAVE_UNISTD_H=1",
 ]
 
 linux_defines = posix_defines + [
@@ -41,7 +43,6 @@ linux_defines = posix_defines + [
     "HAVE_LINK_H=1",
     "HAVE_LSEEK64=1",
     "HAVE_MALLINFO=1",
-    "HAVE_POSIX_FALLOCATE=1",
     "HAVE_SBRK=1",
     "HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC=1",
 ]
@@ -55,9 +56,15 @@ macos_defines = posix_defines + [
 ]
 
 win32_defines = [
-    # MSVC specific
-    "stricmp=_stricmp",
-    "strdup=_strdup",
+    # Windows system library specific defines.
+    "_CRT_SECURE_NO_DEPRECATE",
+    "_CRT_SECURE_NO_WARNINGS",
+    "_CRT_NONSTDC_NO_DEPRECATE",
+    "_CRT_NONSTDC_NO_WARNINGS",
+    "_SCL_SECURE_NO_DEPRECATE",
+    "_SCL_SECURE_NO_WARNINGS",
+    "UNICODE",
+    "_UNICODE",
 
     # LLVM features
     r'LTDL_SHLIB_EXT=\".dll\"',
@@ -69,13 +76,15 @@ win32_defines = [
 os_defines = select({
     "@bazel_tools//src/conditions:windows": win32_defines,
     "@bazel_tools//src/conditions:darwin": macos_defines,
+    "@bazel_tools//src/conditions:freebsd": posix_defines,
     "//conditions:default": linux_defines,
 })
 
 # TODO: We should split out host vs. target here.
 llvm_config_defines = os_defines + select({
     "@bazel_tools//src/conditions:windows": native_arch_defines("X86", "x86_64-pc-win32"),
-    "@bazel_tools//src/conditions:darwin": native_arch_defines("X86", "x86_64-unknown-darwin"),
+    "@bazel_tools//src/conditions:darwin_arm64": native_arch_defines("AArch64", "arm64-apple-darwin"),
+    "@bazel_tools//src/conditions:darwin_x86_64": native_arch_defines("X86", "x86_64-unknown-darwin"),
     "@bazel_tools//src/conditions:linux_aarch64": native_arch_defines("AArch64", "aarch64-unknown-linux-gnu"),
     "//conditions:default": native_arch_defines("X86", "x86_64-unknown-linux-gnu"),
 }) + [

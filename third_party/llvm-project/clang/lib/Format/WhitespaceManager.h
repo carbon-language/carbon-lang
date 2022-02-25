@@ -45,6 +45,9 @@ public:
 
   bool useCRLF() const { return UseCRLF; }
 
+  /// Infers whether the input is using CRLF.
+  static bool inputUsesCRLF(StringRef Text, bool DefaultToCRLF);
+
   /// Replaces the whitespace in front of \p Tok. Only call once for
   /// each \c AnnotatedToken.
   ///
@@ -242,7 +245,7 @@ private:
   /// as described by \p CellDescs.
   void alignArrayInitializersRightJustified(CellDescriptions &&CellDescs);
 
-  /// Align Array Initializers being careful to leftt justify the columns
+  /// Align Array Initializers being careful to left justify the columns
   /// as described by \p CellDescs.
   void alignArrayInitializersLeftJustified(CellDescriptions &&CellDescs);
 
@@ -257,7 +260,7 @@ private:
   /// Does this \p Cell contain a split element?
   static bool isSplitCell(const CellDescription &Cell);
 
-  /// Get the width of the preceeding cells from \p Start to \p End.
+  /// Get the width of the preceding cells from \p Start to \p End.
   template <typename I>
   auto getNetWidth(const I &Start, const I &End, unsigned InitialSpaces) const {
     auto NetWidth = InitialSpaces;

@@ -63,11 +63,25 @@ class LLVM_LIBRARY_VISIBILITY Linker : public MachOTool {
   bool NeedsTempPath(const InputInfoList &Inputs) const;
   void AddLinkArgs(Compilation &C, const llvm::opt::ArgList &Args,
                    llvm::opt::ArgStringList &CmdArgs,
-                   const InputInfoList &Inputs, unsigned Version[5],
-                   bool LinkerIsLLD, bool LinkerIsLLDDarwinNew) const;
+                   const InputInfoList &Inputs, VersionTuple Version,
+                   bool LinkerIsLLD) const;
 
 public:
   Linker(const ToolChain &TC) : MachOTool("darwin::Linker", "linker", TC) {}
+
+  bool hasIntegratedCPP() const override { return false; }
+  bool isLinkJob() const override { return true; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+
+class LLVM_LIBRARY_VISIBILITY StaticLibTool : public MachOTool {
+public:
+  StaticLibTool(const ToolChain &TC)
+      : MachOTool("darwin::StaticLibTool", "static-lib-linker", TC) {}
 
   bool hasIntegratedCPP() const override { return false; }
   bool isLinkJob() const override { return true; }
@@ -125,12 +139,16 @@ class LLVM_LIBRARY_VISIBILITY MachO : public ToolChain {
 protected:
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
+  Tool *buildStaticLibTool() const override;
   Tool *getTool(Action::ActionClass AC) const override;
 
 private:
   mutable std::unique_ptr<tools::darwin::Lipo> Lipo;
   mutable std::unique_ptr<tools::darwin::Dsymutil> Dsymutil;
   mutable std::unique_ptr<tools::darwin::VerifyDebug> VerifyDebug;
+
+  /// The version of the linker known to be available in the tool chain.
+  mutable Optional<VersionTuple> LinkerVersion;
 
 public:
   MachO(const Driver &D, const llvm::Triple &Triple,
@@ -143,6 +161,10 @@ public:
   /// Get the "MachO" arch name for a particular compiler invocation. For
   /// example, Apple treats different ARM variations as distinct architectures.
   StringRef getMachOArchName(const llvm::opt::ArgList &Args) const;
+
+  /// Get the version of the linker known to be available for a particular
+  /// compiler invocation (via the `-mlinker-version=` arg).
+  VersionTuple getLinkerVersion(const llvm::opt::ArgList &Args) const;
 
   /// Add the linker arguments to link the ARC runtime library.
   virtual void AddLinkARCArgs(const llvm::opt::ArgList &Args,
@@ -239,12 +261,13 @@ public:
   }
 
   bool isPICDefault() const override;
-  bool isPIEDefault() const override;
+  bool isPIEDefault(const llvm::opt::ArgList &Args) const override;
   bool isPICDefaultForced() const override;
 
   bool SupportsProfiling() const override;
 
   bool UseDwarfDebugFlags() const override;
+  std::string GetGlobalDebugPathRemapping() const override;
 
   llvm::ExceptionHandling
   GetExceptionModel(const llvm::opt::ArgList &Args) const override {
@@ -294,6 +317,9 @@ public:
 
   /// The information about the darwin SDK that was used.
   mutable Optional<DarwinSDKInfo> SDKInfo;
+
+  /// The target variant triple that was specified (if any).
+  mutable Optional<llvm::Triple> TargetVariantTriple;
 
   CudaInstallationDetector CudaInstallation;
   RocmInstallationDetector RocmInstallation;

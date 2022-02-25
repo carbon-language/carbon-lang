@@ -22,6 +22,7 @@
 #include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
+#include "polly/Support/ISLTools.h"
 #include "polly/Support/SCEVValidator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -31,8 +32,8 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Linker/Linker.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -1151,7 +1152,7 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
 
   isl::set ZeroSet = isl::set::universe(Min.get_space());
 
-  for (long i = 0, n = Min.tuple_dim().release(); i < n; i++)
+  for (unsigned i : rangeIslSize(0, Min.tuple_dim()))
     ZeroSet = ZeroSet.fix_si(isl::dim::set, i, 0);
 
   if (Min.is_subset(ZeroSet)) {
@@ -1160,7 +1161,7 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
 
   isl::ast_expr Result = isl::ast_expr::from_val(isl::val(Min.ctx(), 0));
 
-  for (long i = 0, n = Min.tuple_dim().release(); i < n; i++) {
+  for (unsigned i : rangeIslSize(0, Min.tuple_dim())) {
     if (i > 0) {
       isl::pw_aff Bound_I =
           isl::manage(isl_multi_pw_aff_get_pw_aff(Array->bound, i - 1));
@@ -1317,7 +1318,7 @@ void GPUNodeBuilder::createKernelCopy(ppcg_kernel_stmt *KernelStmt) {
   isl_ast_expr *Index = isl_ast_expr_copy(KernelStmt->u.c.index);
   Index = isl_ast_expr_address_of(Index);
   Value *GlobalAddr = ExprBuilder.create(Index);
-  Type *IndexTy = cast<PointerType>(GlobalAddr->getType())->getElementType();
+  Type *IndexTy = GlobalAddr->getType()->getPointerElementType();
 
   if (KernelStmt->u.c.read) {
     LoadInst *Load = Builder.CreateLoad(IndexTy, GlobalAddr, "shared.read");
@@ -2885,8 +2886,10 @@ public:
     isl::pw_aff Val = isl::aff::var_on_domain(LS, isl::dim::set, 0);
     isl::pw_aff OuterMin = AccessSet.dim_min(0);
     isl::pw_aff OuterMax = AccessSet.dim_max(0);
-    OuterMin = OuterMin.add_dims(isl::dim::in, Val.dim(isl::dim::in).release());
-    OuterMax = OuterMax.add_dims(isl::dim::in, Val.dim(isl::dim::in).release());
+    OuterMin = OuterMin.add_dims(isl::dim::in,
+                                 unsignedFromIslSize(Val.dim(isl::dim::in)));
+    OuterMax = OuterMax.add_dims(isl::dim::in,
+                                 unsignedFromIslSize(Val.dim(isl::dim::in)));
     OuterMin = OuterMin.set_tuple_id(isl::dim::in, Array->getBasePtrId());
     OuterMax = OuterMax.set_tuple_id(isl::dim::in, Array->getBasePtrId());
 
@@ -2910,7 +2913,8 @@ public:
 
       isl::pw_aff Val = isl::aff::var_on_domain(
           isl::local_space(Array->getSpace()), isl::dim::set, i);
-      PwAff = PwAff.add_dims(isl::dim::in, Val.dim(isl::dim::in).release());
+      PwAff = PwAff.add_dims(isl::dim::in,
+                             unsignedFromIslSize(Val.dim(isl::dim::in)));
       PwAff = PwAff.set_tuple_id(isl::dim::in, Val.get_tuple_id(isl::dim::in));
       isl::set Set = PwAff.gt_set(Val);
       Extent = Set.intersect(Extent);
@@ -3249,6 +3253,7 @@ public:
     PPCGGen->kernel_id = 0;
 
     // Set scheduling strategy to same strategy PPCG is using.
+    isl_options_set_schedule_serialize_sccs(PPCGGen->ctx, false);
     isl_options_set_schedule_outer_coincidence(PPCGGen->ctx, true);
     isl_options_set_schedule_maximize_band_depth(PPCGGen->ctx, true);
     isl_options_set_schedule_whole_component(PPCGGen->ctx, false);
@@ -3440,7 +3445,7 @@ public:
       for (Value *Op : Inst.operands())
         // Look for (<func-type>*) among operands of Inst
         if (auto PtrTy = dyn_cast<PointerType>(Op->getType())) {
-          if (isa<FunctionType>(PtrTy->getElementType())) {
+          if (isa<FunctionType>(PtrTy->getPointerElementType())) {
             LLVM_DEBUG(dbgs()
                        << Inst << " has illegal use of function in kernel.\n");
             return true;

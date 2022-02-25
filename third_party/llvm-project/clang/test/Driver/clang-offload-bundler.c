@@ -1,6 +1,6 @@
 // REQUIRES: x86-registered-target
 // REQUIRES: powerpc-registered-target
-// UNSUPPORTED: darwin
+// UNSUPPORTED: darwin, aix
 
 //
 // Generate all the types of files we can bundle.
@@ -366,6 +366,28 @@
 // CKLST2-NOT: openmp-x86_64-pc-linux-gnu
 
 //
+// Check unbundling archive for HIP.
+//
+// When the input to clang-offload-bundler is an archive of bundled bitcodes,
+// for each target, clang-offload-bundler extracts the bitcode from each
+// bundle and archives them. Therefore for each target, the output is an
+// archive of unbundled bitcodes.
+//
+// RUN: clang-offload-bundler -type=bc -targets=hip-amdgcn-amd-amdhsa--gfx900,hip-amdgcn-amd-amdhsa--gfx906 \
+// RUN:   -inputs=%t.tgt1,%t.tgt2 -outputs=%T/hip_bundle1.bc
+// RUN: clang-offload-bundler -type=bc -targets=hip-amdgcn-amd-amdhsa--gfx900,hip-amdgcn-amd-amdhsa--gfx906 \
+// RUN:   -inputs=%t.tgt1,%t.tgt2 -outputs=%T/hip_bundle2.bc
+// RUN: llvm-ar cr %T/hip_archive.a %T/hip_bundle1.bc %T/hip_bundle2.bc
+// RUN: clang-offload-bundler -unbundle -type=a -targets=hip-amdgcn-amd-amdhsa--gfx900,hip-amdgcn-amd-amdhsa--gfx906 \
+// RUN:   -outputs=%T/hip_900.a,%T/hip_906.a -inputs=%T/hip_archive.a
+// RUN: llvm-ar t %T/hip_900.a | FileCheck -check-prefix=HIP-AR-900 %s
+// RUN: llvm-ar t %T/hip_906.a | FileCheck -check-prefix=HIP-AR-906 %s
+// HIP-AR-900-DAG: hip_bundle1-hip-amdgcn-amd-amdhsa--gfx900
+// HIP-AR-900-DAG: hip_bundle2-hip-amdgcn-amd-amdhsa--gfx900
+// HIP-AR-906-DAG: hip_bundle1-hip-amdgcn-amd-amdhsa--gfx906
+// HIP-AR-906-DAG: hip_bundle2-hip-amdgcn-amd-amdhsa--gfx906
+
+//
 // Check bundling without host target is allowed for HIP.
 //
 // RUN: clang-offload-bundler -type=bc -targets=hip-amdgcn-amd-amdhsa--gfx900,hip-amdgcn-amd-amdhsa--gfx906 \
@@ -382,15 +404,24 @@
 // Check archive unbundling
 //
 // Create few code object bundles and archive them to create an input archive
-// RUN: clang-offload-bundler -type=o -targets=host-%itanium_abi_triple,openmp-amdgcn-amd-amdhsa--gfx906,openmp-amdgcn-amd-amdhsa--gfx908 -inputs=%t.o,%t.tgt1,%t.tgt2 -outputs=%t.simple.bundle
+// RUN: clang-offload-bundler -type=o -targets=host-%itanium_abi_triple,openmp-amdgcn-amd-amdhsa-gfx906,openmp-amdgcn-amd-amdhsa--gfx908 -inputs=%t.o,%t.tgt1,%t.tgt2 -outputs=%t.simple.bundle
 // RUN: clang-offload-bundler -type=o -targets=host-%itanium_abi_triple,openmp-amdgcn-amd-amdhsa--gfx903 -inputs=%t.o,%t.tgt1 -outputs=%t.simple1.bundle
 // RUN: llvm-ar cr %t.input-archive.a %t.simple.bundle %t.simple1.bundle
 
-// RUN: clang-offload-bundler -unbundle -type=a -targets=openmp-amdgcn-amd-amdhsa--gfx906,openmp-amdgcn-amd-amdhsa--gfx908 -inputs=%t.input-archive.a -outputs=%t-archive-gfx906-simple.a,%t-archive-gfx908-simple.a
+// RUN: clang-offload-bundler -unbundle -type=a -targets=openmp-amdgcn-amd-amdhsa-gfx906,openmp-amdgcn-amd-amdhsa-gfx908 -inputs=%t.input-archive.a -outputs=%t-archive-gfx906-simple.a,%t-archive-gfx908-simple.a
 // RUN: llvm-ar t %t-archive-gfx906-simple.a | FileCheck %s -check-prefix=GFX906
-// GFX906: simple-openmp-amdgcn-amd-amdhsa--gfx906
+// GFX906: simple-openmp-amdgcn-amd-amdhsa-gfx906
 // RUN: llvm-ar t %t-archive-gfx908-simple.a | FileCheck %s -check-prefix=GFX908
 // GFX908-NOT: {{gfx906}}
+
+// Check for error if no compatible code object is found in the heterogeneous archive library
+// RUN: not clang-offload-bundler -unbundle -type=a -targets=openmp-amdgcn-amd-amdhsa-gfx803 -inputs=%t.input-archive.a -outputs=%t-archive-gfx803-incompatible.a 2>&1 | FileCheck %s -check-prefix=INCOMPATIBLEARCHIVE
+// INCOMPATIBLEARCHIVE: error: no compatible code object found for the target 'openmp-amdgcn-amd-amdhsa-gfx803' in heterogeneous archive library
+
+// Check creation of empty archive if allow-missing-bundles is present and no compatible code object is found in the heterogeneous archive library
+// RUN: clang-offload-bundler -unbundle -type=a -targets=openmp-amdgcn-amd-amdhsa-gfx803 -inputs=%t.input-archive.a -outputs=%t-archive-gfx803-empty.a -allow-missing-bundles
+// RUN: cat %t-archive-gfx803-empty.a | FileCheck %s -check-prefix=EMPTYARCHIVE
+// EMPTYARCHIVE: !<arch>
 
 // Some code so that we can create a binary out of this file.
 int A = 0;

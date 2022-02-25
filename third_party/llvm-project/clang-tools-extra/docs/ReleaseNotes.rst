@@ -1,5 +1,5 @@
 ====================================================
-Extra Clang Tools 14.0.0 (In-Progress) Release Notes
+Extra Clang Tools |release| |ReleaseNotesTitle|
 ====================================================
 
 .. contents::
@@ -8,17 +8,18 @@ Extra Clang Tools 14.0.0 (In-Progress) Release Notes
 
 Written by the `LLVM Team <https://llvm.org/>`_
 
-.. warning::
+.. only:: PreRelease
 
-   These are in-progress notes for the upcoming Extra Clang Tools 14 release.
-   Release notes for previous releases can be found on
-   `the Download Page <https://releases.llvm.org/download.html>`_.
+  .. warning::
+     These are in-progress notes for the upcoming Extra Clang Tools |version| release.
+     Release notes for previous releases can be found on
+     `the Download Page <https://releases.llvm.org/download.html>`_.
 
 Introduction
 ============
 
 This document contains the release notes for the Extra Clang Tools, part of the
-Clang release 14.0.0. Here we describe the status of the Extra Clang Tools in
+Clang release |release|. Here we describe the status of the Extra Clang Tools in
 some detail, including major improvements from the previous release and new
 feature work. All LLVM releases may be downloaded from the `LLVM releases web
 site <https://llvm.org/releases/>`_.
@@ -32,8 +33,8 @@ main Clang web page, this document applies to the *next* release, not
 the current one. To see the release notes for a specific release, please
 see the `releases page <https://llvm.org/releases/>`_.
 
-What's New in Extra Clang Tools 14.0.0?
-=======================================
+What's New in Extra Clang Tools |release|?
+==========================================
 
 Some of the major new features and improvements to Extra Clang Tools are listed
 here. Generic improvements to Extra Clang Tools as a whole or to its underlying
@@ -47,7 +48,35 @@ Major New Features
 Improvements to clangd
 ----------------------
 
-The improvements are...
+Inlay hints
+^^^^^^^^^^^
+
+Diagnostics
+^^^^^^^^^^^
+
+Semantic Highlighting
+^^^^^^^^^^^^^^^^^^^^^
+
+Compile flags
+^^^^^^^^^^^^^
+
+Hover
+^^^^^
+
+Code completion
+^^^^^^^^^^^^^^^
+
+Signature help
+^^^^^^^^^^^^^^
+
+Cross-references
+^^^^^^^^^^^^^^^^
+
+Objective-C
+^^^^^^^^^^^
+
+Miscellaneous
+^^^^^^^^^^^^^
 
 Improvements to clang-doc
 -------------------------
@@ -67,33 +96,15 @@ The improvements are...
 Improvements to clang-tidy
 --------------------------
 
-The improvements are...
-
 New checks
 ^^^^^^^^^^
 
-- New :doc:`bugprone-suspicious-memory-comparison
-  <clang-tidy/checks/bugprone-suspicious-memory-comparison>` check.
+- New :doc:`bugprone-shared-ptr-array-mismatch <clang-tidy/checks/bugprone-shared-ptr-array-mismatch>` check.
 
-  Finds potentially incorrect calls to ``memcmp()`` based on properties of the arguments.
-
-- New :doc:`readability-identifier-length
-  <clang-tidy/checks/readability-identifier-length>` check.
-
-  Reports identifiers whose names are too short. Currently checks local variables and function parameters only.
+  Finds initializations of C++ shared pointers to non-array type that are initialized with an array.
 
 New check aliases
 ^^^^^^^^^^^^^^^^^
-
-- New alias :doc:`cert-exp42-c
-  <clang-tidy/checks/cert-exp42-c>` to
-  :doc:`bugprone-suspicious-memory-comparison
-  <clang-tidy/checks/bugprone-suspicious-memory-comparison>` was added.
-
-- New alias :doc:`cert-flp37-c
-  <clang-tidy/checks/cert-flp37-c>` to
-  :doc:`bugprone-suspicious-memory-comparison
-  <clang-tidy/checks/bugprone-suspicious-memory-comparison>` was added.
 
 Changes in existing checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,5 +132,5 @@ Improvements to pp-trace
 
 The improvements are...
 
-Clang-tidy visual studio plugin
+Clang-tidy Visual Studio plugin
 -------------------------------

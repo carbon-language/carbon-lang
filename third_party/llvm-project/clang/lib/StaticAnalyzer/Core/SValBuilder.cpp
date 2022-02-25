@@ -49,6 +49,16 @@ using namespace ento;
 
 void SValBuilder::anchor() {}
 
+SValBuilder::SValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
+                         ProgramStateManager &stateMgr)
+    : Context(context), BasicVals(context, alloc),
+      SymMgr(context, BasicVals, alloc), MemMgr(context, alloc),
+      StateMgr(stateMgr),
+      AnOpts(
+          stateMgr.getOwningEngine().getAnalysisManager().getAnalyzerOptions()),
+      ArrayIndexTy(context.LongLongTy),
+      ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {}
+
 DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType type) {
   if (Loc::isLocType(type))
     return makeNull();
@@ -244,8 +254,7 @@ SValBuilder::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
 }
 
 DefinedSVal SValBuilder::getMemberPointer(const NamedDecl *ND) {
-  assert(!ND || isa<CXXMethodDecl>(ND) || isa<FieldDecl>(ND) ||
-         isa<IndirectFieldDecl>(ND));
+  assert(!ND || (isa<CXXMethodDecl, FieldDecl, IndirectFieldDecl>(ND)));
 
   if (const auto *MD = dyn_cast_or_null<CXXMethodDecl>(ND)) {
     // Sema treats pointers to static member functions as have function pointer
@@ -405,9 +414,7 @@ SVal SValBuilder::makeSymExprValNN(BinaryOperator::Opcode Op,
 
   // TODO: When the Max Complexity is reached, we should conjure a symbol
   // instead of generating an Unknown value and propagate the taint info to it.
-  const unsigned MaxComp = StateMgr.getOwningEngine()
-                               .getAnalysisManager()
-                               .options.MaxSymbolComplexity;
+  const unsigned MaxComp = AnOpts.MaxSymbolComplexity;
 
   if (symLHS && symRHS &&
       (symLHS->computeComplexity() + symRHS->computeComplexity()) <  MaxComp)
@@ -452,13 +459,23 @@ SVal SValBuilder::evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
     return evalBinOpLN(state, op, *LV, rhs.castAs<NonLoc>(), type);
   }
 
-  if (Optional<Loc> RV = rhs.getAs<Loc>()) {
-    // Support pointer arithmetic where the addend is on the left
-    // and the pointer on the right.
-    assert(op == BO_Add);
+  if (const Optional<Loc> RV = rhs.getAs<Loc>()) {
+    const auto IsCommutative = [](BinaryOperatorKind Op) {
+      return Op == BO_Mul || Op == BO_Add || Op == BO_And || Op == BO_Xor ||
+             Op == BO_Or;
+    };
 
-    // Commute the operands.
-    return evalBinOpLN(state, op, *RV, lhs.castAs<NonLoc>(), type);
+    if (IsCommutative(op)) {
+      // Swap operands.
+      return evalBinOpLN(state, op, *RV, lhs.castAs<NonLoc>(), type);
+    }
+
+    // If the right operand is a concrete int location then we have nothing
+    // better but to treat it as a simple nonloc.
+    if (auto RV = rhs.getAs<loc::ConcreteInt>()) {
+      const nonloc::ConcreteInt RhsAsLoc = makeIntVal(RV->getValue());
+      return evalBinOpNN(state, op, lhs.castAs<NonLoc>(), RhsAsLoc, type);
+    }
   }
 
   return evalBinOpNN(state, op, lhs.castAs<NonLoc>(), rhs.castAs<NonLoc>(),
@@ -963,15 +980,19 @@ SVal SValBuilder::evalCastSubKind(nonloc::SymbolVal V, QualType CastTy,
   } else {
     // Symbol to integer, float.
     QualType T = Context.getCanonicalType(SE->getType());
-    // If types are the same or both are integers, ignore the cast.
-    // FIXME: Remove this hack when we support symbolic truncation/extension.
-    // HACK: If both castTy and T are integers, ignore the cast.  This is
-    // not a permanent solution.  Eventually we want to precisely handle
-    // extension/truncation of symbolic integers.  This prevents us from losing
-    // precision when we assign 'x = y' and 'y' is symbolic and x and y are
-    // different integer types.
-    if (haveSameType(T, CastTy))
-      return V;
+
+    // Produce SymbolCast if CastTy and T are different integers.
+    // NOTE: In the end the type of SymbolCast shall be equal to CastTy.
+    if (T->isIntegralOrEnumerationType() &&
+        CastTy->isIntegralOrEnumerationType()) {
+      AnalyzerOptions &Opts =
+          StateMgr.getOwningEngine().getAnalysisManager().getAnalyzerOptions();
+      // If appropriate option is disabled, ignore the cast.
+      // NOTE: ShouldSupportSymbolicIntegerCasts is `false` by default.
+      if (!Opts.ShouldSupportSymbolicIntegerCasts)
+        return V;
+      return simplifySymbolCast(V, CastTy);
+    }
     if (!Loc::isLocType(CastTy))
       if (!IsUnknownOriginalType || !CastTy->isFloatingType() ||
           T->isFloatingType())
@@ -986,4 +1007,76 @@ SVal SValBuilder::evalCastSubKind(nonloc::PointerToMember V, QualType CastTy,
                                   QualType OriginalTy) {
   // Member pointer to whatever.
   return V;
+}
+
+SVal clang::ento::SValBuilder::simplifySymbolCast(nonloc::SymbolVal V,
+                                                  QualType CastTy) {
+  // We use seven conditions to recognize a simplification case.
+  // For the clarity let `CastTy` be `C`, SE->getType() - `T`, root type - `R`,
+  // prefix `u` for unsigned, `s` for signed, no prefix - any sign:
+  // E.g. (char)(short)(uint x)
+  //      ( sC )( sT  )( uR  x)
+  //
+  // C === R (the same type)
+  //  (char)(char x) -> (char x)
+  //  (long)(long x) -> (long x)
+  // Note: Comparisons operators below are for bit width.
+  // C == T
+  //  (short)(short)(int x) -> (short)(int x)
+  //  (int)(long)(char x) -> (int)(char x) (sizeof(long) == sizeof(int))
+  //  (long)(ullong)(char x) -> (long)(char x) (sizeof(long) == sizeof(ullong))
+  // C < T
+  //  (short)(int)(char x) -> (short)(char x)
+  //  (char)(int)(short x) -> (char)(short x)
+  //  (short)(int)(short x) -> (short x)
+  // C > T > uR
+  //  (int)(short)(uchar x) -> (int)(uchar x)
+  //  (uint)(short)(uchar x) -> (uint)(uchar x)
+  //  (int)(ushort)(uchar x) -> (int)(uchar x)
+  // C > sT > sR
+  //  (int)(short)(char x) -> (int)(char x)
+  //  (uint)(short)(char x) -> (uint)(char x)
+  // C > sT == sR
+  //  (int)(char)(char x) -> (int)(char x)
+  //  (uint)(short)(short x) -> (uint)(short x)
+  // C > uT == uR
+  //  (int)(uchar)(uchar x) -> (int)(uchar x)
+  //  (uint)(ushort)(ushort x) -> (uint)(ushort x)
+  //  (llong)(ulong)(uint x) -> (llong)(uint x) (sizeof(ulong) == sizeof(uint))
+
+  SymbolRef SE = V.getSymbol();
+  QualType T = Context.getCanonicalType(SE->getType());
+
+  if (T == CastTy)
+    return V;
+
+  if (!isa<SymbolCast>(SE))
+    return makeNonLoc(SE, T, CastTy);
+
+  SymbolRef RootSym = cast<SymbolCast>(SE)->getOperand();
+  QualType RT = RootSym->getType().getCanonicalType();
+
+  BasicValueFactory &BVF = getBasicValueFactory();
+  APSIntType CTy = BVF.getAPSIntType(CastTy);
+  APSIntType TTy = BVF.getAPSIntType(T);
+
+  const auto WC = CTy.getBitWidth();
+  const auto WT = TTy.getBitWidth();
+
+  if (WC <= WT) {
+    const bool isSameType = (RT == CastTy);
+    if (isSameType)
+      return nonloc::SymbolVal(RootSym);
+    return makeNonLoc(RootSym, RT, CastTy);
+  }
+
+  APSIntType RTy = BVF.getAPSIntType(RT);
+  const auto WR = RTy.getBitWidth();
+  const bool UT = TTy.isUnsigned();
+  const bool UR = RTy.isUnsigned();
+
+  if (((WT > WR) && (UR || !UT)) || ((WT == WR) && (UT == UR)))
+    return makeNonLoc(RootSym, RT, CastTy);
+
+  return makeNonLoc(SE, T, CastTy);
 }

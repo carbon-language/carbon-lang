@@ -49,7 +49,7 @@ static cl::opt<std::string> inputFilename(cl::Positional,
 
 namespace {
 enum InputType { Toy, MLIR };
-}
+} // namespace
 static cl::opt<enum InputType> inputType(
     "x", cl::init(Toy), cl::desc("Decided the kind of output desired"),
     cl::values(clEnumValN(Toy, "toy", "load the input file as a Toy source.")),
@@ -66,7 +66,7 @@ enum Action {
   DumpLLVMIR,
   RunJIT
 };
-}
+} // namespace
 static cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
@@ -96,7 +96,8 @@ std::unique_ptr<toy::ModuleAST> parseInputFile(llvm::StringRef filename) {
   return parser.parseModule();
 }
 
-int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
+int loadMLIR(mlir::MLIRContext &context,
+             mlir::OwningOpRef<mlir::ModuleOp> &module) {
   // Handle '.toy' input to the compiler.
   if (inputType != InputType::MLIR &&
       !llvm::StringRef(inputFilename).endswith(".mlir")) {
@@ -110,8 +111,8 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
   // Otherwise, the input is '.mlir'.
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> fileOrErr =
       llvm::MemoryBuffer::getFileOrSTDIN(inputFilename);
-  if (std::error_code EC = fileOrErr.getError()) {
-    llvm::errs() << "Could not open input file: " << EC.message() << "\n";
+  if (std::error_code ec = fileOrErr.getError()) {
+    llvm::errs() << "Could not open input file: " << ec.message() << "\n";
     return -1;
   }
 
@@ -127,7 +128,7 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
 }
 
 int loadAndProcessMLIR(mlir::MLIRContext &context,
-                       mlir::OwningModuleRef &module) {
+                       mlir::OwningOpRef<mlir::ModuleOp> &module) {
   if (int error = loadMLIR(context, module))
     return error;
 
@@ -267,7 +268,7 @@ int main(int argc, char **argv) {
   // Load our Dialect in this MLIR Context.
   context.getOrLoadDialect<mlir::toy::ToyDialect>();
 
-  mlir::OwningModuleRef module;
+  mlir::OwningOpRef<mlir::ModuleOp> module;
   if (int error = loadAndProcessMLIR(context, module))
     return error;
 

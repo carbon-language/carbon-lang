@@ -41,7 +41,12 @@ ProgramStateRef RangedConstraintManager::assumeSym(ProgramStateRef State,
       return assumeSymRel(State, SIE->getLHS(), op, SIE->getRHS());
     }
 
-  } else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(Sym)) {
+    // Handle adjustment with non-comparison ops.
+    const llvm::APSInt &Zero = getBasicVals().getValue(0, SIE->getType());
+    return assumeSymRel(State, SIE, (Assumption ? BO_NE : BO_EQ), Zero);
+  }
+
+  if (const auto *SSE = dyn_cast<SymSymExpr>(Sym)) {
     BinaryOperator::Opcode Op = SSE->getOpcode();
     assert(BinaryOperator::isComparisonOp(Op));
 
@@ -226,9 +231,13 @@ void RangedConstraintManager::computeAdjustment(SymbolRef &Sym,
   }
 }
 
-SymbolRef simplify(ProgramStateRef State, SymbolRef Sym) {
+SVal simplifyToSVal(ProgramStateRef State, SymbolRef Sym) {
   SValBuilder &SVB = State->getStateManager().getSValBuilder();
-  SVal SimplifiedVal = SVB.simplifySVal(State, SVB.makeSymbolVal(Sym));
+  return SVB.simplifySVal(State, SVB.makeSymbolVal(Sym));
+}
+
+SymbolRef simplify(ProgramStateRef State, SymbolRef Sym) {
+  SVal SimplifiedVal = simplifyToSVal(State, Sym);
   if (SymbolRef SimplifiedSym = SimplifiedVal.getAsSymbol())
     return SimplifiedSym;
   return Sym;

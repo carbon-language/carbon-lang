@@ -117,17 +117,6 @@ raw_ostream &operator<<(raw_ostream &OS, class ValidatorResult &VR) {
   return OS;
 }
 
-bool polly::isConstCall(llvm::CallInst *Call) {
-  if (Call->mayReadOrWriteMemory())
-    return false;
-
-  for (auto &Operand : Call->arg_operands())
-    if (!isa<ConstantInt>(&Operand))
-      return false;
-
-  return true;
-}
-
 /// Check if a SCEV is valid in a SCoP.
 struct SCEVValidator
     : public SCEVVisitor<SCEVValidator, class ValidatorResult> {
@@ -343,6 +332,24 @@ public:
     return ValidatorResult(SCEVType::PARAM, Expr);
   }
 
+  class ValidatorResult
+  visitSequentialUMinExpr(const SCEVSequentialUMinExpr *Expr) {
+    // We do not support unsigned min operations. If 'Expr' is constant during
+    // Scop execution we treat this as a parameter, otherwise we bail out.
+    for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
+      ValidatorResult Op = visit(Expr->getOperand(i));
+
+      if (!Op.isConstant()) {
+        LLVM_DEBUG(
+            dbgs()
+            << "INVALID: SCEVSequentialUMinExpr has a non-constant operand");
+        return ValidatorResult(SCEVType::INVALID);
+      }
+    }
+
+    return ValidatorResult(SCEVType::PARAM, Expr);
+  }
+
   ValidatorResult visitGenericInst(Instruction *I, const SCEV *S) {
     if (R->contains(I)) {
       LLVM_DEBUG(dbgs() << "INVALID: UnknownExpr references an instruction "
@@ -350,18 +357,6 @@ public:
       return ValidatorResult(SCEVType::INVALID);
     }
 
-    return ValidatorResult(SCEVType::PARAM, S);
-  }
-
-  ValidatorResult visitCallInstruction(Instruction *I, const SCEV *S) {
-    assert(I->getOpcode() == Instruction::Call && "Call instruction expected");
-
-    if (R->contains(I)) {
-      auto Call = cast<CallInst>(I);
-
-      if (!isConstCall(Call))
-        return ValidatorResult(SCEVType::INVALID, S);
-    }
     return ValidatorResult(SCEVType::PARAM, S);
   }
 
@@ -454,8 +449,6 @@ public:
         return visitSDivInstruction(I, Expr);
       case Instruction::SRem:
         return visitSRemInstruction(I, Expr);
-      case Instruction::Call:
-        return visitCallInstruction(I, Expr);
       default:
         return visitGenericInst(I, Expr);
       }
@@ -468,34 +461,6 @@ public:
 
     return ValidatorResult(SCEVType::PARAM, Expr);
   }
-};
-
-class SCEVHasIVParams {
-  bool HasIVParams = false;
-
-public:
-  SCEVHasIVParams() {}
-
-  bool follow(const SCEV *S) {
-    const SCEVUnknown *Unknown = dyn_cast<SCEVUnknown>(S);
-    if (!Unknown)
-      return true;
-
-    CallInst *Call = dyn_cast<CallInst>(Unknown->getValue());
-
-    if (!Call)
-      return true;
-
-    if (isConstCall(Call)) {
-      HasIVParams = true;
-      return false;
-    }
-
-    return true;
-  }
-
-  bool isDone() { return HasIVParams; }
-  bool hasIVParams() { return HasIVParams; }
 };
 
 /// Check whether a SCEV refers to an SSA name defined inside a region.
@@ -515,11 +480,6 @@ public:
     if (auto Unknown = dyn_cast<SCEVUnknown>(S)) {
       Instruction *Inst = dyn_cast<Instruction>(Unknown->getValue());
 
-      CallInst *Call = dyn_cast<CallInst>(Unknown->getValue());
-
-      if (Call && isConstCall(Call))
-        return false;
-
       if (Inst) {
         // When we invariant load hoist a load, we first make sure that there
         // can be no dependences created by it in the Scop region. So, we should
@@ -530,7 +490,7 @@ public:
         // are strictly not necessary by tracking the invariant load as a
         // scalar.
         LoadInst *LI = dyn_cast<LoadInst>(Inst);
-        if (LI && ILS.count(LI) > 0)
+        if (LI && ILS.contains(LI))
           return false;
       }
 
@@ -559,7 +519,6 @@ public:
   bool hasDependences() { return HasInRegionDeps; }
 };
 
-namespace polly {
 /// Find all loops referenced in SCEVAddRecExprs.
 class SCEVFindLoops {
   SetVector<const Loop *> &Loops;
@@ -575,7 +534,7 @@ public:
   bool isDone() { return false; }
 };
 
-void findLoops(const SCEV *Expr, SetVector<const Loop *> &Loops) {
+void polly::findLoops(const SCEV *Expr, SetVector<const Loop *> &Loops) {
   SCEVFindLoops FindLoops(Loops);
   SCEVTraversal<SCEVFindLoops> ST(FindLoops);
   ST.visitAll(Expr);
@@ -616,31 +575,24 @@ public:
   bool isDone() { return false; }
 };
 
-void findValues(const SCEV *Expr, ScalarEvolution &SE,
-                SetVector<Value *> &Values) {
+void polly::findValues(const SCEV *Expr, ScalarEvolution &SE,
+                       SetVector<Value *> &Values) {
   SCEVFindValues FindValues(SE, Values);
   SCEVTraversal<SCEVFindValues> ST(FindValues);
   ST.visitAll(Expr);
 }
 
-bool hasIVParams(const SCEV *Expr) {
-  SCEVHasIVParams HasIVParams;
-  SCEVTraversal<SCEVHasIVParams> ST(HasIVParams);
-  ST.visitAll(Expr);
-  return HasIVParams.hasIVParams();
-}
-
-bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R,
-                               llvm::Loop *Scope, bool AllowLoops,
-                               const InvariantLoadsSetTy &ILS) {
+bool polly::hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R,
+                                      llvm::Loop *Scope, bool AllowLoops,
+                                      const InvariantLoadsSetTy &ILS) {
   SCEVInRegionDependences InRegionDeps(R, Scope, AllowLoops, ILS);
   SCEVTraversal<SCEVInRegionDependences> ST(InRegionDeps);
   ST.visitAll(Expr);
   return InRegionDeps.hasDependences();
 }
 
-bool isAffineExpr(const Region *R, llvm::Loop *Scope, const SCEV *Expr,
-                  ScalarEvolution &SE, InvariantLoadsSetTy *ILS) {
+bool polly::isAffineExpr(const Region *R, llvm::Loop *Scope, const SCEV *Expr,
+                         ScalarEvolution &SE, InvariantLoadsSetTy *ILS) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return false;
 
@@ -680,9 +632,9 @@ static bool isAffineExpr(Value *V, const Region *R, Loop *Scope,
   return true;
 }
 
-bool isAffineConstraint(Value *V, const Region *R, llvm::Loop *Scope,
-                        ScalarEvolution &SE, ParameterSetTy &Params,
-                        bool OrExpr) {
+bool polly::isAffineConstraint(Value *V, const Region *R, Loop *Scope,
+                               ScalarEvolution &SE, ParameterSetTy &Params,
+                               bool OrExpr) {
   if (auto *ICmp = dyn_cast<ICmpInst>(V)) {
     return isAffineConstraint(ICmp->getOperand(0), R, Scope, SE, Params,
                               true) &&
@@ -700,11 +652,12 @@ bool isAffineConstraint(Value *V, const Region *R, llvm::Loop *Scope,
   if (!OrExpr)
     return false;
 
-  return isAffineExpr(V, R, Scope, SE, Params);
+  return ::isAffineExpr(V, R, Scope, SE, Params);
 }
 
-ParameterSetTy getParamsInAffineExpr(const Region *R, Loop *Scope,
-                                     const SCEV *Expr, ScalarEvolution &SE) {
+ParameterSetTy polly::getParamsInAffineExpr(const Region *R, Loop *Scope,
+                                            const SCEV *Expr,
+                                            ScalarEvolution &SE) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return ParameterSetTy();
 
@@ -717,7 +670,7 @@ ParameterSetTy getParamsInAffineExpr(const Region *R, Loop *Scope,
 }
 
 std::pair<const SCEVConstant *, const SCEV *>
-extractConstantFactor(const SCEV *S, ScalarEvolution &SE) {
+polly::extractConstantFactor(const SCEV *S, ScalarEvolution &SE) {
   auto *ConstPart = cast<SCEVConstant>(SE.getConstant(S->getType(), 1));
 
   if (auto *Constant = dyn_cast<SCEVConstant>(S))
@@ -776,8 +729,9 @@ extractConstantFactor(const SCEV *S, ScalarEvolution &SE) {
   return std::make_pair(ConstPart, SE.getMulExpr(LeftOvers));
 }
 
-const SCEV *tryForwardThroughPHI(const SCEV *Expr, Region &R,
-                                 ScalarEvolution &SE, ScopDetection *SD) {
+const SCEV *polly::tryForwardThroughPHI(const SCEV *Expr, Region &R,
+                                        ScalarEvolution &SE,
+                                        ScopDetection *SD) {
   if (auto *Unknown = dyn_cast<SCEVUnknown>(Expr)) {
     Value *V = Unknown->getValue();
     auto *PHI = dyn_cast<PHINode>(V);
@@ -801,7 +755,8 @@ const SCEV *tryForwardThroughPHI(const SCEV *Expr, Region &R,
   return Expr;
 }
 
-Value *getUniqueNonErrorValue(PHINode *PHI, Region *R, ScopDetection *SD) {
+Value *polly::getUniqueNonErrorValue(PHINode *PHI, Region *R,
+                                     ScopDetection *SD) {
   Value *V = nullptr;
   for (unsigned i = 0; i < PHI->getNumIncomingValues(); i++) {
     BasicBlock *BB = PHI->getIncomingBlock(i);
@@ -814,4 +769,3 @@ Value *getUniqueNonErrorValue(PHINode *PHI, Region *R, ScopDetection *SD) {
 
   return V;
 }
-} // namespace polly

@@ -72,7 +72,7 @@ func @yield_op_type_mismatch(%shape : !shape.shape, %init : !shape.size) {
   // expected-error@+4 {{types mismatch between yield op and its parent}}
   %num_elements = shape.reduce(%shape, %init) : !shape.shape -> !shape.size {
     ^bb0(%index: index, %dim: !shape.size, %lci: !shape.size):
-      %c0 = constant 1 : index
+      %c0 = arith.constant 1 : index
       shape.yield %c0 : index
   }
   return
@@ -172,7 +172,7 @@ module attributes {shape.lib = [@shape_lib, "shape_lib"]} {
 
 shape.function_library @shape_lib {
   // Test shape function that returns the shape of input arg as result shape.
-  func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
+  builtin.func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
     %0 = shape.shape_of %arg : !shape.value_shape -> !shape.shape
     return %0 : !shape.shape
   }
@@ -192,7 +192,7 @@ module attributes {shape.lib = [@shape_lib, @shape_lib]} {
 
 shape.function_library @shape_lib {
   // Test shape function that returns the shape of input arg as result shape.
-  func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
+  builtin.func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
     %0 = shape.shape_of %arg : !shape.value_shape -> !shape.shape
     return %0 : !shape.shape
   }
@@ -212,7 +212,7 @@ module attributes {shape.lib = [@shape_lib]} {
 
 shape.function_library @shape_lib {
   // Test shape function that returns the shape of input arg as result shape.
-  func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
+  builtin.func @same_result_shape(%arg: !shape.value_shape) -> !shape.shape {
     %0 = shape.shape_of %arg : !shape.value_shape -> !shape.shape
     return %0 : !shape.shape
   }

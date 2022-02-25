@@ -300,6 +300,15 @@ static bool attributeTreatsKeywordThisAsIdentifier(const IdentifierInfo &II) {
 #undef CLANG_ATTR_THIS_ISA_IDENTIFIER_ARG_LIST
 }
 
+/// Determine if an attribute accepts parameter packs.
+static bool attributeAcceptsExprPack(const IdentifierInfo &II) {
+#define CLANG_ATTR_ACCEPTS_EXPR_PACK
+  return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
+#include "clang/Parse/AttrParserStringSwitches.inc"
+      .Default(false);
+#undef CLANG_ATTR_ACCEPTS_EXPR_PACK
+}
+
 /// Determine whether the given attribute parses a type argument.
 static bool attributeIsTypeArgAttr(const IdentifierInfo &II) {
 #define CLANG_ATTR_TYPE_ARG_LIST
@@ -366,6 +375,8 @@ unsigned Parser::ParseAttributeArgsCommon(
 
   bool ChangeKWThisToIdent = attributeTreatsKeywordThisAsIdentifier(*AttrName);
   bool AttributeIsTypeArgAttr = attributeIsTypeArgAttr(*AttrName);
+  bool AttributeHasVariadicIdentifierArg =
+      attributeHasVariadicIdentifierArg(*AttrName);
 
   // Interpret "kw_this" as an identifier if the attributed requests it.
   if (ChangeKWThisToIdent && Tok.is(tok::kw_this))
@@ -374,8 +385,8 @@ unsigned Parser::ParseAttributeArgsCommon(
   ArgsVector ArgExprs;
   if (Tok.is(tok::identifier)) {
     // If this attribute wants an 'identifier' argument, make it so.
-    bool IsIdentifierArg = attributeHasIdentifierArg(*AttrName) ||
-                           attributeHasVariadicIdentifierArg(*AttrName);
+    bool IsIdentifierArg = AttributeHasVariadicIdentifierArg ||
+                           attributeHasIdentifierArg(*AttrName);
     ParsedAttr::Kind AttrKind =
         ParsedAttr::getParsedKind(AttrName, ScopeName, Syntax);
 
@@ -397,42 +408,81 @@ unsigned Parser::ParseAttributeArgsCommon(
     if (!ArgExprs.empty())
       ConsumeToken();
 
-    // Parse the non-empty comma-separated list of expressions.
-    do {
-      // Interpret "kw_this" as an identifier if the attributed requests it.
-      if (ChangeKWThisToIdent && Tok.is(tok::kw_this))
-        Tok.setKind(tok::identifier);
-
-      ExprResult ArgExpr;
-      if (AttributeIsTypeArgAttr) {
-        TypeResult T = ParseTypeName();
-        if (T.isInvalid()) {
-          SkipUntil(tok::r_paren, StopAtSemi);
-          return 0;
-        }
-        if (T.isUsable())
-          TheParsedType = T.get();
-        break; // FIXME: Multiple type arguments are not implemented.
-      } else if (Tok.is(tok::identifier) &&
-                 attributeHasVariadicIdentifierArg(*AttrName)) {
-        ArgExprs.push_back(ParseIdentifierLoc());
-      } else {
-        bool Uneval = attributeParsedArgsUnevaluated(*AttrName);
-        EnterExpressionEvaluationContext Unevaluated(
-            Actions,
-            Uneval ? Sema::ExpressionEvaluationContext::Unevaluated
-                   : Sema::ExpressionEvaluationContext::ConstantEvaluated);
-
-        ExprResult ArgExpr(
-            Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression()));
-        if (ArgExpr.isInvalid()) {
-          SkipUntil(tok::r_paren, StopAtSemi);
-          return 0;
-        }
-        ArgExprs.push_back(ArgExpr.get());
+    if (AttributeIsTypeArgAttr) {
+      // FIXME: Multiple type arguments are not implemented.
+      TypeResult T = ParseTypeName();
+      if (T.isInvalid()) {
+        SkipUntil(tok::r_paren, StopAtSemi);
+        return 0;
       }
-      // Eat the comma, move to the next argument
-    } while (TryConsumeToken(tok::comma));
+      if (T.isUsable())
+        TheParsedType = T.get();
+    } else if (AttributeHasVariadicIdentifierArg) {
+      // Parse variadic identifier arg. This can either consume identifiers or
+      // expressions. Variadic identifier args do not support parameter packs
+      // because those are typically used for attributes with enumeration
+      // arguments, and those enumerations are not something the user could
+      // express via a pack.
+      do {
+        // Interpret "kw_this" as an identifier if the attributed requests it.
+        if (ChangeKWThisToIdent && Tok.is(tok::kw_this))
+          Tok.setKind(tok::identifier);
+
+        ExprResult ArgExpr;
+        if (Tok.is(tok::identifier)) {
+          ArgExprs.push_back(ParseIdentifierLoc());
+        } else {
+          bool Uneval = attributeParsedArgsUnevaluated(*AttrName);
+          EnterExpressionEvaluationContext Unevaluated(
+              Actions,
+              Uneval ? Sema::ExpressionEvaluationContext::Unevaluated
+                     : Sema::ExpressionEvaluationContext::ConstantEvaluated);
+
+          ExprResult ArgExpr(
+              Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression()));
+
+          if (ArgExpr.isInvalid()) {
+            SkipUntil(tok::r_paren, StopAtSemi);
+            return 0;
+          }
+          ArgExprs.push_back(ArgExpr.get());
+        }
+        // Eat the comma, move to the next argument
+      } while (TryConsumeToken(tok::comma));
+    } else {
+      // General case. Parse all available expressions.
+      bool Uneval = attributeParsedArgsUnevaluated(*AttrName);
+      EnterExpressionEvaluationContext Unevaluated(
+          Actions, Uneval
+                       ? Sema::ExpressionEvaluationContext::Unevaluated
+                       : Sema::ExpressionEvaluationContext::ConstantEvaluated);
+
+      CommaLocsTy CommaLocs;
+      ExprVector ParsedExprs;
+      if (ParseExpressionList(ParsedExprs, CommaLocs,
+                              llvm::function_ref<void()>(),
+                              /*FailImmediatelyOnInvalidExpr=*/true,
+                              /*EarlyTypoCorrection=*/true)) {
+        SkipUntil(tok::r_paren, StopAtSemi);
+        return 0;
+      }
+
+      // Pack expansion must currently be explicitly supported by an attribute.
+      for (size_t I = 0; I < ParsedExprs.size(); ++I) {
+        if (!isa<PackExpansionExpr>(ParsedExprs[I]))
+          continue;
+
+        if (!attributeAcceptsExprPack(*AttrName)) {
+          Diag(Tok.getLocation(),
+               diag::err_attribute_argument_parm_pack_not_supported)
+              << AttrName;
+          SkipUntil(tok::r_paren, StopAtSemi);
+          return 0;
+        }
+      }
+
+      ArgExprs.insert(ArgExprs.end(), ParsedExprs.begin(), ParsedExprs.end());
+    }
   }
 
   SourceLocation RParen = Tok.getLocation();
@@ -2021,6 +2071,18 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       Actions.CodeCompleteAfterFunctionEquals(D);
       return nullptr;
     }
+    // We're at the point where the parsing of function declarator is finished.
+    //
+    // A common error is that users accidently add a virtual specifier
+    // (e.g. override) in an out-line method definition.
+    // We attempt to recover by stripping all these specifiers coming after
+    // the declarator.
+    while (auto Specifier = isCXX11VirtSpecifier()) {
+      Diag(Tok, diag::err_virt_specifier_outside_class)
+          << VirtSpecifiers::getSpecifierName(Specifier)
+          << FixItHint::CreateRemoval(Tok.getLocation());
+      ConsumeToken();
+    }
     // Look at the next token to make sure that this isn't a function
     // declaration.  We have to check this because __attribute__ might be the
     // start of a function definition in GCC-extended K&R C.
@@ -2407,8 +2469,9 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
     auto ThisVarDecl = dyn_cast_or_null<VarDecl>(ThisDecl);
     auto RunSignatureHelp = [&]() {
       QualType PreferredType = Actions.ProduceConstructorSignatureHelp(
-          getCurScope(), ThisVarDecl->getType()->getCanonicalTypeInternal(),
-          ThisDecl->getLocation(), Exprs, T.getOpenLocation());
+          ThisVarDecl->getType()->getCanonicalTypeInternal(),
+          ThisDecl->getLocation(), Exprs, T.getOpenLocation(),
+          /*Braced=*/false);
       CalledSignatureHelp = true;
       return PreferredType;
     };
@@ -2427,8 +2490,9 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
     if (ParseExpressionList(Exprs, CommaLocs, ExpressionStarts)) {
       if (ThisVarDecl && PP.isCodeCompletionReached() && !CalledSignatureHelp) {
         Actions.ProduceConstructorSignatureHelp(
-            getCurScope(), ThisVarDecl->getType()->getCanonicalTypeInternal(),
-            ThisDecl->getLocation(), Exprs, T.getOpenLocation());
+            ThisVarDecl->getType()->getCanonicalTypeInternal(),
+            ThisDecl->getLocation(), Exprs, T.getOpenLocation(),
+            /*Braced=*/false);
         CalledSignatureHelp = true;
       }
       Actions.ActOnInitializerError(ThisDecl);
@@ -2879,7 +2943,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 }
 
 ExprResult Parser::ParseExtIntegerArgument() {
-  assert(Tok.is(tok::kw__ExtInt) && "Not an extended int type");
+  assert(Tok.isOneOf(tok::kw__ExtInt, tok::kw__BitInt) &&
+         "Not an extended int type");
   ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -3065,7 +3130,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
   ParsedAttributesWithRange attrs(AttrFactory);
   // We use Sema's policy to get bool macros right.
   PrintingPolicy Policy = Actions.getPrintingPolicy();
-  while (1) {
+  while (true) {
     bool isInvalid = false;
     bool isStorageClass = false;
     const char *PrevSpec = nullptr;
@@ -3561,12 +3626,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
             }
           }
           ConsumedEnd = Tok.getLocation();
+          DS.setTypeofParensRange(Tracker.getRange());
           // Even if something went wrong above, continue as if we've seen
           // `decltype(auto)`.
           isInvalid = DS.SetTypeSpecType(TST_decltype_auto, Loc, PrevSpec,
                                          DiagID, TemplateId, Policy);
         } else {
-          isInvalid = DS.SetTypeSpecType(TST_auto, Loc, PrevSpec, DiagID,
+          isInvalid = DS.SetTypeSpecType(TST_auto, AutoLoc, PrevSpec, DiagID,
                                          TemplateId, Policy);
         }
         break;
@@ -3870,11 +3936,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
-    case tok::kw__ExtInt: {
+    case tok::kw__ExtInt:
+    case tok::kw__BitInt: {
+      DiagnoseBitIntUse(Tok);
       ExprResult ER = ParseExtIntegerArgument();
       if (ER.isInvalid())
         continue;
-      isInvalid = DS.SetExtIntType(Loc, ER.get(), PrevSpec, DiagID, Policy);
+      isInvalid = DS.SetBitIntType(Loc, ER.get(), PrevSpec, DiagID, Policy);
       ConsumedEnd = PrevTokLocation;
       break;
     }
@@ -3927,6 +3995,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       break;
     case tok::kw___float128:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float128, Loc, PrevSpec,
+                                     DiagID, Policy);
+      break;
+    case tok::kw___ibm128:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_ibm128, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
     case tok::kw_wchar_t:
@@ -3985,8 +4057,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeAltiVecBool(true, Loc, PrevSpec, DiagID, Policy);
       break;
     case tok::kw_pipe:
-      if (!getLangOpts().OpenCL || (getLangOpts().OpenCLVersion < 200 &&
-                                    !getLangOpts().OpenCLCPlusPlus)) {
+      if (!getLangOpts().OpenCL ||
+          getLangOpts().getOpenCLCompatibleVersion() < 200) {
         // OpenCL 2.0 and later define this keyword. OpenCL 1.2 and earlier
         // should support the "pipe" word as identifier.
         Tok.getIdentifierInfo()->revertTokenIDToIdentifier();
@@ -4250,7 +4322,7 @@ void Parser::ParseStructDeclaration(
   // Read struct-declarators until we find the semicolon.
   bool FirstDeclarator = true;
   SourceLocation CommaLoc;
-  while (1) {
+  while (true) {
     ParsingFieldDeclarator DeclaratorInfo(*this, DS);
     DeclaratorInfo.D.setCommaLoc(CommaLoc);
 
@@ -4517,7 +4589,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 
     CXXScopeSpec Spec;
     if (ParseOptionalCXXScopeSpecifier(Spec, /*ObjectType=*/nullptr,
-                                       /*ObjectHadErrors=*/false,
+                                       /*ObjectHasErrors=*/false,
                                        /*EnteringContext=*/true))
       return;
 
@@ -4999,6 +5071,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw_char32_t:
   case tok::kw_int:
   case tok::kw__ExtInt:
+  case tok::kw__BitInt:
   case tok::kw___bf16:
   case tok::kw_half:
   case tok::kw_float:
@@ -5007,6 +5080,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw__Fract:
   case tok::kw__Float16:
   case tok::kw___float128:
+  case tok::kw___ibm128:
   case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Decimal32:
@@ -5080,6 +5154,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_char32_t:
   case tok::kw_int:
   case tok::kw__ExtInt:
+  case tok::kw__BitInt:
   case tok::kw_half:
   case tok::kw___bf16:
   case tok::kw_float:
@@ -5088,6 +5163,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw__Fract:
   case tok::kw__Float16:
   case tok::kw___float128:
+  case tok::kw___ibm128:
   case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Decimal32:
@@ -5171,8 +5247,8 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
   // OpenCL 2.0 and later define this keyword.
   case tok::kw_pipe:
-    return (getLangOpts().OpenCL && getLangOpts().OpenCLVersion >= 200) ||
-           getLangOpts().OpenCLCPlusPlus;
+    return getLangOpts().OpenCL &&
+           getLangOpts().getOpenCLCompatibleVersion() >= 200;
 
   case tok::identifier:   // foo::bar
     // Unfortunate hack to support "Class.factoryMethod" notation.
@@ -5250,6 +5326,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
   case tok::kw_int:
   case tok::kw__ExtInt:
+  case tok::kw__BitInt:
   case tok::kw_half:
   case tok::kw___bf16:
   case tok::kw_float:
@@ -5258,6 +5335,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw__Fract:
   case tok::kw__Float16:
   case tok::kw___float128:
+  case tok::kw___ibm128:
   case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Decimal32:
@@ -5395,7 +5473,7 @@ bool Parser::isConstructorDeclarator(bool IsUnqualified, bool DeductionGuide) {
   // Parse the C++ scope specifier.
   CXXScopeSpec SS;
   if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                     /*ObjectHadErrors=*/false,
+                                     /*ObjectHasErrors=*/false,
                                      /*EnteringContext=*/true)) {
     TPA.Revert();
     return false;
@@ -5553,7 +5631,7 @@ void Parser::ParseTypeQualifierListOpt(
 
   SourceLocation EndLoc;
 
-  while (1) {
+  while (true) {
     bool isInvalid = false;
     const char *PrevSpec = nullptr;
     unsigned DiagID = 0;
@@ -5702,8 +5780,8 @@ static bool isPtrOperatorToken(tok::TokenKind Kind, const LangOptions &Lang,
     return true;
 
   // OpenCL 2.0 and later define this keyword.
-  if (Kind == tok::kw_pipe &&
-      ((Lang.OpenCL && Lang.OpenCLVersion >= 200) || Lang.OpenCLCPlusPlus))
+  if (Kind == tok::kw_pipe && Lang.OpenCL &&
+      Lang.getOpenCLCompatibleVersion() >= 200)
     return true;
 
   if (!Lang.CPlusPlus)
@@ -5777,7 +5855,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
                            D.getContext() == DeclaratorContext::Member;
     CXXScopeSpec SS;
     ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                   /*ObjectHadErrors=*/false, EnteringContext);
+                                   /*ObjectHasErrors=*/false, EnteringContext);
 
     if (SS.isNotEmpty()) {
       if (Tok.isNot(tok::star)) {
@@ -6006,7 +6084,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
                              D.getContext() == DeclaratorContext::Member;
       ParseOptionalCXXScopeSpecifier(
           D.getCXXScopeSpec(), /*ObjectType=*/nullptr,
-          /*ObjectHadErrors=*/false, EnteringContext);
+          /*ObjectHasErrors=*/false, EnteringContext);
     }
 
     if (D.getCXXScopeSpec().isValid()) {
@@ -6245,7 +6323,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   if (D.hasName() && !D.getNumTypeObjects())
     MaybeParseCXX11Attributes(D);
 
-  while (1) {
+  while (true) {
     if (Tok.is(tok::l_paren)) {
       bool IsFunctionDeclaration = D.isFunctionDeclaratorAFunctionDeclaration();
       // Enter function-declaration scope, limiting any declarators to the
@@ -6959,13 +7037,13 @@ void Parser::ParseParameterDeclarationClause(
       //
       // We care about case 1) where the declarator type should be known, and
       // the identifier should be null.
-      if (!ParmDeclarator.isInvalidType() && !ParmDeclarator.hasName()) {
-        if (Tok.getIdentifierInfo() &&
-            Tok.getIdentifierInfo()->isKeyword(getLangOpts())) {
-          Diag(Tok, diag::err_keyword_as_parameter) << PP.getSpelling(Tok);
-          // Consume the keyword.
-          ConsumeToken();
-        }
+      if (!ParmDeclarator.isInvalidType() && !ParmDeclarator.hasName() &&
+          Tok.isNot(tok::raw_identifier) && !Tok.isAnnotation() &&
+          Tok.getIdentifierInfo() &&
+          Tok.getIdentifierInfo()->isKeyword(getLangOpts())) {
+        Diag(Tok, diag::err_keyword_as_parameter) << PP.getSpelling(Tok);
+        // Consume the keyword.
+        ConsumeToken();
       }
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
@@ -7456,4 +7534,25 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
     return true;
   }
   return false;
+}
+
+void Parser::DiagnoseBitIntUse(const Token &Tok) {
+  // If the token is for _ExtInt, diagnose it as being deprecated. Otherwise,
+  // the token is about _BitInt and gets (potentially) diagnosed as use of an
+  // extension.
+  assert(Tok.isOneOf(tok::kw__ExtInt, tok::kw__BitInt) &&
+         "expected either an _ExtInt or _BitInt token!");
+
+  SourceLocation Loc = Tok.getLocation();
+  if (Tok.is(tok::kw__ExtInt)) {
+    Diag(Loc, diag::warn_ext_int_deprecated)
+        << FixItHint::CreateReplacement(Loc, "_BitInt");
+  } else {
+    // In C2x mode, diagnose that the use is not compatible with pre-C2x modes.
+    // Otherwise, diagnose that the use is a Clang extension.
+    if (getLangOpts().C2x)
+      Diag(Loc, diag::warn_c17_compat_bit_int);
+    else
+      Diag(Loc, diag::ext_bit_int) << getLangOpts().CPlusPlus;
+  }
 }

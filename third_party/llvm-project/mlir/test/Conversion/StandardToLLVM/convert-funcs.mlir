@@ -1,4 +1,4 @@
-// RUN: mlir-opt -convert-std-to-llvm %s | FileCheck %s
+// RUN: mlir-opt -convert-std-to-llvm -split-input-file -verify-diagnostics %s | FileCheck %s
 
 //CHECK: llvm.func @second_order_arg(!llvm.ptr<func<void ()>>)
 func private @second_order_arg(%arg0 : () -> ())
@@ -29,13 +29,16 @@ func private @memref_call_conv_nested(%arg0: (memref<?xf32>) -> ())
 //CHECK-LABEL: llvm.func @pass_through(%arg0: !llvm.ptr<func<void ()>>) -> !llvm.ptr<func<void ()>> {
 func @pass_through(%arg0: () -> ()) -> (() -> ()) {
 // CHECK-NEXT:  llvm.br ^bb1(%arg0 : !llvm.ptr<func<void ()>>)
-  br ^bb1(%arg0 : () -> ())
+  cf.br ^bb1(%arg0 : () -> ())
 
 //CHECK-NEXT: ^bb1(%0: !llvm.ptr<func<void ()>>):
 ^bb1(%bbarg: () -> ()):
 // CHECK-NEXT:  llvm.return %0 : !llvm.ptr<func<void ()>>
   return %bbarg : () -> ()
 }
+
+// CHECK-LABEL: llvm.func extern_weak @llvmlinkage(i32)
+func private @llvmlinkage(i32) attributes { "llvm.linkage" = #llvm.linkage<extern_weak> }
 
 // CHECK-LABEL: llvm.func @body(i32)
 func private @body(i32)
@@ -59,3 +62,6 @@ func @indirect_call(%arg0: (f32) -> i32, %arg1: f32) -> i32 {
   return %0 : i32
 }
 
+// -----
+
+func private @badllvmlinkage(i32) attributes { "llvm.linkage" = 3 : i64 } // expected-error {{Contains llvm.linkage attribute not of type LLVM::LinkageAttr}}

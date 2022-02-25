@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_IR_AFFINE_EXPR_H
-#define MLIR_IR_AFFINE_EXPR_H
+#ifndef MLIR_IR_AFFINEEXPR_H
+#define MLIR_IR_AFFINEEXPR_H
 
 #include "mlir/Support/LLVM.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/Casting.h"
 #include <functional>
 #include <type_traits>
@@ -68,7 +69,7 @@ class AffineExpr {
 public:
   using ImplType = detail::AffineExprStorage;
 
-  constexpr AffineExpr() : expr(nullptr) {}
+  constexpr AffineExpr() {}
   /* implicit */ AffineExpr(const ImplType *expr)
       : expr(const_cast<ImplType *>(expr)) {}
 
@@ -194,7 +195,7 @@ public:
   }
 
 protected:
-  ImplType *expr;
+  ImplType *expr{nullptr};
 };
 
 /// Affine binary operation expression. An affine binary operation could be an
@@ -292,10 +293,12 @@ U AffineExpr::cast() const {
   return U(expr);
 }
 
-/// Simplify an affine expression by flattening and some amount of
-/// simple analysis. This has complexity linear in the number of nodes in
-/// 'expr'. Returns the simplified expression, which is the same as the input
-///  expression if it can't be simplified.
+/// Simplify an affine expression by flattening and some amount of simple
+/// analysis. This has complexity linear in the number of nodes in 'expr'.
+/// Returns the simplified expression, which is the same as the input expression
+/// if it can't be simplified. When `expr` is semi-affine, a simplified
+/// semi-affine expression is constructed in the sorted order of dimension and
+/// symbol positions.
 AffineExpr simplifyAffineExpr(AffineExpr expr, unsigned numDims,
                               unsigned numSymbols);
 
@@ -341,11 +344,11 @@ namespace llvm {
 template <>
 struct DenseMapInfo<mlir::AffineExpr> {
   static mlir::AffineExpr getEmptyKey() {
-    auto pointer = llvm::DenseMapInfo<void *>::getEmptyKey();
+    auto *pointer = llvm::DenseMapInfo<void *>::getEmptyKey();
     return mlir::AffineExpr(static_cast<mlir::AffineExpr::ImplType *>(pointer));
   }
   static mlir::AffineExpr getTombstoneKey() {
-    auto pointer = llvm::DenseMapInfo<void *>::getTombstoneKey();
+    auto *pointer = llvm::DenseMapInfo<void *>::getTombstoneKey();
     return mlir::AffineExpr(static_cast<mlir::AffineExpr::ImplType *>(pointer));
   }
   static unsigned getHashValue(mlir::AffineExpr val) {
@@ -358,4 +361,4 @@ struct DenseMapInfo<mlir::AffineExpr> {
 
 } // namespace llvm
 
-#endif // MLIR_IR_AFFINE_EXPR_H
+#endif // MLIR_IR_AFFINEEXPR_H

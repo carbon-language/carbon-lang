@@ -19,7 +19,6 @@ class FunctionStartsTestCase(TestBase):
 
     @skipIfRemote
     @skipUnlessDarwin
-    @skipIfReproducer # File synchronization is not supported during replay.
     def test_function_starts_binary(self):
         """Test that we make synthetic symbols when we have the binary."""
         self.build(dictionary={'CODESIGN': ''}) # Binary is getting stripped later.
@@ -27,7 +26,6 @@ class FunctionStartsTestCase(TestBase):
 
     @skipIfRemote
     @skipUnlessDarwin
-    @skipIfReproducer # File synchronization is not supported during replay.
     def test_function_starts_no_binary(self):
         """Test that we make synthetic symbols when we don't have the binary"""
         self.build(dictionary={'CODESIGN': ''}) # Binary is getting stripped later.
@@ -39,10 +37,7 @@ class FunctionStartsTestCase(TestBase):
 
         exe = self.getBuildArtifact(exe_name)
         # Now strip the binary, but leave externals so we can break on dont_strip_me.
-        try:
-            fail_str = system([["strip", "-u", "-x", "-S", exe]])
-        except CalledProcessError as cmd_error:
-            self.fail("Strip failed: %d"%(cmd_error.returncode))
+        self.runBuildCommand(["strip", "-u", "-x", "-S", exe])
 
         # Use a file as a synchronization point between test and inferior.
         pid_file_path = lldbutil.append_to_process_working_directory(self,
@@ -67,7 +62,7 @@ class FunctionStartsTestCase(TestBase):
         attach_info.SetProcessID(popen.pid)
         attach_info.SetIgnoreExisting(False)
         process = target.Attach(attach_info, error)
-        self.assertTrue(error.Success(), "Didn't attach successfully to %d: %s"%(popen.pid, error.GetCString()))
+        self.assertSuccess(error, "Didn't attach successfully to %d"%(popen.pid))
 
         bkpt = target.BreakpointCreateByName("dont_strip_me", exe)
         self.assertTrue(bkpt.GetNumLocations() > 0, "Didn't set the dont_strip_me bkpt.")

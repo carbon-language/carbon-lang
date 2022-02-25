@@ -18,8 +18,7 @@ let Command = "help" in {
 }
 
 let Command = "settings set" in {
-  def setset_global : Option<"global", "g">, Arg<"Filename">,
-    Completion<"DiskFile">,
+  def setset_global : Option<"global", "g">,
     Desc<"Apply the new value to the global default value.">;
   def setset_force : Option<"force", "f">,
     Desc<"Force an empty value to be accepted as the default.">;
@@ -355,7 +354,7 @@ let Command = "expression" in {
     Desc<"When specified, debug the JIT code by setting a breakpoint on the "
     "first instruction and forcing breakpoints to not be ignored (-i0) and no "
     "unwinding to happen on error (-u0).">;
-  def expression_options_language : Option<"language", "l">, Groups<[1,2]>,
+  def expression_options_language : Option<"language", "l">, Groups<[1,2,3]>,
     Arg<"Language">, Desc<"Specifies the Language to use when parsing the "
     "expression.  If not set the target.language setting is used.">;
   def expression_options_apply_fixits : Option<"apply-fixits", "X">,
@@ -404,6 +403,13 @@ let Command = "frame recognizer add" in {
     Desc<"Give the name of a Python class to use for this frame recognizer.">;
   def frame_recognizer_regex : Option<"regex", "x">,
     Desc<"Function name and module name are actually regular expressions.">;
+  def frame_recognizer_first_instruction_only : Option<"first-instruction-only", "f">, Arg<"Boolean">,
+    Desc<"If true, only apply this recognizer to frames whose PC currently points to the "
+    "first instruction of the specified function. If false, the recognizer "
+    "will always be applied, regardless of the current position within the specified function. The "
+    "implementor should keep in mind that some features, e.g. accessing function argument "
+    "values via $arg<N>, are not guaranteed to work reliably in this case, so extra care must "
+    "be taken to make the recognizer operate correctly. Defaults to true.">;
 }
 
 let Command = "history" in {
@@ -482,6 +488,8 @@ let Command = "memory read" in {
     "display data.">;
   def memory_read_force : Option<"force", "r">, Groups<[1,2,3]>,
     Desc<"Necessary if reading over target.max-memory-read-size bytes.">;
+  def memory_read_show_tags : Option<"show-tags", "\\x01">, Group<1>,
+    Desc<"Include memory tags in output (does not apply to binary output).">;
 }
 
 let Command = "memory find" in {
@@ -529,6 +537,10 @@ let Command = "source" in {
     Desc<"If true, stop executing commands on continue.">;
   def source_silent_run : Option<"silent-run", "s">, Arg<"Boolean">,
     Desc<"If true don't echo commands while executing.">;
+  def cmd_relative_to_command_file : Option<"relative-to-command-file", "C">,
+    Desc<"Resolve non-absolute paths relative to the location of the "
+    "current command file. This argument can only be used when the command is "
+    "being sourced from a file.">;
 }
 
 let Command = "alias" in {
@@ -742,6 +754,9 @@ let Command = "process save_core" in {
   def process_save_core_style : Option<"style", "s">, Group<1>,
     EnumArg<"SaveCoreStyle", "SaveCoreStyles()">, Desc<"Request a specific style "
     "of corefile to be saved.">;
+  def process_save_core_plugin_name : Option<"plugin-name", "p">,
+    OptionalArg<"Plugin">, Desc<"Specify a plugin name to create the core file."
+    "This allows core files to be saved in different formats.">;
 }
 
 let Command = "process trace save" in {
@@ -773,10 +788,21 @@ let Command = "script add" in {
   Desc<"Name of the Python class to bind to this command name.">;
   def script_add_help : Option<"help", "h">, Group<1>, Arg<"HelpText">,
   Desc<"The help text to display for this command.">;
+  def script_add_overwrite : Option<"overwrite", "o">, Groups<[1,2]>,
+  Desc<"Overwrite an existing command at this node.">;
   def script_add_synchronicity : Option<"synchronicity", "s">,
     EnumArg<"ScriptedCommandSynchronicity", "ScriptSynchroType()">,
     Desc<"Set the synchronicity of this command's executions with regard to "
     "LLDB event system.">;
+}
+
+let Command = "container add" in {
+  def container_add_help : Option<"help", "h">, Arg<"HelpText">,
+    Desc<"Help text for this command">;
+  def container_add_long_help : Option<"long-help", "H">, Arg<"HelpText">,
+    Desc<"Long help text for this command">;
+  def container_add_overwrite : Option<"overwrite", "o">, Group<1>,
+  Desc<"Overwrite an existing command at this node.">;
 }
 
 let Command = "script" in {
@@ -1279,4 +1305,9 @@ let Command = "trace dump" in {
 let Command = "trace schema" in {
   def trace_schema_verbose : Option<"verbose", "v">, Group<1>,
     Desc<"Show verbose trace schema logging for debugging the plug-in.">;
+}
+
+let Command = "statistics dump" in {
+  def statistics_dump_all: Option<"all-targets", "a">, Group<1>,
+    Desc<"Include statistics for all targets.">;
 }

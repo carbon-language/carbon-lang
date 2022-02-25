@@ -72,9 +72,8 @@ def : PatGprGpr<urem, REMU>;
 } // Predicates = [HasStdExtM]
 
 let Predicates = [HasStdExtM, IsRV64] in {
-// Select W instructions without sext_inreg if only the lower 32-bits of the
-// result are used.
-def : PatGprGpr<overflowingbinopw<mul>, MULW>;
+// Select W instructions if only the lower 32-bits of the result are used.
+def : PatGprGpr<binop_allwusers<mul>, MULW>;
 
 def : PatGprGpr<riscv_divw, DIVW>;
 def : PatGprGpr<riscv_divuw, DIVUW>;
@@ -102,8 +101,6 @@ let Predicates = [HasStdExtM, IsRV64, NotHasStdExtZba] in {
 // multiply where the inputs aren't known to be zero extended. We can shift the
 // inputs left by 32 and use a MULHU. This saves two SRLIs needed to finish
 // zeroing the upper 32 bits.
-// TODO: If one of the operands is zero extended and the other isn't, we might
-// still be better off shifting both left by 32.
 def : Pat<(i64 (mul (and GPR:$rs1, 0xffffffff), (and GPR:$rs2, 0xffffffff))),
           (MULHU (SLLI GPR:$rs1, 32), (SLLI GPR:$rs2, 32))>;
 } // Predicates = [HasStdExtM, IsRV64, NotHasStdExtZba]

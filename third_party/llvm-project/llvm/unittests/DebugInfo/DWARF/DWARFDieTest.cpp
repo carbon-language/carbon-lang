@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
 #include "llvm/Testing/Support/Error.h"
@@ -87,7 +88,7 @@ TEST(DWARFDie, getLocations) {
       Die.getLocations(DW_AT_vtable_elem_location),
       Failed<ErrorInfoBase>(testing::Property(
           &ErrorInfoBase::message,
-          "Unable to resolve indirect address 1 for: DW_LLE_startx_length")));
+          "unable to resolve indirect address 1 for: DW_LLE_startx_length")));
 
   EXPECT_THAT_EXPECTED(
       Die.getLocations(DW_AT_call_data_location),
@@ -183,11 +184,9 @@ TEST(DWARFDie, getDeclFile) {
   std::string DeclFile = MainDie.getDeclFile(
       DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath);
 
-#if defined(_WIN32)
-  EXPECT_EQ(DeclFile, "/tmp\\main.cpp");
-#else
-  EXPECT_EQ(DeclFile, "/tmp/main.cpp");
-#endif
+  std::string Ref =
+      ("/tmp" + llvm::sys::path::get_separator() + "main.cpp").str();
+  EXPECT_EQ(DeclFile, Ref);
 }
 
 TEST(DWARFDie, getDeclFileAbstractOrigin) {
@@ -291,11 +290,9 @@ TEST(DWARFDie, getDeclFileAbstractOrigin) {
   std::string DeclFile = MainDie.getDeclFile(
       DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath);
 
-#if defined(_WIN32)
-  EXPECT_EQ(DeclFile, "/tmp\\main.cpp");
-#else
-  EXPECT_EQ(DeclFile, "/tmp/main.cpp");
-#endif
+  std::string Ref =
+      ("/tmp" + llvm::sys::path::get_separator() + "main.cpp").str();
+  EXPECT_EQ(DeclFile, Ref);
 }
 
 TEST(DWARFDie, getDeclFileSpecification) {
@@ -398,11 +395,9 @@ TEST(DWARFDie, getDeclFileSpecification) {
   std::string DeclFile = MainDie.getDeclFile(
       DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath);
 
-#if defined(_WIN32)
-  EXPECT_EQ(DeclFile, "/tmp\\main.cpp");
-#else
-  EXPECT_EQ(DeclFile, "/tmp/main.cpp");
-#endif
+  std::string Ref =
+      ("/tmp" + llvm::sys::path::get_separator() + "main.cpp").str();
+  EXPECT_EQ(DeclFile, Ref);
 }
 
 TEST(DWARFDie, getDeclFileAbstractOriginAcrossCUBoundary) {
@@ -522,11 +517,9 @@ TEST(DWARFDie, getDeclFileAbstractOriginAcrossCUBoundary) {
   std::string DeclFile = MainDie.getDeclFile(
       DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath);
 
-#if defined(_WIN32)
-  EXPECT_EQ(DeclFile, "/tmp\\main.cpp");
-#else
-  EXPECT_EQ(DeclFile, "/tmp/main.cpp");
-#endif
+  std::string Ref =
+      ("/tmp" + llvm::sys::path::get_separator() + "main.cpp").str();
+  EXPECT_EQ(DeclFile, Ref);
 }
 
 TEST(DWARFDie, getDeclFileSpecificationAcrossCUBoundary) {
@@ -646,11 +639,9 @@ TEST(DWARFDie, getDeclFileSpecificationAcrossCUBoundary) {
   std::string DeclFile = MainDie.getDeclFile(
       DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath);
 
-#if defined(_WIN32)
-  EXPECT_EQ(DeclFile, "/tmp\\main.cpp");
-#else
-  EXPECT_EQ(DeclFile, "/tmp/main.cpp");
-#endif
+  std::string Ref =
+      ("/tmp" + llvm::sys::path::get_separator() + "main.cpp").str();
+  EXPECT_EQ(DeclFile, Ref);
 }
 
 } // end anonymous namespace

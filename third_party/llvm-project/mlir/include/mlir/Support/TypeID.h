@@ -16,6 +16,8 @@
 
 #include "mlir/Support/LLVM.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/Hashing.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace mlir {
@@ -59,10 +61,12 @@ public:
   TypeID() : TypeID(get<void>()) {}
 
   /// Comparison operations.
-  bool operator==(const TypeID &other) const {
+  inline bool operator==(const TypeID &other) const {
     return storage == other.storage;
   }
-  bool operator!=(const TypeID &other) const { return !(*this == other); }
+  inline bool operator!=(const TypeID &other) const {
+    return !(*this == other);
+  }
 
   /// Construct a type info object for the given type T.
   template <typename T>
@@ -89,11 +93,13 @@ private:
 
   // See TypeIDExported below for an explanation of the trampoline behavior.
   friend struct detail::TypeIDExported;
+
+  friend class TypeIDAllocator;
 };
 
 /// Enable hashing TypeID.
 inline ::llvm::hash_code hash_value(TypeID id) {
-  return llvm::hash_value(id.storage);
+  return DenseMapInfo<const TypeID::Storage *>::getHashValue(id.storage);
 }
 
 namespace detail {
@@ -135,7 +141,35 @@ TypeID TypeID::get() {
   return detail::TypeIDExported::get<Trait>();
 }
 
-} // end namespace mlir
+/// This class provides a way to define new TypeIDs at runtime.
+/// When the allocator is destructed, all allocated TypeIDs become invalid and
+/// therefore should not be used.
+class TypeIDAllocator {
+public:
+  /// Allocate a new TypeID, that is ensured to be unique for the lifetime
+  /// of the TypeIDAllocator.
+  TypeID allocate() { return TypeID(ids.Allocate()); }
+
+private:
+  /// The TypeIDs allocated are the addresses of the different storages.
+  /// Keeping those in memory ensure uniqueness of the TypeIDs.
+  llvm::SpecificBumpPtrAllocator<TypeID::Storage> ids;
+};
+
+/// Defines a TypeID for each instance of this class by using a pointer to the
+/// instance. Thus, the copy and move constructor are deleted.
+class SelfOwningTypeID {
+public:
+  SelfOwningTypeID() = default;
+  SelfOwningTypeID(const SelfOwningTypeID &) = delete;
+  SelfOwningTypeID &operator=(const SelfOwningTypeID &) = delete;
+  SelfOwningTypeID(SelfOwningTypeID &&) = delete;
+  SelfOwningTypeID &operator=(SelfOwningTypeID &&) = delete;
+
+  TypeID getTypeID() const { return TypeID::getFromOpaquePointer(this); }
+};
+
+} // namespace mlir
 
 // Declare/define an explicit specialization for TypeID: this forces the
 // compiler to emit a strong definition for a class and controls which
@@ -165,11 +199,11 @@ TypeID TypeID::get() {
 
 namespace llvm {
 template <> struct DenseMapInfo<mlir::TypeID> {
-  static mlir::TypeID getEmptyKey() {
+  static inline mlir::TypeID getEmptyKey() {
     void *pointer = llvm::DenseMapInfo<void *>::getEmptyKey();
     return mlir::TypeID::getFromOpaquePointer(pointer);
   }
-  static mlir::TypeID getTombstoneKey() {
+  static inline mlir::TypeID getTombstoneKey() {
     void *pointer = llvm::DenseMapInfo<void *>::getTombstoneKey();
     return mlir::TypeID::getFromOpaquePointer(pointer);
   }
@@ -190,6 +224,6 @@ template <> struct PointerLikeTypeTraits<mlir::TypeID> {
   static constexpr int NumLowBitsAvailable = 3;
 };
 
-} // end namespace llvm
+} // namespace llvm
 
 #endif // MLIR_SUPPORT_TYPEID_H

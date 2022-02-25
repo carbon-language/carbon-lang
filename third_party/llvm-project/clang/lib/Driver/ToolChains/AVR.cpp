@@ -28,9 +28,9 @@ using namespace llvm::opt;
 
 namespace {
 
-const struct {
+constexpr struct {
   StringRef Name;
-  std::string SubPath;
+  StringRef SubPath;
   StringRef Family;
   unsigned DataAddr;
 } MCUInfo[] = {
@@ -315,7 +315,7 @@ AVRToolChain::AVRToolChain(const Driver &D, const llvm::Triple &Triple,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs) &&
       !Args.hasArg(options::OPT_c /* does not apply when not linking */)) {
-    std::string CPU = getCPUName(Args, Triple);
+    std::string CPU = getCPUName(D, Args, Triple);
 
     if (CPU.empty()) {
       // We cannot link any standard libraries without an MCU specified.
@@ -379,6 +379,11 @@ void AVRToolChain::addClangTargetOptions(
   if (!DriverArgs.hasFlag(options::OPT_fuse_init_array,
                           options::OPT_fno_use_init_array, false))
     CC1Args.push_back("-fno-use-init-array");
+  // Use `-fno-use-cxa-atexit` as default, since avr-libc does not support
+  // `__cxa_atexit()`.
+  if (!DriverArgs.hasFlag(options::OPT_fuse_cxa_atexit,
+                          options::OPT_fno_use_cxa_atexit, false))
+    CC1Args.push_back("-fno-use-cxa-atexit");
 }
 
 Tool *AVRToolChain::buildLinker() const {
@@ -389,8 +394,10 @@ void AVR::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                const InputInfo &Output,
                                const InputInfoList &Inputs, const ArgList &Args,
                                const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getDriver();
+
   // Compute information about the target AVR.
-  std::string CPU = getCPUName(Args, getToolChain().getTriple());
+  std::string CPU = getCPUName(D, Args, getToolChain().getTriple());
   llvm::Optional<StringRef> FamilyName = GetMCUFamilyName(CPU);
   llvm::Optional<unsigned> SectionAddressData = GetMCUSectionAddressData(CPU);
 
@@ -414,9 +421,7 @@ void AVR::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(DataSectionArg));
   } else {
     // We do not have an entry for this CPU in the address mapping table yet.
-    getToolChain().getDriver().Diag(
-        diag::warn_drv_avr_linker_section_addresses_not_implemented)
-        << CPU;
+    D.Diag(diag::warn_drv_avr_linker_section_addresses_not_implemented) << CPU;
   }
 
   // If the family name is known, we can link with the device-specific libgcc.

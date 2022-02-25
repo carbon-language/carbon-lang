@@ -1439,6 +1439,22 @@ TEST_P(ASTMatchersTest, IsStaticLocal) {
   EXPECT_TRUE(notMatches("int X;", M));
 }
 
+TEST_P(ASTMatchersTest, IsInitCapture) {
+  if (!GetParam().isCXX11OrLater()) {
+    return;
+  }
+  auto M = varDecl(hasName("vd"), isInitCapture());
+  EXPECT_TRUE(notMatches(
+      "int main() { int vd = 3; auto f = [vd]() { return vd; }; }", M));
+
+  if (!GetParam().isCXX14OrLater()) {
+    return;
+  }
+  EXPECT_TRUE(matches("int main() { auto f = [vd=3]() { return vd; }; }", M));
+  EXPECT_TRUE(matches(
+      "int main() { int x = 3; auto f = [vd=x]() { return vd; }; }", M));
+}
+
 TEST_P(ASTMatchersTest, StorageDuration) {
   StringRef T =
       "void f() { int x; static int y; } int a;static int b;extern int c;";
@@ -1774,6 +1790,35 @@ TEST_P(ASTMatchersTest, IsNoThrow_CXX11) {
   EXPECT_TRUE(matches("void f() noexcept;", functionProtoType(isNoThrow())));
 }
 
+TEST_P(ASTMatchersTest, IsConsteval) {
+  if (!GetParam().isCXX20OrLater())
+    return;
+
+  EXPECT_TRUE(matches("consteval int bar();",
+                      functionDecl(hasName("bar"), isConsteval())));
+  EXPECT_TRUE(notMatches("constexpr int bar();",
+                         functionDecl(hasName("bar"), isConsteval())));
+  EXPECT_TRUE(
+      notMatches("int bar();", functionDecl(hasName("bar"), isConsteval())));
+}
+
+TEST_P(ASTMatchersTest, IsConsteval_MatchesIfConsteval) {
+  if (!GetParam().isCXX20OrLater())
+    return;
+
+  EXPECT_TRUE(matches("void baz() { if consteval {} }", ifStmt(isConsteval())));
+  EXPECT_TRUE(
+      matches("void baz() { if ! consteval {} }", ifStmt(isConsteval())));
+  EXPECT_TRUE(matches("void baz() { if ! consteval {} else {} }",
+                      ifStmt(isConsteval())));
+  EXPECT_TRUE(
+      matches("void baz() { if not consteval {} }", ifStmt(isConsteval())));
+  EXPECT_TRUE(notMatches("void baz() { if constexpr(1 > 0) {} }",
+                         ifStmt(isConsteval())));
+  EXPECT_TRUE(
+      notMatches("void baz() { if (1 > 0) {} }", ifStmt(isConsteval())));
+}
+
 TEST_P(ASTMatchersTest, IsConstexpr) {
   if (!GetParam().isCXX11OrLater()) {
     return;
@@ -1794,6 +1839,25 @@ TEST_P(ASTMatchersTest, IsConstexpr_MatchesIfConstexpr) {
       matches("void baz() { if constexpr(1 > 0) {} }", ifStmt(isConstexpr())));
   EXPECT_TRUE(
       notMatches("void baz() { if (1 > 0) {} }", ifStmt(isConstexpr())));
+}
+
+TEST_P(ASTMatchersTest, IsConstinit) {
+  if (!GetParam().isCXX20OrLater())
+    return;
+
+  EXPECT_TRUE(matches("constinit int foo = 1;",
+                      varDecl(hasName("foo"), isConstinit())));
+  EXPECT_TRUE(matches("extern constinit int foo;",
+                      varDecl(hasName("foo"), isConstinit())));
+  EXPECT_TRUE(matches("constinit const char* foo = \"bar\";",
+                      varDecl(hasName("foo"), isConstinit())));
+  EXPECT_TRUE(
+      notMatches("[[clang::require_constant_initialization]] int foo = 1;",
+                 varDecl(hasName("foo"), isConstinit())));
+  EXPECT_TRUE(notMatches("constexpr int foo = 1;",
+                         varDecl(hasName("foo"), isConstinit())));
+  EXPECT_TRUE(notMatches("static inline int foo = 1;",
+                         varDecl(hasName("foo"), isConstinit())));
 }
 
 TEST_P(ASTMatchersTest, HasInitStatement_MatchesSelectionInitializers) {
@@ -4445,5 +4509,42 @@ TEST_P(ASTMatchersTest, HasDirectBase) {
       cxxRecordDecl(hasName("Derived"),
                     hasDirectBase(hasType(cxxRecordDecl(hasName("Base")))))));
 }
+
+TEST_P(ASTMatchersTest, CapturesThis) {
+  if (!GetParam().isCXX11OrLater()) {
+    return;
+  }
+  auto matcher = lambdaExpr(hasAnyCapture(lambdaCapture(capturesThis())));
+  EXPECT_TRUE(matches("class C { int cc; int f() { auto l = [this](){ return "
+                      "cc; }; return l(); } };",
+                      matcher));
+  EXPECT_TRUE(matches("class C { int cc; int f() { auto l = [=](){ return cc; "
+                      "}; return l(); } };",
+                      matcher));
+  EXPECT_TRUE(matches("class C { int cc; int f() { auto l = [&](){ return cc; "
+                      "}; return l(); } };",
+                      matcher));
+  EXPECT_FALSE(matches("class C { int cc; int f() { auto l = [cc](){ return "
+                       "cc; }; return l(); } };",
+                       matcher));
+  EXPECT_FALSE(matches("class C { int this; int f() { auto l = [this](){ "
+                       "return this; }; return l(); } };",
+                       matcher));
+}
+
+TEST_P(ASTMatchersTest, IsImplicit_LambdaCapture) {
+  if (!GetParam().isCXX11OrLater()) {
+    return;
+  }
+  auto matcher = lambdaExpr(hasAnyCapture(
+      lambdaCapture(isImplicit(), capturesVar(varDecl(hasName("cc"))))));
+  EXPECT_TRUE(
+      matches("int main() { int cc; auto f = [&](){ return cc; }; }", matcher));
+  EXPECT_TRUE(
+      matches("int main() { int cc; auto f = [=](){ return cc; }; }", matcher));
+  EXPECT_FALSE(matches("int main() { int cc; auto f = [cc](){ return cc; }; }",
+                       matcher));
+}
+
 } // namespace ast_matchers
 } // namespace clang

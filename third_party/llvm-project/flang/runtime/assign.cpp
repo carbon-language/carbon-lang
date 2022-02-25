@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "assign.h"
+#include "flang/Runtime/assign.h"
 #include "derived.h"
-#include "descriptor.h"
 #include "stat.h"
 #include "terminator.h"
 #include "type-info.h"
+#include "flang/Runtime/descriptor.h"
 
 namespace Fortran::runtime {
 
@@ -193,9 +193,9 @@ void Assign(Descriptor &to, const Descriptor &from, Terminator &terminator) {
           Descriptor &fromCompDesc{statDesc[1].descriptor()};
           for (std::size_t j{0}; j < toElements; ++j,
                to.IncrementSubscripts(toAt), from.IncrementSubscripts(fromAt)) {
-            comp.CreatePointerDescriptor(toCompDesc, to, toAt, terminator);
+            comp.CreatePointerDescriptor(toCompDesc, to, terminator, toAt);
             comp.CreatePointerDescriptor(
-                fromCompDesc, from, fromAt, terminator);
+                fromCompDesc, from, terminator, fromAt);
             Assign(toCompDesc, fromCompDesc, terminator);
           }
         } else { // Component has intrinsic type; simply copy raw bytes

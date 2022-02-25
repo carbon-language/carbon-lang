@@ -633,7 +633,7 @@ static bool IsHeaderFile(const std::string &Filename) {
     return false;
   }
 
-  std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+  std::string Ext = Filename.substr(DotPos + 1);
   // C header: .h
   // C++ header: .hh or .H;
   return Ext == "h" || Ext == "hh" || Ext == "H";
@@ -1957,15 +1957,15 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     // @try -> try
     ReplaceText(startLoc, 1, "");
 
-  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
-    ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
+  for (ObjCAtCatchStmt *Catch : S->catch_stmts()) {
     VarDecl *catchDecl = Catch->getCatchParamDecl();
 
     startLoc = Catch->getBeginLoc();
     bool AtRemoved = false;
     if (catchDecl) {
       QualType t = catchDecl->getType();
-      if (const ObjCObjectPointerType *Ptr = t->getAs<ObjCObjectPointerType>()) {
+      if (const ObjCObjectPointerType *Ptr =
+              t->getAs<ObjCObjectPointerType>()) {
         // Should be a pointer to a class.
         ObjCInterfaceDecl *IDecl = Ptr->getObjectType()->getInterface();
         if (IDecl) {
@@ -5356,16 +5356,15 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
       Exp = new (Context) DeclRefExpr(*Context, FD, false, FD->getType(),
                                       VK_LValue, SourceLocation());
       bool isNestedCapturedVar = false;
-      if (block)
-        for (const auto &CI : block->captures()) {
-          const VarDecl *variable = CI.getVariable();
-          if (variable == ND && CI.isNested()) {
-            assert (CI.isByRef() &&
-                    "SynthBlockInitExpr - captured block variable is not byref");
-            isNestedCapturedVar = true;
-            break;
-          }
+      for (const auto &CI : block->captures()) {
+        const VarDecl *variable = CI.getVariable();
+        if (variable == ND && CI.isNested()) {
+          assert(CI.isByRef() &&
+                 "SynthBlockInitExpr - captured block variable is not byref");
+          isNestedCapturedVar = true;
+          break;
         }
+      }
       // captured nested byref variable has its address passed. Do not take
       // its address again.
       if (!isNestedCapturedVar)

@@ -38,7 +38,7 @@ class LLVMConfig(object):
             # Many tools behave strangely if these environment variables aren't
             # set.
             self.with_system_environment(
-                ['SystemDrive', 'SystemRoot', 'TEMP', 'TMP'])
+                ['SystemDrive', 'SystemRoot', 'TEMP', 'TMP', 'PLATFORM'])
             self.use_lit_shell = True
 
             global lit_path_displayed
@@ -118,6 +118,8 @@ class LLVMConfig(object):
             elif re.match(r'^x86_64.*', target_triple):
                 features.add('target-x86_64')
             elif re.match(r'^aarch64.*', target_triple):
+                features.add('target-aarch64')
+            elif re.match(r'^arm64.*', target_triple):
                 features.add('target-aarch64')
             elif re.match(r'^arm.*', target_triple):
                 features.add('target-arm')

@@ -31,8 +31,6 @@
 namespace clang {
 namespace clangd {
 
-class SymbolIndex;
-
 /// This class exposes ClangdServer's capabilities via Language Server Protocol.
 ///
 /// MessageHandler binds the implemented LSP methods (e.g. onInitialize) to
@@ -56,14 +54,12 @@ public:
     /// Per-feature options. Generally ClangdServer lets these vary
     /// per-request, but LSP allows limited/no customizations.
     clangd::CodeCompleteOptions CodeComplete;
+    MarkupKind SignatureHelpDocumentationFormat = MarkupKind::PlainText;
     clangd::RenameOptions Rename;
     /// Returns true if the tweak should be enabled.
     std::function<bool(const Tweak &)> TweakFilter = [](const Tweak &T) {
       return !T.hidden(); // only enable non-hidden tweaks.
     };
-
-    /// Enable preview of InlayHints feature.
-    bool InlayHints = false;
 
     /// Limit the number of references returned (0 means no limit).
     size_t ReferencesLimit = 0;
@@ -123,6 +119,8 @@ private:
                          Callback<std::vector<Location>>);
   void onGoToDefinition(const TextDocumentPositionParams &,
                         Callback<std::vector<Location>>);
+  void onGoToType(const TextDocumentPositionParams &,
+                  Callback<std::vector<Location>>);
   void onGoToImplementation(const TextDocumentPositionParams &,
                             Callback<std::vector<Location>>);
   void onReference(const ReferenceParams &, Callback<std::vector<Location>>);

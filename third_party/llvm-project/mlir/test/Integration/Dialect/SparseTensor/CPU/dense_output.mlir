@@ -1,11 +1,5 @@
-// RUN: mlir-opt %s \
-// RUN:   --sparsification --sparse-tensor-conversion \
-// RUN:   --convert-vector-to-scf --convert-scf-to-std \
-// RUN:   --func-bufferize --tensor-constant-bufferize --tensor-bufferize \
-// RUN:   --std-bufferize --finalizing-bufferize  \
-// RUN:   --convert-vector-to-llvm --convert-memref-to-llvm --convert-std-to-llvm | \
+// RUN: mlir-opt %s --sparse-compiler | \
 // RUN: TENSOR0="%mlir_integration_test_dir/data/test.mtx" \
-// RUN: TENSOR1="%mlir_integration_test_dir/data/zero.mtx" \
 // RUN: mlir-cpu-runner \
 // RUN:  -e entry -entry-point-result=void  \
 // RUN:  -shared-libs=%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext | \
@@ -45,15 +39,17 @@
 // library.
 module {
   //
-  // A kernel that assigns elements from A to an initially zero X.
+  // A kernel that assigns elements from A to X.
   //
-  func @dense_output(%arga: tensor<?x?xf64, #SparseMatrix>,
-                     %argx: tensor<?x?xf64, #DenseMatrix>
-		     {linalg.inplaceable = true})
-       -> tensor<?x?xf64, #DenseMatrix> {
+  func @dense_output(%arga: tensor<?x?xf64, #SparseMatrix>) -> tensor<?x?xf64, #DenseMatrix> {
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %d0 = tensor.dim %arga, %c0 : tensor<?x?xf64, #SparseMatrix>
+    %d1 = tensor.dim %arga, %c1 : tensor<?x?xf64, #SparseMatrix>
+    %init = sparse_tensor.init [%d0, %d1] : tensor<?x?xf64, #DenseMatrix>
     %0 = linalg.generic #trait_assign
        ins(%arga: tensor<?x?xf64, #SparseMatrix>)
-      outs(%argx: tensor<?x?xf64, #DenseMatrix>) {
+      outs(%init: tensor<?x?xf64, #DenseMatrix>) {
       ^bb(%a: f64, %x: f64):
         linalg.yield %a : f64
     } -> tensor<?x?xf64, #DenseMatrix>
@@ -66,24 +62,18 @@ module {
   // Main driver that reads matrix from file and calls the kernel.
   //
   func @entry() {
-    %d0 = constant 0.0 : f64
-    %c0 = constant 0 : index
-    %c1 = constant 1 : index
+    %d0 = arith.constant 0.0 : f64
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
 
     // Read the sparse matrix from file, construct sparse storage.
     %fileName = call @getTensorFilename(%c0) : (index) -> (!Filename)
     %a = sparse_tensor.new %fileName
       : !Filename to tensor<?x?xf64, #SparseMatrix>
 
-    // Initialize all-dense annotated "sparse" matrix to all zeros.
-    %fileZero = call @getTensorFilename(%c1) : (index) -> (!Filename)
-    %x = sparse_tensor.new %fileZero
-      : !Filename to tensor<?x?xf64, #DenseMatrix>
-
     // Call the kernel.
-    %0 = call @dense_output(%a, %x)
-      : (tensor<?x?xf64, #SparseMatrix>,
-         tensor<?x?xf64, #DenseMatrix>) -> tensor<?x?xf64, #DenseMatrix>
+    %0 = call @dense_output(%a)
+      : (tensor<?x?xf64, #SparseMatrix>) -> tensor<?x?xf64, #DenseMatrix>
 
     //
     // Print the linearized 5x5 result for verification.
@@ -94,6 +84,10 @@ module {
       : tensor<?x?xf64, #DenseMatrix> to memref<?xf64>
     %v = vector.load %m[%c0] : memref<?xf64>, vector<25xf64>
     vector.print %v : vector<25xf64>
+
+    // Release the resources.
+    sparse_tensor.release %a : tensor<?x?xf64, #SparseMatrix>
+    sparse_tensor.release %0 : tensor<?x?xf64, #DenseMatrix>
 
     return
   }

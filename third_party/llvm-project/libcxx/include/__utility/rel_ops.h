@@ -15,7 +15,7 @@
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -55,7 +55,7 @@ operator>=(const _Tp& __x, const _Tp& __y)
     return !(__x < __y);
 }
 
-}  // rel_ops
+} // namespace rel_ops
 
 _LIBCPP_END_NAMESPACE_STD
 

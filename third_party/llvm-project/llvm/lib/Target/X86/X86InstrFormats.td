@@ -296,6 +296,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   // If this is a pseudo instruction, mark it isCodeGenOnly.
   let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
 
+  let HasPositionOrder = 1;
+
   //
   // Attributes specific to X86 instructions...
   //
@@ -750,17 +752,18 @@ class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8PD,
         Requires<[UseSSE42]>;
 
-//   SS42FI - SSE 4.2 instructions with T8XD prefix.
-// NOTE: 'HasSSE42' is used as SS42FI is only used for CRC32 insns.
-class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42]>;
-
 //   SS42AI = SSE 4.2 instructions with TA prefix
 class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TAPD,
         Requires<[UseSSE42]>;
+
+//   CRC32I - SSE 4.2 CRC32 instructions.
+// NOTE: 'HasCRC32' is used as CRC32 instructions are GPR only and not directly
+// controlled by the SSE42 flag.
+class CRC32I<bits<8> o, Format F, dag outs, dag ins, string asm,
+             list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasCRC32]>;
 
 // AVX Instruction Templates:
 //   Instructions introduced in AVX (no SSE equivalent forms)

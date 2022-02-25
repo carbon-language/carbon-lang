@@ -8,6 +8,8 @@
 
 // REQUIRES: locale.en_US.UTF-8
 // XFAIL: LIBCXX-WINDOWS-FIXME
+// XFAIL: LIBCXX-AIX-FIXME
+// XFAIL: libcpp-has-no-wide-characters
 
 // <locale>
 

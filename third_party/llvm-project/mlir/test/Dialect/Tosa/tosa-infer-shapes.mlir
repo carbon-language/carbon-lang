@@ -527,7 +527,7 @@ func @test_padding_no_const(%arg0 : tensor<1x2xf32>, %arg1 : tensor<2x2xi32>) ->
 
 // CHECK-LABEL:@test_padding_dynamic_input
 func @test_padding_dynamic_input(%arg0 : tensor<1x?xf32>) -> () {
-  %0 = constant dense<[[1, 2], [3, 4]]> : tensor<2x2xi32>
+  %0 = arith.constant dense<[[1, 2], [3, 4]]> : tensor<2x2xi32>
   // CHECK: "tosa.pad"(%arg0, %cst) : (tensor<1x?xf32>, tensor<2x2xi32>) -> tensor<4x?xf32>
   %1 = "tosa.pad"(%arg0, %0)  : (tensor<1x?xf32>, tensor<2x2xi32>)  -> (tensor<?x?xf32>)
   return
@@ -537,7 +537,7 @@ func @test_padding_dynamic_input(%arg0 : tensor<1x?xf32>) -> () {
 
 // CHECK-LABEL: @test_padding_simple
 func @test_padding_simple(%arg0 : tensor<1x2xf32>) -> () {
-  %0 = constant dense<[[1, 2], [3, 4]]> : tensor<2x2xi32>
+  %0 = arith.constant dense<[[1, 2], [3, 4]]> : tensor<2x2xi32>
   // CHECK: "tosa.pad"(%arg0, %cst) : (tensor<1x2xf32>, tensor<2x2xi32>) -> tensor<4x9xf32>
   %1 = "tosa.pad"(%arg0, %0)  : (tensor<1x2xf32>, tensor<2x2xi32>)  -> (tensor<?x?xf32>)
   return
@@ -583,7 +583,7 @@ func @test_transpose_perm_unknown(%arg0 : tensor<4x4x5xi32>, %arg1 : tensor<3xi3
 
 // CHECK-LABEL: @test_transpose_static
 func @test_transpose_static(%arg0 : tensor<3x4x5xi32>) -> () {
-  %0 = constant dense<[2, 1, 0]> : tensor<3xi32>
+  %0 = arith.constant dense<[2, 1, 0]> : tensor<3xi32>
   // CHECK: "tosa.transpose"(%arg0, %cst) : (tensor<3x4x5xi32>, tensor<3xi32>) -> tensor<5x4x3xi32>
   %1 = "tosa.transpose"(%arg0, %0) : (tensor<3x4x5xi32>, tensor<3xi32>)  -> (tensor<?x?x?xi32>)
   return
@@ -919,9 +919,27 @@ func @transpose_conv2d_out_shape(%arg0: tensor<2x?x?x3xf32>, %arg1: tensor<5x3x6
 // -----
 
 // CHECK-LABEL: @transpose_conv2d_static
-func @transpose_conv2d_static(%arg0: tensor<2x6x4x3xf32>, %arg1: tensor<5x3x6x3xf32>, %arg2: tensor<5xf32>) {
-  // CHECK: -> tensor<2x8x9x5xf32>
-  %0 = "tosa.transpose_conv2d"(%arg0, %arg1, %arg2) {dilation = [1, 1], out_pad = [0, 0], out_shape = [-1, -1, -1, -1], stride = [1, 1]} : (tensor<2x6x4x3xf32>, tensor<5x3x6x3xf32>, tensor<5xf32>) -> tensor<2x8x9x5xf32>
+func @transpose_conv2d_static(%arg0: tensor<2x16x14x3xf32>, %arg1: tensor<5x3x6x3xf32>, %arg2: tensor<5xf32>) {
+  // CHECK: -> tensor<2x18x19x5xf32>
+  %0 = "tosa.transpose_conv2d"(%arg0, %arg1, %arg2) {dilation = [1, 1], out_pad = [0, 0], out_shape = [-1, -1, -1, -1], stride = [1, 1]} : (tensor<2x16x14x3xf32>, tensor<5x3x6x3xf32>, tensor<5xf32>) -> tensor<2x?x?x5xf32>
+  return
+}
+
+// -----
+
+// CHECK-LABEL: @transpose_conv2d_static_dilated
+func @transpose_conv2d_static_dilated(%arg0: tensor<2x16x14x3xf32>, %arg1: tensor<5x3x6x3xf32>, %arg2: tensor<5xf32>) {
+  // CHECK: -> tensor<2x20x29x5xf32>
+  %0 = "tosa.transpose_conv2d"(%arg0, %arg1, %arg2) {dilation = [2, 3], out_pad = [0, 0], out_shape = [-1, -1, -1, -1], stride = [1, 1]} : (tensor<2x16x14x3xf32>, tensor<5x3x6x3xf32>, tensor<5xf32>) -> tensor<2x?x?x5xf32>
+  return
+}
+
+// -----
+
+// CHECK-LABEL: @transpose_conv2d_static_strided
+func @transpose_conv2d_static_strided(%arg0: tensor<2x16x14x3xf32>, %arg1: tensor<5x3x6x3xf32>, %arg2: tensor<5xf32>) {
+  // CHECK: -> tensor<2x33x45x5xf32>
+  %0 = "tosa.transpose_conv2d"(%arg0, %arg1, %arg2) {dilation = [1, 1], out_pad = [0, 0], out_shape = [-1, -1, -1, -1], stride = [2, 3]} : (tensor<2x16x14x3xf32>, tensor<5x3x6x3xf32>, tensor<5xf32>) -> tensor<2x?x?x5xf32>
   return
 }
 
@@ -1043,14 +1061,16 @@ func @resize_fp_offsetted(%arg0: tensor<1x2x4x1xi32>) {
 
 // CHECK-LABEL: @if_test_simple
 func @if_test_simple(%arg0 : tensor<f32>, %arg1 : tensor<f32>, %arg2 : tensor<i1>) -> () {
+  %a = "tosa.log"(%arg0) : (tensor<f32>) -> tensor<*xf32>
+  %b = "tosa.log"(%arg1) : (tensor<f32>) -> tensor<*xf32>
   // CHECK: (tensor<i1>, tensor<f32>, tensor<f32>) -> tensor<f32>
-  %0 = "tosa.cond_if"(%arg2, %arg0, %arg1) ({
-  ^bb1(%arg3 : tensor<f32>, %arg4 : tensor<f32>):
-    "tosa.yield"(%arg3) : (tensor<f32>) -> ()
+  %0 = "tosa.cond_if"(%arg2, %a, %b) ({
+  ^bb1(%arg3 : tensor<*xf32>, %arg4 : tensor<*xf32>):
+    "tosa.yield"(%arg3) : (tensor<*xf32>) -> ()
   }, {
-  ^bb1(%arg5 : tensor<f32>, %arg6 : tensor<f32>):
-    "tosa.yield"(%arg6) : (tensor<f32>) -> ()
-  }) : (tensor<i1>, tensor<f32>, tensor<f32>) -> (tensor<*xf32>)
+  ^bb1(%arg5 : tensor<*xf32>, %arg6 : tensor<*xf32>):
+    "tosa.yield"(%arg6) : (tensor<*xf32>) -> ()
+  }) : (tensor<i1>, tensor<*xf32>, tensor<*xf32>) -> (tensor<*xf32>)
   return
 }
 
@@ -1098,5 +1118,90 @@ func @if_test_propagate(%arg0 : tensor<f32>, %arg1 : tensor<f32>, %arg2 : tensor
     %1 = "tosa.sub"(%arg5, %arg6) : (tensor<*xf32>, tensor<*xf32>) -> tensor<*xf32>
     "tosa.yield"(%1) : (tensor<*xf32>) -> ()
   }) : (tensor<i1>, tensor<f32>, tensor<f32>) -> (tensor<*xf32>)
+  return
+}
+
+// -----
+
+// CHECK-LABEL: @while_test
+func @while_test(%arg0 : tensor<i32>) -> (tensor<*xi32>) {
+  // CHECK:      "tosa.add" 
+  // CHECK-SAME: (tensor<i32>, tensor<i32>) -> tensor<i32>
+  %0 = "tosa.add"(%arg0, %arg0) : (tensor<i32>, tensor<i32>) -> tensor<*xi32>
+
+  // CHECK:      "tosa.while_loop"
+  %1 = "tosa.while_loop"(%0) ({
+
+  // CHECK:      ^bb0
+  // CHECK-SAME: tensor<i32>
+  ^bb0(%arg2: tensor<*xi32>):
+    %2 = "tosa.const"() {value = dense<3> : tensor<i32>} : () -> tensor<i32>
+    // CHECK:       "tosa.greater_equal"
+    // CHECK-SAME: (tensor<i32>, tensor<i32>) -> tensor<i1>
+    %3 = "tosa.greater_equal"(%2, %arg2) : (tensor<i32>, tensor<*xi32>) -> tensor<*xi1>
+    // CHECK:      "tosa.yield"
+    // CHECK-SAME: tensor<i1>
+    "tosa.yield"(%3) : (tensor<*xi1>) -> ()
+  },  {
+  // CHECK:      ^bb0
+  // CHECK-SAME: tensor<i32>
+  ^bb0(%arg2: tensor<*xi32>):
+    %2 = "tosa.const"() {value = dense<1> : tensor<i32>} : () -> tensor<i32>
+
+    // CHECK:     "tosa.add"
+    // CHECK-SAME: (tensor<i32>, tensor<i32>) -> tensor<i32>
+    %3 = "tosa.add"(%arg2, %2) : (tensor<*xi32>, tensor<i32>) -> tensor<*xi32>
+
+    // CHECK:      "tosa.yield"
+    // CHECK-SAME: tensor<i32>
+    "tosa.yield"(%3) : (tensor<*xi32>) -> ()
+
+  // CHECK:      (tensor<i32>) -> tensor<i32>
+  }) : (tensor<*xi32>) -> (tensor<*xi32>)
+
+  // CHECK:      tensor.cast
+  return %1 : tensor<*xi32>
+}
+
+// -----
+
+// CHECK-LABEL: @while_test
+func @while_test(%arg0 : tensor<i32>, %arg1 : tensor<1xi32>) -> () {
+  // CHECK:      "tosa.while_loop"
+  %1:2 = "tosa.while_loop"(%arg0, %arg1) ({
+
+  // CHECK:      ^bb0
+  // CHECK-SAME: tensor<i32>
+  // CHECK-SAME: tensor<?xi32>
+  ^bb0(%arg2: tensor<*xi32>, %arg3: tensor<*xi32>):
+    %2 = "tosa.const"() {value = dense<3> : tensor<i32>} : () -> tensor<i32>
+
+    // CHECK:       "tosa.greater_equal"
+    // CHECK-SAME: (tensor<i32>, tensor<i32>) -> tensor<i1>
+    %3 = "tosa.greater_equal"(%2, %arg2) : (tensor<i32>, tensor<*xi32>) -> tensor<*xi1>
+    "tosa.yield"(%3) : (tensor<*xi1>) -> ()
+  },  {
+
+  // CHECK:      ^bb0
+  // CHECK-SAME: tensor<i32>
+  // CHECK-SAME: tensor<?xi32>
+  ^bb0(%arg2: tensor<*xi32>, %arg3: tensor<*xi32>):
+    %2 = "tosa.const"() {value = dense<1> : tensor<i32>} : () -> tensor<i32>
+
+    // CHECK:     "tosa.add"
+    // CHECK-SAME: (tensor<i32>, tensor<i32>) -> tensor<i32>
+    %3 = "tosa.add"(%arg2, %2) : (tensor<*xi32>, tensor<i32>) -> tensor<*xi32>
+
+    // CHECK:      "tosa.concat"
+    // CHECK-SAME: (tensor<?xi32>, tensor<?xi32>) -> tensor<?xi32>
+    %4 = "tosa.concat"(%arg3, %arg3) { axis = 0 : i64 } : (tensor<*xi32>, tensor<*xi32>) -> (tensor<*xi32>)
+
+    // CHECK:      "tosa.yield"
+    // CHECK-SAME: tensor<i32>
+    // CHECK-SAME: tensor<?xi32>
+    "tosa.yield"(%3, %4) : (tensor<*xi32>, tensor<*xi32>) -> ()
+
+  // CHECK:      (tensor<i32>, tensor<1xi32>) -> (tensor<i32>, tensor<?xi32>)
+  }) : (tensor<i32>, tensor<1xi32>) -> (tensor<*xi32>, tensor<*xi32>)
   return
 }

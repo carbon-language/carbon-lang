@@ -1,19 +1,19 @@
 // RUN: mlir-opt %s -canonicalize -cse -linalg-comprehensive-module-bufferize |\
-// RUN: mlir-opt -convert-vector-to-scf -lower-affine -convert-linalg-to-loops |\
-// RUN: mlir-opt -canonicalize -convert-scf-to-std -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm | \
+// RUN: mlir-opt -buffer-deallocation -convert-vector-to-scf -lower-affine -convert-linalg-to-loops |\
+// RUN: mlir-opt -canonicalize -convert-scf-to-cf -convert-vector-to-llvm -convert-memref-to-llvm -convert-std-to-llvm -reconcile-unrealized-casts | \
 
 // RUN: mlir-cpu-runner -O3 -e main -entry-point-result=void \
-// RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext |\
+// RUN:   -shared-libs=%mlir_integration_test_dir/libmlir_runner_utils%shlibext,%mlir_integration_test_dir/libmlir_c_runner_utils%shlibext |\
 // RUN: FileCheck %s
 
 #map0 = affine_map<(d0, d1)[s0] -> ((d1 - d0) ceildiv s0)>
 #map1 = affine_map<(d0, d1)[s0] -> ((d0 - d1) ceildiv s0)>
 
 func @init_and_dot(%arg0: tensor<64xf32>, %arg1: tensor<64xf32>, %arg2: tensor<f32> {linalg.inplaceable = true}) -> tensor<f32> {
-  %c64 = constant 64 : index
-  %cst = constant 0.000000e+00 : f32
-  %c2 = constant 2 : index
-  %c0 = constant 0 : index
+  %c64 = arith.constant 64 : index
+  %cst = arith.constant 0.000000e+00 : f32
+  %c2 = arith.constant 2 : index
+  %c0 = arith.constant 0 : index
   %0 = linalg.fill(%cst, %arg2) : f32, tensor<f32> -> tensor<f32>
   %1 = affine.apply #map0(%c0, %c64)[%c2]
   %2 = linalg.init_tensor [%1, 2] : tensor<?x2xf32>
@@ -21,9 +21,9 @@ func @init_and_dot(%arg0: tensor<64xf32>, %arg1: tensor<64xf32>, %arg2: tensor<f
     %8 = affine.apply #map1(%arg3, %c0)[%c2]
     %9 = tensor.extract_slice %arg1[%arg3] [2] [1] : tensor<64xf32> to tensor<2xf32>
     %10 = tensor.cast %9 : tensor<2xf32> to tensor<?xf32>
-    %11 = linalg.pad_tensor %10 low[%c0] high[%c0]  {
-    ^bb0(%arg5: index):  // no predecessors
-      linalg.yield %cst : f32
+    %11 = tensor.pad %10 low[%c0] high[%c0]  {
+    ^bb0(%arg5: index):  
+      tensor.yield %cst : f32
     } : tensor<?xf32> to tensor<2xf32>
     %12 = tensor.insert_slice %11 into %arg4[%8, 0] [1, 2] [1, 1] : tensor<2xf32> into tensor<?x2xf32>
     scf.yield %12 : tensor<?x2xf32>
@@ -38,9 +38,9 @@ func @init_and_dot(%arg0: tensor<64xf32>, %arg1: tensor<64xf32>, %arg2: tensor<f
     %8 = affine.apply #map1(%arg3, %c0)[%c2]
     %9 = tensor.extract_slice %arg0[%arg3] [2] [1] : tensor<64xf32> to tensor<2xf32>
     %10 = tensor.cast %9 : tensor<2xf32> to tensor<?xf32>
-    %11 = linalg.pad_tensor %10 low[%c0] high[%c0]  {
-    ^bb0(%arg5: index):  // no predecessors
-      linalg.yield %cst : f32
+    %11 = tensor.pad %10 low[%c0] high[%c0]  {
+    ^bb0(%arg5: index):  
+      tensor.yield %cst : f32
     } : tensor<?xf32> to tensor<2xf32>
     %12 = tensor.insert_slice %11 into %arg4[%8, 0] [1, 2] [1, 1] : tensor<2xf32> into tensor<?x2xf32>
     scf.yield %12 : tensor<?x2xf32>
@@ -76,9 +76,9 @@ func @init_and_dot(%arg0: tensor<64xf32>, %arg1: tensor<64xf32>, %arg2: tensor<f
 }
 
 func @main() {
-  %v0 = constant 0.0 : f32
-  %v1 = constant 1.0 : f32
-  %v2 = constant 2.0 : f32
+  %v0 = arith.constant 0.0 : f32
+  %v1 = arith.constant 1.0 : f32
+  %v2 = arith.constant 2.0 : f32
 
   %A = linalg.init_tensor [64] : tensor<64xf32>
   %B = linalg.init_tensor [64] : tensor<64xf32>

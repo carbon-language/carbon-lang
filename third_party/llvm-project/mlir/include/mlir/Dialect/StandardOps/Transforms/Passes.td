@@ -11,17 +11,6 @@
 
 include "mlir/Pass/PassBase.td"
 
-def StdBufferize : FunctionPass<"std-bufferize"> {
-  let summary = "Bufferize the std dialect";
-  let constructor = "mlir::createStdBufferizePass()";
-  let dependentDialects = ["memref::MemRefDialect", "scf::SCFDialect"];
-}
-
-def StdExpandOps : FunctionPass<"std-expand"> {
-  let summary = "Legalize std operations to be convertible to LLVM.";
-  let constructor = "mlir::createStdExpandOpsPass()";
-}
-
 def FuncBufferize : Pass<"func-bufferize", "ModuleOp"> {
   let summary = "Bufferize func/call/return ops";
   let description = [{
@@ -47,21 +36,8 @@ def FuncBufferize : Pass<"func-bufferize", "ModuleOp"> {
     whether they need rewriting.
   }];
   let constructor = "mlir::createFuncBufferizePass()";
-  let dependentDialects = ["memref::MemRefDialect"];
-}
-
-def TensorConstantBufferize : Pass<"tensor-constant-bufferize", "ModuleOp"> {
-  let summary = "Bufferize tensor constants.";
-  let description = [{
-    This pass bufferizes tensor constants.
-
-    This pass needs to be a module pass because it inserts memref.global
-    ops into the module, which cannot be done safely from a function pass due to
-    multi-threading. Most other bufferization passes can run in parallel at
-    function granularity.
-  }];
-  let constructor = "mlir::createTensorConstantBufferizePass()";
-  let dependentDialects = ["memref::MemRefDialect"];
+  let dependentDialects = ["bufferization::BufferizationDialect",
+                           "memref::MemRefDialect"];
 }
 
 #endif // MLIR_DIALECT_STANDARD_TRANSFORMS_PASSES

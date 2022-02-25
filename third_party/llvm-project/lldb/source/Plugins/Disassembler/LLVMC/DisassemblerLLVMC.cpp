@@ -21,9 +21,9 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ScopedPrinter.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 
 #include "lldb/Core/Address.h"
@@ -36,6 +36,7 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/DataExtractor.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegularExpression.h"
 #include "lldb/Utility/Stream.h"
@@ -61,6 +62,8 @@ public:
   bool CanBranch(llvm::MCInst &mc_inst) const;
   bool HasDelaySlot(llvm::MCInst &mc_inst) const;
   bool IsCall(llvm::MCInst &mc_inst) const;
+  bool IsLoad(llvm::MCInst &mc_inst) const;
+  bool IsAuthenticated(llvm::MCInst &mc_inst) const;
 
 private:
   MCDisasmInstance(std::unique_ptr<llvm::MCInstrInfo> &&instr_info_up,
@@ -100,6 +103,16 @@ public:
   bool HasDelaySlot() override {
     VisitInstruction();
     return m_has_delay_slot;
+  }
+
+  bool IsLoad() override {
+    VisitInstruction();
+    return m_is_load;
+  }
+
+  bool IsAuthenticated() override {
+    VisitInstruction();
+    return m_is_authenticated;
   }
 
   DisassemblerLLVMC::MCDisasmInstance *GetDisasmToUse(bool &is_alternate_isa) {
@@ -783,8 +796,7 @@ public:
       }
     }
 
-    if (Log *log =
-            lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS)) {
+    if (Log *log = GetLog(LLDBLog::Process)) {
       StreamString ss;
 
       ss.Printf("[%s] expands to %zu operands:\n", operands_string,
@@ -817,9 +829,13 @@ protected:
   //   - Might branch
   //   - Does not have a delay slot
   //   - Is not a call
+  //   - Is not a load
+  //   - Is not an authenticated instruction
   bool m_does_branch = true;
   bool m_has_delay_slot = false;
   bool m_is_call = false;
+  bool m_is_load = false;
+  bool m_is_authenticated = false;
 
   void VisitInstruction() {
     if (m_has_visited_instruction)
@@ -849,6 +865,8 @@ protected:
     m_does_branch = mc_disasm_ptr->CanBranch(inst);
     m_has_delay_slot = mc_disasm_ptr->HasDelaySlot(inst);
     m_is_call = mc_disasm_ptr->IsCall(inst);
+    m_is_load = mc_disasm_ptr->IsLoad(inst);
+    m_is_authenticated = mc_disasm_ptr->IsAuthenticated(inst);
   }
 
 private:
@@ -1027,6 +1045,27 @@ bool DisassemblerLLVMC::MCDisasmInstance::IsCall(llvm::MCInst &mc_inst) const {
   return m_instr_info_up->get(mc_inst.getOpcode()).isCall();
 }
 
+bool DisassemblerLLVMC::MCDisasmInstance::IsLoad(llvm::MCInst &mc_inst) const {
+  return m_instr_info_up->get(mc_inst.getOpcode()).mayLoad();
+}
+
+bool DisassemblerLLVMC::MCDisasmInstance::IsAuthenticated(
+    llvm::MCInst &mc_inst) const {
+  auto InstrDesc = m_instr_info_up->get(mc_inst.getOpcode());
+
+  // Treat software auth traps (brk 0xc470 + aut key, where 0x70 == 'p', 0xc4
+  // == 'a' + 'c') as authenticated instructions for reporting purposes, in
+  // addition to the standard authenticated instructions specified in ARMv8.3.
+  bool IsBrkC47x = false;
+  if (InstrDesc.isTrap() && mc_inst.getNumOperands() == 1) {
+    const llvm::MCOperand &Op0 = mc_inst.getOperand(0);
+    if (Op0.isImm() && Op0.getImm() >= 0xc470 && Op0.getImm() <= 0xc474)
+      IsBrkC47x = true;
+  }
+
+  return InstrDesc.isAuthenticated() || IsBrkC47x;
+}
+
 DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
                                      const char *flavor_string)
     : Disassembler(arch, flavor_string), m_exe_ctx(nullptr), m_inst(nullptr),
@@ -1058,21 +1097,21 @@ DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
       thumb_arch_name.erase(0, 3);
       thumb_arch_name.insert(0, "thumb");
     } else {
-      thumb_arch_name = "thumbv8.7a";
+      thumb_arch_name = "thumbv9.3a";
     }
     thumb_arch.GetTriple().setArchName(llvm::StringRef(thumb_arch_name));
   }
 
   // If no sub architecture specified then use the most recent arm architecture
-  // so the disassembler will return all instruction. Without it we will see a
-  // lot of unknow opcode in case the code uses instructions which are not
-  // available in the oldest arm version (used when no sub architecture is
-  // specified)
+  // so the disassembler will return all instructions. Without it we will see a
+  // lot of unknown opcodes if the code uses instructions which are not
+  // available in the oldest arm version (which is used when no sub architecture
+  // is specified).
   if (triple.getArch() == llvm::Triple::arm &&
       triple.getSubArch() == llvm::Triple::NoSubArch)
-    triple.setArchName("armv8.7a");
+    triple.setArchName("armv9.3a");
 
-  std::string features_str = "";
+  std::string features_str;
   const char *triple_str = triple.getTriple().c_str();
 
   // ARM Cortex M0-M7 devices only execute thumb instructions
@@ -1140,9 +1179,9 @@ DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
   }
 
   // If any AArch64 variant, enable latest ISA with any optional
-  // extensions like SVE.
+  // extensions like MTE.
   if (triple.isAArch64()) {
-    features_str += "+v8.7a,+sve2,+mte";
+    features_str += "+v9.3a,+mte";
 
     if (triple.getVendor() == llvm::Triple::Apple)
       cpu = "apple-latest";
@@ -1254,11 +1293,6 @@ void DisassemblerLLVMC::Initialize() {
 
 void DisassemblerLLVMC::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
-}
-
-ConstString DisassemblerLLVMC::GetPluginNameStatic() {
-  static ConstString g_name("llvm-mc");
-  return g_name;
 }
 
 int DisassemblerLLVMC::OpInfoCallback(void *disassembler, uint64_t pc,
@@ -1422,8 +1456,3 @@ const char *DisassemblerLLVMC::SymbolLookup(uint64_t value, uint64_t *type_ptr,
   *name = nullptr;
   return nullptr;
 }
-
-// PluginInterface protocol
-ConstString DisassemblerLLVMC::GetPluginName() { return GetPluginNameStatic(); }
-
-uint32_t DisassemblerLLVMC::GetPluginVersion() { return 1; }

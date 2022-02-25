@@ -91,8 +91,6 @@ public:
                    FileID PrevFID = FileID()) override;
   void FileSkipped(const FileEntryRef &SkippedFile, const Token &FilenameTok,
                    SrcMgr::CharacteristicKind FileType) override;
-  bool FileNotFound(llvm::StringRef FileName,
-                    llvm::SmallVectorImpl<char> &RecoveryPath) override;
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                           llvm::StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange, const FileEntry *File,
@@ -121,7 +119,7 @@ public:
                         diag::Severity mapping, llvm::StringRef Str) override;
   void PragmaOpenCLExtension(SourceLocation NameLoc, const IdentifierInfo *Name,
                              SourceLocation StateLoc, unsigned State) override;
-  void PragmaWarning(SourceLocation Loc, llvm::StringRef WarningSpec,
+  void PragmaWarning(SourceLocation Loc, PragmaWarningSpecifier WarningSpec,
                      llvm::ArrayRef<int> Ids) override;
   void PragmaWarningPush(SourceLocation Loc, int Level) override;
   void PragmaWarningPop(SourceLocation Loc) override;

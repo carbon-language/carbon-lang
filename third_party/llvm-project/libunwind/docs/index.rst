@@ -77,7 +77,7 @@ and `Getting started with LLVM <https://llvm.org/docs/GettingStarted.html>`__.
 **Bug Reports**
 
 If you think you've found a bug in libunwind, please report it using
-the `LLVM Bugzilla`_. If you're not sure, you
+the `LLVM bug tracker`_. If you're not sure, you
 can post a message to the `cfe-dev mailing list`_ or on IRC.
 Please include "libunwind" in your subject.
 
@@ -98,7 +98,7 @@ Please include [libunwind] in the subject.
 Quick Links
 ===========
 * `LLVM Homepage <https://llvm.org/>`_
-* `LLVM Bugzilla <https://bugs.llvm.org/>`_
+* `LLVM bug tracker <https://github.com/llvm/llvm-project/labels/libunwind/>`_
 * `cfe-commits Mailing List`_
 * `cfe-dev Mailing List`_
 * `Browse libunwind Sources <https://github.com/llvm/llvm-project/blob/main/libunwind/>`_

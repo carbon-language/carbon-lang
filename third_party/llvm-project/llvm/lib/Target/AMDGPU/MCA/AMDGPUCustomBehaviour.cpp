@@ -15,7 +15,7 @@
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "SIInstrInfo.h"
 #include "TargetInfo/AMDGPUTargetInfo.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/WithColor.h"
 
 namespace llvm {
@@ -120,8 +120,7 @@ unsigned AMDGPUCustomBehaviour::handleWaitCnt(ArrayRef<InstRef> IssuedInst,
 
   // We will now look at each of the currently executing instructions
   // to find out if this wait instruction still needs to wait.
-  for (auto I = IssuedInst.begin(), E = IssuedInst.end(); I != E; I++) {
-    const InstRef &PrevIR = *I;
+  for (const InstRef &PrevIR : IssuedInst) {
     const Instruction &PrevInst = *PrevIR.getInstruction();
     const unsigned PrevInstIndex = PrevIR.getSourceIndex() % SrcMgr.size();
     const WaitCntInfo &PrevInstWaitInfo = InstrWaitCntInfo[PrevInstIndex];

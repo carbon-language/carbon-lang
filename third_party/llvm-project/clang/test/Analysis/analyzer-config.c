@@ -15,6 +15,7 @@
 // CHECK-NEXT: apiModeling.StdCLibraryFunctions:DisplayLoadedSummaries = false
 // CHECK-NEXT: apiModeling.StdCLibraryFunctions:ModelPOSIX = false
 // CHECK-NEXT: apply-fixits = false
+// CHECK-NEXT: assume-controlled-environment = false
 // CHECK-NEXT: avoid-suppressing-null-argument-paths = false
 // CHECK-NEXT: c++-allocator-inlining = true
 // CHECK-NEXT: c++-container-inlining = false
@@ -31,6 +32,7 @@
 // CHECK-NEXT: cfg-rich-constructors = true
 // CHECK-NEXT: cfg-scopes = false
 // CHECK-NEXT: cfg-temporary-dtors = true
+// CHECK-NEXT: consider-single-element-arrays-as-flexible-array-members = false
 // CHECK-NEXT: core.CallAndMessage:ArgInitializedness = true
 // CHECK-NEXT: core.CallAndMessage:ArgPointeeInitializedness = false
 // CHECK-NEXT: core.CallAndMessage:CXXDeallocationArg = true
@@ -81,6 +83,8 @@
 // CHECK-NEXT: exploration_strategy = unexplored_first_queue
 // CHECK-NEXT: faux-bodies = true
 // CHECK-NEXT: graph-trim-interval = 1000
+// CHECK-NEXT: ignore-bison-generated-files = true
+// CHECK-NEXT: ignore-flex-generated-files = true
 // CHECK-NEXT: inline-lambdas = true
 // CHECK-NEXT: ipa = dynamic-bifurcate
 // CHECK-NEXT: ipa-always-inline-size = 3
@@ -111,12 +115,13 @@
 // CHECK-NEXT: serialize-stats = false
 // CHECK-NEXT: silence-checkers = ""
 // CHECK-NEXT: stable-report-filename = false
+// CHECK-NEXT: support-symbolic-integer-casts = false
 // CHECK-NEXT: suppress-c++-stdlib = true
 // CHECK-NEXT: suppress-inlined-defensive-checks = true
 // CHECK-NEXT: suppress-null-return-paths = true
 // CHECK-NEXT: track-conditions = true
 // CHECK-NEXT: track-conditions-debug = false
-// CHECK-NEXT: unix.DynamicMemoryModeling:AddNoOwnershipChangeNotes = false
+// CHECK-NEXT: unix.DynamicMemoryModeling:AddNoOwnershipChangeNotes = true
 // CHECK-NEXT: unix.DynamicMemoryModeling:Optimistic = false
 // CHECK-NEXT: unroll-loops = false
 // CHECK-NEXT: verbose-report-filename = false

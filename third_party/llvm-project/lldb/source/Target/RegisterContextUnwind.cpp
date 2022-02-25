@@ -32,6 +32,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/DataBufferHeap.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/lldb-private.h"
@@ -112,7 +113,7 @@ bool RegisterContextUnwind::IsUnwindPlanValidForCurrentPC(
 // zeroth frame or currently executing frame.
 
 void RegisterContextUnwind::InitializeZerothFrame() {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
+  Log *log = GetLog(LLDBLog::Unwind);
   ExecutionContext exe_ctx(m_thread.shared_from_this());
   RegisterContextSP reg_ctx_sp = m_thread.GetRegisterContext();
 
@@ -303,7 +304,7 @@ void RegisterContextUnwind::InitializeZerothFrame() {
 // RegisterContextUnwind "below" it to provide things like its current pc value.
 
 void RegisterContextUnwind::InitializeNonZerothFrame() {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
+  Log *log = GetLog(LLDBLog::Unwind);
   if (IsFrameZero()) {
     m_frame_type = eNotAValidFrame;
     UnwindLogMsg("non-zeroth frame tests positive for IsFrameZero -- that "
@@ -893,13 +894,22 @@ UnwindPlanSP RegisterContextUnwind::GetFullUnwindPlanForFrame() {
     return arch_default_unwind_plan_sp;
   }
 
-  // If we're in _sigtramp(), unwinding past this frame requires special
-  // knowledge.  On Mac OS X this knowledge is properly encoded in the eh_frame
-  // section, so prefer that if available. On other platforms we may need to
-  // provide a platform-specific UnwindPlan which encodes the details of how to
-  // unwind out of sigtramp.
   if (m_frame_type == eTrapHandlerFrame && process) {
     m_fast_unwind_plan_sp.reset();
+
+    // On some platforms the unwind information for signal handlers is not
+    // present or correct. Give the platform plugins a chance to provide
+    // substitute plan. Otherwise, use eh_frame.
+    if (m_sym_ctx_valid) {
+      lldb::PlatformSP platform = process->GetTarget().GetPlatform();
+      unwind_plan_sp = platform->GetTrapHandlerUnwindPlan(
+          process->GetTarget().GetArchitecture().GetTriple(),
+          GetSymbolOrFunctionName(m_sym_ctx));
+
+      if (unwind_plan_sp)
+        return unwind_plan_sp;
+    }
+
     unwind_plan_sp =
         func_unwinders_sp->GetEHFrameUnwindPlan(process->GetTarget());
     if (!unwind_plan_sp)
@@ -1238,7 +1248,7 @@ enum UnwindLLDB::RegisterSearchResult
 RegisterContextUnwind::SavedLocationForRegister(
     uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc) {
   RegisterNumber regnum(m_thread, eRegisterKindLLDB, lldb_regnum);
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
+  Log *log = GetLog(LLDBLog::Unwind);
 
   // Have we already found this register location?
   if (!m_registers.empty()) {
@@ -1500,7 +1510,7 @@ RegisterContextUnwind::SavedLocationForRegister(
                    regnum.GetName(), regnum.GetAsKind(eRegisterKindLLDB));
       return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     } else {
-      std::string unwindplan_name("");
+      std::string unwindplan_name;
       if (m_full_unwind_plan_sp) {
         unwindplan_name += "via '";
         unwindplan_name += m_full_unwind_plan_sp->GetSourceName().AsCString();
@@ -2315,7 +2325,7 @@ bool RegisterContextUnwind::ReadPC(addr_t &pc) {
 }
 
 void RegisterContextUnwind::UnwindLogMsg(const char *fmt, ...) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
+  Log *log = GetLog(LLDBLog::Unwind);
   if (log) {
     va_list args;
     va_start(args, fmt);
@@ -2337,7 +2347,7 @@ void RegisterContextUnwind::UnwindLogMsg(const char *fmt, ...) {
 }
 
 void RegisterContextUnwind::UnwindLogMsgVerbose(const char *fmt, ...) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
+  Log *log = GetLog(LLDBLog::Unwind);
   if (log && log->GetVerbose()) {
     va_list args;
     va_start(args, fmt);

@@ -20,7 +20,6 @@ class SendSignalTestCase(TestBase):
 
     @expectedFailureNetBSD(bugnumber='llvm.org/pr43959')
     @skipIfWindows  # Windows does not support signals
-    @skipIfReproducer # FIXME: Unexpected packet during (active) replay
     def test_with_run_command(self):
         """Test that lldb command 'process signal SIGUSR1' sends a signal to the inferior process."""
         self.build()
@@ -95,6 +94,10 @@ class SendSignalTestCase(TestBase):
         self.assertEqual(
             thread.GetStopReasonDataAtIndex(0), lldbutil.get_signal_number('SIGUSR1'),
             "The stop signal was SIGUSR1")
+
+        self.match("statistics dump",
+                   [r'"signals": \[', r'"SIGUSR1": 1'])
+
 
     def match_state(self, process_listener, expected_state):
         num_seconds = 5

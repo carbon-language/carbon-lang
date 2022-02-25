@@ -15,6 +15,7 @@
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/IRObjectFile.h"
 #include "llvm/Object/MachO.h"
@@ -77,7 +78,7 @@ const char *const *LIPO_nullptr = nullptr;
 #include "LipoOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info LipoInfoTable[] = {
+const opt::OptTable::Info LipoInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {LIPO_##PREFIX, NAME,      HELPTEXT,                                         \

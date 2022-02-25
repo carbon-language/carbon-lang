@@ -162,6 +162,10 @@ let TargetPrefix = "aarch64" in {  // All intrinsics start with "llvm.aarch64.".
                 [LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty],
                 [IntrNoMem]>;
 
+  class AdvSIMD_3IntArg_Intrinsic
+    : DefaultAttrsIntrinsic<[llvm_anyint_ty],
+                [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
+                [IntrNoMem]>;
   class AdvSIMD_3VectorArg_Intrinsic
       : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
                [LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>],
@@ -257,6 +261,9 @@ let TargetPrefix = "aarch64", IntrProperties = [IntrNoMem] in {
   def int_aarch64_neon_sqrdmulh : AdvSIMD_2IntArg_Intrinsic;
   def int_aarch64_neon_sqrdmulh_lane : AdvSIMD_2VectorArg_Lane_Intrinsic;
   def int_aarch64_neon_sqrdmulh_laneq : AdvSIMD_2VectorArg_Lane_Intrinsic;
+
+  def int_aarch64_neon_sqrdmlah : AdvSIMD_3IntArg_Intrinsic;
+  def int_aarch64_neon_sqrdmlsh : AdvSIMD_3IntArg_Intrinsic;
 
   // Vector Polynominal Multiply
   def int_aarch64_neon_pmul : AdvSIMD_2VectorArg_Intrinsic;
@@ -890,6 +897,14 @@ def int_aarch64_stgp  : DefaultAttrsIntrinsic<[], [llvm_ptr_ty, llvm_i64_ty, llv
     [IntrWriteMem, IntrArgMemOnly, NoCapture<ArgIndex<0>>, WriteOnly<ArgIndex<0>>]>;
 }
 
+//===----------------------------------------------------------------------===//
+// Memory Operations (MOPS) Intrinsics
+let TargetPrefix = "aarch64" in {
+  // Sizes are chosen to correspond to the llvm.memset intrinsic: ptr, i8, i64
+  def int_aarch64_mops_memset_tag : DefaultAttrsIntrinsic<[llvm_ptr_ty], [llvm_ptr_ty, llvm_i8_ty, llvm_i64_ty],
+      [IntrWriteMem, IntrArgMemOnly, NoCapture<ArgIndex<0>>, WriteOnly<ArgIndex<0>>]>;
+}
+
 // Transactional Memory Extension (TME) Intrinsics
 let TargetPrefix = "aarch64" in {
 def int_aarch64_tstart  : GCCBuiltin<"__builtin_arm_tstart">,
@@ -958,6 +973,25 @@ let TargetPrefix = "aarch64" in {  // All intrinsics start with "llvm.aarch64.".
 
   class AdvSIMD_1Vec_PredLoad_Intrinsic
     : DefaultAttrsIntrinsic<[llvm_anyvector_ty],
+                [LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                 LLVMPointerToElt<0>],
+                [IntrReadMem, IntrArgMemOnly]>;
+
+  class AdvSIMD_2Vec_PredLoad_Intrinsic
+    : DefaultAttrsIntrinsic<[llvm_anyvector_ty, LLVMMatchType<0>],
+                [LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                 LLVMPointerToElt<0>],
+                [IntrReadMem, IntrArgMemOnly]>;
+
+  class AdvSIMD_3Vec_PredLoad_Intrinsic
+    : DefaultAttrsIntrinsic<[llvm_anyvector_ty, LLVMMatchType<0>, LLVMMatchType<0>],
+                [LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
+                 LLVMPointerToElt<0>],
+                [IntrReadMem, IntrArgMemOnly]>;
+
+  class AdvSIMD_4Vec_PredLoad_Intrinsic
+    : DefaultAttrsIntrinsic<[llvm_anyvector_ty, LLVMMatchType<0>, LLVMMatchType<0>,
+                 LLVMMatchType<0>],
                 [LLVMScalarOrSameVectorWidth<0, llvm_i1_ty>,
                  LLVMPointerToElt<0>],
                 [IntrReadMem, IntrArgMemOnly]>;
@@ -1365,7 +1399,7 @@ let TargetPrefix = "aarch64" in {  // All intrinsics start with "llvm.aarch64.".
 
   // This class of intrinsics are not intended to be useful within LLVM IR but
   // are instead here to support some of the more regid parts of the ACLE.
-  class Builtin_SVCVT<string name, LLVMType OUT, LLVMType PRED, LLVMType IN>
+  class Builtin_SVCVT<LLVMType OUT, LLVMType PRED, LLVMType IN>
       : DefaultAttrsIntrinsic<[OUT], [OUT, PRED, IN], [IntrNoMem]>;
 }
 
@@ -1534,6 +1568,10 @@ def int_aarch64_sve_ld1   : AdvSIMD_1Vec_PredLoad_Intrinsic;
 def int_aarch64_sve_ld2 : AdvSIMD_ManyVec_PredLoad_Intrinsic;
 def int_aarch64_sve_ld3 : AdvSIMD_ManyVec_PredLoad_Intrinsic;
 def int_aarch64_sve_ld4 : AdvSIMD_ManyVec_PredLoad_Intrinsic;
+
+def int_aarch64_sve_ld2_sret : AdvSIMD_2Vec_PredLoad_Intrinsic;
+def int_aarch64_sve_ld3_sret : AdvSIMD_3Vec_PredLoad_Intrinsic;
+def int_aarch64_sve_ld4_sret : AdvSIMD_4Vec_PredLoad_Intrinsic;
 
 def int_aarch64_sve_ldnt1 : AdvSIMD_1Vec_PredLoad_Intrinsic;
 def int_aarch64_sve_ldnf1 : AdvSIMD_1Vec_PredLoad_WriteFFR_Intrinsic;
@@ -1957,44 +1995,44 @@ def int_aarch64_sve_fcmpgt : AdvSIMD_SVE_Compare_Intrinsic;
 def int_aarch64_sve_fcmpne : AdvSIMD_SVE_Compare_Intrinsic;
 def int_aarch64_sve_fcmpuo : AdvSIMD_SVE_Compare_Intrinsic;
 
-def int_aarch64_sve_fcvtzs_i32f16   : Builtin_SVCVT<"svcvt_s32_f16_m", llvm_nxv4i32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvtzs_i32f64   : Builtin_SVCVT<"svcvt_s32_f64_m", llvm_nxv4i32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
-def int_aarch64_sve_fcvtzs_i64f16   : Builtin_SVCVT<"svcvt_s64_f16_m", llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvtzs_i64f32   : Builtin_SVCVT<"svcvt_s64_f32_m", llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvtzs_i32f16   : Builtin_SVCVT<llvm_nxv4i32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvtzs_i32f64   : Builtin_SVCVT<llvm_nxv4i32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvtzs_i64f16   : Builtin_SVCVT<llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvtzs_i64f32   : Builtin_SVCVT<llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
 
-def int_aarch64_sve_fcvt_bf16f32    : Builtin_SVCVT<"svcvt_bf16_f32_m",   llvm_nxv8bf16_ty, llvm_nxv8i1_ty, llvm_nxv4f32_ty>;
-def int_aarch64_sve_fcvtnt_bf16f32  : Builtin_SVCVT<"svcvtnt_bf16_f32_m", llvm_nxv8bf16_ty, llvm_nxv8i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvt_bf16f32    : Builtin_SVCVT<llvm_nxv8bf16_ty, llvm_nxv8i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvtnt_bf16f32  : Builtin_SVCVT<llvm_nxv8bf16_ty, llvm_nxv8i1_ty, llvm_nxv4f32_ty>;
 
-def int_aarch64_sve_fcvtzu_i32f16   : Builtin_SVCVT<"svcvt_u32_f16_m", llvm_nxv4i32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvtzu_i32f64   : Builtin_SVCVT<"svcvt_u32_f64_m", llvm_nxv4i32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
-def int_aarch64_sve_fcvtzu_i64f16   : Builtin_SVCVT<"svcvt_u64_f16_m", llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvtzu_i64f32   : Builtin_SVCVT<"svcvt_u64_f32_m", llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvtzu_i32f16   : Builtin_SVCVT<llvm_nxv4i32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvtzu_i32f64   : Builtin_SVCVT<llvm_nxv4i32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvtzu_i64f16   : Builtin_SVCVT<llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvtzu_i64f32   : Builtin_SVCVT<llvm_nxv2i64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
 
-def int_aarch64_sve_fcvt_f16f32     : Builtin_SVCVT<"svcvt_f16_f32_m", llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4f32_ty>;
-def int_aarch64_sve_fcvt_f16f64     : Builtin_SVCVT<"svcvt_f16_f64_m", llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
-def int_aarch64_sve_fcvt_f32f64     : Builtin_SVCVT<"svcvt_f32_f64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvt_f16f32     : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvt_f16f64     : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvt_f32f64     : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
 
-def int_aarch64_sve_fcvt_f32f16     : Builtin_SVCVT<"svcvt_f32_f16_m", llvm_nxv4f32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvt_f64f16     : Builtin_SVCVT<"svcvt_f64_f16_m", llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvt_f64f32     : Builtin_SVCVT<"svcvt_f64_f32_m", llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvt_f32f16     : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvt_f64f16     : Builtin_SVCVT<llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvt_f64f32     : Builtin_SVCVT<llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
 
-def int_aarch64_sve_fcvtlt_f32f16   : Builtin_SVCVT<"svcvtlt_f32_f16_m", llvm_nxv4f32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
-def int_aarch64_sve_fcvtlt_f64f32   : Builtin_SVCVT<"svcvtlt_f64_f32_m", llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
-def int_aarch64_sve_fcvtnt_f16f32   : Builtin_SVCVT<"svcvtnt_f16_f32_m", llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4f32_ty>;
-def int_aarch64_sve_fcvtnt_f32f64   : Builtin_SVCVT<"svcvtnt_f32_f64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvtlt_f32f16   : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv4i1_ty, llvm_nxv8f16_ty>;
+def int_aarch64_sve_fcvtlt_f64f32   : Builtin_SVCVT<llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvtnt_f16f32   : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4f32_ty>;
+def int_aarch64_sve_fcvtnt_f32f64   : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
 
-def int_aarch64_sve_fcvtx_f32f64    : Builtin_SVCVT<"svcvtx_f32_f64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
-def int_aarch64_sve_fcvtxnt_f32f64  : Builtin_SVCVT<"svcvtxnt_f32_f64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvtx_f32f64    : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
+def int_aarch64_sve_fcvtxnt_f32f64  : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2f64_ty>;
 
-def int_aarch64_sve_scvtf_f16i32    : Builtin_SVCVT<"svcvt_f16_s32_m", llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4i32_ty>;
-def int_aarch64_sve_scvtf_f16i64    : Builtin_SVCVT<"svcvt_f16_s64_m", llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
-def int_aarch64_sve_scvtf_f32i64    : Builtin_SVCVT<"svcvt_f32_s64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
-def int_aarch64_sve_scvtf_f64i32    : Builtin_SVCVT<"svcvt_f64_s32_m", llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4i32_ty>;
+def int_aarch64_sve_scvtf_f16i32    : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4i32_ty>;
+def int_aarch64_sve_scvtf_f16i64    : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
+def int_aarch64_sve_scvtf_f32i64    : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
+def int_aarch64_sve_scvtf_f64i32    : Builtin_SVCVT<llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4i32_ty>;
 
-def int_aarch64_sve_ucvtf_f16i32    : Builtin_SVCVT<"svcvt_f16_u32_m", llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4i32_ty>;
-def int_aarch64_sve_ucvtf_f16i64    : Builtin_SVCVT<"svcvt_f16_u64_m", llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
-def int_aarch64_sve_ucvtf_f32i64    : Builtin_SVCVT<"svcvt_f32_u64_m", llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
-def int_aarch64_sve_ucvtf_f64i32    : Builtin_SVCVT<"svcvt_f64_u32_m", llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4i32_ty>;
+def int_aarch64_sve_ucvtf_f16i32    : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv4i1_ty, llvm_nxv4i32_ty>;
+def int_aarch64_sve_ucvtf_f16i64    : Builtin_SVCVT<llvm_nxv8f16_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
+def int_aarch64_sve_ucvtf_f32i64    : Builtin_SVCVT<llvm_nxv4f32_ty, llvm_nxv2i1_ty, llvm_nxv2i64_ty>;
+def int_aarch64_sve_ucvtf_f64i32    : Builtin_SVCVT<llvm_nxv2f64_ty, llvm_nxv2i1_ty, llvm_nxv4i32_ty>;
 
 //
 // Predicate creation

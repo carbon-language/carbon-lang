@@ -427,7 +427,7 @@ and let the debugger present ``optimized out`` to the developer. Withholding
 these potentially stale variable values from the developer diminishes the
 amount of available debug information, but increases the reliability of the
 remaining information.
- 
+
 To illustrate some potential issues, consider the following example:
 
 .. code-block:: llvm
@@ -797,7 +797,7 @@ presents several difficulties:
   entry:
     br i1 %cond, label %truebr, label %falsebr
 
-  bb1: 
+  bb1:
     %value = phi i32 [ %value1, %truebr ], [ %value2, %falsebr ]
     br label %exit, !dbg !26
 
@@ -813,7 +813,7 @@ presents several difficulties:
     %value = add i32 %input, 2
     br label %bb1
 
-  exit: 
+  exit:
     ret i32 %value, !dbg !30
   }
 
@@ -1068,7 +1068,7 @@ and this will materialize an additional DWARF attribute as:
 
 .. code-block:: text
 
-  DW_TAG_subprogram [3]  
+  DW_TAG_subprogram [3]
      DW_AT_low_pc [DW_FORM_addr]     (0x0000000000000010 ".text")
      DW_AT_high_pc [DW_FORM_data4]   (0x00000001)
      ...
@@ -1086,6 +1086,10 @@ a Fortran front-end would generate the following descriptors:
 
   !DILocalVariable(name: "string", arg: 1, scope: !10, file: !3, line: 4, type: !15)
   !DIStringType(name: "character(*)!2", stringLength: !16, stringLengthExpression: !DIExpression(), size: 32)
+  
+A fortran deferred-length character can also contain the information of raw storage of the characters in addition to the length of the string. This information is encoded in the  stringLocationExpression field. Based on this information, DW_AT_data_location attribute is emitted in a DW_TAG_string_type debug info. 
+
+  !DIStringType(name: "character(*)!2", stringLengthExpression: !DIExpression(), stringLocationExpression: !DIExpression(DW_OP_push_object_address, DW_OP_deref), size: 32)
 
 and this will materialize in DWARF tags as:
 
@@ -1097,6 +1101,7 @@ and this will materialize in DWARF tags as:
    0x00000064:    DW_TAG_variable
                   DW_AT_location      (DW_OP_fbreg +16)
                   DW_AT_type  (0x00000083 "integer*8")
+                  DW_AT_data_location (DW_OP_push_object_address, DW_OP_deref)
                   ...
                   DW_AT_artificial    (true)
 
@@ -1881,6 +1886,7 @@ tag is one of:
 * DW_TAG_subrange_type
 * DW_TAG_base_type
 * DW_TAG_const_type
+* DW_TAG_immutable_type
 * DW_TAG_file_type
 * DW_TAG_namelist
 * DW_TAG_packed_type

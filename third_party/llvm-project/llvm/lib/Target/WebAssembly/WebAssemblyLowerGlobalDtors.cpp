@@ -26,6 +26,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include <map>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "wasm-lower-global-dtors"
@@ -68,7 +70,7 @@ bool LowerGlobalDtors::runOnModule(Module &M) {
   if (!InitList)
     return false;
 
-  // Sanity-check @llvm.global_dtor's type.
+  // Validate @llvm.global_dtor's type.
   auto *ETy = dyn_cast<StructType>(InitList->getType()->getElementType());
   if (!ETy || ETy->getNumElements() != 3 ||
       !ETy->getTypeAtIndex(0U)->isIntegerTy() ||

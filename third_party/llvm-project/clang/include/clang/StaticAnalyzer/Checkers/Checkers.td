@@ -73,6 +73,7 @@ def Taint : Package<"taint">, ParentPackage<SecurityAlpha>;
 
 def CERT : Package<"cert">, ParentPackage<SecurityAlpha>;
 def POS : Package<"pos">, ParentPackage<CERT>;
+def ENV : Package<"env">, ParentPackage<CERT>;
 
 def Unix : Package<"unix">;
 def UnixAlpha : Package<"unix">, ParentPackage<Alpha>;
@@ -375,6 +376,11 @@ def TrustNonnullChecker : Checker<"TrustNonnull">,
            "are not null">,
   Documentation<NotDocumented>;
 
+def TrustReturnsNonnullChecker : Checker<"TrustReturnsNonnull">,
+  HelpText<"Trust that returns from methods annotated with returns_nonnull "
+           "are not null">,
+  Documentation<NotDocumented>;
+
 } // end "apiModeling"
 
 //===----------------------------------------------------------------------===//
@@ -493,8 +499,8 @@ def DynamicMemoryModeling: Checker<"DynamicMemoryModeling">,
                   "that neither deallocated it, or have taken responsibility "
                   "of the ownership are noted, similarly to "
                   "NoStoreFuncVisitor.",
-                  "false",
-                  InAlpha,
+                  "true",
+                  Released,
                   Hide>
   ]>,
   Dependencies<[CStringModeling]>,
@@ -551,7 +557,7 @@ def StdCLibraryFunctionArgsChecker : Checker<"StdCLibraryFunctionArgs">,
            "or is EOF.">,
   Dependencies<[StdCLibraryFunctionsChecker]>,
   WeakDependencies<[CallAndMessageChecker, NonNullParamChecker, StreamChecker]>,
-  Documentation<NotDocumented>;
+  Documentation<HasAlphaDocumentation>;
 
 } // end "alpha.unix"
 
@@ -601,6 +607,10 @@ def SmartPtrModeling: Checker<"SmartPtrModeling">,
                   Hide>,
   ]>,
   Hidden;
+
+def StringChecker: Checker<"StringChecker">,
+  HelpText<"Checks C++ std::string bugs">,
+  Documentation<HasDocumentation>;
 
 def MoveChecker: Checker<"Move">,
   HelpText<"Find use-after-move bugs in C++">,
@@ -946,6 +956,14 @@ let ParentPackage = POS in {
   Documentation<HasDocumentation>;
 
 } // end "alpha.cert.pos"
+
+let ParentPackage = ENV in {
+
+  def InvalidPtrChecker : Checker<"InvalidPtr">,
+  HelpText<"Finds usages of possibly invalidated pointers">,
+  Documentation<HasDocumentation>;
+
+} // end "alpha.cert.env"
 
 let ParentPackage = SecurityAlpha in {
 

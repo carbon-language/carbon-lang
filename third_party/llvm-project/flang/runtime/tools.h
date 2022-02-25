@@ -9,11 +9,11 @@
 #ifndef FORTRAN_RUNTIME_TOOLS_H_
 #define FORTRAN_RUNTIME_TOOLS_H_
 
-#include "cpp-type.h"
-#include "descriptor.h"
-#include "memory.h"
 #include "terminator.h"
 #include "flang/Common/long-double.h"
+#include "flang/Runtime/cpp-type.h"
+#include "flang/Runtime/descriptor.h"
+#include "flang/Runtime/memory.h"
 #include <functional>
 #include <map>
 #include <type_traits>
@@ -55,6 +55,15 @@ inline bool IsLogicalElementTrue(
 void CheckConformability(const Descriptor &to, const Descriptor &x,
     Terminator &, const char *funcName, const char *toName,
     const char *fromName);
+
+// Helper to store integer value in result[at].
+template <int KIND> struct StoreIntegerAt {
+  void operator()(const Fortran::runtime::Descriptor &result, std::size_t at,
+      std::int64_t value) const {
+    *result.ZeroBasedIndexedElement<Fortran::runtime::CppTypeFor<
+        Fortran::common::TypeCategory::Integer, KIND>>(at) = value;
+  }
+};
 
 // Validate a KIND= argument
 void CheckIntegerKind(Terminator &, int kind, const char *intrinsic);
@@ -333,6 +342,13 @@ std::optional<std::pair<TypeCategory, int>> inline constexpr GetResultType(
   }
   return std::nullopt;
 }
+
+// Accumulate floating-point results in (at least) double precision
+template <TypeCategory CAT, int KIND>
+using AccumulationType = CppTypeFor<CAT,
+    CAT == TypeCategory::Real || CAT == TypeCategory::Complex
+        ? std::max(KIND, static_cast<int>(sizeof(double)))
+        : KIND>;
 
 } // namespace Fortran::runtime
 #endif // FORTRAN_RUNTIME_TOOLS_H_

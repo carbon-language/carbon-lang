@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AArch64InstrInfo.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "MCTargetDesc/AArch64InstPrinter.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include "MCTargetDesc/AArch64TargetStreamer.h"
 #include "TargetInfo/AArch64TargetInfo.h"
-#include "AArch64InstrInfo.h"
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -40,15 +40,16 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetOptions.h"
-#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SMLoc.h"
+#include "llvm/Support/AArch64TargetParser.h"
 #include "llvm/Support/TargetParser.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cctype>
@@ -156,7 +157,8 @@ private:
 
   bool parseSysAlias(StringRef Name, SMLoc NameLoc, OperandVector &Operands);
   void createSysAlias(uint16_t Encoding, OperandVector &Operands, SMLoc S);
-  AArch64CC::CondCode parseCondCodeString(StringRef Cond);
+  AArch64CC::CondCode parseCondCodeString(StringRef Cond,
+                                          std::string &Suggestion);
   bool parseCondCode(OperandVector &Operands, bool invertCondCode);
   unsigned matchRegisterNameAlias(StringRef Name, RegKind Kind);
   bool parseRegister(OperandVector &Operands);
@@ -1031,12 +1033,7 @@ public:
     if (DarwinRefKind != MCSymbolRefExpr::VK_None)
       return false;
 
-    for (unsigned i = 0; i != AllowedModifiers.size(); ++i) {
-      if (ELFRefKind == AllowedModifiers[i])
-        return true;
-    }
-
-    return false;
+    return llvm::is_contained(AllowedModifiers, ELFRefKind);
   }
 
   bool isMovWSymbolG3() const {
@@ -1511,7 +1508,7 @@ public:
   }
 
   bool isAdrpLabel() const {
-    // Validation was handled during parsing, so we just sanity check that
+    // Validation was handled during parsing, so we just verify that
     // something didn't go haywire.
     if (!isImm())
         return false;
@@ -1527,7 +1524,7 @@ public:
   }
 
   bool isAdrLabel() const {
-    // Validation was handled during parsing, so we just sanity check that
+    // Validation was handled during parsing, so we just verify that
     // something didn't go haywire.
     if (!isImm())
         return false;
@@ -3033,8 +3030,10 @@ AArch64AsmParser::tryParseImmWithOptionalShift(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-/// parseCondCodeString - Parse a Condition Code string.
-AArch64CC::CondCode AArch64AsmParser::parseCondCodeString(StringRef Cond) {
+/// parseCondCodeString - Parse a Condition Code string, optionally returning a
+/// suggestion to help common typos.
+AArch64CC::CondCode
+AArch64AsmParser::parseCondCodeString(StringRef Cond, std::string &Suggestion) {
   AArch64CC::CondCode CC = StringSwitch<AArch64CC::CondCode>(Cond.lower())
                     .Case("eq", AArch64CC::EQ)
                     .Case("ne", AArch64CC::NE)
@@ -3057,7 +3056,7 @@ AArch64CC::CondCode AArch64AsmParser::parseCondCodeString(StringRef Cond) {
                     .Default(AArch64CC::Invalid);
 
   if (CC == AArch64CC::Invalid &&
-      getSTI().getFeatureBits()[AArch64::FeatureSVE])
+      getSTI().getFeatureBits()[AArch64::FeatureSVE]) {
     CC = StringSwitch<AArch64CC::CondCode>(Cond.lower())
                     .Case("none",  AArch64CC::EQ)
                     .Case("any",   AArch64CC::NE)
@@ -3071,6 +3070,9 @@ AArch64CC::CondCode AArch64AsmParser::parseCondCodeString(StringRef Cond) {
                     .Case("tstop", AArch64CC::LT)
                     .Default(AArch64CC::Invalid);
 
+    if (CC == AArch64CC::Invalid && Cond.lower() == "nfirst")
+      Suggestion = "nfrst";
+  }
   return CC;
 }
 
@@ -3082,9 +3084,14 @@ bool AArch64AsmParser::parseCondCode(OperandVector &Operands,
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
   StringRef Cond = Tok.getString();
-  AArch64CC::CondCode CC = parseCondCodeString(Cond);
-  if (CC == AArch64CC::Invalid)
-    return TokError("invalid condition code");
+  std::string Suggestion;
+  AArch64CC::CondCode CC = parseCondCodeString(Cond, Suggestion);
+  if (CC == AArch64CC::Invalid) {
+    std::string Msg = "invalid condition code";
+    if (!Suggestion.empty())
+      Msg += ", did you mean " + Suggestion + "?";
+    return TokError(Msg);
+  }
   Lex(); // Eat identifier token.
 
   if (invertCondCode) {
@@ -3289,6 +3296,8 @@ static const struct Extension {
     {"sme", {AArch64::FeatureSME}},
     {"sme-f64", {AArch64::FeatureSMEF64}},
     {"sme-i64", {AArch64::FeatureSMEI64}},
+    {"hbc", {AArch64::FeatureHBC}},
+    {"mops", {AArch64::FeatureMOPS}},
     // FIXME: Unsupported extensions
     {"lor", {}},
     {"rdma", {}},
@@ -3296,6 +3305,8 @@ static const struct Extension {
 };
 
 static void setRequiredFeatureString(FeatureBitset FBS, std::string &Str) {
+  if (FBS[AArch64::HasV8_0aOps])
+    Str += "ARMv8a";
   if (FBS[AArch64::HasV8_1aOps])
     Str += "ARMv8.1a";
   else if (FBS[AArch64::HasV8_2aOps])
@@ -3310,6 +3321,18 @@ static void setRequiredFeatureString(FeatureBitset FBS, std::string &Str) {
     Str += "ARMv8.6a";
   else if (FBS[AArch64::HasV8_7aOps])
     Str += "ARMv8.7a";
+  else if (FBS[AArch64::HasV8_8aOps])
+    Str += "ARMv8.8a";
+  else if (FBS[AArch64::HasV9_0aOps])
+    Str += "ARMv9-a";
+  else if (FBS[AArch64::HasV9_1aOps])
+    Str += "ARMv9.1a";
+  else if (FBS[AArch64::HasV9_2aOps])
+    Str += "ARMv9.2a";
+  else if (FBS[AArch64::HasV9_3aOps])
+    Str += "ARMv9.3a";
+  else if (FBS[AArch64::HasV8_0rOps])
+    Str += "ARMv8r";
   else {
     SmallVector<std::string, 2> ExtMatches;
     for (const auto& Ext : ExtensionMap) {
@@ -3345,7 +3368,7 @@ void AArch64AsmParser::createSysAlias(uint16_t Encoding, OperandVector &Operands
 /// the SYS instruction. Parse them specially so that we create a SYS MCInst.
 bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
                                    OperandVector &Operands) {
-  if (Name.find('.') != StringRef::npos)
+  if (Name.contains('.'))
     return TokError("invalid operand");
 
   Mnemonic = Name;
@@ -4526,16 +4549,21 @@ bool AArch64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
   Mnemonic = Head;
 
   // Handle condition codes for a branch mnemonic
-  if (Head == "b" && Next != StringRef::npos) {
+  if ((Head == "b" || Head == "bc") && Next != StringRef::npos) {
     Start = Next;
     Next = Name.find('.', Start + 1);
     Head = Name.slice(Start + 1, Next);
 
     SMLoc SuffixLoc = SMLoc::getFromPointer(NameLoc.getPointer() +
                                             (Head.data() - Name.data()));
-    AArch64CC::CondCode CC = parseCondCodeString(Head);
-    if (CC == AArch64CC::Invalid)
-      return Error(SuffixLoc, "invalid condition code");
+    std::string Suggestion;
+    AArch64CC::CondCode CC = parseCondCodeString(Head, Suggestion);
+    if (CC == AArch64CC::Invalid) {
+      std::string Msg = "invalid condition code";
+      if (!Suggestion.empty())
+        Msg += ", did you mean " + Suggestion + "?";
+      return Error(SuffixLoc, Msg);
+    }
     Operands.push_back(AArch64Operand::CreateToken(".", SuffixLoc, getContext(),
                                                    /*IsSuffix=*/true));
     Operands.push_back(
@@ -4857,6 +4885,177 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
   }
   }
 
+  // Check v8.8-A memops instructions.
+  switch (Inst.getOpcode()) {
+  case AArch64::CPYFP:
+  case AArch64::CPYFPWN:
+  case AArch64::CPYFPRN:
+  case AArch64::CPYFPN:
+  case AArch64::CPYFPWT:
+  case AArch64::CPYFPWTWN:
+  case AArch64::CPYFPWTRN:
+  case AArch64::CPYFPWTN:
+  case AArch64::CPYFPRT:
+  case AArch64::CPYFPRTWN:
+  case AArch64::CPYFPRTRN:
+  case AArch64::CPYFPRTN:
+  case AArch64::CPYFPT:
+  case AArch64::CPYFPTWN:
+  case AArch64::CPYFPTRN:
+  case AArch64::CPYFPTN:
+  case AArch64::CPYFM:
+  case AArch64::CPYFMWN:
+  case AArch64::CPYFMRN:
+  case AArch64::CPYFMN:
+  case AArch64::CPYFMWT:
+  case AArch64::CPYFMWTWN:
+  case AArch64::CPYFMWTRN:
+  case AArch64::CPYFMWTN:
+  case AArch64::CPYFMRT:
+  case AArch64::CPYFMRTWN:
+  case AArch64::CPYFMRTRN:
+  case AArch64::CPYFMRTN:
+  case AArch64::CPYFMT:
+  case AArch64::CPYFMTWN:
+  case AArch64::CPYFMTRN:
+  case AArch64::CPYFMTN:
+  case AArch64::CPYFE:
+  case AArch64::CPYFEWN:
+  case AArch64::CPYFERN:
+  case AArch64::CPYFEN:
+  case AArch64::CPYFEWT:
+  case AArch64::CPYFEWTWN:
+  case AArch64::CPYFEWTRN:
+  case AArch64::CPYFEWTN:
+  case AArch64::CPYFERT:
+  case AArch64::CPYFERTWN:
+  case AArch64::CPYFERTRN:
+  case AArch64::CPYFERTN:
+  case AArch64::CPYFET:
+  case AArch64::CPYFETWN:
+  case AArch64::CPYFETRN:
+  case AArch64::CPYFETN:
+  case AArch64::CPYP:
+  case AArch64::CPYPWN:
+  case AArch64::CPYPRN:
+  case AArch64::CPYPN:
+  case AArch64::CPYPWT:
+  case AArch64::CPYPWTWN:
+  case AArch64::CPYPWTRN:
+  case AArch64::CPYPWTN:
+  case AArch64::CPYPRT:
+  case AArch64::CPYPRTWN:
+  case AArch64::CPYPRTRN:
+  case AArch64::CPYPRTN:
+  case AArch64::CPYPT:
+  case AArch64::CPYPTWN:
+  case AArch64::CPYPTRN:
+  case AArch64::CPYPTN:
+  case AArch64::CPYM:
+  case AArch64::CPYMWN:
+  case AArch64::CPYMRN:
+  case AArch64::CPYMN:
+  case AArch64::CPYMWT:
+  case AArch64::CPYMWTWN:
+  case AArch64::CPYMWTRN:
+  case AArch64::CPYMWTN:
+  case AArch64::CPYMRT:
+  case AArch64::CPYMRTWN:
+  case AArch64::CPYMRTRN:
+  case AArch64::CPYMRTN:
+  case AArch64::CPYMT:
+  case AArch64::CPYMTWN:
+  case AArch64::CPYMTRN:
+  case AArch64::CPYMTN:
+  case AArch64::CPYE:
+  case AArch64::CPYEWN:
+  case AArch64::CPYERN:
+  case AArch64::CPYEN:
+  case AArch64::CPYEWT:
+  case AArch64::CPYEWTWN:
+  case AArch64::CPYEWTRN:
+  case AArch64::CPYEWTN:
+  case AArch64::CPYERT:
+  case AArch64::CPYERTWN:
+  case AArch64::CPYERTRN:
+  case AArch64::CPYERTN:
+  case AArch64::CPYET:
+  case AArch64::CPYETWN:
+  case AArch64::CPYETRN:
+  case AArch64::CPYETN: {
+    unsigned Xd_wb = Inst.getOperand(0).getReg();
+    unsigned Xs_wb = Inst.getOperand(1).getReg();
+    unsigned Xn_wb = Inst.getOperand(2).getReg();
+    unsigned Xd = Inst.getOperand(3).getReg();
+    unsigned Xs = Inst.getOperand(4).getReg();
+    unsigned Xn = Inst.getOperand(5).getReg();
+    if (Xd_wb != Xd)
+      return Error(Loc[0],
+                   "invalid CPY instruction, Xd_wb and Xd do not match");
+    if (Xs_wb != Xs)
+      return Error(Loc[0],
+                   "invalid CPY instruction, Xs_wb and Xs do not match");
+    if (Xn_wb != Xn)
+      return Error(Loc[0],
+                   "invalid CPY instruction, Xn_wb and Xn do not match");
+    if (Xd == Xs)
+      return Error(Loc[0], "invalid CPY instruction, destination and source"
+                           " registers are the same");
+    if (Xd == Xn)
+      return Error(Loc[0], "invalid CPY instruction, destination and size"
+                           " registers are the same");
+    if (Xs == Xn)
+      return Error(Loc[0], "invalid CPY instruction, source and size"
+                           " registers are the same");
+    break;
+  }
+  case AArch64::SETP:
+  case AArch64::SETPT:
+  case AArch64::SETPN:
+  case AArch64::SETPTN:
+  case AArch64::SETM:
+  case AArch64::SETMT:
+  case AArch64::SETMN:
+  case AArch64::SETMTN:
+  case AArch64::SETE:
+  case AArch64::SETET:
+  case AArch64::SETEN:
+  case AArch64::SETETN:
+  case AArch64::SETGP:
+  case AArch64::SETGPT:
+  case AArch64::SETGPN:
+  case AArch64::SETGPTN:
+  case AArch64::SETGM:
+  case AArch64::SETGMT:
+  case AArch64::SETGMN:
+  case AArch64::SETGMTN:
+  case AArch64::MOPSSETGE:
+  case AArch64::MOPSSETGET:
+  case AArch64::MOPSSETGEN:
+  case AArch64::MOPSSETGETN: {
+    unsigned Xd_wb = Inst.getOperand(0).getReg();
+    unsigned Xn_wb = Inst.getOperand(1).getReg();
+    unsigned Xd = Inst.getOperand(2).getReg();
+    unsigned Xn = Inst.getOperand(3).getReg();
+    unsigned Xm = Inst.getOperand(4).getReg();
+    if (Xd_wb != Xd)
+      return Error(Loc[0],
+                   "invalid SET instruction, Xd_wb and Xd do not match");
+    if (Xn_wb != Xn)
+      return Error(Loc[0],
+                   "invalid SET instruction, Xn_wb and Xn do not match");
+    if (Xd == Xn)
+      return Error(Loc[0], "invalid SET instruction, destination and size"
+                           " registers are the same");
+    if (Xd == Xm)
+      return Error(Loc[0], "invalid SET instruction, destination and source"
+                           " registers are the same");
+    if (Xn == Xm)
+      return Error(Loc[0], "invalid SET instruction, source and size"
+                           " registers are the same");
+    break;
+  }
+  }
 
   // Now check immediate ranges. Separate from the above as there is overlap
   // in the instructions being checked and this keeps the nested conditionals
@@ -5058,6 +5257,8 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
     return Error(Loc, "index must be a multiple of 8 in range [0, 32760].");
   case Match_InvalidMemoryIndexed16:
     return Error(Loc, "index must be a multiple of 16 in range [0, 65520].");
+  case Match_InvalidImm0_0:
+    return Error(Loc, "immediate must be 0.");
   case Match_InvalidImm0_1:
     return Error(Loc, "immediate must be an integer in range [0, 1].");
   case Match_InvalidImm0_3:
@@ -5102,6 +5303,8 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
   case Match_InvalidSVECpyImm64:
     return Error(Loc, "immediate must be an integer in range [-128, 127] or a "
                       "multiple of 256 in range [-32768, 32512]");
+  case Match_InvalidIndexRange0_0:
+    return Error(Loc, "expected lane specifier '[0]'");
   case Match_InvalidIndexRange1_1:
     return Error(Loc, "expected lane specifier '[1]'");
   case Match_InvalidIndexRange0_15:
@@ -5690,6 +5893,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMemoryIndexedSImm9:
   case Match_InvalidMemoryIndexed16SImm9:
   case Match_InvalidMemoryIndexed8SImm10:
+  case Match_InvalidImm0_0:
   case Match_InvalidImm0_1:
   case Match_InvalidImm0_3:
   case Match_InvalidImm0_7:
@@ -5711,6 +5915,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidSVECpyImm16:
   case Match_InvalidSVECpyImm32:
   case Match_InvalidSVECpyImm64:
+  case Match_InvalidIndexRange0_0:
   case Match_InvalidIndexRange1_1:
   case Match_InvalidIndexRange0_15:
   case Match_InvalidIndexRange0_7:
@@ -5920,6 +6125,11 @@ static void ExpandCryptoAEK(AArch64::ArchKind ArchKind,
     case AArch64::ArchKind::ARMV8_5A:
     case AArch64::ArchKind::ARMV8_6A:
     case AArch64::ArchKind::ARMV8_7A:
+    case AArch64::ArchKind::ARMV8_8A:
+    case AArch64::ArchKind::ARMV9A:
+    case AArch64::ArchKind::ARMV9_1A:
+    case AArch64::ArchKind::ARMV9_2A:
+    case AArch64::ArchKind::ARMV9_3A:
     case AArch64::ArchKind::ARMV8R:
       RequestedExtensions.push_back("sm4");
       RequestedExtensions.push_back("sha3");
@@ -5942,6 +6152,10 @@ static void ExpandCryptoAEK(AArch64::ArchKind ArchKind,
     case AArch64::ArchKind::ARMV8_5A:
     case AArch64::ArchKind::ARMV8_6A:
     case AArch64::ArchKind::ARMV8_7A:
+    case AArch64::ArchKind::ARMV8_8A:
+    case AArch64::ArchKind::ARMV9A:
+    case AArch64::ArchKind::ARMV9_1A:
+    case AArch64::ArchKind::ARMV9_2A:
       RequestedExtensions.push_back("nosm4");
       RequestedExtensions.push_back("nosha3");
       RequestedExtensions.push_back("nosha2");

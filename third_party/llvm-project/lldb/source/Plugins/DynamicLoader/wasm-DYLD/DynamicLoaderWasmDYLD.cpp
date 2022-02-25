@@ -14,6 +14,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 
 using namespace lldb;
@@ -30,12 +31,7 @@ void DynamicLoaderWasmDYLD::Initialize() {
                                 GetPluginDescriptionStatic(), CreateInstance);
 }
 
-ConstString DynamicLoaderWasmDYLD::GetPluginNameStatic() {
-  static ConstString g_plugin_name("wasm-dyld");
-  return g_plugin_name;
-}
-
-const char *DynamicLoaderWasmDYLD::GetPluginDescriptionStatic() {
+llvm::StringRef DynamicLoaderWasmDYLD::GetPluginDescriptionStatic() {
   return "Dynamic loader plug-in that watches for shared library "
          "loads/unloads in WebAssembly engines.";
 }
@@ -56,7 +52,7 @@ DynamicLoader *DynamicLoaderWasmDYLD::CreateInstance(Process *process,
 }
 
 void DynamicLoaderWasmDYLD::DidAttach() {
-  Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+  Log *log = GetLog(LLDBLog::DynamicLoader);
   LLDB_LOGF(log, "DynamicLoaderWasmDYLD::%s()", __FUNCTION__);
 
   // Ask the process for the list of loaded WebAssembly modules.

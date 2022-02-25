@@ -17,6 +17,8 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/SMLoc.h"
 #include <cassert>
@@ -34,7 +36,6 @@ struct X86Operand final : public MCParsedAsmOperand {
   StringRef SymName;
   void *OpDecl;
   bool AddressOf;
-  bool CallOperand;
 
   struct TokOp {
     const char *Data;
@@ -79,7 +80,7 @@ struct X86Operand final : public MCParsedAsmOperand {
 
   X86Operand(KindTy K, SMLoc Start, SMLoc End)
       : Kind(K), StartLoc(Start), EndLoc(End), OpDecl(nullptr),
-        AddressOf(false), CallOperand(false) {}
+        AddressOf(false) {}
 
   StringRef getSymName() override { return SymName; }
   void *getOpDecl() override { return OpDecl; }
@@ -285,6 +286,12 @@ struct X86Operand final : public MCParsedAsmOperand {
   }
 
   bool isOffsetOfLocal() const override { return isImm() && Imm.LocalRef; }
+
+  bool isMemPlaceholder(const MCInstrDesc &Desc) const override {
+    // Only MS InlineAsm uses global variables with registers rather than
+    // rip/eip.
+    return isMem() && !Mem.DefaultBaseReg && Mem.FrontendSize;
+  }
 
   bool needAddressOf() const override { return AddressOf; }
 

@@ -63,9 +63,18 @@ def add_version_header(tc):
 # ================  ============================================================
 feature_test_macros = [ add_version_header(x) for x in [
   {
+    "name": "__cpp_lib_adaptor_iterator_pair_constructor",
+    "values": { "c++2b": 202106 },
+    "headers": ["queue", "stack"],
+  }, {
     "name": "__cpp_lib_addressof_constexpr",
     "values": { "c++17": 201603 },
     "headers": ["memory"],
+  }, {
+    "name": "__cpp_lib_allocate_at_least",
+    "values": { "c++2b": 202106 },
+    "headers": ["memory"],
+    "unimplemented": True,
   }, {
     "name": "__cpp_lib_allocator_traits_is_always_equal",
     "values": { "c++17": 201411 },
@@ -87,6 +96,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "values": { "c++17": 201510 },
     "headers": ["utility"],
   }, {
+    "name": "__cpp_lib_associative_heterogeneous_erasure",
+    "values": { "c++2b": 202110 },
+    "headers": ["map", "set", "unordered_map", "unordered_set"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_assume_aligned",
     "values": { "c++20": 201811 },
     "headers": ["memory"],
@@ -95,59 +109,50 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_atomic_flag_test",
     "values": { "c++20": 201907 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
   }, {
     "name": "__cpp_lib_atomic_float",
     "values": { "c++20": 201711 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
     "unimplemented": True,
   }, {
     "name": "__cpp_lib_atomic_is_always_lock_free",
     "values": { "c++17": 201603 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
   }, {
     "name": "__cpp_lib_atomic_lock_free_type_aliases",
     "values": { "c++20": 201907 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
   }, {
     "name": "__cpp_lib_atomic_ref",
     "values": { "c++20": 201806 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
     "unimplemented": True,
   }, {
     "name": "__cpp_lib_atomic_shared_ptr",
     "values": { "c++20": 201711 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
     "unimplemented": True,
   }, {
     "name": "__cpp_lib_atomic_value_initialization",
     "values": { "c++20": 201911 },
     "headers": ["atomic", "memory"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS)",
   }, {
     "name": "__cpp_lib_atomic_wait",
     "values": { "c++20": 201907 },
     "headers": ["atomic"],
-    "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS) && !defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_atomic_wait)",
-    "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS) && !defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_atomic_wait)",
+    "test_suite_guard": "!defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_atomic_wait)",
+    "libcxx_guard": "!defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_atomic_wait)",
   }, {
     "name": "__cpp_lib_barrier",
     "values": { "c++20": 201907 },
     "headers": ["barrier"],
     "test_suite_guard": "!defined(_LIBCPP_HAS_NO_THREADS) && !defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_barrier)",
     "libcxx_guard": "!defined(_LIBCPP_HAS_NO_THREADS) && !defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_barrier)",
+  }, {
+    "name": "__cpp_lib_bind_back",
+    "values": { "c++2b": 202202 },
+    "headers": ["functional"],
+    "unimplemented": True,
   }, {
     "name": "__cpp_lib_bind_front",
     "values": { "c++20": 201907 },
@@ -156,7 +161,6 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_bit_cast",
     "values": { "c++20": 201806 },
     "headers": ["bit"],
-    "unimplemented": True,
   }, {
     "name": "__cpp_lib_bitops",
     "values": { "c++20": 201907 },
@@ -179,6 +183,10 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_byte",
     "values": { "c++17": 201603 },
     "headers": ["cstddef"],
+  }, {
+    "name": "__cpp_lib_byteswap",
+    "values": { "c++2b": 202110 },
+    "headers": ["bit"],
   }, {
     "name": "__cpp_lib_char8_t",
     "values": { "c++20": 201811 },
@@ -209,6 +217,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_constexpr_algorithms",
     "values": { "c++20": 201806 },
     "headers": ["algorithm"],
+  }, {
+    "name": "__cpp_lib_constexpr_cmath",
+    "values": { "c++2b": 202202 },
+    "headers": ["cmath", "cstdlib"],
+    "unimplemented": True,
   }, {
     "name": "__cpp_lib_constexpr_complex",
     "values": { "c++20": 201711 },
@@ -247,6 +260,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "values": { "c++20": 201811 },
     "headers": ["tuple"],
   }, {
+    "name": "__cpp_lib_constexpr_typeinfo",
+    "values": { "c++2b": 202106 },
+    "headers": ["typeinfo"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_constexpr_utility",
     "values": { "c++20": 201811 },
     "headers": ["utility"],
@@ -259,7 +277,6 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_coroutine",
     "values": { "c++20": 201902 },
     "headers": ["coroutine"],
-    "unimplemented": True,
   }, {
     "name": "__cpp_lib_destroying_delete",
     "values": { "c++20": 201806 },
@@ -295,7 +312,7 @@ feature_test_macros = [ add_version_header(x) for x in [
     "libcxx_guard": "!defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_filesystem)"
   }, {
     "name": "__cpp_lib_format",
-    "values": { "c++20": 201907 },
+    "values": { "c++20": 202106 },
     "headers": ["format"],
     "test_suite_guard": "!defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_format)",
     "libcxx_guard": "!defined(_LIBCPP_AVAILABILITY_DISABLE_FTM___cpp_lib_format)",
@@ -355,6 +372,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_invoke",
     "values": { "c++17": 201411 },
     "headers": ["functional"],
+  }, {
+    "name": "__cpp_lib_invoke_r",
+    "values": { "c++2b": 202106 },
+    "headers": ["functional"],
+    "unimplemented": True,
   }, {
     "name": "__cpp_lib_is_aggregate",
     "values": { "c++17": 201703 },
@@ -455,6 +477,15 @@ feature_test_macros = [ add_version_header(x) for x in [
     "headers": ["memory_resource"],
     "unimplemented": True,
   }, {
+    "name": "__cpp_lib_monadic_optional",
+    "values": { "c++2b": 202110 },
+    "headers": ["optional"],
+  }, {
+    "name": "__cpp_lib_move_only_function",
+    "values": { "c++2b": 202110 },
+    "headers": ["functional"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_node_extract",
     "values": { "c++17": 201606 },
     "headers": ["map", "set", "unordered_map", "unordered_set"],
@@ -475,6 +506,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "values": { "c++17": 201606 },
     "headers": ["optional"],
   }, {
+    "name": "__cpp_lib_out_ptr",
+    "values": { "c++2b": 202106 },
+    "headers": ["memory"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_parallel_algorithm",
     "values": { "c++17": 201603 },
     "headers": ["algorithm", "numeric"],
@@ -482,7 +518,7 @@ feature_test_macros = [ add_version_header(x) for x in [
   }, {
     "name": "__cpp_lib_polymorphic_allocator",
     "values": { "c++20": 201902 },
-    "headers": ["memory"],
+    "headers": ["memory_resource"],
     "unimplemented": True,
   }, {
     "name": "__cpp_lib_quoted_string_io",
@@ -494,9 +530,54 @@ feature_test_macros = [ add_version_header(x) for x in [
     "headers": ["algorithm", "functional", "iterator", "memory", "ranges"],
     "unimplemented": True,
   }, {
+    "name": "__cpp_lib_ranges_chunk",
+    "values": { "c++2b": 202202 },
+    "headers": ["ranges"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_chunk_by",
+    "values": { "c++2b": 202202 },
+    "headers": ["ranges"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_iota",
+    "values": { "c++2b": 202202 },
+    "headers": ["numeric"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_join_with",
+    "values": { "c++2b": 202202 },
+    "headers": ["ranges"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_slide",
+    "values": { "c++2b": 202202 },
+    "headers": ["ranges"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_starts_ends_with",
+    "values": { "c++2b": 202106 },
+    "headers": ["algorithm"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_to_container",
+    "values": { "c++2b": 202202 },
+    "headers": ["deque", "forward_list", "list", "map", "priority_queue", "queue", "set", "stack", "string", "unordered_map", "unordered_set", "vector"],
+    "unimplemented": True,
+  }, {
+    "name": "__cpp_lib_ranges_zip",
+    "values": { "c++2b": 202110 },
+    "headers": ["ranges", "tuple", "utility"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_raw_memory_algorithms",
     "values": { "c++17": 201606 },
     "headers": ["memory"],
+  }, {
+    "name": "__cpp_lib_reference_from_temporary",
+    "values": { "c++2b": 202202 },
+    "headers": ["type_traits"],
+    "unimplemented": True,
   }, {
     "name": "__cpp_lib_remove_cvref",
     "values": { "c++20": 201711 },
@@ -562,6 +643,11 @@ feature_test_macros = [ add_version_header(x) for x in [
     "values": { "c++20": 202002 },
     "headers": ["span"],
   }, {
+    "name": "__cpp_lib_spanstream",
+    "values": { "c++2b": 202106 },
+    "headers": ["spanstream"],
+    "unimplemented": True,
+  }, {
     "name": "__cpp_lib_ssize",
     "values": { "c++20": 201902 },
     "headers": ["iterator"],
@@ -583,6 +669,10 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_string_contains",
     "values": { "c++2b": 202011 },
     "headers": ["string", "string_view"],
+  }, {
+    "name": "__cpp_lib_string_resize_and_overwrite",
+    "values": { "c++2b": 202110 },
+    "headers": ["string"],
   }, {
     "name": "__cpp_lib_string_udls",
     "values": { "c++14": 201304 },
@@ -612,7 +702,7 @@ feature_test_macros = [ add_version_header(x) for x in [
   }, {
     "name": "__cpp_lib_to_chars",
     "values": { "c++17": 201611 },
-    "headers": ["utility"],
+    "headers": ["charconv"],
     "unimplemented": True,
   }, {
     "name": "__cpp_lib_to_underlying",
@@ -635,6 +725,10 @@ feature_test_macros = [ add_version_header(x) for x in [
     "values": { "c++14": 201304 },
     "headers": ["tuple", "utility"],
   }, {
+    "name": "__cpp_lib_type_identity",
+    "values": { "c++20": 201806 },
+    "headers": ["type_traits"],
+  }, {
     "name": "__cpp_lib_type_trait_variable_templates",
     "values": { "c++17": 201510 },
     "headers": ["type_traits"],
@@ -646,6 +740,10 @@ feature_test_macros = [ add_version_header(x) for x in [
     "name": "__cpp_lib_unordered_map_try_emplace",
     "values": { "c++17": 201411 },
     "headers": ["unordered_map"],
+  }, {
+    "name": "__cpp_lib_unreachable",
+    "values": { "c++2b": 202202 },
+    "headers": ["utility"],
   }, {
     "name": "__cpp_lib_unwrap_ref",
     "values": { "c++20": 201811 },
@@ -669,24 +767,26 @@ assert all(all(key in ["name", "values", "headers", "libcxx_guard", "test_suite_
 # Map from each header to the Lit annotations that should be used for
 # tests that include that header.
 #
-# For example, when threads are not supported, any feature-test-macro test
-# that includes <thread> should be marked as UNSUPPORTED, because including
-# <thread> is a hard error in that case.
+# For example, when threads are not supported, any test that includes
+# <thread> should be marked as UNSUPPORTED, because including <thread>
+# is a hard error in that case.
 lit_markup = {
-  "atomic": ["UNSUPPORTED: libcpp-has-no-threads"],
   "barrier": ["UNSUPPORTED: libcpp-has-no-threads"],
   "filesystem": ["UNSUPPORTED: libcpp-has-no-filesystem-library"],
   "format": ["UNSUPPORTED: libcpp-has-no-incomplete-format"],
   "iomanip": ["UNSUPPORTED: libcpp-has-no-localization"],
+  "ios": ["UNSUPPORTED: libcpp-has-no-localization"],
+  "iostream": ["UNSUPPORTED: libcpp-has-no-localization"],
   "istream": ["UNSUPPORTED: libcpp-has-no-localization"],
   "latch": ["UNSUPPORTED: libcpp-has-no-threads"],
   "locale": ["UNSUPPORTED: libcpp-has-no-localization"],
+  "mutex": ["UNSUPPORTED: libcpp-has-no-threads"],
   "ostream": ["UNSUPPORTED: libcpp-has-no-localization"],
   "ranges": ["UNSUPPORTED: libcpp-has-no-incomplete-ranges"],
   "regex": ["UNSUPPORTED: libcpp-has-no-localization"],
   "semaphore": ["UNSUPPORTED: libcpp-has-no-threads"],
   "shared_mutex": ["UNSUPPORTED: libcpp-has-no-threads"],
-  "thread": ["UNSUPPORTED: libcpp-has-no-threads"],
+  "thread": ["UNSUPPORTED: libcpp-has-no-threads"]
 }
 
 def get_std_dialects():
@@ -823,7 +923,7 @@ def produce_version_synopsis():
 
 def produce_version_header():
   template="""// -*- C++ -*-
-//===--------------------------- version ----------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -844,7 +944,7 @@ def produce_version_header():
 #include <__config>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 // clang-format off
@@ -1096,8 +1196,8 @@ Status
 ======
 
 .. table:: Current Status
-     :name: feature-status-table
-     :widths: auto
+    :name: feature-status-table
+    :widths: auto
 
 {status_tables}
 

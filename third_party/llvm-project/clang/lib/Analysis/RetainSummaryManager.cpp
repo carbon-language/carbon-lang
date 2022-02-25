@@ -397,8 +397,7 @@ const RetainSummary *RetainSummaryManager::getSummaryForObjCOrCFObject(
                                 ArgEffect(DoNothing), ArgEffect(DoNothing));
   } else if (FName.startswith("NSLog")) {
     return getDoNothingSummary();
-  } else if (FName.startswith("NS") &&
-             (FName.find("Insert") != StringRef::npos)) {
+  } else if (FName.startswith("NS") && FName.contains("Insert")) {
     // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
     // be deallocated by NSMapRemove. (radar://11152419)
     ScratchArgs = AF.add(ScratchArgs, 1, ArgEffect(StopTracking));
@@ -792,7 +791,7 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
   // Unary functions have no arg effects by definition.
   ArgEffects ScratchArgs(AF.getEmptyMap());
 
-  // Sanity check that this is *really* a unary function.  This can
+  // Verify that this is *really* a unary function.  This can
   // happen if people do weird things.
   const FunctionProtoType* FTP = dyn_cast<FunctionProtoType>(FT);
   if (!FTP || FTP->getNumParams() != 1)

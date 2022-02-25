@@ -110,9 +110,8 @@ public:
             interpreter, "process launch",
             "Launch the executable in the debugger.", nullptr,
             eCommandRequiresTarget, "restart"),
-        m_options(),
-        m_class_options("scripted process", true, 'C', 'k', 'v', 0),
-        m_all_options() {
+
+        m_class_options("scripted process", true, 'C', 'k', 'v', 0) {
     m_all_options.Append(&m_options);
     m_all_options.Append(&m_class_options, LLDB_OPT_SET_1 | LLDB_OPT_SET_2,
                          LLDB_OPT_SET_ALL);
@@ -146,10 +145,10 @@ public:
 
   Options *GetOptions() override { return &m_all_options; }
 
-  const char *GetRepeatCommand(Args &current_command_args,
-                               uint32_t index) override {
+  llvm::Optional<std::string> GetRepeatCommand(Args &current_command_args,
+                                               uint32_t index) override {
     // No repeat for "process launch"...
-    return "";
+    return std::string("");
   }
 
 protected:
@@ -159,7 +158,12 @@ protected:
     // If our listener is nullptr, users aren't allows to launch
     ModuleSP exe_module_sp = target->GetExecutableModule();
 
-    if (exe_module_sp == nullptr) {
+    // If the target already has an executable module, then use that.  If it
+    // doesn't then someone must be trying to launch using a path that will
+    // make sense to the remote stub, but doesn't exist on the local host.
+    // In that case use the ExecutableFile that was set in the target's
+    // ProcessLaunchInfo.
+    if (exe_module_sp == nullptr && !target->GetProcessLaunchInfo().GetExecutableFile()) {
       result.AppendError("no file in target, create a debug target using the "
                          "'target create' command");
       return false;
@@ -219,11 +223,17 @@ protected:
     if (!target_settings_argv0.empty()) {
       m_options.launch_info.GetArguments().AppendArgument(
           target_settings_argv0);
-      m_options.launch_info.SetExecutableFile(
-          exe_module_sp->GetPlatformFileSpec(), false);
+      if (exe_module_sp)
+        m_options.launch_info.SetExecutableFile(
+            exe_module_sp->GetPlatformFileSpec(), false);
+      else
+        m_options.launch_info.SetExecutableFile(target->GetProcessLaunchInfo().GetExecutableFile(), false);
     } else {
-      m_options.launch_info.SetExecutableFile(
-          exe_module_sp->GetPlatformFileSpec(), true);
+      if (exe_module_sp)
+        m_options.launch_info.SetExecutableFile(
+            exe_module_sp->GetPlatformFileSpec(), true);
+      else
+        m_options.launch_info.SetExecutableFile(target->GetProcessLaunchInfo().GetExecutableFile(), true);
     }
 
     if (launch_args.GetArgumentCount() == 0) {
@@ -250,11 +260,20 @@ protected:
         llvm::StringRef data = stream.GetString();
         if (!data.empty())
           result.AppendMessage(data);
-        const char *archname =
-            exe_module_sp->GetArchitecture().GetArchitectureName();
-        result.AppendMessageWithFormat(
-            "Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(),
-            exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
+        // If we didn't have a local executable, then we wouldn't have had an
+        // executable module before launch.
+        if (!exe_module_sp)
+          exe_module_sp = target->GetExecutableModule();
+        if (!exe_module_sp) {
+          result.AppendWarning("Could not get executable module after launch.");
+        } else {
+
+          const char *archname =
+              exe_module_sp->GetArchitecture().GetArchitectureName();
+          result.AppendMessageWithFormat(
+              "Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(),
+              exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
+        }
         result.SetStatus(eReturnStatusSuccessFinishResult);
         result.SetDidChangeProcessState(true);
       } else {
@@ -280,7 +299,7 @@ class CommandObjectProcessAttach : public CommandObjectProcessLaunchOrAttach {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {
+    CommandOptions() {
       // Keep default values of all options in one place: OptionParsingStarting
       // ()
       OptionParsingStarting(nullptr);
@@ -344,8 +363,7 @@ public:
   CommandObjectProcessAttach(CommandInterpreter &interpreter)
       : CommandObjectProcessLaunchOrAttach(
             interpreter, "process attach", "Attach to a process.",
-            "process attach <cmd-options>", 0, "attach"),
-        m_options() {}
+            "process attach <cmd-options>", 0, "attach") {}
 
   ~CommandObjectProcessAttach() override = default;
 
@@ -398,9 +416,10 @@ protected:
     }
 
     StreamString stream;
+    ProcessSP process_sp;
     const auto error = target->Attach(m_options.attach_info, &stream);
     if (error.Success()) {
-      ProcessSP process_sp(target->GetProcessSP());
+      process_sp = target->GetProcessSP();
       if (process_sp) {
         result.AppendMessage(stream.GetString());
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -452,8 +471,13 @@ protected:
 
     // This supports the use-case scenario of immediately continuing the
     // process once attached.
-    if (m_options.attach_info.GetContinueOnceAttached())
-      m_interpreter.HandleCommand("process continue", eLazyBoolNo, result);
+    if (m_options.attach_info.GetContinueOnceAttached()) {
+      // We have made a process but haven't told the interpreter about it yet,
+      // so CheckRequirements will fail for "process continue".  Set the override
+      // here:
+      ExecutionContext exe_ctx(process_sp);
+      m_interpreter.HandleCommand("process continue", eLazyBoolNo, exe_ctx, result);
+    }
 
     return result.Succeeded();
   }
@@ -476,15 +500,14 @@ public:
             "Continue execution of all threads in the current process.",
             "process continue",
             eCommandRequiresProcess | eCommandTryTargetAPILock |
-                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
-        m_options() {}
+                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused) {}
 
   ~CommandObjectProcessContinue() override = default;
 
 protected:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {
+    CommandOptions() {
       // Keep default values of all options in one place: OptionParsingStarting
       // ()
       OptionParsingStarting(nullptr);
@@ -625,7 +648,7 @@ class CommandObjectProcessDetach : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() { OptionParsingStarting(nullptr); }
+    CommandOptions() { OptionParsingStarting(nullptr); }
 
     ~CommandOptions() override = default;
 
@@ -672,8 +695,7 @@ public:
                             "Detach from the current target process.",
                             "process detach",
                             eCommandRequiresProcess | eCommandTryTargetAPILock |
-                                eCommandProcessMustBeLaunched),
-        m_options() {}
+                                eCommandProcessMustBeLaunched) {}
 
   ~CommandObjectProcessDetach() override = default;
 
@@ -715,7 +737,7 @@ class CommandObjectProcessConnect : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {
+    CommandOptions() {
       // Keep default values of all options in one place: OptionParsingStarting
       // ()
       OptionParsingStarting(nullptr);
@@ -755,8 +777,7 @@ public:
   CommandObjectProcessConnect(CommandInterpreter &interpreter)
       : CommandObjectParsed(interpreter, "process connect",
                             "Connect to a remote debug service.",
-                            "process connect <remote-url>", 0),
-        m_options() {}
+                            "process connect <remote-url>", 0) {}
 
   ~CommandObjectProcessConnect() override = default;
 
@@ -837,7 +858,7 @@ class CommandObjectProcessLoad : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {
+    CommandOptions() {
       // Keep default values of all options in one place: OptionParsingStarting
       // ()
       OptionParsingStarting(nullptr);
@@ -881,8 +902,7 @@ public:
                             "process load <filename> [<filename> ...]",
                             eCommandRequiresProcess | eCommandTryTargetAPILock |
                                 eCommandProcessMustBeLaunched |
-                                eCommandProcessMustBePaused),
-        m_options() {}
+                                eCommandProcessMustBePaused) {}
 
   ~CommandObjectProcessLoad() override = default;
 
@@ -1180,12 +1200,13 @@ static constexpr OptionEnumValues SaveCoreStyles() {
 class CommandObjectProcessSaveCore : public CommandObjectParsed {
 public:
   CommandObjectProcessSaveCore(CommandInterpreter &interpreter)
-      : CommandObjectParsed(interpreter, "process save-core",
-                            "Save the current process as a core file using an "
-                            "appropriate file type.",
-                            "process save-core [-s corefile-style] FILE",
-                            eCommandRequiresProcess | eCommandTryTargetAPILock |
-                                eCommandProcessMustBeLaunched) {}
+      : CommandObjectParsed(
+            interpreter, "process save-core",
+            "Save the current process as a core file using an "
+            "appropriate file type.",
+            "process save-core [-s corefile-style -p plugin-name] FILE",
+            eCommandRequiresProcess | eCommandTryTargetAPILock |
+                eCommandProcessMustBeLaunched) {}
 
   ~CommandObjectProcessSaveCore() override = default;
 
@@ -1193,8 +1214,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions()
-        : Options(), m_requested_save_core_style(eSaveCoreUnspecified) {}
+    CommandOptions() : m_requested_save_core_style(eSaveCoreUnspecified) {}
 
     ~CommandOptions() override = default;
 
@@ -1208,6 +1228,9 @@ public:
       Status error;
 
       switch (short_option) {
+      case 'p':
+        m_requested_plugin_name = option_arg.str();
+        break;
       case 's':
         m_requested_save_core_style =
             (lldb::SaveCoreStyle)OptionArgParser::ToOptionEnum(
@@ -1223,10 +1246,12 @@ public:
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {
       m_requested_save_core_style = eSaveCoreUnspecified;
+      m_requested_plugin_name.clear();
     }
 
     // Instance variables to hold the values for command options.
     SaveCoreStyle m_requested_save_core_style;
+    std::string m_requested_plugin_name;
   };
 
 protected:
@@ -1237,7 +1262,8 @@ protected:
         FileSpec output_file(command.GetArgumentAtIndex(0));
         SaveCoreStyle corefile_style = m_options.m_requested_save_core_style;
         Status error =
-            PluginManager::SaveCore(process_sp, output_file, corefile_style);
+            PluginManager::SaveCore(process_sp, output_file, corefile_style,
+                                    m_options.m_requested_plugin_name);
         if (error.Success()) {
           if (corefile_style == SaveCoreStyle::eSaveCoreDirtyOnly ||
               corefile_style == SaveCoreStyle::eSaveCoreStackOnly) {
@@ -1283,8 +1309,7 @@ public:
             interpreter, "process status",
             "Show status and stop location for the current target process.",
             "process status",
-            eCommandRequiresProcess | eCommandTryTargetAPILock),
-        m_options() {}
+            eCommandRequiresProcess | eCommandTryTargetAPILock) {}
 
   ~CommandObjectProcessStatus() override = default;
 
@@ -1292,7 +1317,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() {}
 
     ~CommandOptions() override = default;
 
@@ -1397,7 +1422,7 @@ class CommandObjectProcessHandle : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() { OptionParsingStarting(nullptr); }
+    CommandOptions() { OptionParsingStarting(nullptr); }
 
     ~CommandOptions() override = default;
 
@@ -1444,8 +1469,7 @@ public:
                             "Manage LLDB handling of OS signals for the "
                             "current target process.  Defaults to showing "
                             "current policy.",
-                            nullptr, eCommandRequiresTarget),
-        m_options() {
+                            nullptr, eCommandRequiresTarget) {
     SetHelpLong("\nIf no signals are specified, update them all.  If no update "
                 "option is specified, list the current values.");
     CommandArgumentEntry arg;
@@ -1654,7 +1678,7 @@ class CommandObjectProcessTraceSave : public CommandObjectParsed {
 public:
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() { OptionParsingStarting(nullptr); }
+    CommandOptions() { OptionParsingStarting(nullptr); }
 
     Status SetOptionValue(uint32_t option_idx, llvm::StringRef option_arg,
                           ExecutionContext *execution_context) override {

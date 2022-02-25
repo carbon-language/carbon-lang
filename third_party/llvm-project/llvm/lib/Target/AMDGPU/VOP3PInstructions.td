@@ -50,8 +50,7 @@ multiclass VOP3PInst<string OpName, VOPProfile P,
 
 // Non-packed instructions that use the VOP3P encoding.
 // VOP3 neg/abs and VOP3P opsel/opsel_hi modifiers are allowed.
-multiclass VOP3_VOP3PInst<string OpName, VOP3P_Mix_Profile P,
-                          SDPatternOperator node = null_frag> {
+multiclass VOP3_VOP3PInst<string OpName, VOP3P_Mix_Profile P> {
   def NAME : VOP3P_Pseudo<OpName, P> {
     let Constraints = !if(P.UseTiedOutput, "$vdst = $vdst_in", "");
     let DisableEncoding = !if(P.UseTiedOutput, "$vdst_in", "");
@@ -83,9 +82,9 @@ defm V_PK_MAX_U16 : VOP3PInst<"v_pk_max_u16", VOP3_Profile<VOP_V2I16_V2I16_V2I16
 defm V_PK_SUB_U16 : VOP3PInst<"v_pk_sub_u16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>>;
 defm V_PK_SUB_I16 : VOP3PInst<"v_pk_sub_i16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, sub>;
 
-defm V_PK_LSHLREV_B16 : VOP3PInst<"v_pk_lshlrev_b16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, lshl_rev>;
-defm V_PK_ASHRREV_I16 : VOP3PInst<"v_pk_ashrrev_i16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, ashr_rev>;
-defm V_PK_LSHRREV_B16 : VOP3PInst<"v_pk_lshrrev_b16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, lshr_rev>;
+defm V_PK_LSHLREV_B16 : VOP3PInst<"v_pk_lshlrev_b16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, clshl_rev_16>;
+defm V_PK_ASHRREV_I16 : VOP3PInst<"v_pk_ashrrev_i16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, cashr_rev_16>;
+defm V_PK_LSHRREV_B16 : VOP3PInst<"v_pk_lshrrev_b16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, clshr_rev_16>;
 
 
 let SubtargetPredicate = HasVOP3PInsts in {
@@ -113,7 +112,6 @@ def : VOP3PSatPat<ssubsat, V_PK_SUB_I16>;
 } // End SubtargetPredicate = HasVOP3PInsts
 
 multiclass MadFmaMixPats<SDPatternOperator fma_like,
-                         Instruction mix_inst,
                          Instruction mixlo_inst,
                          Instruction mixhi_inst> {
   def : GCNPat <
@@ -192,7 +190,7 @@ defm V_MAD_MIXHI_F16 : VOP3_VOP3PInst<"v_mad_mixhi_f16", VOP3P_Mix_Profile<VOP_F
 } // End FPDPRounding = 1
 }
 
-defm : MadFmaMixPats<fmad, V_MAD_MIX_F32, V_MAD_MIXLO_F16, V_MAD_MIXHI_F16>;
+defm : MadFmaMixPats<fmad, V_MAD_MIXLO_F16, V_MAD_MIXHI_F16>;
 } // End SubtargetPredicate = HasMadMixInsts
 
 
@@ -211,7 +209,7 @@ defm V_FMA_MIXHI_F16 : VOP3_VOP3PInst<"v_fma_mixhi_f16", VOP3P_Mix_Profile<VOP_F
 } // End FPDPRounding = 1
 }
 
-defm : MadFmaMixPats<fma, V_FMA_MIX_F32, V_FMA_MIXLO_F16, V_FMA_MIXHI_F16>;
+defm : MadFmaMixPats<fma, V_FMA_MIXLO_F16, V_FMA_MIXHI_F16>;
 }
 
 // Defines patterns that extract signed 4bit from each Idx[0].
@@ -390,6 +388,12 @@ class VOPProfileMAI<VOPProfile P, RegisterOperand _SrcRC, RegisterOperand _DstRC
   let HasModifiers = 0;
   let Asm64 = "$vdst, $src0, $src1, $src2$cbsz$abid$blgp";
   let Ins64 = (ins Src0RC64:$src0, Src1RC64:$src1, Src2RC64:$src2, cbsz:$cbsz, abid:$abid, blgp:$blgp);
+  // Dst and SrcC cannot partially overlap if SrcC/Dst is bigger than 4 VGPRs.
+  // We then create two versions of the instruction: with tied dst and src2
+  // and with the earlyclobber flag on the dst. This is stricter than the
+  // actual HW restriction. In particular earlyclobber also affects src0 and
+  // src1 allocation which is not required.
+  bit NoDstOverlap = !gt(DstVT.Size, 128);
 }
 
 def VOPProfileMAI_F32_F32_X4    : VOPProfileMAI<VOP_V4F32_F32_F32_V4F32,       AISrc_128_f32,  ADst_128>;
@@ -428,6 +432,25 @@ def VOPProfileMAI_F32_V4I16_X32_VCD  : VOPProfileMAI<VOP_V32F32_V4I16_V4I16_V32F
 def VOPProfileMAI_F64_16X16X4F64_VCD : VOPProfileMAI<VOP_V4F64_F64_F64_V4F64,       VISrc_256_f64,  VDst_256,  AVSrc_64>;
 def VOPProfileMAI_F64_4X4X4F64_VCD   : VOPProfileMAI<VOP_F64_F64_F64_F64,           VISrc_64_f64,   VDst_64,   AVSrc_64>;
 
+class MFMATable <bit is_mac, string Name> {
+  bit IsMac = is_mac;
+  string FMAOp = Name;
+}
+
+class MAIFrag<SDPatternOperator Op, code pred> : PatFrag <
+  (ops node:$src0, node:$src1, node:$src2, node:$cbsz, node:$abid, node:$blgp),
+  (Op $src0, $src1, $src2, $cbsz, $abid, $blgp),
+  pred
+>;
+
+let GISelPredicateCode = [{ return MF.getInfo<SIMachineFunctionInfo>()->mayNeedAGPRs(); }] in
+class AgprMAIFrag<SDPatternOperator Op> :
+  MAIFrag<Op, [{ return MF->getInfo<SIMachineFunctionInfo>()->mayNeedAGPRs(); }]>;
+
+let GISelPredicateCode = [{ return !MF.getInfo<SIMachineFunctionInfo>()->mayNeedAGPRs(); }] in
+class VgprMAIFrag<SDPatternOperator Op> :
+  MAIFrag<Op, [{ return !MF->getInfo<SIMachineFunctionInfo>()->mayNeedAGPRs(); }]>;
+
 let Predicates = [HasMAIInsts] in {
 
 let isAsCheapAsAMove = 1, isReMaterializable = 1 in {
@@ -437,13 +460,34 @@ let isAsCheapAsAMove = 1, isReMaterializable = 1 in {
   } // End isMoveImm = 1
 } // End isAsCheapAsAMove = 1, isReMaterializable = 1
 
-multiclass MAIInst<string OpName, string P, SDPatternOperator node> {
+multiclass MAIInst<string OpName, string P, SDPatternOperator node,
+                   bit NoDstOverlap = !cast<VOPProfileMAI>("VOPProfileMAI_" # P).NoDstOverlap> {
   let isConvergent = 1, mayRaiseFPException = 0, ReadsModeReg = 1 in {
     // FP32 denorm mode is respected, rounding mode is not. Exceptions are not supported.
-    defm "" : VOP3Inst<OpName, !cast<VOPProfileMAI>("VOPProfileMAI_" # P), node>;
+    let Constraints = !if(NoDstOverlap, "@earlyclobber $vdst", "") in {
+      defm "" : VOP3Inst<OpName, !cast<VOPProfileMAI>("VOPProfileMAI_" # P),
+                         !if(NoDstOverlap, null_frag, AgprMAIFrag<node>)>,
+                MFMATable<0, NAME # "_e64">;
 
-    let SubtargetPredicate = isGFX90APlus, Mnemonic = OpName in
-    defm _vgprcd : VOP3Inst<OpName # "_vgprcd", !cast<VOPProfileMAI>("VOPProfileMAI_" # P # "_VCD")>;
+      let SubtargetPredicate = isGFX90APlus, Mnemonic = OpName in
+      defm _vgprcd : VOP3Inst<OpName # "_vgprcd", !cast<VOPProfileMAI>("VOPProfileMAI_" # P # "_VCD"),
+                              !if(NoDstOverlap, null_frag, VgprMAIFrag<node>)>,
+                     MFMATable<0, NAME # "_vgprcd_e64">;
+    }
+
+    foreach _ = BoolToList<NoDstOverlap>.ret in {
+      let Constraints = !if(NoDstOverlap, "$vdst = $src2", ""),
+          isConvertibleToThreeAddress = NoDstOverlap,
+          Mnemonic = OpName in {
+        defm "_mac" : VOP3Inst<OpName # "_mac", !cast<VOPProfileMAI>("VOPProfileMAI_" # P), AgprMAIFrag<node>>,
+                      MFMATable<1, NAME # "_e64">;
+
+        let SubtargetPredicate = isGFX90APlus in
+        defm _mac_vgprcd : VOP3Inst<OpName # "_mac_vgprcd", !cast<VOPProfileMAI>("VOPProfileMAI_" # P # "_VCD"),
+                                    VgprMAIFrag<node>>,
+                           MFMATable<1, NAME # "_vgprcd_e64">;
+      }
+    }
   } // End isConvergent = 1, mayRaiseFPException = 0, ReadsModeReg = 1
 }
 
@@ -519,6 +563,7 @@ multiclass VOP3P_Real_MAI<bits<7> op> {
   }
 }
 
+let Constraints = "" in {
 multiclass VOP3P_Real_MFMA_gfx90a<bits<7> op> {
   let SubtargetPredicate = isGFX90AOnly,
       AssemblerPredicate = isGFX90AOnly, DecoderNamespace = "GFX90A" in {
@@ -537,6 +582,7 @@ multiclass VOP3P_Real_MFMA<bits<7> op> :
     let AssemblerPredicate = HasMAIInsts;
     let DecoderNamespace = "GFX8";
   }
+}
 }
 
 defm V_PK_MAD_I16 : VOP3P_Real_vi <0x00>;

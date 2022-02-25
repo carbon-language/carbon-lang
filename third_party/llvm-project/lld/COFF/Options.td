@@ -41,6 +41,7 @@ def color_diagnostics_eq: Joined<["--"], "color-diagnostics=">,
     MetaVarName<"[auto,always,never]">;
 def defaultlib : P<"defaultlib", "Add the library to the list of input files">;
 def delayload : P<"delayload", "Delay loaded DLL name">;
+def diasdkdir : P<"diasdkdir", "Set the location of the DIA SDK">;
 def entry   : P<"entry", "Name of entry point symbol">;
 def errorlimit : P<"errorlimit",
     "Maximum number of errors to emit before stopping (0 = no limit)">;
@@ -78,8 +79,9 @@ def order   : P<"order", "Put functions in order">;
 def out     : P<"out", "Path to file to write output">;
 def natvis : P<"natvis", "Path to natvis file to embed in the PDB">;
 def pdb : P<"pdb", "PDB file path">;
-def pdbstripped : P<"pdbstripped", "Stripped PDB file path">;
 def pdbaltpath : P<"pdbaltpath", "PDB file path to embed in the image">;
+def pdbpagesize : P<"pdbpagesize", "PDB page size">;
+def pdbstripped : P<"pdbstripped", "Stripped PDB file path">;
 def pdbstream : Joined<["/", "-", "/?", "-?"], "pdbstream:">,
     MetaVarName<"<name>=<file>">,
     HelpText<"Embed the contents of <file> in the PDB as named stream <name>">;
@@ -88,9 +90,16 @@ def stack   : P<"stack", "Size of the stack">;
 def stub    : P<"stub", "Specify DOS stub file">;
 def subsystem : P<"subsystem", "Specify subsystem">;
 def timestamp : P<"timestamp", "Specify the PE header timestamp">;
+def vctoolsdir : P<"vctoolsdir", "Set the location of the VC tools">;
+def vctoolsversion : P<"vctoolsversion",
+    "Specify which VC tools version to use">;
 def version : P<"version", "Specify a version number in the PE header">;
 def wholearchive_file : P<"wholearchive",
     "Include all object files from this library">;
+def winsdkdir : P<"winsdkdir", "Set the location of the Windows SDK">;
+def winsdkversion : P<"winsdkversion", "Specify which SDK version to use">;
+def winsysroot : P<"winsysroot",
+    "Adds several subdirectories to the library search paths">;
 
 def disallowlib : Joined<["/", "-", "/?", "-?"], "disallowlib:">,
     Alias<nodefaultlib>;

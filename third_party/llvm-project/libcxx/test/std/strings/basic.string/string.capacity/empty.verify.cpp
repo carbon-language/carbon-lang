@@ -1,4 +1,3 @@
-// -*- C++ -*-
 //===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -19,10 +18,19 @@
 
 #include "test_macros.h"
 
+bool test() {
+  std::string c;
+  c.empty(); // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
+
+  return true;
+}
+
 int main(int, char**)
 {
-    std::string c;
-    c.empty(); // expected-warning {{ignoring return value of function declared with 'nodiscard' attribute}}
+  test();
+#if TEST_STD_VER > 17
+  // static_assert(test());
+#endif
 
-    return 0;
+  return 0;
 }

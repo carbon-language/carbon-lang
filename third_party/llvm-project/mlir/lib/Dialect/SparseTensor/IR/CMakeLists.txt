@@ -11,6 +11,5 @@ add_mlir_dialect_library(MLIRSparseTensor
   LINK_LIBS PUBLIC
   MLIRDialect
   MLIRIR
-  MLIRStandard
   MLIRSupport
   )

@@ -46,6 +46,10 @@ def Tensor_Dialect : Dialect {
   }];
 
   let hasConstantMaterializer = 1;
+  let dependentDialects = [
+    "arith::ArithmeticDialect",
+    "complex::ComplexDialect",
+  ];
 }
 
 #endif // TENSOR_BASE

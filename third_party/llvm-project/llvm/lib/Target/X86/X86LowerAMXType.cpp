@@ -61,6 +61,8 @@
 #include "llvm/Transforms/Utils/AssumeBundleBuilder.h"
 #include "llvm/Transforms/Utils/Local.h"
 
+#include <map>
+
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -175,24 +177,7 @@ public:
   void combineLoadBitcast(LoadInst *LD, BitCastInst *Bitcast);
   void combineBitcastStore(BitCastInst *Bitcast, StoreInst *ST);
   bool transformBitcast(BitCastInst *Bitcast);
-  Value *getRowFromCol(Instruction *II, Value *V, unsigned Granularity);
 };
-
-Value *X86LowerAMXType::getRowFromCol(Instruction *II, Value *V,
-                                      unsigned Granularity) {
-  if (Col2Row.count(V))
-    return Col2Row[V];
-  IRBuilder<> Builder(&*II->getParent()->getFirstInsertionPt());
-  if (auto *I = dyn_cast<Instruction>(V)) {
-    BasicBlock::iterator Iter = I->getIterator();
-    ++Iter;
-    Builder.SetInsertPoint(&*Iter);
-  }
-  ConstantInt *Gran = Builder.getInt16(Granularity);
-  Value *RealRow = Builder.CreateUDiv(V, Gran);
-  Col2Row[V] = RealRow;
-  return RealRow;
-}
 
 // %src = load <256 x i32>, <256 x i32>* %addr, align 64
 // %2 = bitcast <256 x i32> %src to x86_amx
@@ -319,9 +304,7 @@ bool X86LowerAMXType::visit() {
   Col2Row.clear();
 
   for (BasicBlock *BB : post_order(&Func)) {
-    for (BasicBlock::reverse_iterator II = BB->rbegin(), IE = BB->rend();
-         II != IE;) {
-      Instruction &Inst = *II++;
+    for (Instruction &Inst : llvm::make_early_inc_range(llvm::reverse(*BB))) {
       auto *Bitcast = dyn_cast<BitCastInst>(&Inst);
       if (!Bitcast)
         continue;
@@ -364,10 +347,8 @@ bool X86LowerAMXType::visit() {
           continue;
         }
         StoreInst *ST = nullptr;
-        for (auto UI = Bitcast->use_begin(), UE = Bitcast->use_end();
-             UI != UE;) {
-          Value *I = (UI++)->getUser();
-          ST = dyn_cast<StoreInst>(I);
+        for (Use &U : Bitcast->uses()) {
+          ST = dyn_cast<StoreInst>(U.getUser());
           if (ST)
             break;
         }

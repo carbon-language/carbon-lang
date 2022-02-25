@@ -28,7 +28,7 @@ struct SymbolDCE : public SymbolDCEBase<SymbolDCE> {
                                 bool symbolTableIsHidden,
                                 DenseSet<Operation *> &liveSymbols);
 };
-} // end anonymous namespace
+} // namespace
 
 void SymbolDCE::runOnOperation() {
   Operation *symbolTableOp = getOperation();
@@ -124,11 +124,9 @@ LogicalResult SymbolDCE::computeLiveness(Operation *symbolTableOp,
       // Lookup the symbols referenced by this use.
       resolvedSymbols.clear();
       if (failed(symbolTable.lookupSymbolIn(
-              op->getParentOp(), use.getSymbolRef(), resolvedSymbols))) {
-        return use.getUser()->emitError()
-               << "unable to resolve reference to symbol "
-               << use.getSymbolRef();
-      }
+              op->getParentOp(), use.getSymbolRef(), resolvedSymbols)))
+        // Ignore references to unknown symbols.
+        continue;
 
       // Mark each of the resolved symbols as live.
       for (Operation *resolvedSymbol : resolvedSymbols)

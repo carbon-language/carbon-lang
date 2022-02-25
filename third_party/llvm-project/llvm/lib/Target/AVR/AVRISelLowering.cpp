@@ -13,8 +13,8 @@
 
 #include "AVRISelLowering.h"
 
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -232,8 +232,8 @@ AVRTargetLowering::AVRTargetLowering(const AVRTargetMachine &TM,
 }
 
 const char *AVRTargetLowering::getTargetNodeName(unsigned Opcode) const {
-#define NODE(name)       \
-  case AVRISD::name:     \
+#define NODE(name)                                                             \
+  case AVRISD::name:                                                           \
     return #name
 
   switch (Opcode) {
@@ -269,7 +269,7 @@ EVT AVRTargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
 }
 
 SDValue AVRTargetLowering::LowerShifts(SDValue Op, SelectionDAG &DAG) const {
-  //:TODO: this function has to be completely rewritten to produce optimal
+  //: TODO: this function has to be completely rewritten to produce optimal
   // code, for now it's producing very long but correct code.
   unsigned Opc8;
   const SDNode *N = Op.getNode();
@@ -359,6 +359,11 @@ SDValue AVRTargetLowering::LowerShifts(SDValue Op, SelectionDAG &DAG) const {
       Victim = DAG.getNode(AVRISD::LSRBN, dl, VT, Victim,
                            DAG.getConstant(7, dl, VT));
       ShiftAmount = 0;
+    } else if (Op.getOpcode() == ISD::SRA && ShiftAmount == 6) {
+      // Optimize ASR when ShiftAmount == 6.
+      Victim = DAG.getNode(AVRISD::ASRBN, dl, VT, Victim,
+                           DAG.getConstant(6, dl, VT));
+      ShiftAmount = 0;
     } else if (Op.getOpcode() == ISD::SRA && ShiftAmount == 7) {
       // Optimize ASR when ShiftAmount == 7.
       Victim = DAG.getNode(AVRISD::ASRBN, dl, VT, Victim,
@@ -387,16 +392,22 @@ SDValue AVRTargetLowering::LowerShifts(SDValue Op, SelectionDAG &DAG) const {
         Victim = DAG.getNode(AVRISD::LSLWN, dl, VT, Victim,
                              DAG.getConstant(8, dl, VT));
         ShiftAmount -= 8;
+        // Only operate on the higher byte for remaining shift bits.
+        Opc8 = AVRISD::LSLHI;
         break;
       case ISD::SRL:
         Victim = DAG.getNode(AVRISD::LSRWN, dl, VT, Victim,
                              DAG.getConstant(8, dl, VT));
         ShiftAmount -= 8;
+        // Only operate on the lower byte for remaining shift bits.
+        Opc8 = AVRISD::LSRLO;
         break;
       case ISD::SRA:
         Victim = DAG.getNode(AVRISD::ASRWN, dl, VT, Victim,
                              DAG.getConstant(8, dl, VT));
         ShiftAmount -= 8;
+        // Only operate on the lower byte for remaining shift bits.
+        Opc8 = AVRISD::ASRLO;
         break;
       default:
         break;
@@ -407,11 +418,22 @@ SDValue AVRTargetLowering::LowerShifts(SDValue Op, SelectionDAG &DAG) const {
         Victim = DAG.getNode(AVRISD::LSLWN, dl, VT, Victim,
                              DAG.getConstant(12, dl, VT));
         ShiftAmount -= 12;
+        // Only operate on the higher byte for remaining shift bits.
+        Opc8 = AVRISD::LSLHI;
         break;
       case ISD::SRL:
         Victim = DAG.getNode(AVRISD::LSRWN, dl, VT, Victim,
                              DAG.getConstant(12, dl, VT));
         ShiftAmount -= 12;
+        // Only operate on the lower byte for remaining shift bits.
+        Opc8 = AVRISD::LSRLO;
+        break;
+      case ISD::SRA:
+        Victim = DAG.getNode(AVRISD::ASRWN, dl, VT, Victim,
+                             DAG.getConstant(8, dl, VT));
+        ShiftAmount -= 8;
+        // Only operate on the lower byte for remaining shift bits.
+        Opc8 = AVRISD::ASRLO;
         break;
       default:
         break;
@@ -527,7 +549,8 @@ SDValue AVRTargetLowering::getAVRCmp(SDValue LHS, SDValue RHS,
   assert((LHS.getSimpleValueType() == RHS.getSimpleValueType()) &&
          "LHS and RHS have different types");
   assert(((LHS.getSimpleValueType() == MVT::i16) ||
-          (LHS.getSimpleValueType() == MVT::i8)) && "invalid comparison type");
+          (LHS.getSimpleValueType() == MVT::i8)) &&
+         "invalid comparison type");
 
   SDValue Cmp;
 
@@ -856,7 +879,8 @@ void AVRTargetLowering::ReplaceNodeResults(SDNode *N,
 /// by AM is legal for this target, for a load/store of the specified type.
 bool AVRTargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                               const AddrMode &AM, Type *Ty,
-                                              unsigned AS, Instruction *I) const {
+                                              unsigned AS,
+                                              Instruction *I) const {
   int64_t Offs = AM.BaseOffs;
 
   // Allow absolute addresses.
@@ -872,7 +896,8 @@ bool AVRTargetLowering::isLegalAddressingMode(const DataLayout &DL,
   // Allow reg+<6bit> offset.
   if (Offs < 0)
     Offs = -Offs;
-  if (AM.BaseGV == 0 && AM.HasBaseReg && AM.Scale == 0 && isUInt<6>(Offs)) {
+  if (AM.BaseGV == nullptr && AM.HasBaseReg && AM.Scale == 0 &&
+      isUInt<6>(Offs)) {
     return true;
   }
 
@@ -1003,14 +1028,13 @@ static const MCPhysReg RegList8[] = {
     AVR::R19, AVR::R18, AVR::R17, AVR::R16, AVR::R15, AVR::R14,
     AVR::R13, AVR::R12, AVR::R11, AVR::R10, AVR::R9,  AVR::R8};
 static const MCPhysReg RegList16[] = {
-    AVR::R26R25, AVR::R25R24, AVR::R24R23, AVR::R23R22,
-    AVR::R22R21, AVR::R21R20, AVR::R20R19, AVR::R19R18,
-    AVR::R18R17, AVR::R17R16, AVR::R16R15, AVR::R15R14,
-    AVR::R14R13, AVR::R13R12, AVR::R12R11, AVR::R11R10,
-    AVR::R10R9,  AVR::R9R8};
+    AVR::R26R25, AVR::R25R24, AVR::R24R23, AVR::R23R22, AVR::R22R21,
+    AVR::R21R20, AVR::R20R19, AVR::R19R18, AVR::R18R17, AVR::R17R16,
+    AVR::R16R15, AVR::R15R14, AVR::R14R13, AVR::R13R12, AVR::R12R11,
+    AVR::R11R10, AVR::R10R9,  AVR::R9R8};
 
 static_assert(array_lengthof(RegList8) == array_lengthof(RegList16),
-        "8-bit and 16-bit register arrays must be of equal length");
+              "8-bit and 16-bit register arrays must be of equal length");
 
 /// Analyze incoming and outgoing function arguments. We need custom C++ code
 /// to handle special constraints in the ABI.
@@ -1084,10 +1108,11 @@ analyzeArguments(TargetLowering::CallLoweringInfo *CLI, const Function *F,
 
 /// Count the total number of bytes needed to pass or return these arguments.
 template <typename ArgT>
-static unsigned getTotalArgumentsSizeInBytes(const SmallVectorImpl<ArgT> &Args) {
+static unsigned
+getTotalArgumentsSizeInBytes(const SmallVectorImpl<ArgT> &Args) {
   unsigned TotalBytes = 0;
 
-  for (const ArgT& Arg : Args) {
+  for (const ArgT &Arg : Args) {
     TotalBytes += Arg.VT.getStoreSize();
   }
   return TotalBytes;
@@ -1102,7 +1127,8 @@ static void analyzeReturnValues(const SmallVectorImpl<ArgT> &Args,
   unsigned NumArgs = Args.size();
   unsigned TotalBytes = getTotalArgumentsSizeInBytes(Args);
   // CanLowerReturn() guarantees this assertion.
-  assert(TotalBytes <= 8 && "return values greater than 8 bytes cannot be lowered");
+  assert(TotalBytes <= 8 &&
+         "return values greater than 8 bytes cannot be lowered");
 
   // GCC-ABI says that the size is rounded up to the next even number,
   // but actually once it is more than 4 it will always round up to 8.
@@ -1166,7 +1192,7 @@ SDValue AVRTargetLowering::LowerFormalArguments(
         llvm_unreachable("Unknown argument type!");
       }
 
-      unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
+      Register Reg = MF.addLiveIn(VA.getLocReg(), RC);
       ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
 
       // :NOTE: Clang should not promote any i8 into i16 but for safety the
@@ -1197,7 +1223,7 @@ SDValue AVRTargetLowering::LowerFormalArguments(
 
       InVals.push_back(ArgValue);
     } else {
-      // Sanity check.
+      // Only arguments passed on the stack should make it here.
       assert(VA.isMemLoc());
 
       EVT LocVT = VA.getLocVT();
@@ -1259,8 +1285,8 @@ SDValue AVRTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   const Function *F = nullptr;
   if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     const GlobalValue *GV = G->getGlobal();
-
-    F = cast<Function>(GV);
+    if (isa<Function>(GV))
+      F = cast<Function>(GV);
     Callee =
         DAG.getTargetGlobalAddress(GV, DL, getPointerTy(DAG.getDataLayout()));
   } else if (const ExternalSymbolSDNode *ES =
@@ -1406,8 +1432,8 @@ SDValue AVRTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 ///
 SDValue AVRTargetLowering::LowerCallResult(
     SDValue Chain, SDValue InFlag, CallingConv::ID CallConv, bool isVarArg,
-    const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &dl, SelectionDAG &DAG,
-    SmallVectorImpl<SDValue> &InVals) const {
+    const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &dl,
+    SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
@@ -1495,9 +1521,7 @@ AVRTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   const AVRMachineFunctionInfo *AFI = MF.getInfo<AVRMachineFunctionInfo>();
 
   unsigned RetOpc =
-    AFI->isInterruptOrSignalHandler()
-        ? AVRISD::RETI_FLAG
-        : AVRISD::RET_FLAG;
+      AFI->isInterruptOrSignalHandler() ? AVRISD::RETI_FLAG : AVRISD::RET_FLAG;
 
   RetOps[0] = Chain; // Update chain.
 
@@ -1571,8 +1595,10 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
 
   MachineFunction::iterator I;
-  for (I = BB->getIterator(); I != F->end() && &(*I) != BB; ++I);
-  if (I != F->end()) ++I;
+  for (I = BB->getIterator(); I != F->end() && &(*I) != BB; ++I)
+    ;
+  if (I != F->end())
+    ++I;
 
   // Create loop block.
   MachineBasicBlock *LoopBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -1635,8 +1661,7 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
       .addReg(ShiftReg2)
       .addMBB(LoopBB);
 
-  BuildMI(CheckBB, dl, TII.get(AVR::DECRd), ShiftAmtReg2)
-      .addReg(ShiftAmtReg);
+  BuildMI(CheckBB, dl, TII.get(AVR::DECRd), ShiftAmtReg2).addReg(ShiftAmtReg);
   BuildMI(CheckBB, dl, TII.get(AVR::BRPLk)).addMBB(LoopBB);
 
   MI.eraseFromParent(); // The pseudo instruction is gone now.
@@ -1670,6 +1695,72 @@ MachineBasicBlock *AVRTargetLowering::insertMul(MachineInstr &MI,
   return BB;
 }
 
+// Insert a read from R1, which almost always contains the value 0.
+MachineBasicBlock *
+AVRTargetLowering::insertCopyR1(MachineInstr &MI, MachineBasicBlock *BB) const {
+  const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
+  MachineBasicBlock::iterator I(MI);
+  BuildMI(*BB, I, MI.getDebugLoc(), TII.get(AVR::COPY))
+      .add(MI.getOperand(0))
+      .addReg(AVR::R1);
+  MI.eraseFromParent();
+  return BB;
+}
+
+// Lower atomicrmw operation to disable interrupts, do operation, and restore
+// interrupts. This works because all AVR microcontrollers are single core.
+MachineBasicBlock *AVRTargetLowering::insertAtomicArithmeticOp(
+    MachineInstr &MI, MachineBasicBlock *BB, unsigned Opcode, int Width) const {
+  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+  const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
+  MachineBasicBlock::iterator I(MI);
+  const Register SCRATCH_REGISTER = AVR::R0;
+  DebugLoc dl = MI.getDebugLoc();
+
+  // Example instruction sequence, for an atomic 8-bit add:
+  //   ldi r25, 5
+  //   in r0, SREG
+  //   cli
+  //   ld r24, X
+  //   add r25, r24
+  //   st X, r25
+  //   out SREG, r0
+
+  const TargetRegisterClass *RC =
+      (Width == 8) ? &AVR::GPR8RegClass : &AVR::DREGSRegClass;
+  unsigned LoadOpcode = (Width == 8) ? AVR::LDRdPtr : AVR::LDWRdPtr;
+  unsigned StoreOpcode = (Width == 8) ? AVR::STPtrRr : AVR::STWPtrRr;
+
+  // Disable interrupts.
+  BuildMI(*BB, I, dl, TII.get(AVR::INRdA), SCRATCH_REGISTER)
+      .addImm(Subtarget.getIORegSREG());
+  BuildMI(*BB, I, dl, TII.get(AVR::BCLRs)).addImm(7);
+
+  // Load the original value.
+  BuildMI(*BB, I, dl, TII.get(LoadOpcode), MI.getOperand(0).getReg())
+      .add(MI.getOperand(1));
+
+  // Do the arithmetic operation.
+  Register Result = MRI.createVirtualRegister(RC);
+  BuildMI(*BB, I, dl, TII.get(Opcode), Result)
+      .addReg(MI.getOperand(0).getReg())
+      .add(MI.getOperand(2));
+
+  // Store the result.
+  BuildMI(*BB, I, dl, TII.get(StoreOpcode))
+      .add(MI.getOperand(1))
+      .addReg(Result);
+
+  // Restore interrupts.
+  BuildMI(*BB, I, dl, TII.get(AVR::OUTARr))
+      .addImm(Subtarget.getIORegSREG())
+      .addReg(SCRATCH_REGISTER);
+
+  // Remove the pseudo instruction.
+  MI.eraseFromParent();
+  return BB;
+}
+
 MachineBasicBlock *
 AVRTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                                MachineBasicBlock *MBB) const {
@@ -1692,6 +1783,28 @@ AVRTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case AVR::MULRdRr:
   case AVR::MULSRdRr:
     return insertMul(MI, MBB);
+  case AVR::CopyR1:
+    return insertCopyR1(MI, MBB);
+  case AVR::AtomicLoadAdd8:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ADDRdRr, 8);
+  case AVR::AtomicLoadAdd16:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ADDWRdRr, 16);
+  case AVR::AtomicLoadSub8:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::SUBRdRr, 8);
+  case AVR::AtomicLoadSub16:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::SUBWRdRr, 16);
+  case AVR::AtomicLoadAnd8:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ANDRdRr, 8);
+  case AVR::AtomicLoadAnd16:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ANDWRdRr, 16);
+  case AVR::AtomicLoadOr8:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ORRdRr, 8);
+  case AVR::AtomicLoadOr16:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::ORWRdRr, 16);
+  case AVR::AtomicLoadXor8:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::EORRdRr, 8);
+  case AVR::AtomicLoadXor16:
+    return insertAtomicArithmeticOp(MI, MBB, AVR::EORWRdRr, 16);
   }
 
   assert((Opc == AVR::Select16 || Opc == AVR::Select8) &&
@@ -1724,8 +1837,10 @@ AVRTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   MachineBasicBlock *falseMBB = MF->CreateMachineBasicBlock(LLVM_BB);
 
   MachineFunction::iterator I;
-  for (I = MF->begin(); I != MF->end() && &(*I) != MBB; ++I);
-  if (I != MF->end()) ++I;
+  for (I = MF->begin(); I != MF->end() && &(*I) != MBB; ++I)
+    ;
+  if (I != MF->end())
+    ++I;
   MF->insert(I, trueMBB);
   MF->insert(I, falseMBB);
 
@@ -1747,11 +1862,12 @@ AVRTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   falseMBB->addSuccessor(trueMBB);
 
   // Set up the Phi node to determine where we came from
-  BuildMI(*trueMBB, trueMBB->begin(), dl, TII.get(AVR::PHI), MI.getOperand(0).getReg())
-    .addReg(MI.getOperand(1).getReg())
-    .addMBB(MBB)
-    .addReg(MI.getOperand(2).getReg())
-    .addMBB(falseMBB) ;
+  BuildMI(*trueMBB, trueMBB->begin(), dl, TII.get(AVR::PHI),
+          MI.getOperand(0).getReg())
+      .addReg(MI.getOperand(1).getReg())
+      .addMBB(MBB)
+      .addReg(MI.getOperand(2).getReg())
+      .addMBB(falseMBB);
 
   MI.eraseFromParent(); // The pseudo instruction is gone now.
   return trueMBB;
@@ -1778,9 +1894,12 @@ AVRTargetLowering::getConstraintType(StringRef Constraint) const {
     case 'w': // Special upper register pairs
       return C_RegisterClass;
     case 't': // Temporary register
-    case 'x': case 'X': // Pointer register pair X
-    case 'y': case 'Y': // Pointer register pair Y
-    case 'z': case 'Z': // Pointer register pair Z
+    case 'x':
+    case 'X': // Pointer register pair X
+    case 'y':
+    case 'Y': // Pointer register pair Y
+    case 'z':
+    case 'Z': // Pointer register pair Z
       return C_Register;
     case 'Q': // A memory address based on Y or Z pointer with displacement.
       return C_Memory;
@@ -1841,9 +1960,12 @@ AVRTargetLowering::getSingleConstraintMatchWeight(
   case 'q':
   case 't':
   case 'w':
-  case 'x': case 'X':
-  case 'y': case 'Y':
-  case 'z': case 'Z':
+  case 'x':
+  case 'X':
+  case 'y':
+  case 'Y':
+  case 'z':
+  case 'Z':
     weight = CW_SpecificReg;
     break;
   case 'G':
@@ -2001,7 +2123,7 @@ void AVRTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      std::string &Constraint,
                                                      std::vector<SDValue> &Ops,
                                                      SelectionDAG &DAG) const {
-  SDValue Result(0, 0);
+  SDValue Result;
   SDLoc DL(Op);
   EVT Ty = Op.getValueType();
 

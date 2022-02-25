@@ -101,6 +101,7 @@ struct Diag : DiagBase {
     Unknown,
     Clang,
     ClangTidy,
+    Clangd,
     ClangdConfig,
   } Source = Unknown;
   /// Elaborate on the problem, usually pointing to a related piece of code.
@@ -143,6 +144,8 @@ public:
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const clang::Diagnostic &Info) override;
 
+  /// When passed a main diagnostic, returns fixes to add to it.
+  /// When passed a note diagnostic, returns fixes to replace it with.
   using DiagFixer = std::function<std::vector<Fix>(DiagnosticsEngine::Level,
                                                    const clang::Diagnostic &)>;
   using LevelAdjuster = std::function<DiagnosticsEngine::Level(
@@ -177,7 +180,8 @@ private:
 
 /// Determine whether a (non-clang-tidy) diagnostic is suppressed by config.
 bool isBuiltinDiagnosticSuppressed(unsigned ID,
-                                   const llvm::StringSet<> &Suppressed);
+                                   const llvm::StringSet<> &Suppressed,
+                                   const LangOptions &);
 /// Take a user-specified diagnostic code, and convert it to a normalized form
 /// stored in the config and consumed by isBuiltinDiagnosticsSuppressed.
 ///

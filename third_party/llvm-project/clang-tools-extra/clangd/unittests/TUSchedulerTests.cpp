@@ -132,7 +132,7 @@ protected:
     private:
       void reportDiagnostics(PathRef File, llvm::ArrayRef<Diag> Diags,
                              PublishFn Publish) {
-        auto D = Context::current().get(DiagsCallbackKey);
+        auto *D = Context::current().get(DiagsCallbackKey);
         if (!D)
           return;
         Publish([&]() {
@@ -671,11 +671,11 @@ TEST_F(TUSchedulerTests, EmptyPreamble) {
 
   FS.Files[Header] = "void foo()";
   FS.Timestamps[Header] = time_t(0);
-  auto WithPreamble = R"cpp(
+  auto *WithPreamble = R"cpp(
     #include "foo.h"
     int main() {}
   )cpp";
-  auto WithEmptyPreamble = R"cpp(int main() {})cpp";
+  auto *WithEmptyPreamble = R"cpp(int main() {})cpp";
   S.update(Foo, getInputs(Foo, WithPreamble), WantDiagnostics::Auto);
   S.runWithPreamble(
       "getNonEmptyPreamble", Foo, TUScheduler::Stale,
@@ -748,7 +748,7 @@ TEST_F(TUSchedulerTests, RunWaitsForPreamble) {
   // the same time. All reads should get the same non-null preamble.
   TUScheduler S(CDB, optsForTest());
   auto Foo = testPath("foo.cpp");
-  auto NonEmptyPreamble = R"cpp(
+  auto *NonEmptyPreamble = R"cpp(
     #define FOO 1
     #define BAR 2
 
@@ -844,7 +844,7 @@ TEST_F(TUSchedulerTests, MissingHeader) {
   auto HeaderA = testPath("a/foo.h");
   auto HeaderB = testPath("b/foo.h");
 
-  auto SourceContents = R"cpp(
+  auto *SourceContents = R"cpp(
       #include "foo.h"
       int c = b;
     )cpp";
@@ -1122,8 +1122,7 @@ TEST_F(TUSchedulerTests, AsyncPreambleThread) {
     BlockPreambleThread(llvm::StringRef BlockVersion, Notification &N)
         : BlockVersion(BlockVersion), N(N) {}
     void onPreambleAST(PathRef Path, llvm::StringRef Version, ASTContext &Ctx,
-                       std::shared_ptr<clang::Preprocessor> PP,
-                       const CanonicalIncludes &) override {
+                       Preprocessor &, const CanonicalIncludes &) override {
       if (Version == BlockVersion)
         N.wait();
     }
@@ -1165,6 +1164,32 @@ TEST_F(TUSchedulerTests, AsyncPreambleThread) {
   Ready.notify();
 }
 
+TEST_F(TUSchedulerTests, OnlyPublishWhenPreambleIsBuilt) {
+  struct PreamblePublishCounter : public ParsingCallbacks {
+    PreamblePublishCounter(int &PreamblePublishCount)
+        : PreamblePublishCount(PreamblePublishCount) {}
+    void onPreamblePublished(PathRef File) override { ++PreamblePublishCount; }
+    int &PreamblePublishCount;
+  };
+
+  int PreamblePublishCount = 0;
+  TUScheduler S(CDB, optsForTest(),
+                std::make_unique<PreamblePublishCounter>(PreamblePublishCount));
+
+  Path File = testPath("foo.cpp");
+  S.update(File, getInputs(File, ""), WantDiagnostics::Auto);
+  S.blockUntilIdle(timeoutSeconds(10));
+  EXPECT_EQ(PreamblePublishCount, 1);
+  // Same contents, no publish.
+  S.update(File, getInputs(File, ""), WantDiagnostics::Auto);
+  S.blockUntilIdle(timeoutSeconds(10));
+  EXPECT_EQ(PreamblePublishCount, 1);
+  // New contents, should publish.
+  S.update(File, getInputs(File, "#define FOO"), WantDiagnostics::Auto);
+  S.blockUntilIdle(timeoutSeconds(10));
+  EXPECT_EQ(PreamblePublishCount, 2);
+}
+
 // If a header file is missing from the CDB (or inferred using heuristics), and
 // it's included by another open file, then we parse it using that files flags.
 TEST_F(TUSchedulerTests, IncluderCache) {
@@ -1174,10 +1199,10 @@ TEST_F(TUSchedulerTests, IncluderCache) {
                      Unreliable = testPath("unreliable.h"),
                      OK = testPath("ok.h"),
                      NotIncluded = testPath("not_included.h");
-  class NoHeadersCDB : public GlobalCompilationDatabase {
+  struct NoHeadersCDB : public GlobalCompilationDatabase {
     llvm::Optional<tooling::CompileCommand>
     getCompileCommand(PathRef File) const override {
-      if (File == NoCmd || File == NotIncluded)
+      if (File == NoCmd || File == NotIncluded || FailAll)
         return llvm::None;
       auto Basic = getFallbackCommand(File);
       Basic.Heuristic.clear();
@@ -1192,6 +1217,8 @@ TEST_F(TUSchedulerTests, IncluderCache) {
       }
       return Basic;
     }
+
+    std::atomic<bool> FailAll{false};
   } CDB;
   TUScheduler S(CDB, optsForTest());
   auto GetFlags = [&](PathRef Header) {
@@ -1262,6 +1289,21 @@ TEST_F(TUSchedulerTests, IncluderCache) {
       << "association invalidated but not reclaimed";
   EXPECT_THAT(GetFlags(NotIncluded), Contains("-DMAIN2"))
       << "association still valid";
+
+  // Delete the file from CDB, it should invalidate the associations.
+  CDB.FailAll = true;
+  EXPECT_THAT(GetFlags(NoCmd), Not(Contains("-DMAIN3")))
+      << "association should've been invalidated.";
+  // Also run update for Main3 to invalidate the preeamble to make sure next
+  // update populates include cache associations.
+  S.update(Main3, getInputs(Main3, SomeIncludes), WantDiagnostics::Yes);
+  EXPECT_TRUE(S.blockUntilIdle(timeoutSeconds(10)));
+  // Re-add the file and make sure nothing crashes.
+  CDB.FailAll = false;
+  S.update(Main3, getInputs(Main3, SomeIncludes), WantDiagnostics::Yes);
+  EXPECT_TRUE(S.blockUntilIdle(timeoutSeconds(10)));
+  EXPECT_THAT(GetFlags(NoCmd), Contains("-DMAIN3"))
+      << "association invalidated and then claimed by main3";
 }
 
 TEST_F(TUSchedulerTests, PreservesLastActiveFile) {

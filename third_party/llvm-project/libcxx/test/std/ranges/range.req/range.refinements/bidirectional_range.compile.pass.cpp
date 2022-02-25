@@ -17,18 +17,16 @@
 
 #include "test_range.h"
 
-namespace stdr = std::ranges;
-
 template <template <class...> class I>
 constexpr bool check_bidirectional_range() {
-  constexpr bool result = stdr::bidirectional_range<test_range<I> >;
-  static_assert(stdr::bidirectional_range<test_range<I> const> == result);
-  static_assert(stdr::bidirectional_range<test_non_const_common_range<I> > == result);
-  static_assert(stdr::bidirectional_range<test_non_const_range<I> > == result);
-  static_assert(stdr::bidirectional_range<test_common_range<I> > == result);
-  static_assert(stdr::bidirectional_range<test_common_range<I> const> == result);
-  static_assert(!stdr::bidirectional_range<test_non_const_common_range<I> const>);
-  static_assert(!stdr::bidirectional_range<test_non_const_range<I> const>);
+  constexpr bool result = std::ranges::bidirectional_range<test_range<I> >;
+  static_assert(std::ranges::bidirectional_range<test_range<I> const> == result);
+  static_assert(std::ranges::bidirectional_range<test_non_const_common_range<I> > == result);
+  static_assert(std::ranges::bidirectional_range<test_non_const_range<I> > == result);
+  static_assert(std::ranges::bidirectional_range<test_common_range<I> > == result);
+  static_assert(std::ranges::bidirectional_range<test_common_range<I> const> == result);
+  static_assert(!std::ranges::bidirectional_range<test_non_const_common_range<I> const>);
+  static_assert(!std::ranges::bidirectional_range<test_non_const_range<I> const>);
   return result;
 }
 
@@ -38,3 +36,21 @@ static_assert(!check_bidirectional_range<forward_iterator>());
 static_assert(check_bidirectional_range<bidirectional_iterator>());
 static_assert(check_bidirectional_range<random_access_iterator>());
 static_assert(check_bidirectional_range<contiguous_iterator>());
+
+// Test ADL-proofing.
+struct Incomplete;
+template<class T> struct Holder { T t; };
+
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>*>);
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>*&>);
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>*&&>);
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>* const>);
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>* const&>);
+static_assert(!std::ranges::bidirectional_range<Holder<Incomplete>* const&&>);
+
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>*[10]>);
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>*(&)[10]>);
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>*(&&)[10]>);
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>* const[10]>);
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>* const(&)[10]>);
+static_assert( std::ranges::bidirectional_range<Holder<Incomplete>* const(&&)[10]>);

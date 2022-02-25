@@ -86,7 +86,7 @@ protected:
 public:
   InstrConverterBase(unsigned SrcOpcode) : SrcOpcode(SrcOpcode) {}
 
-  virtual ~InstrConverterBase() {}
+  virtual ~InstrConverterBase() = default;
 
   /// \returns true if \p MI is legal to convert.
   virtual bool isLegal(const MachineInstr *MI,
@@ -186,8 +186,8 @@ public:
         TII->getRegClass(TII->get(DstOpcode), 0, MRI->getTargetRegisterInfo(),
                          *MBB->getParent()));
     MachineInstrBuilder Bld = BuildMI(*MBB, MI, DL, TII->get(DstOpcode), Reg);
-    for (unsigned Idx = 1, End = MI->getNumOperands(); Idx < End; ++Idx)
-      Bld.add(MI->getOperand(Idx));
+    for (const MachineOperand &MO : llvm::drop_begin(MI->operands()))
+      Bld.add(MO);
 
     BuildMI(*MBB, MI, DL, TII->get(TargetOpcode::COPY))
         .add(MI->getOperand(0))

@@ -1,4 +1,4 @@
-//===-- runtime/io-error.cpp ------------------------------------*- C++ -*-===//
+//===-- runtime/io-error.cpp ----------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,8 +8,8 @@
 
 #include "io-error.h"
 #include "config.h"
-#include "magic-numbers.h"
 #include "tools.h"
+#include "flang/Runtime/magic-numbers.h"
 #include <cerrno>
 #include <cstdarg>
 #include <cstdio>
@@ -59,9 +59,13 @@ void IoErrorHandler::SignalError(int iostatOrErrno) {
 
 void IoErrorHandler::Forward(
     int ioStatOrErrno, const char *msg, std::size_t length) {
-  SignalError(ioStatOrErrno);
-  if (ioStat_ != IostatOk && (flags_ & hasIoMsg)) {
+  if (ioStat_ != IostatOk && msg && (flags_ & hasIoMsg)) {
     ioMsg_ = SaveDefaultCharacter(msg, length, *this);
+  }
+  if (ioStatOrErrno != IostatOk && msg) {
+    SignalError(ioStatOrErrno, "%.*s", static_cast<int>(length), msg);
+  } else {
+    SignalError(ioStatOrErrno);
   }
 }
 

@@ -29,9 +29,9 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -116,13 +116,6 @@ cl::opt<bool> X86PadForBranchAlign(
     "x86-pad-for-branch-align", cl::init(true), cl::Hidden,
     cl::desc("Pad previous instructions to implement branch alignment"));
 
-class X86ELFObjectWriter : public MCELFObjectTargetWriter {
-public:
-  X86ELFObjectWriter(bool is64Bit, uint8_t OSABI, uint16_t EMachine,
-                     bool HasRelocationAddend, bool foobar)
-    : MCELFObjectTargetWriter(is64Bit, OSABI, EMachine, HasRelocationAddend) {}
-};
-
 class X86AsmBackend : public MCAsmBackend {
   const MCSubtargetInfo &STI;
   std::unique_ptr<const MCInstrInfo> MCII;
@@ -155,7 +148,7 @@ public:
       AlignBranchType.addKind(X86::AlignBranchJcc);
       AlignBranchType.addKind(X86::AlignBranchJmp);
     }
-    // Allow overriding defaults set by master flag
+    // Allow overriding defaults set by main flag
     if (X86AlignBranchBoundary.getNumOccurrences())
       AlignBoundary = assumeAligned(X86AlignBranchBoundary);
     if (X86AlignBranch.getNumOccurrences())
@@ -166,7 +159,8 @@ public:
 
   bool allowAutoPadding() const override;
   bool allowEnhancedRelaxation() const override;
-  void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst) override;
+  void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst,
+                            const MCSubtargetInfo &STI) override;
   void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) override;
 
   unsigned getNumFixupKinds() const override {
@@ -207,9 +201,10 @@ public:
 
   void finishLayout(MCAssembler const &Asm, MCAsmLayout &Layout) const override;
 
-  unsigned getMaximumNopSize() const override;
+  unsigned getMaximumNopSize(const MCSubtargetInfo &STI) const override;
 
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
+  bool writeNopData(raw_ostream &OS, uint64_t Count,
+                    const MCSubtargetInfo *STI) const override;
 };
 } // end anonymous namespace
 
@@ -598,7 +593,7 @@ bool X86AsmBackend::needAlign(const MCInst &Inst) const {
 
 /// Insert BoundaryAlignFragment before instructions to align branches.
 void X86AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
-                                         const MCInst &Inst) {
+                                         const MCInst &Inst, const MCSubtargetInfo &STI) {
   CanPadInst = canPadInst(Inst, OS);
 
   if (!canPadBranches(OS))
@@ -637,7 +632,7 @@ void X86AsmBackend::emitInstructionBegin(MCObjectStreamer &OS,
                           isFirstMacroFusibleInst(Inst, *MCII))) {
     // If we meet a unfused branch or the first instuction in a fusiable pair,
     // insert a BoundaryAlign fragment.
-    OS.insert(PendingBA = new MCBoundaryAlignFragment(AlignBoundary));
+    OS.insert(PendingBA = new MCBoundaryAlignFragment(AlignBoundary, STI));
   }
 }
 
@@ -1081,7 +1076,7 @@ void X86AsmBackend::finishLayout(MCAssembler const &Asm,
   }
 }
 
-unsigned X86AsmBackend::getMaximumNopSize() const {
+unsigned X86AsmBackend::getMaximumNopSize(const MCSubtargetInfo &STI) const {
   if (STI.hasFeature(X86::Mode16Bit))
     return 4;
   if (!STI.hasFeature(X86::FeatureNOPL) && !STI.hasFeature(X86::Mode64Bit))
@@ -1101,7 +1096,8 @@ unsigned X86AsmBackend::getMaximumNopSize() const {
 /// Write a sequence of optimal nops to the output, covering \p Count
 /// bytes.
 /// \return - true on success, false on failure
-bool X86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
+bool X86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
+                                 const MCSubtargetInfo *STI) const {
   static const char Nops32Bit[10][11] = {
       // nop
       "\x90",
@@ -1138,9 +1134,9 @@ bool X86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
   };
 
   const char(*Nops)[11] =
-      STI.getFeatureBits()[X86::Mode16Bit] ? Nops16Bit : Nops32Bit;
+      STI->getFeatureBits()[X86::Mode16Bit] ? Nops16Bit : Nops32Bit;
 
-  uint64_t MaxNopLength = (uint64_t)getMaximumNopSize();
+  uint64_t MaxNopLength = (uint64_t)getMaximumNopSize(*STI);
 
   // Emit as many MaxNopLength NOPs as needed, then emit a NOP of the remaining
   // length.
@@ -1456,9 +1452,7 @@ public:
     unsigned NumDefCFAOffsets = 0;
     int MinAbsOffset = std::numeric_limits<int>::max();
 
-    for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
-      const MCCFIInstruction &Inst = Instrs[i];
-
+    for (const MCCFIInstruction &Inst : Instrs) {
       switch (Inst.getOperation()) {
       default:
         // Any other CFI directives indicate a frame that we aren't prepared

@@ -954,8 +954,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
 
   // Check to see if this is a fixed string, or if it has regex pieces.
   if (!MatchFullLinesHere &&
-      (PatternStr.size() < 2 || (PatternStr.find("{{") == StringRef::npos &&
-                                 PatternStr.find("[[") == StringRef::npos))) {
+      (PatternStr.size() < 2 ||
+       (!PatternStr.contains("{{") && !PatternStr.contains("[[")))) {
     FixedStr = PatternStr;
     return false;
   }
@@ -1007,8 +1007,9 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
     // brackets. They also accept a combined form which sets a numeric variable
     // to the evaluation of an expression. Both string and numeric variable
     // names must satisfy the regular expression "[a-zA-Z_][0-9a-zA-Z_]*" to be
-    // valid, as this helps catch some common errors.
-    if (PatternStr.startswith("[[")) {
+    // valid, as this helps catch some common errors. If there are extra '['s
+    // before the "[[", treat them literally.
+    if (PatternStr.startswith("[[") && !PatternStr.startswith("[[[")) {
       StringRef UnparsedPatternStr = PatternStr.substr(2);
       // Find the closing bracket pair ending the match.  End is going to be an
       // offset relative to the beginning of the match string.
@@ -1034,7 +1035,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       bool IsLegacyLineExpr = false;
       StringRef DefName;
       StringRef SubstStr;
-      std::string MatchRegexp;
+      StringRef MatchRegexp;
+      std::string WildcardRegexp;
       size_t SubstInsertIdx = RegExStr.size();
 
       // Parse string variable or legacy @LINE expression.
@@ -1078,7 +1080,7 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
             return true;
           }
           DefName = Name;
-          MatchRegexp = MatchStr.str();
+          MatchRegexp = MatchStr;
         } else {
           if (IsPseudo) {
             MatchStr = OrigMatchStr;
@@ -1117,7 +1119,8 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
           SubstStr = MatchStr;
         else {
           ExpressionFormat Format = ExpressionPointer->getFormat();
-          MatchRegexp = cantFail(Format.getWildcardRegex());
+          WildcardRegexp = cantFail(Format.getWildcardRegex());
+          MatchRegexp = WildcardRegexp;
         }
       }
 
@@ -1181,12 +1184,14 @@ bool Pattern::parsePattern(StringRef PatternStr, StringRef Prefix,
           Substitutions.push_back(Substitution);
         }
       }
+
+      continue;
     }
 
     // Handle fixed string matches.
     // Find the end, which is the start of the next regex.
-    size_t FixedMatchEnd = PatternStr.find("{{");
-    FixedMatchEnd = std::min(FixedMatchEnd, PatternStr.find("[["));
+    size_t FixedMatchEnd =
+        std::min(PatternStr.find("{{", 1), PatternStr.find("[[", 1));
     RegExStr += Regex::escape(PatternStr.substr(0, FixedMatchEnd));
     PatternStr = PatternStr.substr(FixedMatchEnd);
   }
@@ -2213,7 +2218,7 @@ static Error reportMatchResult(bool ExpectedMatch, const SourceMgr &SM,
 static unsigned CountNumNewlinesBetween(StringRef Range,
                                         const char *&FirstNewLine) {
   unsigned NumNewLines = 0;
-  while (1) {
+  while (true) {
     // Scan for newline.
     Range = Range.substr(Range.find_first_of("\n\r"));
     if (Range.empty())

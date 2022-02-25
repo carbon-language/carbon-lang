@@ -11,8 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 #include "mlir/Conversion/GPUToROCDL/GPUToROCDLPass.h"
 
+#include "mlir/Conversion/ArithmeticToLLVM/ArithmeticToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/LoweringOptions.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
@@ -24,7 +26,7 @@
 #include "mlir/Dialect/GPU/Passes.h"
 #include "mlir/Dialect/LLVMIR/ROCDLDialect.h"
 #include "mlir/Dialect/Math/IR/Math.h"
-#include "mlir/Dialect/Vector/VectorOps.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
@@ -50,8 +52,9 @@ namespace {
 struct LowerGpuOpsToROCDLOpsPass
     : public ConvertGpuOpsToROCDLOpsBase<LowerGpuOpsToROCDLOpsPass> {
   LowerGpuOpsToROCDLOpsPass() = default;
-  LowerGpuOpsToROCDLOpsPass(unsigned indexBitwidth) {
+  LowerGpuOpsToROCDLOpsPass(unsigned indexBitwidth, gpu::amd::Runtime runtime) {
     this->indexBitwidth = indexBitwidth;
+    this->runtime = runtime;
   }
 
   void runOnOperation() override {
@@ -72,11 +75,14 @@ struct LowerGpuOpsToROCDLOpsPass
     populateGpuRewritePatterns(patterns);
     (void)applyPatternsAndFoldGreedily(m, std::move(patterns));
 
+    mlir::arith::populateArithmeticToLLVMConversionPatterns(converter,
+                                                            llvmPatterns);
     populateVectorToLLVMConversionPatterns(converter, llvmPatterns);
     populateVectorToROCDLConversionPatterns(converter, llvmPatterns);
+    cf::populateControlFlowToLLVMConversionPatterns(converter, llvmPatterns);
     populateStdToLLVMConversionPatterns(converter, llvmPatterns);
     populateMemRefToLLVMConversionPatterns(converter, llvmPatterns);
-    populateGpuToROCDLConversionPatterns(converter, llvmPatterns);
+    populateGpuToROCDLConversionPatterns(converter, llvmPatterns, runtime);
     LLVMConversionTarget target(getContext());
     configureGpuToROCDLConversionLegality(target);
     if (failed(applyPartialConversion(m, target, std::move(llvmPatterns))))
@@ -84,7 +90,7 @@ struct LowerGpuOpsToROCDLOpsPass
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 void mlir::configureGpuToROCDLConversionLegality(ConversionTarget &target) {
   target.addIllegalOp<FuncOp>();
@@ -99,8 +105,11 @@ void mlir::configureGpuToROCDLConversionLegality(ConversionTarget &target) {
   target.addLegalOp<gpu::YieldOp, gpu::GPUModuleOp, gpu::ModuleEndOp>();
 }
 
-void mlir::populateGpuToROCDLConversionPatterns(LLVMTypeConverter &converter,
-                                                RewritePatternSet &patterns) {
+void mlir::populateGpuToROCDLConversionPatterns(
+    LLVMTypeConverter &converter, RewritePatternSet &patterns,
+    mlir::gpu::amd::Runtime runtime) {
+  using mlir::gpu::amd::Runtime;
+
   populateWithGenerated(patterns);
   patterns
       .add<GPUIndexIntrinsicOpLowering<gpu::ThreadIdOp, ROCDL::ThreadIdXOp,
@@ -114,16 +123,23 @@ void mlir::populateGpuToROCDLConversionPatterns(LLVMTypeConverter &converter,
            GPUReturnOpLowering>(converter);
   patterns.add<GPUFuncOpLowering>(
       converter, /*allocaAddrSpace=*/5,
-      Identifier::get(ROCDL::ROCDLDialect::getKernelFuncAttrName(),
-                      &converter.getContext()));
-  patterns.add<OpToFuncCallLowering<AbsFOp>>(converter, "__ocml_fabs_f32",
-                                             "__ocml_fabs_f64");
+      StringAttr::get(&converter.getContext(),
+                      ROCDL::ROCDLDialect::getKernelFuncAttrName()));
+  if (Runtime::HIP == runtime) {
+    patterns.add<GPUPrintfOpToHIPLowering>(converter);
+  } else if (Runtime::OpenCL == runtime) {
+    // Use address space = 4 to match the OpenCL definition of printf()
+    patterns.add<GPUPrintfOpToLLVMCallLowering>(converter, /*addressSpace=*/4);
+  }
+
+  patterns.add<OpToFuncCallLowering<math::AbsOp>>(converter, "__ocml_fabs_f32",
+                                                  "__ocml_fabs_f64");
   patterns.add<OpToFuncCallLowering<math::AtanOp>>(converter, "__ocml_atan_f32",
                                                    "__ocml_atan_f64");
   patterns.add<OpToFuncCallLowering<math::Atan2Op>>(
       converter, "__ocml_atan2_f32", "__ocml_atan2_f64");
-  patterns.add<OpToFuncCallLowering<CeilFOp>>(converter, "__ocml_ceil_f32",
-                                              "__ocml_ceil_f64");
+  patterns.add<OpToFuncCallLowering<math::CeilOp>>(converter, "__ocml_ceil_f32",
+                                                   "__ocml_ceil_f64");
   patterns.add<OpToFuncCallLowering<math::CosOp>>(converter, "__ocml_cos_f32",
                                                   "__ocml_cos_f64");
   patterns.add<OpToFuncCallLowering<math::ExpOp>>(converter, "__ocml_exp_f32",
@@ -132,8 +148,8 @@ void mlir::populateGpuToROCDLConversionPatterns(LLVMTypeConverter &converter,
                                                    "__ocml_exp2_f64");
   patterns.add<OpToFuncCallLowering<math::ExpM1Op>>(
       converter, "__ocml_expm1_f32", "__ocml_expm1_f64");
-  patterns.add<OpToFuncCallLowering<FloorFOp>>(converter, "__ocml_floor_f32",
-                                               "__ocml_floor_f64");
+  patterns.add<OpToFuncCallLowering<math::FloorOp>>(
+      converter, "__ocml_floor_f32", "__ocml_floor_f64");
   patterns.add<OpToFuncCallLowering<math::LogOp>>(converter, "__ocml_log_f32",
                                                   "__ocml_log_f64");
   patterns.add<OpToFuncCallLowering<math::Log10Op>>(
@@ -155,6 +171,7 @@ void mlir::populateGpuToROCDLConversionPatterns(LLVMTypeConverter &converter,
 }
 
 std::unique_ptr<OperationPass<gpu::GPUModuleOp>>
-mlir::createLowerGpuOpsToROCDLOpsPass(unsigned indexBitwidth) {
-  return std::make_unique<LowerGpuOpsToROCDLOpsPass>(indexBitwidth);
+mlir::createLowerGpuOpsToROCDLOpsPass(unsigned indexBitwidth,
+                                      gpu::amd::Runtime runtime) {
+  return std::make_unique<LowerGpuOpsToROCDLOpsPass>(indexBitwidth, runtime);
 }

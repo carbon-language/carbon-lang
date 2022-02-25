@@ -13,6 +13,7 @@ set(LLVM_ENABLE_RUNTIMES "" CACHE STRING
 if(LLVM_ENABLE_RUNTIMES STREQUAL "all" )
   set(LLVM_ENABLE_RUNTIMES ${LLVM_ALL_RUNTIMES})
 endif()
+set(COMMON_CMAKE_ARGS "-DHAVE_LLVM_LIT=ON")
 foreach(proj ${LLVM_ENABLE_RUNTIMES})
   set(proj_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../${proj}")
   if(IS_DIRECTORY ${proj_dir} AND EXISTS ${proj_dir}/CMakeLists.txt)
@@ -87,8 +88,12 @@ function(builtin_default_target compiler_rt_path)
                                       -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=${LLVM_ENABLE_PER_TARGET_RUNTIME_DIR_default}
                                       -DCMAKE_C_COMPILER_WORKS=ON
                                       -DCMAKE_ASM_COMPILER_WORKS=ON
+                                      ${COMMON_CMAKE_ARGS}
                                       ${BUILTINS_CMAKE_ARGS}
-                           PASSTHROUGH_PREFIXES COMPILER_RT
+                           PASSTHROUGH_PREFIXES CMAKE_OSX
+                                                COMPILER_RT
+                                                DARWIN
+                                                SANITIZER
                            USE_TOOLCHAIN
                            TARGET_TRIPLE ${TARGET_TRIPLE}
                            ${EXTRA_ARGS})
@@ -119,6 +124,7 @@ function(builtin_register_target compiler_rt_path target)
                                       -DCMAKE_C_COMPILER_WORKS=ON
                                       -DCMAKE_ASM_COMPILER_WORKS=ON
                                       -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON
+                                      ${COMMON_CMAKE_ARGS}
                                       ${${target}_extra_args}
                            USE_TOOLCHAIN
                            TARGET_TRIPLE ${target}
@@ -161,8 +167,8 @@ if(compiler_rt_path)
   endif()
 endif()
 
-# We create a list the names of all the runtime projects in all uppercase and
-# with dashes turned to underscores. This gives us the CMake variable prefixes
+# Create a list with the names of all the runtime projects in all uppercase and
+# with dashes turned to underscores. This gives us the CMake variable `prefixes`
 # for all variables that will apply to runtimes.
 foreach(entry ${runtimes})
   get_filename_component(projName ${entry} NAME)
@@ -178,10 +184,10 @@ foreach(entry ${runtimes})
   if (${canon_name} STREQUAL "OPENMP")
     list(APPEND prefixes "LIBOMP" "LIBOMPTARGET")
   endif()
-  # Many compiler-rt options start with SANITIZER_ rather than COMPILER_RT_,
-  # so when compiler-rt is enabled, consider both.
+  # Many compiler-rt options start with SANITIZER_ and DARWIN_ rather than
+  # COMPILER_RT_, so when compiler-rt is enabled, consider both.
   if(canon_name STREQUAL "COMPILER_RT")
-    list(APPEND prefixes SANITIZER)
+    list(APPEND prefixes SANITIZER DARWIN)
   endif()
 
   string(FIND ${projName} "lib" LIB_IDX)
@@ -236,8 +242,11 @@ function(runtime_default_target)
                                       -DCMAKE_C_COMPILER_WORKS=ON
                                       -DCMAKE_CXX_COMPILER_WORKS=ON
                                       -DCMAKE_ASM_COMPILER_WORKS=ON
+                                      ${COMMON_CMAKE_ARGS}
                                       ${RUNTIMES_CMAKE_ARGS}
-                           PASSTHROUGH_PREFIXES LLVM_ENABLE_RUNTIMES
+                           PASSTHROUGH_PREFIXES CMAKE_OSX
+                                                LLVM_ENABLE_RUNTIMES
+                                                LLVM_USE_LINKER
                                                 ${ARG_PREFIXES}
                            EXTRA_TARGETS ${extra_targets}
                                          ${test_targets}
@@ -290,6 +299,7 @@ function(runtime_register_target name target)
     set(runtimes-test-depends-${name} runtimes-test-depends)
     set(check-runtimes-${name} check-runtimes)
     list(APPEND ${name}_test_targets runtimes-test-depends-${name} check-runtimes-${name})
+    list(APPEND test_targets ${${name}_test_targets})
     foreach(target_name IN LISTS SUB_CHECK_TARGETS)
       set(${target_name}-${name} ${target_name})
       list(APPEND ${name}_test_targets ${target_name}-${name})
@@ -338,7 +348,9 @@ function(runtime_register_target name target)
                                       -DCMAKE_ASM_COMPILER_WORKS=ON
                                       -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON
                                       -DLLVM_RUNTIMES_TARGET=${name}
+                                      ${COMMON_CMAKE_ARGS}
                                       ${${name}_extra_args}
+                           PASSTHROUGH_PREFIXES LLVM_USE_LINKER
                            EXTRA_TARGETS ${${name}_extra_targets}
                                          ${${name}_test_targets}
                            USE_TOOLCHAIN
@@ -350,9 +362,14 @@ if(runtimes)
   # Create a runtimes target that uses this file as its top-level CMake file.
   # The runtimes target is a configuration of all the runtime libraries
   # together in a single CMake invocaiton.
+  set(extra_deps "")
   if("openmp" IN_LIST LLVM_ENABLE_RUNTIMES)
-    message(STATUS "Adding dependencies opt llvm-link")
-    set(extra_deps opt llvm-link)
+    if(TARGET opt)
+      list(APPEND extra_deps opt)
+    endif()
+    if(TARGET llvm-link)
+      list(APPEND extra_deps llvm-link)
+    endif()
   endif()
   if(NOT LLVM_RUNTIME_TARGETS)
     runtime_default_target(

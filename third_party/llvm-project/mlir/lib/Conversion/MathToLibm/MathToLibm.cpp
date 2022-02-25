@@ -9,9 +9,12 @@
 #include "mlir/Conversion/MathToLibm/MathToLibm.h"
 
 #include "../PassDetail.h"
+#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
-#include "mlir/Dialect/Vector/VectorOps.h"
+#include "mlir/Dialect/Utils/IndexingUtils.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
+#include "mlir/Dialect/Vector/Utils/VectorUtils.h"
 #include "mlir/IR/BuiltinDialect.h"
 #include "mlir/IR/PatternMatch.h"
 
@@ -57,21 +60,23 @@ VecOpToScalarOp<Op>::matchAndRewrite(Op op, PatternRewriter &rewriter) const {
   if (!vecType.hasRank())
     return failure();
   auto shape = vecType.getShape();
-  // TODO: support multidimensional vectors
-  if (shape.size() != 1)
-    return failure();
+  int64_t numElements = vecType.getNumElements();
 
-  Value result = rewriter.create<ConstantOp>(
+  Value result = rewriter.create<arith::ConstantOp>(
       loc, DenseElementsAttr::get(
                vecType, FloatAttr::get(vecType.getElementType(), 0.0)));
-  for (auto i = 0; i < shape.front(); ++i) {
+  SmallVector<int64_t> ones(shape.size(), 1);
+  SmallVector<int64_t> strides = computeStrides(shape, ones);
+  for (auto linearIndex = 0; linearIndex < numElements; ++linearIndex) {
+    SmallVector<int64_t> positions = delinearize(strides, linearIndex);
     SmallVector<Value> operands;
     for (auto input : op->getOperands())
       operands.push_back(
-          rewriter.create<vector::ExtractElementOp>(loc, input, i));
+          rewriter.create<vector::ExtractOp>(loc, input, positions));
     Value scalarOp =
         rewriter.create<Op>(loc, vecType.getElementType(), operands);
-    result = rewriter.create<vector::InsertElementOp>(loc, scalarOp, result, i);
+    result =
+        rewriter.create<vector::InsertOp>(loc, scalarOp, result, positions);
   }
   rewriter.replaceOp(op, {result});
   return success();
@@ -100,8 +105,7 @@ ScalarOpToLibmCall<Op>::matchAndRewrite(Op op,
         rewriter.create<FuncOp>(rewriter.getUnknownLoc(), name, opFunctionTy);
     opFunc.setPrivate();
   }
-  assert(SymbolTable::lookupSymbolIn(module, name)
-             ->template hasTrait<mlir::OpTrait::FunctionLike>());
+  assert(isa<FunctionOpInterface>(SymbolTable::lookupSymbolIn(module, name)));
 
   rewriter.replaceOpWithNewOp<CallOp>(op, name, op.getType(),
                                       op->getOperands());
@@ -115,6 +119,8 @@ void mlir::populateMathToLibmConversionPatterns(RewritePatternSet &patterns,
                VecOpToScalarOp<math::TanhOp>>(patterns.getContext(), benefit);
   patterns.add<ScalarOpToLibmCall<math::Atan2Op>>(patterns.getContext(),
                                                   "atan2f", "atan2", benefit);
+  patterns.add<ScalarOpToLibmCall<math::ErfOp>>(patterns.getContext(), "erff",
+                                                "erf", benefit);
   patterns.add<ScalarOpToLibmCall<math::ExpM1Op>>(patterns.getContext(),
                                                   "expm1f", "expm1", benefit);
   patterns.add<ScalarOpToLibmCall<math::TanhOp>>(patterns.getContext(), "tanhf",
@@ -135,8 +141,8 @@ void ConvertMathToLibmPass::runOnOperation() {
   populateMathToLibmConversionPatterns(patterns, /*benefit=*/1);
 
   ConversionTarget target(getContext());
-  target.addLegalDialect<BuiltinDialect, StandardOpsDialect,
-                         vector::VectorDialect>();
+  target.addLegalDialect<arith::ArithmeticDialect, BuiltinDialect,
+                         StandardOpsDialect, vector::VectorDialect>();
   target.addIllegalDialect<math::MathDialect>();
   if (failed(applyPartialConversion(module, target, std::move(patterns))))
     signalPassFailure();

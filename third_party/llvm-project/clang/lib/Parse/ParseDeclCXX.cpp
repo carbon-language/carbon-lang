@@ -291,7 +291,7 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                 /*ObjectHadErrors=*/false,
+                                 /*ObjectHasErrors=*/false,
                                  /*EnteringContext=*/false,
                                  /*MayBePseudoDestructor=*/nullptr,
                                  /*IsTypename=*/false,
@@ -529,7 +529,7 @@ Decl *Parser::ParseUsingDirective(DeclaratorContext Context,
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                 /*ObjectHadErrors=*/false,
+                                 /*ObjectHasErrors=*/false,
                                  /*EnteringContext=*/false,
                                  /*MayBePseudoDestructor=*/nullptr,
                                  /*IsTypename=*/false,
@@ -598,7 +598,7 @@ bool Parser::ParseUsingDeclarator(DeclaratorContext Context,
   // Parse nested-name-specifier.
   IdentifierInfo *LastII = nullptr;
   if (ParseOptionalCXXScopeSpecifier(D.SS, /*ObjectType=*/nullptr,
-                                     /*ObjectHadErrors=*/false,
+                                     /*ObjectHasErrors=*/false,
                                      /*EnteringContext=*/false,
                                      /*MayBePseudoDtor=*/nullptr,
                                      /*IsTypename=*/false,
@@ -678,7 +678,10 @@ Parser::ParseUsingDeclaration(
     SourceLocation UsingLoc, SourceLocation &DeclEnd,
     ParsedAttributesWithRange &PrefixAttrs, AccessSpecifier AS) {
   SourceLocation UELoc;
-  if (TryConsumeToken(tok::kw_enum, UELoc)) {
+  bool InInitStatement = Context == DeclaratorContext::SelectionInit ||
+                         Context == DeclaratorContext::ForInit;
+
+  if (TryConsumeToken(tok::kw_enum, UELoc) && !InInitStatement) {
     // C++20 using-enum
     Diag(UELoc, getLangOpts().CPlusPlus20
                     ? diag::warn_cxx17_compat_using_enum_declaration
@@ -714,6 +717,9 @@ Parser::ParseUsingDeclaration(
   ParsedAttributesWithRange MisplacedAttrs(AttrFactory);
   MaybeParseCXX11Attributes(MisplacedAttrs);
 
+  if (InInitStatement && Tok.isNot(tok::identifier))
+    return nullptr;
+
   UsingDeclarator D;
   bool InvalidDeclarator = ParseUsingDeclarator(Context, D);
 
@@ -732,7 +738,7 @@ Parser::ParseUsingDeclaration(
   }
 
   // Maybe this is an alias-declaration.
-  if (Tok.is(tok::equal)) {
+  if (Tok.is(tok::equal) || InInitStatement) {
     if (InvalidDeclarator) {
       SkipUntil(tok::semi);
       return nullptr;
@@ -1001,6 +1007,9 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
   if (Tok.is(tok::annot_decltype)) {
     Result = getExprAnnotation(Tok);
     EndLoc = Tok.getAnnotationEndLoc();
+    // Unfortunately, we don't know the LParen source location as the annotated
+    // token doesn't have it.
+    DS.setTypeofParensRange(SourceRange(SourceLocation(), EndLoc));
     ConsumeAnnotationToken();
     if (Result.isInvalid()) {
       DS.SetTypeSpecError();
@@ -1065,6 +1074,7 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 
     // Match the ')'
     T.consumeClose();
+    DS.setTypeofParensRange(T.getRange());
     if (T.getCloseLocation().isInvalid()) {
       DS.SetTypeSpecError();
       // FIXME: this should return the location of the last token
@@ -1184,7 +1194,7 @@ TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
   // Parse optional nested-name-specifier
   CXXScopeSpec SS;
   if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                     /*ObjectHadErrors=*/false,
+                                     /*ObjectHasErrors=*/false,
                                      /*EnteringContext=*/false))
     return true;
 
@@ -1603,7 +1613,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     CXXScopeSpec Spec;
     bool HasValidSpec = true;
     if (ParseOptionalCXXScopeSpecifier(Spec, /*ObjectType=*/nullptr,
-                                       /*ObjectHadErrors=*/false,
+                                       /*ObjectHasErrors=*/false,
                                        EnteringContext)) {
       DS.SetTypeSpecError();
       HasValidSpec = false;
@@ -2599,7 +2609,7 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       // Collect the scope specifier token we annotated earlier.
       CXXScopeSpec SS;
       ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                     /*ObjectHadErrors=*/false,
+                                     /*ObjectHasErrors=*/false,
                                      /*EnteringContext=*/false);
 
       if (SS.isInvalid()) {
@@ -2899,7 +2909,7 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   //   member-declarator
   //   member-declarator-list ',' member-declarator
 
-  while (1) {
+  while (true) {
     InClassInitStyle HasInClassInit = ICIS_NoInit;
     bool HasStaticInitializer = false;
     if (Tok.isOneOf(tok::equal, tok::l_brace) && PureSpecLoc.isInvalid()) {
@@ -3668,7 +3678,7 @@ MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   // parse '::'[opt] nested-name-specifier[opt]
   CXXScopeSpec SS;
   if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/nullptr,
-                                     /*ObjectHadErrors=*/false,
+                                     /*ObjectHasErrors=*/false,
                                      /*EnteringContext=*/false))
     return true;
 
@@ -3734,8 +3744,8 @@ MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       if (TemplateTypeTy.isInvalid())
         return QualType();
       QualType PreferredType = Actions.ProduceCtorInitMemberSignatureHelp(
-          getCurScope(), ConstructorDecl, SS, TemplateTypeTy.get(), ArgExprs, II,
-          T.getOpenLocation());
+          ConstructorDecl, SS, TemplateTypeTy.get(), ArgExprs, II,
+          T.getOpenLocation(), /*Braced=*/false);
       CalledSignatureHelp = true;
       return PreferredType;
     };

@@ -54,14 +54,16 @@ define void @test2(double* %ptr, i32 %skip) {
   ret void
 }
 
-; Same as @test1, but the assume just guarantees %skip > -3, which is not
-; enough to derive NoAlias
+; Same as @test1, this time the assume just guarantees %skip > -3, which is
+; enough to derive NoAlias for %ptr and %col.ptr.2 (distance is more than 3
+; doubles, and we load 1 double), but not %col.ptr.1 and %col.ptr.2 (distance
+; is more than 3 doubles, and we load 6 doubles).
 define void @test3(double* %ptr, i32 %skip) {
 ; CHECK-LABEL: Function: test3: 4 pointers, 1 call sites
 ; CHECK-NEXT:  MustAlias:   <6 x double>* %col.ptr.1, double* %ptr
-; CHECK-NEXT:  MayAlias:    double* %col.ptr.2, double* %ptr
+; CHECK-NEXT:  NoAlias:     double* %col.ptr.2, double* %ptr
 ; CHECK-NEXT:  MayAlias:    <6 x double>* %col.ptr.1, double* %col.ptr.2
-; CHECK-NEXT:  MayAlias:    <6 x double>* %col.ptr.2.cast, double* %ptr
+; CHECK-NEXT:  NoAlias:     <6 x double>* %col.ptr.2.cast, double* %ptr
 ; CHECK-NEXT:  MayAlias:    <6 x double>* %col.ptr.1, <6 x double>* %col.ptr.2.cast
 ; CHECK-NEXT:  MustAlias:   <6 x double>* %col.ptr.2.cast, double* %col.ptr.2
 ; CHECK-NEXT:  NoModRef:  Ptr: double* %ptr <->  call void @llvm.assume(i1 %gt)
@@ -125,6 +127,36 @@ define void @symmetry([0 x i8]* %ptr, i32 %a, i32 %b, i32 %c) {
   call void @llvm.assume(i1 %c.cmp)
   %c.off = add nuw nsw i32 %c, 1
   %gep2 = getelementptr [0 x i8], [0 x i8]* %ptr, i32 %a, i32 %c.off
+  ret void
+}
+
+; %ptr.neg and %ptr.shl may alias, as the shl renders the previously
+; non-negative value potentially negative.
+define void @shl_of_non_negative(i8* %ptr, i64 %a) {
+; CHECK-LABEL: Function: shl_of_non_negative
+; CHECK: NoAlias: i8* %ptr.a, i8* %ptr.neg
+; CHECK: MayAlias: i8* %ptr.neg, i8* %ptr.shl
+  %a.cmp = icmp sge i64 %a, 0
+  call void @llvm.assume(i1 %a.cmp)
+  %ptr.neg = getelementptr i8, i8* %ptr, i64 -2
+  %ptr.a = getelementptr i8, i8* %ptr, i64 %a
+  %shl = shl i64 %a, 1
+  %ptr.shl = getelementptr i8, i8* %ptr, i64 %shl
+  ret void
+}
+
+; Unlike the previous case, %ptr.neg and %ptr.shl can't alias, because
+; shl nsw of non-negative is non-negative.
+define void @shl_nsw_of_non_negative(i8* %ptr, i64 %a) {
+; CHECK-LABEL: Function: shl_nsw_of_non_negative
+; CHECK: NoAlias: i8* %ptr.a, i8* %ptr.neg
+; CHECK: NoAlias: i8* %ptr.neg, i8* %ptr.shl
+  %a.cmp = icmp sge i64 %a, 0
+  call void @llvm.assume(i1 %a.cmp)
+  %ptr.neg = getelementptr i8, i8* %ptr, i64 -2
+  %ptr.a = getelementptr i8, i8* %ptr, i64 %a
+  %shl = shl nsw i64 %a, 1
+  %ptr.shl = getelementptr i8, i8* %ptr, i64 %shl
   ret void
 }
 

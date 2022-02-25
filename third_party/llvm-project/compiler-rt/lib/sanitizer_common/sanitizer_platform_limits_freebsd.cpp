@@ -69,11 +69,17 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stddef.h>
+#include <md5.h>
+#include <sha224.h>
+#include <sha256.h>
+#include <sha384.h>
+#include <sha512.h>
 #include <stdio.h>
 #include <stringlist.h>
 #include <term.h>
 #include <termios.h>
 #include <time.h>
+#include <ttyent.h>
 #include <utime.h>
 #include <utmpx.h>
 #include <vis.h>
@@ -124,7 +130,7 @@ unsigned struct_sigevent_sz = sizeof(struct sigevent);
 unsigned struct_sched_param_sz = sizeof(struct sched_param);
 unsigned struct_statfs_sz = sizeof(struct statfs);
 unsigned struct_sockaddr_sz = sizeof(struct sockaddr);
-unsigned ucontext_t_sz = sizeof(ucontext_t);
+unsigned ucontext_t_sz(void *ctx) { return sizeof(ucontext_t); }
 unsigned struct_rlimit_sz = sizeof(struct rlimit);
 unsigned struct_timespec_sz = sizeof(struct timespec);
 unsigned struct_utimbuf_sz = sizeof(struct utimbuf);
@@ -170,8 +176,11 @@ uptr __sanitizer_in_addr_sz(int af) {
 unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
 int glob_nomatch = GLOB_NOMATCH;
 int glob_altdirfunc = GLOB_ALTDIRFUNC;
+const int wordexp_wrde_dooffs = WRDE_DOOFFS;
 
 unsigned path_max = PATH_MAX;
+
+int struct_ttyent_sz = sizeof(struct ttyent);
 
 // ioctl arguments
 unsigned struct_ifreq_sz = sizeof(struct ifreq);
@@ -357,6 +366,22 @@ const int si_SEGV_MAPERR = SEGV_MAPERR;
 const int si_SEGV_ACCERR = SEGV_ACCERR;
 const int unvis_valid = UNVIS_VALID;
 const int unvis_validpush = UNVIS_VALIDPUSH;
+
+const unsigned MD5_CTX_sz = sizeof(MD5_CTX);
+const unsigned MD5_return_length = MD5_DIGEST_STRING_LENGTH;
+
+#define SHA2_CONST(LEN)                                                      \
+  const unsigned SHA##LEN##_CTX_sz = sizeof(SHA##LEN##_CTX);                 \
+  const unsigned SHA##LEN##_return_length = SHA##LEN##_DIGEST_STRING_LENGTH; \
+  const unsigned SHA##LEN##_block_length = SHA##LEN##_BLOCK_LENGTH;          \
+  const unsigned SHA##LEN##_digest_length = SHA##LEN##_DIGEST_LENGTH
+
+SHA2_CONST(224);
+SHA2_CONST(256);
+SHA2_CONST(384);
+SHA2_CONST(512);
+
+#undef SHA2_CONST
 }  // namespace __sanitizer
 
 using namespace __sanitizer;

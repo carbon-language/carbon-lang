@@ -122,6 +122,10 @@ namespace {
       return D;
     }
 
+    llvm::StringRef GetMangledName(GlobalDecl GD) {
+      return Builder->getMangledName(GD);
+    }
+
     llvm::Constant *GetAddrOfGlobal(GlobalDecl global, bool isForDefinition) {
       return Builder->GetAddrOfGlobal(global, ForDefinition_t(isForDefinition));
     }
@@ -142,6 +146,11 @@ namespace {
       const auto &SDKVersion = Ctx->getTargetInfo().getSDKVersion();
       if (!SDKVersion.empty())
         M->setSDKVersion(SDKVersion);
+      if (const auto *TVT = Ctx->getTargetInfo().getDarwinTargetVariantTriple())
+        M->setDarwinTargetVariantTriple(TVT->getTriple());
+      if (auto TVSDKVersion =
+              Ctx->getTargetInfo().getDarwinTargetVariantSDKVersion())
+        M->setDarwinTargetVariantSDKVersion(*TVSDKVersion);
       Builder.reset(new CodeGen::CodeGenModule(Context, HeaderSearchOpts,
                                                PreprocessorOpts, CodeGenOpts,
                                                *M, Diags, CoverageInfo));
@@ -323,6 +332,10 @@ CGDebugInfo *CodeGenerator::getCGDebugInfo() {
 
 const Decl *CodeGenerator::GetDeclForMangledName(llvm::StringRef name) {
   return static_cast<CodeGeneratorImpl*>(this)->GetDeclForMangledName(name);
+}
+
+llvm::StringRef CodeGenerator::GetMangledName(GlobalDecl GD) {
+  return static_cast<CodeGeneratorImpl *>(this)->GetMangledName(GD);
 }
 
 llvm::Constant *CodeGenerator::GetAddrOfGlobal(GlobalDecl global,

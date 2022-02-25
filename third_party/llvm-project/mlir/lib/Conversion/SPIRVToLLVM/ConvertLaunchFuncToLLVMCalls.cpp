@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "../PassDetail.h"
+#include "mlir/Conversion/ArithmeticToLLVM/ArithmeticToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/LoweringOptions.h"
 #include "mlir/Conversion/LLVMCommon/Pattern.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
@@ -127,8 +128,9 @@ static LogicalResult encodeKernelName(spirv::ModuleOp module) {
   //   {spv_module_name}_{function_name}
   auto entryPoint = *module.getOps<spirv::EntryPointOp>().begin();
   StringRef funcName = entryPoint.fn();
-  auto funcOp = module.lookupSymbol<spirv::FuncOp>(funcName);
-  std::string newFuncName = spvModuleName.str() + "_" + funcName.str();
+  auto funcOp = module.lookupSymbol<spirv::FuncOp>(entryPoint.fnAttr());
+  StringAttr newFuncName =
+      StringAttr::get(module->getContext(), spvModuleName + "_" + funcName);
   if (failed(SymbolTable::replaceAllSymbolUses(funcOp, newFuncName, module)))
     return failure();
   SymbolTable::setSymbolName(funcOp, newFuncName);
@@ -156,7 +158,7 @@ class GPULaunchLowering : public ConvertOpToLLVMPattern<gpu::LaunchFuncOp> {
   using ConvertOpToLLVMPattern<gpu::LaunchFuncOp>::ConvertOpToLLVMPattern;
 
   LogicalResult
-  matchAndRewrite(gpu::LaunchFuncOp launchOp, ArrayRef<Value> operands,
+  matchAndRewrite(gpu::LaunchFuncOp launchOp, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
     auto *op = launchOp.getOperation();
     MLIRContext *context = rewriter.getContext();
@@ -166,9 +168,10 @@ class GPULaunchLowering : public ConvertOpToLLVMPattern<gpu::LaunchFuncOp> {
     // is named:
     //   __spv__{kernel_module_name}
     // based on GPU to SPIR-V conversion.
-    StringRef kernelModuleName = launchOp.getKernelModuleName();
+    StringRef kernelModuleName = launchOp.getKernelModuleName().getValue();
     std::string spvModuleName = kSPIRVModule + kernelModuleName.str();
-    auto spvModule = module.lookupSymbol<spirv::ModuleOp>(spvModuleName);
+    auto spvModule = module.lookupSymbol<spirv::ModuleOp>(
+        StringAttr::get(context, spvModuleName));
     if (!spvModule) {
       return launchOp.emitOpError("SPIR-V kernel module '")
              << spvModuleName << "' is not found";
@@ -180,9 +183,10 @@ class GPULaunchLowering : public ConvertOpToLLVMPattern<gpu::LaunchFuncOp> {
     // variables. The name of the kernel will be
     //   {spv_module_name}_{kernel_function_name}
     // to avoid symbolic name conflicts.
-    StringRef kernelFuncName = launchOp.getKernelName();
+    StringRef kernelFuncName = launchOp.getKernelName().getValue();
     std::string newKernelFuncName = spvModuleName + "_" + kernelFuncName.str();
-    auto kernelFunc = module.lookupSymbol<LLVM::LLVMFuncOp>(newKernelFuncName);
+    auto kernelFunc = module.lookupSymbol<LLVM::LLVMFuncOp>(
+        StringAttr::get(context, newKernelFuncName));
     if (!kernelFunc) {
       OpBuilder::InsertionGuard guard(rewriter);
       rewriter.setInsertionPointToStart(module.getBody());
@@ -203,8 +207,8 @@ class GPULaunchLowering : public ConvertOpToLLVMPattern<gpu::LaunchFuncOp> {
     Location loc = launchOp.getLoc();
     SmallVector<CopyInfo, 4> copyInfo;
     auto numKernelOperands = launchOp.getNumKernelOperands();
-    auto kernelOperands = operands.take_back(numKernelOperands);
-    for (auto operand : llvm::enumerate(kernelOperands)) {
+    auto kernelOperands = adaptor.getOperands().take_back(numKernelOperands);
+    for (const auto &operand : llvm::enumerate(kernelOperands)) {
       // Check if the kernel's operand is a ranked memref.
       auto memRefType = launchOp.getKernelOperand(operand.index())
                             .getType()
@@ -284,6 +288,8 @@ public:
     auto *context = module.getContext();
     RewritePatternSet patterns(context);
     LLVMTypeConverter typeConverter(context, options);
+    mlir::arith::populateArithmeticToLLVMConversionPatterns(typeConverter,
+                                                            patterns);
     populateMemRefToLLVMConversionPatterns(typeConverter, patterns);
     populateStdToLLVMConversionPatterns(typeConverter, patterns);
     patterns.add<GPULaunchLowering>(typeConverter);

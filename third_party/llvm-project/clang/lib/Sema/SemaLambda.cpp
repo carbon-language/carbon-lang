@@ -373,7 +373,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
     const FunctionProtoType *FPT = MethodType->castAs<FunctionProtoType>();
     QualType Result = FPT->getReturnType();
     if (Result->isUndeducedType()) {
-      Result = SubstAutoType(Result, Context.DependentTy);
+      Result = SubstAutoTypeDependent(Result);
       MethodType = Context.getFunctionType(Result, FPT->getParamTypes(),
                                            FPT->getExtProtoInfo());
     }
@@ -1245,7 +1245,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   // cleanups from the enclosing full-expression.
   PushExpressionEvaluationContext(
       LSI->CallOperator->isConsteval()
-          ? ExpressionEvaluationContext::ConstantEvaluated
+          ? ExpressionEvaluationContext::ImmediateFunctionContext
           : ExpressionEvaluationContext::PotentiallyEvaluated);
 }
 
@@ -1948,6 +1948,7 @@ ExprResult Sema::BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
     // ratified, it lays out the exact set of conditions where we shouldn't
     // allow a lambda-expression.
     case ExpressionEvaluationContext::ConstantEvaluated:
+    case ExpressionEvaluationContext::ImmediateFunctionContext:
       // We don't actually diagnose this case immediately, because we
       // could be within a context where we might find out later that
       // the expression is potentially evaluated (e.g., for typeid).
@@ -1978,8 +1979,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
   CallOperator->markUsed(Context);
 
   ExprResult Init = PerformCopyInitialization(
-      InitializedEntity::InitializeLambdaToBlock(ConvLocation, Src->getType(),
-                                                 /*NRVO=*/false),
+      InitializedEntity::InitializeLambdaToBlock(ConvLocation, Src->getType()),
       CurrentLocation, Src);
   if (!Init.isInvalid())
     Init = ActOnFinishFullExpr(Init.get(), /*DiscardedValue*/ false);

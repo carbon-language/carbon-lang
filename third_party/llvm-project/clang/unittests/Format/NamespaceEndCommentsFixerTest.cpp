@@ -256,6 +256,15 @@ TEST_F(NamespaceEndCommentsFixerTest, AddsEndComment) {
                                     "int j;\n"
                                     "};}",
                                     CompactNamespacesStyle));
+  EXPECT_EQ("namespace out { namespace {\n"
+            "int i;\n"
+            "int j;\n"
+            "}}// namespace out",
+            fixNamespaceEndComments("namespace out { namespace {\n"
+                                    "int i;\n"
+                                    "int j;\n"
+                                    "}}",
+                                    CompactNamespacesStyle));
 
   // Adds an end comment after a semicolon.
   EXPECT_EQ("namespace {\n"
@@ -608,6 +617,11 @@ TEST_F(NamespaceEndCommentsFixerTest, UpdatesInvalidEndLineComment) {
             fixNamespaceEndComments("namespace out { namespace in {\n"
                                     "}// banamespace in\n"
                                     "} // namespace out",
+                                    CompactNamespacesStyle));
+  EXPECT_EQ("namespace out { namespace {\n"
+            "}} // namespace out",
+            fixNamespaceEndComments("namespace out { namespace {\n"
+                                    "}} // namespace out::",
                                     CompactNamespacesStyle));
 }
 
@@ -1182,6 +1196,82 @@ TEST_F(ShortNamespaceLinesTest, MultipleUnwrappedLine) {
                                     "int i;\n"
                                     "int j;\n"
                                     "int k;\n"
+                                    "}\n",
+                                    Style));
+}
+
+TEST_F(ShortNamespaceLinesTest, NamespaceAlias) {
+  auto Style = getLLVMStyle();
+
+  EXPECT_EQ("namespace n = nn;\n"
+            "{\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}\n",
+            fixNamespaceEndComments("namespace n = nn;\n"
+                                    "{\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
+                                    "}\n",
+                                    Style));
+
+  EXPECT_EQ("namespace n = nn; // comment\n"
+            "{\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}\n",
+            fixNamespaceEndComments("namespace n = nn; // comment\n"
+                                    "{\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
+                                    "}\n",
+                                    Style));
+
+  EXPECT_EQ("namespace n = nn; /* comment */\n"
+            "{\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}\n",
+            fixNamespaceEndComments("namespace n = nn; /* comment */\n"
+                                    "{\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
+                                    "}\n",
+                                    Style));
+
+  EXPECT_EQ(
+      "namespace n = nn; /* comment */ /* comment2 */\n"
+      "{\n"
+      "  int i;\n"
+      "  int j;\n"
+      "}\n",
+      fixNamespaceEndComments("namespace n = nn; /* comment */ /* comment2 */\n"
+                              "{\n"
+                              "  int i;\n"
+                              "  int j;\n"
+                              "}\n",
+                              Style));
+
+  EXPECT_EQ("namespace n = nn; {\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}\n",
+            fixNamespaceEndComments("namespace n = nn; {\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
+                                    "}\n",
+                                    Style));
+  EXPECT_EQ("int foo;\n"
+            "namespace n\n"
+            "{\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}// namespace n\n",
+            fixNamespaceEndComments("int foo;\n"
+                                    "namespace n\n"
+                                    "{\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
                                     "}\n",
                                     Style));
 }

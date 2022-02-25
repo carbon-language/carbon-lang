@@ -89,6 +89,23 @@ template <typename A> bool IsAssumedRank(const std::optional<A> &x) {
   return x && IsAssumedRank(*x);
 }
 
+// Predicate: true when an expression is a coarray (corank > 0)
+bool IsCoarray(const ActualArgument &);
+bool IsCoarray(const Symbol &);
+template <typename A> bool IsCoarray(const A &) { return false; }
+template <typename A> bool IsCoarray(const Designator<A> &designator) {
+  if (const auto *symbol{std::get_if<SymbolRef>(&designator.u)}) {
+    return IsCoarray(**symbol);
+  }
+  return false;
+}
+template <typename T> bool IsCoarray(const Expr<T> &expr) {
+  return std::visit([](const auto &x) { return IsCoarray(x); }, expr.u);
+}
+template <typename A> bool IsCoarray(const std::optional<A> &x) {
+  return x && IsCoarray(*x);
+}
+
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
 
@@ -220,7 +237,7 @@ auto UnwrapConvertedExpr(B &x) -> common::Constify<A, B> * {
 // a pointer to the Symbol with TypeParamDetails.
 template <typename A> const Symbol *ExtractBareLenParameter(const A &expr) {
   if (const auto *typeParam{
-          evaluate::UnwrapConvertedExpr<evaluate::TypeParamInquiry>(expr)}) {
+          UnwrapConvertedExpr<evaluate::TypeParamInquiry>(expr)}) {
     if (!typeParam->base()) {
       const Symbol &symbol{typeParam->parameter()};
       if (const auto *tpd{symbol.detailsIf<semantics::TypeParamDetails>()}) {
@@ -282,6 +299,9 @@ std::optional<DataRef> ExtractDataRef(const A *p, bool intoSubstring = false) {
     return std::nullopt;
   }
 }
+std::optional<DataRef> ExtractDataRef(
+    const ActualArgument &, bool intoSubstring = false);
+
 std::optional<DataRef> ExtractSubstringBase(const Substring &);
 
 // Predicate: is an expression is an array element reference?
@@ -869,12 +889,21 @@ template <typename A> bool IsAllocatableOrPointer(const A &x) {
       semantics::Attrs{semantics::Attr::POINTER, semantics::Attr::ALLOCATABLE});
 }
 
+// Like IsAllocatableOrPointer, but accepts pointer function results as being
+// pointers.
+bool IsAllocatableOrPointerObject(const Expr<SomeType> &, FoldingContext &);
+
 // Procedure and pointer detection predicates
 bool IsProcedure(const Expr<SomeType> &);
 bool IsFunction(const Expr<SomeType> &);
 bool IsProcedurePointerTarget(const Expr<SomeType> &);
+bool IsBareNullPointer(const Expr<SomeType> *); // NULL() w/o MOLD=
 bool IsNullPointer(const Expr<SomeType> &);
 bool IsObjectPointer(const Expr<SomeType> &, FoldingContext &);
+
+// Can Expr be passed as absent to an optional dummy argument.
+// See 15.5.2.12 point 1 for more details.
+bool MayBePassedAsAbsentOptional(const Expr<SomeType> &, FoldingContext &);
 
 // Extracts the chain of symbols from a designator, which has perhaps been
 // wrapped in an Expr<>, removing all of the (co)subscripts.  The
@@ -992,11 +1021,37 @@ private:
   std::optional<ConstantSubscripts> lbounds_;
 };
 
+// Given a collection of element values, package them as a Constant.
+// If the type is Character or a derived type, take the length or type
+// (resp.) from a another Constant.
+template <typename T>
+Constant<T> PackageConstant(std::vector<Scalar<T>> &&elements,
+    const Constant<T> &reference, const ConstantSubscripts &shape) {
+  if constexpr (T::category == TypeCategory::Character) {
+    return Constant<T>{
+        reference.LEN(), std::move(elements), ConstantSubscripts{shape}};
+  } else if constexpr (T::category == TypeCategory::Derived) {
+    return Constant<T>{reference.GetType().GetDerivedTypeSpec(),
+        std::move(elements), ConstantSubscripts{shape}};
+  } else {
+    return Constant<T>{std::move(elements), ConstantSubscripts{shape}};
+  }
+}
+
+// Nonstandard conversions of constants (integer->logical, logical->integer)
+// that can appear in DATA statements as an extension.
+std::optional<Expr<SomeType>> DataConstantConversionExtension(
+    FoldingContext &, const DynamicType &, const Expr<SomeType> &);
+
 } // namespace Fortran::evaluate
 
 namespace Fortran::semantics {
 
 class Scope;
+
+// If a symbol represents an ENTRY, return the symbol of the main entry
+// point to its subprogram.
+const Symbol *GetMainEntry(const Symbol *);
 
 // These functions are used in Evaluate so they are defined here rather than in
 // Semantics to avoid a link-time dependency on Semantics.
@@ -1009,11 +1064,23 @@ bool IsFunction(const Scope &);
 bool IsProcedure(const Symbol &);
 bool IsProcedure(const Scope &);
 bool IsProcedurePointer(const Symbol &);
+bool IsAutomatic(const Symbol &);
 bool IsSaved(const Symbol &); // saved implicitly or explicitly
 bool IsDummy(const Symbol &);
+bool IsAssumedShape(const Symbol &);
+bool IsDeferredShape(const Symbol &);
 bool IsFunctionResult(const Symbol &);
 bool IsKindTypeParameter(const Symbol &);
 bool IsLenTypeParameter(const Symbol &);
+bool IsExtensibleType(const DerivedTypeSpec *);
+bool IsBuiltinDerivedType(const DerivedTypeSpec *derived, const char *name);
+// Is this derived type TEAM_TYPE from module ISO_FORTRAN_ENV?
+bool IsTeamType(const DerivedTypeSpec *);
+// Is this derived type TEAM_TYPE, C_PTR, or C_FUNPTR?
+bool IsBadCoarrayType(const DerivedTypeSpec *);
+// Is this derived type either C_PTR or C_FUNPTR from module ISO_C_BINDING
+bool IsIsoCType(const DerivedTypeSpec *);
+bool IsEventTypeOrLockType(const DerivedTypeSpec *);
 
 // ResolveAssociations() traverses use associations and host associations
 // like GetUltimate(), but also resolves through whole variable associations
@@ -1038,6 +1105,11 @@ bool AreTypeParamCompatible(
 
 const Symbol &GetUsedModule(const UseDetails &);
 const Symbol *FindFunctionResult(const Symbol &);
+
+// Type compatibility predicate: are x and y effectively the same type?
+// Uses DynamicType::IsTkCompatible(), which handles the case of distinct
+// but identical derived types.
+bool AreTkCompatibleTypes(const DeclTypeSpec *x, const DeclTypeSpec *y);
 
 } // namespace Fortran::semantics
 

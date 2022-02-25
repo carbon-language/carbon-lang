@@ -44,7 +44,7 @@ class targetCommandTestCase(TestBase):
         self.buildAll()
         self.do_target_command()
 
-    @expectedFailureAll(archs=['arm64e']) # <rdar://problem/37773624>
+    @expectedFailureDarwin(archs=["arm64", "arm64e"]) # <rdar://problem/37773624>
     def test_target_variable_command(self):
         """Test 'target variable' command before and after starting the inferior."""
         d = {'C_SOURCES': 'globals.c', 'EXE': self.getBuildArtifact('globals')}
@@ -53,7 +53,7 @@ class targetCommandTestCase(TestBase):
 
         self.do_target_variable_command('globals')
 
-    @expectedFailureAll(archs=['arm64e']) # <rdar://problem/37773624>
+    @expectedFailureDarwin(archs=["arm64", "arm64e"]) # <rdar://problem/37773624>
     def test_target_variable_command_no_fail(self):
         """Test 'target variable' command before and after starting the inferior."""
         d = {'C_SOURCES': 'globals.c', 'EXE': self.getBuildArtifact('globals')}
@@ -358,7 +358,6 @@ class targetCommandTestCase(TestBase):
 
     # Write only files don't seem to be supported on Windows.
     @skipIfWindows
-    @skipIfReproducer # Cannot be captured in the VFS.
     @no_debug_info_test
     def test_target_create_unreadable_core_file(self):
         tf = tempfile.NamedTemporaryFile()
@@ -383,7 +382,6 @@ class targetCommandTestCase(TestBase):
     # Write only files don't seem to be supported on Windows.
     @skipIfWindows
     @no_debug_info_test
-    @skipIfReproducer # Cannot be captured in the VFS.
     def test_target_create_unreadable_sym_file(self):
         tf = tempfile.NamedTemporaryFile()
         os.chmod(tf.name, stat.S_IWRITE)
@@ -470,3 +468,11 @@ class targetCommandTestCase(TestBase):
         # Invalid arguments.
         self.expect("target modules search-paths query faz baz", error=True,
                     substrs=["query requires one argument"])
+
+    @no_debug_info_test
+    def test_target_modules_type(self):
+        self.buildB()
+        self.runCmd("file " + self.getBuildArtifact("b.out"),
+                    CURRENT_EXECUTABLE_SET)
+        self.expect("target modules lookup --type int",
+                    substrs=["1 match found", 'name = "int"'])

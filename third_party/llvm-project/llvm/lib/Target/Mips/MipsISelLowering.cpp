@@ -94,18 +94,6 @@ static const MCPhysReg Mips64DPRegs[8] = {
   Mips::D16_64, Mips::D17_64, Mips::D18_64, Mips::D19_64
 };
 
-// If I is a shifted mask, set the size (Size) and the first bit of the
-// mask (Pos), and return true.
-// For example, if I is 0x003ff800, (Pos, Size) = (11, 11).
-static bool isShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
-  if (!isShiftedMask_64(I))
-    return false;
-
-  Size = countPopulation(I);
-  Pos = countTrailingZeros(I);
-  return true;
-}
-
 // The MIPS MSA ABI passes vector arguments in the integer register set.
 // The number of integer registers used is dependant on the ABI used.
 MVT MipsTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
@@ -509,6 +497,9 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
     setLibcallName(RTLIB::SHL_I128, nullptr);
     setLibcallName(RTLIB::SRL_I128, nullptr);
     setLibcallName(RTLIB::SRA_I128, nullptr);
+    setLibcallName(RTLIB::MUL_I128, nullptr);
+    setLibcallName(RTLIB::MULO_I64, nullptr);
+    setLibcallName(RTLIB::MULO_I128, nullptr);
   }
 
   setMinFunctionAlignment(Subtarget.isGP64bit() ? Align(8) : Align(4));
@@ -791,14 +782,15 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
   EVT ValTy = N->getValueType(0);
   SDLoc DL(N);
 
-  uint64_t Pos = 0, SMPos, SMSize;
+  uint64_t Pos = 0;
+  unsigned SMPos, SMSize;
   ConstantSDNode *CN;
   SDValue NewOperand;
   unsigned Opc;
 
   // Op's second operand must be a shifted mask.
   if (!(CN = dyn_cast<ConstantSDNode>(Mask)) ||
-      !isShiftedMask(CN->getZExtValue(), SMPos, SMSize))
+      !isShiftedMask_64(CN->getZExtValue(), SMPos, SMSize))
     return SDValue();
 
   if (FirstOperandOpc == ISD::SRA || FirstOperandOpc == ISD::SRL) {
@@ -872,7 +864,7 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   SDValue And0 = N->getOperand(0), And1 = N->getOperand(1);
-  uint64_t SMPos0, SMSize0, SMPos1, SMSize1;
+  unsigned SMPos0, SMSize0, SMPos1, SMSize1;
   ConstantSDNode *CN, *CN1;
 
   // See if Op's first operand matches (and $src1 , mask0).
@@ -880,7 +872,7 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   if (!(CN = dyn_cast<ConstantSDNode>(And0.getOperand(1))) ||
-      !isShiftedMask(~CN->getSExtValue(), SMPos0, SMSize0))
+      !isShiftedMask_64(~CN->getSExtValue(), SMPos0, SMSize0))
     return SDValue();
 
   // See if Op's second operand matches (and (shl $src, pos), mask1).
@@ -888,7 +880,7 @@ static SDValue performORCombine(SDNode *N, SelectionDAG &DAG,
       And1.getOperand(0).getOpcode() == ISD::SHL) {
 
     if (!(CN = dyn_cast<ConstantSDNode>(And1.getOperand(1))) ||
-        !isShiftedMask(CN->getZExtValue(), SMPos1, SMSize1))
+        !isShiftedMask_64(CN->getZExtValue(), SMPos1, SMSize1))
       return SDValue();
 
     // The shift masks must have the same position and size.
@@ -1115,7 +1107,8 @@ static SDValue performSHLCombine(SDNode *N, SelectionDAG &DAG,
   EVT ValTy = N->getValueType(0);
   SDLoc DL(N);
 
-  uint64_t Pos = 0, SMPos, SMSize;
+  uint64_t Pos = 0;
+  unsigned SMPos, SMSize;
   ConstantSDNode *CN;
   SDValue NewOperand;
 
@@ -1133,7 +1126,7 @@ static SDValue performSHLCombine(SDNode *N, SelectionDAG &DAG,
 
   // AND's second operand must be a shifted mask.
   if (!(CN = dyn_cast<ConstantSDNode>(FirstOperand.getOperand(1))) ||
-      !isShiftedMask(CN->getZExtValue(), SMPos, SMSize))
+      !isShiftedMask_64(CN->getZExtValue(), SMPos, SMSize))
     return SDValue();
 
   // Return if the shifted mask does not start at bit 0 or the sum of its size
@@ -2073,7 +2066,7 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
     const MipsTargetObjectFile *TLOF =
         static_cast<const MipsTargetObjectFile *>(
             getTargetMachine().getObjFileLowering());
-    const GlobalObject *GO = GV->getBaseObject();
+    const GlobalObject *GO = GV->getAliaseeObject();
     if (GO && TLOF->IsGlobalInSmallSection(GO, getTargetMachine()))
       // %gp_rel relocation
       return getAddrGPRel(N, SDLoc(N), Ty, DAG, ABI.IsN64());
@@ -2520,7 +2513,7 @@ SDValue MipsTargetLowering::lowerRETURNADDR(SDValue Op,
   MFI.setReturnAddressIsTaken(true);
 
   // Return RA, which contains the return address. Mark it an implicit live-in.
-  unsigned Reg = MF.addLiveIn(RA, getRegClassFor(VT));
+  Register Reg = MF.addLiveIn(RA, getRegClassFor(VT));
   return DAG.getCopyFromReg(DAG.getEntryNode(), SDLoc(Op), Reg, VT);
 }
 
@@ -3048,17 +3041,15 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   // stuck together.
   SDValue InFlag;
 
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = CLI.DAG.getCopyToReg(Chain, CLI.DL, RegsToPass[i].first,
-                                 RegsToPass[i].second, InFlag);
+  for (auto &R : RegsToPass) {
+    Chain = CLI.DAG.getCopyToReg(Chain, CLI.DL, R.first, R.second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-    Ops.push_back(CLI.DAG.getRegister(RegsToPass[i].first,
-                                      RegsToPass[i].second.getValueType()));
+  for (auto &R : RegsToPass)
+    Ops.push_back(CLI.DAG.getRegister(R.first, R.second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
@@ -3714,7 +3705,7 @@ SDValue MipsTargetLowering::LowerFormalArguments(
           LocVT = VA.getValVT();
       }
 
-      // sanity check
+      // Only arguments pased on the stack should make it here. 
       assert(VA.isMemLoc());
 
       // The stack pointer offset is relative to the caller stack frame.
@@ -4118,7 +4109,7 @@ MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
-      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8) {
+      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8 || VT == MVT::i1) {
         if (Subtarget.inMips16Mode())
           return std::make_pair(0U, &Mips::CPU16RegsRegClass);
         return std::make_pair(0U, &Mips::GPR32RegClass);

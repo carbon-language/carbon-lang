@@ -16,10 +16,11 @@
 // work with arbitrary lower bounds.  This may be technically an extension
 // of the standard but it more likely to conform with its intent.
 
-#include "transformational.h"
+#include "flang/Runtime/transformational.h"
 #include "copy.h"
 #include "terminator.h"
 #include "tools.h"
+#include "flang/Runtime/descriptor.h"
 #include <algorithm>
 
 namespace Fortran::runtime {
@@ -184,7 +185,7 @@ void RTNAME(CshiftVector)(Descriptor &result, const Descriptor &source,
   for (SubscriptValue j{0}; j < extent; ++j) {
     SubscriptValue resultAt{1 + j};
     SubscriptValue sourceAt{lb + (j + shift) % extent};
-    if (sourceAt < 0) {
+    if (sourceAt < lb) {
       sourceAt += extent;
     }
     CopyElement(result, &resultAt, source, &sourceAt, terminator);
@@ -376,7 +377,9 @@ void RTNAME(Reshape)(Descriptor &result, const Descriptor &source,
   for (SubscriptValue j{0}; j < resultRank; ++j, ++shapeSubscript) {
     resultExtent[j] = GetInt64(
         shape.Element<char>(&shapeSubscript), shapeElementBytes, terminator);
-    RUNTIME_CHECK(terminator, resultExtent[j] >= 0);
+    if (resultExtent[j] < 0)
+      terminator.Crash(
+          "RESHAPE: bad value for SHAPE(%d)=%d", j + 1, resultExtent[j]);
     resultElements *= resultExtent[j];
   }
 
@@ -385,8 +388,10 @@ void RTNAME(Reshape)(Descriptor &result, const Descriptor &source,
   std::size_t elementBytes{source.ElementBytes()};
   std::size_t sourceElements{source.Elements()};
   std::size_t padElements{pad ? pad->Elements() : 0};
-  if (resultElements < sourceElements) {
-    RUNTIME_CHECK(terminator, padElements > 0);
+  if (resultElements > sourceElements) {
+    if (padElements <= 0)
+      terminator.Crash("RESHAPE: not eough elements, need %d but only have %d",
+          resultElements, sourceElements);
     RUNTIME_CHECK(terminator, pad->ElementBytes() == elementBytes);
   }
 
@@ -396,17 +401,20 @@ void RTNAME(Reshape)(Descriptor &result, const Descriptor &source,
   if (order) {
     RUNTIME_CHECK(terminator, order->rank() == 1);
     RUNTIME_CHECK(terminator, order->type().IsInteger());
-    RUNTIME_CHECK(terminator, order->GetDimension(0).Extent() == resultRank);
+    if (order->GetDimension(0).Extent() != resultRank)
+      terminator.Crash("RESHAPE: the extent of ORDER (%d) must match the rank"
+                       " of the SHAPE (%d)",
+          order->GetDimension(0).Extent(), resultRank);
     std::uint64_t values{0};
     SubscriptValue orderSubscript{order->GetDimension(0).LowerBound()};
     std::size_t orderElementBytes{order->ElementBytes()};
     for (SubscriptValue j{0}; j < resultRank; ++j, ++orderSubscript) {
       auto k{GetInt64(order->Element<char>(&orderSubscript), orderElementBytes,
           terminator)};
-      RUNTIME_CHECK(
-          terminator, k >= 1 && k <= resultRank && !((values >> k) & 1));
+      if (k < 1 || k > resultRank || ((values >> k) & 1))
+        terminator.Crash("RESHAPE: bad value for ORDER element (%d)", k);
       values |= std::uint64_t{1} << k;
-      dimOrder[k - 1] = j;
+      dimOrder[j] = k - 1;
     }
   } else {
     for (int j{0}; j < resultRank; ++j) {

@@ -23,9 +23,14 @@ class Module;
 } // namespace llvm
 
 namespace mlir {
+/// Pass that moves ops which are likely an index computation into gpu.launch
+/// body.
+std::unique_ptr<Pass> createGpuLauchSinkIndexComputationsPass();
+
 /// Replaces `gpu.launch` with `gpu.launch_func` by moving the region into
 /// a separate kernel function.
-std::unique_ptr<OperationPass<ModuleOp>> createGpuKernelOutliningPass();
+std::unique_ptr<OperationPass<ModuleOp>>
+createGpuKernelOutliningPass(StringRef dataLayoutStr = StringRef());
 
 /// Rewrites a function region so that GPU ops execute asynchronously.
 std::unique_ptr<OperationPass<FuncOp>> createGpuAsyncRegionPass();
@@ -54,13 +59,22 @@ public:
 protected:
   void getDependentDialects(DialectRegistry &registry) const override;
 
-private:
-  /// Creates the LLVM target machine to generate the ISA.
-  std::unique_ptr<llvm::TargetMachine> createTargetMachine();
+  /// Hook allowing the application of optimizations before codegen
+  /// By default, does nothing
+  virtual LogicalResult optimizeLlvm(llvm::Module &llvmModule,
+                                     llvm::TargetMachine &targetMachine);
 
   /// Translates the 'getOperation()' result to an LLVM module.
   virtual std::unique_ptr<llvm::Module>
   translateToLLVMIR(llvm::LLVMContext &llvmContext);
+
+private:
+  /// Creates the LLVM target machine to generate the ISA.
+  std::unique_ptr<llvm::TargetMachine> createTargetMachine();
+
+  /// Translates the module to ISA
+  Optional<std::string> translateToISA(llvm::Module &llvmModule,
+                                       llvm::TargetMachine &targetMachine);
 
   /// Serializes the target ISA to binary form.
   virtual std::unique_ptr<std::vector<char>>
@@ -91,6 +105,13 @@ void registerGpuSerializeToCubinPass();
 /// Register pass to serialize GPU kernel functions to a HSAco binary
 /// annotation.
 void registerGpuSerializeToHsacoPass();
+
+/// Create an instance of the GPU kernel function to HSAco binary serialization
+/// pass.
+std::unique_ptr<Pass> createGpuSerializeToHsacoPass(StringRef triple,
+                                                    StringRef arch,
+                                                    StringRef features,
+                                                    int optLevel);
 
 /// Generate the code for registering passes.
 #define GEN_PASS_REGISTRATION

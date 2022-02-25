@@ -26,32 +26,36 @@ GCNMaxOccupancySchedStrategy::GCNMaxOccupancySchedStrategy(
 void GCNMaxOccupancySchedStrategy::initialize(ScheduleDAGMI *DAG) {
   GenericScheduler::initialize(DAG);
 
-  const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
-
   MF = &DAG->MF;
 
   const GCNSubtarget &ST = MF->getSubtarget<GCNSubtarget>();
 
   // FIXME: This is also necessary, because some passes that run after
   // scheduling and before regalloc increase register pressure.
-  const int ErrorMargin = 3;
+  const unsigned ErrorMargin = 3;
 
-  SGPRExcessLimit = Context->RegClassInfo
-    ->getNumAllocatableRegs(&AMDGPU::SGPR_32RegClass) - ErrorMargin;
-  VGPRExcessLimit = Context->RegClassInfo
-    ->getNumAllocatableRegs(&AMDGPU::VGPR_32RegClass) - ErrorMargin;
-  if (TargetOccupancy) {
-    SGPRCriticalLimit = ST.getMaxNumSGPRs(TargetOccupancy, true);
-    VGPRCriticalLimit = ST.getMaxNumVGPRs(TargetOccupancy);
-  } else {
-    SGPRCriticalLimit = SRI->getRegPressureSetLimit(DAG->MF,
-        AMDGPU::RegisterPressureSets::SReg_32);
-    VGPRCriticalLimit = SRI->getRegPressureSetLimit(DAG->MF,
-        AMDGPU::RegisterPressureSets::VGPR_32);
-  }
+  SGPRExcessLimit =
+      Context->RegClassInfo->getNumAllocatableRegs(&AMDGPU::SGPR_32RegClass);
+  VGPRExcessLimit =
+      Context->RegClassInfo->getNumAllocatableRegs(&AMDGPU::VGPR_32RegClass);
 
-  SGPRCriticalLimit -= ErrorMargin;
-  VGPRCriticalLimit -= ErrorMargin;
+  SIMachineFunctionInfo &MFI = *MF->getInfo<SIMachineFunctionInfo>();
+  // Set the initial TargetOccupnacy to the maximum occupancy that we can
+  // achieve for this function. This effectively sets a lower bound on the
+  // 'Critical' register limits in the scheduler.
+  TargetOccupancy = MFI.getOccupancy();
+  SGPRCriticalLimit =
+      std::min(ST.getMaxNumSGPRs(TargetOccupancy, true), SGPRExcessLimit);
+  VGPRCriticalLimit =
+      std::min(ST.getMaxNumVGPRs(TargetOccupancy), VGPRExcessLimit);
+
+  // Subtract error margin from register limits and avoid overflow.
+  SGPRCriticalLimit =
+      std::min(SGPRCriticalLimit - ErrorMargin, SGPRCriticalLimit);
+  VGPRCriticalLimit =
+      std::min(VGPRCriticalLimit - ErrorMargin, VGPRCriticalLimit);
+  SGPRExcessLimit = std::min(SGPRExcessLimit - ErrorMargin, SGPRExcessLimit);
+  VGPRExcessLimit = std::min(VGPRExcessLimit - ErrorMargin, VGPRExcessLimit);
 }
 
 void GCNMaxOccupancySchedStrategy::initCandidate(SchedCandidate &Cand, SUnit *SU,
@@ -117,7 +121,7 @@ void GCNMaxOccupancySchedStrategy::initCandidate(SchedCandidate &Cand, SUnit *SU
 
   // Register pressure is considered 'CRITICAL' if it is approaching a value
   // that would reduce the wave occupancy for the execution unit.  When
-  // register pressure is 'CRITICAL', increading SGPR and VGPR pressure both
+  // register pressure is 'CRITICAL', increasing SGPR and VGPR pressure both
   // has the same cost, so we don't need to prefer one over the other.
 
   int SGPRDelta = NewSGPRPressure - SGPRCriticalLimit;
@@ -361,14 +365,18 @@ void GCNScheduleDAGMILive::schedule() {
     LLVM_DEBUG(dbgs() << "Pressure in desired limits, done.\n");
     return;
   }
-  unsigned Occ = MFI.getOccupancy();
-  unsigned WavesAfter = std::min(Occ, PressureAfter.getOccupancy(ST));
-  unsigned WavesBefore = std::min(Occ, PressureBefore.getOccupancy(ST));
+
+  unsigned WavesAfter =
+      std::min(S.TargetOccupancy, PressureAfter.getOccupancy(ST));
+  unsigned WavesBefore =
+      std::min(S.TargetOccupancy, PressureBefore.getOccupancy(ST));
   LLVM_DEBUG(dbgs() << "Occupancy before scheduling: " << WavesBefore
                     << ", after " << WavesAfter << ".\n");
 
-  // We could not keep current target occupancy because of the just scheduled
-  // region. Record new occupancy for next scheduling cycle.
+  // We may not be able to keep the current target occupancy because of the just
+  // scheduled region. We might still be able to revert scheduling if the
+  // occupancy before was higher, or if the current schedule has register
+  // pressure higher than the excess limits which could lead to more spilling.
   unsigned NewOccupancy = std::max(WavesAfter, WavesBefore);
   // Allow memory bound functions to drop to 4 waves if not limited by an
   // attribute.
@@ -378,6 +386,7 @@ void GCNScheduleDAGMILive::schedule() {
                       << MFI.getMinAllowedOccupancy() << " waves\n");
     NewOccupancy = WavesAfter;
   }
+
   if (NewOccupancy < MinOccupancy) {
     MinOccupancy = NewOccupancy;
     MFI.limitOccupancy(MinOccupancy);
@@ -394,6 +403,11 @@ void GCNScheduleDAGMILive::schedule() {
     RegionsWithHighRP[RegionIdx] = true;
   }
 
+  // If this condition is true, then either the occupancy before and after
+  // scheduling is the same, or we are allowing the occupancy to drop because
+  // the function is memory bound. Even if we are OK with the current occupancy,
+  // we still need to verify that we will not introduce any extra chance of
+  // spilling.
   if (WavesAfter >= MinOccupancy) {
     if (Stage == UnclusteredReschedule &&
         !PressureAfter.less(ST, PressureBefore)) {
@@ -415,9 +429,12 @@ void GCNScheduleDAGMILive::schedule() {
   RescheduleRegions[RegionIdx] = RegionsWithClusters[RegionIdx] ||
                                  (Stage + 1) != UnclusteredReschedule;
   RegionEnd = RegionBegin;
+  int SkippedDebugInstr = 0;
   for (MachineInstr *MI : Unsched) {
-    if (MI->isDebugInstr())
+    if (MI->isDebugInstr()) {
+      ++SkippedDebugInstr;
       continue;
+    }
 
     if (MI->getIterator() != RegionEnd) {
       BB->remove(MI);
@@ -445,10 +462,31 @@ void GCNScheduleDAGMILive::schedule() {
     ++RegionEnd;
     LLVM_DEBUG(dbgs() << "Scheduling " << *MI);
   }
-  RegionBegin = Unsched.front()->getIterator();
-  Regions[RegionIdx] = std::make_pair(RegionBegin, RegionEnd);
 
+  // After reverting schedule, debug instrs will now be at the end of the block
+  // and RegionEnd will point to the first debug instr. Increment RegionEnd
+  // pass debug instrs to the actual end of the scheduling region.
+  while (SkippedDebugInstr-- > 0)
+    ++RegionEnd;
+
+  // If Unsched.front() instruction is a debug instruction, this will actually
+  // shrink the region since we moved all debug instructions to the end of the
+  // block. Find the first instruction that is not a debug instruction.
+  RegionBegin = Unsched.front()->getIterator();
+  if (RegionBegin->isDebugInstr()) {
+    for (MachineInstr *MI : Unsched) {
+      if (MI->isDebugInstr())
+        continue;
+      RegionBegin = MI->getIterator();
+      break;
+    }
+  }
+
+  // Then move the debug instructions back into their correct place and set
+  // RegionBegin and RegionEnd if needed.
   placeDebugValues();
+
+  Regions[RegionIdx] = std::make_pair(RegionBegin, RegionEnd);
 }
 
 GCNRegPressure GCNScheduleDAGMILive::getRealRegPressure() const {
@@ -479,14 +517,14 @@ void GCNScheduleDAGMILive::computeBlockPressure(const MachineBasicBlock *MBB) {
 
   auto I = MBB->begin();
   auto LiveInIt = MBBLiveIns.find(MBB);
+  auto &Rgn = Regions[CurRegion];
+  auto *NonDbgMI = &*skipDebugInstructionsForward(Rgn.first, Rgn.second);
   if (LiveInIt != MBBLiveIns.end()) {
     auto LiveIn = std::move(LiveInIt->second);
     RPTracker.reset(*MBB->begin(), &LiveIn);
     MBBLiveIns.erase(LiveInIt);
   } else {
-    auto &Rgn = Regions[CurRegion];
     I = Rgn.first;
-    auto *NonDbgMI = &*skipDebugInstructionsForward(Rgn.first, Rgn.second);
     auto LRS = BBLiveInMap.lookup(NonDbgMI);
 #ifdef EXPENSIVE_CHECKS
     assert(isEqual(getLiveRegsBefore(*NonDbgMI, *LIS), LRS));
@@ -497,7 +535,7 @@ void GCNScheduleDAGMILive::computeBlockPressure(const MachineBasicBlock *MBB) {
   for ( ; ; ) {
     I = RPTracker.getNext();
 
-    if (Regions[CurRegion].first == I) {
+    if (Regions[CurRegion].first == I || NonDbgMI == I) {
       LiveIns[CurRegion] = RPTracker.getLiveRegs();
       RPTracker.clearMaxPressure();
     }
@@ -540,7 +578,6 @@ GCNScheduleDAGMILive::getBBLiveInMap() const {
 }
 
 void GCNScheduleDAGMILive::finalizeSchedule() {
-  GCNMaxOccupancySchedStrategy &S = (GCNMaxOccupancySchedStrategy&)*SchedImpl;
   LLVM_DEBUG(dbgs() << "All regions recorded, starting actual scheduling.\n");
 
   LiveIns.resize(Regions.size());
@@ -586,8 +623,6 @@ void GCNScheduleDAGMILive::finalizeSchedule() {
             dbgs()
             << "Retrying function scheduling with lowest recorded occupancy "
             << MinOccupancy << ".\n");
-
-        S.setTargetOccupancy(MinOccupancy);
       }
     }
 

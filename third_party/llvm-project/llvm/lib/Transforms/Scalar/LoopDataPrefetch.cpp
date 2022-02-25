@@ -224,8 +224,8 @@ bool LoopDataPrefetch::run() {
   bool MadeChange = false;
 
   for (Loop *I : *LI)
-    for (auto L = df_begin(I), LE = df_end(I); L != LE; ++L)
-      MadeChange |= runOnLoop(*L);
+    for (Loop *L : depth_first(I))
+      MadeChange |= runOnLoop(L);
 
   return MadeChange;
 }
@@ -236,15 +236,14 @@ struct Prefetch {
   /// The address formula for this prefetch as returned by ScalarEvolution.
   const SCEVAddRecExpr *LSCEVAddRec;
   /// The point of insertion for the prefetch instruction.
-  Instruction *InsertPt;
+  Instruction *InsertPt = nullptr;
   /// True if targeting a write memory access.
-  bool Writes;
+  bool Writes = false;
   /// The (first seen) prefetched instruction.
-  Instruction *MemI;
+  Instruction *MemI = nullptr;
 
   /// Constructor to create a new Prefetch for \p I.
-  Prefetch(const SCEVAddRecExpr *L, Instruction *I)
-      : LSCEVAddRec(L), InsertPt(nullptr), Writes(false), MemI(nullptr) {
+  Prefetch(const SCEVAddRecExpr *L, Instruction *I) : LSCEVAddRec(L) {
     addInstruction(I);
   };
 

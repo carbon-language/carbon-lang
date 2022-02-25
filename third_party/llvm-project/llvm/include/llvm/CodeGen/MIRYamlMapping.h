@@ -392,7 +392,7 @@ struct FrameIndex {
   bool IsFixed;
   SMRange SourceRange;
 
-  FrameIndex() {}
+  FrameIndex() = default;
   FrameIndex(int FI, const llvm::MachineFrameInfo &MFI);
 
   Expected<int> getFI(const llvm::MachineFrameInfo &MFI) const;
@@ -671,7 +671,7 @@ template <> struct MappingTraits<MachineFrameInfo> {
 /// Targets should override this in a way that mirrors the implementation of
 /// llvm::MachineFunctionInfo.
 struct MachineFunctionInfo {
-  virtual ~MachineFunctionInfo() {}
+  virtual ~MachineFunctionInfo() = default;
   virtual void mappingImpl(IO &YamlIO) {}
 };
 
@@ -694,6 +694,8 @@ struct MachineFunction {
   // Register information
   bool TracksRegLiveness = false;
   bool HasWinCFI = false;
+  bool FailsVerification = false;
+  bool TracksDebugUserValues = false;
   std::vector<VirtualRegisterDefinition> VirtualRegisters;
   std::vector<MachineFunctionLiveIn> LiveIns;
   Optional<std::vector<FlowStringValue>> CalleeSavedRegisters;
@@ -722,6 +724,9 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("failedISel", MF.FailedISel, false);
     YamlIO.mapOptional("tracksRegLiveness", MF.TracksRegLiveness, false);
     YamlIO.mapOptional("hasWinCFI", MF.HasWinCFI, false);
+    YamlIO.mapOptional("failsVerification", MF.FailsVerification, false);
+    YamlIO.mapOptional("tracksDebugUserValues", MF.TracksDebugUserValues,
+                       false);
     YamlIO.mapOptional("registers", MF.VirtualRegisters,
                        std::vector<VirtualRegisterDefinition>());
     YamlIO.mapOptional("liveins", MF.LiveIns,

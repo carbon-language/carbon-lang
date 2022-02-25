@@ -11,7 +11,11 @@ add_mlir_conversion_library(MLIRSCFToOpenMP
   Core
 
   LINK_LIBS PUBLIC
+  MLIRAnalysis
+  MLIRArithmetic
+  MLIRLLVMIR
   MLIROpenMP
   MLIRSCF
+  MLIRStandard
   MLIRTransforms
   )

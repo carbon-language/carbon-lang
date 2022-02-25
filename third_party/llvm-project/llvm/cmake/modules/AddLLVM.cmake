@@ -1,3 +1,4 @@
+include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 include(LLVMProcessSources)
 include(LLVM-Config)
@@ -166,34 +167,47 @@ function(add_llvm_symbol_exports target_name export_file)
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction(add_llvm_symbol_exports)
 
-if (NOT DEFINED LLVM_LINKER_DETECTED)
+if (NOT DEFINED LLVM_LINKER_DETECTED AND NOT WIN32)
+  # Detect what linker we have here.
   if(APPLE)
-    execute_process(
-      COMMAND "${CMAKE_LINKER}" -v
-      ERROR_VARIABLE stderr
-      )
+    # Linkers with ld64-compatible flags.
+    set(version_flag "-Wl,-v")
+  else()
+    # Linkers with BFD ld-compatible flags.
+    set(version_flag "-Wl,--version")
+  endif()
+
+  if(LLVM_USE_LINKER)
+    set(command ${CMAKE_C_COMPILER} -fuse-ld=${LLVM_USE_LINKER} ${version_flag})
+  else()
+    separate_arguments(flags UNIX_COMMAND "${CMAKE_EXE_LINKER_FLAGS}")
+    set(command ${CMAKE_C_COMPILER} ${flags} ${version_flag})
+  endif()
+  execute_process(
+    COMMAND ${command}
+    OUTPUT_VARIABLE stdout
+    ERROR_VARIABLE stderr
+    )
+
+  if(APPLE)
     if("${stderr}" MATCHES "PROJECT:ld64")
       set(LLVM_LINKER_DETECTED YES CACHE INTERNAL "")
       set(LLVM_LINKER_IS_LD64 YES CACHE INTERNAL "")
       message(STATUS "Linker detection: ld64")
+    elseif("${stderr}" MATCHES "^LLD" OR
+           "${stdout}" MATCHES "^LLD")
+      set(LLVM_LINKER_DETECTED YES CACHE INTERNAL "")
+      set(LLVM_LINKER_IS_LLD YES CACHE INTERNAL "")
+      message(STATUS "Linker detection: lld")
     else()
       set(LLVM_LINKER_DETECTED NO CACHE INTERNAL "")
       message(STATUS "Linker detection: unknown")
     endif()
-  elseif(NOT WIN32)
-    # Detect what linker we have here
-    if( LLVM_USE_LINKER )
-      set(command ${CMAKE_C_COMPILER} -fuse-ld=${LLVM_USE_LINKER} -Wl,--version)
-    else()
-      separate_arguments(flags UNIX_COMMAND "${CMAKE_EXE_LINKER_FLAGS}")
-      set(command ${CMAKE_C_COMPILER} ${flags} -Wl,--version)
-    endif()
-    execute_process(
-      COMMAND ${command}
-      OUTPUT_VARIABLE stdout
-      ERROR_VARIABLE stderr
-      )
-    if("${stdout}" MATCHES "GNU gold")
+  else()
+    if("${stdout}" MATCHES "^mold")
+      set(LLVM_LINKER_DETECTED YES CACHE INTERNAL "")
+      message(STATUS "Linker detection: mold")
+    elseif("${stdout}" MATCHES "GNU gold")
       set(LLVM_LINKER_DETECTED YES CACHE INTERNAL "")
       set(LLVM_LINKER_IS_GOLD YES CACHE INTERNAL "")
       message(STATUS "Linker detection: GNU Gold")
@@ -241,14 +255,6 @@ function(add_link_opts target_name)
   # Don't use linker optimizations in debug builds since it slows down the
   # linker in a context where the optimizations are not important.
   if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-
-    # Pass -O3 to the linker. This enabled different optimizations on different
-    # linkers.
-    if(NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|SunOS|AIX|OS390" OR WIN32) AND in_distribution)
-      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS " -Wl,-O3")
-    endif()
-
     if(NOT LLVM_NO_DEAD_STRIP)
       if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # ld64's implementation of -dead_strip breaks tools that use plugins.
@@ -263,7 +269,7 @@ function(add_link_opts target_name)
           set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                        LINK_FLAGS " -Wl,-z,discard-unused=sections")
         endif()
-      elseif(NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD|AIX|OS390")
+      elseif(NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "AIX|OS390")
         # TODO Revisit this later on z/OS.
         set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                      LINK_FLAGS " -Wl,--gc-sections")
@@ -726,6 +732,7 @@ function(add_llvm_install_targets target)
                             ${prefix_option}
                             -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
                     USES_TERMINAL)
+  set_target_properties(${target} PROPERTIES FOLDER "Component Install Targets")
   add_custom_target(${target}-stripped
                     DEPENDS ${file_dependencies}
                     COMMAND "${CMAKE_COMMAND}"
@@ -734,6 +741,7 @@ function(add_llvm_install_targets target)
                             -DCMAKE_INSTALL_DO_STRIP=1
                             -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
                     USES_TERMINAL)
+  set_target_properties(${target}-stripped PROPERTIES FOLDER "Component Install Targets (Stripped)")
   if(target_dependencies)
     add_dependencies(${target} ${target_dependencies})
     add_dependencies(${target}-stripped ${target_dependencies})
@@ -832,7 +840,7 @@ macro(add_llvm_library name)
               ${export_to_llvmexports}
               LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT ${name}
               ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT ${name}
-              RUNTIME DESTINATION bin COMPONENT ${name})
+              RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${name})
 
       if (NOT LLVM_ENABLE_IDE)
         add_llvm_install_targets(install-${name}
@@ -1161,7 +1169,7 @@ function(export_executable_symbols target)
       set(mangling itanium)
     endif()
     add_custom_command(OUTPUT ${exported_symbol_file}
-                       COMMAND "${Python3_EXECUTABLE}" ${LLVM_MAIN_SRC_DIR}/utils/extract_symbols.py --mangling=${mangling} ${static_libs} -o ${exported_symbol_file}
+                       COMMAND "${Python3_EXECUTABLE}" ${LLVM_MAIN_SRC_DIR}/utils/extract_symbols.py ${LLVM_EXTRACT_SYMBOLS_FLAGS} --mangling=${mangling} ${static_libs} -o ${exported_symbol_file}
                        WORKING_DIRECTORY ${LLVM_LIBRARY_OUTPUT_INTDIR}
                        DEPENDS ${LLVM_MAIN_SRC_DIR}/utils/extract_symbols.py ${static_libs}
                        VERBATIM
@@ -1202,11 +1210,14 @@ if(NOT LLVM_TOOLCHAIN_TOOLS)
     llvm-ar
     llvm-cov
     llvm-cxxfilt
+    llvm-dwp
     llvm-ranlib
     llvm-lib
+    llvm-ml
     llvm-nm
     llvm-objcopy
     llvm-objdump
+    llvm-pdbutil
     llvm-rc
     llvm-readobj
     llvm-size
@@ -1264,7 +1275,7 @@ macro(add_llvm_example name)
   endif()
   add_llvm_executable(${name} ${ARGN})
   if( LLVM_BUILD_EXAMPLES )
-    install(TARGETS ${name} RUNTIME DESTINATION examples)
+    install(TARGETS ${name} RUNTIME DESTINATION "${LLVM_EXAMPLES_INSTALL_DIR}")
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Examples")
 endmacro(add_llvm_example name)
@@ -1465,7 +1476,9 @@ function(add_unittest test_suite test_name)
     list(APPEND LLVM_COMPILE_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
   endif()
 
-  set(LLVM_REQUIRES_RTTI OFF)
+  if (NOT DEFINED LLVM_REQUIRES_RTTI)
+    set(LLVM_REQUIRES_RTTI OFF)
+  endif()
 
   list(APPEND LLVM_LINK_COMPONENTS Support) # gtest needs it for raw_ostream
   add_llvm_executable(${test_name} IGNORE_EXTERNALIZE_DEBUGINFO NO_INSTALL_RPATH ${ARGN})
@@ -1637,7 +1650,7 @@ function(configure_lit_site_cfg site_in site_out)
     set(ENABLE_SHARED "0")
   endif()
 
-  if(LLVM_ENABLE_ASSERTIONS AND NOT MSVC_IDE)
+  if(LLVM_ENABLE_ASSERTIONS)
     set(ENABLE_ASSERTIONS "1")
   else()
     set(ENABLE_ASSERTIONS "0")
@@ -1836,7 +1849,11 @@ endfunction()
 
 function(add_lit_testsuites project directory)
   if (NOT LLVM_ENABLE_IDE)
-    cmake_parse_arguments(ARG "EXCLUDE_FROM_CHECK_ALL" "" "PARAMS;DEPENDS;ARGS" ${ARGN})
+    cmake_parse_arguments(ARG "EXCLUDE_FROM_CHECK_ALL" "FOLDER" "PARAMS;DEPENDS;ARGS" ${ARGN})
+    
+    if (NOT ARG_FOLDER)
+      set(ARG_FOLDER "Test Subdirectories")
+    endif()
 
     # Search recursively for test directories by assuming anything not
     # in a directory called Inputs contains tests.
@@ -1864,6 +1881,7 @@ function(add_lit_testsuites project directory)
           DEPENDS ${ARG_DEPENDS}
           ARGS ${ARG_ARGS}
         )
+        set_target_properties(check-${name_var} PROPERTIES FOLDER ${ARG_FOLDER})
       endif()
     endforeach()
   endif()

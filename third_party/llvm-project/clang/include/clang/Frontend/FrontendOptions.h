@@ -75,6 +75,9 @@ enum ActionKind {
   /// Emit a .o file.
   EmitObj,
 
+  // Extract API information
+  ExtractAPI,
+
   /// Parse and apply any fixits to the source.
   FixIt,
 
@@ -373,7 +376,7 @@ public:
                          ObjCMT_MigrateDecls | ObjCMT_PropertyDotSyntax)
   };
   unsigned ObjCMTAction = ObjCMT_None;
-  std::string ObjCMTWhiteListPath;
+  std::string ObjCMTAllowListPath;
 
   std::string MTMigrateDir;
   std::string ARCMTMigrateReportOut;

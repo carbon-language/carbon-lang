@@ -145,9 +145,11 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D,
 Sema::CUDAVariableTarget Sema::IdentifyCUDATarget(const VarDecl *Var) {
   if (Var->hasAttr<HIPManagedAttr>())
     return CVT_Unified;
-  if (Var->isConstexpr() && !hasExplicitAttr<CUDAConstantAttr>(Var))
-    return CVT_Both;
-  if (Var->getType().isConstQualified() && Var->hasAttr<CUDAConstantAttr>() &&
+  // Only constexpr and const variabless with implicit constant attribute
+  // are emitted on both sides. Such variables are promoted to device side
+  // only if they have static constant intializers on device side.
+  if ((Var->isConstexpr() || Var->getType().isConstQualified()) &&
+      Var->hasAttr<CUDAConstantAttr>() &&
       !hasExplicitAttr<CUDAConstantAttr>(Var))
     return CVT_Both;
   if (Var->hasAttr<CUDADeviceAttr>() || Var->hasAttr<CUDAConstantAttr>() ||
@@ -590,6 +592,8 @@ bool HasAllowedCUDADeviceStaticInitializer(Sema &S, VarDecl *VD,
   };
   auto IsConstantInit = [&](const Expr *Init) {
     assert(Init);
+    ASTContext::CUDAConstantEvalContextRAII EvalCtx(S.Context,
+                                                    /*NoWronSidedVars=*/true);
     return Init->isConstantInitializer(S.Context,
                                        VD->getType()->isReferenceType());
   };
@@ -716,9 +720,9 @@ void Sema::MaybeAddCUDAConstantAttr(VarDecl *VD) {
       !VD->hasAttr<CUDAConstantAttr>() && !VD->hasAttr<CUDASharedAttr>() &&
       (VD->isFileVarDecl() || VD->isStaticDataMember()) &&
       !IsDependentVar(VD) &&
-      (VD->isConstexpr() || (VD->getType().isConstQualified() &&
-                             HasAllowedCUDADeviceStaticInitializer(
-                                 *this, VD, CICK_DeviceOrConstant)))) {
+      ((VD->isConstexpr() || VD->getType().isConstQualified()) &&
+       HasAllowedCUDADeviceStaticInitializer(*this, VD,
+                                             CICK_DeviceOrConstant))) {
     VD->addAttr(CUDAConstantAttr::CreateImplicit(getASTContext()));
   }
 }
@@ -878,10 +882,14 @@ void Sema::CUDACheckLambdaCapture(CXXMethodDecl *Callee,
                           diag::err_capture_bad_target, Callee, *this)
         << Capture.getVariable();
   } else if (Capture.isThisCapture()) {
+    // Capture of this pointer is allowed since this pointer may be pointing to
+    // managed memory which is accessible on both device and host sides. It only
+    // results in invalid memory access if this pointer points to memory not
+    // accessible on device side.
     SemaDiagnosticBuilder(DiagKind, Capture.getLocation(),
-                          diag::err_capture_bad_target_this_ptr, Callee, *this);
+                          diag::warn_maybe_capture_bad_target_this_ptr, Callee,
+                          *this);
   }
-  return;
 }
 
 void Sema::CUDASetLambdaAttrs(CXXMethodDecl *Method) {

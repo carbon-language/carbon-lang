@@ -3,10 +3,13 @@
 // CHECK-NEXT: acc
 // CHECK-NEXT: affine
 // CHECK-NEXT: amx
+// CHECK-NEXT: arith
 // CHECK-NEXT: arm_neon
 // CHECK-NEXT: arm_sve
 // CHECK-NEXT: async
+// CHECK-NEXT: bufferization
 // CHECK-NEXT: builtin
+// CHECK-NEXT: cf
 // CHECK-NEXT: complex
 // CHECK-NEXT: dlti
 // CHECK-NEXT: emitc

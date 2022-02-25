@@ -2,7 +2,7 @@
 
 func @load_number_of_indices(%v : memref<f32>) {
   // expected-error @+2 {{incorrect number of indices for load}}
-  %c0 = constant 0 : index
+  %c0 = arith.constant 0 : index
   memref.load %v[%c0] : memref<f32>
 }
 
@@ -10,8 +10,8 @@ func @load_number_of_indices(%v : memref<f32>) {
 
 func @store_number_of_indices(%v : memref<f32>) {
   // expected-error @+3 {{store index operand count not equal to memref rank}}
-  %c0 = constant 0 : index
-  %f0 = constant 0.0 : f32
+  %c0 = arith.constant 0 : index
+  %f0 = arith.constant 0.0 : f32
   memref.store %f0, %v[%c0] : memref<f32>
 }
 
@@ -109,7 +109,7 @@ func @generic_one_d_view(%arg0: memref<?xf32, affine_map<(i)[off]->(off + i)>>) 
 // -----
 
 func @generic_scalar_view(%arg0: memref<?xf32, affine_map<(i)[off]->(off + i)>>) {
-  %cst = constant 0.0 : f32
+  %cst = arith.constant 0.0 : f32
   // expected-error @+1 {{expected operand rank (0) to match the result rank of indexing_map #0 (1)}}
   linalg.generic {
     indexing_maps =  [ affine_map<() -> (0)>, affine_map<() -> (0, 0)> ],
@@ -130,7 +130,7 @@ func @generic_result_0_element_type(%arg0: memref<?xf32, affine_map<(i)[off]->(o
     iterator_types = ["parallel"]}
       outs(%arg0 : memref<?xf32, affine_map<(i)[off]->(off + i)>>) {
     ^bb(%0: f32):
-      %1 = constant 1: i4
+      %1 = arith.constant 1: i4
       linalg.yield %1: i4
   }
 }
@@ -159,10 +159,10 @@ func @generic_singular_maps(%arg0: memref<?xf32, affine_map<(i)[off]->(off + i)>
 // -----
 
 func @generic_empty_region(%arg0: memref<f32>) {
-  %f0 = constant 0.0: f32
+  %f0 = arith.constant 0.0: f32
   // expected-error @+1 {{op expects region #0 to have 0 or 1 blocks}}
   linalg.generic {
-    indexing_maps =  [ affine_map<() -> (0)> ],
+    indexing_maps =  [ affine_map<() -> ()>, affine_map<() -> ()> ],
     iterator_types = []}
       ins(%arg0 : memref<f32>)
      outs(%arg0 : memref<f32>) {
@@ -176,8 +176,8 @@ func @generic_empty_region(%arg0: memref<f32>) {
 // -----
 
 func @generic_empty_region(%arg0: memref<f32>) {
-  %f0 = constant 0.0: f32
-  // expected-error @+1 {{linalg.generic' op expected 1 region with 1 block}}
+  %f0 = arith.constant 0.0: f32
+  // expected-error @+1 {{op expects to have 1 region with 1 block}}
   linalg.generic {
     indexing_maps =  [ affine_map<() -> ()> , affine_map<() -> ()> ],
     iterator_types = []}
@@ -234,7 +234,7 @@ func @generic_result_0_element_type(%arg0: memref<?xf32, affine_map<(i)[off]->(o
     iterator_types = ["parallel"]}
       outs(%arg0 : memref<?xf32, affine_map<(i)[off]->(off + i)>>) {
     ^bb(%i: f32):
-      %0 = constant 0: i1
+      %0 = arith.constant 0: i1
       linalg.yield %0: i1
   }
 }
@@ -272,14 +272,14 @@ func @generic_result_tensor_type(%arg0: memref<?xf32, affine_map<(i)[off]->(off 
 // -----
 
 func @generic(%arg0: memref<?x?xi4>) {
-  // expected-error @+2 {{op expects regions to end with 'linalg.yield', found 'std.addf'}}
+  // expected-error @+2 {{op expects regions to end with 'linalg.yield', found 'arith.addf'}}
   // expected-note @+1 {{in custom textual format, the absence of terminator implies 'linalg.yield'}}
   linalg.generic  {
-    indexing_maps = [ affine_map<(i) -> (i)> ],
-    iterator_types = ["parallel"]}
+    indexing_maps = [ affine_map<(i, j) -> (i, j)> ],
+    iterator_types = ["parallel", "parallel"]}
       outs(%arg0 : memref<?x?xi4>) {
     ^bb(%0: i4) :
-      %1 = std.addf %0, %0: i4
+      %1 = arith.addf %0, %0: i4
   }
   return
 }
@@ -297,27 +297,6 @@ func @generic(%arg0: memref<?x?xi4>) {
 // }
 //
 // // -----
-
-// expected-error @+1 {{unknown Linalg type}}
-!invalid_type = type !linalg.unknown
-
-// -----
-
-// expected-error @+1 {{expected valid keyword}}
-!invalid_type = type !linalg<"?">
-
-// -----
-
-func @pooling_rank_mismatch(%arg0: memref<?x?x?xf32>,
-                            %arg1: memref<2x3xf32>,
-                            %arg2: memref<?x?x?xf32>) {
-  // expected-error @+1 {{expected operand rank (2) to match the result rank of indexing_map #1 (3)}}
-  linalg.pooling_max(%arg0, %arg1, %arg2) {strides = [2, 1, 2]}:
-    memref<?x?x?xf32>, memref<2x3xf32>, memref<?x?x?xf32>
-  return
-}
-
-// -----
 
 func @named_ops(%a3: memref<?x?x?xf32>, %b3: memref<?x?xf32>, %c3: memref<?x?x?xf32>) {
   // expected-error @+1 {{expected operand rank (2) to match the result rank of indexing_map #1 (3)}}
@@ -370,156 +349,6 @@ func @init_tensor_err(%arg0 : index)
   // expected-error @+1 {{expected 2 dynamic sizes values}}
   %1 = "linalg.init_tensor"(%arg0) {static_sizes = [4, -1, -1, 5]} : (index) -> tensor<4x?x?x5xf32>
   return
-}
-
-// -----
-
-func @illegal_expanding_reshape_dynamic_tensor
-  (%arg0: tensor<?x?x?xf32>) -> tensor<?x?x?x4x?xf32>
-{
-  // expected-error @+1 {{invalid to have a single dimension (2) expanded into multiple dynamic dims (2,4)}}
-  %0 = linalg.tensor_expand_shape %arg0 [[0], [1], [2, 3, 4]]
-      : tensor<?x?x?xf32> into tensor<?x?x?x4x?xf32>
-  return %0 : tensor<?x?x?x4x?xf32>
-}
-
-// -----
-
-
-func @illegal_expanding_reshape_static_tensor
-  (%arg0: tensor<2x3x20xf32>) -> tensor<2x3x2x4x5xf32>
-{
-  // expected-error @+1 {{expected dimension 2 of collapsed type to be static value of 40}}
-  %0 = linalg.tensor_expand_shape %arg0 [[0], [1], [2, 3, 4]]
-      : tensor<2x3x20xf32> into tensor<2x3x2x4x5xf32>
-  return %0 : tensor<2x3x2x4x5xf32>
-}
-
-// -----
-
-func @illegal_collapsing_reshape_static_tensor
-  (%arg0: tensor<2x3x2x4x5xf32>) -> tensor<2x3x20xf32>
-{
-  // expected-error @+1 {{expected dimension 2 of collapsed type to be static value of 40}}
-  %0 = linalg.tensor_collapse_shape %arg0 [[0], [1], [2, 3, 4]]
-      : tensor<2x3x2x4x5xf32> into tensor<2x3x20xf32>
-  return %0 : tensor<2x3x20xf32>
-}
-
-// -----
-
-func @illegal_expanding_reshape_mixed_tensor(%arg0 : tensor<?x?xf32>) -> tensor<?x4x5xf32>
-{
-  // expected-error @+1 {{expected dimension 1 of collapsed type to be static value of 5}}
-  %0 = linalg.tensor_expand_shape %arg0 [[0, 1], [2]]
-      : tensor<?x?xf32> into tensor<?x4x5xf32>
-  return %0 : tensor<?x4x5xf32>
-}
-
-// -----
-
-func @illegal_expanding_reshape_mixed_tensor_2(%arg0 : tensor<?x?xf32>) -> tensor<?x4x5xf32>
-{
-  // expected-error @+1 {{expected dimension 1 of collapsed type to be static value of 20}}
-  %0 = linalg.tensor_expand_shape %arg0 [[0], [1, 2]]
-      : tensor<?x?xf32> into tensor<?x4x5xf32>
-  return %0 : tensor<?x4x5xf32>
-}
-
-// -----
-
-func @illegal_collapsing_reshape_mixed_tensor(%arg0 : tensor<?x4x5xf32>) -> tensor<?x?xf32>
-{
-  // expected-error @+1 {{expected dimension 1 of collapsed type to be static value of 5}}
-  %0 = linalg.tensor_collapse_shape %arg0 [[0, 1], [2]]
-      : tensor<?x4x5xf32> into tensor<?x?xf32>
-  return %0 : tensor<?x?xf32>
-}
-
-// -----
-
-func @illegal_collapsing_reshape_mixed_tensor_2(%arg0 : tensor<?x4x5xf32>) -> tensor<?x?xf32>
-{
-  // expected-error @+1 {{expected dimension 1 of collapsed type to be static value of 20}}
-  %0 = linalg.tensor_collapse_shape %arg0 [[0], [1, 2]]
-      : tensor<?x4x5xf32> into tensor<?x?xf32>
-  return %0 : tensor<?x?xf32>
-}
-
-// -----
-
-func @pad_result_type(%arg0: tensor<?x2x3x4xi32>, %arg1: index, %arg2: i32) -> tensor<?x?x?x8xf32> {
-  // expected-error @+1 {{specified type 'tensor<?x?x?x8xf32>' does not match the inferred type 'tensor<?x?x?x9xi32>}}
-  %0 = linalg.pad_tensor %arg0 low[1, %arg1, 2, 2] high[1, 2, %arg1, 3] {
-  ^bb0(%arg3: index, %arg4: index):  // no predecessors
-    linalg.yield %arg2 : i32
-  } : tensor<?x2x3x4xi32> to tensor<?x?x?x8xf32>
-  return %0 : tensor<?x?x?x8xf32>
-}
-
-// -----
-
-// expected-note@+1 {{prior use here}}
-func @pad_output_type(%arg0: tensor<?x2x3x4xi32>, %arg1: index, %arg2: i32, %output: tensor<?x6x6x7xf32>) -> tensor<?x?x?x8xf32> {
-  // expected-error @+1 {{use of value '%output' expects different type than prior uses: 'tensor<?x5x6x7xf32>' vs 'tensor<?x6x6x7xf32>'}}
-  %0 = linalg.pad_tensor %arg0 low[1, 1, 1, 1] high[2, 2, 2, 2] into %output {
-  ^bb0(%arg3: index, %arg4: index):  // no predecessors
-    linalg.yield %arg2 : i32
-  } : tensor<?x2x3x4xi32> to tensor<?x5x6x7xf32>
-  return %0 : tensor<?x5x6x7xf32>
-}
-
-// -----
-
-func @pad_number_of_block_args(%arg0: tensor<?x4xi32>, %arg1: i32) -> tensor<?x9xi32> {
-  // expected-error @+1 {{expected the block to have 2 arguments}}
-  %0 = linalg.pad_tensor %arg0 low[1, 2] high[2, 3] {
-  ^bb0(%arg2: index, %arg3: index, %arg4: index):  // no predecessors
-    linalg.yield %arg1 : i32
-  } : tensor<?x4xi32> to tensor<?x9xi32>
-  return %0 : tensor<?x9xi32>
-}
-
-// -----
-
-func @pad_no_block(%arg0: tensor<?x4xi32>, %arg1: i32) -> tensor<?x9xi32> {
-  // expected-error @+1 {{op region #0 ('region') failed to verify constraint: region with 1 blocks}}
-  %0 = linalg.pad_tensor %arg0 low[1, 2] high[2, 3] {
-  } : tensor<?x4xi32> to tensor<?x9xi32>
-  return %0 : tensor<?x9xi32>
-}
-
-// -----
-
-func @pad_block_args(%arg0: tensor<?x4xi32>, %arg1: i32) -> tensor<?x9xi32> {
-  // expected-error @+1 {{op expected block argument 1 to be an index}}
-  %0 = linalg.pad_tensor %arg0 low[1, 2] high[2, 3] {
-  ^bb0(%arg2: i32, %arg3: i32):  // no predecessors
-    linalg.yield %arg1 : i32
-  } : tensor<?x4xi32> to tensor<?x9xi32>
-  return %0 : tensor<?x9xi32>
-}
-
-// -----
-
-func @pad_num_yields(%arg0: tensor<?x4xi32>, %arg1: i32) -> tensor<?x9xi32> {
-  // expected-error @+3 {{op expected single yield operand (got 2)}}
-  %0 = linalg.pad_tensor %arg0 low[1, 2] high[2, 3] {
-  ^bb0(%arg2: index, %arg3: index):  // no predecessors
-    linalg.yield %arg1, %arg1 : i32, i32
-  } : tensor<?x4xi32> to tensor<?x9xi32>
-  return %0 : tensor<?x9xi32>
-}
-
-// -----
-
-func @pad_yield_type(%arg0: tensor<?x4xi32>, %arg1: i8) -> tensor<?x9xi32> {
-  // expected-error @+3 {{op expected yield type to match shape element type}}
-  %0 = linalg.pad_tensor %arg0 low[1, 2] high[2, 3] {
-  ^bb0(%arg2: index, %arg3: index):  // no predecessors
-    linalg.yield %arg1 : i8
-  } : tensor<?x4xi32> to tensor<?x9xi32>
-  return %0 : tensor<?x9xi32>
 }
 
 // -----
@@ -592,9 +421,9 @@ func private @foo(%A: memref<192x192xf32>, %B: memref<192x192xf32>,
 func @tiled_loop_incorrent_num_yield_operands(%A: memref<192x192xf32>,
     %B: memref<192x192xf32>, %C: memref<192x192xf32>,
     %C_tensor: tensor<192x192xf32>) {
-  %c24 = constant 24 : index
-  %c0 = constant 0 : index
-  %c192 = constant 192 : index
+  %c24 = arith.constant 24 : index
+  %c0 = arith.constant 0 : index
+  %c192 = arith.constant 192 : index
   %0 = linalg.tiled_loop (%i, %j) = (%c0, %c0) to (%c192, %c192)
       step (%c24, %c24)
       ins (%A_ = %A: memref<192x192xf32>, %B_ = %B: memref<192x192xf32>)
@@ -620,9 +449,9 @@ func private @foo(%A: memref<192x192xf32>, %B: memref<192x192xf32>,
 func @tiled_loop_incorrent_yield_operand_type(%A: memref<192x192xf32>,
     %B: memref<192x192xf32>, %C: memref<192x192xf32>,
     %C_tensor: tensor<192x192xf32>) {
-  %c24 = constant 24 : index
-  %c0 = constant 0 : index
-  %c192 = constant 192 : index
+  %c24 = arith.constant 24 : index
+  %c0 = arith.constant 0 : index
+  %c192 = arith.constant 192 : index
   %0 = linalg.tiled_loop (%i, %j) = (%c0, %c0) to (%c192, %c192)
       step (%c24, %c24)
       ins (%A_ = %A: memref<192x192xf32>, %B_ = %B: memref<192x192xf32>)
@@ -644,11 +473,11 @@ func private @foo(%A: memref<192x192xf32>, %B: memref<192x192xf32>,
 func @tiled_loop_incorrent_iterator_types_count(%A: memref<192x192xf32>,
     %B: memref<192x192xf32>, %C: memref<192x192xf32>,
     %C_tensor: tensor<192x192xf32>) {
-  %c24 = constant 24 : index
-  %c0 = constant 0 : index
-  %c192 = constant 192 : index
+  %c24 = arith.constant 24 : index
+  %c0 = arith.constant 0 : index
+  %c192 = arith.constant 192 : index
   // expected-error @+1 {{expected iterator types array attribute size = 1 to match the number of loops = 2}}
-  %0 = "linalg.tiled_loop"(%c0, %c0, %c192, %c192, %c24, %c24, %A, %B, %C_tensor, %C) ( {
+  %0 = "linalg.tiled_loop"(%c0, %c0, %c192, %c192, %c24, %c24, %A, %B, %C_tensor, %C) ({
     ^bb0(%arg4: index, %arg5: index, %A_: memref<192x192xf32>,
          %B_: memref<192x192xf32>, %CT_: tensor<192x192xf32>,
          %C_: memref<192x192xf32>):
@@ -669,11 +498,11 @@ func @tiled_loop_incorrent_iterator_types_count(%A: memref<192x192xf32>,
 func private @foo(%A: memref<100xf32>) -> ()
 
 func @tiled_loop_incorrent_block_arg_type(%A: memref<192xf32>) {
-  %c0 = constant 0 : index
-  %c192 = constant 192 : index
-  %c24 = constant 24 : index
+  %c0 = arith.constant 0 : index
+  %c192 = arith.constant 192 : index
+  %c24 = arith.constant 24 : index
   // expected-error @+1 {{expected output arg 0 with type = 'memref<192xf32>' to match region arg 1 type = 'memref<100xf32>'}}
-  "linalg.tiled_loop"(%c0, %c192, %c24, %A) ( {
+  "linalg.tiled_loop"(%c0, %c192, %c24, %A) ({
     ^bb0(%arg4: index, %A_: memref<100xf32>):
       call @foo(%A_) : (memref<100xf32>)-> ()
       linalg.yield
@@ -687,18 +516,18 @@ func @tiled_loop_incorrent_block_arg_type(%A: memref<192xf32>) {
 // -----
 
 #attrs = {
-	indexing_maps = [
-		affine_map<(i) -> (3 - i)>,
-		affine_map<(i) -> (i)>
-	],
-	iterator_types = ["parallel"]
+        indexing_maps = [
+                affine_map<(i) -> (3 - i)>,
+                affine_map<(i) -> (i)>
+        ],
+        iterator_types = ["parallel"]
 }
 
 func @invalid_reverse(%A: memref<5xf32>, %B: memref<5xf32>) {
   // expected-error @+1 {{unexpected result less than 0 at expression #0 in}}
   linalg.generic #attrs ins(%A: memref<5xf32>) outs(%B: memref<5xf32>) {
-		^bb0(%a: f32, %b: f32):
-		linalg.yield %a : f32
-	}
-	return
+                ^bb0(%a: f32, %b: f32):
+                linalg.yield %a : f32
+        }
+        return
 }

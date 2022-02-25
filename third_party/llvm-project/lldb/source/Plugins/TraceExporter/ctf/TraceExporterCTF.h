@@ -24,15 +24,15 @@ public:
   /// \{
   static llvm::Expected<lldb::TraceExporterUP> CreateInstance();
 
-  ConstString GetPluginName() override;
+  llvm::StringRef GetPluginName() override {
+    return GetPluginNameStatic();
+  }
 
   static void Initialize();
 
   static void Terminate();
 
-  static ConstString GetPluginNameStatic();
-
-  uint32_t GetPluginVersion() override;
+  static llvm::StringRef GetPluginNameStatic() { return "ctf"; }
   /// \}
 };
 

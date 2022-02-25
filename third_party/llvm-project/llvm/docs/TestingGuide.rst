@@ -36,8 +36,9 @@ and ``llvm/test`` respectively and are expected to always pass -- they should be
 run before every commit.
 
 The whole programs tests are referred to as the "LLVM test suite" (or
-"test-suite") and are in the ``test-suite`` module in subversion. For
-historical reasons, these tests are also referred to as the "nightly
+"test-suite") and are in the ``test-suite``
+`repository on GitHub <https://github.com/llvm/llvm-test-suite.git>`_.
+For historical reasons, these tests are also referred to as the "nightly
 tests" in places, which is less ambiguous than "test-suite" and remains
 in use although we run them much more often than nightly.
 
@@ -94,7 +95,8 @@ serve as a way of benchmarking LLVM performance, both in terms of the
 efficiency of the programs generated as well as the speed with which
 LLVM compiles, optimizes, and generates code.
 
-The test-suite is located in the ``test-suite`` Subversion module.
+The test-suite is located in the ``test-suite``
+`repository on GitHub <https://github.com/llvm/llvm-test-suite.git>`_.
 
 See the :doc:`TestSuiteGuide` for details.
 
@@ -112,8 +114,8 @@ test suite for more information. This test suite is located in the
 Quick start
 ===========
 
-The tests are located in two separate Subversion modules. The unit and
-regression tests are in the main "llvm" module under the directories
+The tests are located in two separate repositories. The unit and
+regression tests are in the main "llvm"/ directory under the directories
 ``llvm/unittests`` and ``llvm/test`` (so you get these tests for free with the
 main LLVM tree). Use ``make check-all`` to run the unit and regression tests
 after building LLVM.
@@ -184,7 +186,7 @@ or the :doc:`lit man page <CommandGuide/lit>`.
 Debugging Information tests
 ---------------------------
 
-To run debugging information tests simply add the ``debuginfo-tests``
+To run debugging information tests simply add the ``cross-project-tests``
 project to your ``LLVM_ENABLE_PROJECTS`` define on the cmake
 command-line.
 
@@ -273,6 +275,45 @@ Put related tests into a single file rather than having a separate file per
 test. Check if there are files already covering your feature and consider
 adding your code there instead of creating a new file.
 
+Generating assertions in regression tests
+-----------------------------------------
+
+Some regression test cases are very large and complex to write/update by hand.
+In that case to reduce the human work we can use the scripts available in
+llvm/utils/ to generate the assertions.
+
+For example to generate assertions in an :program:`llc`-based test, run:
+
+ .. code-block:: bash
+
+     % llvm/utils/update_llc_test_checks.py --llc-binary build/bin/llc test.ll
+
+And if you want to update assertions in an existing test case, pass `-u` option
+which first check the ``NOTE:`` line exists and matches the script name.
+
+These are the most common scripts and their purposes/applications in generating
+assertions:
+
+.. code-block:: none
+
+  update_analyze_test_checks.py
+  opt -passes='print<cost-model>'
+
+  update_cc_test_checks.py
+  C/C++, or clang/clang++ (IR checks)
+
+  update_llc_test_checks.py
+  llc (assembly checks)
+
+  update_mca_test_checks.py
+  llvm-mca
+
+  update_mir_test_checks.py
+  llc (MIR checks)
+
+  update_test_checks.py
+  opt
+
 Extra files
 -----------
 
@@ -292,9 +333,10 @@ using ``split-file`` to extract them. For example,
   ;--- b.ll
   ...
 
-The parts are separated by the regex ``^(.|//)--- <part>``. By default the
-extracted content has leading empty lines to preserve line numbers. Specify
-``--no-leading-lines`` to drop leading lines.
+The parts are separated by the regex ``^(.|//)--- <part>``.
+
+If you want to test relative line numbers like ``[[#@LINE+1]]``, specify
+``--leading-lines`` to add leading empty lines to preserve line numbers.
 
 If the extra files are large, the idiomatic place to put them is in a subdirectory ``Inputs``.
 You can then refer to the extra files as ``%S/Inputs/foo.bar``.

@@ -11,24 +11,24 @@
 
 include "mlir/Pass/PassBase.td"
 
-def SCFBufferize : FunctionPass<"scf-bufferize"> {
+def SCFBufferize : Pass<"scf-bufferize", "FuncOp"> {
   let summary = "Bufferize the scf dialect.";
   let constructor = "mlir::createSCFBufferizePass()";
-  let dependentDialects = ["memref::MemRefDialect"];
+  let dependentDialects = ["bufferization::BufferizationDialect",
+                           "memref::MemRefDialect"];
 }
 
-// Note: Making this a canonicalization pattern would require a dependency
-// of the SCF dialect on the Affine dialect or vice versa.
-def SCFAffineOpCanonicalization
-    : FunctionPass<"canonicalize-scf-affine-op"> {
-  let summary = "Canonicalize affine.min and affine.max ops in the context of "
-                "SCF loops with known bounds";
-  let constructor = "mlir::createSCFAffineOpCanonicalizationPass()";
-  let dependentDialects = ["AffineDialect"];
+// Note: Making these canonicalization patterns would require a dependency
+// of the SCF dialect on the Affine/Tensor/MemRef dialects or vice versa.
+def SCFForLoopCanonicalization
+    : Pass<"scf-for-loop-canonicalization", "FuncOp"> {
+  let summary = "Canonicalize operations within scf.for loop bodies";
+  let constructor = "mlir::createSCFForLoopCanonicalizationPass()";
+  let dependentDialects = ["AffineDialect", "tensor::TensorDialect",
+                           "memref::MemRefDialect"];
 }
 
-def SCFForLoopPeeling
-    : FunctionPass<"for-loop-peeling"> {
+def SCFForLoopPeeling : Pass<"scf-for-loop-peeling", "FuncOp"> {
   let summary = "Peel `for` loops at their upper bounds.";
   let constructor = "mlir::createForLoopPeelingPass()";
   let options = [
@@ -40,24 +40,39 @@ def SCFForLoopPeeling
   let dependentDialects = ["AffineDialect"];
 }
 
-def SCFForLoopSpecialization
-    : FunctionPass<"for-loop-specialization"> {
+def SCFForLoopSpecialization : Pass<"scf-for-loop-specialization", "FuncOp"> {
   let summary = "Specialize `for` loops for vectorization";
   let constructor = "mlir::createForLoopSpecializationPass()";
 }
 
-def SCFParallelLoopFusion : Pass<"parallel-loop-fusion"> {
+def SCFParallelLoopFusion : Pass<"scf-parallel-loop-fusion"> {
   let summary = "Fuse adjacent parallel loops";
   let constructor = "mlir::createParallelLoopFusionPass()";
 }
 
+def SCFParallelLoopCollapsing : Pass<"scf-parallel-loop-collapsing"> {
+  let summary = "Collapse parallel loops to use less induction variables";
+  let constructor = "mlir::createParallelLoopCollapsingPass()";
+  let options = [
+    ListOption<"clCollapsedIndices0", "collapsed-indices-0", "unsigned",
+               "Which loop indices to combine 0th loop index",
+               "llvm::cl::MiscFlags::CommaSeparated">,
+    ListOption<"clCollapsedIndices1", "collapsed-indices-1", "unsigned",
+               "Which loop indices to combine into the position 1 loop index",
+               "llvm::cl::MiscFlags::CommaSeparated">,
+    ListOption<"clCollapsedIndices2", "collapsed-indices-2", "unsigned",
+               "Which loop indices to combine into the position 2 loop index",
+               "llvm::cl::MiscFlags::CommaSeparated">,
+  ];
+}
+
 def SCFParallelLoopSpecialization
-    : FunctionPass<"parallel-loop-specialization"> {
+    : Pass<"scf-parallel-loop-specialization", "FuncOp"> {
   let summary = "Specialize parallel loops for vectorization";
   let constructor = "mlir::createParallelLoopSpecializationPass()";
 }
 
-def SCFParallelLoopTiling : FunctionPass<"parallel-loop-tiling"> {
+def SCFParallelLoopTiling : Pass<"scf-parallel-loop-tiling", "FuncOp"> {
   let summary = "Tile parallel loops";
   let constructor = "mlir::createParallelLoopTilingPass()";
   let options = [
@@ -72,10 +87,43 @@ def SCFParallelLoopTiling : FunctionPass<"parallel-loop-tiling"> {
   let dependentDialects = ["AffineDialect"];
 }
 
-def SCFForLoopRangeFolding
-    : Pass<"for-loop-range-folding"> {
+def SCFForLoopRangeFolding : Pass<"scf-for-loop-range-folding"> {
   let summary = "Fold add/mul ops into loop range";
   let constructor = "mlir::createForLoopRangeFoldingPass()";
+}
+
+def SCFForToWhileLoop : Pass<"scf-for-to-while", "FuncOp"> {
+  let summary = "Convert SCF for loops to SCF while loops";
+  let constructor = "mlir::createForToWhileLoopPass()";
+  let description = [{
+    This pass transforms SCF.ForOp operations to SCF.WhileOp. The For loop
+    condition is placed in the 'before' region of the while operation, and the
+    induction variable incrementation and loop body in the 'after' region.
+    The loop carried values of the while op are the induction variable (IV) of
+    the for-loop + any iter_args specified for the for-loop.
+    Any 'yield' ops in the for-loop are rewritten to additionally yield the
+    (incremented) induction variable.
+
+    ```mlir
+    # Before:
+      scf.for %i = %c0 to %arg1 step %c1 {
+        %0 = arith.addi %arg2, %arg2 : i32
+        memref.store %0, %arg0[%i] : memref<?xi32>
+      }
+
+    # After:
+      %0 = scf.while (%i = %c0) : (index) -> index {
+        %1 = arith.cmpi slt, %i, %arg1 : index
+        scf.condition(%1) %i : index
+      } do {
+      ^bb0(%i: index):
+        %1 = arith.addi %i, %c1 : index
+        %2 = arith.addi %arg2, %arg2 : i32
+        memref.store %2, %arg0[%i] : memref<?xi32>
+        scf.yield %1 : index
+      }
+    ```
+  }];
 }
 
 #endif // MLIR_DIALECT_SCF_PASSES

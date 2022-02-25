@@ -58,6 +58,7 @@
 #include "support/Logger.h"
 #include "support/MemoryTree.h"
 #include "support/Path.h"
+#include "support/ThreadCrashReporter.h"
 #include "support/Threading.h"
 #include "support/Trace.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -76,6 +77,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Threading.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -98,10 +100,10 @@ namespace {
 class ASTWorker;
 } // namespace
 
-static clang::clangd::Key<std::string> kFileBeingProcessed;
+static clang::clangd::Key<std::string> FileBeingProcessed;
 
 llvm::Optional<llvm::StringRef> TUScheduler::getFileBeingProcessedInContext() {
-  if (auto *File = Context::current().get(kFileBeingProcessed))
+  if (auto *File = Context::current().get(FileBeingProcessed))
     return llvm::StringRef(*File);
   return None;
 }
@@ -286,8 +288,12 @@ public:
   void remove(PathRef MainFile) {
     std::lock_guard<std::mutex> Lock(Mu);
     Association *&First = MainToFirst[MainFile];
-    if (First)
+    if (First) {
       invalidate(First);
+      First = nullptr;
+    }
+    // MainToFirst entry should stay alive, as Associations might be pointing at
+    // its key.
   }
 
   /// Get the mainfile associated with Header, or the empty string if none.
@@ -583,6 +589,8 @@ private:
   void startTask(llvm::StringRef Name, llvm::unique_function<void()> Task,
                  llvm::Optional<UpdateType> Update,
                  TUScheduler::ASTActionInvalidation);
+  /// Runs a task synchronously.
+  void runTask(llvm::StringRef Name, llvm::function_ref<void()> Task);
 
   /// Determines the next action to perform.
   /// All actions that should never run are discarded.
@@ -848,7 +856,6 @@ void ASTWorker::update(ParseInputs Inputs, WantDiagnostics WantDiags,
       // LatestPreamble is only populated by ASTWorker thread.
       return LatestPreamble || !PreambleRequests.empty() || Done;
     });
-    return;
   };
   startTask(TaskName, std::move(Task), UpdateType{WantDiags, ContentChanged},
             TUScheduler::NoInvalidation);
@@ -898,18 +905,54 @@ void ASTWorker::runWithAST(
   startTask(Name, std::move(Task), /*Update=*/None, Invalidation);
 }
 
+/// To be called from ThreadCrashReporter's signal handler.
+static void crashDumpCompileCommand(llvm::raw_ostream &OS,
+                                    const tooling::CompileCommand &Command) {
+  OS << "  Filename: " << Command.Filename << "\n";
+  OS << "  Directory: " << Command.Directory << "\n";
+  OS << "  Command Line:";
+  for (auto &Arg : Command.CommandLine) {
+    OS << " " << Arg;
+  }
+  OS << "\n";
+}
+
+/// To be called from ThreadCrashReporter's signal handler.
+static void crashDumpFileContents(llvm::raw_ostream &OS,
+                                  const std::string &Contents) {
+  // Avoid flooding the terminal with source code by default, but allow clients
+  // to opt in. Use an env var to preserve backwards compatibility of the
+  // command line interface, while allowing it to be set outside the clangd
+  // launch site for more flexibility.
+  if (getenv("CLANGD_CRASH_DUMP_SOURCE")) {
+    OS << "  Contents:\n";
+    OS << Contents << "\n";
+  }
+}
+
+/// To be called from ThreadCrashReporter's signal handler.
+static void crashDumpParseInputs(llvm::raw_ostream &OS,
+                                 const ParseInputs &FileInputs) {
+  auto &Command = FileInputs.CompileCommand;
+  crashDumpCompileCommand(OS, Command);
+  OS << "  Version: " << FileInputs.Version << "\n";
+  crashDumpFileContents(OS, FileInputs.Contents);
+}
+
 void PreambleThread::build(Request Req) {
   assert(Req.CI && "Got preamble request with null compiler invocation");
   const ParseInputs &Inputs = Req.Inputs;
+  bool ReusedPreamble = false;
 
   Status.update([&](TUStatus &Status) {
     Status.PreambleActivity = PreambleAction::Building;
   });
-  auto _ = llvm::make_scope_exit([this, &Req] {
+  auto _ = llvm::make_scope_exit([this, &Req, &ReusedPreamble] {
     ASTPeer.updatePreamble(std::move(Req.CI), std::move(Req.Inputs),
                            LatestBuild, std::move(Req.CIDiags),
                            std::move(Req.WantDiags));
-    Callbacks.onPreamblePublished(FileName);
+    if (!ReusedPreamble)
+      Callbacks.onPreamblePublished(FileName);
   });
 
   if (!LatestBuild || Inputs.ForceRebuild) {
@@ -918,6 +961,7 @@ void PreambleThread::build(Request Req) {
   } else if (isPreambleCompatible(*LatestBuild, Inputs, FileName, *Req.CI)) {
     vlog("Reusing preamble version {0} for version {1} of {2}",
          LatestBuild->Version, Inputs.Version, FileName);
+    ReusedPreamble = true;
     return;
   } else {
     vlog("Rebuilding invalidated preamble for {0} version {1} (previous was "
@@ -925,13 +969,16 @@ void PreambleThread::build(Request Req) {
          FileName, Inputs.Version, LatestBuild->Version);
   }
 
+  ThreadCrashReporter ScopedReporter([&Inputs]() {
+    llvm::errs() << "Signalled while building preamble\n";
+    crashDumpParseInputs(llvm::errs(), Inputs);
+  });
+
   LatestBuild = clang::clangd::buildPreamble(
       FileName, *Req.CI, Inputs, StoreInMemory,
-      [this, Version(Inputs.Version)](ASTContext &Ctx,
-                                      std::shared_ptr<clang::Preprocessor> PP,
+      [this, Version(Inputs.Version)](ASTContext &Ctx, Preprocessor &PP,
                                       const CanonicalIncludes &CanonIncludes) {
-        Callbacks.onPreambleAST(FileName, Version, Ctx, std::move(PP),
-                                CanonIncludes);
+        Callbacks.onPreambleAST(FileName, Version, Ctx, PP, CanonIncludes);
       });
   if (LatestBuild && isReliable(LatestBuild->CompileCommand))
     HeaderIncluders.update(FileName, LatestBuild->Includes.allHeaders());
@@ -942,7 +989,7 @@ void ASTWorker::updatePreamble(std::unique_ptr<CompilerInvocation> CI,
                                std::shared_ptr<const PreambleData> Preamble,
                                std::vector<Diag> CIDiags,
                                WantDiagnostics WantDiags) {
-  std::string TaskName = llvm::formatv("Build AST for ({0})", PI.Version);
+  llvm::StringLiteral TaskName = "Build AST";
   // Store preamble and build diagnostics with new preamble if requested.
   auto Task = [this, Preamble = std::move(Preamble), CI = std::move(CI),
                PI = std::move(PI), CIDiags = std::move(CIDiags),
@@ -977,12 +1024,12 @@ void ASTWorker::updatePreamble(std::unique_ptr<CompilerInvocation> CI,
     generateDiagnostics(std::move(CI), std::move(PI), std::move(CIDiags));
   };
   if (RunSync) {
-    Task();
+    runTask(TaskName, Task);
     return;
   }
   {
     std::lock_guard<std::mutex> Lock(Mutex);
-    PreambleRequests.push_back({std::move(Task), std::move(TaskName),
+    PreambleRequests.push_back({std::move(Task), std::string(TaskName),
                                 steady_clock::now(), Context::current().clone(),
                                 llvm::None, llvm::None,
                                 TUScheduler::NoInvalidation, nullptr});
@@ -1147,15 +1194,23 @@ void ASTWorker::stop() {
   RequestsCV.notify_all();
 }
 
+void ASTWorker::runTask(llvm::StringRef Name, llvm::function_ref<void()> Task) {
+  ThreadCrashReporter ScopedReporter([this, Name]() {
+    llvm::errs() << "Signalled during AST worker action: " << Name << "\n";
+    crashDumpParseInputs(llvm::errs(), FileInputs);
+  });
+  trace::Span Tracer(Name);
+  WithContext WithProvidedContext(ContextProvider(FileName));
+  Task();
+}
+
 void ASTWorker::startTask(llvm::StringRef Name,
                           llvm::unique_function<void()> Task,
                           llvm::Optional<UpdateType> Update,
                           TUScheduler::ASTActionInvalidation Invalidation) {
   if (RunSync) {
     assert(!Done && "running a task after stop()");
-    trace::Span Tracer(Name + ":" + llvm::sys::path::filename(FileName));
-    WithContext WithProvidedContext(ContextProvider(FileName));
-    Task();
+    runTask(Name, Task);
     return;
   }
 
@@ -1173,7 +1228,7 @@ void ASTWorker::startTask(llvm::StringRef Name,
     }
 
     // Allow this request to be cancelled if invalidated.
-    Context Ctx = Context::current().derive(kFileBeingProcessed, FileName);
+    Context Ctx = Context::current().derive(FileBeingProcessed, FileName);
     Canceler Invalidate = nullptr;
     if (Invalidation) {
       WithContext WC(std::move(Ctx));
@@ -1224,8 +1279,8 @@ void ASTWorker::run() {
         if (Done) {
           if (Requests.empty())
             return;
-          else     // Even though Done is set, finish pending requests.
-            break; // However, skip delays to shutdown fast.
+          // Even though Done is set, finish pending requests.
+          break; // However, skip delays to shutdown fast.
         }
 
         // Tracing: we have a next request, attribute this sleep to it.
@@ -1275,13 +1330,11 @@ void ASTWorker::run() {
         Lock.lock();
       }
       WithContext Guard(std::move(CurrentRequest->Ctx));
-      trace::Span Tracer(CurrentRequest->Name);
       Status.update([&](TUStatus &Status) {
         Status.ASTActivity.K = ASTAction::RunningAction;
         Status.ASTActivity.Name = CurrentRequest->Name;
       });
-      WithContext WithProvidedContext(ContextProvider(FileName));
-      CurrentRequest->Action();
+      runTask(CurrentRequest->Name, CurrentRequest->Action);
     }
 
     bool IsEmpty = false;
@@ -1603,9 +1656,14 @@ void TUScheduler::runWithPreamble(llvm::StringRef Name, PathRef File,
   auto Task = [Worker, Consistency, Name = Name.str(), File = File.str(),
                Contents = It->second->Contents,
                Command = Worker->getCurrentCompileCommand(),
-               Ctx = Context::current().derive(kFileBeingProcessed,
+               Ctx = Context::current().derive(FileBeingProcessed,
                                                std::string(File)),
                Action = std::move(Action), this]() mutable {
+    ThreadCrashReporter ScopedReporter([&Name, &Contents, &Command]() {
+      llvm::errs() << "Signalled during preamble action: " << Name << "\n";
+      crashDumpCompileCommand(llvm::errs(), Command);
+      crashDumpFileContents(llvm::errs(), Contents);
+    });
     std::shared_ptr<const PreambleData> Preamble;
     if (Consistency == PreambleConsistency::Stale) {
       // Wait until the preamble is built for the first time, if preamble
@@ -1656,7 +1714,7 @@ DebouncePolicy::compute(llvm::ArrayRef<clock::duration> History) const {
   // nth_element needs a mutable array, take the chance to bound the data size.
   History = History.take_back(15);
   llvm::SmallVector<clock::duration, 15> Recent(History.begin(), History.end());
-  auto Median = Recent.begin() + Recent.size() / 2;
+  auto *Median = Recent.begin() + Recent.size() / 2;
   std::nth_element(Recent.begin(), Median, Recent.end());
 
   clock::duration Target =
