@@ -64,10 +64,9 @@ cc_binary(
     srcs = ["numeric_literal_benchmark.cpp"],
     deps = [
         ":numeric_literal",
-        "//common:ostream",
+        "//common:check",
         "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",
-        "@llvm-project//llvm:Support",
     ],
 )
 
