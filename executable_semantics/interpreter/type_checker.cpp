@@ -1196,6 +1196,10 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d) {
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
+      if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
+        FATAL_COMPILATION_ERROR(var.binding().type().source_loc())
+            << "Expected expression for variable type";
+      }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
       TypeCheckPattern(&var.binding(), std::nullopt);
