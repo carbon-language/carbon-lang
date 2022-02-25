@@ -4,42 +4,6 @@
 
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
-# These currently have to be a single build rule because of a dependency cycle
-# in printing.
-# cc_library(
-#     name = "action_and_value_and_heap",
-#     srcs = [
-#         "action.cpp",
-#         "action_stack.cpp",
-#         "heap.cpp",
-#         "value.cpp",
-#     ],
-#     hdrs = [
-#         "action.h",
-#         "action_stack.h",
-#         "heap.h",
-#         "value.h",
-#     ],
-#     deps = [
-#         ":address",
-#         ":dictionary",
-#         ":field_path",
-#         ":heap_allocation_interface",
-#         ":stack",
-#         "//common:check",
-#         "//common:ostream",
-#         "//executable_semantics/ast:declaration",
-#         "//executable_semantics/ast:expression",
-#         "//executable_semantics/ast:pattern",
-#         "//executable_semantics/ast:source_location",
-#         "//executable_semantics/ast:statement",
-#         "//executable_semantics/common:arena",
-#         "//executable_semantics/common:error",
-#         "//executable_semantics/common:nonnull",
-#         "@llvm-project//llvm:Support",
-#     ],
-# )
-
 cc_library(
     name = "action_and_value",
     srcs = [
