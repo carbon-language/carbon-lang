@@ -28,11 +28,12 @@ Consider this example
 
 ```mermaid
 graph BT
-    minus["minus<br><tt>-x</tt>"]
-    mul>"mul<br><tt>x * y</tt>"]
-    add>"add<br><tt>x + y</tt>"]
-    mod["mod<br><tt>x % y</tt>"]
-    eq["eq<br><tt>x == y</tt>"]
+    %%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+    minus["minus<br>-x"]
+    mul>"mul<br>x * y"]
+    add>"add<br>x + y"]
+    mod["mod<br>x % y"]
+    eq["eq<br>x == y"]
 
     minus --> mul & mod
     mul --> add
