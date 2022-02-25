@@ -82,6 +82,7 @@ def _download(url: str, local_path: Path) -> Optional[int]:
         with local_path.open("wb") as f:
             shutil.copyfileobj(response, f)
             # Run fsync because of "Text file busy" in GH Actions.
+            f.flush()
             os.fsync(f.fileno())
     return None
 
@@ -134,7 +135,8 @@ def get_release(release: Release) -> str:
     if want_hash != found_hash:
         exit(
             f"Downloaded {release.value}-{version} but found sha256 "
-            f"{found_hash}, wanted {want_hash}"
+            f"{found_hash} ({local_path.stat().st_size} bytes), wanted "
+            f"{want_hash}"
         )
 
     return str(local_path)
