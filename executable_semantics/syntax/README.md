@@ -119,8 +119,12 @@ mul_expression:
 // minus_expression is listed here because it is excluded from mul_expression.
 add_operand:
   minus_expression | mul_expression ;
+// This is notionally
+//   add_operand | add_expression
+// but that introduces a reduce-reduce conflict when interpreting a
+// mul_expression as an add_lhs.
 add_lhs:
-  add_operand | add_expression ;
+  minus_expression | add_expression ;
 // A mul_expression is an add_expression, because multiplication is
 // higher-precedence, and mul is not at the top of a diamond in the precedence
 // graph. minus_expression is excluded because we are within a diamond with it
