@@ -17,6 +17,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/interpreter/action.h"
+#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -501,9 +502,16 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        FieldPath::Component field(access.field(), access.impl());
-        auto member = act.results()[0]->GetField(
-            arena_, FieldPath(field), exp.source_loc(), todo_, heap_);
+        std::optional<Nonnull<const Value*>> witness = std::nullopt;
+        if (access.impl().has_value()) {
+          auto witness_addr =
+              todo_.ValueOfName(*access.impl(), access.source_loc());
+          witness = heap_.Read(llvm::dyn_cast<LValue>(witness_addr)->address(),
+                               access.source_loc(), todo_);
+        }
+        FieldPath::Component field(access.field(), witness);
+        auto member = act.results()[0]->GetField(arena_, FieldPath(field),
+                                                 exp.source_loc());
         return todo_.FinishAction(member);
       }
     }

@@ -6,18 +6,48 @@ package(default_visibility = ["//executable_semantics:__pkg__"])
 
 # These currently have to be a single build rule because of a dependency cycle
 # in printing.
+# cc_library(
+#     name = "action_and_value_and_heap",
+#     srcs = [
+#         "action.cpp",
+#         "action_stack.cpp",
+#         "heap.cpp",
+#         "value.cpp",
+#     ],
+#     hdrs = [
+#         "action.h",
+#         "action_stack.h",
+#         "heap.h",
+#         "value.h",
+#     ],
+#     deps = [
+#         ":address",
+#         ":dictionary",
+#         ":field_path",
+#         ":heap_allocation_interface",
+#         ":stack",
+#         "//common:check",
+#         "//common:ostream",
+#         "//executable_semantics/ast:declaration",
+#         "//executable_semantics/ast:expression",
+#         "//executable_semantics/ast:pattern",
+#         "//executable_semantics/ast:source_location",
+#         "//executable_semantics/ast:statement",
+#         "//executable_semantics/common:arena",
+#         "//executable_semantics/common:error",
+#         "//executable_semantics/common:nonnull",
+#         "@llvm-project//llvm:Support",
+#     ],
+# )
+
 cc_library(
-    name = "action_and_value_and_heap",
+    name = "action_and_value",
     srcs = [
         "action.cpp",
-        "action_stack.cpp",
-        "heap.cpp",
         "value.cpp",
     ],
     hdrs = [
         "action.h",
-        "action_stack.h",
-        "heap.h",
         "value.h",
     ],
     deps = [
@@ -31,11 +61,23 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:pattern",
-        "//executable_semantics/ast:source_location",
         "//executable_semantics/ast:statement",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "action_stack",
+    srcs = ["action_stack.cpp"],
+    hdrs = ["action_stack.h"],
+    deps = [
+        ":action_and_value",
+        ":stack",
+        "//common:ostream",
+        "//executable_semantics/ast:statement",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -84,6 +126,22 @@ cc_library(
 )
 
 cc_library(
+    name = "heap",
+    srcs = ["heap.cpp"],
+    hdrs = ["heap.h"],
+    deps = [
+        ":action_and_value",
+        ":address",
+        ":heap_allocation_interface",
+        "//common:ostream",
+        "//executable_semantics/ast:source_location",
+        "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "heap_allocation_interface",
     hdrs = ["heap_allocation_interface.h"],
     deps = [
@@ -102,8 +160,10 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action_and_value_and_heap",
+        ":action_and_value",
+        ":action_stack",
         ":address",
+        ":heap",
         ":stack",
         "//common:check",
         "//common:ostream",
@@ -168,7 +228,7 @@ cc_library(
         "type_checker.h",
     ],
     deps = [
-        ":action_and_value_and_heap",
+        ":action_and_value",
         ":dictionary",
         ":interpreter",
         "//common:ostream",

@@ -39,7 +39,7 @@ class FieldPath {
   class Component {
    public:
     explicit Component(std::string name) : name_(std::move(name)) {}
-    Component(std::string name, std::optional<EntityView> impl)
+    Component(std::string name, std::optional<Nonnull<const Value*>> impl)
         : name_(std::move(name)), impl_(impl) {}
 
     auto name() const -> const std::string& { return name_; }
@@ -48,13 +48,13 @@ class FieldPath {
     // e.g. `T`, then type_variable() returns the `EntityView`
     // for the impl for `T`.
     // Otherwise returns `std::nullopt`.
-    auto impl() const -> std::optional<EntityView> { return impl_; }
+    auto impl() const -> std::optional<Nonnull<const Value*>> { return impl_; }
 
     void Print(llvm::raw_ostream& out) const { out << name_; }
 
    private:
     std::string name_;
-    std::optional<EntityView> impl_;
+    std::optional<Nonnull<const Value*>> impl_;
   };
 
   // Constructs a FieldPath consisting of a single step.

@@ -22,8 +22,6 @@
 namespace Carbon {
 
 class Action;
-class ActionStack;
-class Heap;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -78,8 +76,7 @@ class Value {
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
   auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc, const ActionStack& todo,
-                const Heap& heap) const -> Nonnull<const Value*>;
+                SourceLocation source_loc) const -> Nonnull<const Value*>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.

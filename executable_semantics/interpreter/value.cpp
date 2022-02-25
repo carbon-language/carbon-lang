@@ -10,8 +10,6 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/action_stack.h"
-#include "executable_semantics/interpreter/heap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -31,15 +29,11 @@ auto StructValue::FindField(const std::string& name) const
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
-                      SourceLocation source_loc, const ActionStack& todo,
-                      const Heap& heap) -> Nonnull<const Value*> {
+                      SourceLocation source_loc) -> Nonnull<const Value*> {
   const std::string& f = field.name();
 
   if (field.impl().has_value()) {
-    auto witness_addr = todo.ValueOfName(*field.impl(), source_loc);
-    Nonnull<const Value*> witness = heap.Read(
-        llvm::dyn_cast<LValue>(witness_addr)->address(), source_loc, todo);
-
+    Nonnull<const Value*> witness = *field.impl();
     switch (witness->kind()) {
       case Value::Kind::ImplValue: {
         const ImplValue& impl_type = cast<ImplValue>(*witness);
@@ -114,11 +108,10 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 }
 
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                     SourceLocation source_loc, const ActionStack& todo,
-                     const Heap& heap) const -> Nonnull<const Value*> {
+                     SourceLocation source_loc) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    value = GetMember(arena, value, field, source_loc, todo, heap);
+    value = GetMember(arena, value, field, source_loc);
   }
   return value;
 }
