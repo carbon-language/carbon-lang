@@ -23,12 +23,12 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     return 0;
   }
 
-  if (!token->is_valid()) {
+  if (!token->is_terminated()) {
     // Found errors while parsing.
     return 0;
   }
 
-  fprintf(stderr, "valid: %d\n", token->is_valid());
+  fprintf(stderr, "valid: %d\n", token->is_terminated());
   fprintf(stderr, "size: %lu\n", token->text().size());
   fprintf(stderr, "text: %s\n", token->text().str().c_str());
 

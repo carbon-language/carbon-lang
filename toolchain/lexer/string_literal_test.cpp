@@ -112,7 +112,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
     EXPECT_TRUE(result.hasValue());
     if (result) {
-      EXPECT_FALSE(result->is_valid());
+      EXPECT_FALSE(result->is_terminated());
     }
   }
 }

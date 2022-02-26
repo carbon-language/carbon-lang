@@ -930,7 +930,7 @@ TEST_F(LexerTest, Diagnostics) {
     //no space after comment
     "hello\bworld\xab"
     0x123abc
-    #"
+    #" "
   )";
 
   Testing::MockDiagnosticConsumer consumer;
