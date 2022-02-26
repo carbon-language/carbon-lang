@@ -335,7 +335,7 @@ private:
   /// for emission and therefore should only be output if they are actually
   /// used. If a decl is in this, then it is known to have not been referenced
   /// yet.
-  std::map<StringRef, GlobalDecl> DeferredDecls;
+  llvm::DenseMap<StringRef, GlobalDecl> DeferredDecls;
 
   /// This is a list of deferred decls which we have seen that *are* actually
   /// referenced. These get code generated when the module is done.
@@ -393,13 +393,6 @@ private:
   /// An ordered map of canonical GlobalDecls to their mangled names.
   llvm::MapVector<GlobalDecl, StringRef> MangledDeclNames;
   llvm::StringMap<GlobalDecl, llvm::BumpPtrAllocator> Manglings;
-
-  // An ordered map of canonical GlobalDecls paired with the cpu-index for
-  // cpu-specific name manglings.
-  llvm::MapVector<std::pair<GlobalDecl, unsigned>, StringRef>
-      CPUSpecificMangledDeclNames;
-  llvm::StringMap<std::pair<GlobalDecl, unsigned>, llvm::BumpPtrAllocator>
-      CPUSpecificManglings;
 
   /// Global annotations.
   std::vector<llvm::Constant*> Annotations;
@@ -1468,7 +1461,8 @@ private:
   llvm::Constant *GetOrCreateMultiVersionResolver(GlobalDecl GD,
                                                   llvm::Type *DeclTy,
                                                   const FunctionDecl *FD);
-  void UpdateMultiVersionNames(GlobalDecl GD, const FunctionDecl *FD);
+  void UpdateMultiVersionNames(GlobalDecl GD, const FunctionDecl *FD,
+                               StringRef &CurName);
 
   llvm::Constant *
   GetOrCreateLLVMGlobal(StringRef MangledName, llvm::Type *Ty, LangAS AddrSpace,

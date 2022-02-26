@@ -15,9 +15,7 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Unwind.h"
 #include "lldb/Utility/DataBufferHeap.h"
-#include "lldb/Utility/Log.h"
-#include "lldb/Utility/Logging.h"
-
+#include "lldb/Utility/LLDBLog.h"
 #include <memory>
 
 using namespace lldb;
@@ -28,43 +26,59 @@ void ScriptedThread::CheckInterpreterAndScriptObject() const {
   lldbassert(GetInterface() && "Invalid Scripted Thread Interface.");
 }
 
-ScriptedThread::ScriptedThread(ScriptedProcess &process, Status &error)
-    : Thread(process, LLDB_INVALID_THREAD_ID), m_scripted_process(process) {
-  if (!process.IsValid()) {
-    error.SetErrorString("Invalid scripted process");
-    return;
-  }
+llvm::Expected<std::shared_ptr<ScriptedThread>>
+ScriptedThread::Create(ScriptedProcess &process,
+                       StructuredData::Generic *script_object) {
+  if (!process.IsValid())
+    return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                   "Invalid scripted process.");
 
   process.CheckInterpreterAndScriptObject();
 
-  auto scripted_thread_interface = GetInterface();
-  if (!scripted_thread_interface) {
-    error.SetErrorString("Failed to get scripted thread interface.");
-    return;
-  }
+  auto scripted_thread_interface =
+      process.GetInterface().CreateScriptedThreadInterface();
+  if (!scripted_thread_interface)
+    return llvm::createStringError(
+        llvm::inconvertibleErrorCode(),
+        "Failed to create scripted thread interface.");
 
-  llvm::Optional<std::string> class_name =
-      process.GetInterface().GetScriptedThreadPluginName();
-  if (!class_name || class_name->empty()) {
-    error.SetErrorString("Failed to get scripted thread class name.");
-    return;
+  llvm::StringRef thread_class_name;
+  if (!script_object) {
+    llvm::Optional<std::string> class_name =
+        process.GetInterface().GetScriptedThreadPluginName();
+    if (!class_name || class_name->empty())
+      return llvm::createStringError(
+          llvm::inconvertibleErrorCode(),
+          "Failed to get scripted thread class name.");
+    thread_class_name = *class_name;
   }
 
   ExecutionContext exe_ctx(process);
-
-  StructuredData::GenericSP object_sp =
+  StructuredData::GenericSP owned_script_object_sp =
       scripted_thread_interface->CreatePluginObject(
-          class_name->c_str(), exe_ctx,
-          process.m_scripted_process_info.GetArgsSP());
-  if (!object_sp || !object_sp->IsValid()) {
-    error.SetErrorString("Failed to create valid script object");
-    return;
-  }
+          thread_class_name, exe_ctx,
+          process.m_scripted_process_info.GetArgsSP(), script_object);
 
-  m_script_object_sp = object_sp;
+  if (!owned_script_object_sp)
+    return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                   "Failed to create script object.");
+  if (!owned_script_object_sp->IsValid())
+    return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                   "Created script object is invalid.");
 
-  SetID(scripted_thread_interface->GetThreadID());
+  lldb::tid_t tid = scripted_thread_interface->GetThreadID();
+
+  return std::make_shared<ScriptedThread>(process, scripted_thread_interface,
+                                          tid, owned_script_object_sp);
 }
+
+ScriptedThread::ScriptedThread(ScriptedProcess &process,
+                               ScriptedThreadInterfaceSP interface_sp,
+                               lldb::tid_t tid,
+                               StructuredData::GenericSP script_object_sp)
+    : Thread(process, tid), m_scripted_process(process),
+      m_scripted_thread_interface_sp(interface_sp),
+      m_script_object_sp(script_object_sp) {}
 
 ScriptedThread::~ScriptedThread() { DestroyThread(); }
 
@@ -109,7 +123,7 @@ ScriptedThread::CreateRegisterContextForFrame(StackFrame *frame) {
   if (!reg_data)
     return GetInterface()->ErrorWithMessage<lldb::RegisterContextSP>(
         LLVM_PRETTY_FUNCTION, "Failed to get scripted thread registers data.",
-        error, LIBLLDB_LOG_THREAD);
+        error, LLDBLog::Thread);
 
   DataBufferSP data_sp(
       std::make_shared<DataBufferHeap>(reg_data->c_str(), reg_data->size()));
@@ -117,7 +131,7 @@ ScriptedThread::CreateRegisterContextForFrame(StackFrame *frame) {
   if (!data_sp->GetByteSize())
     return GetInterface()->ErrorWithMessage<lldb::RegisterContextSP>(
         LLVM_PRETTY_FUNCTION, "Failed to copy raw registers data.", error,
-        LIBLLDB_LOG_THREAD);
+        LLDBLog::Thread);
 
   std::shared_ptr<RegisterContextMemory> reg_ctx_memory =
       std::make_shared<RegisterContextMemory>(
@@ -125,7 +139,7 @@ ScriptedThread::CreateRegisterContextForFrame(StackFrame *frame) {
   if (!reg_ctx_memory)
     return GetInterface()->ErrorWithMessage<lldb::RegisterContextSP>(
         LLVM_PRETTY_FUNCTION, "Failed to create a register context.", error,
-        LIBLLDB_LOG_THREAD);
+        LLDBLog::Thread);
 
   reg_ctx_memory->SetAllRegisterData(data_sp);
   m_reg_context_sp = reg_ctx_memory;
@@ -133,10 +147,82 @@ ScriptedThread::CreateRegisterContextForFrame(StackFrame *frame) {
   return m_reg_context_sp;
 }
 
+bool ScriptedThread::LoadArtificialStackFrames() {
+  StructuredData::ArraySP arr_sp = GetInterface()->GetStackFrames();
+
+  Status error;
+  if (!arr_sp)
+    return GetInterface()->ErrorWithMessage<bool>(
+        LLVM_PRETTY_FUNCTION, "Failed to get scripted thread stackframes.",
+        error, LLDBLog::Thread);
+
+  size_t arr_size = arr_sp->GetSize();
+  if (arr_size > std::numeric_limits<uint32_t>::max())
+    return GetInterface()->ErrorWithMessage<bool>(
+        LLVM_PRETTY_FUNCTION,
+        llvm::Twine(
+            "StackFrame array size (" + llvm::Twine(arr_size) +
+            llvm::Twine(
+                ") is greater than maximum autorized for a StackFrameList."))
+            .str(),
+        error, LLDBLog::Thread);
+
+  StackFrameListSP frames = GetStackFrameList();
+
+  for (size_t idx = 0; idx < arr_size; idx++) {
+
+    StructuredData::Dictionary *dict;
+
+    if (!arr_sp->GetItemAtIndexAsDictionary(idx, dict) || !dict)
+      return GetInterface()->ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION,
+          llvm::Twine(
+              "Couldn't get artificial stackframe dictionary at index (" +
+              llvm::Twine(idx) + llvm::Twine(") from stackframe array."))
+              .str(),
+          error, LLDBLog::Thread);
+
+    lldb::addr_t pc;
+    if (!dict->GetValueForKeyAsInteger("pc", pc))
+      return ScriptedInterface::ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION,
+          "Couldn't find value for key 'pc' in stackframe dictionary.", error,
+          LLDBLog::Thread);
+
+    Address symbol_addr;
+    symbol_addr.SetLoadAddress(pc, &this->GetProcess()->GetTarget());
+
+    lldb::addr_t cfa = LLDB_INVALID_ADDRESS;
+    bool cfa_is_valid = false;
+    const bool behaves_like_zeroth_frame = false;
+    SymbolContext sc;
+    symbol_addr.CalculateSymbolContext(&sc);
+
+    StackFrameSP synth_frame_sp = std::make_shared<StackFrame>(
+        this->shared_from_this(), idx, idx, cfa, cfa_is_valid, pc,
+        StackFrame::Kind::Artificial, behaves_like_zeroth_frame, &sc);
+
+    if (!frames->SetFrameAtIndex(static_cast<uint32_t>(idx), synth_frame_sp))
+      return GetInterface()->ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION,
+          llvm::Twine("Couldn't add frame (" + llvm::Twine(idx) +
+                      llvm::Twine(") to ScriptedThread StackFrameList."))
+              .str(),
+          error, LLDBLog::Thread);
+  }
+
+  return true;
+}
+
 bool ScriptedThread::CalculateStopInfo() {
   StructuredData::DictionarySP dict_sp = GetInterface()->GetStopReason();
 
   Status error;
+  if (!dict_sp)
+    return GetInterface()->ErrorWithMessage<bool>(
+        LLVM_PRETTY_FUNCTION, "Failed to get scripted thread stop info.", error,
+        LLDBLog::Thread);
+
   lldb::StopInfoSP stop_info_sp;
   lldb::StopReason stop_reason_type;
 
@@ -144,18 +230,18 @@ bool ScriptedThread::CalculateStopInfo() {
     return GetInterface()->ErrorWithMessage<bool>(
         LLVM_PRETTY_FUNCTION,
         "Couldn't find value for key 'type' in stop reason dictionary.", error,
-        LIBLLDB_LOG_THREAD);
+        LLDBLog::Thread);
 
   StructuredData::Dictionary *data_dict;
   if (!dict_sp->GetValueForKeyAsDictionary("data", data_dict))
     return GetInterface()->ErrorWithMessage<bool>(
         LLVM_PRETTY_FUNCTION,
-        "Couldn't find value for key 'type' in stop reason dictionary.", error,
-        LIBLLDB_LOG_THREAD);
+        "Couldn't find value for key 'data' in stop reason dictionary.", error,
+        LLDBLog::Thread);
 
   switch (stop_reason_type) {
   case lldb::eStopReasonNone:
-    break;
+    return true;
   case lldb::eStopReasonBreakpoint: {
     lldb::break_id_t break_id;
     data_dict->GetValueForKeyAsInteger("break_id", break_id,
@@ -172,14 +258,24 @@ bool ScriptedThread::CalculateStopInfo() {
     stop_info_sp =
         StopInfo::CreateStopReasonWithSignal(*this, signal, description.data());
   } break;
+  case lldb::eStopReasonException: {
+    llvm::StringRef description;
+    data_dict->GetValueForKeyAsString("desc", description);
+
+    stop_info_sp =
+        StopInfo::CreateStopReasonWithException(*this, description.data());
+  } break;
   default:
     return GetInterface()->ErrorWithMessage<bool>(
         LLVM_PRETTY_FUNCTION,
         llvm::Twine("Unsupported stop reason type (" +
                     llvm::Twine(stop_reason_type) + llvm::Twine(")."))
             .str(),
-        error, LIBLLDB_LOG_THREAD);
+        error, LLDBLog::Thread);
   }
+
+  if (!stop_info_sp)
+    return false;
 
   SetStopInfo(stop_info_sp);
   return true;
@@ -187,10 +283,11 @@ bool ScriptedThread::CalculateStopInfo() {
 
 void ScriptedThread::RefreshStateAfterStop() {
   GetRegisterContext()->InvalidateIfNeeded(/*force=*/false);
+  LoadArtificialStackFrames();
 }
 
 lldb::ScriptedThreadInterfaceSP ScriptedThread::GetInterface() const {
-  return m_scripted_process.GetInterface().GetScriptedThreadInterface();
+  return m_scripted_thread_interface_sp;
 }
 
 std::shared_ptr<DynamicRegisterInfo> ScriptedThread::GetDynamicRegisterInfo() {
@@ -205,7 +302,7 @@ std::shared_ptr<DynamicRegisterInfo> ScriptedThread::GetDynamicRegisterInfo() {
           ->ErrorWithMessage<std::shared_ptr<DynamicRegisterInfo>>(
               LLVM_PRETTY_FUNCTION,
               "Failed to get scripted thread registers info.", error,
-              LIBLLDB_LOG_THREAD);
+              LLDBLog::Thread);
 
     m_register_info_sp = std::make_shared<DynamicRegisterInfo>(
         *reg_info, m_scripted_process.GetTarget().GetArchitecture());

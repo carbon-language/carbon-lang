@@ -14,37 +14,18 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import hashlib
-import os
-from pathlib import Path
-import platform
 import re
-import shutil
 import subprocess
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
-import urllib.request
 from xml.etree import ElementTree
+
+import scripts_utils  # type: ignore
 
 
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x)
-}
-
-URL = "https://github.com/bazelbuild/buildtools/releases/download/4.2.5/"
-
-# Checksums gathered with:
-#   for v in darwin-amd64 darwin-arm64 linux-amd64 linux-arm64 windows-amd64.exe
-#   do
-#     echo \"$v\": \"$(wget -q -O - https://github.com/bazelbuild/buildtools/releases/download/4.2.5/buildozer-$v | sha256sum | cut -d ' ' -f1)\", \# noqa: E501
-#   done
-VERSIONS = {
-    "darwin-amd64": "3fe671620e6cb7d2386f9da09c1de8de88b02b9dd9275cdecd8b9e417f74df1b",  # noqa: E501
-    "darwin-arm64": "ff4d297023fe3e0fd14113c78f04cef55289ca5bfe5e45a916be738b948dc743",  # noqa: E501
-    "linux-amd64": "e8e39b71c52318a9030dd9fcb9bbfd968d0e03e59268c60b489e6e6fc1595d7b",  # noqa: E501
-    "linux-arm64": "96227142969540def1d23a9e8225524173390d23f3d7fd56ce9c4436953f02fc",  # noqa: E501
-    "windows-amd64.exe": "2a9a7176cbd3b2f0ef989502128efbafd3b156ddabae93b9c979cd4017ffa300",  # noqa: E501
 }
 
 
@@ -60,82 +41,6 @@ class Rule(NamedTuple):
     # For genrules:
     # The outs attribute, as relative paths to the file.
     outs: Set[str]
-
-
-def get_hash(file: Path) -> str:
-    """Returns the sha256 of a file."""
-    digest = hashlib.sha256()
-    with file.open("rb") as f:
-        while True:
-            chunk = f.read(1024 * 64)
-            if not chunk:
-                break
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def install_buildozer() -> str:
-    """Install buildozer to a cache."""
-    cache_dir = Path.home().joinpath(".cache", "carbon-lang-pre-commit")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-
-    # Translate platform information into Bazel's release form.
-    machine = platform.machine()
-    if machine == "x86_64":
-        machine = "amd64"
-    version = f"{platform.system().lower()}-{machine}"
-
-    # Get ready to add .exe for Windows.
-    ext = ""
-    if platform.system() == "Windows":
-        ext = ".exe"
-
-    # Ensure the platform is supported, and grab its hash.
-    if version not in VERSIONS:
-        # If this because a platform support issue, we may need to print errors.
-        exit(f"No buildozer available for platform: {version}")
-    want_hash = VERSIONS[version]
-
-    # Check if there's a cached file that can be used.
-    local_path = cache_dir.joinpath(f"buildozer{ext}")
-    if local_path.is_file() and want_hash == get_hash(local_path):
-        return str(local_path)
-
-    # Download buildozer.
-    url = f"{URL}/buildozer-{version}{ext}"
-    with urllib.request.urlopen(url) as response:
-        with local_path.open("wb") as f:
-            shutil.copyfileobj(response, f)
-    local_path.chmod(0o755)
-
-    # Verify the downloaded hash.
-    found_hash = get_hash(local_path)
-    if want_hash != found_hash:
-        exit(
-            f"Downloaded buildozer-{version} but found sha256 {found_hash}, "
-            f"wanted {want_hash}"
-        )
-
-    return str(local_path)
-
-
-def locate_bazel() -> str:
-    """Returns the bazel command.
-
-    We use the `BAZEL` environment variable if present. If not, then we try to
-    use `bazelisk` and then `bazel`.
-    """
-    bazel = os.environ.get("BAZEL")
-    if bazel:
-        return bazel
-
-    if shutil.which("bazelisk"):
-        return "bazelisk"
-
-    if shutil.which("bazel"):
-        return "bazel"
-
-    exit("Unable to run Bazel")
 
 
 def remap_file(label: str) -> str:
@@ -164,7 +69,7 @@ def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
     return results
 
 
-def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
+def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
     """Queries the specified targets, returning the found rules.
 
     keep_going will be set to true for external repositories, where sometimes we
@@ -173,7 +78,7 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
     The return maps rule names to rule data.
     """
     args = [
-        "bazel",
+        bazel,
         "query",
         "--output=xml",
         f"kind('(cc_binary|cc_library|cc_test|genrule)', set({targets}))",
@@ -271,15 +176,14 @@ def get_missing_deps(
 
 
 def main() -> None:
-    # Change the working directory to the repository root so that the remaining
-    # operations reliably operate relative to that root.
-    os.chdir(Path(__file__).parent.parent)
+    scripts_utils.chdir_repo_root()
+    bazel = scripts_utils.locate_bazel()
 
     print("Querying bazel for Carbon targets...")
-    carbon_rules = get_rules("//...", False)
+    carbon_rules = get_rules(bazel, "//...", False)
     print("Querying bazel for external targets...")
     external_repo_query = " ".join([f"{repo}//..." for repo in EXTERNAL_REPOS])
-    external_rules = get_rules(external_repo_query, True)
+    external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
     header_to_rule_map: Dict[str, Set[str]] = {}
@@ -307,7 +211,7 @@ def main() -> None:
 
     if all_missing_deps:
         print("Checking buildozer availability...")
-        buildozer = install_buildozer()
+        buildozer = scripts_utils.get_release(scripts_utils.Release.BUILDOZER)
 
         print("Fixing dependencies...")
         SEPARATOR = "\n- "

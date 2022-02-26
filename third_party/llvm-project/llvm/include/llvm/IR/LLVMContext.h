@@ -15,6 +15,7 @@
 #define LLVM_IR_LLVMCONTEXT_H
 
 #include "llvm-c/Types.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/IR/DiagnosticHandler.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include <cstdint>
@@ -35,7 +36,6 @@ template <typename T> class StringMapEntry;
 class StringRef;
 class Twine;
 class LLVMRemarkStreamer;
-class raw_ostream;
 
 namespace remarks {
 class RemarkStreamer;
@@ -93,6 +93,7 @@ public:
     OB_preallocated = 4,           // "preallocated"
     OB_gc_live = 5,                // "gc-live"
     OB_clang_arc_attachedcall = 6, // "clang.arc.attachedcall"
+    OB_ptrauth = 7,                // "ptrauth"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

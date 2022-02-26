@@ -9,13 +9,16 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ExitCodes.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ThreadLocal.h"
 #include "llvm/Support/thread.h"
 #include <mutex>
 #include <setjmp.h>
+
+#if !defined(_MSC_VER) && !defined(_WIN32)
+#include "llvm/Support/ExitCodes.h"
+#endif
 
 using namespace llvm;
 
@@ -94,7 +97,7 @@ static ManagedStatic<sys::ThreadLocal<const CrashRecoveryContext>>
 static void installExceptionOrSignalHandlers();
 static void uninstallExceptionOrSignalHandlers();
 
-CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() {}
+CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() = default;
 
 CrashRecoveryContext::CrashRecoveryContext() {
   // On Windows, if abort() was previously triggered (and caught by a previous

@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Precedence](#precedence)
 -   [Operators](#operators)
     -   [Precedence](#precedence)
 -   [Conversions and casts](#conversions-and-casts)
@@ -33,6 +34,85 @@ fn Foo(a: i32*) -> i32 {
 
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
+
+## Precedence
+
+Expressions are interpreted based on a partial
+[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
+Expression components which lack a relative ordering must be disambiguated by
+the developer, for example by adding parentheses; otherwise, the expression will
+be invalid due to ambiguity. Precedence orderings will only be added when it's
+reasonable to expect most developers to understand the precedence without
+parentheses.
+
+The precedence diagram is defined thusly:
+
+```mermaid
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+graph BT
+    parens["(...)"]
+
+    braces["{...}"]
+    click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
+
+    as["x as T"]
+    click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
+
+    not["not x"]
+    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    comparison["x == y<br>
+                x != y<br>
+                x < y<br>
+                x <= y<br>
+                x > y<br>
+                x >= y"]
+    click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
+
+    and>"x and y"]
+    click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    or>"x or y"]
+    click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    if>"if x then y else z"]
+    click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
+
+    expressionEnd["x;"]
+
+    as & not --> parens & braces
+    comparison --> as
+    and & or --> comparison & not
+    if & expressionEnd --> and & or
+```
+
+The diagram's attributes are:
+
+-   Each node represents a precedence group.
+
+-   When an expression is composed from different precedence groups, the
+    interpretation is determined by the precedence edges:
+
+    -   A precedence edge A --> B means that A is lower precedence than B, so A
+        can contain B without parentheses. For example, `or --> not` means that
+        `not x or y` is treated as `(not x) or y`.
+
+    -   Precedence edges are transitive. For example, `or --> == --> as` means
+        that `or` is lower precedence than `as`.
+
+-   When an expression is composed from a single precedence group, the
+    interpretation is determined by the
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
+    precedence group:
+
+    ```mermaid
+    graph TD
+        non["Non-associative"]
+        left>"Left associative"]
+    ```
+
+    -   For example, `+` and `-` are left-associative and in the same precedence
+        group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
 
 ## Operators
 

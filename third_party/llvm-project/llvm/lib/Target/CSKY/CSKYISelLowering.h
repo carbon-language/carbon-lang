@@ -88,6 +88,12 @@ private:
     return (Kind != ScalarCondVectorVal);
   }
 
+  ConstraintType getConstraintType(StringRef Constraint) const override;
+
+  std::pair<unsigned, const TargetRegisterClass *>
+  getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                               StringRef Constraint, MVT VT) const override;
+
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *BB) const override;
@@ -153,6 +159,10 @@ private:
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue getStaticTLSAddr(GlobalAddressSDNode *N, SelectionDAG &DAG,
+                           bool UseGOT) const;
+  SDValue getDynamicTLSAddr(GlobalAddressSDNode *N, SelectionDAG &DAG) const;
 
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg) const;
   CCAssignFn *CCAssignFnForReturn(CallingConv::ID CC, bool IsVarArg) const;

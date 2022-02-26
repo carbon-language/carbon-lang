@@ -699,17 +699,14 @@ bool isNoopIntrinsic(Instruction *I) {
 }
 
 // Check if we can ignore \p D for DSE.
-bool canSkipDef(MemoryDef *D, bool DefVisibleToCaller,
-                const TargetLibraryInfo &TLI) {
+bool canSkipDef(MemoryDef *D, bool DefVisibleToCaller) {
   Instruction *DI = D->getMemoryInst();
   // Calls that only access inaccessible memory cannot read or write any memory
   // locations we consider for elimination.
   if (auto *CB = dyn_cast<CallBase>(DI))
-    if (CB->onlyAccessesInaccessibleMemory()) {
-      if (isAllocLikeFn(DI, &TLI))
-        return false;
+    if (CB->onlyAccessesInaccessibleMemory())
       return true;
-    }
+
   // We can eliminate stores to locations not visible to the caller across
   // throwing instructions.
   if (DI->mayThrow() && !DefVisibleToCaller)
@@ -759,10 +756,8 @@ struct DSEState {
   SmallVector<MemoryDef *, 64> MemDefs;
   // Any that should be skipped as they are already deleted
   SmallPtrSet<MemoryAccess *, 4> SkipStores;
-  // Keep track of all of the objects that are invisible to the caller before
-  // the function returns.
-  // SmallPtrSet<const Value *, 16> InvisibleToCallerBeforeRet;
-  DenseMap<const Value *, bool> InvisibleToCallerBeforeRet;
+  // Keep track whether a given object is captured before return or not.
+  DenseMap<const Value *, bool> CapturedBeforeReturn;
   // Keep track of all of the objects that are invisible to the caller after
   // the function returns.
   DenseMap<const Value *, bool> InvisibleToCallerAfterRet;
@@ -775,6 +770,10 @@ struct DSEState {
   /// Keep track of instructions (partly) overlapping with killing MemoryDefs per
   /// basic block.
   MapVector<BasicBlock *, InstOverlapIntervalsTy> IOLs;
+  // Check if there are root nodes that are terminated by UnreachableInst.
+  // Those roots pessimize post-dominance queries. If there are such roots,
+  // fall back to CFG scan starting from all non-unreachable roots.
+  bool AnyUnreachableExit;
 
   // Class contains self-reference, make sure it's not copied/moved.
   DSEState(const DSEState &) = delete;
@@ -805,15 +804,15 @@ struct DSEState {
     // Treat byval or inalloca arguments the same as Allocas, stores to them are
     // dead at the end of the function.
     for (Argument &AI : F.args())
-      if (AI.hasPassPointeeByValueCopyAttr()) {
-        // For byval, the caller doesn't know the address of the allocation.
-        if (AI.hasByValAttr())
-          InvisibleToCallerBeforeRet.insert({&AI, true});
+      if (AI.hasPassPointeeByValueCopyAttr())
         InvisibleToCallerAfterRet.insert({&AI, true});
-      }
 
     // Collect whether there is any irreducible control flow in the function.
     ContainsIrreducibleLoops = mayContainIrreducibleControl(F, &LI);
+
+    AnyUnreachableExit = any_of(PDT.roots(), [](const BasicBlock *E) {
+      return isa<UnreachableInst>(E->getTerminator());
+    });
   }
 
   /// Return 'OW_Complete' if a store to the 'KillingLoc' location (by \p
@@ -957,7 +956,7 @@ struct DSEState {
       return true;
     auto I = InvisibleToCallerAfterRet.insert({V, false});
     if (I.second) {
-      if (!isInvisibleToCallerBeforeRet(V)) {
+      if (!isInvisibleToCallerOnUnwind(V)) {
         I.first->second = false;
       } else if (isNoAliasCall(V)) {
         I.first->second = !PointerMayBeCaptured(V, true, false);
@@ -966,17 +965,21 @@ struct DSEState {
     return I.first->second;
   }
 
-  bool isInvisibleToCallerBeforeRet(const Value *V) {
-    if (isa<AllocaInst>(V))
+  bool isInvisibleToCallerOnUnwind(const Value *V) {
+    bool RequiresNoCaptureBeforeUnwind;
+    if (!isNotVisibleOnUnwind(V, RequiresNoCaptureBeforeUnwind))
+      return false;
+    if (!RequiresNoCaptureBeforeUnwind)
       return true;
-    auto I = InvisibleToCallerBeforeRet.insert({V, false});
-    if (I.second && isNoAliasCall(V))
+
+    auto I = CapturedBeforeReturn.insert({V, true});
+    if (I.second)
       // NOTE: This could be made more precise by PointerMayBeCapturedBefore
       // with the killing MemoryDef. But we refrain from doing so for now to
       // limit compile-time and this does not cause any changes to the number
       // of stores removed on a large test set in practice.
-      I.first->second = !PointerMayBeCaptured(V, false, true);
-    return I.first->second;
+      I.first->second = PointerMayBeCaptured(V, false, true);
+    return !I.first->second;
   }
 
   Optional<MemoryLocation> getLocForWrite(Instruction *I) const {
@@ -1264,8 +1267,7 @@ struct DSEState {
       MemoryDef *CurrentDef = cast<MemoryDef>(Current);
       Instruction *CurrentI = CurrentDef->getMemoryInst();
 
-      if (canSkipDef(CurrentDef, !isInvisibleToCallerBeforeRet(KillingUndObj),
-                     TLI)) {
+      if (canSkipDef(CurrentDef, !isInvisibleToCallerOnUnwind(KillingUndObj))) {
         CanOptimize = false;
         continue;
       }
@@ -1437,7 +1439,7 @@ struct DSEState {
         continue;
       }
 
-      if (UseInst->mayThrow() && !isInvisibleToCallerBeforeRet(KillingUndObj)) {
+      if (UseInst->mayThrow() && !isInvisibleToCallerOnUnwind(KillingUndObj)) {
         LLVM_DEBUG(dbgs() << "  ... found throwing instruction\n");
         return None;
       }
@@ -1514,54 +1516,56 @@ struct DSEState {
         CommonPred = PDT.findNearestCommonDominator(CommonPred, BB);
       }
 
-      // If CommonPred is in the set of killing blocks, just check if it
-      // post-dominates MaybeDeadAccess.
-      if (KillingBlocks.count(CommonPred)) {
-        if (PDT.dominates(CommonPred, MaybeDeadAccess->getBlock()))
-          return {MaybeDeadAccess};
-        return None;
-      }
-
       // If the common post-dominator does not post-dominate MaybeDeadAccess,
       // there is a path from MaybeDeadAccess to an exit not going through a
       // killing block.
-      if (PDT.dominates(CommonPred, MaybeDeadAccess->getBlock())) {
-        SetVector<BasicBlock *> WorkList;
+      if (!PDT.dominates(CommonPred, MaybeDeadAccess->getBlock())) {
+        if (!AnyUnreachableExit)
+          return None;
 
-        // If CommonPred is null, there are multiple exits from the function.
-        // They all have to be added to the worklist.
-        if (CommonPred)
-          WorkList.insert(CommonPred);
-        else
-          for (BasicBlock *R : PDT.roots())
-            WorkList.insert(R);
-
-        NumCFGTries++;
-        // Check if all paths starting from an exit node go through one of the
-        // killing blocks before reaching MaybeDeadAccess.
-        for (unsigned I = 0; I < WorkList.size(); I++) {
-          NumCFGChecks++;
-          BasicBlock *Current = WorkList[I];
-          if (KillingBlocks.count(Current))
-            continue;
-          if (Current == MaybeDeadAccess->getBlock())
-            return None;
-
-          // MaybeDeadAccess is reachable from the entry, so we don't have to
-          // explore unreachable blocks further.
-          if (!DT.isReachableFromEntry(Current))
-            continue;
-
-          for (BasicBlock *Pred : predecessors(Current))
-            WorkList.insert(Pred);
-
-          if (WorkList.size() >= MemorySSAPathCheckLimit)
-            return None;
-        }
-        NumCFGSuccess++;
-        return {MaybeDeadAccess};
+        // Fall back to CFG scan starting at all non-unreachable roots if not
+        // all paths to the exit go through CommonPred.
+        CommonPred = nullptr;
       }
-      return None;
+
+      // If CommonPred itself is in the set of killing blocks, we're done.
+      if (KillingBlocks.count(CommonPred))
+        return {MaybeDeadAccess};
+
+      SetVector<BasicBlock *> WorkList;
+      // If CommonPred is null, there are multiple exits from the function.
+      // They all have to be added to the worklist.
+      if (CommonPred)
+        WorkList.insert(CommonPred);
+      else
+        for (BasicBlock *R : PDT.roots()) {
+          if (!isa<UnreachableInst>(R->getTerminator()))
+            WorkList.insert(R);
+        }
+
+      NumCFGTries++;
+      // Check if all paths starting from an exit node go through one of the
+      // killing blocks before reaching MaybeDeadAccess.
+      for (unsigned I = 0; I < WorkList.size(); I++) {
+        NumCFGChecks++;
+        BasicBlock *Current = WorkList[I];
+        if (KillingBlocks.count(Current))
+          continue;
+        if (Current == MaybeDeadAccess->getBlock())
+          return None;
+
+        // MaybeDeadAccess is reachable from the entry, so we don't have to
+        // explore unreachable blocks further.
+        if (!DT.isReachableFromEntry(Current))
+          continue;
+
+        for (BasicBlock *Pred : predecessors(Current))
+          WorkList.insert(Pred);
+
+        if (WorkList.size() >= MemorySSAPathCheckLimit)
+          return None;
+      }
+      NumCFGSuccess++;
     }
 
     // No aliasing MemoryUses of MaybeDeadAccess found, MaybeDeadAccess is
@@ -1618,7 +1622,7 @@ struct DSEState {
     // First see if we can ignore it by using the fact that KillingI is an
     // alloca/alloca like object that is not visible to the caller during
     // execution of the function.
-    if (KillingUndObj && isInvisibleToCallerBeforeRet(KillingUndObj))
+    if (KillingUndObj && isInvisibleToCallerOnUnwind(KillingUndObj))
       return false;
 
     if (KillingI->getParent() == DeadI->getParent())
@@ -1634,7 +1638,7 @@ struct DSEState {
   bool isDSEBarrier(const Value *KillingUndObj, Instruction *DeadI) {
     // If DeadI may throw it acts as a barrier, unless we are to an
     // alloca/alloca like object that does not escape.
-    if (DeadI->mayThrow() && !isInvisibleToCallerBeforeRet(KillingUndObj))
+    if (DeadI->mayThrow() && !isInvisibleToCallerOnUnwind(KillingUndObj))
       return true;
 
     // If DeadI is an atomic load/store stronger than monotonic, do not try to
@@ -1790,14 +1794,11 @@ struct DSEState {
       auto *CB = cast<CallBase>(DefUO);
       auto *InitC = getInitialValueOfAllocation(CB, &TLI,
                                                 StoredConstant->getType());
-      if (InitC && InitC == StoredConstant) {
-        auto *UnderlyingDef = cast<MemoryDef>(MSSA.getMemoryAccess(CB));
-        // If UnderlyingDef is the clobbering access of Def, no instructions
-        // between them can modify the memory location.
-        auto *ClobberDef =
-          MSSA.getSkipSelfWalker()->getClobberingMemoryAccess(Def);
-        return UnderlyingDef == ClobberDef;
-      }
+      // If the clobbering access is LiveOnEntry, no instructions between them
+      // can modify the memory location.
+      if (InitC && InitC == StoredConstant)
+        return MSSA.isLiveOnEntryDef(
+            MSSA.getSkipSelfWalker()->getClobberingMemoryAccess(Def));
     }
 
     if (!Store)

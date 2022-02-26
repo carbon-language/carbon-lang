@@ -13,65 +13,110 @@
 #ifndef MLIR_ANALYSIS_PRESBURGER_INTEGERPOLYHEDRON_H
 #define MLIR_ANALYSIS_PRESBURGER_INTEGERPOLYHEDRON_H
 
+#include "mlir/Analysis/Presburger/Fraction.h"
 #include "mlir/Analysis/Presburger/Matrix.h"
+#include "mlir/Analysis/Presburger/PresburgerSpace.h"
+#include "mlir/Analysis/Presburger/Utils.h"
 #include "mlir/Support/LogicalResult.h"
 
 namespace mlir {
 
-/// An integer polyhedron is the set of solutions to a list of affine
-/// constraints over n integer-valued variables/identifiers. Affine constraints
-/// can be inequalities or equalities in the form:
+/// An IntegerRelation is a PresburgerLocalSpace subject to affine constraints.
+/// Affine constraints can be inequalities or equalities in the form:
 ///
 /// Inequality: c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} + c_n >= 0
 /// Equality  : c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} + c_n == 0
 ///
-/// where c_0, c_1, ..., c_n are integers.
+/// where c_0, c_1, ..., c_n are integers and n is the total number of
+/// identifiers in the space.
 ///
-/// Such a set corresponds to the set of integer points lying in a convex
-/// polyhedron. For example, consider the set: (x, y) : (1 <= x <= 7, x = 2y).
-/// This set contains the points (2, 1), (4, 2), and (6, 3).
+/// Such a relation corresponds to the set of integer points lying in a convex
+/// polyhedron. For example, consider the relation:
+///         (x) -> (y) : (1 <= x <= 7, x = 2y)
+/// These can be thought of as points in the polyhedron:
+///         (x, y) : (1 <= x <= 7, x = 2y)
+/// This relation contains the pairs (2, 1), (4, 2), and (6, 3).
 ///
-/// The integer-valued variables are distinguished into 3 types of:
+/// Since IntegerRelation makes a distinction between dimensions, IdKind::Range
+/// and IdKind::Domain should be used to refer to dimension identifiers.
+class IntegerRelation : public PresburgerLocalSpace {
+public:
+  /// Constructs a relation reserving memory for the specified number
+  /// of constraints and identifiers.
+  IntegerRelation(unsigned numReservedInequalities,
+                  unsigned numReservedEqualities, unsigned numReservedCols,
+                  unsigned numDomain, unsigned numRange, unsigned numSymbols,
+                  unsigned numLocals)
+      : PresburgerLocalSpace(numDomain, numRange, numSymbols, numLocals),
+        equalities(0, getNumIds() + 1, numReservedEqualities, numReservedCols),
+        inequalities(0, getNumIds() + 1, numReservedInequalities,
+                     numReservedCols) {
+    assert(numReservedCols >= getNumIds() + 1);
+  }
+
+  /// Constructs a relation with the specified number of dimensions and symbols.
+  IntegerRelation(unsigned numDomain = 0, unsigned numRange = 0,
+                  unsigned numSymbols = 0, unsigned numLocals = 0)
+      : IntegerRelation(/*numReservedInequalities=*/0,
+                        /*numReservedEqualities=*/0,
+                        /*numReservedCols=*/numDomain + numRange + numSymbols +
+                            numLocals + 1,
+                        numDomain, numRange, numSymbols, numLocals) {}
+
+protected:
+  /// Constructs a set reserving memory for the specified number
+  /// of constraints and identifiers.  This constructor should not be used
+  /// directly to create a relation and should only be used to create Sets.
+  IntegerRelation(unsigned numReservedInequalities,
+                  unsigned numReservedEqualities, unsigned numReservedCols,
+                  unsigned numDims, unsigned numSymbols, unsigned numLocals)
+      : PresburgerLocalSpace(numDims, numSymbols, numLocals),
+        equalities(0, getNumIds() + 1, numReservedEqualities, numReservedCols),
+        inequalities(0, getNumIds() + 1, numReservedInequalities,
+                     numReservedCols) {
+    assert(numReservedCols >= getNumIds() + 1);
+  }
+
+  /// Coefficients of affine equalities (in == 0 form).
+  Matrix equalities;
+
+  /// Coefficients of affine inequalities (in >= 0 form).
+  Matrix inequalities;
+};
+
+/// An IntegerPolyhedron is a PresburgerLocalSpace subject to affine
+/// constraints. Affine constraints can be inequalities or equalities in the
+/// form:
 ///
-/// Dimension: Ordinary variables over which the set is represented.
+/// Inequality: c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} + c_n >= 0
+/// Equality  : c_0*x_0 + c_1*x_1 + .... + c_{n-1}*x_{n-1} + c_n == 0
 ///
-/// Symbol: Symbol variables correspond to fixed but unknown values.
-/// Mathematically, an integer polyhedron with symbolic variables is like a
-/// family of integer polyhedra indexed by the symbolic variables.
+/// where c_0, c_1, ..., c_n are integers and n is the total number of
+/// identifiers in the space.
 ///
-/// Local: Local variables correspond to existentially quantified variables. For
-/// example, consider the set: (x) : (exists q : 1 <= x <= 7, x = 2q). An
-/// assignment to symbolic and dimension variables is valid if there exists some
-/// assignment to the local variable `q` satisfying these constraints. For this
-/// example, the set is equivalent to {2, 4, 6}. Mathematically, existential
-/// quantification can be thought of as the result of projection. In this
-/// example, `q` is existentially quantified. This can be thought of as the
-/// result of projecting out `q` from the previous example, i.e. we obtained {2,
-/// 4, 6} by projecting out the second dimension from {(2, 1), (4, 2), (6, 2)}.
+/// An IntegerPolyhedron is similar to a IntegerRelation but it does not make a
+/// distinction between Domain and Range identifiers. Internally,
+/// IntegerPolyhedron is implemented as a IntegerRelation with zero domain ids.
 ///
-class IntegerPolyhedron {
+/// Since IntegerPolyhedron does not make a distinction between dimensions,
+/// IdKind::SetDim should be used to refer to dimension identifiers.
+class IntegerPolyhedron : public IntegerRelation {
 public:
   /// All derived classes of IntegerPolyhedron.
   enum class Kind {
     FlatAffineConstraints,
     FlatAffineValueConstraints,
+    MultiAffineFunction,
     IntegerPolyhedron
   };
-
-  /// Kind of identifier (column).
-  enum IdKind { Dimension, Symbol, Local };
 
   /// Constructs a constraint system reserving memory for the specified number
   /// of constraints and identifiers.
   IntegerPolyhedron(unsigned numReservedInequalities,
                     unsigned numReservedEqualities, unsigned numReservedCols,
                     unsigned numDims, unsigned numSymbols, unsigned numLocals)
-      : numIds(numDims + numSymbols + numLocals), numDims(numDims),
-        numSymbols(numSymbols),
-        equalities(0, numIds + 1, numReservedEqualities, numReservedCols),
-        inequalities(0, numIds + 1, numReservedInequalities, numReservedCols) {
-    assert(numReservedCols >= numIds + 1);
-  }
+      : IntegerRelation(numReservedInequalities, numReservedEqualities,
+                        numReservedCols, numDims, numSymbols, numLocals) {}
 
   /// Constructs a constraint system with the specified number of
   /// dimensions and symbols.
@@ -89,8 +134,6 @@ public:
                                        unsigned numSymbols = 0) {
     return IntegerPolyhedron(numDims, numSymbols);
   }
-
-  virtual ~IntegerPolyhedron() = default;
 
   /// Return the kind of this IntegerPolyhedron.
   virtual Kind getKind() const { return Kind::IntegerPolyhedron; }
@@ -114,6 +157,16 @@ public:
   /// intersection with no simplification of any sort attempted.
   void append(const IntegerPolyhedron &other);
 
+  /// Return whether `this` and `other` are equal. This is integer-exact
+  /// and somewhat expensive, since it uses the integer emptiness check
+  /// (see IntegerPolyhedron::findIntegerSample()).
+  bool isEqual(const IntegerPolyhedron &other) const;
+
+  /// Return whether this is a subset of the given IntegerPolyhedron. This is
+  /// integer-exact and somewhat expensive, since it uses the integer emptiness
+  /// check (see IntegerPolyhedron::findIntegerSample()).
+  bool isSubsetOf(const IntegerPolyhedron &other) const;
+
   /// Returns the value at the specified equality row and column.
   inline int64_t atEq(unsigned i, unsigned j) const { return equalities(i, j); }
   inline int64_t &atEq(unsigned i, unsigned j) { return equalities(i, j); }
@@ -127,16 +180,9 @@ public:
   unsigned getNumConstraints() const {
     return getNumInequalities() + getNumEqualities();
   }
-  inline unsigned getNumIds() const { return numIds; }
-  inline unsigned getNumDimIds() const { return numDims; }
-  inline unsigned getNumSymbolIds() const { return numSymbols; }
-  inline unsigned getNumDimAndSymbolIds() const { return numDims + numSymbols; }
-  inline unsigned getNumLocalIds() const {
-    return numIds - numDims - numSymbols;
-  }
 
   /// Returns the number of columns in the constraint system.
-  inline unsigned getNumCols() const { return numIds + 1; }
+  inline unsigned getNumCols() const { return getNumIds() + 1; }
 
   inline unsigned getNumEqualities() const { return equalities.getNumRows(); }
 
@@ -168,7 +214,7 @@ public:
   unsigned insertDimId(unsigned pos, unsigned num = 1);
   unsigned insertSymbolId(unsigned pos, unsigned num = 1);
   unsigned insertLocalId(unsigned pos, unsigned num = 1);
-  virtual unsigned insertId(IdKind kind, unsigned pos, unsigned num = 1);
+  unsigned insertId(IdKind kind, unsigned pos, unsigned num = 1) override;
 
   /// Append `num` identifiers of the specified kind after the last identifier.
   /// of that kind. Return the position of the first appended column. The
@@ -182,6 +228,11 @@ public:
   void addInequality(ArrayRef<int64_t> inEq);
   /// Adds an equality from the coefficients specified in `eq`.
   void addEquality(ArrayRef<int64_t> eq);
+
+  /// Eliminate the `posB^th` local identifier, replacing every instance of it
+  /// with the `posA^th` local identifier. This should be used when the two
+  /// local variables are known to always take the same values.
+  virtual void eliminateRedundantLocalId(unsigned posA, unsigned posB);
 
   /// Removes identifiers of the specified kind with the specified pos (or
   /// within the specified range) from the system. The specified location is
@@ -198,6 +249,20 @@ public:
   /// Remove the (in)equalities at positions [start, end).
   void removeEqualityRange(unsigned start, unsigned end);
   void removeInequalityRange(unsigned start, unsigned end);
+
+  /// Get the lexicographically minimum rational point satisfying the
+  /// constraints. Returns an empty optional if the polyhedron is empty or if
+  /// the lexmin is unbounded. Symbols are not supported and will result in
+  /// assert-failure.
+  presburger_utils::MaybeOptimum<SmallVector<Fraction, 8>>
+  findRationalLexMin() const;
+
+  /// Same as above, but returns lexicographically minimal integer point.
+  /// Note: this should be used only when the lexmin is really required.
+  /// For a generic integer sampling operation, findIntegerSample is more
+  /// robust and should be preferred.
+  presburger_utils::MaybeOptimum<SmallVector<int64_t, 8>>
+  findIntegerLexMin() const;
 
   /// Swap the posA^th identifier with the posB^th identifier.
   virtual void swapId(unsigned posA, unsigned posB);
@@ -254,25 +319,32 @@ public:
   /// otherwise.
   Optional<SmallVector<int64_t, 8>> findIntegerSample() const;
 
+  /// Compute an overapproximation of the number of integer points in the
+  /// polyhedron. Symbol ids are currently not supported. If the computed
+  /// overapproximation is infinite, an empty optional is returned.
+  Optional<uint64_t> computeVolume() const;
+
   /// Returns true if the given point satisfies the constraints, or false
   /// otherwise.
+  ///
+  /// Note: currently, if the polyhedron contains local ids, the values of
+  /// the local ids must also be provided.
   bool containsPoint(ArrayRef<int64_t> point) const;
 
-  /// Find pairs of inequalities identified by their position indices, using
-  /// which an explicit representation for each local variable can be computed.
-  /// The pairs are stored as indices of upperbound, lowerbound inequalities. If
-  /// no such pair can be found, it is stored as llvm::None.
+  /// Find equality and pairs of inequality contraints identified by their
+  /// position indices, using which an explicit representation for each local
+  /// variable can be computed. The indices of the constraints are stored in
+  /// `MaybeLocalRepr` struct. If no such pair can be found, the kind attribute
+  /// in `MaybeLocalRepr` is set to None.
   ///
   /// The dividends of the explicit representations are stored in `dividends`
   /// and the denominators in `denominators`. If no explicit representation
   /// could be found for the `i^th` local identifier, `denominators[i]` is set
   /// to 0.
-  void getLocalReprs(
-      std::vector<SmallVector<int64_t, 8>> &dividends,
-      SmallVector<unsigned, 4> &denominators,
-      std::vector<llvm::Optional<std::pair<unsigned, unsigned>>> &repr) const;
-  void getLocalReprs(
-      std::vector<llvm::Optional<std::pair<unsigned, unsigned>>> &repr) const;
+  void getLocalReprs(std::vector<SmallVector<int64_t, 8>> &dividends,
+                     SmallVector<unsigned, 4> &denominators,
+                     std::vector<presburger_utils::MaybeLocalRepr> &repr) const;
+  void getLocalReprs(std::vector<presburger_utils::MaybeLocalRepr> &repr) const;
   void getLocalReprs(std::vector<SmallVector<int64_t, 8>> &dividends,
                      SmallVector<unsigned, 4> &denominators) const;
 
@@ -299,11 +371,6 @@ public:
   // mark exactness for example.
   void projectOut(unsigned pos, unsigned num);
   inline void projectOut(unsigned pos) { return projectOut(pos, 1); }
-
-  /// Changes the partition between dimensions and symbols. Depending on the new
-  /// symbol count, either a chunk of trailing dimensional identifiers becomes
-  /// symbols, or some of the leading symbols become dimensions.
-  void setDimSymbolSeparation(unsigned newSymbolCount);
 
   /// Tries to fold the specified identifier to a constant using a trivial
   /// equality detection; if successful, the constant is substituted for the
@@ -358,7 +425,6 @@ public:
 
   /// Returns the constant bound for the pos^th identifier if there is one;
   /// None otherwise.
-  // TODO: Support EQ bounds.
   Optional<int64_t> getConstantBound(BoundType type, unsigned pos) const;
 
   /// Removes constraints that are independent of (i.e., do not have a
@@ -479,16 +545,10 @@ protected:
   /// IntegerPolyhedron.
   virtual void printSpace(raw_ostream &os) const;
 
-  /// Return the index at which the specified kind of id starts.
-  unsigned getIdKindOffset(IdKind kind) const;
-
-  /// Get the number of ids of the specified kind.
-  unsigned getNumIdKind(IdKind kind) const;
-
   /// Removes identifiers in the column range [idStart, idLimit), and copies any
   /// remaining valid data into place, updates member variables, and resizes
   /// arrays as needed.
-  virtual void removeIdRange(unsigned idStart, unsigned idLimit);
+  void removeIdRange(unsigned idStart, unsigned idLimit) override;
 
   /// A parameter that controls detection of an unrealistic number of
   /// constraints. If the number of constraints is this many times the number of
@@ -501,22 +561,6 @@ protected:
   // don't expect an identifier to have more than 32 lower/upper/equality
   // constraints. This is conservatively set low and can be raised if needed.
   constexpr static unsigned kExplosionFactor = 32;
-
-  /// Total number of identifiers.
-  unsigned numIds;
-
-  /// Number of identifiers corresponding to real dimensions.
-  unsigned numDims;
-
-  /// Number of identifiers corresponding to symbols (unknown but constant for
-  /// analysis).
-  unsigned numSymbols;
-
-  /// Coefficients of affine equalities (in == 0 form).
-  Matrix equalities;
-
-  /// Coefficients of affine inequalities (in >= 0 form).
-  Matrix inequalities;
 };
 
 } // namespace mlir

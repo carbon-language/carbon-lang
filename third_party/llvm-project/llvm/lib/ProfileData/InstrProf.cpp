@@ -51,6 +51,7 @@
 #include <memory>
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -118,9 +119,6 @@ static std::string getInstrProfErrString(instrprof_error Err,
     break;
   case instrprof_error::unable_to_correlate_profile:
     OS << "unable to correlate profile";
-    break;
-  case instrprof_error::unsupported_debug_format:
-    OS << "unsupported debug info format (only DWARF is supported)";
     break;
   case instrprof_error::invalid_prof:
     OS << "invalid profile created. Please file a bug "
@@ -1184,32 +1182,6 @@ bool canRenameComdatFunc(const Function &F, bool CheckAddressTaken) {
   return true;
 }
 
-// Create a COMDAT variable INSTR_PROF_RAW_VERSION_VAR to make the runtime
-// aware this is an ir_level profile so it can set the version flag.
-GlobalVariable *createIRLevelProfileFlagVar(Module &M, bool IsCS,
-                                            bool InstrEntryBBEnabled,
-                                            bool DebugInfoCorrelate) {
-  const StringRef VarName(INSTR_PROF_QUOTE(INSTR_PROF_RAW_VERSION_VAR));
-  Type *IntTy64 = Type::getInt64Ty(M.getContext());
-  uint64_t ProfileVersion = (INSTR_PROF_RAW_VERSION | VARIANT_MASK_IR_PROF);
-  if (IsCS)
-    ProfileVersion |= VARIANT_MASK_CSIR_PROF;
-  if (InstrEntryBBEnabled)
-    ProfileVersion |= VARIANT_MASK_INSTR_ENTRY;
-  if (DebugInfoCorrelate)
-    ProfileVersion |= VARIANT_MASK_DBG_CORRELATE;
-  auto IRLevelVersionVariable = new GlobalVariable(
-      M, IntTy64, true, GlobalValue::WeakAnyLinkage,
-      Constant::getIntegerValue(IntTy64, APInt(64, ProfileVersion)), VarName);
-  IRLevelVersionVariable->setVisibility(GlobalValue::DefaultVisibility);
-  Triple TT(M.getTargetTriple());
-  if (TT.supportsCOMDAT()) {
-    IRLevelVersionVariable->setLinkage(GlobalValue::ExternalLinkage);
-    IRLevelVersionVariable->setComdat(M.getOrInsertComdat(VarName));
-  }
-  return IRLevelVersionVariable;
-}
-
 // Create the variable for the profile file name.
 void createProfileFileNameVar(Module &M, StringRef InstrProfileOutput) {
   if (InstrProfileOutput.empty())
@@ -1339,5 +1311,77 @@ void OverlapStats::dump(raw_fd_ostream &OS) const {
        << "\n";
   }
 }
+
+namespace IndexedInstrProf {
+// A C++14 compatible version of the offsetof macro.
+template <typename T1, typename T2>
+inline size_t constexpr offsetOf(T1 T2::*Member) {
+  constexpr T2 Object{};
+  return size_t(&(Object.*Member)) - size_t(&Object);
+}
+
+static inline uint64_t read(const unsigned char *Buffer, size_t Offset) {
+  return *reinterpret_cast<const uint64_t *>(Buffer + Offset);
+}
+
+uint64_t Header::formatVersion() const {
+  using namespace support;
+  return endian::byte_swap<uint64_t, little>(Version);
+}
+
+Expected<Header> Header::readFromBuffer(const unsigned char *Buffer) {
+  using namespace support;
+  static_assert(std::is_standard_layout<Header>::value,
+                "The header should be standard layout type since we use offset "
+                "of fields to read.");
+  Header H;
+
+  H.Magic = read(Buffer, offsetOf(&Header::Magic));
+  // Check the magic number.
+  uint64_t Magic = endian::byte_swap<uint64_t, little>(H.Magic);
+  if (Magic != IndexedInstrProf::Magic)
+    return make_error<InstrProfError>(instrprof_error::bad_magic);
+
+  // Read the version.
+  H.Version = read(Buffer, offsetOf(&Header::Version));
+  if (GET_VERSION(H.formatVersion()) >
+      IndexedInstrProf::ProfVersion::CurrentVersion)
+    return make_error<InstrProfError>(instrprof_error::unsupported_version);
+
+  switch (GET_VERSION(H.formatVersion())) {
+    // When a new field is added in the header add a case statement here to
+    // populate it.
+    static_assert(
+        IndexedInstrProf::ProfVersion::CurrentVersion == Version8,
+        "Please update the reading code below if a new field has been added, "
+        "if not add a case statement to fall through to the latest version.");
+  case 8ull:
+    H.MemProfOffset = read(Buffer, offsetOf(&Header::MemProfOffset));
+    LLVM_FALLTHROUGH;
+  default: // Version7 (when the backwards compatible header was introduced).
+    H.HashType = read(Buffer, offsetOf(&Header::HashType));
+    H.HashOffset = read(Buffer, offsetOf(&Header::HashOffset));
+  }
+
+  return H;
+}
+
+size_t Header::size() const {
+  switch (GET_VERSION(formatVersion())) {
+    // When a new field is added to the header add a case statement here to
+    // compute the size as offset of the new field + size of the new field. This
+    // relies on the field being added to the end of the list.
+    static_assert(IndexedInstrProf::ProfVersion::CurrentVersion == Version8,
+                  "Please update the size computation below if a new field has "
+                  "been added to the header, if not add a case statement to "
+                  "fall through to the latest version.");
+  case 8ull:
+    return offsetOf(&Header::MemProfOffset) + sizeof(Header::MemProfOffset);
+  default: // Version7 (when the backwards compatible header was introduced).
+    return offsetOf(&Header::HashOffset) + sizeof(Header::HashOffset);
+  }
+}
+
+} // namespace IndexedInstrProf
 
 } // end namespace llvm

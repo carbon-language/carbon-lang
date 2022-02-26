@@ -92,7 +92,7 @@ private:
   llvm::ScopedHashTable<StringRef, mlir::Value> symbolTable;
 
   /// Helper conversion for a Toy AST location to an MLIR location.
-  mlir::Location loc(Location loc) {
+  mlir::Location loc(const Location &loc) {
     return mlir::FileLineColLoc::get(builder.getStringAttr(*loc.file), loc.line,
                                      loc.col);
   }
@@ -443,8 +443,8 @@ private:
 namespace toy {
 
 // The public API for codegen.
-mlir::OwningModuleRef mlirGen(mlir::MLIRContext &context,
-                              ModuleAST &moduleAST) {
+mlir::OwningOpRef<mlir::ModuleOp> mlirGen(mlir::MLIRContext &context,
+                                          ModuleAST &moduleAST) {
   return MLIRGenImpl(context).mlirGen(moduleAST);
 }
 

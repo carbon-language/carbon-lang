@@ -21,6 +21,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
@@ -29,6 +30,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <unordered_map>
+#include <utility>
 
 #define DEBUG_TYPE "aggregator"
 
@@ -286,7 +288,7 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
     return;
   }
 
-  FileBuf.reset(MB->release());
+  FileBuf = std::move(*MB);
   ParsingBuf = FileBuf->getBuffer();
   if (ParsingBuf.empty()) {
     errs() << "PERF2BOLT-WARNING: build-id will not be checked because perf "
@@ -347,7 +349,7 @@ void DataAggregator::parsePreAggregated() {
     exit(1);
   }
 
-  FileBuf.reset(MB->release());
+  FileBuf = std::move(*MB);
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
@@ -501,7 +503,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
       exit(1);
     }
 
-    FileBuf.reset(MB->release());
+    FileBuf = std::move(*MB);
     ParsingBuf = FileBuf->getBuffer();
     Col = 0;
     Line = 1;
@@ -585,7 +587,7 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
     exit(1);
   }
 
-  FileBuf.reset(MB->release());
+  FileBuf = std::move(*MB);
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
@@ -913,7 +915,7 @@ bool DataAggregator::recordTrace(
       const MCInst *Instr = BB->getLastNonPseudoInstr();
       uint64_t Offset = 0;
       if (Instr)
-        Offset = BC.MIB->getAnnotationWithDefault<uint32_t>(*Instr, "Offset");
+        Offset = BC.MIB->getOffsetWithDefault(*Instr, 0);
       else
         Offset = BB->getOffset();
 
@@ -1347,11 +1349,11 @@ std::error_code DataAggregator::printLBRHeatMap() {
     exit(1);
   }
 
-  HM.print(opts::HeatmapFile);
-  if (opts::HeatmapFile == "-")
-    HM.printCDF(opts::HeatmapFile);
+  HM.print(opts::OutputFilename);
+  if (opts::OutputFilename == "-")
+    HM.printCDF(opts::OutputFilename);
   else
-    HM.printCDF(opts::HeatmapFile + ".csv");
+    HM.printCDF(opts::OutputFilename + ".csv");
 
   return std::error_code();
 }

@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Target/LLVMIR/Import.h"
+
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
-#include "mlir/Target/LLVMIR/Import.h"
 #include "mlir/Target/LLVMIR/TypeFromLLVM.h"
 #include "mlir/Translation.h"
 
@@ -647,7 +648,8 @@ LogicalResult Importer::processInstruction(llvm::Instruction *inst) {
     Type type = processType(inst->getType());
     if (!type)
       return failure();
-    v = b.getInsertionBlock()->addArgument(type);
+    v = b.getInsertionBlock()->addArgument(
+        type, processDebugLoc(inst->getDebugLoc(), inst));
     return success();
   }
   case llvm::Instruction::Call: {
@@ -810,6 +812,9 @@ LogicalResult Importer::processFunction(llvm::Function *f) {
     emitWarning(UnknownLoc::get(context),
                 "could not deduce personality, skipping it");
 
+  if (f->hasGC())
+    fop.setGarbageCollectorAttr(b.getStringAttr(f->getGC()));
+
   if (f->isDeclaration())
     return success();
 
@@ -822,9 +827,10 @@ LogicalResult Importer::processFunction(llvm::Function *f) {
   currentEntryBlock = blockList[0];
 
   // Add function arguments to the entry block.
-  for (const auto &kv : llvm::enumerate(f->args()))
-    instMap[&kv.value()] =
-        blockList[0]->addArgument(functionType.getParamType(kv.index()));
+  for (const auto &kv : llvm::enumerate(f->args())) {
+    instMap[&kv.value()] = blockList[0]->addArgument(
+        functionType.getParamType(kv.index()), fop.getLoc());
+  }
 
   for (auto bbs : llvm::zip(*f, blockList)) {
     if (failed(processBasicBlock(&std::get<0>(bbs), std::get<1>(bbs))))
@@ -852,11 +858,11 @@ LogicalResult Importer::processBasicBlock(llvm::BasicBlock *bb, Block *block) {
   return success();
 }
 
-OwningModuleRef
+OwningOpRef<ModuleOp>
 mlir::translateLLVMIRToModule(std::unique_ptr<llvm::Module> llvmModule,
                               MLIRContext *context) {
   context->loadDialect<LLVMDialect>();
-  OwningModuleRef module(ModuleOp::create(
+  OwningOpRef<ModuleOp> module(ModuleOp::create(
       FileLineColLoc::get(context, "", /*line=*/0, /*column=*/0)));
 
   Importer deserializer(context, module.get());
@@ -874,8 +880,8 @@ mlir::translateLLVMIRToModule(std::unique_ptr<llvm::Module> llvmModule,
 
 // Deserializes the LLVM bitcode stored in `input` into an MLIR module in the
 // LLVM dialect.
-OwningModuleRef translateLLVMIRToModule(llvm::SourceMgr &sourceMgr,
-                                        MLIRContext *context) {
+OwningOpRef<ModuleOp> translateLLVMIRToModule(llvm::SourceMgr &sourceMgr,
+                                              MLIRContext *context) {
   llvm::SMDiagnostic err;
   llvm::LLVMContext llvmContext;
   std::unique_ptr<llvm::Module> llvmModule = llvm::parseIR(

@@ -76,27 +76,16 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/ADT/simple_ilist.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/PHITransAddr.h"
-#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DerivedUser.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/Use.h"
 #include "llvm/IR/User.h"
-#include "llvm/IR/Value.h"
-#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -106,11 +95,15 @@
 
 namespace llvm {
 
+class BasicBlock;
 class Function;
 class Instruction;
+class LLVMContext;
 class MemoryAccess;
 class MemorySSAWalker;
-class LLVMContext;
+class Module;
+class Use;
+class Value;
 class raw_ostream;
 
 namespace MSSAHelpers {
@@ -865,7 +858,7 @@ private:
   AccessList *getOrCreateAccessList(const BasicBlock *);
   DefsList *getOrCreateDefsList(const BasicBlock *);
   void renumberBlock(const BasicBlock *) const;
-  AliasAnalysis *AA;
+  AliasAnalysis *AA = nullptr;
   DominatorTree *DT;
   Function &F;
 
@@ -892,7 +885,7 @@ private:
   std::unique_ptr<ClobberWalkerBase<AliasAnalysis>> WalkerBase;
   std::unique_ptr<CachingWalker<AliasAnalysis>> Walker;
   std::unique_ptr<SkipSelfWalker<AliasAnalysis>> SkipWalker;
-  unsigned NextID;
+  unsigned NextID = 0;
 };
 
 /// Enables verification of MemorySSA.

@@ -1030,7 +1030,12 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
     Qualifier->print(OS, Policy);
   if (Node->hasTemplateKeyword())
     OS << "template ";
-  OS << Node->getNameInfo();
+  if (Policy.CleanUglifiedParameters &&
+      isa<ParmVarDecl, NonTypeTemplateParmDecl>(Node->getDecl()) &&
+      Node->getDecl()->getIdentifier())
+    OS << Node->getDecl()->getIdentifier()->deuglifiedName();
+  else
+    Node->getNameInfo().printName(OS, Policy);
   if (Node->hasExplicitTemplateArgs()) {
     const TemplateParameterList *TPL = nullptr;
     if (!Node->hadMultipleCandidates())
@@ -1731,21 +1736,16 @@ void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
     }
   } else if (Kind == OO_Arrow) {
     PrintExpr(Node->getArg(0));
-  } else if (Kind == OO_Call) {
+  } else if (Kind == OO_Call || Kind == OO_Subscript) {
     PrintExpr(Node->getArg(0));
-    OS << '(';
+    OS << (Kind == OO_Call ? '(' : '[');
     for (unsigned ArgIdx = 1; ArgIdx < Node->getNumArgs(); ++ArgIdx) {
       if (ArgIdx > 1)
         OS << ", ";
       if (!isa<CXXDefaultArgExpr>(Node->getArg(ArgIdx)))
         PrintExpr(Node->getArg(ArgIdx));
     }
-    OS << ')';
-  } else if (Kind == OO_Subscript) {
-    PrintExpr(Node->getArg(0));
-    OS << '[';
-    PrintExpr(Node->getArg(1));
-    OS << ']';
+    OS << (Kind == OO_Call ? ')' : ']');
   } else if (Node->getNumArgs() == 1) {
     OS << getOperatorSpelling(Kind) << ' ';
     PrintExpr(Node->getArg(0));
@@ -2069,7 +2069,10 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
       } else {
         NeedComma = true;
       }
-      std::string ParamStr = P->getNameAsString();
+      std::string ParamStr =
+          (Policy.CleanUglifiedParameters && P->getIdentifier())
+              ? P->getIdentifier()->deuglifiedName().str()
+              : P->getNameAsString();
       P->getOriginalType().print(OS, Policy, ParamStr);
     }
     if (Method->isVariadic()) {
@@ -2129,10 +2132,10 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   if (E->isParenTypeId())
     OS << "(";
   std::string TypeS;
-  if (Optional<Expr *> Size = E->getArraySize()) {
+  if (E->isArray()) {
     llvm::raw_string_ostream s(TypeS);
     s << '[';
-    if (*Size)
+    if (Optional<Expr *> Size = E->getArraySize())
       (*Size)->printPretty(s, Helper, Policy);
     s << ']';
   }
