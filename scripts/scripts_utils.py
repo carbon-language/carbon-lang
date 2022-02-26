@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 from enum import Enum
+import fcntl
 import hashlib
 import os
 from pathlib import Path
@@ -81,8 +82,6 @@ def _download(url: str, local_path: Path) -> Optional[int]:
             return int(response.code)
         with local_path.open("wb") as f:
             shutil.copyfileobj(response, f)
-            # Run fsync because of "Text file busy" in GH Actions.
-            os.fsync(f.fileno())
     return None
 
 
@@ -111,31 +110,40 @@ def get_release(release: Release) -> str:
         exit(f"No {release.value} release available for platform: {version}")
     want_hash = _VERSION_SHAS[release.value][version]
 
-    # Check if there's a cached file that can be used.
-    local_path = cache_dir.joinpath(f"{release.value}{ext}")
-    if local_path.is_file() and want_hash == _get_hash(local_path):
-        return str(local_path)
+    # Hold a lock while checksumming and downloading the path. Otherwise,
+    # parallel runs by pre-commit may conflict with one another with
+    # simultaneous downloads.
+    with open(cache_dir.joinpath(f"{release.value}.lock"), "w") as lock_file:
+        fcntl.lockf(lock_file.fileno(), fcntl.LOCK_EX)
 
-    # Download the file.
-    url = f"{_URL}/{release.value}-{version}{ext}"
-    retries = 5
-    while True:
-        err = _download(url, local_path)
-        if err is None:
-            break
-        retries -= 1
-        if retries == 0:
-            exit(f"Failed to download {release.value}-{version}: HTTP {err}.")
-        time.sleep(1)
-    local_path.chmod(0o755)
+        # Check if there's a cached file that can be used.
+        local_path = cache_dir.joinpath(f"{release.value}{ext}")
+        if local_path.is_file() and want_hash == _get_hash(local_path):
+            return str(local_path)
 
-    # Verify the downloaded hash.
-    found_hash = _get_hash(local_path)
-    if want_hash != found_hash:
-        exit(
-            f"Downloaded {release.value}-{version} but found sha256 "
-            f"{found_hash}, wanted {want_hash}"
-        )
+        # Download the file.
+        url = f"{_URL}/{release.value}-{version}{ext}"
+        retries = 5
+        while True:
+            err = _download(url, local_path)
+            if err is None:
+                break
+            retries -= 1
+            if retries == 0:
+                exit(
+                    f"Failed to download {release.value}-{version}: HTTP {err}."
+                )
+            time.sleep(1)
+        local_path.chmod(0o755)
+
+        # Verify the downloaded hash.
+        found_hash = _get_hash(local_path)
+        if want_hash != found_hash:
+            exit(
+                f"Downloaded {release.value}-{version} but found sha256 "
+                f"{found_hash} ({local_path.stat().st_size} bytes), wanted "
+                f"{want_hash}"
+            )
 
     return str(local_path)
 
