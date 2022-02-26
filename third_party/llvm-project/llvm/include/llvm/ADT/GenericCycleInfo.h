@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-//
+///
 /// \file
 /// \brief Find all cycles in a control-flow graph, including irreducible loops.
 ///
@@ -22,7 +22,7 @@
 ///   unique cycle C which is a superset of L.
 /// - In the absence of irreducible control flow, the cycles are
 ///   exactly the natural loops in the program.
-//
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_GENERICCYCLEINFO_H
@@ -41,8 +41,8 @@
 
 namespace llvm {
 
-template <typename ContexT> class GenericCycleInfo;
-template <typename ContexT> class GenericCycleInfoCompute;
+template <typename ContextT> class GenericCycleInfo;
+template <typename ContextT> class GenericCycleInfoCompute;
 
 /// A possibly irreducible generalization of a \ref Loop.
 template <typename ContextT> class GenericCycle {

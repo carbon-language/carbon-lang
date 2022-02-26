@@ -8,8 +8,8 @@
 
 #include "flang/Lower/Mangler.h"
 #include "flang/Common/reference.h"
+#include "flang/Lower/Support/Utils.h"
 #include "flang/Lower/Todo.h"
-#include "flang/Lower/Utils.h"
 #include "flang/Optimizer/Dialect/FIRType.h"
 #include "flang/Optimizer/Support/InternalNames.h"
 #include "flang/Semantics/tools.h"
@@ -22,7 +22,7 @@
 // recursively build the vector of module scopes
 static void moduleNames(const Fortran::semantics::Scope &scope,
                         llvm::SmallVector<llvm::StringRef, 2> &result) {
-  if (scope.kind() == Fortran::semantics::Scope::Kind::Global) {
+  if (scope.IsTopLevel()) {
     return;
   }
   moduleNames(scope.parent(), result);

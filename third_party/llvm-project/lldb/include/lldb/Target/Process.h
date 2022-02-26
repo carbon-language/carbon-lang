@@ -1759,7 +1759,7 @@ public:
   ///
   /// If load_addr is within the address space the process has mapped
   /// range_info will be filled in with the start and end of that range as
-  /// well as the permissions for that range and range_info.GetMapped will
+  /// well as the permissions for that range and range_info. GetMapped will
   /// return true.
   ///
   /// If load_addr is outside any mapped region then range_info will have its
@@ -1768,23 +1768,21 @@ public:
   /// there are no valid mapped ranges between load_addr and the end of the
   /// process address space.
   ///
-  /// GetMemoryRegionInfo will only return an error if it is unimplemented for
-  /// the current process.
+  /// GetMemoryRegionInfo calls DoGetMemoryRegionInfo. Override that function in
+  /// process subclasses.
   ///
   /// \param[in] load_addr
-  ///     The load address to query the range_info for.
+  ///     The load address to query the range_info for. May include non
+  ///     address bits, these will be removed by the the ABI plugin if there is
+  ///     one.
   ///
   /// \param[out] range_info
   ///     An range_info value containing the details of the range.
   ///
   /// \return
   ///     An error value.
-  virtual Status GetMemoryRegionInfo(lldb::addr_t load_addr,
-                                     MemoryRegionInfo &range_info) {
-    Status error;
-    error.SetErrorString("Process::GetMemoryRegionInfo() not supported");
-    return error;
-  }
+  Status GetMemoryRegionInfo(lldb::addr_t load_addr,
+                             MemoryRegionInfo &range_info);
 
   /// Obtain all the mapped memory regions within this process.
   ///
@@ -1884,7 +1882,7 @@ public:
   ///     want to deallocate.
   ///
   /// \return
-  ///     \btrue if the memory was deallocated, \bfalse otherwise.
+  ///     \b true if the memory was deallocated, \b false otherwise.
   virtual Status DoDeallocateMemory(lldb::addr_t ptr) {
     Status error;
     error.SetErrorStringWithFormatv(
@@ -1903,7 +1901,7 @@ public:
   ///     want to deallocate.
   ///
   /// \return
-  ///     \btrue if the memory was deallocated, \bfalse otherwise.
+  ///     \b true if the memory was deallocated, \b false otherwise.
   Status DeallocateMemory(lldb::addr_t ptr);
 
   /// Get any available STDOUT.
@@ -2604,6 +2602,26 @@ protected:
   virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size,
                               Status &error) = 0;
 
+  /// DoGetMemoryRegionInfo is called by GetMemoryRegionInfo after it has
+  /// removed non address bits from load_addr. Override this method in
+  /// subclasses of Process.
+  ///
+  /// See GetMemoryRegionInfo for details of the logic.
+  ///
+  /// \param[in] load_addr
+  ///     The load address to query the range_info for. (non address bits
+  ///     removed)
+  ///
+  /// \param[out] range_info
+  ///     An range_info value containing the details of the range.
+  ///
+  /// \return
+  ///     An error value.
+  virtual Status DoGetMemoryRegionInfo(lldb::addr_t load_addr,
+                                       MemoryRegionInfo &range_info) {
+    return Status("Process::DoGetMemoryRegionInfo() not supported");
+  }
+
   lldb::StateType GetPrivateState();
 
   /// The "private" side of resuming a process.  This doesn't alter the state
@@ -3054,6 +3072,9 @@ private:
   bool ShouldBroadcastEvent(Event *event_ptr);
 
   void ControlPrivateStateThread(uint32_t signal);
+
+  Status LaunchPrivate(ProcessLaunchInfo &launch_info, lldb::StateType &state,
+                       lldb::EventSP &event_sp);
 
   Process(const Process &) = delete;
   const Process &operator=(const Process &) = delete;

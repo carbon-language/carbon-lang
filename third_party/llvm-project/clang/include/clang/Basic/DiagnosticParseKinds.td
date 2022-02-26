@@ -719,6 +719,8 @@ def err_attributes_misplaced : Error<"misplaced attributes; expected attributes 
 def err_l_square_l_square_not_attribute : Error<
   "C++11 only allows consecutive left square brackets when "
   "introducing an attribute">;
+def err_attribute_argument_parm_pack_not_supported : Error<
+  "attribute %0 does not support argument pack expansion">;
 def err_ms_declspec_type : Error<
   "__declspec attributes must be an identifier or string literal">;
 def err_ms_property_no_getter_or_putter : Error<
@@ -1537,6 +1539,10 @@ def err_private_module_fragment_expected_semi : Error<
 def err_missing_before_module_end : Error<"expected %0 at end of module">;
 def err_unsupported_module_partition : Error<
   "sorry, module partitions are not yet supported">;
+def err_import_not_allowed_here : Error<
+  "imports must immediately follow the module declaration">;
+def err_import_in_wrong_fragment : Error<
+  "module%select{| partition}0 imports cannot be in the %select{global|private}1 module fragment">;
 
 def err_export_empty : Error<"export declaration cannot be empty">;
 }

@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_PATTERNMATCHER_H
-#define MLIR_PATTERNMATCHER_H
+#ifndef MLIR_IR_PATTERNMATCH_H
+#define MLIR_IR_PATTERNMATCH_H
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -33,7 +33,7 @@ class PatternBenefit {
   enum { ImpossibleToMatchSentinel = 65535 };
 
 public:
-  PatternBenefit() : representation(ImpossibleToMatchSentinel) {}
+  PatternBenefit() = default;
   PatternBenefit(unsigned benefit);
   PatternBenefit(const PatternBenefit &) = default;
   PatternBenefit &operator=(const PatternBenefit &) = default;
@@ -57,7 +57,7 @@ public:
   bool operator>=(const PatternBenefit &rhs) const { return !(*this < rhs); }
 
 private:
-  unsigned short representation;
+  unsigned short representation{ImpossibleToMatchSentinel};
 };
 
 //===----------------------------------------------------------------------===//
@@ -243,7 +243,7 @@ private:
 ///
 class RewritePattern : public Pattern {
 public:
-  virtual ~RewritePattern() {}
+  virtual ~RewritePattern() = default;
 
   /// Rewrite the IR rooted at the specified operation with the result of
   /// this pattern, generating any new operations with the specified
@@ -402,7 +402,7 @@ public:
 
   /// Construct a new PDL value.
   PDLValue(const PDLValue &other) = default;
-  PDLValue(std::nullptr_t = nullptr) : value(nullptr), kind(Kind::Attribute) {}
+  PDLValue(std::nullptr_t = nullptr) {}
   PDLValue(Attribute value)
       : value(value.getAsOpaquePointer()), kind(Kind::Attribute) {}
   PDLValue(Operation *value) : value(value), kind(Kind::Operation) {}
@@ -486,9 +486,9 @@ private:
   }
 
   /// The internal opaque representation of a PDLValue.
-  const void *value;
+  const void *value{nullptr};
   /// The kind of the opaque value.
-  Kind kind;
+  Kind kind{Kind::Attribute};
 };
 
 inline raw_ostream &operator<<(raw_ostream &os, PDLValue value) {
@@ -612,7 +612,7 @@ public:
   PDLPatternModule() = default;
 
   /// Construct a PDL pattern with the given module.
-  PDLPatternModule(OwningModuleRef pdlModule)
+  PDLPatternModule(OwningOpRef<ModuleOp> pdlModule)
       : pdlModule(std::move(pdlModule)) {}
 
   /// Merge the state in `other` into this pattern module.
@@ -669,7 +669,7 @@ public:
 
 private:
   /// The module containing the `pdl.pattern` operations.
-  OwningModuleRef pdlModule;
+  OwningOpRef<ModuleOp> pdlModule;
 
   /// The external functions referenced from within the PDL module.
   llvm::StringMap<PDLConstraintFunction> constraintFunctions;
@@ -1061,7 +1061,7 @@ public:
     private:
       LogicalResult (*implFn)(OpType, PatternRewriter &rewriter);
     };
-    insert(std::make_unique<FnPattern>(std::move(implFn), getContext()));
+    add(std::make_unique<FnPattern>(std::move(implFn), getContext()));
     return *this;
   }
 
@@ -1091,4 +1091,4 @@ private:
 
 } // namespace mlir
 
-#endif // MLIR_PATTERN_MATCH_H
+#endif // MLIR_IR_PATTERNMATCH_H

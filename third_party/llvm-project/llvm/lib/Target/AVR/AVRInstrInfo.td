@@ -1394,7 +1394,7 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
   // ldd Rd,   P+q
   // ldd Rd+1, P+q+1
   let Constraints = "@earlyclobber $dst" in def LDDWRdPtrQ
-      : Pseudo<(outs DREGS_WITHOUT_YZ_WORKAROUND
+      : Pseudo<(outs DREGS
                 : $dst),
                (ins memri
                 : $memri),
@@ -1446,26 +1446,13 @@ class AtomicStore<PatFrag Op, RegisterClass DRC, RegisterClass PTRRC>
                             : $rd, DRC
                             : $rr)]>;
 
-let Constraints =
-    "@earlyclobber $rd" in class AtomicLoadOp<PatFrag Op, RegisterClass DRC,
-                                              RegisterClass PTRRC>
-    : Pseudo<(outs DRC
-              : $rd),
-             (ins PTRRC
-              : $rr, DRC
-              : $operand),
-             "atomic_op", [(set DRC
-                            : $rd, (Op i16
-                                    : $rr, DRC
-                                    : $operand))]>;
-
-// FIXME: I think 16-bit atomic binary ops need to mark
-// r0 as clobbered.
+class AtomicLoadOp<PatFrag Op, RegisterClass DRC, RegisterClass PTRRC>
+    : Pseudo<(outs DRC:$rd),
+             (ins PTRRC:$rr, DRC:$operand),
+             "atomic_op", [(set DRC:$rd, (Op i16:$rr, DRC:$operand))]>;
 
 // Atomic instructions
 // ===================
-//
-// These are all expanded by AVRExpandPseudoInsts
 //
 // 8-bit operations can use any pointer register because
 // they are expanded directly into an LD/ST instruction.
@@ -1482,16 +1469,18 @@ def AtomicStore16 : AtomicStore<atomic_store_16, DREGS, PTRDISPREGS>;
 class AtomicLoadOp8<PatFrag Op> : AtomicLoadOp<Op, GPR8, PTRREGS>;
 class AtomicLoadOp16<PatFrag Op> : AtomicLoadOp<Op, DREGS, PTRDISPREGS>;
 
-def AtomicLoadAdd8 : AtomicLoadOp8<atomic_load_add_8>;
-def AtomicLoadAdd16 : AtomicLoadOp16<atomic_load_add_16>;
-def AtomicLoadSub8 : AtomicLoadOp8<atomic_load_sub_8>;
-def AtomicLoadSub16 : AtomicLoadOp16<atomic_load_sub_16>;
-def AtomicLoadAnd8 : AtomicLoadOp8<atomic_load_and_8>;
-def AtomicLoadAnd16 : AtomicLoadOp16<atomic_load_and_16>;
-def AtomicLoadOr8 : AtomicLoadOp8<atomic_load_or_8>;
-def AtomicLoadOr16 : AtomicLoadOp16<atomic_load_or_16>;
-def AtomicLoadXor8 : AtomicLoadOp8<atomic_load_xor_8>;
-def AtomicLoadXor16 : AtomicLoadOp16<atomic_load_xor_16>;
+let usesCustomInserter=1 in {
+  def AtomicLoadAdd8 : AtomicLoadOp8<atomic_load_add_8>;
+  def AtomicLoadAdd16 : AtomicLoadOp16<atomic_load_add_16>;
+  def AtomicLoadSub8 : AtomicLoadOp8<atomic_load_sub_8>;
+  def AtomicLoadSub16 : AtomicLoadOp16<atomic_load_sub_16>;
+  def AtomicLoadAnd8 : AtomicLoadOp8<atomic_load_and_8>;
+  def AtomicLoadAnd16 : AtomicLoadOp16<atomic_load_and_16>;
+  def AtomicLoadOr8 : AtomicLoadOp8<atomic_load_or_8>;
+  def AtomicLoadOr16 : AtomicLoadOp16<atomic_load_or_16>;
+  def AtomicLoadXor8 : AtomicLoadOp8<atomic_load_xor_8>;
+  def AtomicLoadXor16 : AtomicLoadOp16<atomic_load_xor_16>;
+}
 def AtomicFence
     : Pseudo<(outs), (ins), "atomic_fence", [(atomic_fence timm, timm)]>;
 
@@ -1702,21 +1691,34 @@ let mayLoad = 1, hasSideEffects = 0 in {
       : F16<0b1001010111011000, (outs), (ins), "elpm", []>,
       Requires<[HasELPM]>;
 
-  def ELPMRdZ : FLPMX<1, 0,
-                      (outs GPR8
-                       : $dst),
-                      (ins ZREG
-                       : $z),
+  def ELPMRdZ : FLPMX<1, 0, (outs GPR8:$dst), (ins ZREG:$z),
                       "elpm\t$dst, $z", []>,
                 Requires<[HasELPMX]>;
 
-  let Defs = [R31R30] in def ELPMRdZPi : FLPMX<1, 1,
-                                               (outs GPR8
-                                                : $dst),
-                                               (ins ZREG
-                                                : $z),
-                                               "elpm\t$dst, $z+", []>,
-      Requires<[HasELPMX]>;
+  let Defs = [R31R30] in {
+    def ELPMRdZPi : FLPMX<1, 1, (outs GPR8:$dst), (ins ZREG:$z),
+                          "elpm\t$dst, $z+", []>,
+                    Requires<[HasELPMX]>;
+  }
+
+  // These pseudos are combination of the OUT and ELPM instructions.
+  let Defs = [R31R30], hasSideEffects = 1 in {
+    def ELPMBRdZ : Pseudo<(outs GPR8:$dst), (ins ZREG:$z, LD8:$p),
+                          "elpmb\t$dst, $z, $p", []>,
+                   Requires<[HasELPMX]>;
+
+    def ELPMWRdZ : Pseudo<(outs DREGS:$dst), (ins ZREG:$z, LD8:$p),
+                          "elpmw\t$dst, $z, $p", []>,
+                   Requires<[HasELPMX]>;
+
+    def ELPMBRdZPi : Pseudo<(outs GPR8:$dst), (ins ZREG:$z, LD8:$p),
+                            "elpmb\t$dst, $z+, $p", []>,
+                     Requires<[HasELPMX]>;
+
+    def ELPMWRdZPi : Pseudo<(outs DREGS:$dst), (ins ZREG:$z, LD8:$p),
+                            "elpmw\t$dst, $z+, $p", []>,
+                     Requires<[HasELPMX]>;
+  }
 }
 
 // Store program memory operations.
@@ -2109,15 +2111,17 @@ def ROL : InstAlias<"rol\t$rd", (ADCRdRr GPR8 : $rd, GPR8 : $rd)>;
 // Sets all bits in a register.
 def : InstAlias<"ser\t$rd", (LDIRdK LD8 : $rd, 0xff), 0>;
 
-let Defs = [SREG] in def BSETs : FS<0, (outs),
-                                    (ins i8imm
-                                     : $s),
-                                    "bset\t$s", []>;
+let hasSideEffects=1 in {
+  let Defs = [SREG] in def BSETs : FS<0,
+                                      (outs),
+                                      (ins i8imm:$s),
+                                      "bset\t$s", []>;
 
-let Defs = [SREG] in def BCLRs : FS<1, (outs),
-                                    (ins i8imm
-                                     : $s),
-                                    "bclr\t$s", []>;
+  let Defs = [SREG] in def BCLRs : FS<1,
+                                      (outs),
+                                      (ins i8imm:$s),
+                                      "bclr\t$s", []>;
+}
 
 // Set/clear aliases for the carry (C) status flag (bit 0).
 def : InstAlias<"sec", (BSETs 0)>;
@@ -2376,6 +2380,10 @@ def Asr16 : ShiftPseudo<(outs DREGS
                                             : $dst, (AVRasrLoop i16
                                                      : $src, i8
                                                      : $cnt))]>;
+
+// lowered to a copy from R1, which contains the value zero.
+let usesCustomInserter=1 in
+def CopyR1 : Pseudo<(outs GPR8:$rd), (ins), "clrz\t$rd", [(set i8:$rd, 0)]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

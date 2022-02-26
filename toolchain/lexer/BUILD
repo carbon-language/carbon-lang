@@ -58,6 +58,18 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "numeric_literal_benchmark",
+    testonly = 1,
+    srcs = ["numeric_literal_benchmark.cpp"],
+    deps = [
+        ":numeric_literal",
+        "//common:check",
+        "//toolchain/diagnostics:null_diagnostics",
+        "@com_github_google_benchmark//:benchmark_main",
+    ],
+)
+
 cc_test(
     name = "numeric_literal_test",
     size = "small",
@@ -65,6 +77,7 @@ cc_test(
     deps = [
         ":numeric_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -103,10 +116,7 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
-        "//common:ostream",
-        "//toolchain/diagnostics:diagnostic_emitter",
         "@com_github_google_benchmark//:benchmark_main",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -117,6 +127,7 @@ cc_test(
     deps = [
         ":string_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -161,6 +172,7 @@ cc_library(
     hdrs = ["tokenized_buffer_test_helpers.h"],
     deps = [
         ":tokenized_buffer",
+        "//common:check",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

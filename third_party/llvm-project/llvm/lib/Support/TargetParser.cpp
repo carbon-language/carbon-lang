@@ -13,10 +13,8 @@
 
 #include "llvm/Support/TargetParser.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/ARMBuildAttributes.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace llvm;
 using namespace AMDGPU;
@@ -329,21 +327,6 @@ bool getCPUFeaturesExceptStdExt(CPUKind Kind,
     Features.push_back("-64bit");
 
   return true;
-}
-
-StringRef computeDefaultABIFromArch(const llvm::RISCVISAInfo &ISAInfo) {
-  if (ISAInfo.getXLen() == 32) {
-    if (ISAInfo.hasExtension("d"))
-      return "ilp32d";
-    if (ISAInfo.hasExtension("e"))
-      return "ilp32e";
-    return "ilp32";
-  } else if (ISAInfo.getXLen() == 64) {
-    if (ISAInfo.hasExtension("d"))
-      return "lp64d";
-    return "lp64";
-  }
-  llvm_unreachable("Invalid XLEN");
 }
 
 } // namespace RISCV

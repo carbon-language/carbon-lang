@@ -78,6 +78,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -337,11 +338,12 @@ static bool doesStringMatchAnyRegex(StringRef Str,
   }
   return false;
 }
+
 //===----------------------------------------------------------------------===//
 // ScopDetection.
 
 ScopDetection::ScopDetection(const DominatorTree &DT, ScalarEvolution &SE,
-                             LoopInfo &LI, RegionInfo &RI, AliasAnalysis &AA,
+                             LoopInfo &LI, RegionInfo &RI, AAResults &AA,
                              OptimizationRemarkEmitter &ORE)
     : DT(DT), SE(SE), LI(LI), RI(RI), AA(AA), ORE(ORE) {}
 

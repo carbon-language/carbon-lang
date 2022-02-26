@@ -18,7 +18,7 @@ Search,binary_search,Christopher Di Bella,n/a,Not started
 Search,min,Not assigned,n/a,Not started
 Search,max,Not assigned,n/a,Not started
 Search,minmax,Not assigned,n/a,Not started
-Search,min_element,Not assigned,n/a,Not started
+Search,min_element,Nikolas Klauser,n/a,✅
 Search,max_element,Not assigned,n/a,Not started
 Search,minmax_element,Not assigned,n/a,Not started
 Search,count,Not assigned,n/a,Not started
@@ -46,14 +46,14 @@ Write,fill,Not assigned,n/a,Not started
 Write,fill_n,Not assigned,n/a,Not started
 Write,transform,Not assigned,n/a,Not started
 Write,generate,Not assigned,n/a,Not started
-Write,generate_nNot assigned,n/a,Not started
+Write,generate_n,Not assigned,n/a,Not started
 Write,remove_copy,Not assigned,n/a,Not started
 Write,remove_copy_if,Not assigned,n/a,Not started
 Write,replace,Not assigned,n/a,Not started
 Write,replace_if,Not assigned,n/a,Not started
 Write,replace_copy,Not assigned,n/a,Not started
 Write,replace_copy_if,Not assigned,n/a,Not started
-Write,swap_ranges,Not assigned,n/a,Not started
+Write,swap_ranges,Nikolas Klauser,`D116303 <https://llvm.org/D116303>`_,✅
 Write,reverse_copy,Not assigned,n/a,Not started
 Write,rotate_copy,Not assigned,n/a,Not started
 Write,sample,Not assigned,n/a,Not started
@@ -94,7 +94,7 @@ Uninitialised memory,uninitialized_default_construct,Konstantin Varlamov,`D11531
 Uninitialised memory,uninitialized_default_construct_n,Konstantin Varlamov,`D115315 <https://llvm.org/D115315>`_,✅
 Uninitialised memory,uninitialized_value_construct,Konstantin Varlamov,`D115626 <https://llvm.org/D115626>`_,✅
 Uninitialised memory,uninitialized_value_construct_n,Konstantin Varlamov,`D115626 <https://llvm.org/D115626>`_,✅
-Uninitialised memory,destroy,Konstantin Varlamov,n/a,Not started
-Uninitialised memory,destroy_n,Konstantin Varlamov,n/a,Not started
-Uninitialised memory,destroy_at,Konstantin Varlamov,n/a,Not started
-Uninitialised memory,construct_at,Konstantin Varlamov,n/a,Not started
+Uninitialised memory,destroy,Konstantin Varlamov,`D116078 <https://llvm.org/D116078>`_,✅
+Uninitialised memory,destroy_n,Konstantin Varlamov,`D116078 <https://llvm.org/D116078>`_,✅
+Uninitialised memory,destroy_at,Konstantin Varlamov,`D116078 <https://llvm.org/D116078>`_,✅
+Uninitialised memory,construct_at,Konstantin Varlamov,`D116078 <https://llvm.org/D116078>`_,✅

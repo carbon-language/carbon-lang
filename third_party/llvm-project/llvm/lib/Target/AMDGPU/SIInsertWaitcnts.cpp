@@ -119,7 +119,7 @@ static const unsigned WaitEventMaskForInst[NUM_INST_CNTS] = {
 // special tokens like SCMEM_LDS (needed for buffer load to LDS).
 enum RegisterMapping {
   SQ_MAX_PGM_VGPRS = 512, // Maximum programmable VGPRs across all targets.
-  AGPR_OFFSET = 226, // Maximum programmable ArchVGPRs across all targets.
+  AGPR_OFFSET = 256,      // Maximum programmable ArchVGPRs across all targets.
   SQ_MAX_PGM_SGPRS = 256, // Maximum programmable SGPRs across all targets.
   NUM_EXTRA_VGPRS = 1,    // A reserved slot for DS.
   EXTRA_VGPR_LDS = 0,     // This is a placeholder the Shader algorithm uses.
@@ -863,7 +863,7 @@ bool SIInsertWaitcnts::applyPreexistingWaitcnt(WaitcntBrackets &ScoreBrackets,
       Wait.ExpCnt = ~0u;
 
       LLVM_DEBUG(dbgs() << "generateWaitcntInstBefore\n"
-                        << "Old Instr: " << MI << "New Instr: " << *WaitcntInstr
+                        << "Old Instr: " << *MI << "New Instr: " << *WaitcntInstr
                         << '\n');
     } else {
       WaitcntInstr->eraseFromParent();
@@ -886,7 +886,7 @@ bool SIInsertWaitcnts::applyPreexistingWaitcnt(WaitcntBrackets &ScoreBrackets,
       Wait.VsCnt = ~0u;
 
       LLVM_DEBUG(dbgs() << "generateWaitcntInstBefore\n"
-                        << "Old Instr: " << MI
+                        << "Old Instr: " << *MI
                         << "New Instr: " << *WaitcntVsCntInstr << '\n');
     } else {
       WaitcntVsCntInstr->eraseFromParent();
@@ -1040,7 +1040,7 @@ bool SIInsertWaitcnts::generateWaitcntInstBefore(
     if (MI.isCall() && callWaitsOnFunctionEntry(MI)) {
       // The function is going to insert a wait on everything in its prolog.
       // This still needs to be careful if the call target is a load (e.g. a GOT
-      // load). We also need to check WAW depenancy with saved PC.
+      // load). We also need to check WAW dependency with saved PC.
       Wait = AMDGPU::Waitcnt();
 
       int CallAddrOpIdx =
@@ -1382,7 +1382,6 @@ bool WaitcntBrackets::merge(const WaitcntBrackets &Other) {
 
   for (auto T : inst_counter_types()) {
     // Merge event flags for this counter
-    const bool OldOutOfOrder = counterOutOfOrder(T);
     const unsigned OldEvents = PendingEvents & WaitEventMaskForInst[T];
     const unsigned OtherEvents = Other.PendingEvents & WaitEventMaskForInst[T];
     if (OtherEvents & ~OldEvents)
@@ -1425,7 +1424,7 @@ bool WaitcntBrackets::merge(const WaitcntBrackets &Other) {
       }
     }
 
-    if (RegStrictDom && !OldOutOfOrder)
+    if (RegStrictDom)
       StrictDom = true;
   }
 

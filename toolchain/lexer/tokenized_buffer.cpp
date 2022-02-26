@@ -175,7 +175,7 @@ class TokenizedBuffer::Lexer {
         default:
           // If we find a non-whitespace character without exhausting the
           // buffer, return true to continue lexing.
-          assert(!IsSpace(source_text.front()));
+          CHECK(!IsSpace(source_text.front()));
           if (whitespace_start != source_text.begin()) {
             NoteWhitespace();
           }
@@ -249,8 +249,8 @@ class TokenizedBuffer::Lexer {
               buffer_.literal_int_storage_.size();
           buffer_.literal_int_storage_.push_back(std::move(value.mantissa));
           buffer_.literal_int_storage_.push_back(std::move(value.exponent));
-          assert(buffer_.GetRealLiteral(token).IsDecimal() ==
-                 (value.radix == 10));
+          CHECK(buffer_.GetRealLiteral(token).IsDecimal() ==
+                (value.radix == 10));
           return token;
         },
         [&](LexedNumericLiteral::UnrecoverableError) {
@@ -899,9 +899,9 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     const char* loc) -> Diagnostic::Location {
-  assert(llvm::is_sorted(std::array{buffer_->source_->Text().begin(), loc,
-                                    buffer_->source_->Text().end()}) &&
-         "location not within buffer");
+  CHECK(llvm::is_sorted(std::array{buffer_->source_->Text().begin(), loc,
+                                   buffer_->source_->Text().end()}))
+      << "location not within buffer";
   int64_t offset = loc - buffer_->source_->Text().begin();
 
   // Find the first line starting after the given location. Note that we can't

@@ -118,12 +118,6 @@ static llvm::Optional<PdbCompilandSymId> FindSymbolScope(PdbIndex &index,
   std::vector<PdbCompilandSymId> scope_stack;
 
   while (begin != end) {
-    if (id.offset == begin.offset()) {
-      // We have a match!  Return the top of the stack
-      if (scope_stack.empty())
-        return llvm::None;
-      return scope_stack.back();
-    }
     if (begin.offset() > id.offset) {
       // We passed it.  We couldn't even find this symbol record.
       lldbassert(false && "Invalid compiland symbol id!");
@@ -136,7 +130,7 @@ static llvm::Optional<PdbCompilandSymId> FindSymbolScope(PdbIndex &index,
       // We can use the end offset of the scope to determine whether or not
       // we can just outright skip this entire scope.
       uint32_t scope_end = getScopeEndOffset(*begin);
-      if (scope_end < id.modi) {
+      if (scope_end < id.offset) {
         begin = syms.at(scope_end);
       } else {
         // The symbol we're looking for is somewhere in this scope.
@@ -147,8 +141,10 @@ static llvm::Optional<PdbCompilandSymId> FindSymbolScope(PdbIndex &index,
     }
     ++begin;
   }
-
-  return llvm::None;
+  if (scope_stack.empty())
+    return llvm::None;
+  // We have a match!  Return the top of the stack
+  return scope_stack.back();
 }
 
 static clang::TagTypeKind TranslateUdtKind(const TagRecord &cr) {
@@ -1081,7 +1077,7 @@ PdbAstBuilder::GetOrCreateFunctionDecl(PdbCompilandSymId func_id) {
 
   clang::FunctionDecl *function_decl = nullptr;
   if (parent->isRecord()) {
-    clang::QualType parent_qt = llvm::dyn_cast<clang::TypeDecl>(parent)
+    clang::QualType parent_qt = llvm::cast<clang::TypeDecl>(parent)
                                     ->getTypeForDecl()
                                     ->getCanonicalTypeInternal();
     lldb::opaque_compiler_type_t parent_opaque_ty =
@@ -1318,7 +1314,7 @@ void PdbAstBuilder::ParseAllNamespacesPlusChildrenOf(
     if (!context->isNamespace())
       continue;
 
-    clang::NamespaceDecl *ns = llvm::dyn_cast<clang::NamespaceDecl>(context);
+    clang::NamespaceDecl *ns = llvm::cast<clang::NamespaceDecl>(context);
     std::string actual_ns = ns->getQualifiedNameAsString();
     if (llvm::StringRef(actual_ns).startswith(*parent)) {
       clang::QualType qt = GetOrCreateType(tid);

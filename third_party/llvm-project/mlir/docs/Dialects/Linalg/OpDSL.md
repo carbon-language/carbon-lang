@@ -102,10 +102,10 @@ bound to a `TensorDef` as demonstrated by the matmul example. All parameters
 appear in the parameter list of the operation:
 
 ```python
-fill(val, in_tensor, outs=[out_tensor])
+copy_and_scale(val, in_tensor, outs=[out_tensor])
 ```
 
-## Attributes
+## Index Attributes
 
 Attributes are compile-time constant parameters only accessible in index
 expressions. They can be used to parameterize the access pattern of a structured
@@ -118,7 +118,7 @@ The following example demonstrates the use of attributes:
 @linalg_structured_op
 def strided_copy(I=TensorDef(T, S.IH, S.IW),
                  O=TensorDef(T, S.OH, S.OW, output=True),
-                 strides=IndexAttrDef(S.SH, S.SW)):
+                 strides=IndexAttrDef(S.SH, S.SW, default=[1, 1])):
   """Copy a subset of the input tensor elements to the output tensor"""
   O[D.oh, D.ow] = I[D.oh * S.SH, D.ow * S.SW]
 ```
@@ -129,11 +129,12 @@ the symbols `S.SH` and `S.SW`, which are used to index the input tensor `I`.
 When instantiating the operation, the attribute is set using a named argument:
 
 ```python
-strided_copy(in_tensor, outs=[out_tensor], strides=[1,2])
+strided_copy(in_tensor, outs=[out_tensor], strides=[1, 2])
 ```
 
 The `strides` vector elements substitute the symbols `S.SH` and `S.SW` in the
-index expressions of the operation instance.
+index expressions of the operation instance. If no strides are provided the
+`default` vector elements are used instead.
 
 Attributes are currently limited to integer vectors and only accessible in index
 expressions. An operation may have multiple attributes all of them placed at the
@@ -157,8 +158,8 @@ def pooling_poly(
     I=TensorDef(T1, S.N, S.H, S.W, S.C),
     K=TensorDef(T2, S.KH, S.KW, index_dims=[D.kh, D.kw]),
     O=TensorDef(U, S.N, S.OH, S.OW, S.C, output=True),
-    strides=IndexAttrDef(S.SH, S.SW),
-    dilations=IndexAttrDef(S.DH, S.DW)):
+    strides=IndexAttrDef(S.SH, S.SW, default=[1, 1]),
+    dilations=IndexAttrDef(S.DH, S.DW, default=[1, 1])):
   O[D.n, D.oh, D.ow, D.c] += TypeFn.cast(U,
           I[D.n, D.oh * S.SH + D.kh * S.DH, D.ow * S.SW + D.kw * S.DW, D.c])
 ```
@@ -251,3 +252,31 @@ The following examples illustrate the lowering of signed and unsigned functions:
 
 Not all functions are applicable for all numeric types, and on mismatch, op
 verification will fail.
+
+## Pointwise Computations
+
+Pointwise computations are expressible in a rank polymorphic form that supports
+arbitrary ranked operands - all of them need to have the same rank - with a
+single operation definition.
+
+An example for a rank polymorphic operation is `fill`:
+
+```python
+@linalg_structured_op
+def fill(value=ScalarDef(T1),
+         O=TensorDef(U, output=True)):
+  O[None] = TypeFn.cast(U, value)
+```
+
+The operation sets the elements of the output tensor `O` to `value`. All
+operands are either scalars or rank zero tensors that are accessed using the
+index `None`. The operation thus performs a scalar computation that trivially
+extends to a multi-dimensional pointwise computation. As a result, we may use
+`fill` with arbitrary ranked output tensors:
+
+```python
+tensor_2d = linalg.InitTensorOp([4, 8], f32)
+tensor_3d = linalg.InitTensorOp([4, 8, 16], f32)
+fill(value, outs=[tensor_2d])
+fill(value, outs=[tensor_3d])
+```

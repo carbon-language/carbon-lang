@@ -863,6 +863,8 @@ public:
     return nullptr;
   }
 
+  virtual CompilerType GetSiginfoType(const llvm::Triple &triple);
+
 protected:
   /// Create a list of ArchSpecs with the given OS and a architectures. The
   /// vendor field is left as an "unspecified unknown".
@@ -890,7 +892,7 @@ protected:
   FileSpec m_working_dir; // The working directory which is used when installing
                           // modules that have no install path set
   std::string m_remote_url;
-  std::string m_name;
+  std::string m_hostname;
   llvm::VersionTuple m_os_version;
   ArchSpec
       m_system_arch; // The architecture of the kernel or the remote platform

@@ -5,19 +5,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains some templates that are useful if you are working with the
-// STL at all.
-//
-// No library is required when using these functions.
-//
+///
+/// \file
+/// This file contains some templates that are useful if you are working with
+/// the STL at all.
+///
+/// No library is required when using these functions.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_STLEXTRAS_H
 #define LLVM_ADT_STLEXTRAS_H
 
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/STLArrayExtras.h"
 #include "llvm/ADT/STLForwardCompat.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
+#include "llvm/ADT/identity.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Config/abi-breaking.h"
@@ -198,65 +202,6 @@ struct FirstIndexOfType<T, T, Us...> : std::integral_constant<size_t, 0> {};
 /// TypeAtIndex<I, Ts...> is the type at index I in Ts.
 template <size_t I, typename... Ts>
 using TypeAtIndex = std::tuple_element_t<I, std::tuple<Ts...>>;
-
-//===----------------------------------------------------------------------===//
-//     Extra additions to <functional>
-//===----------------------------------------------------------------------===//
-
-template <class Ty> struct identity {
-  using argument_type = Ty;
-
-  Ty &operator()(Ty &self) const {
-    return self;
-  }
-  const Ty &operator()(const Ty &self) const {
-    return self;
-  }
-};
-
-/// An efficient, type-erasing, non-owning reference to a callable. This is
-/// intended for use as the type of a function parameter that is not used
-/// after the function in question returns.
-///
-/// This class does not own the callable, so it is not in general safe to store
-/// a function_ref.
-template<typename Fn> class function_ref;
-
-template<typename Ret, typename ...Params>
-class function_ref<Ret(Params...)> {
-  Ret (*callback)(intptr_t callable, Params ...params) = nullptr;
-  intptr_t callable;
-
-  template<typename Callable>
-  static Ret callback_fn(intptr_t callable, Params ...params) {
-    return (*reinterpret_cast<Callable*>(callable))(
-        std::forward<Params>(params)...);
-  }
-
-public:
-  function_ref() = default;
-  function_ref(std::nullptr_t) {}
-
-  template <typename Callable>
-  function_ref(
-      Callable &&callable,
-      // This is not the copy-constructor.
-      std::enable_if_t<!std::is_same<remove_cvref_t<Callable>,
-                                     function_ref>::value> * = nullptr,
-      // Functor must be callable and return a suitable type.
-      std::enable_if_t<std::is_void<Ret>::value ||
-                       std::is_convertible<decltype(std::declval<Callable>()(
-                                               std::declval<Params>()...)),
-                                           Ret>::value> * = nullptr)
-      : callback(callback_fn<typename std::remove_reference<Callable>::type>),
-        callable(reinterpret_cast<intptr_t>(&callable)) {}
-
-  Ret operator()(Params ...params) const {
-    return callback(callable, std::forward<Params>(params)...);
-  }
-
-  explicit operator bool() const { return callback; }
-};
 
 //===----------------------------------------------------------------------===//
 //     Extra additions to <iterator>
@@ -1467,7 +1412,7 @@ constexpr decltype(auto) makeVisitor(CallableTs &&...Callables) {
 }
 
 //===----------------------------------------------------------------------===//
-//     Extra additions for arrays
+//     Extra additions to <algorithm>
 //===----------------------------------------------------------------------===//
 
 // We have a copy here so that LLVM behaves the same when using different
@@ -1485,12 +1430,6 @@ void shuffle(Iterator first, Iterator last, RNG &&g) {
     if (offset != difference_type(0))
       std::iter_swap(first, first + offset);
   }
-}
-
-/// Find the length of an array.
-template <class T, std::size_t N>
-constexpr inline size_t array_lengthof(T (&)[N]) {
-  return N;
 }
 
 /// Adapt std::less<T> for array_pod_sort.
@@ -1619,10 +1558,6 @@ template <typename Container, typename Compare>
 inline void sort(Container &&C, Compare Comp) {
   llvm::sort(adl_begin(C), adl_end(C), Comp);
 }
-
-//===----------------------------------------------------------------------===//
-//     Extra additions to <algorithm>
-//===----------------------------------------------------------------------===//
 
 /// Get the size of a range. This is a wrapper function around std::distance
 /// which is only enabled when the operation is O(1).

@@ -55,6 +55,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
@@ -1909,7 +1910,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     const Register Reg = MO->getReg();
     if (!Reg)
       return;
-    if (MRI->tracksLiveness() && !MI->isDebugValue())
+    if (MRI->tracksLiveness() && !MI->isDebugInstr())
       checkLiveness(MO, MONum);
 
     // Verify the consistency of tied operands.

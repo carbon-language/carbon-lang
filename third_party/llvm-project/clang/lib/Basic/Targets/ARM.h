@@ -18,6 +18,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ARMTargetParser.h"
 #include "llvm/Support/TargetParser.h"
 
 namespace clang {
@@ -125,8 +126,10 @@ public:
   StringRef getABI() const override;
   bool setABI(const std::string &Name) override;
 
-  bool validateBranchProtection(StringRef, BranchProtectionInfo &,
-                                StringRef &) const override;
+  bool isBranchProtectionSupportedArch(StringRef Arch) const override;
+  bool validateBranchProtection(StringRef Spec, StringRef Arch,
+                                BranchProtectionInfo &BPI,
+                                StringRef &Err) const override;
 
   // FIXME: This should be based on Arch attributes, not CPU names.
   bool
