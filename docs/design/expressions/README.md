@@ -92,7 +92,8 @@ graph BT
 
     expressionEnd["x;"]
 
-    not & negation --> parens & braces
+    negation --> parens & braces
+    not -----> parens & braces
     multiplication & modulo & as --> negation
     addition --> multiplication
     comparison --> modulo & addition & as
