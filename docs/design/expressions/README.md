@@ -54,17 +54,17 @@ graph BT
     braces["{...}"]
     click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
-    // TODO: x.y
-
     negation["-x"]
 
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
-    multiplication>"x * y<br> x / y"]
+    multiplication>"x * y<br>
+                    x / y"]
     click multiplication "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
-    addition>"x + y<br> x - y"]
+    addition>"x + y<br>
+              x - y"]
     click addition "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
     modulo["x % y"]
