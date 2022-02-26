@@ -94,10 +94,8 @@ graph BT
 
     not & negation --> parens & braces
     multiplication & modulo & as --> negation
-    multiplication --> addition
-    addition --> comparison
-    modulo --> comparison
-    comparison --> as
+    addition --> multiplication
+    comparison --> modulo & addition & as
     and & or --> comparison & not
     if & expressionEnd --> and & or
 ```
