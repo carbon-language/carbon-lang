@@ -13,7 +13,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Precedence](#precedence)
 -   [Operators](#operators)
-    -   [Precedence](#precedence)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
 -   [Alternatives considered](#alternatives-considered)
@@ -55,11 +54,21 @@ graph BT
     braces["{...}"]
     click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
+    // TODO: x.y
+
+    negation["-x"]
+
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
-    not["not x"]
-    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+    multiplication>"x * y<br> x / y"]
+    click multiplication "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    addition>"x + y<br> x - y"]
+    click addition "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    modulo["x % y"]
+    click modulo "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
     comparison["x == y<br>
                 x != y<br>
@@ -68,6 +77,9 @@ graph BT
                 x > y<br>
                 x >= y"]
     click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
+
+    not["not x"]
+    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
     and>"x and y"]
     click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
@@ -80,7 +92,11 @@ graph BT
 
     expressionEnd["x;"]
 
-    as & not --> parens & braces
+    not & negation --> parens & braces
+    multiplication & modulo & as --> negation
+    multiplication --> addition
+    addition --> comparison
+    modulo --> comparison
     comparison --> as
     and & or --> comparison & not
     if & expressionEnd --> and & or
@@ -136,59 +152,6 @@ Most expressions are modeled as operators:
 | Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
 | Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
 | Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
-
-### Precedence
-
-Operators have a partial
-[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
-Expressions using operators that lack a relative ordering must be disambiguated
-by the developer, for example by adding parentheses; when a program's meaning
-depends on an undefined relative ordering of two operators, it will be rejected
-due to ambiguity. Precedence orderings will only be added when it's reasonable
-to expect most developers to understand the precedence without parentheses.
-
-The precedence diagram is defined thusly:
-
-```mermaid
-graph TD
-    parens["(...)"] --> postfix
-    struct_literal["{.a = x, .b = y}<br> {.a: T, .b: U}"] --> postfix
-    postfix["x.y"] --> not & negation
-    negation["-x"] --> multiplicative & modulo & as
-    as["x as T"] --> comparison
-    not["not x"] --> and & or
-    multiplicative>"x * y<br> x / y"] --> additive
-    additive>"x + y<br> x - y"] --> comparison
-    modulo["x % y"] --> comparison
-    comparison["x == y<br> x != y<br> x < y<br> x <= y<br> x > y<br> x >= y"] --> and & or
-    and>"x and y"] --> expression_statement & if_else
-    or>"x or y"] --> expression_statement & if_else
-    expression_statement(["x ;"])
-    if_else["if x then y else z"] --> subexpression
-    subexpression(["parenthesized subexpression"])
-```
-
-The diagram's attributes are:
-
--   Edges indicate a relative ordering: given an edge A --> B, it means that A
-    is higher precedence than B. This is also transitive, such as with A and C
-    in A --> B --> C.
-
-    -   Higher precedence operators are higher in the graph.
-
-    -   For example, `not x or y` is valid because there is an arrow from `not`
-        to `or`, so `not` is higher precedence than `or` and can be used inside
-        `or` expressions without parentheses. The parenthesized equivalent is
-        `((not x) or y)`.
-
--   Shapes indicate
-    [associativity](https://en.wikipedia.org/wiki/Operator_associativity):
-
-    ```mermaid
-    graph TD
-        non["Non-associative"]
-        left>"Left associative"]
-    ```
 
 ## Conversions and casts
 
