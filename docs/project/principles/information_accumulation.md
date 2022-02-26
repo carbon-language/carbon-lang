@@ -69,18 +69,6 @@ Disallowing programs from changing meaning in the context of more information
 ensures that the program is interpreted consistently or is rejected. This is
 especially important to the coherence of generics and templates.
 
-This principle serves several goals:
-
--   [Language tools](/docs/project/goals.md#language-tools-and-ecosystem) should
-    be easier to write and maintain with information accumulating linearly in
-    the source file.
--   [Language evolution](/docs/project/goals.md#software-and-language-evolution)
-    options for revisiting this choice are kept open by ensuring that allowing
-    more information to flow backwards is a non-breaking change.
--   [Understandability of code](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
-    is improved by requiring source files to introduce information before it is
-    used.
-
 ## Applications of this principle
 
 -   As in C++, and unlike in Rust and Swift, name lookup only finds names
