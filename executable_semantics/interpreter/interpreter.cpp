@@ -155,8 +155,7 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
-      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc,
-                        todo_);
+      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
@@ -374,7 +373,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplValue:
+    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -506,8 +505,8 @@ void Interpreter::StepExp() {
         if (access.impl().has_value()) {
           auto witness_addr =
               todo_.ValueOfName(*access.impl(), access.source_loc());
-          witness = heap_.Read(llvm::dyn_cast<LValue>(witness_addr)->address(),
-                               access.source_loc(), todo_);
+          witness = heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                               access.source_loc());
         }
         FieldPath::Component field(access.field(), witness);
         auto member = act.results()[0]->GetField(arena_, FieldPath(field),
@@ -522,7 +521,7 @@ void Interpreter::StepExp() {
       Nonnull<const Value*> value =
           todo_.ValueOfName(ident.named_entity(), ident.source_loc());
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
-        value = heap_.Read(lvalue->address(), exp.source_loc(), todo_);
+        value = heap_.Read(lvalue->address(), exp.source_loc());
       }
       return todo_.FinishAction(value);
     }
@@ -588,8 +587,7 @@ void Interpreter::StepExp() {
               auto impl_value = todo_.ValueOfName(impl_name, exp.source_loc());
               if (impl_value->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*impl_value);
-                impl_value =
-                    heap_.Read(lval.address(), exp.source_loc(), todo_);
+                impl_value = heap_.Read(lval.address(), exp.source_loc());
               }
               function_scope.Initialize(named_ent, impl_value);
             }

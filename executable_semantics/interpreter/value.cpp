@@ -35,9 +35,10 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   if (field.impl().has_value()) {
     Nonnull<const Value*> witness = *field.impl();
     switch (witness->kind()) {
-      case Value::Kind::ImplValue: {
-        const ImplValue& impl_type = cast<ImplValue>(*witness);
-        if (auto mem_decl = FindMember(f, impl_type.declaration().members());
+      case Value::Kind::Witness: {
+        const Witness& impl_type = cast<Witness>(*witness);
+        if (std::optional<Nonnull<const Declaration*>> mem_decl =
+                FindMember(f, impl_type.declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           return arena->New<BoundMethodValue>(&fun_decl, v);
@@ -47,7 +48,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         }
       }
       default:
-        FATAL() << "expected ImplValue, not " << *witness;
+        FATAL() << "expected Witness, not " << *witness;
     }
   }
   switch (v->kind()) {
@@ -292,8 +293,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "interface " << iface_type.declaration().name();
       break;
     }
-    case Value::Kind::ImplValue: {
-      const auto& impl_type = cast<ImplValue>(*this);
+    case Value::Kind::Witness: {
+      const auto& impl_type = cast<Witness>(*this);
       out << "impl " << *impl_type.declaration().impl_type() << " as "
           << impl_type.declaration().interface();
       break;
@@ -456,8 +457,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
               << *t2;
-    case Value::Kind::ImplValue:
-      FATAL() << "TypeEqual: unexpected ImplValue";
+    case Value::Kind::Witness:
+      FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
       FATAL() << "TypeEqual: unexpected AutoType";
@@ -533,7 +534,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplValue:
+    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -603,8 +604,9 @@ auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
-  for (auto member : members) {
-    if (auto mem_name = GetName(*member); mem_name.has_value()) {
+  for (Nonnull<const Declaration*> member : members) {
+    if (std::optional<std::string> mem_name = GetName(*member);
+        mem_name.has_value()) {
       if (*mem_name == name)
         return member;
     }

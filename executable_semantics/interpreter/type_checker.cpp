@@ -83,7 +83,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::ImplValue:
+    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -306,7 +306,7 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       ExpectType(source_loc, "argument deduction", param, arg);
       return;
     // The rest of these cases should never happen.
-    case Value::Kind::ImplValue:
+    case Value::Kind::Witness:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -377,7 +377,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfChoiceType:
       return type;
     // The rest of these cases should never happen.
-    case Value::Kind::ImplValue:
+    case Value::Kind::Witness:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -1258,13 +1258,16 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
   // Check that the interface is satisfied by the impl members
   for (Nonnull<Declaration*> m : iface_decl.members()) {
-    if (auto mem_name = GetName(*m); mem_name.has_value()) {
-      if (auto mem = FindMember(*mem_name, impl_decl->members());
+    if (std::optional<std::string> mem_name = GetName(*m);
+        mem_name.has_value()) {
+      if (std::optional<Nonnull<const Declaration*>> mem =
+              FindMember(*mem_name, impl_decl->members());
           mem.has_value()) {
         std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
             self_map;
         self_map[iface_decl.self()] = impl_type_value;
-        auto iface_mem_type = Substitute(self_map, &m->static_type());
+        Nonnull<const Value*> iface_mem_type =
+            Substitute(self_map, &m->static_type());
         ExpectType((*mem)->source_loc(), "member of implementation",
                    iface_mem_type, &(*mem)->static_type());
       } else {
@@ -1273,7 +1276,7 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       }
     }
   }
-  Nonnull<ImplValue*> impl_type = arena_->New<ImplValue>(impl_decl);
+  Nonnull<Witness*> impl_type = arena_->New<Witness>(impl_decl);
   impl_decl->set_constant_value(impl_type);
 }
 

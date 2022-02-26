@@ -16,8 +16,6 @@
 
 namespace Carbon {
 
-class ActionStack;
-
 // A Heap represents the abstract machine's dynamically allocated memory.
 class Heap : public HeapAllocationInterface {
  public:
@@ -29,8 +27,8 @@ class Heap : public HeapAllocationInterface {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(const Address& a, SourceLocation source_loc,
-            const ActionStack& todo) const -> Nonnull<const Value*>;
+  auto Read(const Address& a, SourceLocation source_loc) const
+      -> Nonnull<const Value*>;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.

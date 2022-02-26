@@ -44,7 +44,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
-    ImplValue,
+    Witness,
     IntType,
     BoolType,
     TypeType,
@@ -508,13 +508,13 @@ class InterfaceType : public Value {
 };
 
 // The witness table for an impl.
-class ImplValue : public Value {
+class Witness : public Value {
  public:
-  ImplValue(Nonnull<const ImplDeclaration*> declaration)
-      : Value(Kind::ImplValue), declaration_(declaration) {}
+  Witness(Nonnull<const ImplDeclaration*> declaration)
+      : Value(Kind::Witness), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ImplValue;
+    return value->kind() == Kind::Witness;
   }
 
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }
