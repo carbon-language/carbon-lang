@@ -42,13 +42,6 @@ class LexedStringLiteral {
         multi_line_(multi_line),
         is_terminated_(is_terminated) {}
 
-  static auto UnterminatedStringLiteral(llvm::StringRef text, int prefix_len,
-                                        int hash_level, bool multi_line)
-      -> LexedStringLiteral {
-    return LexedStringLiteral(text, text.drop_front(prefix_len), hash_level,
-                              multi_line, /*is_terminated=*/false);
-  }
-
   // The complete text of the string literal.
   llvm::StringRef text_;
   // The content of the literal. For a multi-line literal, this begins

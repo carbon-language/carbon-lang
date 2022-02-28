@@ -154,16 +154,19 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           // should stop here.
           if (cursor >= source_text_size ||
               (!multi_line && source_text[cursor] == '\n')) {
-            return UnterminatedStringLiteral(source_text.take_front(cursor),
-                                             prefix_len, hash_level,
-                                             multi_line);
+            llvm::StringRef text = source_text.take_front(cursor);
+            return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                      hash_level, multi_line,
+                                      /*is_terminated=*/false);
           }
         }
         break;
       case '\n':
         if (!multi_line) {
-          return UnterminatedStringLiteral(source_text.take_front(cursor),
-                                           prefix_len, hash_level, multi_line);
+          llvm::StringRef text = source_text.take_front(cursor);
+          return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                    hash_level, multi_line,
+                                    /*is_terminated=*/false);
         }
         break;
       case '\"': {
@@ -180,9 +183,10 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
       }
     }
   }
-  // All remaining text was invalid.
-  return UnterminatedStringLiteral(source_text, prefix_len, hash_level,
-                                   multi_line);
+  // No terminator was found.
+  return LexedStringLiteral(source_text, source_text.drop_front(prefix_len),
+                            hash_level, multi_line,
+                            /*is_terminated=*/false);
 }
 
 // Given a string that contains at least one newline, find the indent (the

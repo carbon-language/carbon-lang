@@ -948,7 +948,7 @@ TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(AllOf(
-                  DiagnosticAt(1, 1),
+                  DiagnosticAt(1, 3),
                   DiagnosticMessage(HasSubstr("Whitespace is required")))));
   Lex("//no space after comment", consumer);
 }
@@ -958,9 +958,19 @@ TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   EXPECT_CALL(
       consumer,
       HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 12),
+          DiagnosticAt(1, 8),
           DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
-  Lex(R"("hello\bworld\xab")", consumer);
+  Lex(R"("hello\bworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticBadHex) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 9),
+          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  Lex(R"("hello\xabworld")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
@@ -968,7 +978,7 @@ TEST_F(LexerTest, DiagnosticInvalidDigit) {
   EXPECT_CALL(
       consumer,
       HandleDiagnostic(AllOf(
-          DiagnosticAt(6, 10),
+          DiagnosticAt(1, 6),
           DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
   Lex("0x123abc", consumer);
 }
@@ -977,7 +987,7 @@ TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(
-                  AllOf(DiagnosticAt(7, 5),
+                  AllOf(DiagnosticAt(1, 1),
                         DiagnosticMessage(HasSubstr("missing a terminator")))));
   Lex(R"(#" ")", consumer);
 }
@@ -986,7 +996,7 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(AllOf(
-                  DiagnosticAt(7, 5),
+                  DiagnosticAt(1, 1),
                   DiagnosticMessage(HasSubstr("unrecognized character")))));
   Lex("\b", consumer);
 }
