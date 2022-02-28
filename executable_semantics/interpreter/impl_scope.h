@@ -28,6 +28,27 @@ struct Impl {
 // the `impl` for that type and interface.
 // A scope may have parent scopes, whose names will also be visible in
 // the child scope.
+//
+// There is typically one instance of this class per scope because
+// the impls that are visible for a given type and interface can
+// vary from scope to scope. For example, consider the `bar` and
+// `baz` methods in the following class C and nested class D.
+//
+//     class C(U:! Type, T:! Type)  {
+//       class D(V:! Type where U is Fooable(T)) {
+//         fn bar[me: Self](x: U, y : T) -> T{
+//           return x.foo(y)
+//         }
+//       }
+//       fn baz[me: Self](x: U, y : T) -> T {
+//         return x.foo(y);
+//       }
+//     }
+//
+//  The call to `x.foo` in `bar` is valid because the `U is Fooable(T)`
+//  impl is visible in the body of `bar`. In contrast, the call to
+//  `x.foo` in `baz` is not valid because there is no visible impl for
+//  `U` and `Fooable` in that scope.
 class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
