@@ -985,9 +985,9 @@ TEST_F(LexerTest, DiagnosticMissingTerminator) {
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
-              HandleDiagnostic(
-                  AllOf(DiagnosticAt(7, 5),
-                        DiagnosticMessage(HasSubstr("unrecognized character")))));
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(7, 5),
+                  DiagnosticMessage(HasSubstr("unrecognized character")))));
   Lex("\b", consumer);
 }
 
