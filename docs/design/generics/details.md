@@ -4289,16 +4289,15 @@ defined. This is needed to allow cyclic references, for example when declaring
 the edges and nodes of a graph. It is also a tool that may be used to make code
 more readable.
 
-The [interface](#interfaces) and
-[implementation](#implementing-interfaces) sections describe the syntax for
-their _definition_, which consists of a declaration followed by a body contained
-in curly braces `{` ... `}`. A _forward declaration_ is a declaration followed
-by a semicolon `;`. A forward declaration is a promise that the entity being
-declared will be defined later. Between the first declaration of an entity,
-which may be in a forward declaration or the first part of a definition, and the
-end of the definition the interface or implementation is called _incomplete_.
-There are additional restrictions on how the name of an incomplete entity may be
-used.
+The [interface](#interfaces) and [implementation](#implementing-interfaces)
+sections describe the syntax for their _definition_, which consists of a
+declaration followed by a body contained in curly braces `{` ... `}`. A _forward
+declaration_ is a declaration followed by a semicolon `;`. A forward declaration
+is a promise that the entity being declared will be defined later. Between the
+first declaration of an entity, which may be in a forward declaration or the
+first part of a definition, and the end of the definition the interface or
+implementation is called _incomplete_. There are additional restrictions on how
+the name of an incomplete entity may be used.
 
 ### Declaring interfaces
 
@@ -4795,4 +4794,3 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
-
