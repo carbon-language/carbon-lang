@@ -790,13 +790,21 @@ TEST_F(LexerTest, StringLiterals) {
 
 TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
-      "")",  R"("\)",   R"("\")", R"("\\)", R"("\\\")", R"(""")",
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
+      R"(""")",
       R"("""
-      )",  R"("""\)",
+      )",
+      R"("""\)",
       R"(#"""
       """)",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
@@ -923,45 +931,64 @@ TEST_F(LexerTest, TypeLiterals) {
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
-TEST_F(LexerTest, Diagnostics) {
+TEST_F(LexerTest, DiagnosticTrailingComment) {
   llvm::StringLiteral testcase = R"(
     // Hello!
     var String x; // trailing comment
-    //no space after comment
-    "hello\bworld\xab"
-    0x123abc
-    #" "
   )";
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
                             DiagnosticAt(3, 19),
                             DiagnosticMessage(HasSubstr("Trailing comment")))));
+  Lex(testcase, consumer);
+}
+
+TEST_F(LexerTest, DiagnosticWhitespace) {
+  Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(AllOf(
-                  DiagnosticAt(4, 7),
+                  DiagnosticAt(1, 1),
                   DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  Lex("//no space after comment", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
+  Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
       HandleDiagnostic(AllOf(
           DiagnosticAt(5, 12),
           DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 20),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  Lex(R"("hello\bworld\xab")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticInvalidDigit) {
+  Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
       HandleDiagnostic(AllOf(
           DiagnosticAt(6, 10),
           DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+  Lex("0x123abc", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(
                   AllOf(DiagnosticAt(7, 5),
                         DiagnosticMessage(HasSubstr("missing a terminator")))));
+  Lex(R"(#" ")", consumer);
+}
 
-  Lex(testcase, consumer);
+TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(
+                  AllOf(DiagnosticAt(7, 5),
+                        DiagnosticMessage(HasSubstr("unrecognized character")))));
+  Lex("\b", consumer);
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
