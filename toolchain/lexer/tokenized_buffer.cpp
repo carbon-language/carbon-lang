@@ -315,7 +315,7 @@ class TokenizedBuffer::Lexer {
       return buffer_.AddToken({.kind = TokenKind::Error(),
                                .token_line = string_line,
                                .column = string_column,
-                               .literal_index = literal_size});
+                               .error_length = literal_size});
     }
   }
 
