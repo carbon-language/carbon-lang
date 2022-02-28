@@ -754,7 +754,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e) {
 
 void TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ValueCategory surrounding_value_category) {
+    ValueCategory enclosing_value_category) {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -771,8 +771,7 @@ void TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      TypeCheckPattern(&binding.type(), std::nullopt,
-                       surrounding_value_category);
+      TypeCheckPattern(&binding.type(), std::nullopt, enclosing_value_category);
       Nonnull<const Value*> type =
           InterpPattern(&binding.type(), arena_, trace_);
       if (expected) {
@@ -793,7 +792,7 @@ void TypeChecker::TypeCheckPattern(
       SetValue(&binding, InterpPattern(&binding, arena_, trace_));
 
       if (!binding.has_value_category()) {
-        binding.set_value_category(surrounding_value_category);
+        binding.set_value_category(enclosing_value_category);
       }
       return;
     }
@@ -814,8 +813,7 @@ void TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
-        TypeCheckPattern(field, expected_field_type,
-                         surrounding_value_category);
+        TypeCheckPattern(field, expected_field_type, enclosing_value_category);
         field_types.push_back(&field->static_type());
       }
       SetStaticType(&tuple, arena_->New<TupleValue>(std::move(field_types)));
@@ -846,7 +844,7 @@ void TypeChecker::TypeCheckPattern(
             << "' is not an alternative of " << choice_type;
       }
       TypeCheckPattern(&alternative.arguments(), *parameter_types,
-                       surrounding_value_category);
+                       enclosing_value_category);
       SetStaticType(&alternative, &choice_type);
       SetValue(&alternative, InterpPattern(&alternative, arena_, trace_));
       return;
