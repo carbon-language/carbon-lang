@@ -4289,8 +4289,8 @@ defined. This is needed to allow cyclic references, for example when declaring
 the edges and nodes of a graph. It is also a tool that may be used to make code
 more readable.
 
-The syntax described in the [interface](#interfaces) and
-[implementation](#implementing-interfaces) sections described the syntax for
+The [interface](#interfaces) and
+[implementation](#implementing-interfaces) sections describe the syntax for
 their _definition_, which consists of a declaration followed by a body contained
 in curly braces `{` ... `}`. A _forward declaration_ is a declaration followed
 by a semicolon `;`. A forward declaration is a promise that the entity being
@@ -4442,7 +4442,7 @@ impl MyClass as Interface6 { }
 In this example, `NodeInterface` has an `EdgeType` associated type that is
 constrained to implement `EdgeInterface`, and `EdgeInterface` has a `NodeType`
 associated type that is constrained to implement `NodeInterface`. Furthermore,
-The `NodeType` of an `EdgeType` is the original type, and the other way around.
+the `NodeType` of an `EdgeType` is the original type, and the other way around.
 
 ```
 // Forward declaration of interface
