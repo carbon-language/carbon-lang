@@ -24,14 +24,14 @@ struct Impl {
   EntityView impl;
 };
 
-// Maps a type and interface to the location of the witness table for
-// the `impl` for that type and interface.
-// A scope may have parent scopes, whose names will also be visible in
-// the child scope.
+// The `ImplScope` class is responsible for mapping a type and
+// interface to the location of the witness table for the `impl` for
+// that type and interface.  A scope may have parent scopes, whose
+// impls will also be visible in the child scope.
 //
-// There is typically one instance of this class per scope because
-// the impls that are visible for a given type and interface can
-// vary from scope to scope. For example, consider the `bar` and
+// There is typically one instance of `ImplScope` class per scope
+// because the impls that are visible for a given type and interface
+// can vary from scope to scope. For example, consider the `bar` and
 // `baz` methods in the following class C and nested class D.
 //
 //     class C(U:! Type, T:! Type)  {
