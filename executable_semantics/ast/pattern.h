@@ -124,24 +124,27 @@ class BindingPattern : public Pattern {
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
-  // Indicates whether the bound variable is a Let or Var variable.
-  // value_category_ can be null before typechecking, but mustn't be null after
-  // that because the typechecker must assign either Let or Var based on
-  // surrounding context. It will be set to Let when the name is AnonymousName.
+  // Gets the value category of this pattern. Can only be called after
+  // typechecking.
   auto value_category() const -> ValueCategory {
     return value_category_.value();
   }
 
-  // Checks if the typechecker has set a value category for this binding.
+  // Returns whether the value category has been set. Should only be called
+  // during typechecking: before typechecking it's false if "var" or "let"
+  // hasn't been explicitly specified for this pattern, and after typechecking
+  // it's guaranteed to be true.
   auto has_value_category() const -> bool {
     return value_category_.has_value();
   }
 
-  // Sets the value category of the variable being bound.
+  // Sets the value category of the variable being bound. Can only be called
+  // once during typechecking
   void set_value_category(ValueCategory vc) {
     CHECK(!value_category_.has_value());
     value_category_ = vc;
   }
+
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
