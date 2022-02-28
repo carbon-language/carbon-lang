@@ -132,12 +132,12 @@ class BindingPattern : public Pattern {
     return value_category_.value();
   }
 
-  // Checks if the typechecker has set a value category for this binding
+  // Checks if the typechecker has set a value category for this binding.
   auto has_value_category() const -> bool {
     return value_category_.has_value();
   }
 
-  // sets the value category of the variable being bound
+  // Sets the value category of the variable being bound.
   void set_value_category(ValueCategory vc) {
     CHECK(!value_category_.has_value());
     value_category_ = vc;
