@@ -16,11 +16,10 @@
 
 #include "../PassDetail.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
-#include "mlir/Dialect/Affine/Utils.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/SCF.h"
-#include "mlir/Dialect/Vector/VectorTransforms.h"
+#include "mlir/Dialect/Vector/Transforms/VectorTransforms.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/ImplicitLocOpBuilder.h"
 #include "mlir/Pass/Pass.h"
@@ -268,15 +267,22 @@ struct BufferAllocs {
   Value maskBuffer;
 };
 
+// TODO: Parallelism and threadlocal considerations with a ParallelScope trait.
+static Operation *getAutomaticAllocationScope(Operation *op) {
+  Operation *scope =
+      op->getParentWithTrait<OpTrait::AutomaticAllocationScope>();
+  assert(scope && "Expected op to be inside automatic allocation scope");
+  return scope;
+}
+
 /// Allocate temporary buffers for data (vector) and mask (if present).
-/// TODO: Parallelism and threadlocal considerations.
 template <typename OpTy>
 static BufferAllocs allocBuffers(OpBuilder &b, OpTy xferOp) {
   Location loc = xferOp.getLoc();
   OpBuilder::InsertionGuard guard(b);
-  Operation *scope =
-      xferOp->template getParentWithTrait<OpTrait::AutomaticAllocationScope>();
-  assert(scope && "Expected op to be inside automatic allocation scope");
+  Operation *scope = getAutomaticAllocationScope(xferOp);
+  assert(scope->getNumRegions() == 1 &&
+         "AutomaticAllocationScope with >1 regions");
   b.setInsertionPointToStart(&scope->getRegion(0).front());
 
   BufferAllocs result;
@@ -419,7 +425,7 @@ struct Strategy<TransferReadOp> {
     Location loc = xferOp.getLoc();
     auto bufferType = buffer.getType().dyn_cast<ShapedType>();
     auto vecType = bufferType.getElementType().dyn_cast<VectorType>();
-    auto vec = b.create<SplatOp>(loc, vecType, xferOp.padding());
+    auto vec = b.create<vector::SplatOp>(loc, vecType, xferOp.padding());
     b.create<memref::StoreOp>(loc, vec, buffer, storeIndices);
 
     return Value();
@@ -849,8 +855,8 @@ struct UnrollTransferReadConversion
     if (auto insertOp = getInsertOp(xferOp))
       return insertOp.dest();
     Location loc = xferOp.getLoc();
-    return rewriter.create<SplatOp>(loc, xferOp.getVectorType(),
-                                    xferOp.padding());
+    return rewriter.create<vector::SplatOp>(loc, xferOp.getVectorType(),
+                                            xferOp.padding());
   }
 
   /// If the result of the TransferReadOp has exactly one user, which is a
@@ -1137,7 +1143,8 @@ struct Strategy1d<TransferReadOp> {
   static Value initialLoopState(OpBuilder &b, TransferReadOp xferOp) {
     // Inititalize vector with padding value.
     Location loc = xferOp.getLoc();
-    return b.create<SplatOp>(loc, xferOp.getVectorType(), xferOp.padding());
+    return b.create<vector::SplatOp>(loc, xferOp.getVectorType(),
+                                     xferOp.padding());
   }
 };
 
@@ -1284,7 +1291,7 @@ struct ConvertVectorToSCFPass
     this->lowerTensors = options.lowerTensors;
   }
 
-  void runOnFunction() override {
+  void runOnOperation() override {
     VectorTransferToSCFOptions options;
     options.unroll = fullUnroll;
     options.targetRank = targetRank;
@@ -1293,16 +1300,16 @@ struct ConvertVectorToSCFPass
 
     // Lower permutation maps first.
     if (lowerPermutationMaps) {
-      RewritePatternSet lowerTransferPatterns(getFunction().getContext());
+      RewritePatternSet lowerTransferPatterns(getOperation().getContext());
       mlir::vector::populateVectorTransferPermutationMapLoweringPatterns(
           lowerTransferPatterns);
-      (void)applyPatternsAndFoldGreedily(getFunction(),
+      (void)applyPatternsAndFoldGreedily(getOperation(),
                                          std::move(lowerTransferPatterns));
     }
 
-    RewritePatternSet patterns(getFunction().getContext());
+    RewritePatternSet patterns(getOperation().getContext());
     populateVectorToSCFConversionPatterns(patterns, options);
-    (void)applyPatternsAndFoldGreedily(getFunction(), std::move(patterns));
+    (void)applyPatternsAndFoldGreedily(getOperation(), std::move(patterns));
   }
 };
 

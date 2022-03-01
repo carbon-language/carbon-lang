@@ -110,8 +110,8 @@ struct CompileAndExecuteConfig {
 
 } // namespace
 
-static OwningModuleRef parseMLIRInput(StringRef inputFilename,
-                                      MLIRContext *context) {
+static OwningOpRef<ModuleOp> parseMLIRInput(StringRef inputFilename,
+                                            MLIRContext *context) {
   // Set up the input file.
   std::string errorMessage;
   auto file = openInputFile(inputFilename, &errorMessage);
@@ -121,8 +121,8 @@ static OwningModuleRef parseMLIRInput(StringRef inputFilename,
   }
 
   llvm::SourceMgr sourceMgr;
-  sourceMgr.AddNewSourceBuffer(std::move(file), llvm::SMLoc());
-  return OwningModuleRef(parseSourceFile(sourceMgr, context));
+  sourceMgr.AddNewSourceBuffer(std::move(file), SMLoc());
+  return OwningOpRef<ModuleOp>(parseSourceFile(sourceMgr, context));
 }
 
 static inline Error makeStringError(const Twine &message) {

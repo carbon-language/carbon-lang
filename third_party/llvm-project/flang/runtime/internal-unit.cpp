@@ -38,15 +38,11 @@ InternalDescriptorUnit<DIR>::InternalDescriptorUnit(
 }
 
 template <Direction DIR> void InternalDescriptorUnit<DIR>::EndIoStatement() {
-  if constexpr (DIR == Direction::Output) { // blank fill
-    while (char *record{CurrentRecord()}) {
-      if (furthestPositionInRecord <
-          recordLength.value_or(furthestPositionInRecord)) {
-        std::fill_n(record + furthestPositionInRecord,
-            *recordLength - furthestPositionInRecord, ' ');
-      }
-      furthestPositionInRecord = 0;
-      ++currentRecordNumber;
+  if constexpr (DIR == Direction::Output) {
+    // Clear the remainder of the current record if anything was written
+    // to it, or if it is the only record.
+    if (endfileRecordNumber.value_or(-1) == 2 || furthestPositionInRecord > 0) {
+      BlankFillOutputRecord();
     }
   }
 }
@@ -127,18 +123,24 @@ bool InternalDescriptorUnit<DIR>::AdvanceRecord(IoErrorHandler &handler) {
     handler.SignalEnd();
     return false;
   }
-  if constexpr (DIR == Direction::Output) { // blank fill
-    if (furthestPositionInRecord <
-        recordLength.value_or(furthestPositionInRecord)) {
-      char *record{CurrentRecord()};
-      RUNTIME_CHECK(handler, record != nullptr);
-      std::fill_n(record + furthestPositionInRecord,
-          *recordLength - furthestPositionInRecord, ' ');
-    }
+  if constexpr (DIR == Direction::Output) {
+    BlankFillOutputRecord();
   }
   ++currentRecordNumber;
   BeginRecord();
   return true;
+}
+
+template <Direction DIR>
+void InternalDescriptorUnit<DIR>::BlankFillOutputRecord() {
+  if constexpr (DIR == Direction::Output) {
+    if (furthestPositionInRecord <
+        recordLength.value_or(furthestPositionInRecord)) {
+      char *record{CurrentRecord()};
+      std::fill_n(record + furthestPositionInRecord,
+          *recordLength - furthestPositionInRecord, ' ');
+    }
+  }
 }
 
 template <Direction DIR>

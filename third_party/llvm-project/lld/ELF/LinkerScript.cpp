@@ -19,7 +19,7 @@
 #include "SyntheticSections.h"
 #include "Target.h"
 #include "Writer.h"
-#include "lld/Common/Memory.h"
+#include "lld/Common/CommonLinkerContext.h"
 #include "lld/Common/Strings.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -27,15 +27,11 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Parallel.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/TimeProfiler.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <limits>
 #include <string>
 #include <vector>
@@ -64,8 +60,8 @@ static StringRef getOutputSectionName(const InputSectionBase *s) {
     if (InputSectionBase *rel = isec->getRelocatedSection()) {
       OutputSection *out = rel->getOutputSection();
       if (s->type == SHT_RELA)
-        return saver.save(".rela" + out->name);
-      return saver.save(".rel" + out->name);
+        return saver().save(".rela" + out->name);
+      return saver().save(".rel" + out->name);
     }
   }
 
@@ -135,7 +131,7 @@ uint64_t ExprValue::getSectionOffset() const {
 
 OutputSection *LinkerScript::createOutputSection(StringRef name,
                                                  StringRef location) {
-  OutputSection *&secRef = nameToOutputSection[name];
+  OutputSection *&secRef = nameToOutputSection[CachedHashStringRef(name)];
   OutputSection *sec;
   if (secRef && secRef->location.empty()) {
     // There was a forward reference.
@@ -150,7 +146,7 @@ OutputSection *LinkerScript::createOutputSection(StringRef name,
 }
 
 OutputSection *LinkerScript::getOrCreateOutputSection(StringRef name) {
-  OutputSection *&cmdRef = nameToOutputSection[name];
+  OutputSection *&cmdRef = nameToOutputSection[CachedHashStringRef(name)];
   if (!cmdRef)
     cmdRef = make<OutputSection>(name, SHT_PROGBITS, 0);
   return cmdRef;
@@ -310,7 +306,7 @@ void LinkerScript::processInsertCommands() {
   for (const InsertCommand &cmd : insertCommands) {
     for (StringRef name : cmd.names) {
       // If base is empty, it may have been discarded by
-      // adjustSectionsBeforeSorting(). We do not handle such output sections.
+      // adjustOutputSections(). We do not handle such output sections.
       auto from = llvm::find_if(sectionCommands, [&](SectionCommand *subCmd) {
         return isa<OutputSection>(subCmd) &&
                cast<OutputSection>(subCmd)->name == name;
@@ -561,16 +557,8 @@ LinkerScript::computeInputSections(const InputSectionDescription *cmd,
 }
 
 void LinkerScript::discard(InputSectionBase &s) {
-  if (&s == in.shStrTab.get() || &s == mainPart->relrDyn.get())
+  if (&s == in.shStrTab.get())
     error("discarding " + s.name + " section is not allowed");
-
-  // You can discard .hash and .gnu.hash sections by linker scripts. Since
-  // they are synthesized sections, we need to handle them differently than
-  // other regular sections.
-  if (&s == mainPart->gnuHashTab)
-    mainPart->gnuHashTab = nullptr;
-  if (&s == mainPart->hashTab)
-    mainPart->hashTab = nullptr;
 
   s.markDead();
   s.parent = nullptr;
@@ -582,8 +570,9 @@ void LinkerScript::discardSynthetic(OutputSection &outCmd) {
   for (Partition &part : partitions) {
     if (!part.armExidx || !part.armExidx->isLive())
       continue;
-    std::vector<InputSectionBase *> secs(part.armExidx->exidxSections.begin(),
-                                         part.armExidx->exidxSections.end());
+    SmallVector<InputSectionBase *, 0> secs(
+        part.armExidx->exidxSections.begin(),
+        part.armExidx->exidxSections.end());
     for (SectionCommand *cmd : outCmd.commands)
       if (auto *isd = dyn_cast<InputSectionDescription>(cmd))
         for (InputSectionBase *s : computeInputSections(isd, secs))
@@ -653,14 +642,16 @@ void LinkerScript::processSectionCommands() {
 
   // Process OVERWRITE_SECTIONS first so that it can overwrite the main script
   // or orphans.
-  DenseMap<StringRef, OutputSection *> map;
+  DenseMap<CachedHashStringRef, OutputSection *> map;
   size_t i = 0;
   for (OutputSection *osec : overwriteSections)
-    if (process(osec) && !map.try_emplace(osec->name, osec).second)
+    if (process(osec) &&
+        !map.try_emplace(CachedHashStringRef(osec->name), osec).second)
       warn("OVERWRITE_SECTIONS specifies duplicate " + osec->name);
   for (SectionCommand *&base : sectionCommands)
     if (auto *osec = dyn_cast<OutputSection>(base)) {
-      if (OutputSection *overwrite = map.lookup(osec->name)) {
+      if (OutputSection *overwrite =
+              map.lookup(CachedHashStringRef(osec->name))) {
         log(overwrite->location + " overwrites " + osec->name);
         overwrite->sectionIndex = i++;
         base = overwrite;
@@ -1119,7 +1110,7 @@ static void maybePropagatePhdrs(OutputSection &sec,
   }
 }
 
-void LinkerScript::adjustSectionsBeforeSorting() {
+void LinkerScript::adjustOutputSections() {
   // If the output section contains only symbol assignments, create a
   // corresponding output section. The issue is what to do with linker script
   // like ".foo : { symbol = 42; }". One option would be to convert it to
@@ -1153,14 +1144,16 @@ void LinkerScript::adjustSectionsBeforeSorting() {
       sec->alignment =
           std::max<uint32_t>(sec->alignment, sec->alignExpr().getValue());
 
-    // The input section might have been removed (if it was an empty synthetic
-    // section), but we at least know the flags.
-    if (sec->hasInputSections)
+    bool isEmpty = (getFirstInputSection(sec) == nullptr);
+    bool discardable = isEmpty && isDiscardable(*sec);
+    // If sec has at least one input section and not discarded, remember its
+    // flags to be inherited by subsequent output sections. (sec may contain
+    // just one empty synthetic section.)
+    if (sec->hasInputSections && !discardable)
       flags = sec->flags;
 
     // We do not want to keep any special flags for output section
     // in case it is empty.
-    bool isEmpty = (getFirstInputSection(sec) == nullptr);
     if (isEmpty)
       sec->flags = flags & ((sec->nonAlloc ? 0 : (uint64_t)SHF_ALLOC) |
                             SHF_WRITE | SHF_EXECINSTR);
@@ -1177,7 +1170,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
     if (sec->sectionIndex != UINT32_MAX)
       maybePropagatePhdrs(*sec, defPhdrs);
 
-    if (isEmpty && isDiscardable(*sec)) {
+    if (discardable) {
       sec->markDead();
       cmd = nullptr;
     }

@@ -25,6 +25,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/DataBuffer.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
 
@@ -124,8 +125,7 @@ ProcessMachCore::~ProcessMachCore() {
 }
 
 bool ProcessMachCore::GetDynamicLoaderAddress(lldb::addr_t addr) {
-  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER |
-                                                  LIBLLDB_LOG_PROCESS));
+  Log *log(GetLog(LLDBLog::DynamicLoader | LLDBLog::Process));
   llvm::MachO::mach_header header;
   Status error;
   if (DoReadMemory(addr, &header, sizeof(header), error) != sizeof(header))
@@ -252,8 +252,7 @@ static bool load_standalone_binary(UUID uuid, addr_t value,
 
 // Process Control
 Status ProcessMachCore::DoLoadCore() {
-  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER |
-                                                  LIBLLDB_LOG_PROCESS));
+  Log *log(GetLog(LLDBLog::DynamicLoader | LLDBLog::Process));
   Status error;
   if (!m_core_module_sp) {
     error.SetErrorString("invalid core module");
@@ -659,8 +658,8 @@ size_t ProcessMachCore::DoReadMemory(addr_t addr, void *buf, size_t size,
   return bytes_read;
 }
 
-Status ProcessMachCore::GetMemoryRegionInfo(addr_t load_addr,
-                                            MemoryRegionInfo &region_info) {
+Status ProcessMachCore::DoGetMemoryRegionInfo(addr_t load_addr,
+                                              MemoryRegionInfo &region_info) {
   region_info.Clear();
   const VMRangeToPermissions::Entry *permission_entry =
       m_core_range_infos.FindEntryThatContainsOrFollows(load_addr);

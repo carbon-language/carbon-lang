@@ -295,6 +295,8 @@ static cl::opt<bool> OverwriteExistingWeights(
     "overwrite-existing-weights", cl::Hidden, cl::init(false),
     cl::desc("Ignore existing branch weights on IR and always overwrite."));
 
+extern cl::opt<bool> EnableExtTspBlockPlacement;
+
 namespace {
 
 using BlockWeightMap = DenseMap<const BasicBlock *, uint64_t>;
@@ -839,6 +841,13 @@ static void
 updateIDTMetaData(Instruction &Inst,
                   const SmallVectorImpl<InstrProfValueData> &CallTargets,
                   uint64_t Sum) {
+  // Bail out early if MaxNumPromotions is zero.
+  // This prevents allocating an array of zero length below.
+  //
+  // Note `updateIDTMetaData` is called in two places so check
+  // `MaxNumPromotions` inside it.
+  if (MaxNumPromotions == 0)
+    return;
   uint32_t NumVals = 0;
   // OldSum is the existing total count in the value profile data.
   uint64_t OldSum = 0;
@@ -922,6 +931,10 @@ updateIDTMetaData(Instruction &Inst,
 bool SampleProfileLoader::tryPromoteAndInlineCandidate(
     Function &F, InlineCandidate &Candidate, uint64_t SumOrigin, uint64_t &Sum,
     SmallVector<CallBase *, 8> *InlinedCallSite) {
+  // Bail out early if MaxNumPromotions is zero.
+  // This prevents allocating an array of zero length in callees below.
+  if (MaxNumPromotions == 0)
+    return false;
   auto CalleeFunctionName = Candidate.CalleeSamples->getFuncName();
   auto R = SymbolMap.find(CalleeFunctionName);
   if (R == SymbolMap.end() || !R->getValue())
@@ -1226,45 +1239,45 @@ bool SampleProfileLoader::tryInlineCandidate(
 
   InlineFunctionInfo IFI(nullptr, GetAC);
   IFI.UpdateProfile = false;
-  if (InlineFunction(CB, IFI).isSuccess()) {
-    // Merge the attributes based on the inlining.
-    AttributeFuncs::mergeAttributesForInlining(*BB->getParent(),
-                                               *CalledFunction);
+  if (!InlineFunction(CB, IFI).isSuccess())
+    return false;
 
-    // The call to InlineFunction erases I, so we can't pass it here.
-    emitInlinedIntoBasedOnCost(*ORE, DLoc, BB, *CalledFunction,
-                               *BB->getParent(), Cost, true, CSINLINE_DEBUG);
+  // Merge the attributes based on the inlining.
+  AttributeFuncs::mergeAttributesForInlining(*BB->getParent(),
+                                             *CalledFunction);
 
-    // Now populate the list of newly exposed call sites.
-    if (InlinedCallSites) {
-      InlinedCallSites->clear();
-      for (auto &I : IFI.InlinedCallSites)
-        InlinedCallSites->push_back(I);
-    }
+  // The call to InlineFunction erases I, so we can't pass it here.
+  emitInlinedIntoBasedOnCost(*ORE, DLoc, BB, *CalledFunction,
+                             *BB->getParent(), Cost, true, CSINLINE_DEBUG);
 
-    if (ProfileIsCSFlat)
-      ContextTracker->markContextSamplesInlined(Candidate.CalleeSamples);
-    ++NumCSInlined;
-
-    // Prorate inlined probes for a duplicated inlining callsite which probably
-    // has a distribution less than 100%. Samples for an inlinee should be
-    // distributed among the copies of the original callsite based on each
-    // callsite's distribution factor for counts accuracy. Note that an inlined
-    // probe may come with its own distribution factor if it has been duplicated
-    // in the inlinee body. The two factor are multiplied to reflect the
-    // aggregation of duplication.
-    if (Candidate.CallsiteDistribution < 1) {
-      for (auto &I : IFI.InlinedCallSites) {
-        if (Optional<PseudoProbe> Probe = extractProbe(*I))
-          setProbeDistributionFactor(*I, Probe->Factor *
-                                             Candidate.CallsiteDistribution);
-      }
-      NumDuplicatedInlinesite++;
-    }
-
-    return true;
+  // Now populate the list of newly exposed call sites.
+  if (InlinedCallSites) {
+    InlinedCallSites->clear();
+    for (auto &I : IFI.InlinedCallSites)
+      InlinedCallSites->push_back(I);
   }
-  return false;
+
+  if (ProfileIsCSFlat)
+    ContextTracker->markContextSamplesInlined(Candidate.CalleeSamples);
+  ++NumCSInlined;
+
+  // Prorate inlined probes for a duplicated inlining callsite which probably
+  // has a distribution less than 100%. Samples for an inlinee should be
+  // distributed among the copies of the original callsite based on each
+  // callsite's distribution factor for counts accuracy. Note that an inlined
+  // probe may come with its own distribution factor if it has been duplicated
+  // in the inlinee body. The two factor are multiplied to reflect the
+  // aggregation of duplication.
+  if (Candidate.CallsiteDistribution < 1) {
+    for (auto &I : IFI.InlinedCallSites) {
+      if (Optional<PseudoProbe> Probe = extractProbe(*I))
+        setProbeDistributionFactor(*I, Probe->Factor *
+                                   Candidate.CallsiteDistribution);
+    }
+    NumDuplicatedInlinesite++;
+  }
+
+  return true;
 }
 
 bool SampleProfileLoader::getInlineCandidate(InlineCandidate *NewCandidate,
@@ -1539,6 +1552,10 @@ void SampleProfileLoader::promoteMergeNotInlinedContextSamples(
     if (FS->getTotalSamples() == 0 && FS->getEntrySamples() == 0) {
       continue;
     }
+
+    // Do not merge a context that is already duplicated into the base profile.
+    if (FS->getContext().hasAttribute(sampleprof::ContextDuplicatedIntoBase))
+      continue;
 
     if (ProfileMergeInlinee) {
       // A function call can be replicated by optimizations like callsite
@@ -1999,6 +2016,10 @@ bool SampleProfileLoader::doInitialization(Module &M,
     // Enable Profi by default for CSSPGO.
     if (!SampleProfileUseProfi.getNumOccurrences())
       SampleProfileUseProfi = true;
+
+    // Enable EXT-TSP block layout for CSSPGO.
+    if (!EnableExtTspBlockPlacement.getNumOccurrences())
+      EnableExtTspBlockPlacement = true;
 
     if (FunctionSamples::ProfileIsCSFlat) {
       // Tracker for profiles under different context

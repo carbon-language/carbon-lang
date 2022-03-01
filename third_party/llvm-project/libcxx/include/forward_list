@@ -179,9 +179,11 @@ template <class T, class Allocator, class Predicate>
 
 */
 
+#include <__algorithm/comp.h>
+#include <__algorithm/lexicographical_compare.h>
+#include <__algorithm/min.h>
 #include <__config>
 #include <__utility/forward.h>
-#include <algorithm>
 #include <initializer_list>
 #include <iterator>
 #include <limits>
@@ -190,7 +192,7 @@ template <class T, class Allocator, class Predicate>
 #include <version>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_PUSH_MACROS

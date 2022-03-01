@@ -14,6 +14,7 @@
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVM.h"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/Async/IR/Async.h"
+#include "mlir/Dialect/LLVMIR/FunctionCallUtils.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Dialect/StandardOps/Transforms/FuncConversions.h"
@@ -58,6 +59,8 @@ static constexpr const char *kAwaitValueAndExecute =
     "mlirAsyncRuntimeAwaitValueAndExecute";
 static constexpr const char *kAwaitAllAndExecute =
     "mlirAsyncRuntimeAwaitAllInGroupAndExecute";
+static constexpr const char *kGetNumWorkerThreads =
+    "mlirAsyncRuntimGetNumWorkerThreads";
 
 namespace {
 /// Async Runtime API function types.
@@ -180,6 +183,10 @@ struct AsyncAPI {
     return FunctionType::get(ctx, {GroupType::get(ctx), hdl, resume}, {});
   }
 
+  static FunctionType getNumWorkerThreads(MLIRContext *ctx) {
+    return FunctionType::get(ctx, {}, {IndexType::get(ctx)});
+  }
+
   // Auxiliary coroutine resume intrinsic wrapper.
   static Type resumeFunctionType(MLIRContext *ctx) {
     auto voidTy = LLVM::LLVMVoidType::get(ctx);
@@ -225,37 +232,7 @@ static void addAsyncRuntimeApiDeclarations(ModuleOp module) {
               AsyncAPI::awaitValueAndExecuteFunctionType(ctx));
   addFuncDecl(kAwaitAllAndExecute,
               AsyncAPI::awaitAllAndExecuteFunctionType(ctx));
-}
-
-//===----------------------------------------------------------------------===//
-// Add malloc/free declarations to the module.
-//===----------------------------------------------------------------------===//
-
-static constexpr const char *kMalloc = "malloc";
-static constexpr const char *kFree = "free";
-
-static void addLLVMFuncDecl(ModuleOp module, ImplicitLocOpBuilder &builder,
-                            StringRef name, Type ret, ArrayRef<Type> params) {
-  if (module.lookupSymbol(name))
-    return;
-  Type type = LLVM::LLVMFunctionType::get(ret, params);
-  builder.create<LLVM::LLVMFuncOp>(name, type);
-}
-
-/// Adds malloc/free declarations to the module.
-static void addCRuntimeDeclarations(ModuleOp module) {
-  using namespace mlir::LLVM;
-
-  MLIRContext *ctx = module.getContext();
-  auto builder =
-      ImplicitLocOpBuilder::atBlockEnd(module.getLoc(), module.getBody());
-
-  auto voidTy = LLVMVoidType::get(ctx);
-  auto i64 = IntegerType::get(ctx, 64);
-  auto i8Ptr = LLVMPointerType::get(IntegerType::get(ctx, 8));
-
-  addLLVMFuncDecl(module, builder, kMalloc, i8Ptr, {i64});
-  addLLVMFuncDecl(module, builder, kFree, voidTy, {i8Ptr});
+  addFuncDecl(kGetNumWorkerThreads, AsyncAPI::getNumWorkerThreads(ctx));
 }
 
 //===----------------------------------------------------------------------===//
@@ -363,13 +340,33 @@ public:
     auto loc = op->getLoc();
 
     // Get coroutine frame size: @llvm.coro.size.i64.
-    auto coroSize =
+    Value coroSize =
         rewriter.create<LLVM::CoroSizeOp>(loc, rewriter.getI64Type());
+    // Get coroutine frame alignment: @llvm.coro.align.i64.
+    Value coroAlign =
+        rewriter.create<LLVM::CoroAlignOp>(loc, rewriter.getI64Type());
+
+    // Round up the size to be multiple of the alignment. Since aligned_alloc
+    // requires the size parameter be an integral multiple of the alignment
+    // parameter.
+    auto makeConstant = [&](uint64_t c) {
+      return rewriter.create<LLVM::ConstantOp>(
+          op->getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(c));
+    };
+    coroSize = rewriter.create<LLVM::AddOp>(op->getLoc(), coroSize, coroAlign);
+    coroSize =
+        rewriter.create<LLVM::SubOp>(op->getLoc(), coroSize, makeConstant(1));
+    Value negCoroAlign =
+        rewriter.create<LLVM::SubOp>(op->getLoc(), makeConstant(0), coroAlign);
+    coroSize =
+        rewriter.create<LLVM::AndOp>(op->getLoc(), coroSize, negCoroAlign);
 
     // Allocate memory for the coroutine frame.
+    auto allocFuncOp = LLVM::lookupOrCreateAlignedAllocFn(
+        op->getParentOfType<ModuleOp>(), rewriter.getI64Type());
     auto coroAlloc = rewriter.create<LLVM::CallOp>(
-        loc, i8Ptr, SymbolRefAttr::get(rewriter.getContext(), kMalloc),
-        ValueRange(coroSize.getResult()));
+        loc, i8Ptr, SymbolRefAttr::get(allocFuncOp),
+        ValueRange{coroAlign, coroSize});
 
     // Begin a coroutine: @llvm.coro.begin.
     auto coroId = CoroBeginOpAdaptor(adaptor.getOperands()).id();
@@ -401,9 +398,11 @@ public:
         rewriter.create<LLVM::CoroFreeOp>(loc, i8Ptr, adaptor.getOperands());
 
     // Free the memory.
-    rewriter.replaceOpWithNewOp<LLVM::CallOp>(
-        op, TypeRange(), SymbolRefAttr::get(rewriter.getContext(), kFree),
-        ValueRange(coroMem.getResult()));
+    auto freeFuncOp =
+        LLVM::lookupOrCreateFreeFn(op->getParentOfType<ModuleOp>());
+    rewriter.replaceOpWithNewOp<LLVM::CallOp>(op, TypeRange(),
+                                              SymbolRefAttr::get(freeFuncOp),
+                                              ValueRange(coroMem.getResult()));
 
     return success();
   }
@@ -888,6 +887,30 @@ public:
 } // namespace
 
 //===----------------------------------------------------------------------===//
+// Convert async.runtime.num_worker_threads to the corresponding runtime API
+// call.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class RuntimeNumWorkerThreadsOpLowering
+    : public OpConversionPattern<RuntimeNumWorkerThreadsOp> {
+public:
+  using OpConversionPattern::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(RuntimeNumWorkerThreadsOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+
+    // Replace with a runtime API function call.
+    rewriter.replaceOpWithNewOp<CallOp>(op, kGetNumWorkerThreads,
+                                        rewriter.getIndexType());
+
+    return success();
+  }
+};
+} // namespace
+
+//===----------------------------------------------------------------------===//
 // Async reference counting ops lowering (`async.runtime.add_ref` and
 // `async.runtime.drop_ref` to the corresponding API calls).
 //===----------------------------------------------------------------------===//
@@ -968,7 +991,6 @@ void ConvertAsyncToLLVMPass::runOnOperation() {
   // We delay adding the resume function until it's needed because it currently
   // fails to compile unless '-O0' is specified.
   addAsyncRuntimeApiDeclarations(module);
-  addCRuntimeDeclarations(module);
 
   // Lower async.runtime and async.coro operations to Async Runtime API and
   // LLVM coroutine intrinsics.
@@ -983,7 +1005,7 @@ void ConvertAsyncToLLVMPass::runOnOperation() {
   llvmConverter.addConversion(AsyncRuntimeTypeConverter::convertAsyncTypes);
 
   // Convert async types in function signatures and function calls.
-  populateFuncOpTypeConversionPattern(patterns, converter);
+  populateFunctionOpInterfaceTypeConversionPattern<FuncOp>(patterns, converter);
   populateCallOpTypeConversionPattern(patterns, converter);
 
   // Convert return operations inside async.execute regions.
@@ -993,8 +1015,9 @@ void ConvertAsyncToLLVMPass::runOnOperation() {
   patterns.add<RuntimeSetAvailableOpLowering, RuntimeSetErrorOpLowering,
                RuntimeIsErrorOpLowering, RuntimeAwaitOpLowering,
                RuntimeAwaitAndResumeOpLowering, RuntimeResumeOpLowering,
-               RuntimeAddToGroupOpLowering, RuntimeAddRefOpLowering,
-               RuntimeDropRefOpLowering>(converter, ctx);
+               RuntimeAddToGroupOpLowering, RuntimeNumWorkerThreadsOpLowering,
+               RuntimeAddRefOpLowering, RuntimeDropRefOpLowering>(converter,
+                                                                  ctx);
 
   // Lower async.runtime operations that rely on LLVM type converter to convert
   // from async value payload type to the LLVM type.

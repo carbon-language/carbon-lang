@@ -17,6 +17,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/Analysis/FlowSensitive/StorageLocation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <utility>
 
@@ -26,7 +28,19 @@ namespace dataflow {
 /// Base class for all values computed by abstract interpretation.
 class Value {
 public:
-  enum class Kind { Integer, Reference, Pointer, Struct };
+  enum class Kind {
+    Integer,
+    Reference,
+    Pointer,
+    Struct,
+
+    // Synthetic boolean values are either atomic values or composites that
+    // represent conjunctions, disjunctions, and negations.
+    AtomicBool,
+    Conjunction,
+    Disjunction,
+    Negation
+  };
 
   explicit Value(Kind ValKind) : ValKind(ValKind) {}
 
@@ -36,6 +50,93 @@ public:
 
 private:
   Kind ValKind;
+};
+
+/// Models a boolean.
+class BoolValue : public Value {
+public:
+  explicit BoolValue(Kind ValueKind) : Value(ValueKind) {}
+
+  static bool classof(const Value *Val) {
+    return Val->getKind() == Kind::AtomicBool ||
+           Val->getKind() == Kind::Conjunction ||
+           Val->getKind() == Kind::Disjunction ||
+           Val->getKind() == Kind::Negation;
+  }
+};
+
+/// Models an atomic boolean.
+class AtomicBoolValue : public BoolValue {
+public:
+  explicit AtomicBoolValue() : BoolValue(Kind::AtomicBool) {}
+
+  static bool classof(const Value *Val) {
+    return Val->getKind() == Kind::AtomicBool;
+  }
+};
+
+/// Models a boolean conjunction.
+// FIXME: Consider representing binary and unary boolean operations similar
+// to how they are represented in the AST. This might become more pressing
+// when such operations need to be added for other data types.
+class ConjunctionValue : public BoolValue {
+public:
+  explicit ConjunctionValue(BoolValue &LeftSubVal, BoolValue &RightSubVal)
+      : BoolValue(Kind::Conjunction), LeftSubVal(LeftSubVal),
+        RightSubVal(RightSubVal) {}
+
+  static bool classof(const Value *Val) {
+    return Val->getKind() == Kind::Conjunction;
+  }
+
+  /// Returns the left sub-value of the conjunction.
+  BoolValue &getLeftSubValue() const { return LeftSubVal; }
+
+  /// Returns the right sub-value of the conjunction.
+  BoolValue &getRightSubValue() const { return RightSubVal; }
+
+private:
+  BoolValue &LeftSubVal;
+  BoolValue &RightSubVal;
+};
+
+/// Models a boolean disjunction.
+class DisjunctionValue : public BoolValue {
+public:
+  explicit DisjunctionValue(BoolValue &LeftSubVal, BoolValue &RightSubVal)
+      : BoolValue(Kind::Disjunction), LeftSubVal(LeftSubVal),
+        RightSubVal(RightSubVal) {}
+
+  static bool classof(const Value *Val) {
+    return Val->getKind() == Kind::Disjunction;
+  }
+
+  /// Returns the left sub-value of the disjunction.
+  BoolValue &getLeftSubValue() const { return LeftSubVal; }
+
+  /// Returns the right sub-value of the disjunction.
+  BoolValue &getRightSubValue() const { return RightSubVal; }
+
+private:
+  BoolValue &LeftSubVal;
+  BoolValue &RightSubVal;
+};
+
+/// Models a boolean negation.
+class NegationValue : public BoolValue {
+public:
+  explicit NegationValue(BoolValue &SubVal)
+      : BoolValue(Kind::Negation), SubVal(SubVal) {}
+
+  static bool classof(const Value *Val) {
+    return Val->getKind() == Kind::Negation;
+  }
+
+  /// Returns the sub-value of the negation.
+  BoolValue &getSubVal() const { return SubVal; }
+
+private:
+  BoolValue &SubVal;
 };
 
 /// Models an integer.
@@ -100,15 +201,32 @@ public:
     return Val->getKind() == Kind::Struct;
   }
 
-  /// Returns the child value for `D`.
+  /// Returns the child value that is assigned for `D`.
   Value &getChild(const ValueDecl &D) const {
     auto It = Children.find(&D);
     assert(It != Children.end());
     return *It->second;
   }
 
+  /// Assigns `Val` as the child value for `D`.
+  void setChild(const ValueDecl &D, Value &Val) { Children[&D] = &Val; }
+
+  /// Returns the value of the synthetic property with the given `Name` or null
+  /// if the property isn't assigned a value.
+  Value *getProperty(llvm::StringRef Name) const {
+    auto It = Properties.find(Name);
+    return It == Properties.end() ? nullptr : It->second;
+  }
+
+  /// Assigns `Val` as the value of the synthetic property with the given
+  /// `Name`.
+  void setProperty(llvm::StringRef Name, Value &Val) {
+    Properties.insert_or_assign(Name, &Val);
+  }
+
 private:
-  const llvm::DenseMap<const ValueDecl *, Value *> Children;
+  llvm::DenseMap<const ValueDecl *, Value *> Children;
+  llvm::StringMap<Value *> Properties;
 };
 
 } // namespace dataflow

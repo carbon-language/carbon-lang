@@ -1172,8 +1172,15 @@ bool LoopIdiomRecognize::processLoopStridedStore(
 
   CallInst *NewCall;
   if (SplatValue) {
-    NewCall = Builder.CreateMemSet(BasePtr, SplatValue, NumBytes,
-                                   MaybeAlign(StoreAlignment));
+    AAMDNodes AATags = TheStore->getAAMetadata();
+    if (auto CI = dyn_cast<ConstantInt>(NumBytes))
+      AATags = AATags.extendTo(CI->getZExtValue());
+    else
+      AATags = AATags.extendTo(-1);
+
+    NewCall = Builder.CreateMemSet(
+        BasePtr, SplatValue, NumBytes, MaybeAlign(StoreAlignment),
+        /*isVolatile=*/false, AATags.TBAA, AATags.Scope, AATags.NoAlias);
   } else {
     // Everything is emitted in default address space
     Type *Int8PtrTy = DestInt8PtrTy;
@@ -1268,9 +1275,8 @@ class MemmoveVerifier {
 public:
   explicit MemmoveVerifier(const Value &LoadBasePtr, const Value &StoreBasePtr,
                            const DataLayout &DL)
-      : DL(DL), LoadOff(0), StoreOff(0),
-        BP1(llvm::GetPointerBaseWithConstantOffset(
-            LoadBasePtr.stripPointerCasts(), LoadOff, DL)),
+      : DL(DL), BP1(llvm::GetPointerBaseWithConstantOffset(
+                    LoadBasePtr.stripPointerCasts(), LoadOff, DL)),
         BP2(llvm::GetPointerBaseWithConstantOffset(
             StoreBasePtr.stripPointerCasts(), StoreOff, DL)),
         IsSameObject(BP1 == BP2) {}
@@ -1300,8 +1306,8 @@ public:
 
 private:
   const DataLayout &DL;
-  int64_t LoadOff;
-  int64_t StoreOff;
+  int64_t LoadOff = 0;
+  int64_t StoreOff = 0;
   const Value *BP1;
   const Value *BP2;
 
@@ -1452,17 +1458,28 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   Value *NumBytes =
       Expander.expandCodeFor(NumBytesS, IntIdxTy, Preheader->getTerminator());
 
+  AAMDNodes AATags = TheLoad->getAAMetadata();
+  AAMDNodes StoreAATags = TheStore->getAAMetadata();
+  AATags = AATags.merge(StoreAATags);
+  if (auto CI = dyn_cast<ConstantInt>(NumBytes))
+    AATags = AATags.extendTo(CI->getZExtValue());
+  else
+    AATags = AATags.extendTo(-1);
+
   CallInst *NewCall = nullptr;
   // Check whether to generate an unordered atomic memcpy:
   //  If the load or store are atomic, then they must necessarily be unordered
   //  by previous checks.
   if (!TheStore->isAtomic() && !TheLoad->isAtomic()) {
     if (UseMemMove)
-      NewCall = Builder.CreateMemMove(StoreBasePtr, StoreAlign, LoadBasePtr,
-                                      LoadAlign, NumBytes);
+      NewCall = Builder.CreateMemMove(
+          StoreBasePtr, StoreAlign, LoadBasePtr, LoadAlign, NumBytes,
+          /*isVolatile=*/false, AATags.TBAA, AATags.Scope, AATags.NoAlias);
     else
-      NewCall = Builder.CreateMemCpy(StoreBasePtr, StoreAlign, LoadBasePtr,
-                                     LoadAlign, NumBytes);
+      NewCall =
+          Builder.CreateMemCpy(StoreBasePtr, StoreAlign, LoadBasePtr, LoadAlign,
+                               NumBytes, /*isVolatile=*/false, AATags.TBAA,
+                               AATags.TBAAStruct, AATags.Scope, AATags.NoAlias);
   } else {
     // For now don't support unordered atomic memmove.
     if (UseMemMove)
@@ -1486,7 +1503,8 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
     // have an alignment but non-atomic loads/stores may not.
     NewCall = Builder.CreateElementUnorderedAtomicMemCpy(
         StoreBasePtr, StoreAlign.getValue(), LoadBasePtr, LoadAlign.getValue(),
-        NumBytes, StoreSize);
+        NumBytes, StoreSize, AATags.TBAA, AATags.TBAAStruct, AATags.Scope,
+        AATags.NoAlias);
   }
   NewCall->setDebugLoc(TheStore->getDebugLoc());
 

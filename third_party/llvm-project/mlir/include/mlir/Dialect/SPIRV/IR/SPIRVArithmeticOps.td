@@ -19,7 +19,7 @@ include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 class SPV_ArithmeticBinaryOp<string mnemonic, Type type,
-                       list<OpTrait> traits = []> :
+                       list<Trait> traits = []> :
       // Operands type same as result type.
       SPV_BinaryOp<mnemonic, type, type,
                    !listconcat(traits,
@@ -34,10 +34,11 @@ class SPV_ArithmeticBinaryOp<string mnemonic, Type type,
   let results = (outs
     SPV_ScalarOrVectorOrCoopMatrixOf<type>:$result
   );
+  let assemblyFormat = "operands attr-dict `:` type($result)";
 }
 
 class SPV_ArithmeticUnaryOp<string mnemonic, Type type,
-                            list<OpTrait> traits = []> :
+                            list<Trait> traits = []> :
       // Operand type same as result type.
       SPV_UnaryOp<mnemonic, type, type,
                    !listconcat(traits,

@@ -10,6 +10,7 @@
 #ifndef _LIBCPP___FORMAT_FORMATTER_STRING_H
 #define _LIBCPP___FORMAT_FORMATTER_STRING_H
 
+#include <__assert>
 #include <__config>
 #include <__format/format_error.h>
 #include <__format/format_fwd.h>
@@ -19,11 +20,8 @@
 #include <string_view>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
-
-_LIBCPP_PUSH_MACROS
-#include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -64,7 +62,7 @@ public:
 // [format.formatter.spec]/2.2 For each charT, the string type specializations
 
 // Formatter const char*.
-template <class _CharT>
+template <__formatter::__char_type _CharT>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
     formatter<const _CharT*, _CharT>
     : public __format_spec::__formatter_string<_CharT> {
@@ -98,7 +96,7 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
 };
 
 // Formatter char*.
-template <class _CharT>
+template <__formatter::__char_type _CharT>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
     formatter<_CharT*, _CharT> : public formatter<const _CharT*, _CharT> {
   using _Base = formatter<const _CharT*, _CharT>;
@@ -110,7 +108,7 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
 };
 
 // Formatter const char[].
-template <class _CharT, size_t _Size>
+template <__formatter::__char_type _CharT, size_t _Size>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
     formatter<const _CharT[_Size], _CharT>
     : public __format_spec::__formatter_string<_CharT> {
@@ -123,7 +121,7 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
 };
 
 // Formatter std::string.
-template <class _CharT, class _Traits, class _Allocator>
+template <__formatter::__char_type _CharT, class _Traits, class _Allocator>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
     formatter<basic_string<_CharT, _Traits, _Allocator>, _CharT>
     : public __format_spec::__formatter_string<_CharT> {
@@ -138,7 +136,7 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT
 };
 
 // Formatter std::string_view.
-template <class _CharT, class _Traits>
+template <__formatter::__char_type _CharT, class _Traits>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT formatter<basic_string_view<_CharT, _Traits>, _CharT>
     : public __format_spec::__formatter_string<_CharT> {
   using _Base = __format_spec::__formatter_string<_CharT>;
@@ -156,7 +154,5 @@ struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT formatter<basic_string_v
 #endif //_LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
-
-_LIBCPP_POP_MACROS
 
 #endif // _LIBCPP___FORMAT_FORMATTER_STRING_H
