@@ -33,28 +33,22 @@ class FieldPath {
   // A single component of the FieldPath, which is typically the name
   // of a field. However, inside a generic, when there is a field
   // access on something of a generic type, e.g., `T`, then we also
-  // need a reference to it's generic binding (via a
-  // `NamedEntityView`) so that the interpreter can find its witness
-  // table, hence the addition `type_variable()` method.
+  // need `witness`, a pointer to the witness table containing that field.
   class Component {
    public:
     explicit Component(std::string name) : name_(std::move(name)) {}
-    Component(std::string name, std::optional<Nonnull<const Value*>> impl)
-        : name_(std::move(name)), impl_(impl) {}
+    Component(std::string name, std::optional<Nonnull<const Witness*>> witness)
+        : name_(std::move(name)), witness_(witness) {}
 
     auto name() const -> const std::string& { return name_; }
 
-    // If the field access was on something whose type is generic,
-    // e.g. `T`, then type_variable() returns the `EntityView`
-    // for the impl for `T`.
-    // Otherwise returns `std::nullopt`.
-    auto impl() const -> std::optional<Nonnull<const Value*>> { return impl_; }
+    auto witness() const -> std::optional<Nonnull<const Witness*>> { return witness_; }
 
     void Print(llvm::raw_ostream& out) const { out << name_; }
 
    private:
     std::string name_;
-    std::optional<Nonnull<const Value*>> impl_;
+    std::optional<Nonnull<const Witness*>> witness_;
   };
 
   // Constructs a FieldPath consisting of a single step.
