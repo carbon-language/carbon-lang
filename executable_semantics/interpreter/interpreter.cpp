@@ -501,12 +501,13 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        std::optional<Nonnull<const Value*>> witness = std::nullopt;
+        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
           auto witness_addr =
               todo_.ValueOfName(*access.impl(), access.source_loc());
-          witness = heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                               access.source_loc());
+          witness = cast<Witness>(
+              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                         access.source_loc()));
         }
         FieldPath::Component field(access.field(), witness);
         auto member = act.results()[0]->GetField(arena_, FieldPath(field),
