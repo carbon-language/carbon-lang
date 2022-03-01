@@ -156,16 +156,18 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
-  // Inside a generic, when there is a field access on an expression whose
-  // type is a type variable, e.g. `T`, then we record the impl binding
-  // for that type variable in the field access expression during type checking
-  // so that in the interpreter we can use it to lookup it's witness table.
-  // If the field access is not on an expression whose type is a type variable
-  // (on a struct or class type), then `impl()` returns `std::nullopt`.
+  // If `aggregate` has a generic type, returns the `ImplBinding` that identifies
+  // its witness table. Otherwise, returns `std::nullopt`.
+  // Should not be called before typechecking.
   auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
     return impl_;
   }
-  void set_impl(Nonnull<const ImplBinding*> impl) { impl_ = impl; }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const ImplBinding*> impl) {
+    CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
 
  private:
   Nonnull<Expression*> aggregate_;
