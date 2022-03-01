@@ -32,7 +32,8 @@ using ::testing::StrEq;
 class LexerTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
-    source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
+    source_storage.push_back(
+        std::move(*SourceBuffer::CreateFromText(text.str())));
     return source_storage.back();
   }
 
