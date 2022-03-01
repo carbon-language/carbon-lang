@@ -32,19 +32,18 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       SourceLocation source_loc) -> Nonnull<const Value*> {
   const std::string& f = field.name();
 
-  if (field.impl().has_value()) {
-    Nonnull<const Value*> witness = *field.impl();
+  if (field.witness().has_value()) {
+    Nonnull<const Witness*> witness = *field.witness();
     switch (witness->kind()) {
       case Value::Kind::Witness: {
-        const Witness& impl_type = cast<Witness>(*witness);
         if (std::optional<Nonnull<const Declaration*>> mem_decl =
-                FindMember(f, impl_type.declaration().members());
+                FindMember(f, witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           return arena->New<BoundMethodValue>(&fun_decl, v);
         } else {
           FATAL_COMPILATION_ERROR(source_loc)
-              << "member " << f << " not in " << impl_type;
+              << "member " << f << " not in " << *witness;
         }
       }
       default:
