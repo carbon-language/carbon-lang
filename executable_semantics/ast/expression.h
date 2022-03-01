@@ -374,18 +374,19 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  // If the call is to a generic function, then the type checker
-  // finds an impl for each type parameter whose type is an interface,
-  // e.g. `T:! Vector`, storing the results in the call expression's
-  // `impls_` field. The interpreter, when performing a function call,
-  // uses the `impls_` to obtain witness tables for it to pass into
-  // the function.
+  // Maps each of `function`'s generic parameters to the AST node
+  // that identifies the witness table for the corresponding argument.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
   auto impls() const
       -> const std::map<Nonnull<const ImplBinding*>, EntityView>& {
     return impls_;
   }
+
+  // Can only be called once, during typechecking.
   void set_impls(
       const std::map<Nonnull<const ImplBinding*>, EntityView>& impls) {
+    CHECK(impls_.empty());
     impls_ = impls;
   }
 
