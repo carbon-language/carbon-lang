@@ -83,10 +83,14 @@ class GenericBinding : public AstNode {
 using BindingMap =
     std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
 
-// A binding for a witness table of an impl.
-// In other words, when a witness table is passed to a generic function,
-// an instance of this class acts as a key in the runtime scope,
-// and its associated value is a witness table.
+// The run-time counterpart of a `GenericBinding`.
+//
+// Once a generic binding has been declared, it can be used
+// in two different ways: as a compile-time constant with a
+// symbolic value (such as a `VariableType`), or as a run-time
+// variable with a concrete value that is stored on the stack.
+// An `ImplBinding` is used in contexts where the second
+// interpretation is intended.
 class ImplBinding : public AstNode {
  public:
   using ImplementsCarbonEntity = void;
