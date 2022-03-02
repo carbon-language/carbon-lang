@@ -107,22 +107,21 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
 }
 
 SourceBuffer::SourceBuffer(SourceBuffer&& arg) noexcept
-    : content_mode_(arg.content_mode_),
+    // Sets Uninitialized to ensure the input doesn't release mmapped data.
+    : content_mode_(
+          std::exchange(arg.content_mode_, ContentMode::Uninitialized)),
       filename_(std::move(arg.filename_)),
       text_storage_(std::move(arg.text_storage_)),
-      text_(content_mode_ == ContentMode::OWNED ? text_storage_ : arg.text_) {
-  // Ensure the input doesn't release mmapped data.
-  arg.content_mode_ = ContentMode::UNINITIALIZED;
-}
+      text_(content_mode_ == ContentMode::Owned ? text_storage_ : arg.text_) {}
 
 SourceBuffer::SourceBuffer(std::string filename, std::string text)
-    : content_mode_(ContentMode::OWNED),
+    : content_mode_(ContentMode::Owned),
       filename_(std::move(filename)),
       text_storage_(std::move(text)),
       text_(text_storage_) {}
 
 SourceBuffer::SourceBuffer(std::string filename, llvm::StringRef text)
-    : content_mode_(ContentMode::MMAPPED),
+    : content_mode_(ContentMode::MMapped),
       filename_(std::move(filename)),
       text_(text) {
   CHECK(!text.empty())
@@ -130,7 +129,7 @@ SourceBuffer::SourceBuffer(std::string filename, llvm::StringRef text)
 }
 
 SourceBuffer::~SourceBuffer() {
-  if (content_mode_ == ContentMode::MMAPPED) {
+  if (content_mode_ == ContentMode::MMapped) {
     errno = 0;
     int result =
         munmap(const_cast<void*>(static_cast<const void*>(text_.data())),

@@ -57,9 +57,9 @@ class SourceBuffer {
 
  private:
   enum class ContentMode {
-    UNINITIALIZED,
-    MMAPPED,
-    OWNED,
+    Uninitialized,
+    MMapped,
+    Owned,
   };
 
   // Constructor for mmapped content.
