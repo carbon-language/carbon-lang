@@ -73,17 +73,21 @@ of focus for the project.
 
 Our goal is that no single organization makes up >50% of participation in the
 Carbon project, to ensure that we are including as broad and representative a
-set of perspectives in the evolution of Carbon as possible. Metrics to track
-include:
+set of perspectives in the evolution of Carbon as possible.
 
--   Number of messages sent to Discord by author.
--   Number of proposals by both author and reviewer.
--   People present in weekly sync meetings, and number of comments attributed to
-    them in the minutes.
+As a proxy for the amount of participation, we will count the number of active
+participants from each organization in 2022, with the aim that each organization
+is represented by less than 50% of all active participatnts.
 
-We are unlikely to be able to reach this goal until after we go public, so
-metrics should be tracked towards the end of the year rather than considering an
-average across the whole year.
+There are many ways in which someone could be an active participant, and when
+the leads come to reflect on this at the end of the year, we expect this to be a
+judgment call. We will consider at least the following when measuring our
+success on this objective:
+
+-   Pull requests authored and reviewed, including proposals, code changes, and
+    documentation changes.
+-   Contribution to discussions, including Discord, teleconferences, and github
+    issues.
 
 ### Example ports of C++ libraries to Carbon (100% of [woff2](https://github.com/google/woff2), 99% of [RE2](https://github.com/google/re2))
 
@@ -115,8 +119,8 @@ overarching value proposition.
 #### Language design covers the syntax and semantics of the example port code.
 
 We should have a clear understanding of the syntax and semantics used by these
-example ports. We should be able to demonstrate that the ported code works
-correctly using the executable semantics implementation.
+example ports. We should be able to demonstrate that self-contained portions of
+the ported code work correctly using the executable semantics implementation.
 
 ### Demo implementation of core features with working examples
 
