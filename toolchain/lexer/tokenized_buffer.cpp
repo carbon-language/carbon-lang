@@ -522,10 +522,6 @@ class TokenizedBuffer::Lexer {
       error_text = source_text.take_front(1);
     }
 
-    // Longer errors get to be two tokens.
-    // TODO: Limit SourceBuffer to std::numeric_limits<int32_t>::max() and
-    // remove this.
-    error_text = error_text.substr(0, std::numeric_limits<int32_t>::max());
     auto token = buffer_.AddToken(
         {.kind = TokenKind::Error(),
          .token_line = current_line_,
