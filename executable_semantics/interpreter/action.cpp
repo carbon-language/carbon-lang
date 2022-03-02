@@ -44,20 +44,20 @@ RuntimeScope::~RuntimeScope() {
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
-  for (const auto& [named_entity, value] : locals_) {
-    out << sep << named_entity.base() << ": " << *value;
+  for (const auto& [node_view, value] : locals_) {
+    out << sep << node_view.base() << ": " << *value;
   }
   out << "}";
 }
 
-void RuntimeScope::Initialize(ValueNodeView named_entity,
+void RuntimeScope::Initialize(ValueNodeView node_view,
                               Nonnull<const Value*> value) {
-  CHECK(!named_entity.constant_value().has_value());
+  CHECK(!node_view.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
-      {named_entity, heap_->arena().New<LValue>(Address(allocations_.back()))});
-  CHECK(success) << "Duplicate definition of " << named_entity.base();
+      {node_view, heap_->arena().New<LValue>(Address(allocations_.back()))});
+  CHECK(success) << "Duplicate definition of " << node_view.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
@@ -71,9 +71,9 @@ void RuntimeScope::Merge(RuntimeScope other) {
   other.allocations_.clear();
 }
 
-auto RuntimeScope::Get(ValueNodeView named_entity) const
+auto RuntimeScope::Get(ValueNodeView node_view) const
     -> std::optional<Nonnull<const LValue*>> {
-  auto it = locals_.find(named_entity);
+  auto it = locals_.find(node_view);
   if (it != locals_.end()) {
     return it->second;
   } else {

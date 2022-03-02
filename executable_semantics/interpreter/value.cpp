@@ -180,8 +180,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
       out << "Placeholder<";
-      if (placeholder.named_entity().has_value()) {
-        out << (*placeholder.named_entity());
+      if (placeholder.node_view().has_value()) {
+        out << (*placeholder.node_view());
       } else {
         out << "_";
       }
@@ -293,9 +293,9 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::Witness: {
-      const auto& impl_type = cast<Witness>(*this);
-      out << "impl " << *impl_type.declaration().impl_type() << " as "
-          << impl_type.declaration().interface();
+      const auto& witness = cast<Witness>(*this);
+      out << "impl " << *witness.declaration().impl_type() << " as "
+          << witness.declaration().interface();
       break;
     }
     case Value::Kind::ChoiceType:

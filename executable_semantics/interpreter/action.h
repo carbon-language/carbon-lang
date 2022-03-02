@@ -45,17 +45,17 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Allocates storage for `named_entity` in `heap`, and initializes it with
+  // Allocates storage for `node_view` in `heap`, and initializes it with
   // `value`.
-  void Initialize(ValueNodeView named_entity, Nonnull<const Value*> value);
+  void Initialize(ValueNodeView node_view, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
   // scopes must not define the same name, and must be backed by the same Heap.
   void Merge(RuntimeScope other);
 
-  // Returns the local storage for named_entity, if it has storage local to
+  // Returns the local storage for node_view, if it has storage local to
   // this scope.
-  auto Get(ValueNodeView named_entity) const
+  auto Get(ValueNodeView node_view) const
       -> std::optional<Nonnull<const LValue*>>;
 
  private:

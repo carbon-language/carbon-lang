@@ -336,9 +336,11 @@ class ImplDeclaration : public Declaration {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromImplDeclaration(node->kind());
   }
+  // Return whether this is an external or internal impl.
   auto kind() const -> ImplKind { return kind_; }
+  // Return the type that is doing the implementing.
   auto impl_type() const -> Nonnull<Expression*> { return impl_type_; }
-
+  // Return the interface that is being implemented.
   auto interface() const -> const Expression& { return *interface_; }
   auto interface() -> Expression& { return *interface_; }
   void set_interface_type(Nonnull<const Value*> iface_type) {
@@ -350,6 +352,7 @@ class ImplDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
+  // Return the witness table for this impl.
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }

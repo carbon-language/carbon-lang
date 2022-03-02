@@ -184,8 +184,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             << "Name bindings are not supported in this context";
       }
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      if (placeholder.named_entity().has_value()) {
-        (*bindings)->Initialize(*placeholder.named_entity(), v);
+      if (placeholder.node_view().has_value()) {
+        (*bindings)->Initialize(*placeholder.node_view(), v);
       }
       return true;
     }
@@ -276,8 +276,8 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Nonnull<const Value*> value = todo_.ValueOfName(
-          cast<IdentifierExpression>(exp).named_entity(), exp.source_loc());
+      Nonnull<const Value*> value = todo_.ValueOfNode(
+          cast<IdentifierExpression>(exp).node_view(), exp.source_loc());
       CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
@@ -505,14 +505,14 @@ void Interpreter::StepExp() {
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
           auto witness_addr =
-              todo_.ValueOfName(*access.impl(), access.source_loc());
+              todo_.ValueOfNode(*access.impl(), access.source_loc());
           witness = cast<Witness>(
               heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
                          access.source_loc()));
         }
         FieldPath::Component field(access.field(), witness);
-        auto member = act.results()[0]->GetField(arena_, FieldPath(field),
-                                                 exp.source_loc());
+        Nonnull<const Value*> member = act.results()[0]->GetField(
+            arena_, FieldPath(field), exp.source_loc());
         return todo_.FinishAction(member);
       }
     }
@@ -521,7 +521,7 @@ void Interpreter::StepExp() {
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Nonnull<const Value*> value =
-          todo_.ValueOfName(ident.named_entity(), ident.source_loc());
+          todo_.ValueOfNode(ident.node_view(), ident.source_loc());
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         value = heap_.Read(lvalue->address(), exp.source_loc());
       }
@@ -583,15 +583,15 @@ void Interpreter::StepExp() {
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
             // Bring the impl witness tables into scope.
-            for (const auto& [impl_bind, impl_name] :
+            for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
-              ValueNodeView named_ent(impl_bind);
-              auto impl_value = todo_.ValueOfName(impl_name, exp.source_loc());
-              if (impl_value->kind() == Value::Kind::LValue) {
-                const LValue& lval = cast<LValue>(*impl_value);
-                impl_value = heap_.Read(lval.address(), exp.source_loc());
+              Nonnull<const Value*> witness =
+                  todo_.ValueOfNode(impl_node, exp.source_loc());
+              if (witness->kind() == Value::Kind::LValue) {
+                const LValue& lval = cast<LValue>(*witness);
+                witness = heap_.Read(lval.address(), exp.source_loc());
               }
-              function_scope.Initialize(named_ent, impl_value);
+              function_scope.Initialize(impl_bind, witness);
             }
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),

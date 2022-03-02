@@ -124,7 +124,7 @@ static void ResolveNames(Expression& expression,
       break;
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
-      identifier.set_named_entity(
+      identifier.set_node_view(
           enclosing_scope.Resolve(identifier.name(), identifier.source_loc()));
       break;
     }

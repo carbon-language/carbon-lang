@@ -335,20 +335,20 @@ class BindingPlaceholderValue : public Value {
   explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
 
   // Represents a named placeholder.
-  explicit BindingPlaceholderValue(ValueNodeView named_entity)
+  explicit BindingPlaceholderValue(ValueNodeView node_view)
       : Value(Kind::BindingPlaceholderValue),
-        named_entity_(std::move(named_entity)) {}
+        node_view_(std::move(node_view)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto named_entity() const -> const std::optional<ValueNodeView>& {
-    return named_entity_;
+  auto node_view() const -> const std::optional<ValueNodeView>& {
+    return node_view_;
   }
 
  private:
-  std::optional<ValueNodeView> named_entity_;
+  std::optional<ValueNodeView> node_view_;
 };
 
 // The int type.

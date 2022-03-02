@@ -560,14 +560,15 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::InterfaceType: {
               const InterfaceType& iface_type = cast<InterfaceType>(typeof_var);
               const InterfaceDeclaration& iface_decl = iface_type.declaration();
-              if (auto member =
+              if (std::optional<Nonnull<const Declaration*>> member =
                       FindMember(access.field(), iface_decl.members());
                   member.has_value()) {
                 const Value& member_type = (*member)->static_type();
                 std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
                     self_map;
                 self_map[iface_decl.self()] = &var_type;
-                auto inst_member_type = Substitute(self_map, &member_type);
+                Nonnull<const Value*> inst_member_type =
+                    Substitute(self_map, &member_type);
                 access.set_static_type(inst_member_type);
                 access.set_impl(*var_type.binding().impl_binding());
                 return;
@@ -592,18 +593,17 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
-      if (ident.named_entity().base().kind() ==
-          AstNodeKind::FunctionDeclaration) {
+      if (ident.node_view().base().kind() == AstNodeKind::FunctionDeclaration) {
         const auto& function =
-            cast<FunctionDeclaration>(ident.named_entity().base());
+            cast<FunctionDeclaration>(ident.node_view().base());
         if (!function.has_static_type()) {
           CHECK(function.return_term().is_auto());
           FATAL_COMPILATION_ERROR(ident.source_loc())
               << "Function calls itself, but has a deduced return type";
         }
       }
-      ident.set_static_type(&ident.named_entity().static_type());
-      ident.set_value_category(ident.named_entity().value_category());
+      ident.set_static_type(&ident.node_view().static_type());
+      ident.set_value_category(ident.node_view().value_category());
       return;
     }
     case ExpressionKind::IntLiteral:
@@ -732,7 +732,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  fun_t.impl_bindings()) {
               switch (impl_binding->interface()->kind()) {
                 case Value::Kind::InterfaceType: {
-                  auto impl = impl_scope.Resolve(
+                  ValueNodeView impl = impl_scope.Resolve(
                       impl_binding->interface(),
                       deduced_args[impl_binding->type_var()], e->source_loc());
                   impls.emplace(impl_binding, impl);
@@ -1249,12 +1249,14 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     llvm::outs() << "declaring " << *impl_decl << "\n";
   }
   TypeCheckExp(&impl_decl->interface(), enclosing_scope);
-  auto iface_type = InterpExp(&impl_decl->interface(), arena_, trace_);
+  Nonnull<const Value*> iface_type =
+      InterpExp(&impl_decl->interface(), arena_, trace_);
   const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
   impl_decl->set_interface_type(iface_type);
 
   TypeCheckExp(impl_decl->impl_type(), enclosing_scope);
-  auto impl_type_value = InterpExp(impl_decl->impl_type(), arena_, trace_);
+  Nonnull<const Value*> impl_type_value =
+      InterpExp(impl_decl->impl_type(), arena_, trace_);
   enclosing_scope.Add(iface_type, impl_type_value, impl_decl);
 
   for (Nonnull<Declaration*> m : impl_decl->members()) {
@@ -1280,8 +1282,7 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       }
     }
   }
-  Nonnull<Witness*> impl_type = arena_->New<Witness>(impl_decl);
-  impl_decl->set_constant_value(impl_type);
+  impl_decl->set_constant_value(arena_->New<Witness>(impl_decl));
 }
 
 void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
@@ -1417,19 +1418,18 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 }
 
 template <typename T>
-void TypeChecker::SetConstantValue(Nonnull<T*> named_entity,
+void TypeChecker::SetConstantValue(Nonnull<T*> node_view,
                                    Nonnull<const Value*> value) {
-  std::optional<Nonnull<const Value*>> old_value =
-      named_entity->constant_value();
+  std::optional<Nonnull<const Value*>> old_value = node_view->constant_value();
   CHECK(!old_value.has_value());
-  named_entity->set_constant_value(value);
-  CHECK(constants_.insert(named_entity).second);
+  node_view->set_constant_value(value);
+  CHECK(constants_.insert(node_view).second);
 }
 
 void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
-  for (const auto& named_entity : constants_) {
-    out << sep << named_entity;
+  for (const auto& node_view : constants_) {
+    out << sep << node_view;
   }
 }
 
