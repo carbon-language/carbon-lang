@@ -89,7 +89,7 @@ graph BT
 
     expressionEnd["x;"]
 
-    memberAccess -> parens & braces & unqualifiedName
+    memberAccess --> parens & braces & unqualifiedName
     as & not --> memberAccess
     comparison --> as
     and & or --> comparison & not
