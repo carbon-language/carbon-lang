@@ -57,12 +57,12 @@ graph BT
     braces["{...}"]
     click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
-    unqualified_name["x"]
-    click unqualified_name "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
+    unqualifiedName["x"]
+    click unqualifiedName "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
 
-    member_access>"x.y<br>
+    memberAccess>"x.y<br>
                     x.(...)"]
-    click member_access "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
+    click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
@@ -89,8 +89,8 @@ graph BT
 
     expressionEnd["x;"]
 
-    member_access -> parens & braces & unqualified_name
-    as & not --> member_access
+    memberAccess -> parens & braces & unqualifiedName
+    as & not --> memberAccess
     comparison --> as
     and & or --> comparison & not
     if & expressionEnd --> and & or
