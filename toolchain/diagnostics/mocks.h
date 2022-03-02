@@ -13,8 +13,7 @@ namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  // TODO: Use `MOCK_METHOD` once it's available.
-  MOCK_METHOD1(HandleDiagnostic, void(const Diagnostic& diagnostic));
+  MOCK_METHOD(void, HandleDiagnostic, (const Diagnostic& diagnostic));
 };
 
 // Matcher `DiagnosticAt` matches the location of a diagnostic.
