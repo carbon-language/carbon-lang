@@ -32,7 +32,8 @@ using ::testing::StrEq;
 class ParseTreeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
-    source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
+    source_storage.push_front(
+        std::move(*SourceBuffer::CreateFromText(t.str())));
     return source_storage.front();
   }
 

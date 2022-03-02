@@ -20,7 +20,7 @@ namespace {
 class ParseTreeTest : public ::testing::Test {
  protected:
   auto Analyze(llvm::Twine t) -> Semantics {
-    source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
+    source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     return Semantics::Analyze(*parse_tree, consumer);

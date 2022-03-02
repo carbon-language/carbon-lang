@@ -85,6 +85,8 @@ cc_library(
     hdrs = ["field_path.h"],
     deps = [
         "//common:ostream",
+        "//executable_semantics/ast",
+        "//executable_semantics/ast:static_scope",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -183,8 +185,14 @@ cc_library(
 
 cc_library(
     name = "type_checker",
-    srcs = ["type_checker.cpp"],
-    hdrs = ["type_checker.h"],
+    srcs = [
+        "impl_scope.cpp",
+        "type_checker.cpp",
+    ],
+    hdrs = [
+        "impl_scope.h",
+        "type_checker.h",
+    ],
     deps = [
         ":action_and_value",
         ":dictionary",

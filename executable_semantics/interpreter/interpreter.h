@@ -15,7 +15,6 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
