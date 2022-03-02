@@ -57,7 +57,6 @@ class Value {
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
-    ImplType,          // The type of an impl.
     BindingPlaceholderValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
@@ -335,20 +334,20 @@ class BindingPlaceholderValue : public Value {
   explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
 
   // Represents a named placeholder.
-  explicit BindingPlaceholderValue(ValueNodeView node_view)
+  explicit BindingPlaceholderValue(ValueNodeView value_node)
       : Value(Kind::BindingPlaceholderValue),
-        node_view_(std::move(node_view)) {}
+        value_node_(std::move(value_node)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto node_view() const -> const std::optional<ValueNodeView>& {
-    return node_view_;
+  auto value_node() const -> const std::optional<ValueNodeView>& {
+    return value_node_;
   }
 
  private:
-  std::optional<ValueNodeView> node_view_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // The int type.
@@ -574,22 +573,6 @@ class VariableType : public Value {
 
  private:
   Nonnull<const GenericBinding*> binding_;
-};
-
-// Type of an impl.
-class ImplType : public Value {
- public:
-  explicit ImplType(Nonnull<const ImplBinding*> binding)
-      : Value(Kind::ImplType), binding_(binding) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ImplType;
-  }
-
-  auto binding() const -> const ImplBinding& { return *binding_; }
-
- private:
-  Nonnull<const ImplBinding*> binding_;
 };
 
 // A first-class continuation representation of a fragment of the stack.

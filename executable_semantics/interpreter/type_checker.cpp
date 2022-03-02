@@ -87,7 +87,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
-    case Value::Kind::ImplType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
@@ -304,7 +303,6 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::ImplType:
       ExpectType(source_loc, "argument deduction", param, arg);
       return;
     // The rest of these cases should never happen.
@@ -377,7 +375,6 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::ImplType:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
@@ -593,17 +590,18 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
-      if (ident.node_view().base().kind() == AstNodeKind::FunctionDeclaration) {
+      if (ident.value_node().base().kind() ==
+          AstNodeKind::FunctionDeclaration) {
         const auto& function =
-            cast<FunctionDeclaration>(ident.node_view().base());
+            cast<FunctionDeclaration>(ident.value_node().base());
         if (!function.has_static_type()) {
           CHECK(function.return_term().is_auto());
           FATAL_COMPILATION_ERROR(ident.source_loc())
               << "Function calls itself, but has a deduced return type";
         }
       }
-      ident.set_static_type(&ident.node_view().static_type());
-      ident.set_value_category(ident.node_view().value_category());
+      ident.set_static_type(&ident.value_node().static_type());
+      ident.set_value_category(ident.value_node().value_category());
       return;
     }
     case ExpressionKind::IntLiteral:
@@ -1110,7 +1108,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
         deduced->source_loc(), deduced, &deduced->static_type());
     deduced->set_impl_binding(impl_binding);
-    impl_binding->set_static_type(arena_->New<ImplType>(impl_binding));
+    impl_binding->set_static_type(&deduced->static_type());
     impl_bindings.push_back(impl_binding);
   }
 
@@ -1418,18 +1416,18 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 }
 
 template <typename T>
-void TypeChecker::SetConstantValue(Nonnull<T*> node_view,
+void TypeChecker::SetConstantValue(Nonnull<T*> value_node,
                                    Nonnull<const Value*> value) {
-  std::optional<Nonnull<const Value*>> old_value = node_view->constant_value();
+  std::optional<Nonnull<const Value*>> old_value = value_node->constant_value();
   CHECK(!old_value.has_value());
-  node_view->set_constant_value(value);
-  CHECK(constants_.insert(node_view).second);
+  value_node->set_constant_value(value);
+  CHECK(constants_.insert(value_node).second);
 }
 
 void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
-  for (const auto& node_view : constants_) {
-    out << sep << node_view;
+  for (const auto& value_node : constants_) {
+    out << sep << value_node;
   }
 }
 

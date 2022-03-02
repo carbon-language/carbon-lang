@@ -125,18 +125,18 @@ class IdentifierExpression : public Expression {
 
   // Returns the ValueNodeView this identifier refers to. Cannot be called
   // before name resolution.
-  auto node_view() const -> const ValueNodeView& { return *node_view_; }
+  auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
-  // Sets the value returned by node_view. Can be called only once,
+  // Sets the value returned by value_node. Can be called only once,
   // during name resolution.
-  void set_node_view(ValueNodeView node_view) {
-    CHECK(!node_view_.has_value());
-    node_view_ = std::move(node_view);
+  void set_value_node(ValueNodeView value_node) {
+    CHECK(!value_node_.has_value());
+    value_node_ = std::move(value_node);
   }
 
  private:
   std::string name_;
-  std::optional<ValueNodeView> node_view_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 class FieldAccessExpression : public Expression {

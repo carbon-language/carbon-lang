@@ -184,8 +184,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             << "Name bindings are not supported in this context";
       }
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      if (placeholder.node_view().has_value()) {
-        (*bindings)->Initialize(*placeholder.node_view(), v);
+      if (placeholder.value_node().has_value()) {
+        (*bindings)->Initialize(*placeholder.value_node(), v);
       }
       return true;
     }
@@ -277,7 +277,7 @@ void Interpreter::StepLvalue() {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       Nonnull<const Value*> value = todo_.ValueOfNode(
-          cast<IdentifierExpression>(exp).node_view(), exp.source_loc());
+          cast<IdentifierExpression>(exp).value_node(), exp.source_loc());
       CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
@@ -377,7 +377,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
-    case Value::Kind::ImplType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
@@ -521,7 +520,7 @@ void Interpreter::StepExp() {
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Nonnull<const Value*> value =
-          todo_.ValueOfNode(ident.node_view(), ident.source_loc());
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         value = heap_.Read(lvalue->address(), exp.source_loc());
       }
