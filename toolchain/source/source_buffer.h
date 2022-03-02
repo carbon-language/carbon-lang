@@ -5,7 +5,6 @@
 #ifndef TOOLCHAIN_SOURCE_SOURCEBUFFER_H_
 #define TOOLCHAIN_SOURCE_SOURCEBUFFER_H_
 
-#include <optional>
 #include <string>
 #include <utility>
 
