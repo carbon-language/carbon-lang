@@ -74,7 +74,7 @@ fn GrowSomeCogs() {
 
 A member access expression is processed using the following steps:
 
--   First, the name or parenthesized expression to the right of the `.` is
+-   First, the word or parenthesized expression to the right of the `.` is
     [resolved](#member-resolution) to a specific member entity, called `M` in
     this document.
 -   Then, if necessary, [`impl` lookup](#impl-lookup) is performed to map from a
@@ -102,18 +102,18 @@ operand of a member access or as the target of an `alias` declaration.
 
 ```
 namespace MyNamespace;
-fn MyNamespace.Fn() {}
+fn MyNamespace.MyFunction() {}
 
 // ✅ OK, can alias a namespace.
 alias MyNS = MyNamespace;
-fn CallFn() { MyNS.Fn(); }
+fn CallMyFunction() { MyNS.MyFunction(); }
 
 // ❌ Error: a namespace is not a value.
 let MyNS2:! auto = MyNamespace;
 
-fn CallFn2() {
+fn CallMyFunction2() {
   // ❌ Error: cannot perform indirect member access into a namespace.
-  MyNamespace.(MyNamespace.Fn)();
+  MyNamespace.(MyNamespace.MyFunction)();
 }
 ```
 
@@ -214,6 +214,7 @@ class TemplateWrapper(template T:! Type) {
   var field: T;
 }
 fn G[template T:! Type](x: TemplateWrapper(T)) -> T {
+  // 🤷 Not yet decided.
   return x.field;
 }
 ```
@@ -302,7 +303,7 @@ interface Addable {
   // #1
   fn Add[me: Self](other: Self) -> Self;
   // #2
-  fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
+  default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
   }
 }
@@ -365,7 +366,7 @@ the argument for the template parameter is known.
 ```carbon
 interface I {
   // #1
-  fn F[me: Self]() {}
+  default fn F[me: Self]() {}
   let N:! i32;
 }
 class C {
