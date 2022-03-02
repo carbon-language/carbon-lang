@@ -820,18 +820,29 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
                            widths.indent),
       token_text);
 
-  if (token_info.kind == TokenKind::Identifier()) {
-    output_stream << ", identifier: " << GetIdentifier(token).index_;
-  } else if (token_info.kind.IsOpeningSymbol()) {
-    output_stream << ", closing_token: "
-                  << GetMatchedClosingToken(token).index_;
-  } else if (token_info.kind.IsClosingSymbol()) {
-    output_stream << ", opening_token: "
-                  << GetMatchedOpeningToken(token).index_;
-  } else if (token_info.kind == TokenKind::StringLiteral()) {
-    output_stream << ", value: `" << GetStringLiteral(token) << "`";
+  switch (token_info.kind) {
+    case TokenKind::Identifier():
+      output_stream << ", identifier: " << GetIdentifier(token).index_;
+      break;
+    case TokenKind::IntegerLiteral():
+      output_stream << ", value: `" << GetIntegerLiteral(token) << "`";
+      break;
+    case TokenKind::RealLiteral():
+      output_stream << ", value: `" << GetRealLiteral(token) << "`";
+      break;
+    case TokenKind::StringLiteral():
+      output_stream << ", value: `" << GetStringLiteral(token) << "`";
+      break;
+    default:
+      if (token_info.kind.IsOpeningSymbol()) {
+        output_stream << ", closing_token: "
+                      << GetMatchedClosingToken(token).index_;
+      } else if (token_info.kind.IsClosingSymbol()) {
+        output_stream << ", opening_token: "
+                      << GetMatchedOpeningToken(token).index_;
+      }
+      break;
   }
-  // TODO: Include value for numeric literals.
 
   if (token_info.has_trailing_space) {
     output_stream << ", has_trailing_space: true";
