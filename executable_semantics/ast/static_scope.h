@@ -32,7 +32,9 @@ template <typename NodeType, typename = void>
 static constexpr bool ImplementsValueNode = false;
 
 /*
-  The ValueNode interface (extends the Entity interface):
+  ValueNode is an interface implemented by AstNodes that can be associated
+  with a value, such as declarations and bindings. The interface consists of
+  the following methods:
 
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
