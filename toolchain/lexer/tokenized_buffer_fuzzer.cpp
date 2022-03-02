@@ -28,7 +28,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
 
-  auto buffer = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
+  auto buffer = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (buffer.HasErrors()) {
     return 0;
   }
