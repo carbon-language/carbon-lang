@@ -96,6 +96,7 @@ class FieldInitializer {
 
 enum class Operator {
   Add,
+  AddressOf,
   And,
   Deref,
   Eq,

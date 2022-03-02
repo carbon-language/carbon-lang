@@ -1350,13 +1350,9 @@ public:
   SDValue getIndexedLoadVP(SDValue OrigLoad, const SDLoc &dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getStoreVP(SDValue Chain, const SDLoc &dl, SDValue Val, SDValue Ptr,
-                     SDValue Mask, SDValue EVL, MachinePointerInfo PtrInfo,
-                     Align Alignment, MachineMemOperand::Flags MMOFlags,
-                     const AAMDNodes &AAInfo = AAMDNodes(),
-                     bool IsCompressing = false);
-  SDValue getStoreVP(SDValue Chain, const SDLoc &dl, SDValue Val, SDValue Ptr,
-                     SDValue Mask, SDValue EVL, MachineMemOperand *MMO,
-                     bool IsCompressing = false);
+                     SDValue Offset, SDValue Mask, SDValue EVL, EVT MemVT,
+                     MachineMemOperand *MMO, ISD::MemIndexedMode AM,
+                     bool IsTruncating = false, bool IsCompressing = false);
   SDValue getTruncStoreVP(SDValue Chain, const SDLoc &dl, SDValue Val,
                           SDValue Ptr, SDValue Mask, SDValue EVL,
                           MachinePointerInfo PtrInfo, EVT SVT, Align Alignment,
@@ -1415,6 +1411,11 @@ public:
 
   /// Return an AssertAlignSDNode.
   SDValue getAssertAlign(const SDLoc &DL, SDValue V, Align A);
+
+  /// Swap N1 and N2 if Opcode is a commutative binary opcode
+  /// and the canonical form expects the opposite order.
+  void canonicalizeCommutativeBinop(unsigned Opcode, SDValue &N1,
+                                    SDValue &N2) const;
 
   /// Return the specified value casted to
   /// the target's desired shift amount type.

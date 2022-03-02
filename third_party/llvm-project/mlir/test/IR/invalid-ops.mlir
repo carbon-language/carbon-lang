@@ -55,7 +55,7 @@ func @func_with_ops(i32, i32, i32) {
 ^bb0(%cond : i32, %t : i32, %f : i32):
   // expected-error@+2 {{different type than prior uses}}
   // expected-note@-2 {{prior use here}}
-  %r = select %cond, %t, %f : i32
+  %r = arith.select %cond, %t, %f : i32
 }
 
 // -----
@@ -63,7 +63,7 @@ func @func_with_ops(i32, i32, i32) {
 func @func_with_ops(i32, i32, i32) {
 ^bb0(%cond : i32, %t : i32, %f : i32):
   // expected-error@+1 {{op operand #0 must be bool-like}}
-  %r = "std.select"(%cond, %t, %f) : (i32, i32, i32) -> i32
+  %r = "arith.select"(%cond, %t, %f) : (i32, i32, i32) -> i32
 }
 
 // -----
@@ -75,7 +75,7 @@ func @func_with_ops(i1, i32, i64) {
   // message. In final state the error should refer to mismatch in true_value and
   // false_value.
   // expected-error@+1 {{type}}
-  %r = "std.select"(%cond, %t, %f) : (i1, i32, i64) -> i32
+  %r = "arith.select"(%cond, %t, %f) : (i1, i32, i64) -> i32
 }
 
 // -----
@@ -83,7 +83,7 @@ func @func_with_ops(i1, i32, i64) {
 func @func_with_ops(vector<12xi1>, vector<42xi32>, vector<42xi32>) {
 ^bb0(%cond : vector<12xi1>, %t : vector<42xi32>, %f : vector<42xi32>):
   // expected-error@+1 {{all non-scalar operands/results must have the same shape and base type}}
-  %r = "std.select"(%cond, %t, %f) : (vector<12xi1>, vector<42xi32>, vector<42xi32>) -> vector<42xi32>
+  %r = "arith.select"(%cond, %t, %f) : (vector<12xi1>, vector<42xi32>, vector<42xi32>) -> vector<42xi32>
 }
 
 // -----
@@ -91,7 +91,7 @@ func @func_with_ops(vector<12xi1>, vector<42xi32>, vector<42xi32>) {
 func @func_with_ops(tensor<12xi1>, tensor<42xi32>, tensor<42xi32>) {
 ^bb0(%cond : tensor<12xi1>, %t : tensor<42xi32>, %f : tensor<42xi32>):
   // expected-error@+1 {{all non-scalar operands/results must have the same shape and base type}}
-  %r = "std.select"(%cond, %t, %f) : (tensor<12xi1>, tensor<42xi32>, tensor<42xi32>) -> tensor<42xi32>
+  %r = "arith.select"(%cond, %t, %f) : (tensor<12xi1>, tensor<42xi32>, tensor<42xi32>) -> tensor<42xi32>
 }
 
 // -----
@@ -106,84 +106,8 @@ func @return_not_in_function() {
 
 // -----
 
-func @invalid_splat(%v : f32) {
-  splat %v : memref<8xf32>
-  // expected-error@-1 {{must be vector of any type values or statically shaped tensor of any type values}}
-  return
-}
-
-// -----
-
-func @invalid_splat(%v : vector<8xf32>) {
-  %w = splat %v : tensor<8xvector<8xf32>>
-  // expected-error@-1 {{must be integer/index/float type}}
-  return
-}
-
-// -----
-
 func @invalid_splat(%v : f32) { // expected-note {{prior use here}}
-  splat %v : vector<8xf64>
+  vector.splat %v : vector<8xf64>
   // expected-error@-1 {{expects different type than prior uses}}
-  return
-}
-
-// -----
-
-func @generic_atomic_rmw_wrong_arg_num(%I: memref<10xf32>, %i : index) {
-  // expected-error@+1 {{expected single number of entry block arguments}}
-  %x = generic_atomic_rmw %I[%i] : memref<10xf32> {
-    ^bb0(%arg0 : f32, %arg1 : f32):
-      %c1 = arith.constant 1.0 : f32
-      atomic_yield %c1 : f32
-  }
-  return
-}
-
-// -----
-
-func @generic_atomic_rmw_wrong_arg_type(%I: memref<10xf32>, %i : index) {
-  // expected-error@+1 {{expected block argument of the same type result type}}
-  %x = generic_atomic_rmw %I[%i] : memref<10xf32> {
-    ^bb0(%old_value : i32):
-      %c1 = arith.constant 1.0 : f32
-      atomic_yield %c1 : f32
-  }
-  return
-}
-
-// -----
-
-func @generic_atomic_rmw_result_type_mismatch(%I: memref<10xf32>, %i : index) {
- // expected-error@+1 {{failed to verify that result type matches element type of memref}}
- %0 = "std.generic_atomic_rmw"(%I, %i) ( {
-    ^bb0(%old_value: f32):
-      %c1 = arith.constant 1.0 : f32
-      atomic_yield %c1 : f32
-    }) : (memref<10xf32>, index) -> i32
-  return
-}
-
-// -----
-
-func @generic_atomic_rmw_has_side_effects(%I: memref<10xf32>, %i : index) {
-  // expected-error@+4 {{should contain only operations with no side effects}}
-  %x = generic_atomic_rmw %I[%i] : memref<10xf32> {
-    ^bb0(%old_value : f32):
-      %c1 = arith.constant 1.0 : f32
-      %buf = memref.alloc() : memref<2048xf32>
-      atomic_yield %c1 : f32
-  }
-}
-
-// -----
-
-func @atomic_yield_type_mismatch(%I: memref<10xf32>, %i : index) {
-  // expected-error@+4 {{op types mismatch between yield op: 'i32' and its parent: 'f32'}}
-  %x = generic_atomic_rmw %I[%i] : memref<10xf32> {
-    ^bb0(%old_value : f32):
-      %c1 = arith.constant 1 : i32
-      atomic_yield %c1 : i32
-  }
   return
 }

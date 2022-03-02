@@ -905,12 +905,26 @@ def SKXWriteResGroup43 : SchedWriteRes<[SKXPort237,SKXPort0156]> {
 def: InstRW<[SKXWriteResGroup43], (instrs MFENCE)>;
 
 def SKXWriteResGroup44 : SchedWriteRes<[SKXPort06,SKXPort0156]> {
-  let Latency = 3;
+  let Latency = 2;
   let NumMicroOps = 3;
   let ResourceCycles = [1,2];
 }
-def: InstRW<[SKXWriteResGroup44], (instregex "RCL(8|16|32|64)r(1|i)",
-                                             "RCR(8|16|32|64)r(1|i)")>;
+def: InstRW<[SKXWriteResGroup44], (instrs RCL8r1, RCL16r1, RCL32r1, RCL64r1,
+                                          RCR8r1, RCR16r1, RCR32r1, RCR64r1)>;
+
+def SKXWriteResGroup44b : SchedWriteRes<[SKXPort1,SKXPort06,SKXPort0156]> {
+  let Latency = 5;
+  let NumMicroOps = 8;
+  let ResourceCycles = [2,4,2];
+}
+def: InstRW<[SKXWriteResGroup44b], (instrs RCR8ri, RCR16ri, RCR32ri, RCR64ri)>;
+
+def SKXWriteResGroup44c : SchedWriteRes<[SKXPort1,SKXPort06,SKXPort0156]> {
+  let Latency = 6;
+  let NumMicroOps = 8;
+  let ResourceCycles = [2,4,2];
+}
+def: InstRW<[SKXWriteResGroup44c], (instrs RCL8ri, RCL16ri, RCL32ri, RCL64ri)>;
 
 def SKXWriteResGroup45 : SchedWriteRes<[SKXPort0,SKXPort4,SKXPort237]> {
   let Latency = 3;
@@ -2614,5 +2628,49 @@ def SKXSETA_SETBErm :  SchedWriteVariant<[
 
 def : InstRW<[SKXSETA_SETBErr], (instrs SETCCr)>;
 def : InstRW<[SKXSETA_SETBErm], (instrs SETCCm)>;
+
+///////////////////////////////////////////////////////////////////////////////
+// Dependency breaking instructions.
+///////////////////////////////////////////////////////////////////////////////
+
+def : IsZeroIdiomFunction<[
+  // GPR Zero-idioms.
+  DepBreakingClass<[ SUB32rr, SUB64rr, XOR32rr, XOR64rr ], ZeroIdiomPredicate>,
+
+  // SSE Zero-idioms.
+  DepBreakingClass<[
+    // fp variants.
+    XORPSrr, XORPDrr,
+
+    // int variants.
+    PXORrr,
+    PSUBBrr, PSUBWrr, PSUBDrr, PSUBQrr,
+    PCMPGTBrr, PCMPGTDrr, PCMPGTQrr, PCMPGTWrr
+  ], ZeroIdiomPredicate>,
+
+  // AVX Zero-idioms.
+  DepBreakingClass<[
+    // xmm fp variants.
+    VXORPSrr, VXORPDrr,
+
+    // xmm int variants.
+    VPXORrr,
+    VPSUBBrr, VPSUBWrr, VPSUBDrr, VPSUBQrr,
+    VPCMPGTBrr, VPCMPGTWrr, VPCMPGTDrr, VPCMPGTQrr,
+
+    // ymm variants.
+    VXORPSYrr, VXORPDYrr, VPXORYrr,
+    VPSUBBYrr, VPSUBWYrr, VPSUBDYrr, VPSUBQYrr,
+    VPCMPGTBYrr, VPCMPGTWYrr, VPCMPGTDYrr, VPCMPGTQYrr,
+
+    // zmm variants.
+    VXORPSZrr, VXORPDZrr, VPXORDZrr, VPXORQZrr,
+    VXORPSZ128rr, VXORPDZ128rr, VPXORDZ128rr, VPXORQZ128rr,
+    VXORPSZ256rr, VXORPDZ256rr, VPXORDZ256rr, VPXORQZ256rr,
+    VPSUBBZrr, VPSUBWZrr, VPSUBDZrr, VPSUBQZrr,
+    VPSUBBZ128rr, VPSUBWZ128rr, VPSUBDZ128rr, VPSUBQZ128rr,
+    VPSUBBZ256rr, VPSUBWZ256rr, VPSUBDZ256rr, VPSUBQZ256rr,
+  ], ZeroIdiomPredicate>,
+]>;
 
 } // SchedModel

@@ -24,7 +24,7 @@
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -52,10 +52,6 @@ public:
       [[fallthrough]];
     case _Flags::_Type::__string:
       this->__handle_bool();
-      break;
-
-    case _Flags::_Type::__char:
-      this->__handle_char();
       break;
 
     case _Flags::_Type::__binary_lower_case:
@@ -102,7 +98,7 @@ using __formatter_bool = __formatter_integral<__parser_bool<_CharT>>;
 // For each charT, for each cv-unqualified arithmetic type ArithmeticT other
 // than char, wchar_t, char8_t, char16_t, or char32_t, a specialization
 
-template <class _CharT>
+template <__formatter::__char_type _CharT>
 struct _LIBCPP_TEMPLATE_VIS _LIBCPP_AVAILABILITY_FORMAT formatter<bool, _CharT>
     : public __format_spec::__formatter_bool<_CharT> {
   using _Base = __format_spec::__formatter_bool<_CharT>;

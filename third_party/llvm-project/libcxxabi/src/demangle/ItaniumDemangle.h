@@ -6,8 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Generic itanium demangler library. This file has two byte-per-byte identical
-// copies in the source tree, one in libcxxabi, and the other in llvm.
+// Generic itanium demangler library.
+// There are two copies of this file in the source tree.  The one under
+// libcxxabi is the original and the one under llvm is the copy.  Use
+// cp-to-llvm.sh to update the copy.  See README.txt for more details.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,92 +23,92 @@
 #include "DemangleConfig.h"
 #include "StringView.h"
 #include "Utility.h"
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <numeric>
+#include <limits>
 #include <utility>
 
-#define FOR_EACH_NODE_KIND(X) \
-    X(NodeArrayNode) \
-    X(DotSuffix) \
-    X(VendorExtQualType) \
-    X(QualType) \
-    X(ConversionOperatorType) \
-    X(PostfixQualifiedType) \
-    X(ElaboratedTypeSpefType) \
-    X(NameType) \
-    X(AbiTagAttr) \
-    X(EnableIfAttr) \
-    X(ObjCProtoName) \
-    X(PointerType) \
-    X(ReferenceType) \
-    X(PointerToMemberType) \
-    X(ArrayType) \
-    X(FunctionType) \
-    X(NoexceptSpec) \
-    X(DynamicExceptionSpec) \
-    X(FunctionEncoding) \
-    X(LiteralOperator) \
-    X(SpecialName) \
-    X(CtorVtableSpecialName) \
-    X(QualifiedName) \
-    X(NestedName) \
-    X(LocalName) \
-    X(VectorType) \
-    X(PixelVectorType) \
-    X(BinaryFPType) \
-    X(SyntheticTemplateParamName) \
-    X(TypeTemplateParamDecl) \
-    X(NonTypeTemplateParamDecl) \
-    X(TemplateTemplateParamDecl) \
-    X(TemplateParamPackDecl) \
-    X(ParameterPack) \
-    X(TemplateArgumentPack) \
-    X(ParameterPackExpansion) \
-    X(TemplateArgs) \
-    X(ForwardTemplateReference) \
-    X(NameWithTemplateArgs) \
-    X(GlobalQualifiedName) \
-    X(StdQualifiedName) \
-    X(ExpandedSpecialSubstitution) \
-    X(SpecialSubstitution) \
-    X(CtorDtorName) \
-    X(DtorName) \
-    X(UnnamedTypeName) \
-    X(ClosureTypeName) \
-    X(StructuredBindingName) \
-    X(BinaryExpr) \
-    X(ArraySubscriptExpr) \
-    X(PostfixExpr) \
-    X(ConditionalExpr) \
-    X(MemberExpr) \
-    X(SubobjectExpr) \
-    X(EnclosingExpr) \
-    X(CastExpr) \
-    X(SizeofParamPackExpr) \
-    X(CallExpr) \
-    X(NewExpr) \
-    X(DeleteExpr) \
-    X(PrefixExpr) \
-    X(FunctionParam) \
-    X(ConversionExpr) \
-    X(PointerToMemberConversionExpr) \
-    X(InitListExpr) \
-    X(FoldExpr) \
-    X(ThrowExpr) \
-    X(BoolExpr) \
-    X(StringLiteral) \
-    X(LambdaExpr) \
-    X(EnumLiteral)    \
-    X(IntegerLiteral) \
-    X(FloatLiteral) \
-    X(DoubleLiteral) \
-    X(LongDoubleLiteral) \
-    X(BracedExpr) \
-    X(BracedRangeExpr)
+#define FOR_EACH_NODE_KIND(X)                                                  \
+  X(NodeArrayNode)                                                             \
+  X(DotSuffix)                                                                 \
+  X(VendorExtQualType)                                                         \
+  X(QualType)                                                                  \
+  X(ConversionOperatorType)                                                    \
+  X(PostfixQualifiedType)                                                      \
+  X(ElaboratedTypeSpefType)                                                    \
+  X(NameType)                                                                  \
+  X(AbiTagAttr)                                                                \
+  X(EnableIfAttr)                                                              \
+  X(ObjCProtoName)                                                             \
+  X(PointerType)                                                               \
+  X(ReferenceType)                                                             \
+  X(PointerToMemberType)                                                       \
+  X(ArrayType)                                                                 \
+  X(FunctionType)                                                              \
+  X(NoexceptSpec)                                                              \
+  X(DynamicExceptionSpec)                                                      \
+  X(FunctionEncoding)                                                          \
+  X(LiteralOperator)                                                           \
+  X(SpecialName)                                                               \
+  X(CtorVtableSpecialName)                                                     \
+  X(QualifiedName)                                                             \
+  X(NestedName)                                                                \
+  X(LocalName)                                                                 \
+  X(VectorType)                                                                \
+  X(PixelVectorType)                                                           \
+  X(BinaryFPType)                                                              \
+  X(SyntheticTemplateParamName)                                                \
+  X(TypeTemplateParamDecl)                                                     \
+  X(NonTypeTemplateParamDecl)                                                  \
+  X(TemplateTemplateParamDecl)                                                 \
+  X(TemplateParamPackDecl)                                                     \
+  X(ParameterPack)                                                             \
+  X(TemplateArgumentPack)                                                      \
+  X(ParameterPackExpansion)                                                    \
+  X(TemplateArgs)                                                              \
+  X(ForwardTemplateReference)                                                  \
+  X(NameWithTemplateArgs)                                                      \
+  X(GlobalQualifiedName)                                                       \
+  X(ExpandedSpecialSubstitution)                                               \
+  X(SpecialSubstitution)                                                       \
+  X(CtorDtorName)                                                              \
+  X(DtorName)                                                                  \
+  X(UnnamedTypeName)                                                           \
+  X(ClosureTypeName)                                                           \
+  X(StructuredBindingName)                                                     \
+  X(BinaryExpr)                                                                \
+  X(ArraySubscriptExpr)                                                        \
+  X(PostfixExpr)                                                               \
+  X(ConditionalExpr)                                                           \
+  X(MemberExpr)                                                                \
+  X(SubobjectExpr)                                                             \
+  X(EnclosingExpr)                                                             \
+  X(CastExpr)                                                                  \
+  X(SizeofParamPackExpr)                                                       \
+  X(CallExpr)                                                                  \
+  X(NewExpr)                                                                   \
+  X(DeleteExpr)                                                                \
+  X(PrefixExpr)                                                                \
+  X(FunctionParam)                                                             \
+  X(ConversionExpr)                                                            \
+  X(PointerToMemberConversionExpr)                                             \
+  X(InitListExpr)                                                              \
+  X(FoldExpr)                                                                  \
+  X(ThrowExpr)                                                                 \
+  X(BoolExpr)                                                                  \
+  X(StringLiteral)                                                             \
+  X(LambdaExpr)                                                                \
+  X(EnumLiteral)                                                               \
+  X(IntegerLiteral)                                                            \
+  X(FloatLiteral)                                                              \
+  X(DoubleLiteral)                                                             \
+  X(LongDoubleLiteral)                                                         \
+  X(BracedExpr)                                                                \
+  X(BracedRangeExpr)
 
 DEMANGLE_NAMESPACE_BEGIN
 
@@ -310,7 +312,7 @@ public:
       printRight(OB);
   }
 
-  // Print the "left" side of this Node into OutputString.
+  // Print the "left" side of this Node into OutputBuffer.
   virtual void printLeft(OutputBuffer &) const = 0;
 
   // Print the "right". This distinction is necessary to represent C++ types
@@ -1210,7 +1212,8 @@ public:
 class ParameterPack final : public Node {
   NodeArray Data;
 
-  // Setup OutputString for a pack expansion unless we're already expanding one.
+  // Setup OutputBuffer for a pack expansion, unless we're already expanding
+  // one.
   void initializePackExpansion(OutputBuffer &OB) const {
     if (OB.CurrentPackMax == std::numeric_limits<unsigned>::max()) {
       OB.CurrentPackMax = static_cast<unsigned>(Data.size());
@@ -1465,21 +1468,6 @@ public:
 
   void printLeft(OutputBuffer &OB) const override {
     OB += "::";
-    Child->print(OB);
-  }
-};
-
-struct StdQualifiedName : Node {
-  Node *Child;
-
-  StdQualifiedName(Node *Child_) : Node(KStdQualifiedName), Child(Child_) {}
-
-  template<typename Fn> void match(Fn F) const { F(Child); }
-
-  StringView getBaseName() const override { return Child->getBaseName(); }
-
-  void printLeft(OutputBuffer &OB) const override {
-    OB += "std::";
     Child->print(OB);
   }
 };
@@ -1799,7 +1787,13 @@ public:
   void printLeft(OutputBuffer &OB) const override {
     LHS->print(OB);
     OB += Kind;
+    // Parenthesize pointer-to-member deference argument.
+    bool IsPtr = Kind.back() == '*';
+    if (IsPtr)
+      OB += '(';
     RHS->print(OB);
+    if (IsPtr)
+      OB += ')';
   }
 };
 
@@ -1932,16 +1926,16 @@ public:
 
   void printLeft(OutputBuffer &OB) const override {
     if (IsGlobal)
-      OB += "::operator ";
+      OB += "::";
     OB += "new";
     if (IsArray)
       OB += "[]";
-    OB += ' ';
     if (!ExprList.empty()) {
       OB += "(";
       ExprList.printWithComma(OB);
       OB += ")";
     }
+    OB += ' ';
     Type->print(OB);
     if (!InitList.empty()) {
       OB += "(";
@@ -1967,7 +1961,8 @@ public:
       OB += "::";
     OB += "delete";
     if (IsArray)
-      OB += "[] ";
+      OB += "[]";
+    OB += ' ';
     Op->print(OB);
   }
 };
@@ -2473,7 +2468,7 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
 
   char consume() { return First != Last ? *First++ : '\0'; }
 
-  char look(unsigned Lookahead = 0) {
+  char look(unsigned Lookahead = 0) const {
     if (static_cast<size_t>(Last - First) <= Lookahead)
       return '\0';
     return First[Lookahead];
@@ -2501,7 +2496,6 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
   Node *parseExprPrimary();
   template <class Float> Node *parseFloatingLiteral();
   Node *parseFunctionParam();
-  Node *parseNewExpr();
   Node *parseConversionExpr();
   Node *parseBracedExpr();
   Node *parseFoldExpr();
@@ -2553,7 +2547,7 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
   Node *parseName(NameState *State = nullptr);
   Node *parseLocalName(NameState *State);
   Node *parseOperatorName(NameState *State);
-  Node *parseUnqualifiedName(NameState *State);
+  Node *parseUnqualifiedName(NameState *State, Node *Scope);
   Node *parseUnnamedTypeName(NameState *State);
   Node *parseSourceName(NameState *State);
   Node *parseUnscopedName(NameState *State);
@@ -2563,7 +2557,7 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
   Node *parseAbiTags(Node *N);
 
   /// Parse the <unresolved-name> production.
-  Node *parseUnresolvedName();
+  Node *parseUnresolvedName(bool Global);
   Node *parseSimpleId();
   Node *parseBaseUnresolvedName();
   Node *parseUnresolvedType();
@@ -2584,41 +2578,43 @@ const char* parse_discriminator(const char* first, const char* last);
 //                          ::= <substitution>
 template <typename Derived, typename Alloc>
 Node *AbstractManglingParser<Derived, Alloc>::parseName(NameState *State) {
-  consumeIf('L'); // extension
-
   if (look() == 'N')
     return getDerived().parseNestedName(State);
   if (look() == 'Z')
     return getDerived().parseLocalName(State);
 
-  //        ::= <unscoped-template-name> <template-args>
-  if (look() == 'S' && look(1) != 't') {
-    Node *S = getDerived().parseSubstitution();
-    if (S == nullptr)
-      return nullptr;
-    if (look() != 'I')
-      return nullptr;
+  Node *Result = nullptr;
+  bool IsSubst = look() == 'S' && look(1) != 't';
+  if (IsSubst) {
+    // A substitution must lead to:
+    //        ::= <unscoped-template-name> <template-args>
+    Result = getDerived().parseSubstitution();
+  } else {
+    // An unscoped name can be one of:
+    //        ::= <unscoped-name>
+    //        ::= <unscoped-template-name> <template-args>
+    Result = getDerived().parseUnscopedName(State);
+  }
+  if (Result == nullptr)
+    return nullptr;
+
+  if (look() == 'I') {
+    //        ::= <unscoped-template-name> <template-args>
+    if (!IsSubst)
+      // An unscoped-template-name is substitutable.
+      Subs.push_back(Result);
     Node *TA = getDerived().parseTemplateArgs(State != nullptr);
     if (TA == nullptr)
       return nullptr;
-    if (State) State->EndsWithTemplateArgs = true;
-    return make<NameWithTemplateArgs>(S, TA);
+    if (State)
+      State->EndsWithTemplateArgs = true;
+    Result = make<NameWithTemplateArgs>(Result, TA);
+  } else if (IsSubst) {
+    // The substitution case must be followed by <template-args>.
+    return nullptr;
   }
 
-  Node *N = getDerived().parseUnscopedName(State);
-  if (N == nullptr)
-    return nullptr;
-  //        ::= <unscoped-template-name> <template-args>
-  if (look() == 'I') {
-    Subs.push_back(N);
-    Node *TA = getDerived().parseTemplateArgs(State != nullptr);
-    if (TA == nullptr)
-      return nullptr;
-    if (State) State->EndsWithTemplateArgs = true;
-    return make<NameWithTemplateArgs>(N, TA);
-  }
-  //        ::= <unscoped-name>
-  return N;
+  return Result;
 }
 
 // <local-name> := Z <function encoding> E <entity name> [<discriminator>]
@@ -2657,36 +2653,39 @@ Node *AbstractManglingParser<Derived, Alloc>::parseLocalName(NameState *State) {
   return make<LocalName>(Encoding, Entity);
 }
 
-// <unscoped-name> ::= <unqualified-name>
-//                 ::= St <unqualified-name>   # ::std::
-// extension       ::= StL<unqualified-name>
+// <unscoped-name> ::= [L]* <unqualified-name>
+//                 ::= St [L]* <unqualified-name>   # ::std::
+// [*] extension
 template <typename Derived, typename Alloc>
 Node *
 AbstractManglingParser<Derived, Alloc>::parseUnscopedName(NameState *State) {
-  if (consumeIf("StL") || consumeIf("St")) {
-    Node *R = getDerived().parseUnqualifiedName(State);
-    if (R == nullptr)
+  Node *Std = nullptr;
+  if (consumeIf("St")) {
+    Std = make<NameType>("std");
+    if (Std == nullptr)
       return nullptr;
-    return make<StdQualifiedName>(R);
   }
-  return getDerived().parseUnqualifiedName(State);
+  consumeIf('L');
+
+  return getDerived().parseUnqualifiedName(State, Std);
 }
 
 // <unqualified-name> ::= <operator-name> [abi-tags]
-//                    ::= <ctor-dtor-name>
-//                    ::= <source-name>
-//                    ::= <unnamed-type-name>
+//                    ::= <ctor-dtor-name> [<abi-tags>]
+//                    ::= <source-name> [<abi-tags>]
+//                    ::= <unnamed-type-name> [<abi-tags>]
 //                    ::= DC <source-name>+ E      # structured binding declaration
 template <typename Derived, typename Alloc>
 Node *
-AbstractManglingParser<Derived, Alloc>::parseUnqualifiedName(NameState *State) {
-  // <ctor-dtor-name>s are special-cased in parseNestedName().
+AbstractManglingParser<Derived, Alloc>::parseUnqualifiedName(NameState *State,
+                                                             Node *Scope) {
   Node *Result;
   if (look() == 'U')
     Result = getDerived().parseUnnamedTypeName(State);
   else if (look() >= '1' && look() <= '9')
     Result = getDerived().parseSourceName(State);
   else if (consumeIf("DC")) {
+    // Structured binding
     size_t BindingsBegin = Names.size();
     do {
       Node *Binding = getDerived().parseSourceName(State);
@@ -2695,10 +2694,18 @@ AbstractManglingParser<Derived, Alloc>::parseUnqualifiedName(NameState *State) {
       Names.push_back(Binding);
     } while (!consumeIf('E'));
     Result = make<StructuredBindingName>(popTrailingNodeArray(BindingsBegin));
-  } else
+  } else if (look() == 'C' || look() == 'D') {
+    // A <ctor-dtor-name>.
+    if (Scope == nullptr)
+      return nullptr;
+    Result = getDerived().parseCtorDtorName(Scope, State);
+  } else {
     Result = getDerived().parseOperatorName(State);
+  }
   if (Result != nullptr)
     Result = getDerived().parseAbiTags(Result);
+  if (Result != nullptr && Scope != nullptr)
+    Result = make<NestedName>(Scope, Result);
   return Result;
 }
 
@@ -3148,14 +3155,14 @@ AbstractManglingParser<Derived, Alloc>::parseCtorDtorName(Node *&SoFar,
 // <nested-name> ::= N [<CV-Qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E
 //               ::= N [<CV-Qualifiers>] [<ref-qualifier>] <template-prefix> <template-args> E
 //
-// <prefix> ::= <prefix> <unqualified-name>
+// <prefix> ::= <prefix> [L]* <unqualified-name>
 //          ::= <template-prefix> <template-args>
 //          ::= <template-param>
 //          ::= <decltype>
 //          ::= # empty
 //          ::= <substitution>
 //          ::= <prefix> <data-member-prefix>
-//  extension ::= L
+// [*] extension
 //
 // <data-member-prefix> := <member source-name> [<template-args>] M
 //
@@ -3175,90 +3182,67 @@ AbstractManglingParser<Derived, Alloc>::parseNestedName(NameState *State) {
     if (State) State->ReferenceQualifier = FrefQualRValue;
   } else if (consumeIf('R')) {
     if (State) State->ReferenceQualifier = FrefQualLValue;
-  } else
+  } else {
     if (State) State->ReferenceQualifier = FrefQualNone;
-
-  Node *SoFar = nullptr;
-  auto PushComponent = [&](Node *Comp) {
-    if (!Comp) return false;
-    if (SoFar) SoFar = make<NestedName>(SoFar, Comp);
-    else       SoFar = Comp;
-    if (State) State->EndsWithTemplateArgs = false;
-    return SoFar != nullptr;
-  };
-
-  if (consumeIf("St")) {
-    SoFar = make<NameType>("std");
-    if (!SoFar)
-      return nullptr;
   }
 
+  Node *SoFar = nullptr;
   while (!consumeIf('E')) {
-    consumeIf('L'); // extension
+    if (State)
+      // Only set end-with-template on the case that does that.
+      State->EndsWithTemplateArgs = false;
 
-    // <data-member-prefix> := <member source-name> [<template-args>] M
-    if (consumeIf('M')) {
-      if (SoFar == nullptr)
-        return nullptr;
-      continue;
-    }
-
-    //          ::= <template-param>
     if (look() == 'T') {
-      if (!PushComponent(getDerived().parseTemplateParam()))
-        return nullptr;
-      Subs.push_back(SoFar);
-      continue;
-    }
-
-    //          ::= <template-prefix> <template-args>
-    if (look() == 'I') {
+      //          ::= <template-param>
+      if (SoFar != nullptr)
+        return nullptr; // Cannot have a prefix.
+      SoFar = getDerived().parseTemplateParam();
+    } else if (look() == 'I') {
+      //          ::= <template-prefix> <template-args>
+      if (SoFar == nullptr)
+        return nullptr; // Must have a prefix.
       Node *TA = getDerived().parseTemplateArgs(State != nullptr);
-      if (TA == nullptr || SoFar == nullptr)
+      if (TA == nullptr)
         return nullptr;
+      if (SoFar->getKind() == Node::KNameWithTemplateArgs)
+        // Semantically <template-args> <template-args> cannot be generated by a
+        // C++ entity.  There will always be [something like] a name between
+        // them.
+        return nullptr;
+      if (State)
+        State->EndsWithTemplateArgs = true;
       SoFar = make<NameWithTemplateArgs>(SoFar, TA);
-      if (!SoFar)
-        return nullptr;
-      if (State) State->EndsWithTemplateArgs = true;
-      Subs.push_back(SoFar);
-      continue;
-    }
-
-    //          ::= <decltype>
-    if (look() == 'D' && (look(1) == 't' || look(1) == 'T')) {
-      if (!PushComponent(getDerived().parseDecltype()))
-        return nullptr;
-      Subs.push_back(SoFar);
-      continue;
-    }
-
-    //          ::= <substitution>
-    if (look() == 'S' && look(1) != 't') {
-      Node *S = getDerived().parseSubstitution();
-      if (!PushComponent(S))
-        return nullptr;
-      if (SoFar != S)
-        Subs.push_back(S);
-      continue;
-    }
-
-    // Parse an <unqualified-name> thats actually a <ctor-dtor-name>.
-    if (look() == 'C' || (look() == 'D' && look(1) != 'C')) {
+    } else if (look() == 'D' && (look(1) == 't' || look(1) == 'T')) {
+      //          ::= <decltype>
+      if (SoFar != nullptr)
+        return nullptr; // Cannot have a prefix.
+      SoFar = getDerived().parseDecltype();
+    } else if (look() == 'S') {
+      //          ::= <substitution>
+      if (SoFar != nullptr)
+        return nullptr; // Cannot have a prefix.
+      if (look(1) == 't') {
+        // parseSubstition does not handle 'St'.
+        First += 2;
+        SoFar = make<NameType>("std");
+      } else {
+        SoFar = getDerived().parseSubstitution();
+      }
       if (SoFar == nullptr)
         return nullptr;
-      if (!PushComponent(getDerived().parseCtorDtorName(SoFar, State)))
-        return nullptr;
-      SoFar = getDerived().parseAbiTags(SoFar);
-      if (SoFar == nullptr)
-        return nullptr;
-      Subs.push_back(SoFar);
-      continue;
+      continue; // Do not push a new substitution.
+    } else {
+      consumeIf('L'); // extension
+      //          ::= [<prefix>] <unqualified-name>
+      SoFar = getDerived().parseUnqualifiedName(State, SoFar);
     }
-
-    //          ::= <prefix> <unqualified-name>
-    if (!PushComponent(getDerived().parseUnqualifiedName(State)))
+    if (SoFar == nullptr)
       return nullptr;
     Subs.push_back(SoFar);
+
+    // No longer used.
+    // <data-member-prefix> := <member source-name> [<template-args>] M
+    consumeIf('M');
   }
 
   if (SoFar == nullptr || Subs.empty())
@@ -3353,6 +3337,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseBaseUnresolvedName() {
 //                   ::= [gs] <base-unresolved-name>                     # x or (with "gs") ::x
 //                   ::= [gs] sr <unresolved-qualifier-level>+ E <base-unresolved-name>
 //                                                                       # A::x, N::y, A<T>::z; "gs" means leading "::"
+// [gs] has been parsed by caller.
 //                   ::= sr <unresolved-type> <base-unresolved-name>     # T::x / decltype(p)::x
 //  extension        ::= sr <unresolved-type> <template-args> <base-unresolved-name>
 //                                                                       # T::N::x /decltype(p)::N::x
@@ -3360,7 +3345,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseBaseUnresolvedName() {
 //
 // <unresolved-qualifier-level> ::= <simple-id>
 template <typename Derived, typename Alloc>
-Node *AbstractManglingParser<Derived, Alloc>::parseUnresolvedName() {
+Node *AbstractManglingParser<Derived, Alloc>::parseUnresolvedName(bool Global) {
   Node *SoFar = nullptr;
 
   // srN <unresolved-type> [<template-args>] <unresolved-qualifier-level>* E <base-unresolved-name>
@@ -3393,8 +3378,6 @@ Node *AbstractManglingParser<Derived, Alloc>::parseUnresolvedName() {
       return nullptr;
     return make<QualifiedName>(SoFar, Base);
   }
-
-  bool Global = consumeIf("gs");
 
   // [gs] <base-unresolved-name>                     # x or (with "gs") ::x
   if (!consumeIf("sr")) {
@@ -4064,9 +4047,9 @@ Node *AbstractManglingParser<Derived, Alloc>::parseType() {
   }
   //             ::= <substitution>  # See Compression below
   case 'S': {
-    if (look(1) && look(1) != 't') {
-      Node *Sub = getDerived().parseSubstitution();
-      if (Sub == nullptr)
+    if (look(1) != 't') {
+      Result = getDerived().parseSubstitution();
+      if (Result == nullptr)
         return nullptr;
 
       // Sub could be either of:
@@ -4083,13 +4066,13 @@ Node *AbstractManglingParser<Derived, Alloc>::parseType() {
         Node *TA = getDerived().parseTemplateArgs();
         if (TA == nullptr)
           return nullptr;
-        Result = make<NameWithTemplateArgs>(Sub, TA);
-        break;
+        Result = make<NameWithTemplateArgs>(Result, TA);
+      } else {
+        // If all we parsed was a substitution, don't re-insert into the
+        // substitution table.
+        return Result;
       }
-
-      // If all we parsed was a substitution, don't re-insert into the
-      // substitution table.
-      return Sub;
+      break;
     }
     DEMANGLE_FALLTHROUGH;
   }
@@ -4177,43 +4160,6 @@ Node *AbstractManglingParser<Derived, Alloc>::parseFunctionParam() {
     return make<FunctionParam>(Num);
   }
   return nullptr;
-}
-
-// [gs] nw <expression>* _ <type> E                     # new (expr-list) type
-// [gs] nw <expression>* _ <type> <initializer>         # new (expr-list) type (init)
-// [gs] na <expression>* _ <type> E                     # new[] (expr-list) type
-// [gs] na <expression>* _ <type> <initializer>         # new[] (expr-list) type (init)
-// <initializer> ::= pi <expression>* E                 # parenthesized initialization
-template <typename Derived, typename Alloc>
-Node *AbstractManglingParser<Derived, Alloc>::parseNewExpr() {
-  bool Global = consumeIf("gs");
-  bool IsArray = look(1) == 'a';
-  if (!consumeIf("nw") && !consumeIf("na"))
-    return nullptr;
-  size_t Exprs = Names.size();
-  while (!consumeIf('_')) {
-    Node *Ex = getDerived().parseExpr();
-    if (Ex == nullptr)
-      return nullptr;
-    Names.push_back(Ex);
-  }
-  NodeArray ExprList = popTrailingNodeArray(Exprs);
-  Node *Ty = getDerived().parseType();
-  if (Ty == nullptr)
-    return Ty;
-  if (consumeIf("pi")) {
-    size_t InitsBegin = Names.size();
-    while (!consumeIf('E')) {
-      Node *Init = getDerived().parseExpr();
-      if (Init == nullptr)
-        return Init;
-      Names.push_back(Init);
-    }
-    NodeArray Inits = popTrailingNodeArray(InitsBegin);
-    return make<NewExpr>(ExprList, Ty, Inits, Global, IsArray);
-  } else if (!consumeIf('E'))
-    return nullptr;
-  return make<NewExpr>(ExprList, Ty, NodeArray(), Global, IsArray);
 }
 
 // cv <type> <expression>                               # conversion with one argument
@@ -4695,7 +4641,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
       return make<DeleteExpr>(E, Global, /*is_array=*/false);
     }
     case 'n':
-      return getDerived().parseUnresolvedName();
+      return getDerived().parseUnresolvedName(Global);
     case 's': {
       First += 2;
       Node *LHS = getDerived().parseExpr();
@@ -4818,8 +4764,35 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
   case 'n':
     switch (First[1]) {
     case 'a':
-    case 'w':
-      return getDerived().parseNewExpr();
+    case 'w': {
+      // [gs] nw <expression>* _ <type> [pi <expression>*] E   # new (expr-list) type [(init)]
+      // [gs] na <expression>* _ <type> [pi <expression>*] E   # new[] (expr-list) type [(init)]
+      bool IsArray = First[1] == 'a';
+      First += 2;
+      size_t Exprs = Names.size();
+      while (!consumeIf('_')) {
+        Node *Ex = getDerived().parseExpr();
+        if (Ex == nullptr)
+          return nullptr;
+        Names.push_back(Ex);
+      }
+      NodeArray ExprList = popTrailingNodeArray(Exprs);
+      Node *Ty = getDerived().parseType();
+      if (Ty == nullptr)
+        return nullptr;
+      bool HaveInits = consumeIf("pi");
+      size_t InitsBegin = Names.size();
+      while (!consumeIf('E')) {
+        if (!HaveInits)
+          return nullptr;
+        Node *Init = getDerived().parseExpr();
+        if (Init == nullptr)
+          return Init;
+        Names.push_back(Init);
+      }
+      NodeArray Inits = popTrailingNodeArray(InitsBegin);
+      return make<NewExpr>(ExprList, Ty, Inits, Global, IsArray);
+    }
     case 'e':
       First += 2;
       return getDerived().parseBinaryExpr("!=");
@@ -4840,7 +4813,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
   case 'o':
     switch (First[1]) {
     case 'n':
-      return getDerived().parseUnresolvedName();
+      return getDerived().parseUnresolvedName(Global);
     case 'o':
       First += 2;
       return getDerived().parseBinaryExpr("||");
@@ -4854,9 +4827,16 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
     return nullptr;
   case 'p':
     switch (First[1]) {
-    case 'm':
+    case 'm': {
       First += 2;
-      return getDerived().parseBinaryExpr("->*");
+      Node *LHS = getDerived().parseExpr();
+      if (LHS == nullptr)
+        return LHS;
+      Node *RHS = getDerived().parseExpr();
+      if (RHS == nullptr)
+        return nullptr;
+      return make<MemberExpr>(LHS, "->*", RHS);
+    }
     case 'l':
       First += 2;
       return getDerived().parseBinaryExpr("+");
@@ -4951,7 +4931,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
       return make<ParameterPackExpansion>(Child);
     }
     case 'r':
-      return getDerived().parseUnresolvedName();
+      return getDerived().parseUnresolvedName(Global);
     case 't': {
       First += 2;
       Node *Ty = getDerived().parseType();
@@ -5048,30 +5028,29 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
     // interpreted as <type> node 'short' or 'ellipsis'. However, neither
     // __uuidof(short) nor __uuidof(...) can actually appear, so there is no
     // actual conflict here.
+    bool IsUUID = false;
+    Node *UUID = nullptr;
     if (Name->getBaseName() == "__uuidof") {
-      if (numLeft() < 2)
-        return nullptr;
-      if (*First == 't') {
-        ++First;
-        Node *Ty = getDerived().parseType();
-        if (!Ty)
-          return nullptr;
-        return make<CallExpr>(Name, makeNodeArray(&Ty, &Ty + 1));
-      }
-      if (*First == 'z') {
-        ++First;
-        Node *Ex = getDerived().parseExpr();
-        if (!Ex)
-          return nullptr;
-        return make<CallExpr>(Name, makeNodeArray(&Ex, &Ex + 1));
+      if (consumeIf('t')) {
+        UUID = getDerived().parseType();
+        IsUUID = true;
+      } else if (consumeIf('z')) {
+        UUID = getDerived().parseExpr();
+        IsUUID = true;
       }
     }
     size_t ExprsBegin = Names.size();
-    while (!consumeIf('E')) {
-      Node *E = getDerived().parseTemplateArg();
-      if (E == nullptr)
-        return E;
-      Names.push_back(E);
+    if (IsUUID) {
+      if (UUID == nullptr)
+        return nullptr;
+      Names.push_back(UUID);
+    } else {
+      while (!consumeIf('E')) {
+        Node *E = getDerived().parseTemplateArg();
+        if (E == nullptr)
+          return E;
+        Names.push_back(E);
+      }
     }
     return make<CallExpr>(Name, popTrailingNodeArray(ExprsBegin));
   }
@@ -5084,7 +5063,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
   case '7':
   case '8':
   case '9':
-    return getDerived().parseUnresolvedName();
+    return getDerived().parseUnresolvedName(Global);
   }
   return nullptr;
 }
@@ -5432,43 +5411,41 @@ bool AbstractManglingParser<Alloc, Derived>::parseSeqId(size_t *Out) {
 // <substitution> ::= Si # ::std::basic_istream<char,  std::char_traits<char> >
 // <substitution> ::= So # ::std::basic_ostream<char,  std::char_traits<char> >
 // <substitution> ::= Sd # ::std::basic_iostream<char, std::char_traits<char> >
+// The St case is handled specially in parseNestedName.
 template <typename Derived, typename Alloc>
 Node *AbstractManglingParser<Derived, Alloc>::parseSubstitution() {
   if (!consumeIf('S'))
     return nullptr;
 
-  if (std::islower(look())) {
-    Node *SpecialSub;
+  if (look() >= 'a' && look() <= 'z') {
+    SpecialSubKind Kind;
     switch (look()) {
     case 'a':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::allocator);
+      Kind = SpecialSubKind::allocator;
       break;
     case 'b':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::basic_string);
-      break;
-    case 's':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::string);
-      break;
-    case 'i':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::istream);
-      break;
-    case 'o':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::ostream);
+      Kind = SpecialSubKind::basic_string;
       break;
     case 'd':
-      ++First;
-      SpecialSub = make<SpecialSubstitution>(SpecialSubKind::iostream);
+      Kind = SpecialSubKind::iostream;
+      break;
+    case 'i':
+      Kind = SpecialSubKind::istream;
+      break;
+    case 'o':
+      Kind = SpecialSubKind::ostream;
+      break;
+    case 's':
+      Kind = SpecialSubKind::string;
       break;
     default:
       return nullptr;
     }
+    ++First;
+    auto *SpecialSub = make<SpecialSubstitution>(Kind);
     if (!SpecialSub)
       return nullptr;
+
     // Itanium C++ ABI 5.1.2: If a name that would use a built-in <substitution>
     // has ABI tags, the tags are appended to the substitution; the result is a
     // substitutable component.

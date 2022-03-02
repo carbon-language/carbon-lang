@@ -23,6 +23,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/FileSpec.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/StreamString.h"
 
@@ -58,7 +59,7 @@ void PlatformRemoteMacOSX::Terminate() {
 
 PlatformSP PlatformRemoteMacOSX::CreateInstance(bool force,
                                                 const ArchSpec *arch) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PLATFORM));
+  Log *log = GetLog(LLDBLog::Platform);
   if (log) {
     const char *arch_name;
     if (arch && arch->GetArchitectureName())
@@ -127,7 +128,7 @@ PlatformSP PlatformRemoteMacOSX::CreateInstance(bool force,
 std::vector<ArchSpec> PlatformRemoteMacOSX::GetSupportedArchitectures() {
   // macOS for ARM64 support both native and translated x86_64 processes
   std::vector<ArchSpec> result;
-  ARMGetSupportedArchitectures(result);
+  ARMGetSupportedArchitectures(result, llvm::Triple::MacOSX);
 
   // We can't use x86GetSupportedArchitectures() because it uses
   // the system architecture for some of its return values and also

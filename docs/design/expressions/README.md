@@ -11,12 +11,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Precedence](#precedence)
 -   [Names](#names)
     -   [Unqualified names](#unqualified-names)
     -   [Qualified names and member access](#qualified-names-and-member-access)
 -   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -33,6 +36,93 @@ fn Foo(a: i32*) -> i32 {
 
 Here, the parameter type `i32*`, the return type `i32`, and the operand `*a` of
 the `return` statement are all expressions.
+
+## Precedence
+
+Expressions are interpreted based on a partial
+[precedence ordering](https://en.wikipedia.org/wiki/Order_of_operations).
+Expression components which lack a relative ordering must be disambiguated by
+the developer, for example by adding parentheses; otherwise, the expression will
+be invalid due to ambiguity. Precedence orderings will only be added when it's
+reasonable to expect most developers to understand the precedence without
+parentheses.
+
+The precedence diagram is defined thusly:
+
+```mermaid
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+graph BT
+    parens["(...)"]
+
+    braces["{...}"]
+    click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
+
+    unqualified_name["x"]
+    click unqualified_name "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
+
+    member_access>"x.y<br>
+                    x.(...)"]
+    click member_access "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
+
+    as["x as T"]
+    click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
+
+    not["not x"]
+    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    comparison["x == y<br>
+                x != y<br>
+                x < y<br>
+                x <= y<br>
+                x > y<br>
+                x >= y"]
+    click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
+
+    and>"x and y"]
+    click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    or>"x or y"]
+    click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    if>"if x then y else z"]
+    click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
+
+    expressionEnd["x;"]
+
+    member_access -> parens & braces & unqualified_name
+    as & not --> member_access
+    comparison --> as
+    and & or --> comparison & not
+    if & expressionEnd --> and & or
+```
+
+The diagram's attributes are:
+
+-   Each node represents a precedence group.
+
+-   When an expression is composed from different precedence groups, the
+    interpretation is determined by the precedence edges:
+
+    -   A precedence edge A --> B means that A is lower precedence than B, so A
+        can contain B without parentheses. For example, `or --> not` means that
+        `not x or y` is treated as `(not x) or y`.
+
+    -   Precedence edges are transitive. For example, `or --> == --> as` means
+        that `or` is lower precedence than `as`.
+
+-   When an expression is composed from a single precedence group, the
+    interpretation is determined by the
+    [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
+    precedence group:
+
+    ```mermaid
+    graph TD
+        non["Non-associative"]
+        left>"Left associative"]
+    ```
+
+    -   For example, `+` and `-` are left-associative and in the same precedence
+        group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
 
 ## Names
 
@@ -111,12 +201,18 @@ fn Q(x: X) { x.(I.F)(); }
 
 Most expressions are modeled as operators:
 
-| Category   | Operator                      | Syntax    | Function                                                            |
-| ---------- | ----------------------------- | --------- | ------------------------------------------------------------------- |
-| Conversion | [`as`](as_expressions.md)     | `x as T`  | Converts the value `x` to the type `T`.                             |
-| Logical    | [`and`](logical_operators.md) | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`. |
-| Logical    | [`or`](logical_operators.md)  | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.  |
-| Logical    | [`not`](logical_operators.md) | `not x`   | Logical NOT: `true` if the operand is `false`.                      |
+| Category   | Operator                        | Syntax    | Function                                                              |
+| ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
+| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
+| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
+| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
+| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
+| Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
+| Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
+| Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
+| Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
+| Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
+| Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
 
 ## Conversions and casts
 
@@ -146,3 +242,20 @@ fn Run(args: Span(StringView)) {
 ```
 
 `if` expressions are analogous to `?:` ternary expressions in C and C++.
+
+## Alternatives considered
+
+Other expression documents will list more references; this lists references not
+noted elsewhere.
+
+-   [Total order](/proposals/p0555.md#total-order)
+-   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)
+-   [Require less than a partial order](/proposals/p0555.md#require-less-than-a-partial-order)
+
+## References
+
+Other expression documents will list more references; this lists references not
+noted elsewhere.
+
+-   Proposal
+    [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555).

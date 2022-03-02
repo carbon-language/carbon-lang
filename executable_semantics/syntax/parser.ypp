@@ -110,8 +110,8 @@
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
-%type <std::vector<Nonnull<GenericBinding*>>> deduced_params
-%type <std::vector<Nonnull<GenericBinding*>>> deduced_param_list
+%type <std::vector<Nonnull<AstNode*>>> deduced_params
+%type <std::vector<Nonnull<AstNode*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <BisonWrap<ReturnTerm>> return_term
@@ -122,9 +122,8 @@
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
 %type <std::string> binding_lhs
+%type <std::optional<Nonnull<BindingPattern*>>> receiver
 %type <Nonnull<BindingPattern*>> variable_declaration
-%type <Nonnull<Member*>> member
-%type <std::vector<Nonnull<Member*>>> member_list
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
 %type <Nonnull<Pattern*>> paren_pattern
@@ -141,6 +140,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  AMPERSAND
   AND
   API
   ARROW
@@ -214,7 +214,7 @@
 %nonassoc EQUAL_EQUAL
 %left PLUS MINUS
 %left BINARY_STAR
-%precedence NOT UNARY_MINUS PREFIX_STAR
+%precedence NOT UNARY_MINUS PREFIX_STAR AMPERSAND
 // We need to give the `UNARY_STAR` token a precedence, rather than overriding
 // the precedence of the `expression UNARY_STAR` rule below, because bison
 // compares the precedence of the final token (for a shift) to the precedence
@@ -365,6 +365,12 @@ expression:
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
           context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$2}));
+    }
+| AMPERSAND expression
+    {
+      $$ = arena->New<PrimitiveOperatorExpression>(
+          context.source_loc(), Operator::AddressOf,
           std::vector<Nonnull<Expression*>>({$2}));
     }
 | expression tuple
@@ -646,10 +652,10 @@ generic_binding:
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | generic_binding
     {
-      $$ = std::vector<Nonnull<GenericBinding*>>();
+      $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
 | generic_binding COMMA deduced_param_list
@@ -657,39 +663,43 @@ deduced_param_list:
       $$ = $3;
       $$.push_back($1);
     }
+| variable_declaration
+    {
+      $$ = std::vector<Nonnull<AstNode*>>();
+      $$.push_back($1);
+    }
+| variable_declaration COMMA deduced_param_list
+    {
+      $$ = $3;
+      $$.push_back($1);
+    }
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<Nonnull<GenericBinding*>>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
+receiver:
+  // Empty
+    { $$ = std::nullopt; }
+| LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
+    { $$ = $2; }
+;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_term block
+  FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
       $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           $6);
+                                           $6, $7);
     }
-| FN identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
+| FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
       $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           std::nullopt);
+                                           $6, std::nullopt);
     }
 ;
 variable_declaration: identifier COLON pattern
     { $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3); }
-;
-member: VAR variable_declaration SEMICOLON
-    { $$ = arena->New<FieldMember>(context.source_loc(), $2); }
-;
-member_list:
-  // Empty
-    { $$ = {}; }
-| member_list member
-    {
-      $$ = $1;
-      $$.push_back($2);
-    }
 ;
 alternative:
   identifier tuple
@@ -721,10 +731,15 @@ alternative_list_contents:
 declaration:
   function_declaration
     { $$ = $1; }
-| CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
+| CLASS identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $4); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
+| VAR variable_declaration SEMICOLON
+    {
+      $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
+                                           std::nullopt);
+    }
 | VAR variable_declaration EQUAL expression SEMICOLON
     { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4); }
 ;

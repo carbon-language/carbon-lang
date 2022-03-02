@@ -10,14 +10,14 @@
 #ifndef _LIBCPP___FORMAT_FORMAT_STRING_H
 #define _LIBCPP___FORMAT_FORMAT_STRING_H
 
+#include <__assert>
 #include <__config>
-#include <__debug>
 #include <__format/format_error.h>
 #include <cstddef>
 #include <cstdint>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD

@@ -160,7 +160,6 @@ struct Configuration {
   bool compressDebugSections;
   bool cref;
   std::vector<std::pair<llvm::GlobPattern, uint64_t>> deadRelocInNonAlloc;
-  bool defineCommon;
   bool demangle = true;
   bool dependentLibraries;
   bool disableVerify;
@@ -312,6 +311,9 @@ struct Configuration {
   // if that's true.)
   bool isMips64EL;
 
+  // True if we need to reserve two .got entries for local-dynamic TLS model.
+  bool needsTlsLd = false;
+
   // True if we need to set the DF_STATIC_TLS flag to an output file, which
   // works as a hint to the dynamic loader that the shared object contains code
   // compiled with the initial-exec TLS model.
@@ -352,12 +354,7 @@ static inline ArrayRef<VersionDefinition> namedVersionDefs() {
   return llvm::makeArrayRef(config->versionDefinitions).slice(2);
 }
 
-static inline void errorOrWarn(const Twine &msg) {
-  if (!config->noinhibitExec)
-    error(msg);
-  else
-    warn(msg);
-}
+void errorOrWarn(const Twine &msg);
 
 static inline void internalLinkerError(StringRef loc, const Twine &msg) {
   errorOrWarn(loc + "internal linker error: " + msg + "\n" +

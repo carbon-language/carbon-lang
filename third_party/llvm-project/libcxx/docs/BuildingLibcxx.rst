@@ -443,10 +443,10 @@ The following options allow building libc++ for a different ABI version.
   with other libc++ versions.
 
   .. warning::
-    When providing a custom namespace, it's the users responsibility to ensure the name won't cause
+    When providing a custom namespace, it's the user's responsibility to ensure the name won't cause
     conflicts with other names defined by libc++, both now and in the future. In particular, inline
-    namespaces of the form ``__[0-9]+`` are strictly reserved by libc++ and may not be used by users.
-    Doing otherwise could cause conflicts and hinder libc++ ABI evolution.
+    namespaces of the form ``__[0-9]+`` could cause conflicts with future versions of the library,
+    and so should be avoided.
 
 .. option:: LIBCXX_ABI_DEFINES:STRING
 
@@ -523,8 +523,8 @@ We can now run CMake:
 
 .. code-block:: bash
 
-  $ cmake -G Ninja -S llvm -B build           \
-    -DLLVM_ENABLE_PROJECTS="libcxx"           \
+  $ cmake -G Ninja -S runtimes -B build       \
+    -DLLVM_ENABLE_RUNTIMES="libcxx"           \
     -DLIBCXX_CXX_ABI=libstdc++                \
     -DLIBCXX_CXX_ABI_INCLUDE_PATHS="/usr/include/c++/4.7/;/usr/include/c++/4.7/x86_64-linux-gnu/"
   $ ninja -C build install-cxx
@@ -549,8 +549,8 @@ We can now run CMake like:
 
 .. code-block:: bash
 
-  $ cmake -G Ninja -S llvm -B build                                   \
-          -DLLVM_ENABLE_PROJECTS="libcxx"                             \
+  $ cmake -G Ninja -S runtimes -B build                               \
+          -DLLVM_ENABLE_RUNTIMES="libcxx"                             \
           -DLIBCXX_CXX_ABI=libcxxrt                                   \
           -DLIBCXX_CXX_ABI_INCLUDE_PATHS=path/to/libcxxrt-sources/src
   $ ninja -C build install-cxx

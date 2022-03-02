@@ -84,6 +84,7 @@ Clang-Tidy Checks
    `bugprone-posix-return <bugprone-posix-return.html>`_, "Yes"
    `bugprone-redundant-branch-condition <bugprone-redundant-branch-condition.html>`_, "Yes"
    `bugprone-reserved-identifier <bugprone-reserved-identifier.html>`_, "Yes"
+   `bugprone-shared-ptr-array-mismatch <bugprone-shared-ptr-array-mismatch.html>`_, "Yes"
    `bugprone-signal-handler <bugprone-signal-handler.html>`_,
    `bugprone-signed-char-misuse <bugprone-signed-char-misuse.html>`_,
    `bugprone-sizeof-container <bugprone-sizeof-container.html>`_,
@@ -213,7 +214,7 @@ Clang-Tidy Checks
    `llvmlibc-restrict-system-libc-headers <llvmlibc-restrict-system-libc-headers.html>`_, "Yes"
    `misc-definitions-in-headers <misc-definitions-in-headers.html>`_, "Yes"
    `misc-misleading-bidirectional <misc-misleading-bidirectional.html>`_,
-   `misc-misleading-identifier <misc-mileading-identifier.html>`_,
+   `misc-misleading-identifier <misc-misleading-identifier.html>`_,
    `misc-misplaced-const <misc-misplaced-const.html>`_,
    `misc-new-delete-overloads <misc-new-delete-overloads.html>`_,
    `misc-no-recursion <misc-no-recursion.html>`_,
@@ -290,10 +291,12 @@ Clang-Tidy Checks
    `readability-avoid-const-params-in-decls <readability-avoid-const-params-in-decls.html>`_, "Yes"
    `readability-braces-around-statements <readability-braces-around-statements.html>`_, "Yes"
    `readability-const-return-type <readability-const-return-type.html>`_, "Yes"
+   `readability-container-contains <readability-container-contains.html>`_, "Yes"
    `readability-container-data-pointer <readability-container-data-pointer.html>`_, "Yes"
    `readability-container-size-empty <readability-container-size-empty.html>`_, "Yes"
    `readability-convert-member-functions-to-static <readability-convert-member-functions-to-static.html>`_, "Yes"
    `readability-delete-null-pointer <readability-delete-null-pointer.html>`_, "Yes"
+   `readability-duplicate-include <readability-duplicate-include.html>`_, "Yes"
    `readability-else-after-return <readability-else-after-return.html>`_, "Yes"
    `readability-function-cognitive-complexity <readability-function-cognitive-complexity.html>`_,
    `readability-function-size <readability-function-size.html>`_,

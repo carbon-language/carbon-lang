@@ -1576,6 +1576,12 @@ def f2l : OutPatFrag<(ops node:$exp),
 def l2f : OutPatFrag<(ops node:$exp),
                      (EXTRACT_SUBREG $exp, sub_f32)>;
 
+// Zero out subregisters.
+def zero_i32 : OutPatFrag<(ops node:$expr),
+                          (ANDrm $expr, 32)>;
+def zero_f32 : OutPatFrag<(ops node:$expr),
+                          (ANDrm $expr, !add(32, 64))>;
+
 // Small immediates.
 def : Pat<(i32 simm7:$val), (EXTRACT_SUBREG (ORim (LO7 $val), 0), sub_i32)>;
 def : Pat<(i64 simm7:$val), (ORim (LO7 $val), 0)>;
@@ -2286,6 +2292,28 @@ def : Pat<(i64 (and i64:$val, 0xffffffff)),
 class IsVLVT<int OpIdx> : SDTCisVT<OpIdx,i32>;
 def vec_broadcast       : SDNode<"VEISD::VEC_BROADCAST", SDTypeProfile<1, 2,
                                  [SDTCisVec<0>, IsVLVT<2>]>>;
+
+///// Packed mode Support /////
+// unpack the lo part of this vector
+def vec_unpack_lo   : SDNode<"VEISD::VEC_UNPACK_LO", SDTypeProfile<1, 2,
+                             [SDTCisVec<0>, SDTCisVec<1>, IsVLVT<2>]>>;
+// unpack the hipart of this vector
+def vec_unpack_hi   : SDNode<"VEISD::VEC_UNPACK_HI", SDTypeProfile<1, 2,
+                             [SDTCisVec<0>, SDTCisVec<1>, IsVLVT<2>]>>;
+// re-pack v256i32, v256f32 back into tone v512.32
+def vec_pack        : SDNode<"VEISD::VEC_PACK", SDTypeProfile<1, 3,
+                             [SDTCisVec<0>, SDTCisVec<1>, SDTCisVec<2>,
+                              SDTCisSameNumEltsAs<1,2>, IsVLVT<3>]>>;
+
+// replicate lower 32bit to upper 32bit (f32 scalar replication).
+def repl_f32            : SDNode<"VEISD::REPL_F32",
+                            SDTypeProfile<1, 1,
+                              [SDTCisInt<0>, SDTCisFP<1>]>>;
+// replicate upper 32bit to lower 32 bit (i32 scalar replication).
+def repl_i32            : SDNode<"VEISD::REPL_I32",
+                            SDTypeProfile<1, 1,
+                              [SDTCisInt<0>, SDTCisInt<1>]>>;
+
 
 // Whether this is an all-true mask (assuming undef-bits above VL are all-true).
 def true_mask           : PatLeaf<

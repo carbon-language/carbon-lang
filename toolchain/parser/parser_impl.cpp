@@ -601,7 +601,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
+  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
 
   auto add_error_function_node = [&] {
@@ -663,7 +663,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   // `var` pattern [= expression] `;`
-  TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
+  TokenizedBuffer::Token var_token = Consume(TokenKind::Var());
   auto start = GetSubtreeStartPosition();
 
   RETURN_IF_STACK_LIMITED(AddNode(ParseNodeKind::VariableDeclaration(),
@@ -706,9 +706,9 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
-    case TokenKind::FnKeyword():
+    case TokenKind::Fn():
       return ParseFunctionDeclaration();
-    case TokenKind::VarKeyword():
+    case TokenKind::Var():
       return ParseVariableDeclaration();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
@@ -804,10 +804,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         }
 
         // Work out the kind of this element
-        Kind elem_kind =
-            (NextTokenIs(TokenKind::Equal())
-                 ? Value
-                 : NextTokenIs(TokenKind::Colon()) ? Type : Unknown);
+        Kind elem_kind = (NextTokenIs(TokenKind::Equal())   ? Value
+                          : NextTokenIs(TokenKind::Colon()) ? Type
+                                                            : Unknown);
         if (elem_kind == Unknown || (kind != Unknown && elem_kind != kind)) {
           return diagnose_invalid_syntax();
         }
@@ -913,6 +912,7 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
   llvm::Optional<Node> expression = ParsePrimaryExpression();
 
+  TokenizedBuffer::TokenIterator last_position = position_;
   while (true) {
     switch (NextTokenKind()) {
       case TokenKind::Period():
@@ -924,10 +924,16 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
         expression = ParseCallExpression(start, !expression);
         break;
 
-      default: {
+      default:
         return expression;
-      }
     }
+    // This is subject to an infinite loop if a child call fails, so monitor for
+    // stalling.
+    if (last_position == position_) {
+      CHECK(expression == llvm::None);
+      return expression;
+    }
+    last_position = position_;
   }
 }
 
@@ -1178,14 +1184,14 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
-  auto if_token = Consume(TokenKind::IfKeyword());
-  auto cond = ParseParenCondition(TokenKind::IfKeyword());
+  auto if_token = Consume(TokenKind::If());
+  auto cond = ParseParenCondition(TokenKind::If());
   auto then_case = ParseCodeBlock();
   bool else_has_errors = false;
-  if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
+  if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
                               ParseNodeKind::IfStatementElse())) {
     // 'else if' is permitted as a special case.
-    if (NextTokenIs(TokenKind::IfKeyword())) {
+    if (NextTokenIs(TokenKind::If())) {
       else_has_errors = !ParseIfStatement();
     } else {
       else_has_errors = !ParseCodeBlock();
@@ -1198,8 +1204,8 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
 auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
   RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
-  auto while_token = Consume(TokenKind::WhileKeyword());
-  auto cond = ParseParenCondition(TokenKind::WhileKeyword());
+  auto while_token = Consume(TokenKind::While());
+  auto cond = ParseParenCondition(TokenKind::While());
   auto body = ParseCodeBlock();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
                  /*has_error=*/!cond || !body);
@@ -1210,7 +1216,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
     -> llvm::Optional<Node> {
   RETURN_IF_STACK_LIMITED(llvm::None);
   auto keyword_kind = NextTokenKind();
-  assert(keyword_kind.IsKeyword());
+  CHECK(keyword_kind.IsKeyword());
 
   auto start = GetSubtreeStartPosition();
   auto keyword = Consume(keyword_kind);
@@ -1235,24 +1241,24 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
   RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
-    case TokenKind::VarKeyword():
+    case TokenKind::Var():
       return ParseVariableDeclaration();
 
-    case TokenKind::IfKeyword():
+    case TokenKind::If():
       return ParseIfStatement();
 
-    case TokenKind::WhileKeyword():
+    case TokenKind::While():
       return ParseWhileStatement();
 
-    case TokenKind::ContinueKeyword():
+    case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),
                                    KeywordStatementArgument::None);
 
-    case TokenKind::BreakKeyword():
+    case TokenKind::Break():
       return ParseKeywordStatement(ParseNodeKind::BreakStatement(),
                                    KeywordStatementArgument::None);
 
-    case TokenKind::ReturnKeyword():
+    case TokenKind::Return():
       return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
                                    KeywordStatementArgument::Optional);
 

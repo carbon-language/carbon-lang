@@ -154,7 +154,9 @@ auto Interpreter::EvalPrim(Operator op,
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
     case Operator::Deref:
-      FATAL() << "dereference not implemented yet";
+      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
+    case Operator::AddressOf:
+      return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
   }
 }
 
@@ -313,13 +315,28 @@ void Interpreter::StepLvalue() {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::PrimitiveOperatorExpression: {
+      const PrimitiveOperatorExpression& op =
+          cast<PrimitiveOperatorExpression>(exp);
+      if (op.op() != Operator::Deref) {
+        FATAL() << "Can't treat primitive operator expression as lvalue: "
+                << exp;
+      }
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(op.arguments()[0]));
+      } else {
+        const PointerValue& res = cast<PointerValue>(*act.results()[0]);
+        return todo_.FinishAction(arena_->New<LValue>(res.address()));
+      }
+      break;
+    }
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::CallExpression:
-    case ExpressionKind::PrimitiveOperatorExpression:
     case ExpressionKind::IntTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
@@ -340,6 +357,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
@@ -509,7 +528,11 @@ void Interpreter::StepExp() {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
-        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        if (op.op() == Operator::AddressOf) {
+          return todo_.Spawn(std::make_unique<LValAction>(arg));
+        } else {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        }
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
@@ -552,6 +575,23 @@ void Interpreter::StepExp() {
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*function.body()),
                 std::move(function_scope));
+          }
+          case Value::Kind::BoundMethodValue: {
+            const BoundMethodValue& m =
+                cast<BoundMethodValue>(*act.results()[0]);
+            const FunctionDeclaration& method = m.declaration();
+            Nonnull<const Value*> converted_args = Convert(
+                act.results()[1], &method.param_pattern().static_type());
+            RuntimeScope method_scope(&heap_);
+            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                               exp.source_loc(), &method_scope));
+            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                               exp.source_loc(), &method_scope));
+            CHECK(method.body().has_value())
+                << "Calling a method that's missing a body";
+            return todo_.Spawn(
+                std::make_unique<StatementAction>(*method.body()),
+                std::move(method_scope));
           }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
@@ -908,11 +948,15 @@ void Interpreter::StepDeclaration() {
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
-      if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&var_decl.initializer()));
+      if (var_decl.has_initializer()) {
+        if (act.pos() == 0) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&var_decl.initializer()));
+        } else {
+          todo_.Initialize(&var_decl.binding(), act.results()[0]);
+          return todo_.FinishAction();
+        }
       } else {
-        todo_.Initialize(&var_decl.binding(), act.results()[0]);
         return todo_.FinishAction();
       }
     }

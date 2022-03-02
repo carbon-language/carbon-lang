@@ -14,14 +14,12 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import os
 import re
-import shutil
 import subprocess
-from pathlib import Path
-import tempfile
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
+
+import scripts_utils  # type: ignore
 
 
 # Maps external repository names to a method translating bazel labels to file
@@ -43,44 +41,6 @@ class Rule(NamedTuple):
     # For genrules:
     # The outs attribute, as relative paths to the file.
     outs: Set[str]
-
-
-def install_buildozer() -> str:
-    # 4.2.4
-    buildozer_sha = "cdedcc0318b9c8919afb0167e30c1588fc990ffc"
-    args = [
-        "go",
-        "install",
-        f"github.com/bazelbuild/buildtools/buildozer@{buildozer_sha}",
-    ]
-    # Install to a cache.
-    env = os.environ.copy()
-    cache_dir = Path(tempfile.gettempdir()).joinpath("carbon-pre-commit-cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    env["GOPATH"] = str(cache_dir)
-    if "GOBIN" in env:
-        del env["GOBIN"]
-    subprocess.check_call(args, env=env)
-    return str(cache_dir.joinpath("bin", "buildozer"))
-
-
-def locate_bazel() -> str:
-    """Returns the bazel command.
-
-    We use the `BAZEL` environment variable if present. If not, then we try to
-    use `bazelisk` and then `bazel`.
-    """
-    bazel = os.environ.get("BAZEL")
-    if bazel:
-        return bazel
-
-    if shutil.which("bazelisk"):
-        return "bazelisk"
-
-    if shutil.which("bazel"):
-        return "bazel"
-
-    exit("Unable to run Bazel")
 
 
 def remap_file(label: str) -> str:
@@ -109,7 +69,7 @@ def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
     return results
 
 
-def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
+def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
     """Queries the specified targets, returning the found rules.
 
     keep_going will be set to true for external repositories, where sometimes we
@@ -118,7 +78,7 @@ def get_rules(targets: str, keep_going: bool) -> Dict[str, Rule]:
     The return maps rule names to rule data.
     """
     args = [
-        "bazel",
+        bazel,
         "query",
         "--output=xml",
         f"kind('(cc_binary|cc_library|cc_test|genrule)', set({targets}))",
@@ -216,15 +176,14 @@ def get_missing_deps(
 
 
 def main() -> None:
-    # Change the working directory to the repository root so that the remaining
-    # operations reliably operate relative to that root.
-    os.chdir(Path(__file__).parent.parent)
+    scripts_utils.chdir_repo_root()
+    bazel = scripts_utils.locate_bazel()
 
     print("Querying bazel for Carbon targets...")
-    carbon_rules = get_rules("//...", False)
+    carbon_rules = get_rules(bazel, "//...", False)
     print("Querying bazel for external targets...")
     external_repo_query = " ".join([f"{repo}//..." for repo in EXTERNAL_REPOS])
-    external_rules = get_rules(external_repo_query, True)
+    external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
     header_to_rule_map: Dict[str, Set[str]] = {}
@@ -252,7 +211,7 @@ def main() -> None:
 
     if all_missing_deps:
         print("Checking buildozer availability...")
-        buildozer = install_buildozer()
+        buildozer = scripts_utils.get_release(scripts_utils.Release.BUILDOZER)
 
         print("Fixing dependencies...")
         SEPARATOR = "\n- "

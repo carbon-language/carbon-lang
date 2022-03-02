@@ -564,7 +564,7 @@ static bool isLibCallInTailPosition(MachineInstr &MI,
   // the return. Ignore NoAlias and NonNull because they don't affect the
   // call sequence.
   AttributeList CallerAttrs = F.getAttributes();
-  if (AttrBuilder(F.getContext(), CallerAttrs, AttributeList::ReturnIndex)
+  if (AttrBuilder(F.getContext(), CallerAttrs.getRetAttrs())
           .removeAttribute(Attribute::NoAlias)
           .removeAttribute(Attribute::NonNull)
           .hasAttributes())
@@ -1677,7 +1677,7 @@ LegalizerHelper::widenScalarUnmergeValues(MachineInstr &MI, unsigned TypeIdx,
 
     // Widen SrcTy to WideTy. This does not affect the result, but since the
     // user requested this size, it is probably better handled than SrcTy and
-    // should reduce the total number of legalization artifacts
+    // should reduce the total number of legalization artifacts.
     if (WideTy.getSizeInBits() > SrcTy.getSizeInBits()) {
       SrcTy = WideTy;
       SrcReg = MIRBuilder.buildAnyExt(WideTy, SrcReg).getReg(0);
@@ -4096,13 +4096,14 @@ LegalizerHelper::reduceLoadStoreWidth(GLoadStore &LdStMI, unsigned TypeIdx,
   // is a load, return the new registers in ValRegs. For a store, each elements
   // of ValRegs should be PartTy. Returns the next offset that needs to be
   // handled.
+  bool isBigEndian = MIRBuilder.getDataLayout().isBigEndian();
   auto MMO = LdStMI.getMMO();
   auto splitTypePieces = [=](LLT PartTy, SmallVectorImpl<Register> &ValRegs,
-                             unsigned Offset) -> unsigned {
+                             unsigned NumParts, unsigned Offset) -> unsigned {
     MachineFunction &MF = MIRBuilder.getMF();
     unsigned PartSize = PartTy.getSizeInBits();
     for (unsigned Idx = 0, E = NumParts; Idx != E && Offset < TotalSize;
-         Offset += PartSize, ++Idx) {
+         ++Idx) {
       unsigned ByteOffset = Offset / 8;
       Register NewAddrReg;
 
@@ -4118,16 +4119,19 @@ LegalizerHelper::reduceLoadStoreWidth(GLoadStore &LdStMI, unsigned TypeIdx,
       } else {
         MIRBuilder.buildStore(ValRegs[Idx], NewAddrReg, *NewMMO);
       }
+      Offset = isBigEndian ? Offset - PartSize : Offset + PartSize;
     }
 
     return Offset;
   };
 
-  unsigned HandledOffset = splitTypePieces(NarrowTy, NarrowRegs, 0);
+  unsigned Offset = isBigEndian ? TotalSize - NarrowTy.getSizeInBits() : 0;
+  unsigned HandledOffset =
+      splitTypePieces(NarrowTy, NarrowRegs, NumParts, Offset);
 
   // Handle the rest of the register if this isn't an even type breakdown.
   if (LeftoverTy.isValid())
-    splitTypePieces(LeftoverTy, NarrowLeftoverRegs, HandledOffset);
+    splitTypePieces(LeftoverTy, NarrowLeftoverRegs, NumLeftover, HandledOffset);
 
   if (IsLoad) {
     insertParts(ValReg, ValTy, NarrowTy, NarrowRegs,

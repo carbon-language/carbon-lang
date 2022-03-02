@@ -61,11 +61,11 @@ namespace std {
 
 */
 
+#include <__assert>
 #include <__bit/bit_cast.h>
 #include <__bit/byteswap.h>
 #include <__bits> // __libcpp_clz
 #include <__config>
-#include <__debug>
 #include <limits>
 #include <type_traits>
 #include <version>
@@ -78,7 +78,7 @@ namespace std {
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_PUSH_MACROS
