@@ -28,8 +28,28 @@ auto StructValue::FindField(const std::string& name) const
 }
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
-                      const std::string& f, SourceLocation source_loc)
-    -> Nonnull<const Value*> {
+                      const FieldPath::Component& field,
+                      SourceLocation source_loc) -> Nonnull<const Value*> {
+  const std::string& f = field.name();
+
+  if (field.witness().has_value()) {
+    Nonnull<const Witness*> witness = *field.witness();
+    switch (witness->kind()) {
+      case Value::Kind::Witness: {
+        if (std::optional<Nonnull<const Declaration*>> mem_decl =
+                FindMember(f, witness->declaration().members());
+            mem_decl.has_value()) {
+          const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
+          return arena->New<BoundMethodValue>(&fun_decl, v);
+        } else {
+          FATAL_COMPILATION_ERROR(source_loc)
+              << "member " << f << " not in " << *witness;
+        }
+      }
+      default:
+        FATAL() << "expected Witness, not " << *witness;
+    }
+  }
   switch (v->kind()) {
     case Value::Kind::StructValue: {
       std::optional<Nonnull<const Value*>> field =
@@ -51,8 +71,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v
-                                          << " or its class " << class_type;
+          FATAL_RUNTIME_ERROR(source_loc)
+              << "member " << f << " not in " << *v << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
@@ -90,17 +110,18 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc) const -> Nonnull<const Value*> {
   Nonnull<const Value*> value(this);
-  for (const std::string& field : path.components_) {
+  for (const FieldPath::Component& field : path.components_) {
     value = GetMember(arena, value, field, source_loc);
   }
   return value;
 }
 
-static auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
-                         std::vector<std::string>::const_iterator path_begin,
-                         std::vector<std::string>::const_iterator path_end,
-                         Nonnull<const Value*> field_value,
-                         SourceLocation source_loc) -> Nonnull<const Value*> {
+static auto SetFieldImpl(
+    Nonnull<Arena*> arena, Nonnull<const Value*> value,
+    std::vector<FieldPath::Component>::const_iterator path_begin,
+    std::vector<FieldPath::Component>::const_iterator path_end,
+    Nonnull<const Value*> field_value, SourceLocation source_loc)
+    -> Nonnull<const Value*> {
   if (path_begin == path_end) {
     return field_value;
   }
@@ -109,11 +130,11 @@ static auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
       std::vector<NamedValue> elements = cast<StructValue>(*value).elements();
       auto it = std::find_if(elements.begin(), elements.end(),
                              [path_begin](const NamedValue& element) {
-                               return element.name == *path_begin;
+                               return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
         FATAL_RUNTIME_ERROR(source_loc)
-            << "field " << *path_begin << " not in " << *value;
+            << "field " << (*path_begin).name() << " not in " << *value;
       }
       it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
                                field_value, source_loc);
@@ -127,10 +148,10 @@ static auto SetFieldImpl(Nonnull<Arena*> arena, Nonnull<const Value*> value,
       std::vector<Nonnull<const Value*>> elements =
           cast<TupleValue>(*value).elements();
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
-      int index = std::stoi(*path_begin);
+      int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "index " << *path_begin << " out of range in " << *value;
+        FATAL_RUNTIME_ERROR(source_loc) << "index " << (*path_begin).name()
+                                        << " out of range in " << *value;
       }
       elements[index] = SetFieldImpl(arena, elements[index], path_begin + 1,
                                      path_end, field_value, source_loc);
@@ -159,8 +180,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BindingPlaceholderValue: {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
       out << "Placeholder<";
-      if (placeholder.named_entity().has_value()) {
-        out << (*placeholder.named_entity()).name();
+      if (placeholder.value_node().has_value()) {
+        out << (*placeholder.value_node());
       } else {
         out << "_";
       }
@@ -266,6 +287,17 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "class " << class_type.declaration().name();
       break;
     }
+    case Value::Kind::InterfaceType: {
+      const InterfaceType& iface_type = cast<InterfaceType>(*this);
+      out << "interface " << iface_type.declaration().name();
+      break;
+    }
+    case Value::Kind::Witness: {
+      const auto& witness = cast<Witness>(*this);
+      out << "impl " << *witness.declaration().impl_type() << " as "
+          << witness.declaration().interface();
+      break;
+    }
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -287,6 +319,14 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TypeOfClassType:
       out << "typeof("
           << cast<TypeOfClassType>(*this).class_type().declaration().name()
+          << ")";
+      break;
+    case Value::Kind::TypeOfInterfaceType:
+      out << "typeof("
+          << cast<TypeOfInterfaceType>(*this)
+                 .interface_type()
+                 .declaration()
+                 .name()
           << ")";
       break;
     case Value::Kind::TypeOfChoiceType:
@@ -364,6 +404,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::NominalClassType:
       return cast<NominalClassType>(*t1).declaration().name() ==
              cast<NominalClassType>(*t2).declaration().name();
+    case Value::Kind::InterfaceType:
+      return cast<InterfaceType>(*t1).declaration().name() ==
+             cast<InterfaceType>(*t2).declaration().name();
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
@@ -391,13 +434,34 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfClassType:
       return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
                        &cast<TypeOfClassType>(*t2).class_type());
+    case Value::Kind::TypeOfInterfaceType:
+      return TypeEqual(&cast<TypeOfInterfaceType>(*t1).interface_type(),
+                       &cast<TypeOfInterfaceType>(*t2).interface_type());
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
-    default:
+    case Value::Kind::IntValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::ContinuationValue:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
               << *t2;
+    case Value::Kind::Witness:
+      FATAL() << "TypeEqual: unexpected Witness";
+      break;
+    case Value::Kind::AutoType:
+      FATAL() << "TypeEqual: unexpected AutoType";
+      break;
   }
 }
 
@@ -468,11 +532,14 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::AutoType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
@@ -533,29 +600,21 @@ auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
   return field_types;
 }
 
-auto NominalClassType::FindMember(const std::string& name) const
+auto FindMember(const std::string& name,
+                llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
-  for (const auto& member : declaration().members()) {
-    switch (member->kind()) {
-      case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
-          return &fun;
-        }
-        break;
-      }
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*member);
-        if (var.binding().name() == name) {
-          return &var;
-        }
-        break;
-      }
-      default:
-        break;
+  for (Nonnull<const Declaration*> member : members) {
+    if (std::optional<std::string> mem_name = GetName(*member);
+        mem_name.has_value()) {
+      if (*mem_name == name)
+        return member;
     }
   }
   return std::nullopt;
+}
+
+void ImplBinding::Print(llvm::raw_ostream& out) const {
+  out << "impl " << *type_var_ << " as " << *iface_;
 }
 
 }  // namespace Carbon
