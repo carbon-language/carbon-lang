@@ -36,7 +36,7 @@ void ActionStack::Start(std::unique_ptr<Action> action) {
   todo_.Push(std::move(action));
 }
 
-void ActionStack::Initialize(NamedEntityView named_entity,
+void ActionStack::Initialize(ValueNodeView named_entity,
                              Nonnull<const Value*> value) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
@@ -47,7 +47,7 @@ void ActionStack::Initialize(NamedEntityView named_entity,
   globals_->Initialize(named_entity, value);
 }
 
-auto ActionStack::ValueOfName(EntityView named_entity,
+auto ActionStack::ValueOfName(ValueNodeView named_entity,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
   if (std::optional<Nonnull<const Value*>> constant_value =

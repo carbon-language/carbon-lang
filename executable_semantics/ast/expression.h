@@ -123,20 +123,20 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
-  // Returns the NamedEntityView this identifier refers to. Cannot be called
+  // Returns the ValueNodeView this identifier refers to. Cannot be called
   // before name resolution.
-  auto named_entity() const -> const NamedEntityView& { return *named_entity_; }
+  auto named_entity() const -> const ValueNodeView& { return *named_entity_; }
 
   // Sets the value returned by named_entity. Can be called only once,
   // during name resolution.
-  void set_named_entity(NamedEntityView named_entity) {
+  void set_named_entity(ValueNodeView named_entity) {
     CHECK(!named_entity_.has_value());
     named_entity_ = std::move(named_entity);
   }
 
  private:
   std::string name_;
-  std::optional<NamedEntityView> named_entity_;
+  std::optional<ValueNodeView> named_entity_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -156,9 +156,9 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
-  // If `aggregate` has a generic type, returns the `ImplBinding` that identifies
-  // its witness table. Otherwise, returns `std::nullopt`.
-  // Should not be called before typechecking.
+  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
   auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
     return impl_;
   }
@@ -379,13 +379,13 @@ class CallExpression : public Expression {
   // Should not be called before typechecking, or if `function` is not
   // a generic function.
   auto impls() const
-      -> const std::map<Nonnull<const ImplBinding*>, EntityView>& {
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
     return impls_;
   }
 
   // Can only be called once, during typechecking.
   void set_impls(
-      const std::map<Nonnull<const ImplBinding*>, EntityView>& impls) {
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
     CHECK(impls_.empty());
     impls_ = impls;
   }
@@ -393,7 +393,7 @@ class CallExpression : public Expression {
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  std::map<Nonnull<const ImplBinding*>, EntityView> impls_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
 };
 
 class FunctionTypeLiteral : public Expression {

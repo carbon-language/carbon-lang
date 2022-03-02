@@ -14,6 +14,8 @@
 
 namespace Carbon {
 
+class Witness;
+
 // Given some initial Value, a FieldPath identifies a sub-Value within it,
 // in much the same way that a file path identifies a file within some
 // directory. FieldPaths are relative rather than absolute: the initial
@@ -42,7 +44,9 @@ class FieldPath {
 
     auto name() const -> const std::string& { return name_; }
 
-    auto witness() const -> std::optional<Nonnull<const Witness*>> { return witness_; }
+    auto witness() const -> std::optional<Nonnull<const Witness*>> {
+      return witness_;
+    }
 
     void Print(llvm::raw_ostream& out) const { out << name_; }
 

@@ -377,6 +377,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
+    case Value::Kind::ImplType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
@@ -584,7 +585,7 @@ void Interpreter::StepExp() {
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, impl_name] :
                  cast<CallExpression>(exp).impls()) {
-              EntityView named_ent(impl_bind);
+              ValueNodeView named_ent(impl_bind);
               auto impl_value = todo_.ValueOfName(impl_name, exp.source_loc());
               if (impl_value->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*impl_value);

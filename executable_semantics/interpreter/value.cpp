@@ -181,7 +181,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& placeholder = cast<BindingPlaceholderValue>(*this);
       out << "Placeholder<";
       if (placeholder.named_entity().has_value()) {
-        out << (*placeholder.named_entity()).name();
+        out << (*placeholder.named_entity());
       } else {
         out << "_";
       }
@@ -300,6 +300,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
+      break;
+    case Value::Kind::ImplType:
+      out << cast<ImplType>(*this).binding();
       break;
     case Value::Kind::VariableType:
       out << cast<VariableType>(*this).binding().name();
@@ -431,6 +434,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
              &cast<VariableType>(*t2).binding();
+    case Value::Kind::ImplType:
+      return &cast<ImplType>(*t1).binding() == &cast<ImplType>(*t2).binding();
     case Value::Kind::TypeOfClassType:
       return TypeEqual(&cast<TypeOfClassType>(*t1).class_type(),
                        &cast<TypeOfClassType>(*t2).class_type());
@@ -537,6 +542,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
+    case Value::Kind::ImplType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:

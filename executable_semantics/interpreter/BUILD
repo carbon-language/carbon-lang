@@ -4,6 +4,8 @@
 
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
+# These currently have to be a single build rule because of a dependency cycle
+# in printing.
 cc_library(
     name = "action_and_value",
     srcs = [

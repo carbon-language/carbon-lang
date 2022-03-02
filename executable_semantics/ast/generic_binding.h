@@ -22,7 +22,7 @@ class ImplBinding;
 //   For now, only generic parameters are supported.
 class GenericBinding : public AstNode {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   GenericBinding(SourceLocation source_loc, std::string name,
                  Nonnull<Expression*> type)
@@ -93,7 +93,7 @@ using BindingMap =
 // interpretation is intended.
 class ImplBinding : public AstNode {
  public:
-  using ImplementsCarbonEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   ImplBinding(SourceLocation source_loc,
               Nonnull<const GenericBinding*> type_var,
@@ -112,14 +112,26 @@ class ImplBinding : public AstNode {
   // The interface being implemented.
   auto interface() const -> Nonnull<const Value*> { return iface_; }
 
-  // Required for the the Entity interface
+  // Required for the the ValueNode interface
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
 
+  // The static type of the impl. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the impl. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
  private:
   Nonnull<const GenericBinding*> type_var_;
   Nonnull<const Value*> iface_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 }  // namespace Carbon

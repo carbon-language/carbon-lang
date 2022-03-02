@@ -87,6 +87,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
+    case Value::Kind::ImplType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
@@ -303,6 +304,7 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::ImplType:
       ExpectType(source_loc, "argument deduction", param, arg);
       return;
     // The rest of these cases should never happen.
@@ -375,6 +377,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::ImplType:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
@@ -724,7 +727,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             parameters = Substitute(deduced_args, parameters);
             return_type = Substitute(deduced_args, return_type);
             // Find impls for all the impl bindings of the function
-            std::map<Nonnull<const ImplBinding*>, EntityView> impls;
+            std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
             for (Nonnull<const ImplBinding*> impl_binding :
                  fun_t.impl_bindings()) {
               switch (impl_binding->interface()->kind()) {
@@ -1104,9 +1107,10 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Create the impl_bindings
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    Nonnull<const ImplBinding*> impl_binding = arena_->New<ImplBinding>(
+    Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
         deduced->source_loc(), deduced, &deduced->static_type());
     deduced->set_impl_binding(impl_binding);
+    impl_binding->set_static_type(arena_->New<ImplType>(impl_binding));
     impl_bindings.push_back(impl_binding);
   }
 
@@ -1425,10 +1429,7 @@ void TypeChecker::SetConstantValue(Nonnull<T*> named_entity,
 void TypeChecker::PrintConstants(llvm::raw_ostream& out) {
   llvm::ListSeparator sep;
   for (const auto& named_entity : constants_) {
-    out << sep << named_entity.name();
-    if (named_entity.constant_value().has_value()) {
-      out << ": " << **named_entity.constant_value();
-    }
+    out << sep << named_entity;
   }
 }
 

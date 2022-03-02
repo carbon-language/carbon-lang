@@ -99,7 +99,7 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type)
@@ -113,7 +113,7 @@ class BindingPattern : public Pattern {
 
   // The name this pattern binds, if any. If equal to AnonymousName, indicates
   // that this BindingPattern does not bind a name, which in turn means it
-  // should not be used as a NamedEntity.
+  // should not be used as a ValueNode.
   auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.

@@ -11,19 +11,6 @@ namespace Carbon {
 
 class Value;
 
-// The `Impl` struct is a key-value pair where the key is the
-// combination of a type and an interface, e.g., `List` and `Container`,
-// and the value is the result of statically resolving to the `impl`
-// for `List` as `Container`, which is an `EntityView`. The generality
-// of `EntityView` is needed (not just `ImplDeclaration`) because
-// inside a generic, we need to map, e.g., from `T` and `Container` to the
-// witness table that is passed into the generic.
-struct Impl {
-  Nonnull<const Value*> interface;
-  Nonnull<const Value*> type;
-  EntityView impl;
-};
-
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
 // that type and interface.  A scope may have parent scopes, whose
@@ -53,7 +40,7 @@ class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-           EntityView impl);
+           ValueNodeView impl);
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -63,15 +50,29 @@ class ImplScope {
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
   auto Resolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-               SourceLocation source_loc) const -> EntityView;
+               SourceLocation source_loc) const -> ValueNodeView;
 
  private:
   auto TryResolve(Nonnull<const Value*> iface_type, Nonnull<const Value*> type,
-                  SourceLocation source_loc) const -> std::optional<EntityView>;
+                  SourceLocation source_loc) const
+      -> std::optional<ValueNodeView>;
   auto ResolveHere(Nonnull<const Value*> iface_type,
                    Nonnull<const Value*> impl_type,
                    SourceLocation source_loc) const
-      -> std::optional<EntityView>;
+      -> std::optional<ValueNodeView>;
+
+  // The `Impl` struct is a key-value pair where the key is the
+  // combination of a type and an interface, e.g., `List` and `Container`,
+  // and the value is the result of statically resolving to the `impl`
+  // for `List` as `Container`, which is an `ValueNodeView`. The generality
+  // of `ValueNodeView` is needed (not just `ImplDeclaration`) because
+  // inside a generic, we need to map, e.g., from `T` and `Container` to the
+  // witness table that is passed into the generic.
+  struct Impl {
+    Nonnull<const Value*> interface;
+    Nonnull<const Value*> type;
+    ValueNodeView impl;
+  };
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;

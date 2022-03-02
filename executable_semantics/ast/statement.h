@@ -314,7 +314,7 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   Continuation(SourceLocation source_loc, std::string name,
                Nonnull<Block*> body)

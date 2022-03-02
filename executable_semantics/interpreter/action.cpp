@@ -50,7 +50,7 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
-void RuntimeScope::Initialize(EntityView named_entity,
+void RuntimeScope::Initialize(ValueNodeView named_entity,
                               Nonnull<const Value*> value) {
   CHECK(!named_entity.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
@@ -71,7 +71,7 @@ void RuntimeScope::Merge(RuntimeScope other) {
   other.allocations_.clear();
 }
 
-auto RuntimeScope::Get(EntityView named_entity) const
+auto RuntimeScope::Get(ValueNodeView named_entity) const
     -> std::optional<Nonnull<const LValue*>> {
   auto it = locals_.find(named_entity);
   if (it != locals_.end()) {

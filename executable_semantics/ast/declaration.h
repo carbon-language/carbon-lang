@@ -80,7 +80,7 @@ class Declaration : public AstNode {
 
 class FunctionDeclaration : public Declaration {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<AstNode*>> deduced_params,
@@ -147,7 +147,7 @@ class FunctionDeclaration : public Declaration {
 
 class ClassDeclaration : public Declaration {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
                    std::vector<Nonnull<Declaration*>> members)
@@ -207,7 +207,7 @@ class AlternativeSignature : public AstNode {
 
 class ChoiceDeclaration : public Declaration {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   ChoiceDeclaration(SourceLocation source_loc, std::string name,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
@@ -277,7 +277,7 @@ class VariableDeclaration : public Declaration {
 
 class InterfaceDeclaration : public Declaration {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   InterfaceDeclaration(SourceLocation source_loc, std::string name,
                        Nonnull<GenericBinding*> self,
@@ -321,14 +321,13 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,
                   Nonnull<Expression*> interface,
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
-        name_("__impl"),
         kind_(kind),
         impl_type_(impl_type),
         interface_(interface),
@@ -351,7 +350,6 @@ class ImplDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto name() const -> const std::string& { return name_; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
@@ -362,8 +360,6 @@ class ImplDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string
-      name_;  // So that this can be a named entity. Otherwise not useful.
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;  // TODO: make this optional
   Nonnull<Expression*> interface_;

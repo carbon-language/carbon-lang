@@ -131,7 +131,7 @@ class TypeChecker {
   void PrintConstants(llvm::raw_ostream& out);
 
   Nonnull<Arena*> arena_;
-  std::set<NamedEntityView> constants_;
+  std::set<ValueNodeView> constants_;
 
   bool trace_;
 };

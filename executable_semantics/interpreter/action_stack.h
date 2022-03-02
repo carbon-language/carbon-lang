@@ -44,11 +44,11 @@ class ActionStack {
   auto CurrentAction() -> Action& { return *todo_.Top(); }
 
   // Allocates storage for `named_entity`, and initializes it to `value`.
-  void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
+  void Initialize(ValueNodeView named_entity, Nonnull<const Value*> value);
 
   // Returns the value bound to `named_entity`. If `named_entity` is a local
   // variable, this will be an LValue.
-  auto ValueOfName(EntityView named_entity, SourceLocation source_loc) const
+  auto ValueOfName(ValueNodeView named_entity, SourceLocation source_loc) const
       -> Nonnull<const Value*>;
 
   // Merges `scope` into the innermost scope currently on the stack.
