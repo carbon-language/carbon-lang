@@ -699,7 +699,8 @@ void Interpreter::StepExp() {
       } else if (act.pos() == 1) {
         const BoolValue& condition = cast<BoolValue>(*act.results()[0]);
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            condition.value() ? if_expr.then_value() : if_expr.else_value()));
+            condition.value() ? if_expr.then_expression()
+                              : if_expr.else_expression()));
       } else {
         return todo_.FinishAction(act.results()[1]);
       }

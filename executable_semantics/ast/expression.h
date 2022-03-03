@@ -494,25 +494,29 @@ class IfExpression : public Expression {
  public:
   explicit IfExpression(SourceLocation source_loc,
                         Nonnull<Expression*> condition,
-                        Nonnull<Expression*> then_value,
-                        Nonnull<Expression*> else_value)
+                        Nonnull<Expression*> then_expression,
+                        Nonnull<Expression*> else_expression)
       : Expression(AstNodeKind::IfExpression, source_loc),
         condition_(condition),
-        then_value_(then_value),
-        else_value_(else_value) {}
+        then_expression_(then_expression),
+        else_expression_(else_expression) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIfExpression(node->kind());
   }
 
   auto condition() const -> Nonnull<Expression*> { return condition_; }
-  auto then_value() const -> Nonnull<Expression*> { return then_value_; }
-  auto else_value() const -> Nonnull<Expression*> { return else_value_; }
+  auto then_expression() const -> Nonnull<Expression*> {
+    return then_expression_;
+  }
+  auto else_expression() const -> Nonnull<Expression*> {
+    return else_expression_;
+  }
 
  private:
   Nonnull<Expression*> condition_;
-  Nonnull<Expression*> then_value_;
-  Nonnull<Expression*> else_value_;
+  Nonnull<Expression*> then_expression_;
+  Nonnull<Expression*> else_expression_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
