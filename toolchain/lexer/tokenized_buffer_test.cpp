@@ -989,7 +989,7 @@ auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   return line.str();
 }
 
-TEST_F(LexerTest, Printing) {
+TEST_F(LexerTest, PrintingBasic) {
   auto buffer = Lex(";");
   ASSERT_FALSE(buffer.HasErrors());
   std::string print_storage;
@@ -1003,13 +1003,47 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
                     "indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
-  // Test kind padding.
-  buffer = Lex("(;foo;)");
+TEST_F(LexerTest, PrintingInteger) {
+  auto buffer = Lex("123");
   ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+                    "column: 1, indent: 1, spelling: '123', value: `123`, "
+                    "has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingReal) {
+  auto buffer = Lex("2.5");
+  ASSERT_FALSE(buffer.HasErrors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(
+      GetAndDropLine(print),
+      StrEq(
+          "token: { index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
+          "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingPadding) {
+  // Test kind padding.
+  auto buffer = Lex("(;foo;)");
+  ASSERT_FALSE(buffer.HasErrors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 0, kind:  'OpenParen', line: 1, column: "
                     "1, indent: 1, spelling: '(', closing_token: 4 }"));
@@ -1030,13 +1064,16 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
                     "8, indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
+TEST_F(LexerTest, PrintingPaddingDigits) {
   // Test digit padding with max values of 9, 10, and 11.
-  buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
+  auto buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
   ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
