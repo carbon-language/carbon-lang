@@ -15,19 +15,20 @@ namespace {
 using ::testing::Eq;
 
 TEST(PrecedenceTest, OperatorsAreRecognized) {
-  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Minus()).hasValue());
-  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Tilde()).hasValue());
-  EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Slash()).hasValue());
-  EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Identifier()).hasValue());
+  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Minus()).has_value());
+  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Tilde()).has_value());
+  EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Slash()).has_value());
+  EXPECT_FALSE(
+      PrecedenceGroup::ForLeading(TokenKind::Identifier()).has_value());
 
   EXPECT_TRUE(
-      PrecedenceGroup::ForTrailing(TokenKind::Minus(), false).hasValue());
+      PrecedenceGroup::ForTrailing(TokenKind::Minus(), false).has_value());
   EXPECT_FALSE(
-      PrecedenceGroup::ForTrailing(TokenKind::Tilde(), false).hasValue());
+      PrecedenceGroup::ForTrailing(TokenKind::Tilde(), false).has_value());
   EXPECT_TRUE(
-      PrecedenceGroup::ForTrailing(TokenKind::Slash(), true).hasValue());
+      PrecedenceGroup::ForTrailing(TokenKind::Slash(), true).has_value());
   EXPECT_FALSE(
-      PrecedenceGroup::ForTrailing(TokenKind::Identifier(), false).hasValue());
+      PrecedenceGroup::ForTrailing(TokenKind::Identifier(), false).has_value());
 
   EXPECT_TRUE(
       PrecedenceGroup::ForTrailing(TokenKind::Minus(), true)->is_binary);

@@ -216,7 +216,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<LexedNumericLiteral> literal =
+    std::optional<LexedNumericLiteral> literal =
         LexedNumericLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
@@ -267,7 +267,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<LexedStringLiteral> literal =
+    std::optional<LexedStringLiteral> literal =
         LexedStringLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
@@ -387,7 +387,7 @@ class TokenizedBuffer::Lexer {
       return LexResult::NoMatch();
     }
 
-    llvm::Optional<TokenKind> kind;
+    std::optional<TokenKind> kind;
     switch (word.front()) {
       case 'i':
         kind = TokenKind::IntegerTypeLiteral();
@@ -641,7 +641,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
       token_info.kind == TokenKind::RealLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<LexedNumericLiteral> relexed_token =
+    std::optional<LexedNumericLiteral> relexed_token =
         LexedNumericLiteral::Lex(source_->Text().substr(token_start));
     CHECK(relexed_token) << "Could not reform numeric literal token.";
     return relexed_token->Text();
@@ -652,7 +652,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<LexedStringLiteral> relexed_token =
+    std::optional<LexedStringLiteral> relexed_token =
         LexedStringLiteral::Lex(source_->Text().substr(token_start));
     CHECK(relexed_token) << "Could not reform string literal token.";
     return relexed_token->text();

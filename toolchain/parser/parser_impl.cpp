@@ -5,9 +5,9 @@
 #include "toolchain/parser/parser_impl.h"
 
 #include <cstdlib>
+#include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lexer/token_kind.h"
@@ -286,7 +286,7 @@ auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
 }
 
 auto ParseTree::Parser::ConsumeIf(TokenKind kind)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   if (!NextTokenIs(kind)) {
     return {};
   }
@@ -302,7 +302,7 @@ auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
 
 auto ParseTree::Parser::ConsumeAndAddLeafNodeIf(TokenKind t_kind,
                                                 ParseNodeKind n_kind)
-    -> llvm::Optional<Node> {
+    -> std::optional<Node> {
   auto t = ConsumeIf(t_kind);
   if (!t) {
     return {};
@@ -364,7 +364,7 @@ auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
 
 auto ParseTree::Parser::FindNextOf(
     std::initializer_list<TokenKind> desired_kinds)
-    -> llvm::Optional<TokenizedBuffer::Token> {
+    -> std::optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
@@ -376,7 +376,7 @@ auto ParseTree::Parser::FindNextOf(
     // Step to the next token at the current bracketing level.
     if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
       // There are no more tokens at this level.
-      return llvm::None;
+      return std::nullopt;
     } else if (kind.IsOpeningSymbol()) {
       new_position =
           TokenizedBuffer::TokenIterator(tokens_.GetMatchedClosingToken(token));
@@ -390,9 +390,9 @@ auto ParseTree::Parser::FindNextOf(
 
 auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
                                           SemiHandler on_semi)
-    -> llvm::Optional<Node> {
+    -> std::optional<Node> {
   if (AtEndOfFile()) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   TokenizedBuffer::Line root_line = tokens_.GetLine(skip_root);
@@ -414,7 +414,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
     if (NextTokenKind() == TokenKind::CloseCurlyBrace()) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return llvm::None;
+      return std::nullopt;
     }
 
     // We assume that a semicolon is always intended to be the end of the
@@ -433,12 +433,12 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
   } while (!AtEndOfFile() &&
            is_same_line_or_indent_greater_than_root(*position_));
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
                                         ParseNodeKind kind)
-    -> llvm::Optional<Node> {
+    -> std::optional<Node> {
   if (auto close_paren =
           ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), kind)) {
     return close_paren;
@@ -448,7 +448,7 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
                                          {.open_paren = open_paren});
   SkipTo(tokens_.GetMatchedClosingToken(open_paren));
   AddLeafNode(kind, Consume(TokenKind::CloseParen()));
-  return llvm::None;
+  return std::nullopt;
 }
 
 template <typename ListElementParser, typename ListCompletionHandler>
@@ -457,7 +457,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
                                   ParseNodeKind comma_kind,
                                   ListCompletionHandler list_handler,
                                   bool allow_trailing_comma)
-    -> llvm::Optional<Node> {
+    -> std::optional<Node> {
   // `(` element-list[opt] `)`
   //
   // element-list ::= element
@@ -505,8 +505,8 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
   return list_handler(open_paren, is_single_item, Consume(close), has_errors);
 }
 
-auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParsePattern(PatternKind kind) -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   if (NextTokenIs(TokenKind::Identifier()) &&
       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
     // identifier `:` type
@@ -529,11 +529,11 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
       break;
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
-auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseFunctionParameter() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   return ParsePattern(PatternKind::Parameter);
 }
 
@@ -561,12 +561,12 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
     }
   }
 
-  return params.hasValue();
+  return params.has_value();
 }
 
-auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
-  llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
+auto ParseTree::Parser::ParseCodeBlock() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
+  std::optional<TokenizedBuffer::Token> maybe_open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
@@ -703,8 +703,8 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
                      Consume(TokenKind::Semi()));
 }
 
-auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseDeclaration() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   switch (NextTokenKind()) {
     case TokenKind::Fn():
       return ParseFunctionDeclaration();
@@ -713,7 +713,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
     case TokenKind::EndOfFile():
-      return llvm::None;
+      return std::nullopt;
     default:
       // Errors are handled outside the switch.
       break;
@@ -733,11 +733,11 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   }
 
   // Nothing, not even a semicolon found.
-  return llvm::None;
+  return std::nullopt;
 }
 
-auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseParenExpression() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   // parenthesized-expression ::= `(` expression `)`
   // tuple-literal ::= `(` `)`
   //               ::= `(` expression `,` [expression-list [`,`]] `)`
@@ -759,8 +759,8 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
       /*allow_trailing_comma=*/true);
 }
 
-auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseBraceExpression() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   // braced-expression ::= `{` [field-value-list] `}`
   //                   ::= `{` field-type-list `}`
   // field-value-list ::= field-value [`,`]
@@ -777,14 +777,14 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
   Kind kind = Unknown;
   return ParseList(
       TokenKind::OpenCurlyBrace(), TokenKind::CloseCurlyBrace(),
-      [&]() -> llvm::Optional<Node> {
+      [&]() -> std::optional<Node> {
         auto start_elem = GetSubtreeStartPosition();
 
         auto diagnose_invalid_syntax = [&] {
           emitter_.EmitError<ExpectedStructLiteralField>(
               *position_,
               {.can_be_type = kind != Value, .can_be_value = kind != Type});
-          return llvm::None;
+          return std::nullopt;
         };
 
         if (!NextTokenIs(TokenKind::Period())) {
@@ -798,7 +798,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
               {TokenKind::Equal(), TokenKind::Colon(), TokenKind::Comma()});
           if (!recovery_pos ||
               tokens_.GetKind(*recovery_pos) == TokenKind::Comma()) {
-            return llvm::None;
+            return std::nullopt;
           }
           SkipTo(*recovery_pos);
         }
@@ -833,9 +833,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
       /*allow_trailing_comma=*/true);
 }
 
-auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
-  llvm::Optional<ParseNodeKind> kind;
+auto ParseTree::Parser::ParsePrimaryExpression() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
+  std::optional<ParseNodeKind> kind;
   switch (NextTokenKind()) {
     case TokenKind::Identifier():
       kind = ParseNodeKind::NameReference();
@@ -858,7 +858,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
 
     default:
       emitter_.EmitError<ExpectedExpression>(*position_);
-      return llvm::None;
+      return std::nullopt;
   }
 
   return AddLeafNode(*kind, Consume(NextTokenKind()));
@@ -867,7 +867,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
 auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
                                                   ParseNodeKind kind,
                                                   bool has_errors)
-    -> llvm::Optional<Node> {
+    -> std::optional<Node> {
   // `.` identifier
   auto dot = Consume(TokenKind::Period());
   auto name = ConsumeIf(TokenKind::Identifier());
@@ -887,12 +887,12 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   }
 
   Node result = AddNode(kind, dot, start, has_errors);
-  return name ? result : llvm::Optional<Node>();
+  return name ? result : std::optional<Node>();
 }
 
 auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
-    -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+    -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   // `(` expression-list[opt] `)`
   //
   // expression-list ::= expression
@@ -907,10 +907,10 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
       });
 }
 
-auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParsePostfixExpression() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   auto start = GetSubtreeStartPosition();
-  llvm::Optional<Node> expression = ParsePrimaryExpression();
+  std::optional<Node> expression = ParsePrimaryExpression();
 
   TokenizedBuffer::TokenIterator last_position = position_;
   while (true) {
@@ -930,7 +930,7 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
     // This is subject to an infinite loop if a child call fails, so monitor for
     // stalling.
     if (last_position == position_) {
-      CHECK(expression == llvm::None);
+      CHECK(expression == std::nullopt);
       return expression;
     }
     last_position = position_;
@@ -1046,11 +1046,11 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
 }
 
 auto ParseTree::Parser::ParseOperatorExpression(
-    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+    PrecedenceGroup ambient_precedence) -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   auto start = GetSubtreeStartPosition();
 
-  llvm::Optional<Node> lhs;
+  std::optional<Node> lhs;
   PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
 
   // Check for a prefix operator.
@@ -1097,7 +1097,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
       emitter_.EmitError<OperatorRequiresParentheses>(*position_);
-      lhs = llvm::None;
+      lhs = std::nullopt;
     } else {
       DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
                                        : OperatorFixity::Postfix);
@@ -1119,18 +1119,18 @@ auto ParseTree::Parser::ParseOperatorExpression(
   return lhs;
 }
 
-auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseExpression() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
 }
 
-auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseType() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   return ParseOperatorExpression(PrecedenceGroup::ForType());
 }
 
-auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseExpressionStatement() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   TokenizedBuffer::Token start_token = *position_;
   auto start = GetSubtreeStartPosition();
 
@@ -1154,12 +1154,12 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   }
 
   // Found junk not even followed by a `;`.
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
-    -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+    -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   // `(` expression `)`
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
@@ -1172,7 +1172,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
 
   if (!open_paren) {
     // Don't expect a matching closing paren if there wasn't an opening paren.
-    return llvm::None;
+    return std::nullopt;
   }
 
   auto close_paren =
@@ -1182,7 +1182,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
                  /*has_error=*/!expr || !close_paren);
 }
 
-auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
+auto ParseTree::Parser::ParseIfStatement() -> std::optional<Node> {
   auto start = GetSubtreeStartPosition();
   auto if_token = Consume(TokenKind::If());
   auto cond = ParseParenCondition(TokenKind::If());
@@ -1201,8 +1201,8 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
                  /*has_error=*/!cond || !then_case || else_has_errors);
 }
 
-auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseWhileStatement() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   auto start = GetSubtreeStartPosition();
   auto while_token = Consume(TokenKind::While());
   auto cond = ParseParenCondition(TokenKind::While());
@@ -1213,8 +1213,8 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
-    -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+    -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   auto keyword_kind = NextTokenKind();
   CHECK(keyword_kind.IsKeyword());
 
@@ -1238,8 +1238,8 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
 }
 
-auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
-  RETURN_IF_STACK_LIMITED(llvm::None);
+auto ParseTree::Parser::ParseStatement() -> std::optional<Node> {
+  RETURN_IF_STACK_LIMITED(std::nullopt);
   switch (NextTokenKind()) {
     case TokenKind::Var():
       return ParseVariableDeclaration();

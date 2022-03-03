@@ -31,7 +31,7 @@ class NumericLiteralTest : public ::testing::Test {
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
-    llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
+    std::optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     CHECK(result);
     EXPECT_EQ(result->Text(), text);
     return *result;

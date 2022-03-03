@@ -5,7 +5,8 @@
 #ifndef TOOLCHAIN_PARSER_PARSER_IMPL_H_
 #define TOOLCHAIN_PARSER_PARSER_IMPL_H_
 
-#include "llvm/ADT/Optional.h"
+#include <optional>
+
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -57,7 +58,7 @@ class ParseTree::Parser {
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(TokenKind kind) -> llvm::Optional<TokenizedBuffer::Token>;
+  auto ConsumeIf(TokenKind kind) -> std::optional<TokenizedBuffer::Token>;
 
   // Adds a node to the parse tree that is fully parsed, has no children
   // ("leaf"), and has a subsequent sibling.
@@ -69,7 +70,7 @@ class ParseTree::Parser {
   // Composes `consumeIf` and `addLeafNode`, propagating the failure case
   // through the optional.
   auto ConsumeAndAddLeafNodeIf(TokenKind t_kind, ParseNodeKind n_kind)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Marks the node `N` as having some parse error and that the tree contains
   // a node with a parse error.
@@ -101,12 +102,12 @@ class ParseTree::Parser {
   // Find the next token of any of the given kinds at the current bracketing
   // level.
   auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-      -> llvm::Optional<TokenizedBuffer::Token>;
+      -> std::optional<TokenizedBuffer::Token>;
 
   // Callback used if we find a semicolon when skipping to the end of a
   // declaration or statement.
   using SemiHandler = llvm::function_ref<
-      auto(TokenizedBuffer::Token semi)->llvm::Optional<Node>>;
+      auto(TokenizedBuffer::Token semi)->std::optional<Node>>;
 
   // Skips forward to move past the likely end of a declaration or statement.
   //
@@ -127,20 +128,20 @@ class ParseTree::Parser {
   // to build a parse node to represent it, and will return that node.
   // Otherwise we will return an empty optional.
   auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root, SemiHandler on_semi)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Parses a close paren token corresponding to the given open paren token,
   // possibly skipping forward and diagnosing if necessary. Creates and returns
   // a parse node of the specified kind if successful.
   auto ParseCloseParen(TokenizedBuffer::Token open_paren, ParseNodeKind kind)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Parses a comma-separated list with the given delimiters.
   template <typename ListElementParser, typename ListCompletionHandler>
   auto ParseList(TokenKind open, TokenKind close,
                  ListElementParser list_element_parser,
                  ParseNodeKind comma_kind, ListCompletionHandler list_handler,
-                 bool allow_trailing_comma = false) -> llvm::Optional<Node>;
+                 bool allow_trailing_comma = false) -> std::optional<Node>;
 
   // Parses a parenthesized, comma-separated list.
   template <typename ListElementParser, typename ListCompletionHandler>
@@ -148,14 +149,14 @@ class ParseTree::Parser {
                       ParseNodeKind comma_kind,
                       ListCompletionHandler list_handler,
                       bool allow_trailing_comma = false)
-      -> llvm::Optional<Node> {
+      -> std::optional<Node> {
     return ParseList(TokenKind::OpenParen(), TokenKind::CloseParen(),
                      list_element_parser, comma_kind, list_handler,
                      allow_trailing_comma);
   }
 
   // Parses a single function parameter declaration.
-  auto ParseFunctionParameter() -> llvm::Optional<Node>;
+  auto ParseFunctionParameter() -> std::optional<Node>;
 
   // Parses the signature of the function, consisting of a parameter list and an
   // optional return type. Returns the root node of the signature which must be
@@ -166,7 +167,7 @@ class ParseTree::Parser {
   //
   // These can form the definition for a function or be nested within a function
   // definition. These contain variable declarations and statements.
-  auto ParseCodeBlock() -> llvm::Optional<Node>;
+  auto ParseCodeBlock() -> std::optional<Node>;
 
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
@@ -181,26 +182,26 @@ class ParseTree::Parser {
   // Tries to parse a declaration. If a declaration, even an empty one after
   // skipping errors, can be parsed, it is returned. There may be parse errors
   // even when a node is returned.
-  auto ParseDeclaration() -> llvm::Optional<Node>;
+  auto ParseDeclaration() -> std::optional<Node>;
 
   // Parses a parenthesized expression.
-  auto ParseParenExpression() -> llvm::Optional<Node>;
+  auto ParseParenExpression() -> std::optional<Node>;
 
   // Parses a braced expression.
-  auto ParseBraceExpression() -> llvm::Optional<Node>;
+  auto ParseBraceExpression() -> std::optional<Node>;
 
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
-  auto ParsePrimaryExpression() -> llvm::Optional<Node>;
+  auto ParsePrimaryExpression() -> std::optional<Node>;
 
   // Parses a designator expression suffix starting with `.`.
   auto ParseDesignatorExpression(SubtreeStart start, ParseNodeKind kind,
-                                 bool has_errors) -> llvm::Optional<Node>;
+                                 bool has_errors) -> std::optional<Node>;
 
   // Parses a call expression suffix starting with `(`.
   auto ParseCallExpression(SubtreeStart start, bool has_errors)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Parses a postfix expression, which is a primary expression followed by
   // zero or more of the following:
@@ -208,7 +209,7 @@ class ParseTree::Parser {
   // -   function applications
   // -   array indexes (TODO)
   // -   designators
-  auto ParsePostfixExpression() -> llvm::Optional<Node>;
+  auto ParsePostfixExpression() -> std::optional<Node>;
 
   enum class OperatorFixity { Prefix, Infix, Postfix };
 
@@ -227,25 +228,25 @@ class ParseTree::Parser {
   // Parses an expression involving operators, in a context with the given
   // precedence.
   auto ParseOperatorExpression(PrecedenceGroup precedence)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Parses an expression.
-  auto ParseExpression() -> llvm::Optional<Node>;
+  auto ParseExpression() -> std::optional<Node>;
 
   // Parses a type expression.
-  auto ParseType() -> llvm::Optional<Node>;
+  auto ParseType() -> std::optional<Node>;
 
   // Parses an expression statement: an expression followed by a semicolon.
-  auto ParseExpressionStatement() -> llvm::Optional<Node>;
+  auto ParseExpressionStatement() -> std::optional<Node>;
 
   // Parses the parenthesized condition in an if-statement.
-  auto ParseParenCondition(TokenKind introducer) -> llvm::Optional<Node>;
+  auto ParseParenCondition(TokenKind introducer) -> std::optional<Node>;
 
   // Parses an if-statement.
-  auto ParseIfStatement() -> llvm::Optional<Node>;
+  auto ParseIfStatement() -> std::optional<Node>;
 
   // Parses a while-statement.
-  auto ParseWhileStatement() -> llvm::Optional<Node>;
+  auto ParseWhileStatement() -> std::optional<Node>;
 
   enum class KeywordStatementArgument {
     None,
@@ -256,10 +257,10 @@ class ParseTree::Parser {
   // Parses a statement of the form `keyword;` such as `break;` or `continue;`.
   auto ParseKeywordStatement(ParseNodeKind kind,
                              KeywordStatementArgument argument)
-      -> llvm::Optional<Node>;
+      -> std::optional<Node>;
 
   // Parses a statement.
-  auto ParseStatement() -> llvm::Optional<Node>;
+  auto ParseStatement() -> std::optional<Node>;
 
   enum class PatternKind {
     Parameter,
@@ -267,7 +268,7 @@ class ParseTree::Parser {
   };
 
   // Parses a pattern.
-  auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;
+  auto ParsePattern(PatternKind kind) -> std::optional<Node>;
 
   ParseTree& tree_;
   TokenizedBuffer& tokens_;
