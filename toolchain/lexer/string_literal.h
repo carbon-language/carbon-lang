@@ -13,10 +13,9 @@ namespace Carbon {
 class LexedStringLiteral {
  public:
   // Extract a string literal token from the given text, if it has a suitable
-  // form. Returning llvm::None indicates no string literal was found;
-  // returning an invalid literal indicates a string prefix was found, but it's
-  // malformed and is returning a partial string literal to assist error
-  // construction.
+  // form. Returning llvm::None indicates no string literal was found; returning
+  // an invalid literal indicates a string prefix was found, but it's malformed
+  // and is returning a partial string literal to assist error construction.
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedStringLiteral>;
 
