@@ -7,12 +7,10 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_missing_var.carbon:16: syntax error, unexpected COLON, expecting EQUAL or SEMICOLON
 
 package ExecutableSemanticsTest api;
 
-fn Main() -> i32 {
-  // error
-  x : i32;
-  return 1;
+fn CompareBools(a: Bool, b: Bool) -> Bool {
+  // CHECK: COMPILATION ERROR: {{.*}}.carbon:[[@LINE+1]]: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
+  return not a == b;
 }
