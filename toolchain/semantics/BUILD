@@ -22,5 +22,6 @@ cc_test(
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
         "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
     ],
 )

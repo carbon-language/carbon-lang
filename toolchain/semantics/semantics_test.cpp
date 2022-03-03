@@ -7,8 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <optional>
-
+#include "llvm/ADT/Optional.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
@@ -26,9 +25,9 @@ class ParseTreeTest : public ::testing::Test {
     return Semantics::Analyze(*parse_tree, consumer);
   }
 
-  std::optional<SourceBuffer> source_buffer;
-  std::optional<TokenizedBuffer> tokenized_buffer;
-  std::optional<ParseTree> parse_tree;
+  llvm::Optional<SourceBuffer> source_buffer;
+  llvm::Optional<TokenizedBuffer> tokenized_buffer;
+  llvm::Optional<ParseTree> parse_tree;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
