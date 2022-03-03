@@ -35,6 +35,16 @@ cc_library(
 )
 
 cc_library(
+    name = "lex_helpers",
+    srcs = ["lex_helpers.cpp"],
+    hdrs = ["lex_helpers.h"],
+    deps = [
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "test_helpers",
     testonly = 1,
     hdrs = ["test_helpers.h"],
@@ -52,6 +62,7 @@ cc_library(
     hdrs = ["numeric_literal.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -104,6 +115,7 @@ cc_library(
     hdrs = ["string_literal.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -154,6 +166,7 @@ cc_library(
     hdrs = ["tokenized_buffer.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
         ":numeric_literal",
         ":string_literal",
         ":token_kind",

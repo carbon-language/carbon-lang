@@ -11,6 +11,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
+#include "toolchain/lexer/lex_helpers.h"
 
 namespace Carbon {
 
@@ -218,6 +219,9 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         std::string& result) -> bool {
   unsigned code_point;
+  if (!CanLexInteger(emitter, digits)) {
+    return false;
+  }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
     emitter.EmitError<UnicodeEscapeTooLarge>(digits.begin());
     return false;
