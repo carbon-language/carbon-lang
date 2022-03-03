@@ -16,7 +16,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 using namespace llvm;
@@ -493,6 +492,9 @@ static bool haveSameSpecialState(const Instruction *I1, const Instruction *I2,
   if (const ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I1))
     return SVI->getShuffleMask() ==
            cast<ShuffleVectorInst>(I2)->getShuffleMask();
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I1))
+    return GEP->getSourceElementType() ==
+           cast<GetElementPtrInst>(I2)->getSourceElementType();
 
   return true;
 }

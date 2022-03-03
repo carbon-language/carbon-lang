@@ -93,9 +93,18 @@ unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   //        before the assembly printer.
   unsigned NumBytes = 0;
   const MCInstrDesc &Desc = MI.getDesc();
+
+  // Size should be preferably set in
+  // llvm/lib/Target/AArch64/AArch64InstrInfo.td (default case).
+  // Specific cases handle instructions of variable sizes
   switch (Desc.getOpcode()) {
   default:
-    // Anything not explicitly designated otherwise is a normal 4-byte insn.
+    if (Desc.getSize())
+      return Desc.getSize();
+
+    // Anything not explicitly designated otherwise (i.e. pseudo-instructions
+    // with fixed constant size but not specified in .td file) is a normal
+    // 4-byte insn.
     NumBytes = 4;
     break;
   case TargetOpcode::STACKMAP:
@@ -115,28 +124,8 @@ unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     if (NumBytes == 0)
       NumBytes = 4;
     break;
-  case AArch64::TLSDESC_CALLSEQ:
-    // This gets lowered to an instruction sequence which takes 16 bytes
-    NumBytes = 16;
-    break;
-  case AArch64::SpeculationBarrierISBDSBEndBB:
-    // This gets lowered to 2 4-byte instructions.
-    NumBytes = 8;
-    break;
-  case AArch64::SpeculationBarrierSBEndBB:
-    // This gets lowered to 1 4-byte instructions.
-    NumBytes = 4;
-    break;
-  case AArch64::JumpTableDest32:
-  case AArch64::JumpTableDest16:
-  case AArch64::JumpTableDest8:
-    NumBytes = 12;
-    break;
   case AArch64::SPACE:
     NumBytes = MI.getOperand(1).getImm();
-    break;
-  case AArch64::StoreSwiftAsyncContext:
-    NumBytes = 20;
     break;
   case TargetOpcode::BUNDLE:
     NumBytes = getInstBundleLength(MI);
@@ -1558,27 +1547,6 @@ findCondCodeUseOperandIdxForBranchOrSelect(const MachineInstr &Instr) {
   }
 }
 
-namespace {
-
-struct UsedNZCV {
-  bool N = false;
-  bool Z = false;
-  bool C = false;
-  bool V = false;
-
-  UsedNZCV() = default;
-
-  UsedNZCV &operator|=(const UsedNZCV &UsedFlags) {
-    this->N |= UsedFlags.N;
-    this->Z |= UsedFlags.Z;
-    this->C |= UsedFlags.C;
-    this->V |= UsedFlags.V;
-    return *this;
-  }
-};
-
-} // end anonymous namespace
-
 /// Find a condition code used by the instruction.
 /// Returns AArch64CC::Invalid if either the instruction does not use condition
 /// codes or we don't optimize CmpInstr in the presence of such instructions.
@@ -1633,15 +1601,15 @@ static UsedNZCV getUsedNZCV(AArch64CC::CondCode CC) {
   return UsedFlags;
 }
 
-/// \returns Conditions flags used after \p CmpInstr in its MachineBB if they
-/// are not containing C or V flags and NZCV flags are not alive in successors
-/// of the same \p CmpInstr and \p MI parent. \returns None otherwise.
+/// \returns Conditions flags used after \p CmpInstr in its MachineBB if NZCV
+/// flags are not alive in successors of the same \p CmpInstr and \p MI parent.
+/// \returns None otherwise.
 ///
 /// Collect instructions using that flags in \p CCUseInstrs if provided.
-static Optional<UsedNZCV>
-examineCFlagsUse(MachineInstr &MI, MachineInstr &CmpInstr,
-                 const TargetRegisterInfo &TRI,
-                 SmallVectorImpl<MachineInstr *> *CCUseInstrs = nullptr) {
+Optional<UsedNZCV>
+llvm::examineCFlagsUse(MachineInstr &MI, MachineInstr &CmpInstr,
+                       const TargetRegisterInfo &TRI,
+                       SmallVectorImpl<MachineInstr *> *CCUseInstrs) {
   MachineBasicBlock *CmpParent = CmpInstr.getParent();
   if (MI.getParent() != CmpParent)
     return None;
@@ -1663,8 +1631,6 @@ examineCFlagsUse(MachineInstr &MI, MachineInstr &CmpInstr,
     if (Instr.modifiesRegister(AArch64::NZCV, &TRI))
       break;
   }
-  if (NZCVUsedAfterCmp.C || NZCVUsedAfterCmp.V)
-    return None;
   return NZCVUsedAfterCmp;
 }
 
@@ -1695,7 +1661,8 @@ static bool canInstrSubstituteCmpInstr(MachineInstr &MI, MachineInstr &CmpInstr,
   if (!isADDSRegImm(CmpOpcode) && !isSUBSRegImm(CmpOpcode))
     return false;
 
-  if (!examineCFlagsUse(MI, CmpInstr, TRI))
+  Optional<UsedNZCV> NZVCUsed = examineCFlagsUse(MI, CmpInstr, TRI);
+  if (!NZVCUsed || NZVCUsed->C || NZVCUsed->V)
     return false;
 
   AccessKind AccessToCheck = AK_Write;
@@ -1784,7 +1751,7 @@ static bool canCmpInstrBeRemoved(MachineInstr &MI, MachineInstr &CmpInstr,
       examineCFlagsUse(MI, CmpInstr, TRI, &CCUseInstrs);
   // Condition flags are not used in CmpInstr basic block successors and only
   // Z or N flags allowed to be used after CmpInstr within its basic block
-  if (!NZCVUsedAfterCmp)
+  if (!NZCVUsedAfterCmp || NZCVUsedAfterCmp->C || NZCVUsedAfterCmp->V)
     return false;
   // Z or N flag used after CmpInstr must correspond to the flag used in MI
   if ((MIUsedNZCV.Z && NZCVUsedAfterCmp->N) ||
@@ -2281,6 +2248,19 @@ unsigned AArch64InstrInfo::getLoadStoreImmIdx(unsigned Opc) {
   case AArch64::LD1SW_D_IMM:
   case AArch64::LD1D_IMM:
 
+  case AArch64::LD2B_IMM:
+  case AArch64::LD2H_IMM:
+  case AArch64::LD2W_IMM:
+  case AArch64::LD2D_IMM:
+  case AArch64::LD3B_IMM:
+  case AArch64::LD3H_IMM:
+  case AArch64::LD3W_IMM:
+  case AArch64::LD3D_IMM:
+  case AArch64::LD4B_IMM:
+  case AArch64::LD4H_IMM:
+  case AArch64::LD4W_IMM:
+  case AArch64::LD4D_IMM:
+
   case AArch64::ST1B_IMM:
   case AArch64::ST1B_H_IMM:
   case AArch64::ST1B_S_IMM:
@@ -2291,6 +2271,19 @@ unsigned AArch64InstrInfo::getLoadStoreImmIdx(unsigned Opc) {
   case AArch64::ST1W_IMM:
   case AArch64::ST1W_D_IMM:
   case AArch64::ST1D_IMM:
+
+  case AArch64::ST2B_IMM:
+  case AArch64::ST2H_IMM:
+  case AArch64::ST2W_IMM:
+  case AArch64::ST2D_IMM:
+  case AArch64::ST3B_IMM:
+  case AArch64::ST3H_IMM:
+  case AArch64::ST3W_IMM:
+  case AArch64::ST3D_IMM:
+  case AArch64::ST4B_IMM:
+  case AArch64::ST4H_IMM:
+  case AArch64::ST4W_IMM:
+  case AArch64::ST4D_IMM:
 
   case AArch64::LD1RB_IMM:
   case AArch64::LD1RB_H_IMM:
@@ -2908,6 +2901,45 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, TypeSize &Scale,
     MinOffset = -8;
     MaxOffset = 7;
     break;
+  case AArch64::LD2B_IMM:
+  case AArch64::LD2H_IMM:
+  case AArch64::LD2W_IMM:
+  case AArch64::LD2D_IMM:
+  case AArch64::ST2B_IMM:
+  case AArch64::ST2H_IMM:
+  case AArch64::ST2W_IMM:
+  case AArch64::ST2D_IMM:
+    Scale = TypeSize::Scalable(32);
+    Width = SVEMaxBytesPerVector * 2;
+    MinOffset = -8;
+    MaxOffset = 7;
+    break;
+  case AArch64::LD3B_IMM:
+  case AArch64::LD3H_IMM:
+  case AArch64::LD3W_IMM:
+  case AArch64::LD3D_IMM:
+  case AArch64::ST3B_IMM:
+  case AArch64::ST3H_IMM:
+  case AArch64::ST3W_IMM:
+  case AArch64::ST3D_IMM:
+    Scale = TypeSize::Scalable(48);
+    Width = SVEMaxBytesPerVector * 3;
+    MinOffset = -8;
+    MaxOffset = 7;
+    break;
+  case AArch64::LD4B_IMM:
+  case AArch64::LD4H_IMM:
+  case AArch64::LD4W_IMM:
+  case AArch64::LD4D_IMM:
+  case AArch64::ST4B_IMM:
+  case AArch64::ST4H_IMM:
+  case AArch64::ST4W_IMM:
+  case AArch64::ST4D_IMM:
+    Scale = TypeSize::Scalable(64);
+    Width = SVEMaxBytesPerVector * 4;
+    MinOffset = -8;
+    MaxOffset = 7;
+    break;
   case AArch64::LD1B_H_IMM:
   case AArch64::LD1SB_H_IMM:
   case AArch64::LD1H_S_IMM:
@@ -3114,6 +3146,51 @@ bool AArch64InstrInfo::isPreSt(const MachineInstr &MI) {
 
 bool AArch64InstrInfo::isPreLdSt(const MachineInstr &MI) {
   return isPreLd(MI) || isPreSt(MI);
+}
+
+static const TargetRegisterClass *getRegClass(const MachineInstr &MI,
+                                              Register Reg) {
+  if (MI.getParent() == nullptr)
+    return nullptr;
+  const MachineFunction *MF = MI.getParent()->getParent();
+  return MF ? MF->getRegInfo().getRegClassOrNull(Reg) : nullptr;
+}
+
+bool AArch64InstrInfo::isQForm(const MachineInstr &MI) {
+  auto IsQFPR = [&](const MachineOperand &Op) {
+    if (!Op.isReg())
+      return false;
+    auto Reg = Op.getReg();
+    if (Reg.isPhysical())
+      return AArch64::FPR128RegClass.contains(Reg);
+    const TargetRegisterClass *TRC = ::getRegClass(MI, Reg);
+    return TRC == &AArch64::FPR128RegClass ||
+           TRC == &AArch64::FPR128_loRegClass;
+  };
+  return llvm::any_of(MI.operands(), IsQFPR);
+}
+
+bool AArch64InstrInfo::isFpOrNEON(const MachineInstr &MI) {
+  auto IsFPR = [&](const MachineOperand &Op) {
+    if (!Op.isReg())
+      return false;
+    auto Reg = Op.getReg();
+    if (Reg.isPhysical())
+      return AArch64::FPR128RegClass.contains(Reg) ||
+             AArch64::FPR64RegClass.contains(Reg) ||
+             AArch64::FPR32RegClass.contains(Reg) ||
+             AArch64::FPR16RegClass.contains(Reg) ||
+             AArch64::FPR8RegClass.contains(Reg);
+
+    const TargetRegisterClass *TRC = ::getRegClass(MI, Reg);
+    return TRC == &AArch64::FPR128RegClass ||
+           TRC == &AArch64::FPR128_loRegClass ||
+           TRC == &AArch64::FPR64RegClass ||
+           TRC == &AArch64::FPR64_loRegClass ||
+           TRC == &AArch64::FPR32RegClass || TRC == &AArch64::FPR16RegClass ||
+           TRC == &AArch64::FPR8RegClass;
+  };
+  return llvm::any_of(MI.operands(), IsFPR);
 }
 
 // Scale the unscaled offsets.  Returns false if the unscaled offset can't be
@@ -6225,6 +6302,14 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
   if (MUL)
     DelInstrs.push_back(MUL);
   DelInstrs.push_back(&Root);
+
+  // Set the flags on the inserted instructions to be the merged flags of the
+  // instructions that we have combined.
+  uint16_t Flags = Root.getFlags();
+  if (MUL)
+    Flags = Root.mergeFlagsWith(*MUL);
+  for (auto *MI : InsInstrs)
+    MI->setFlags(Flags);
 }
 
 /// Replace csincr-branch sequence by simple conditional branch
@@ -6537,13 +6622,12 @@ enum MachineOutlinerMBBFlags {
   UnsafeRegsDead = 0x8
 };
 
-unsigned
-AArch64InstrInfo::findRegisterToSaveLRTo(const outliner::Candidate &C) const {
-  assert(C.LRUWasSet && "LRU wasn't set?");
+Register
+AArch64InstrInfo::findRegisterToSaveLRTo(outliner::Candidate &C) const {
   MachineFunction *MF = C.getMF();
-  const AArch64RegisterInfo *ARI = static_cast<const AArch64RegisterInfo *>(
-      MF->getSubtarget().getRegisterInfo());
-
+  const TargetRegisterInfo &TRI = *MF->getSubtarget().getRegisterInfo();
+  const AArch64RegisterInfo *ARI =
+      static_cast<const AArch64RegisterInfo *>(&TRI);
   // Check if there is an available register across the sequence that we can
   // use.
   for (unsigned Reg : AArch64::GPR64RegClass) {
@@ -6551,12 +6635,11 @@ AArch64InstrInfo::findRegisterToSaveLRTo(const outliner::Candidate &C) const {
         Reg != AArch64::LR &&  // LR is not reserved, but don't use it.
         Reg != AArch64::X16 && // X16 is not guaranteed to be preserved.
         Reg != AArch64::X17 && // Ditto for X17.
-        C.LRU.available(Reg) && C.UsedInSequence.available(Reg))
+        C.isAvailableAcrossAndOutOfSeq(Reg, TRI) &&
+        C.isAvailableInsideSeq(Reg, TRI))
       return Reg;
   }
-
-  // No suitable register. Return 0.
-  return 0u;
+  return Register();
 }
 
 static bool
@@ -6700,49 +6783,10 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
 
   // Properties about candidate MBBs that hold for all of them.
   unsigned FlagsSetInAll = 0xF;
-
-  // Compute liveness information for each candidate, and set FlagsSetInAll.
   std::for_each(RepeatedSequenceLocs.begin(), RepeatedSequenceLocs.end(),
                 [&FlagsSetInAll](outliner::Candidate &C) {
                   FlagsSetInAll &= C.Flags;
                 });
-
-  // According to the AArch64 Procedure Call Standard, the following are
-  // undefined on entry/exit from a function call:
-  //
-  // * Registers x16, x17, (and thus w16, w17)
-  // * Condition codes (and thus the NZCV register)
-  //
-  // Because if this, we can't outline any sequence of instructions where
-  // one
-  // of these registers is live into/across it. Thus, we need to delete
-  // those
-  // candidates.
-  auto CantGuaranteeValueAcrossCall = [&TRI](outliner::Candidate &C) {
-    // If the unsafe registers in this block are all dead, then we don't need
-    // to compute liveness here.
-    if (C.Flags & UnsafeRegsDead)
-      return false;
-    C.initLRU(TRI);
-    LiveRegUnits LRU = C.LRU;
-    return (!LRU.available(AArch64::W16) || !LRU.available(AArch64::W17) ||
-            !LRU.available(AArch64::NZCV));
-  };
-
-  // Are there any candidates where those registers are live?
-  if (!(FlagsSetInAll & UnsafeRegsDead)) {
-    // Erase every candidate that violates the restrictions above. (It could be
-    // true that we have viable candidates, so it's not worth bailing out in
-    // the case that, say, 1 out of 20 candidates violate the restructions.)
-    llvm::erase_if(RepeatedSequenceLocs, CantGuaranteeValueAcrossCall);
-
-    // If the sequence doesn't have enough candidates left, then we're done.
-    if (RepeatedSequenceLocs.size() < 2)
-      return outliner::OutlinedFunction();
-  }
-
-  // At this point, we have only "safe" candidates to outline. Figure out
-  // frame + call instruction information.
 
   unsigned LastInstrOpcode = RepeatedSequenceLocs[0].back()->getOpcode();
 
@@ -6871,8 +6915,10 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
 
     // Check if we have to save LR.
     for (outliner::Candidate &C : RepeatedSequenceLocs) {
-      C.initLRU(TRI);
-
+      bool LRAvailable =
+          (C.Flags & MachineOutlinerMBBFlags::LRUnavailableSomewhere)
+              ? C.isAvailableAcrossAndOutOfSeq(AArch64::LR, TRI)
+              : true;
       // If we have a noreturn caller, then we're going to be conservative and
       // say that we have to save LR. If we don't have a ret at the end of the
       // block, then we can't reason about liveness accurately.
@@ -6883,7 +6929,7 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
           C.getMF()->getFunction().hasFnAttribute(Attribute::NoReturn);
 
       // Is LR available? If so, we don't need a save.
-      if (C.LRU.available(AArch64::LR) && !IsNoReturn) {
+      if (LRAvailable && !IsNoReturn) {
         NumBytesNoStackCalls += 4;
         C.setCallInfo(MachineOutlinerNoLRSave, 4);
         CandidatesWithoutStackFixups.push_back(C);
@@ -6899,7 +6945,7 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
 
       // Is SP used in the sequence at all? If not, we don't have to modify
       // the stack, so we are guaranteed to get the same frame.
-      else if (C.UsedInSequence.available(AArch64::SP)) {
+      else if (C.isAvailableInsideSeq(AArch64::SP, TRI)) {
         NumBytesNoStackCalls += 12;
         C.setCallInfo(MachineOutlinerDefault, 12);
         CandidatesWithoutStackFixups.push_back(C);
@@ -6968,11 +7014,12 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
       // LR to (ie one extra stack save/restore).
       //
       if (FlagsSetInAll & MachineOutlinerMBBFlags::HasCalls) {
-        erase_if(RepeatedSequenceLocs, [this](outliner::Candidate &C) {
+        erase_if(RepeatedSequenceLocs, [this, &TRI](outliner::Candidate &C) {
           return (std::any_of(
                      C.front(), std::next(C.back()),
                      [](const MachineInstr &MI) { return MI.isCall(); })) &&
-                 (!C.LRU.available(AArch64::LR) || !findRegisterToSaveLRTo(C));
+                 (!C.isAvailableAcrossAndOutOfSeq(AArch64::LR, TRI) ||
+                  !findRegisterToSaveLRTo(C));
         });
       }
     }
@@ -7054,72 +7101,88 @@ bool AArch64InstrInfo::isFunctionSafeToOutlineFrom(
   return true;
 }
 
-bool AArch64InstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
-                                              unsigned &Flags) const {
-  if (!TargetInstrInfo::isMBBSafeToOutlineFrom(MBB, Flags))
-    return false;
-  // Check if LR is available through all of the MBB. If it's not, then set
-  // a flag.
+SmallVector<std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>>
+AArch64InstrInfo::getOutlinableRanges(MachineBasicBlock &MBB,
+                                      unsigned &Flags) const {
   assert(MBB.getParent()->getRegInfo().tracksLiveness() &&
-         "Suitable Machine Function for outlining must track liveness");
+         "Must track liveness!");
+  SmallVector<
+      std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>>
+      Ranges;
+
+  // The range [RangeBegin, RangeEnd).
+  MachineBasicBlock::instr_iterator RangeEnd = MBB.instr_end();
+  MachineBasicBlock::instr_iterator RangeBegin = RangeEnd;
+  unsigned RangeLen = 0;
+
+  // According to the AArch64 Procedure Call Standard, the following are
+  // undefined on entry/exit from a function call:
+  //
+  // * Registers x16, x17, (and thus w16, w17)
+  // * Condition codes (and thus the NZCV register)
+  //
+  // If any of these registers are used inside or live across an outlined
+  // function, then they may be modified later, either by the compiler or
+  // some other tool (like the linker).
+  //
+  // To avoid outlining in these situations, partition each block into ranges
+  // where these registers are dead. We will only outline from those ranges.
   LiveRegUnits LRU(getRegisterInfo());
+  auto AreAllUnsafeRegsDead = [&LRU]() {
+    return LRU.available(AArch64::W16) && LRU.available(AArch64::W17) &&
+           LRU.available(AArch64::NZCV);
+  };
 
-  std::for_each(MBB.rbegin(), MBB.rend(),
-                [&LRU](MachineInstr &MI) { LRU.accumulate(MI); });
+  // We need to know if LR is live across an outlining boundary later on in
+  // order to decide how we'll create the outlined call, frame, etc.
+  //
+  // It's pretty expensive to check this for *every candidate* within a block.
+  // That's some potentially n^2 behaviour, since in the worst case, we'd need
+  // to compute liveness from the end of the block for O(n) candidates within
+  // the block.
+  //
+  // So, to improve the average case, let's keep track of liveness from the end
+  // of the block to the beginning of *every outlinable range*. If we know that
+  // LR is available in every range we could outline from, then we know that
+  // we don't need to check liveness for any candidate within that range.
+  bool LRAvailableEverywhere = true;
 
-  // Check if each of the unsafe registers are available...
-  bool W16AvailableInBlock = LRU.available(AArch64::W16);
-  bool W17AvailableInBlock = LRU.available(AArch64::W17);
-  bool NZCVAvailableInBlock = LRU.available(AArch64::NZCV);
-
-  // If all of these are dead (and not live out), we know we don't have to check
-  // them later.
-  if (W16AvailableInBlock && W17AvailableInBlock && NZCVAvailableInBlock)
-    Flags |= MachineOutlinerMBBFlags::UnsafeRegsDead;
-
-  // Now, add the live outs to the set.
+  // Compute liveness bottom-up.
   LRU.addLiveOuts(MBB);
-
-  // If any of these registers is available in the MBB, but also a live out of
-  // the block, then we know outlining is unsafe.
-  if (W16AvailableInBlock && !LRU.available(AArch64::W16))
-    return false;
-  if (W17AvailableInBlock && !LRU.available(AArch64::W17))
-    return false;
-  if (NZCVAvailableInBlock && !LRU.available(AArch64::NZCV))
-    return false;
-
-  // Check if there's a call inside this MachineBasicBlock. If there is, then
-  // set a flag.
-  if (any_of(MBB, [](MachineInstr &MI) { return MI.isCall(); }))
-    Flags |= MachineOutlinerMBBFlags::HasCalls;
-
-  MachineFunction *MF = MBB.getParent();
-
-  // In the event that we outline, we may have to save LR. If there is an
-  // available register in the MBB, then we'll always save LR there. Check if
-  // this is true.
-  bool CanSaveLR = false;
-  const AArch64RegisterInfo *ARI = static_cast<const AArch64RegisterInfo *>(
-      MF->getSubtarget().getRegisterInfo());
-
-  // Check if there is an available register across the sequence that we can
-  // use.
-  for (unsigned Reg : AArch64::GPR64RegClass) {
-    if (!ARI->isReservedReg(*MF, Reg) && Reg != AArch64::LR &&
-        Reg != AArch64::X16 && Reg != AArch64::X17 && LRU.available(Reg)) {
-      CanSaveLR = true;
-      break;
+  for (auto &MI : make_range(MBB.instr_rbegin(), MBB.instr_rend())) {
+    LRU.stepBackward(MI);
+    // If we are in a range where all of the unsafe registers are dead, then
+    // update the beginning of the range. Also try to precalculate some stuff
+    // for getOutliningCandidateInfo.
+    if (AreAllUnsafeRegsDead()) {
+      if (MI.isCall())
+        Flags |= MachineOutlinerMBBFlags::HasCalls;
+      LRAvailableEverywhere &= LRU.available(AArch64::LR);
+      RangeBegin = MI.getIterator();
+      ++RangeLen;
+      continue;
     }
+    // At least one unsafe register is not dead. We do not want to outline at
+    // this point. If it is long enough to outline from, save the range
+    // [RangeBegin, RangeEnd).
+    if (RangeLen > 1)
+      Ranges.push_back(std::make_pair(RangeBegin, RangeEnd));
+    // Start a new range where RangeEnd is the first known unsafe point.
+    RangeLen = 0;
+    RangeBegin = MI.getIterator();
+    RangeEnd = MI.getIterator();
   }
-
-  // Check if we have a register we can save LR to, and if LR was used
-  // somewhere. If both of those things are true, then we need to evaluate the
-  // safety of outlining stack instructions later.
-  if (!CanSaveLR && !LRU.available(AArch64::LR))
+  // Above loop misses the last (or only) range.
+  if (AreAllUnsafeRegsDead() && RangeLen > 1)
+    Ranges.push_back(std::make_pair(RangeBegin, RangeEnd));
+  if (Ranges.empty())
+    return Ranges;
+  // We found the ranges bottom-up. Mapping expects the top-down. Reverse
+  // the order.
+  std::reverse(Ranges.begin(), Ranges.end());
+  if (!LRAvailableEverywhere)
     Flags |= MachineOutlinerMBBFlags::LRUnavailableSomewhere;
-
-  return true;
+  return Ranges;
 }
 
 outliner::InstrType
@@ -7506,7 +7569,7 @@ void AArch64InstrInfo::buildOutlinedFrame(
 
 MachineBasicBlock::iterator AArch64InstrInfo::insertOutlinedCall(
     Module &M, MachineBasicBlock &MBB, MachineBasicBlock::iterator &It,
-    MachineFunction &MF, const outliner::Candidate &C) const {
+    MachineFunction &MF, outliner::Candidate &C) const {
 
   // Are we tail calling?
   if (C.CallConstructionID == MachineOutlinerTailCall) {
@@ -7537,8 +7600,8 @@ MachineBasicBlock::iterator AArch64InstrInfo::insertOutlinedCall(
   if (C.CallConstructionID == MachineOutlinerRegSave) {
     // FIXME: This logic should be sunk into a target-specific interface so that
     // we don't have to recompute the register.
-    unsigned Reg = findRegisterToSaveLRTo(C);
-    assert(Reg != 0 && "No callee-saved register available?");
+    Register Reg = findRegisterToSaveLRTo(C);
+    assert(Reg && "No callee-saved register available?");
 
     // LR has to be a live in so that we can save it.
     if (!MBB.isLiveIn(AArch64::LR))

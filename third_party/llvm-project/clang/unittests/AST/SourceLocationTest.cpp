@@ -242,6 +242,21 @@ TEST(TypeLoc, DecltypeTypeLocRange) {
   verify(Target2->getSourceRange(), Code.range("full2"));
 }
 
+TEST(TypeLoc, AutoTypeLocRange) {
+  RangeVerifier<TypeLoc> Verifier;
+  Verifier.expectRange(1, 1, 1, 14);
+  EXPECT_TRUE(Verifier.match("decltype(auto) a = 1;", typeLoc(loc(autoType())),
+                             Lang_CXX14));
+
+  const char *Code =
+      R"cpp(template <typename T> concept C = true;
+C auto abc();
+)cpp";
+  // Should include "C auto" tokens.
+  Verifier.expectRange(2, 1, 2, 3); // token range.
+  EXPECT_TRUE(Verifier.match(Code, typeLoc(loc(autoType())), Lang_CXX20));
+}
+
 TEST(TypeLoc, LongDoubleRange) {
   RangeVerifier<TypeLoc> Verifier;
   Verifier.expectRange(1, 1, 1, 6);

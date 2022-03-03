@@ -12,6 +12,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -23,6 +24,7 @@
 namespace Carbon {
 
 class Value;
+class VariableType;
 
 class Expression : public AstNode {
  public:
@@ -45,12 +47,10 @@ class Expression : public AstNode {
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value category of this expression. Cannot be called before
   // typechecking.
@@ -123,20 +123,20 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
-  // Returns the NamedEntityView this identifier refers to. Cannot be called
+  // Returns the ValueNodeView this identifier refers to. Cannot be called
   // before name resolution.
-  auto named_entity() const -> const NamedEntityView& { return *named_entity_; }
+  auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
-  // Sets the value returned by named_entity. Can be called only once,
+  // Sets the value returned by value_node. Can be called only once,
   // during name resolution.
-  void set_named_entity(NamedEntityView named_entity) {
-    CHECK(!named_entity_.has_value());
-    named_entity_ = std::move(named_entity);
+  void set_value_node(ValueNodeView value_node) {
+    CHECK(!value_node_.has_value());
+    value_node_ = std::move(value_node);
   }
 
  private:
   std::string name_;
-  std::optional<NamedEntityView> named_entity_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -156,9 +156,23 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
+  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
+  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const ImplBinding*> impl) {
+    CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
+  std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -340,6 +354,8 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
+class ImplBinding;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -358,9 +374,26 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
+  // Maps each of `function`'s generic parameters to the AST node
+  // that identifies the witness table for the corresponding argument.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impls(
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
+    CHECK(impls_.empty());
+    impls_ = impls;
+  }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
 };
 
 class FunctionTypeLiteral : public Expression {

@@ -43,13 +43,13 @@ class ActionStack {
   // ScopeAction.
   auto CurrentAction() -> Action& { return *todo_.Top(); }
 
-  // Allocates storage for `named_entity`, and initializes it to `value`.
-  void Initialize(NamedEntityView named_entity, Nonnull<const Value*> value);
+  // Allocates storage for `value_node`, and initializes it to `value`.
+  void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
-  // Returns the value bound to `named_entity`. If `named_entity` is a local
+  // Returns the value bound to `value_node`. If `value_node` is a local
   // variable, this will be an LValue.
-  auto ValueOfName(NamedEntityView named_entity,
-                   SourceLocation source_loc) const -> Nonnull<const Value*>;
+  auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
+      -> Nonnull<const Value*>;
 
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);

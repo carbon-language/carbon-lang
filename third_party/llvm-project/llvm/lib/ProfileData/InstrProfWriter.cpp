@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/ProfileData/InstrProf.h"
+#include "llvm/ProfileData/MemProf.h"
 #include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
@@ -32,7 +33,6 @@
 #include <vector>
 
 using namespace llvm;
-extern cl::opt<bool> DebugInfoCorrelate;
 
 // A struct to define how the data stream should be patched. For Indexed
 // profiling, only uint64_t data type is needed.
@@ -64,11 +64,16 @@ public:
 
     if (IsFDOStream) {
       raw_fd_ostream &FDOStream = static_cast<raw_fd_ostream &>(OS);
+      const uint64_t LastPos = FDOStream.tell();
       for (int K = 0; K < NItems; K++) {
         FDOStream.seek(P[K].Pos);
         for (int I = 0; I < P[K].N; I++)
           write(P[K].D[I]);
       }
+      // Reset the stream to the last position after patching so that users
+      // don't accidentally overwrite data. This makes it consistent with
+      // the string stream below which replaces the data directly.
+      FDOStream.seek(LastPos);
     } else {
       raw_string_ostream &SOStream = static_cast<raw_string_ostream &>(OS);
       std::string &Data = SOStream.str(); // with flush
@@ -166,9 +171,8 @@ public:
 
 } // end namespace llvm
 
-InstrProfWriter::InstrProfWriter(bool Sparse, bool InstrEntryBBEnabled)
-    : Sparse(Sparse), InstrEntryBBEnabled(InstrEntryBBEnabled),
-      InfoObj(new InstrProfRecordWriterTrait()) {}
+InstrProfWriter::InstrProfWriter(bool Sparse)
+    : Sparse(Sparse), InfoObj(new InstrProfRecordWriterTrait()) {}
 
 InstrProfWriter::~InstrProfWriter() { delete InfoObj; }
 
@@ -250,11 +254,39 @@ void InstrProfWriter::addRecord(StringRef Name, uint64_t Hash,
   Dest.sortValueData();
 }
 
+void InstrProfWriter::addRecord(const memprof::MemProfRecord &MR,
+                                function_ref<void(Error)> Warn) {
+  // Use 0 as a sentinel value since its highly unlikely that the lower 64-bits
+  // of a 128 bit md5 hash will be all zeros.
+  // TODO: Move this Key frame detection to the contructor to avoid having to
+  // scan all the callstacks again when adding a new record.
+  uint64_t Key = 0;
+  for (auto Iter = MR.CallStack.rbegin(), End = MR.CallStack.rend();
+       Iter != End; Iter++) {
+    if (!Iter->IsInlineFrame) {
+      Key = Iter->Function;
+      break;
+    }
+  }
+
+  if (Key == 0) {
+    Warn(make_error<InstrProfError>(
+        instrprof_error::invalid_prof,
+        "could not determine leaf function for memprof record."));
+  }
+
+  MemProfData[Key].push_back(MR);
+}
+
 void InstrProfWriter::mergeRecordsFromWriter(InstrProfWriter &&IPW,
                                              function_ref<void(Error)> Warn) {
   for (auto &I : IPW.FunctionData)
     for (auto &Func : I.getValue())
       addRecord(I.getKey(), Func.first, std::move(Func.second), 1, Warn);
+
+  for (auto &I : IPW.MemProfData)
+    for (const auto &MR : I.second)
+      addRecord(MR, Warn);
 }
 
 bool InstrProfWriter::shouldEncodeData(const ProfilingData &PD) {
@@ -299,33 +331,45 @@ Error InstrProfWriter::writeImpl(ProfOStream &OS) {
   for (const auto &I : FunctionData)
     if (shouldEncodeData(I.getValue()))
       Generator.insert(I.getKey(), &I.getValue());
+
   // Write the header.
   IndexedInstrProf::Header Header;
   Header.Magic = IndexedInstrProf::Magic;
   Header.Version = IndexedInstrProf::ProfVersion::CurrentVersion;
-  if (ProfileKind == PF_IRLevel)
+  if (static_cast<bool>(ProfileKind & InstrProfKind::IR))
     Header.Version |= VARIANT_MASK_IR_PROF;
-  if (ProfileKind == PF_IRLevelWithCS) {
-    Header.Version |= VARIANT_MASK_IR_PROF;
+  if (static_cast<bool>(ProfileKind & InstrProfKind::CS))
     Header.Version |= VARIANT_MASK_CSIR_PROF;
-  }
-  if (InstrEntryBBEnabled)
+  if (static_cast<bool>(ProfileKind & InstrProfKind::BB))
     Header.Version |= VARIANT_MASK_INSTR_ENTRY;
+  if (static_cast<bool>(ProfileKind & InstrProfKind::SingleByteCoverage))
+    Header.Version |= VARIANT_MASK_BYTE_COVERAGE;
+  if (static_cast<bool>(ProfileKind & InstrProfKind::FunctionEntryOnly))
+    Header.Version |= VARIANT_MASK_FUNCTION_ENTRY_ONLY;
+  if (static_cast<bool>(ProfileKind & InstrProfKind::MemProf))
+    Header.Version |= VARIANT_MASK_MEMPROF;
 
   Header.Unused = 0;
   Header.HashType = static_cast<uint64_t>(IndexedInstrProf::HashType);
   Header.HashOffset = 0;
+  Header.MemProfOffset = 0;
   int N = sizeof(IndexedInstrProf::Header) / sizeof(uint64_t);
 
-  // Only write out all the fields except 'HashOffset'. We need
-  // to remember the offset of that field to allow back patching
-  // later.
-  for (int I = 0; I < N - 1; I++)
+  // Only write out all the fields except 'HashOffset' and 'MemProfOffset'. We
+  // need to remember the offset of these fields to allow back patching later.
+  for (int I = 0; I < N - 2; I++)
     OS.write(reinterpret_cast<uint64_t *>(&Header)[I]);
 
   // Save the location of Header.HashOffset field in \c OS.
   uint64_t HashTableStartFieldOffset = OS.tell();
   // Reserve the space for HashOffset field.
+  OS.write(0);
+
+  // Save the location of MemProf profile data. This is stored in two parts as
+  // the schema and as a separate on-disk chained hashtable.
+  uint64_t MemProfSectionOffset = OS.tell();
+  // Reserve space for the MemProf table field to be patched later if this
+  // profile contains memory profile information.
   OS.write(0);
 
   // Reserve space to write profile summary data.
@@ -337,7 +381,7 @@ Error InstrProfWriter::writeImpl(ProfOStream &OS) {
     OS.write(0);
   uint64_t CSSummaryOffset = 0;
   uint64_t CSSummarySize = 0;
-  if (ProfileKind == PF_IRLevelWithCS) {
+  if (static_cast<bool>(ProfileKind & InstrProfKind::CS)) {
     CSSummaryOffset = OS.tell();
     CSSummarySize = SummarySize / sizeof(uint64_t);
     for (unsigned I = 0; I < CSSummarySize; I++)
@@ -346,6 +390,42 @@ Error InstrProfWriter::writeImpl(ProfOStream &OS) {
 
   // Write the hash table.
   uint64_t HashTableStart = Generator.Emit(OS.OS, *InfoObj);
+
+  // Write the MemProf profile data if we have it. This includes a simple schema
+  // with the format described below followed by the hashtable:
+  // uint64_t Offset = MemProfGenerator.Emit
+  // uint64_t Num schema entries
+  // uint64_t Schema entry 0
+  // uint64_t Schema entry 1
+  // ....
+  // uint64_t Schema entry N - 1
+  // OnDiskChainedHashTable MemProfFunctionData
+  uint64_t MemProfSectionStart = 0;
+  if (static_cast<bool>(ProfileKind & InstrProfKind::MemProf)) {
+    MemProfSectionStart = OS.tell();
+    OS.write(0ULL); // Reserve space for the offset.
+
+    auto Schema = memprof::PortableMemInfoBlock::getSchema();
+    OS.write(static_cast<uint64_t>(Schema.size()));
+    for (const auto Id : Schema) {
+      OS.write(static_cast<uint64_t>(Id));
+    }
+
+    auto MemProfWriter = std::make_unique<memprof::MemProfRecordWriterTrait>();
+    MemProfWriter->Schema = &Schema;
+    OnDiskChainedHashTableGenerator<memprof::MemProfRecordWriterTrait>
+        MemProfGenerator;
+    for (const auto &I : MemProfData) {
+      // Insert the key (func hash) and value (vector of memprof records).
+      MemProfGenerator.insert(I.first, I.second);
+    }
+
+    uint64_t TableOffset = MemProfGenerator.Emit(OS.OS, *MemProfWriter);
+    PatchItem PatchItems[] = {
+        {MemProfSectionStart, &TableOffset, 1},
+    };
+    OS.patch(PatchItems, 1);
+  }
 
   // Allocate space for data to be serialized out.
   std::unique_ptr<IndexedInstrProf::Summary> TheSummary =
@@ -358,7 +438,7 @@ Error InstrProfWriter::writeImpl(ProfOStream &OS) {
 
   // For Context Sensitive summary.
   std::unique_ptr<IndexedInstrProf::Summary> TheCSSummary = nullptr;
-  if (ProfileKind == PF_IRLevelWithCS) {
+  if (static_cast<bool>(ProfileKind & InstrProfKind::CS)) {
     TheCSSummary = IndexedInstrProf::allocSummary(SummarySize);
     std::unique_ptr<ProfileSummary> CSPS = CSISB.getSummary();
     setSummary(TheCSSummary.get(), *CSPS);
@@ -369,6 +449,8 @@ Error InstrProfWriter::writeImpl(ProfOStream &OS) {
   PatchItem PatchItems[] = {
       // Patch the Header.HashOffset field.
       {HashTableStartFieldOffset, &HashTableStart, 1},
+      // Patch the Header.MemProfOffset (=0 for profiles without MemProf data).
+      {MemProfSectionOffset, &MemProfSectionStart, 1},
       // Patch the summary data.
       {SummaryOffset, reinterpret_cast<uint64_t *>(TheSummary.get()),
        (int)(SummarySize / sizeof(uint64_t))},
@@ -470,11 +552,13 @@ void InstrProfWriter::writeRecordInText(StringRef Name, uint64_t Hash,
 }
 
 Error InstrProfWriter::writeText(raw_fd_ostream &OS) {
-  if (ProfileKind == PF_IRLevel)
-    OS << "# IR level Instrumentation Flag\n:ir\n";
-  else if (ProfileKind == PF_IRLevelWithCS)
+  // Check CS first since it implies an IR level profile.
+  if (static_cast<bool>(ProfileKind & InstrProfKind::CS))
     OS << "# CSIR level Instrumentation Flag\n:csir\n";
-  if (InstrEntryBBEnabled)
+  else if (static_cast<bool>(ProfileKind & InstrProfKind::IR))
+    OS << "# IR level Instrumentation Flag\n:ir\n";
+
+  if (static_cast<bool>(ProfileKind & InstrProfKind::BB))
     OS << "# Always instrument the function entry block\n:entry_first\n";
   InstrProfSymtab Symtab;
 

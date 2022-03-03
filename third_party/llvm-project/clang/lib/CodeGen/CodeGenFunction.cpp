@@ -383,9 +383,6 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
                        "__cyg_profile_func_exit");
   }
 
-  if (ShouldSkipSanitizerInstrumentation())
-    CurFn->addFnAttr(llvm::Attribute::DisableSanitizerInstrumentation);
-
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo())
     DI->EmitFunctionEnd(Builder, CurFn);
@@ -593,7 +590,7 @@ CodeGenFunction::DecodeAddrUsedInPrologue(llvm::Value *F,
   auto *GOTAddr = Builder.CreateIntToPtr(GOTAsInt, Int8PtrPtrTy, "global_addr");
 
   // Load the original pointer through the global.
-  return Builder.CreateLoad(Address(GOTAddr, getPointerAlign()),
+  return Builder.CreateLoad(Address(GOTAddr, Int8PtrTy, getPointerAlign()),
                             "decoded_addr");
 }
 
@@ -767,17 +764,22 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
       Fn->addFnAttr(llvm::Attribute::NoSanitizeCoverage);
   }
 
-  // Apply sanitizer attributes to the function.
-  if (SanOpts.hasOneOf(SanitizerKind::Address | SanitizerKind::KernelAddress))
-    Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
-  if (SanOpts.hasOneOf(SanitizerKind::HWAddress | SanitizerKind::KernelHWAddress))
-    Fn->addFnAttr(llvm::Attribute::SanitizeHWAddress);
-  if (SanOpts.has(SanitizerKind::MemTag))
-    Fn->addFnAttr(llvm::Attribute::SanitizeMemTag);
-  if (SanOpts.has(SanitizerKind::Thread))
-    Fn->addFnAttr(llvm::Attribute::SanitizeThread);
-  if (SanOpts.hasOneOf(SanitizerKind::Memory | SanitizerKind::KernelMemory))
-    Fn->addFnAttr(llvm::Attribute::SanitizeMemory);
+  if (ShouldSkipSanitizerInstrumentation()) {
+    CurFn->addFnAttr(llvm::Attribute::DisableSanitizerInstrumentation);
+  } else {
+    // Apply sanitizer attributes to the function.
+    if (SanOpts.hasOneOf(SanitizerKind::Address | SanitizerKind::KernelAddress))
+      Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
+    if (SanOpts.hasOneOf(SanitizerKind::HWAddress |
+                         SanitizerKind::KernelHWAddress))
+      Fn->addFnAttr(llvm::Attribute::SanitizeHWAddress);
+    if (SanOpts.has(SanitizerKind::MemTag))
+      Fn->addFnAttr(llvm::Attribute::SanitizeMemTag);
+    if (SanOpts.has(SanitizerKind::Thread))
+      Fn->addFnAttr(llvm::Attribute::SanitizeThread);
+    if (SanOpts.hasOneOf(SanitizerKind::Memory | SanitizerKind::KernelMemory))
+      Fn->addFnAttr(llvm::Attribute::SanitizeMemory);
+  }
   if (SanOpts.has(SanitizerKind::SafeStack))
     Fn->addFnAttr(llvm::Attribute::SafeStack);
   if (SanOpts.has(SanitizerKind::ShadowCallStack))
@@ -882,6 +884,13 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     if (Offset)
       Fn->addFnAttr("patchable-function-prefix", std::to_string(Offset));
   }
+  // Instruct that functions for COFF/CodeView targets should start with a
+  // patchable instruction, but only on x86/x64. Don't forward this to ARM/ARM64
+  // backends as they don't need it -- instructions on these architectures are
+  // always atomically patchable at runtime.
+  if (CGM.getCodeGenOpts().HotPatch &&
+      getContext().getTargetInfo().getTriple().isX86())
+    Fn->addFnAttr("patchable-function", "prologue-short-redirect");
 
   // Add no-jump-tables value.
   if (CGM.getCodeGenOpts().NoUseJumpTables)
@@ -973,6 +982,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   if (FD && ((FD->isMain() || FD->isMSVCRTEntryPoint()) &&
              CGM.getCodeGenOpts().StackAlignment))
     Fn->addFnAttr("stackrealign");
+
+  // "main" doesn't need to zero out call-used registers.
+  if (FD && FD->isMain())
+    Fn->removeFnAttr("zero-call-used-regs");
 
   llvm::BasicBlock *EntryBB = createBasicBlock("entry", CurFn);
 
@@ -1090,9 +1103,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
         EI->getType()->getPointerElementType(), &*EI, Idx);
     llvm::Type *Ty =
         cast<llvm::GetElementPtrInst>(Addr)->getResultElementType();
-    ReturnValuePointer = Address(Addr, getPointerAlign());
+    ReturnValuePointer = Address(Addr, Ty, getPointerAlign());
     Addr = Builder.CreateAlignedLoad(Ty, Addr, getPointerAlign(), "agg.result");
-    ReturnValue = Address(Addr, CGM.getNaturalTypeAlignment(RetTy));
+    ReturnValue =
+        Address(Addr, ConvertType(RetTy), CGM.getNaturalTypeAlignment(RetTy));
   } else {
     ReturnValue = CreateIRTemp(RetTy, "retval");
 
@@ -1917,7 +1931,7 @@ static void emitNonZeroVLAInit(CodeGenFunction &CGF, QualType baseType,
     dest.getAlignment().alignmentOfArrayElement(baseSize);
 
   // memcpy the individual element bit-pattern.
-  Builder.CreateMemCpy(Address(cur, curAlign), src, baseSizeInChars,
+  Builder.CreateMemCpy(Address(cur, CGF.Int8Ty, curAlign), src, baseSizeInChars,
                        /*volatile*/ false);
 
   // Go to the next element.
@@ -1990,7 +2004,7 @@ CodeGenFunction::EmitNullInitialization(Address DestPtr, QualType Ty) {
     CharUnits NullAlign = DestPtr.getAlignment();
     NullVariable->setAlignment(NullAlign.getAsAlign());
     Address SrcPtr(Builder.CreateBitCast(NullVariable, Builder.getInt8PtrTy()),
-                   NullAlign);
+                   Builder.getInt8Ty(), NullAlign);
 
     if (vla) return emitNonZeroVLAInit(*this, Ty, DestPtr, SrcPtr, SizeVal);
 
@@ -2468,7 +2482,7 @@ Address CodeGenFunction::EmitFieldAnnotations(const FieldDecl *D,
     V = Builder.CreateBitCast(V, VTy);
   }
 
-  return Address(V, Addr.getAlignment());
+  return Address(V, Addr.getElementType(), Addr.getAlignment());
 }
 
 CodeGenFunction::CGCapturedStmtInfo::~CGCapturedStmtInfo() { }

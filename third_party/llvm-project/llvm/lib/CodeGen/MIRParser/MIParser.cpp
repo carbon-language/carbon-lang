@@ -875,11 +875,11 @@ bool MIParser::parseBasicBlock(MachineBasicBlock &MBB,
   // N.B: Multiple lists of successors and liveins are allowed and they're
   // merged into one.
   // Example:
-  //   liveins: %edi
-  //   liveins: %esi
+  //   liveins: $edi
+  //   liveins: $esi
   //
   // is equivalent to
-  //   liveins: %edi, %esi
+  //   liveins: $edi, $esi
   bool ExplicitSuccessors = false;
   while (true) {
     if (Token.is(MIToken::kw_successors)) {
@@ -1094,11 +1094,23 @@ bool MIParser::parse(MachineInstr *&MI) {
       return true;
   }
 
-  // TODO: Check for extraneous machine operands.
   MI = MF.CreateMachineInstr(MCID, DebugLocation, /*NoImplicit=*/true);
   MI->setFlags(Flags);
-  for (const auto &Operand : Operands)
+
+  unsigned NumExplicitOps = 0;
+  for (const auto &Operand : Operands) {
+    bool IsImplicitOp = Operand.Operand.isReg() && Operand.Operand.isImplicit();
+    if (!IsImplicitOp) {
+      if (!MCID.isVariadic() && NumExplicitOps >= MCID.getNumOperands() &&
+          !Operand.Operand.isValidExcessOperand())
+        return error("too many operands for instruction");
+
+      ++NumExplicitOps;
+    }
+
     MI->addOperand(MF, Operand.Operand);
+  }
+
   if (assignRegisterTies(*MI, Operands))
     return true;
   if (PreInstrSymbol)

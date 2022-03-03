@@ -208,20 +208,30 @@ void OpenStatementState::set_path(const char *path, std::size_t length) {
 }
 
 int OpenStatementState::EndIoStatement() {
+  if (position_) {
+    if (access_ && *access_ == Access::Direct) {
+      SignalError("POSITION= may not be set with ACCESS='DIRECT'");
+      position_.reset();
+    }
+  }
   if (path_.get() || wasExtant_ ||
       (status_ && *status_ == OpenStatus::Scratch)) {
-    unit().OpenUnit(status_, action_, position_, std::move(path_), pathLength_,
-        convert_, *this);
+    unit().OpenUnit(status_, action_, position_.value_or(Position::AsIs),
+        std::move(path_), pathLength_, convert_, *this);
   } else {
-    unit().OpenAnonymousUnit(status_, action_, position_, convert_, *this);
+    unit().OpenAnonymousUnit(
+        status_, action_, position_.value_or(Position::AsIs), convert_, *this);
   }
   if (access_) {
     if (*access_ != unit().access) {
       if (wasExtant_) {
         SignalError("ACCESS= may not be changed on an open unit");
+        access_.reset();
       }
     }
-    unit().access = *access_;
+    if (access_) {
+      unit().access = *access_;
+    }
   }
   if (!unit().isUnformatted) {
     unit().isUnformatted = isUnformatted_;
@@ -258,7 +268,7 @@ ExternalIoStatementState<DIR>::ExternalIoStatementState(
     : ExternalIoStatementBase{unit, sourceFile, sourceLine}, mutableModes_{
                                                                  unit.modes} {
   if constexpr (DIR == Direction::Output) {
-    // If the last statement was a non advancing IO input statement, the unit
+    // If the last statement was a non-advancing IO input statement, the unit
     // furthestPositionInRecord was not advanced, but the positionInRecord may
     // have been advanced. Advance furthestPositionInRecord here to avoid
     // overwriting the part of the record that has been read with blanks.
@@ -495,6 +505,66 @@ bool IoStatementState::EmitField(
   }
 }
 
+std::optional<char32_t> IoStatementState::NextInField(
+    std::optional<int> &remaining, const DataEdit &edit) {
+  if (!remaining) { // Stream, list-directed, or NAMELIST
+    if (auto next{GetCurrentChar()}) {
+      if (edit.IsListDirected()) {
+        // list-directed or NAMELIST: check for separators
+        switch (*next) {
+        case ' ':
+        case '\t':
+        case ';':
+        case '/':
+        case '(':
+        case ')':
+        case '\'':
+        case '"':
+        case '*':
+        case '\n': // for stream access
+          return std::nullopt;
+        case ',':
+          if (edit.modes.editingFlags & decimalComma) {
+            break;
+          } else {
+            return std::nullopt;
+          }
+        default:
+          break;
+        }
+      }
+      HandleRelativePosition(1);
+      GotChar();
+      return next;
+    }
+  } else if (*remaining > 0) {
+    if (auto next{GetCurrentChar()}) {
+      --*remaining;
+      HandleRelativePosition(1);
+      GotChar();
+      return next;
+    }
+    const ConnectionState &connection{GetConnectionState()};
+    if (!connection.IsAtEOF()) {
+      if (auto length{connection.EffectiveRecordLength()}) {
+        if (connection.positionInRecord >= *length) {
+          IoErrorHandler &handler{GetIoErrorHandler()};
+          if (mutableModes().nonAdvancing) {
+            handler.SignalEor();
+          } else if (connection.openRecl && !connection.modes.pad) {
+            handler.SignalError(IostatRecordReadOverrun);
+          }
+          if (connection.modes.pad) { // PAD='YES'
+            --*remaining;
+            return std::optional<char32_t>{' '};
+          }
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
 bool IoStatementState::Inquire(
     InquiryKeywordHash inquiry, char *out, std::size_t chars) {
   return std::visit(
@@ -570,13 +640,13 @@ ListDirectedStatementState<Direction::Input>::GetNextDataEdit(
   DataEdit edit;
   edit.descriptor = DataEdit::ListDirected;
   edit.repeat = 1; // may be overridden below
-  edit.modes = connection.modes;
+  edit.modes = io.mutableModes();
   if (hitSlash_) { // everything after '/' is nullified
     edit.descriptor = DataEdit::ListDirectedNullValue;
     return edit;
   }
   char32_t comma{','};
-  if (io.mutableModes().editingFlags & decimalComma) {
+  if (edit.modes.editingFlags & decimalComma) {
     comma = ';';
   }
   if (remaining_ > 0 && !realPart_) { // "r*c" repetition in progress
@@ -609,6 +679,7 @@ ListDirectedStatementState<Direction::Input>::GetNextDataEdit(
     // Consume comma & whitespace after previous item.
     // This includes the comma between real and imaginary components
     // in list-directed/NAMELIST complex input.
+    // (When DECIMAL='COMMA', the comma is actually a semicolon.)
     io.HandleRelativePosition(1);
     ch = io.GetNextNonBlank();
   }
@@ -1049,7 +1120,7 @@ bool InquireUnitState::Inquire(
     result = unit().IsConnected() ? unit().unitNumber() : -1;
     return true;
   case HashInquiryKeyword("POS"):
-    result = unit().position();
+    result = unit().InquirePos();
     return true;
   case HashInquiryKeyword("RECL"):
     if (!unit().IsConnected()) {

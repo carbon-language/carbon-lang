@@ -16,6 +16,7 @@
 
 struct DebugException {};
 
+// ADDITIONAL_COMPILE_FLAGS: -Wno-macro-redefined
 #define _LIBCPP_DEBUG 0
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : throw ::DebugException())
 
@@ -270,7 +271,7 @@ void test_value_categories() {
     assert(dl(static_cast<int&&>(1), static_cast<const int&&>(2)));
 }
 
-#if TEST_STD_VER > 17
+#if TEST_STD_VER > 11
 constexpr bool test_constexpr() {
     std::less<> cmp{};
     __debug_less<std::less<> > dcmp(cmp);
@@ -287,7 +288,7 @@ int main(int, char**) {
     test_non_const_arg_cmp();
     test_value_iterator();
     test_value_categories();
-#if TEST_STD_VER > 17
+#if TEST_STD_VER > 11
     static_assert(test_constexpr(), "");
 #endif
     return 0;

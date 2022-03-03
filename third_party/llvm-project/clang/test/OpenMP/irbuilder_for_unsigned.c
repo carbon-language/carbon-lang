@@ -14,7 +14,7 @@ extern "C" void workshareloop_unsigned(float *a, float *b, float *c, float *d) {
 
 #endif // HEADER
 // CHECK-LABEL: define {{[^@]+}}@workshareloop_unsigned
-// CHECK-SAME: (float* [[A:%.*]], float* [[B:%.*]], float* [[C:%.*]], float* [[D:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-SAME: (float* noundef [[A:%.*]], float* noundef [[B:%.*]], float* noundef [[C:%.*]], float* noundef [[D:%.*]]) #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[A_ADDR:%.*]] = alloca float*, align 8
 // CHECK-NEXT:    [[B_ADDR:%.*]] = alloca float*, align 8
@@ -98,7 +98,7 @@ extern "C" void workshareloop_unsigned(float *a, float *b, float *c, float *d) {
 //
 //
 // CHECK-LABEL: define {{[^@]+}}@__captured_stmt
-// CHECK-SAME: (i32* nonnull align 4 dereferenceable(4) [[DISTANCE:%.*]], %struct.anon* noalias [[__CONTEXT:%.*]]) #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: (i32* noundef nonnull align 4 dereferenceable(4) [[DISTANCE:%.*]], %struct.anon* noalias noundef [[__CONTEXT:%.*]]) #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[DISTANCE_ADDR:%.*]] = alloca i32*, align 8
 // CHECK-NEXT:    [[__CONTEXT_ADDR:%.*]] = alloca %struct.anon*, align 8
@@ -123,19 +123,22 @@ extern "C" void workshareloop_unsigned(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT:    [[TMP7:%.*]] = load i32, i32* [[DOTSTART]], align 4
 // CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[TMP6]], [[TMP7]]
 // CHECK-NEXT:    [[TMP8:%.*]] = load i32, i32* [[DOTSTEP]], align 4
-// CHECK-NEXT:    [[DIV:%.*]] = udiv i32 [[SUB]], [[TMP8]]
+// CHECK-NEXT:    [[SUB1:%.*]] = sub i32 [[TMP8]], 1
+// CHECK-NEXT:    [[ADD:%.*]] = add i32 [[SUB]], [[SUB1]]
+// CHECK-NEXT:    [[TMP9:%.*]] = load i32, i32* [[DOTSTEP]], align 4
+// CHECK-NEXT:    [[DIV:%.*]] = udiv i32 [[ADD]], [[TMP9]]
 // CHECK-NEXT:    br label [[COND_END:%.*]]
 // CHECK:       cond.false:
 // CHECK-NEXT:    br label [[COND_END]]
 // CHECK:       cond.end:
 // CHECK-NEXT:    [[COND:%.*]] = phi i32 [ [[DIV]], [[COND_TRUE]] ], [ 0, [[COND_FALSE]] ]
-// CHECK-NEXT:    [[TMP9:%.*]] = load i32*, i32** [[DISTANCE_ADDR]], align 8
-// CHECK-NEXT:    store i32 [[COND]], i32* [[TMP9]], align 4
+// CHECK-NEXT:    [[TMP10:%.*]] = load i32*, i32** [[DISTANCE_ADDR]], align 8
+// CHECK-NEXT:    store i32 [[COND]], i32* [[TMP10]], align 4
 // CHECK-NEXT:    ret void
 //
 //
 // CHECK-LABEL: define {{[^@]+}}@__captured_stmt.1
-// CHECK-SAME: (i32* nonnull align 4 dereferenceable(4) [[LOOPVAR:%.*]], i32 [[LOGICAL:%.*]], %struct.anon.0* noalias [[__CONTEXT:%.*]]) #[[ATTR1]] {
+// CHECK-SAME: (i32* noundef nonnull align 4 dereferenceable(4) [[LOOPVAR:%.*]], i32 noundef [[LOGICAL:%.*]], %struct.anon.0* noalias noundef [[__CONTEXT:%.*]]) #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[LOOPVAR_ADDR:%.*]] = alloca i32*, align 8
 // CHECK-NEXT:    [[LOGICAL_ADDR:%.*]] = alloca i32, align 4

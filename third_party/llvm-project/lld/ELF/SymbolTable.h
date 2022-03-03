@@ -9,15 +9,14 @@
 #ifndef LLD_ELF_SYMBOL_TABLE_H
 #define LLD_ELF_SYMBOL_TABLE_H
 
-#include "InputFiles.h"
 #include "Symbols.h"
-#include "lld/Common/Strings.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLExtras.h"
 
 namespace lld {
 namespace elf {
+
+class InputFile;
 
 // SymbolTable is a bucket of all known symbols, including defined,
 // undefined, or lazy symbols (the last one is symbols in archive
@@ -40,6 +39,7 @@ public:
   Symbol *insert(StringRef name);
 
   Symbol *addSymbol(const Symbol &newSym);
+  Symbol *addAndCheckDuplicate(const Defined &newSym);
 
   void scanVersionScript();
 
@@ -48,7 +48,7 @@ public:
   void handleDynamicList();
 
   // Set of .so files to not link the same shared object file more than once.
-  llvm::DenseMap<StringRef, SharedFile *> soNames;
+  llvm::DenseMap<llvm::CachedHashStringRef, SharedFile *> soNames;
 
   // Comdat groups define "link once" sections. If two comdat groups have the
   // same name, only one of them is linked, and the other is ignored. This map

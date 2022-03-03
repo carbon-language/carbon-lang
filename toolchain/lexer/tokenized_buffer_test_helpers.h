@@ -7,6 +7,7 @@
 
 #include <gmock/gmock.h>
 
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/YAMLParser.h"
@@ -130,8 +131,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
       matches = false;
     }
 
-    assert(!expected.string_contents ||
-           expected.kind == TokenKind::StringLiteral());
+    CHECK(!expected.string_contents ||
+          expected.kind == TokenKind::StringLiteral());
     if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {

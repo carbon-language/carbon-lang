@@ -227,6 +227,11 @@ class TokenizedBuffer {
     // If true, the value is mantissa * 10^exponent.
     [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
 
+    void Print(llvm::raw_ostream& output_stream) const {
+      output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
+                    << Exponent();
+    }
+
    private:
     friend class TokenizedBuffer;
 

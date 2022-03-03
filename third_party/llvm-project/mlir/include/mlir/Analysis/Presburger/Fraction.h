@@ -25,7 +25,7 @@ namespace mlir {
 /// representable by 64-bit integers.
 struct Fraction {
   /// Default constructor initializes the represented rational number to zero.
-  Fraction() : num(0), den(1) {}
+  Fraction() = default;
 
   /// Construct a Fraction from a numerator and denominator.
   Fraction(int64_t oNum, int64_t oDen) : num(oNum), den(oDen) {
@@ -35,9 +35,16 @@ struct Fraction {
     }
   }
 
+  // Return the value of the fraction as an integer. This should only be called
+  // when the fraction's value is really an integer.
+  int64_t getAsInteger() const {
+    assert(num % den == 0 && "Get as integer called on non-integral fraction!");
+    return num / den;
+  }
+
   /// The numerator and denominator, respectively. The denominator is always
   /// positive.
-  int64_t num, den;
+  int64_t num{0}, den{1};
 };
 
 /// Three-way comparison between two fractions.

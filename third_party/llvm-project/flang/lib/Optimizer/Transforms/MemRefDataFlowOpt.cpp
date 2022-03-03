@@ -94,27 +94,27 @@ private:
 
 class MemDataFlowOpt : public fir::MemRefDataFlowOptBase<MemDataFlowOpt> {
 public:
-  void runOnFunction() override {
-    mlir::FuncOp f = getFunction();
+  void runOnOperation() override {
+    mlir::FuncOp f = getOperation();
 
     auto *domInfo = &getAnalysis<mlir::DominanceInfo>();
     LoadStoreForwarding<fir::LoadOp, fir::StoreOp> lsf(domInfo);
     f.walk([&](fir::LoadOp loadOp) {
       auto maybeStore = lsf.findStoreToForward(
-          loadOp, getSpecificUsers<fir::StoreOp>(loadOp.memref()));
+          loadOp, getSpecificUsers<fir::StoreOp>(loadOp.getMemref()));
       if (maybeStore) {
         auto storeOp = maybeStore.getValue();
         LLVM_DEBUG(llvm::dbgs() << "FlangMemDataFlowOpt: In " << f.getName()
                                 << " erasing load " << loadOp
                                 << " with value from " << storeOp << '\n');
-        loadOp.getResult().replaceAllUsesWith(storeOp.value());
+        loadOp.getResult().replaceAllUsesWith(storeOp.getValue());
         loadOp.erase();
       }
     });
     f.walk([&](fir::AllocaOp alloca) {
       for (auto &storeOp : getSpecificUsers<fir::StoreOp>(alloca.getResult())) {
         if (!lsf.findReadForWrite(
-                storeOp, getSpecificUsers<fir::LoadOp>(storeOp.memref()))) {
+                storeOp, getSpecificUsers<fir::LoadOp>(storeOp.getMemref()))) {
           LLVM_DEBUG(llvm::dbgs() << "FlangMemDataFlowOpt: In " << f.getName()
                                   << " erasing store " << storeOp << '\n');
           storeOp.erase();

@@ -8,23 +8,21 @@
 
 #include "mlir/Analysis/Presburger/PresburgerSet.h"
 #include "mlir/Analysis/Presburger/Simplex.h"
+#include "mlir/Analysis/Presburger/Utils.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallBitVector.h"
 
 using namespace mlir;
+using namespace presburger_utils;
 
 PresburgerSet::PresburgerSet(const IntegerPolyhedron &poly)
-    : nDim(poly.getNumDimIds()), nSym(poly.getNumSymbolIds()) {
+    : PresburgerSpace(poly) {
   unionPolyInPlace(poly);
 }
 
 unsigned PresburgerSet::getNumPolys() const {
   return integerPolyhedrons.size();
 }
-
-unsigned PresburgerSet::getNumDims() const { return nDim; }
-
-unsigned PresburgerSet::getNumSyms() const { return nSym; }
 
 ArrayRef<IntegerPolyhedron> PresburgerSet::getAllIntegerPolyhedron() const {
   return integerPolyhedrons;
@@ -40,10 +38,10 @@ PresburgerSet::getIntegerPolyhedron(unsigned index) const {
 /// compatible spaces.
 static void assertDimensionsCompatible(const IntegerPolyhedron &poly,
                                        const PresburgerSet &set) {
-  assert(poly.getNumDimIds() == set.getNumDims() &&
+  assert(poly.getNumDimIds() == set.getNumDimIds() &&
          "Number of dimensions of the IntegerPolyhedron and PresburgerSet"
          "do not match!");
-  assert(poly.getNumSymbolIds() == set.getNumSyms() &&
+  assert(poly.getNumSymbolIds() == set.getNumSymbolIds() &&
          "Number of symbols of the IntegerPolyhedron and PresburgerSet"
          "do not match!");
 }
@@ -51,9 +49,9 @@ static void assertDimensionsCompatible(const IntegerPolyhedron &poly,
 /// Assert that the two PresburgerSets live in compatible spaces.
 static void assertDimensionsCompatible(const PresburgerSet &setA,
                                        const PresburgerSet &setB) {
-  assert(setA.getNumDims() == setB.getNumDims() &&
+  assert(setA.getNumDimIds() == setB.getNumDimIds() &&
          "Number of dimensions of the PresburgerSets do not match!");
-  assert(setA.getNumSyms() == setB.getNumSyms() &&
+  assert(setA.getNumSymbolIds() == setB.getNumSymbolIds() &&
          "Number of symbols of the PresburgerSets do not match!");
 }
 
@@ -89,14 +87,16 @@ bool PresburgerSet::containsPoint(ArrayRef<int64_t> point) const {
   });
 }
 
-PresburgerSet PresburgerSet::getUniverse(unsigned nDim, unsigned nSym) {
-  PresburgerSet result(nDim, nSym);
-  result.unionPolyInPlace(IntegerPolyhedron::getUniverse(nDim, nSym));
+PresburgerSet PresburgerSet::getUniverse(unsigned numDims,
+                                         unsigned numSymbols) {
+  PresburgerSet result(numDims, numSymbols);
+  result.unionPolyInPlace(IntegerPolyhedron::getUniverse(numDims, numSymbols));
   return result;
 }
 
-PresburgerSet PresburgerSet::getEmptySet(unsigned nDim, unsigned nSym) {
-  return PresburgerSet(nDim, nSym);
+PresburgerSet PresburgerSet::getEmptySet(unsigned numDims,
+                                         unsigned numSymbols) {
+  return PresburgerSet(numDims, numSymbols);
 }
 
 // Return the intersection of this set with the given set.
@@ -109,7 +109,7 @@ PresburgerSet PresburgerSet::getEmptySet(unsigned nDim, unsigned nSym) {
 PresburgerSet PresburgerSet::intersect(const PresburgerSet &set) const {
   assertDimensionsCompatible(set, *this);
 
-  PresburgerSet result(nDim, nSym);
+  PresburgerSet result(getNumDimIds(), getNumSymbolIds());
   for (const IntegerPolyhedron &csA : integerPolyhedrons) {
     for (const IntegerPolyhedron &csB : set.integerPolyhedrons) {
       IntegerPolyhedron csACopy = csA, csBCopy = csB;
@@ -209,8 +209,7 @@ static void subtractRecursively(IntegerPolyhedron &b, Simplex &simplex,
 
   // Find out which inequalities of sI correspond to division inequalities for
   // the local variables of sI.
-  std::vector<llvm::Optional<std::pair<unsigned, unsigned>>> repr(
-      sI.getNumLocalIds());
+  std::vector<MaybeLocalRepr> repr(sI.getNumLocalIds());
   sI.getLocalReprs(repr);
 
   // Add sI's locals to b, after b's locals. Also add b's locals to sI, before
@@ -220,18 +219,20 @@ static void subtractRecursively(IntegerPolyhedron &b, Simplex &simplex,
   // Mark which inequalities of sI are division inequalities and add all such
   // inequalities to b.
   llvm::SmallBitVector isDivInequality(sI.getNumInequalities());
-  for (Optional<std::pair<unsigned, unsigned>> &maybePair : repr) {
-    assert(maybePair &&
+  for (MaybeLocalRepr &maybeInequality : repr) {
+    assert(maybeInequality.kind == ReprKind::Inequality &&
            "Subtraction is not supported when a representation of the local "
            "variables of the subtrahend cannot be found!");
+    auto lb = maybeInequality.repr.inequalityPair.lowerBoundIdx;
+    auto ub = maybeInequality.repr.inequalityPair.upperBoundIdx;
 
-    b.addInequality(sI.getInequality(maybePair->first));
-    b.addInequality(sI.getInequality(maybePair->second));
+    b.addInequality(sI.getInequality(lb));
+    b.addInequality(sI.getInequality(ub));
 
-    assert(maybePair->first != maybePair->second &&
+    assert(lb != ub &&
            "Upper and lower bounds must be different inequalities!");
-    isDivInequality[maybePair->first] = true;
-    isDivInequality[maybePair->second] = true;
+    isDivInequality[lb] = true;
+    isDivInequality[ub] = true;
   }
 
   unsigned offset = simplex.getNumConstraints();
@@ -333,42 +334,40 @@ PresburgerSet PresburgerSet::getSetDifference(IntegerPolyhedron poly,
 /// Return the complement of this set.
 PresburgerSet PresburgerSet::complement() const {
   return getSetDifference(
-      IntegerPolyhedron::getUniverse(getNumDims(), getNumSyms()), *this);
+      IntegerPolyhedron::getUniverse(getNumDimIds(), getNumSymbolIds()), *this);
 }
 
 /// Return the result of subtract the given set from this set, i.e.,
 /// return `this \ set`.
 PresburgerSet PresburgerSet::subtract(const PresburgerSet &set) const {
   assertDimensionsCompatible(set, *this);
-  PresburgerSet result(nDim, nSym);
+  PresburgerSet result(getNumDimIds(), getNumSymbolIds());
   // We compute (U_i t_i) \ (U_i set_i) as U_i (t_i \ V_i set_i).
   for (const IntegerPolyhedron &poly : integerPolyhedrons)
     result.unionSetInPlace(getSetDifference(poly, set));
   return result;
 }
 
-/// Two sets S and T are equal iff S contains T and T contains S.
-/// By "S contains T", we mean that S is a superset of or equal to T.
-///
-/// S contains T iff T \ S is empty, since if T \ S contains a
-/// point then this is a point that is contained in T but not S.
-///
-/// Therefore, S is equal to T iff S \ T and T \ S are both empty.
+/// T is a subset of S iff T \ S is empty, since if T \ S contains a
+/// point then this is a point that is contained in T but not S, and
+/// if T contains a point that is not in S, this also lies in T \ S.
+bool PresburgerSet::isSubsetOf(const PresburgerSet &set) const {
+  return this->subtract(set).isIntegerEmpty();
+}
+
+/// Two sets are equal iff they are subsets of each other.
 bool PresburgerSet::isEqual(const PresburgerSet &set) const {
   assertDimensionsCompatible(set, *this);
-  return this->subtract(set).isIntegerEmpty() &&
-         set.subtract(*this).isIntegerEmpty();
+  return this->isSubsetOf(set) && set.isSubsetOf(*this);
 }
 
 /// Return true if all the sets in the union are known to be integer empty,
 /// false otherwise.
 bool PresburgerSet::isIntegerEmpty() const {
   // The set is empty iff all of the disjuncts are empty.
-  for (const IntegerPolyhedron &poly : integerPolyhedrons) {
-    if (!poly.isIntegerEmpty())
-      return false;
-  }
-  return true;
+  return std::all_of(
+      integerPolyhedrons.begin(), integerPolyhedrons.end(),
+      [](const IntegerPolyhedron &poly) { return poly.isIntegerEmpty(); });
 }
 
 bool PresburgerSet::findIntegerSample(SmallVectorImpl<int64_t> &sample) {
@@ -382,8 +381,23 @@ bool PresburgerSet::findIntegerSample(SmallVectorImpl<int64_t> &sample) {
   return false;
 }
 
+Optional<uint64_t> PresburgerSet::computeVolume() const {
+  assert(getNumSymbolIds() == 0 && "Symbols are not yet supported!");
+  // The sum of the volumes of the disjuncts is a valid overapproximation of the
+  // volume of their union, even if they overlap.
+  uint64_t result = 0;
+  for (const IntegerPolyhedron &poly : integerPolyhedrons) {
+    Optional<uint64_t> volume = poly.computeVolume();
+    if (!volume)
+      return {};
+    result += *volume;
+  }
+  return result;
+}
+
 PresburgerSet PresburgerSet::coalesce() const {
-  PresburgerSet newSet = PresburgerSet::getEmptySet(getNumDims(), getNumSyms());
+  PresburgerSet newSet =
+      PresburgerSet::getEmptySet(getNumDimIds(), getNumSymbolIds());
   llvm::SmallBitVector isRedundant(getNumPolys());
 
   for (unsigned i = 0, e = integerPolyhedrons.size(); i < e; ++i) {

@@ -985,17 +985,18 @@ bool LLParser::parseAliasOrIFunc(const std::string &Name, LocTy NameLoc,
     return error(AliaseeLoc, "An alias or ifunc must have pointer type");
   unsigned AddrSpace = PTy->getAddressSpace();
 
-  if (IsAlias && !PTy->isOpaqueOrPointeeTypeMatches(Ty)) {
-    return error(
-        ExplicitTypeLoc,
-        typeComparisonErrorMessage(
-            "explicit pointee type doesn't match operand's pointee type", Ty,
-            PTy->getElementType()));
-  }
-
-  if (!IsAlias && !PTy->getElementType()->isFunctionTy()) {
-    return error(ExplicitTypeLoc,
-                 "explicit pointee type should be a function type");
+  if (IsAlias) {
+    if (!PTy->isOpaqueOrPointeeTypeMatches(Ty))
+      return error(
+          ExplicitTypeLoc,
+          typeComparisonErrorMessage(
+              "explicit pointee type doesn't match operand's pointee type", Ty,
+              PTy->getNonOpaquePointerElementType()));
+  } else {
+    if (!PTy->isOpaque() &&
+        !PTy->getNonOpaquePointerElementType()->isFunctionTy())
+      return error(ExplicitTypeLoc,
+                   "explicit pointee type should be a function type");
   }
 
   GlobalValue *GVal = nullptr;
@@ -1332,6 +1333,13 @@ bool LLParser::parseEnumAttribute(Attribute::AttrKind Attr, AttrBuilder &B,
     B.addDereferenceableOrNullAttr(Bytes);
     return false;
   }
+  case Attribute::UWTable: {
+    UWTableKind Kind;
+    if (parseOptionalUWTableKind(Kind))
+      return true;
+    B.addUWTableAttr(Kind);
+    return false;
+  }
   default:
     B.addAttribute(Attr);
     Lex.Lex();
@@ -1410,14 +1418,14 @@ static inline GlobalValue *createGlobalFwdRef(Module *M, PointerType *PTy) {
                               nullptr, GlobalVariable::NotThreadLocal,
                               PTy->getAddressSpace());
 
-  if (auto *FT = dyn_cast<FunctionType>(PTy->getPointerElementType()))
+  Type *ElemTy = PTy->getNonOpaquePointerElementType();
+  if (auto *FT = dyn_cast<FunctionType>(ElemTy))
     return Function::Create(FT, GlobalValue::ExternalWeakLinkage,
                             PTy->getAddressSpace(), "", M);
   else
-    return new GlobalVariable(*M, PTy->getPointerElementType(), false,
-                              GlobalValue::ExternalWeakLinkage, nullptr, "",
-                              nullptr, GlobalVariable::NotThreadLocal,
-                              PTy->getAddressSpace());
+    return new GlobalVariable(
+        *M, ElemTy, false, GlobalValue::ExternalWeakLinkage, nullptr, "",
+        nullptr, GlobalVariable::NotThreadLocal, PTy->getAddressSpace());
 }
 
 Value *LLParser::checkValidVariableType(LocTy Loc, const Twine &Name, Type *Ty,
@@ -1993,6 +2001,22 @@ bool LLParser::parseOptionalDerefAttrBytes(lltok::Kind AttrKind,
   if (!Bytes)
     return error(DerefLoc, "dereferenceable bytes must be non-zero");
   return false;
+}
+
+bool LLParser::parseOptionalUWTableKind(UWTableKind &Kind) {
+  Lex.Lex();
+  Kind = UWTableKind::Default;
+  if (!EatIfPresent(lltok::lparen))
+    return false;
+  LocTy KindLoc = Lex.getLoc();
+  if (Lex.getKind() == lltok::kw_sync)
+    Kind = UWTableKind::Sync;
+  else if (Lex.getKind() == lltok::kw_async)
+    Kind = UWTableKind::Async;
+  else
+    return error(KindLoc, "expected unwind table kind");
+  Lex.Lex();
+  return parseToken(lltok::rparen, "expected ')'");
 }
 
 /// parseOptionalCommaAlign
@@ -3588,7 +3612,7 @@ bool LLParser::parseValID(ValID &ID, PerFunctionState *PFS, Type *ExpectedTy) {
             ExplicitTypeLoc,
             typeComparisonErrorMessage(
                 "explicit pointee type doesn't match operand's pointee type",
-                Ty, BasePointerType->getElementType()));
+                Ty, BasePointerType->getNonOpaquePointerElementType()));
       }
 
       unsigned GEPWidth =
@@ -4143,8 +4167,8 @@ bool LLParser::parseMDField(LocTy Loc, StringRef Name, DIFlagField &Result) {
 
     Val = DINode::getFlag(Lex.getStrVal());
     if (!Val)
-      return tokError(Twine("invalid debug info flag flag '") +
-                      Lex.getStrVal() + "'");
+      return tokError(Twine("invalid debug info flag '") + Lex.getStrVal() +
+                      "'");
     Lex.Lex();
     return false;
   };
@@ -4550,16 +4574,17 @@ bool LLParser::parseDIStringType(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(stringLength, MDField, );                                           \
   OPTIONAL(stringLengthExpression, MDField, );                                 \
+  OPTIONAL(stringLocationExpression, MDField, );                               \
   OPTIONAL(size, MDUnsignedField, (0, UINT64_MAX));                            \
   OPTIONAL(align, MDUnsignedField, (0, UINT32_MAX));                           \
   OPTIONAL(encoding, DwarfAttEncodingField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  Result = GET_OR_DISTINCT(DIStringType,
-                           (Context, tag.Val, name.Val, stringLength.Val,
-                            stringLengthExpression.Val, size.Val, align.Val,
-                            encoding.Val));
+  Result = GET_OR_DISTINCT(
+      DIStringType,
+      (Context, tag.Val, name.Val, stringLength.Val, stringLengthExpression.Val,
+       stringLocationExpression.Val, size.Val, align.Val, encoding.Val));
   return false;
 }
 
@@ -5602,7 +5627,7 @@ bool LLParser::parseFunctionHeader(Function *&Fn, bool IsDefine) {
     if (FRVI != ForwardRefVals.end()) {
       FwdFn = FRVI->second.first;
       if (!FwdFn->getType()->isOpaque()) {
-        if (!FwdFn->getType()->getPointerElementType()->isFunctionTy())
+        if (!FwdFn->getType()->getNonOpaquePointerElementType()->isFunctionTy())
           return error(FRVI->second.second, "invalid forward reference to "
                                             "function as global value!");
         if (FwdFn->getType() != PFT)
@@ -5629,7 +5654,7 @@ bool LLParser::parseFunctionHeader(Function *&Fn, bool IsDefine) {
     // types agree.
     auto I = ForwardRefValIDs.find(NumberedVals.size());
     if (I != ForwardRefValIDs.end()) {
-      FwdFn = cast<Function>(I->second.first);
+      FwdFn = I->second.first;
       if (!FwdFn->getType()->isOpaque() && FwdFn->getType() != PFT)
         return error(NameLoc, "type of definition and forward reference of '@" +
                                   Twine(NumberedVals.size()) +
@@ -7205,7 +7230,7 @@ int LLParser::parseLoad(Instruction *&Inst, PerFunctionState &PFS) {
         ExplicitTypeLoc,
         typeComparisonErrorMessage(
             "explicit pointee type doesn't match operand's pointee type", Ty,
-            cast<PointerType>(Val->getType())->getElementType()));
+            Val->getType()->getNonOpaquePointerElementType()));
   }
   SmallPtrSet<Type *, 4> Visited;
   if (!Alignment && !Ty->isSized(&Visited))
@@ -7465,7 +7490,7 @@ int LLParser::parseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
         ExplicitTypeLoc,
         typeComparisonErrorMessage(
             "explicit pointee type doesn't match operand's pointee type", Ty,
-            BasePointerType->getElementType()));
+            BasePointerType->getNonOpaquePointerElementType()));
   }
 
   SmallVector<Value*, 16> Indices;

@@ -32,7 +32,8 @@ using ::testing::StrEq;
 class LexerTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
-    source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
+    source_storage.push_back(
+        std::move(*SourceBuffer::CreateFromText(text.str())));
     return source_storage.back();
   }
 
@@ -272,14 +273,14 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                   // newline
                   {.kind = TokenKind::IntegerLiteral(), .text = "13"},
                   {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::UnderscoreKeyword()},
+                  {.kind = TokenKind::Underscore()},
                   // newline
                   {.kind = TokenKind::EndOfFile()},
               }));
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -288,8 +289,8 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
           {.kind = TokenKind::Error(),
            .line = 1,
            .column = 1,
+           // 💩 takes 4 bytes, and we count column as bytes offset.
            .text = llvm::StringRef("$$💩", 6)},
-          // 💩 takes 4 bytes, and we count column as bytes offset.
           {.kind = TokenKind::Minus(), .line = 1, .column = 7},
           {.kind = TokenKind::Error(), .line = 1, .column = 8, .text = "$"},
           // newline
@@ -303,19 +304,13 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Backslash(),
            .line = 3,
            .column = 1,
-           .text = llvm::StringRef("\"", 1)},
+           .text = "\\"},
+          {.kind = TokenKind::Error(), .line = 3, .column = 2, .text = "\"\\"},
           // newline
-          {.kind = TokenKind::Error(),
-           .line = 4,
-           .column = 1,
-           .text = llvm::StringRef("\"", 1)},
-          {.kind = TokenKind::Backslash(),
-           .line = 4,
-           .column = 2,
-           .text = llvm::StringRef("\\", 1)},
+          {.kind = TokenKind::Error(), .line = 4, .column = 1, .text = "\"x"},
           {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
       }));
 }
@@ -577,28 +572,26 @@ TEST_F(LexerTest, Whitespace) {
 TEST_F(LexerTest, Keywords) {
   auto buffer = Lex("   fn");
   EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::FnKeyword(), .column = 4, .indent_column = 4},
-          {TokenKind::EndOfFile()},
-      }));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
+                  {TokenKind::EndOfFile()},
+              }));
 
-  buffer = Lex("and or not if else for loop return var break continue _");
+  buffer = Lex("and or not if else for return var break continue _");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::AndKeyword()},
-                          {TokenKind::OrKeyword()},
-                          {TokenKind::NotKeyword()},
-                          {TokenKind::IfKeyword()},
-                          {TokenKind::ElseKeyword()},
-                          {TokenKind::ForKeyword()},
-                          {TokenKind::LoopKeyword()},
-                          {TokenKind::ReturnKeyword()},
-                          {TokenKind::VarKeyword()},
-                          {TokenKind::BreakKeyword()},
-                          {TokenKind::ContinueKeyword()},
-                          {TokenKind::UnderscoreKeyword()},
+                          {TokenKind::And()},
+                          {TokenKind::Or()},
+                          {TokenKind::Not()},
+                          {TokenKind::If()},
+                          {TokenKind::Else()},
+                          {TokenKind::For()},
+                          {TokenKind::Return()},
+                          {TokenKind::Var()},
+                          {TokenKind::Break()},
+                          {TokenKind::Continue()},
+                          {TokenKind::Underscore()},
                           {TokenKind::EndOfFile()},
                       }));
 }
@@ -798,24 +791,27 @@ TEST_F(LexerTest, StringLiterals) {
 
 TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
-      "")",        //
-      R"("\)",     //
-      R"("\")",    //
-      R"("\\)",    //
-      R"("\\\")",  //
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
       R"(""")",
       R"("""
-      )",  //
+      )",
       R"("""\)",
       R"(#"""
       """)",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
+    SCOPED_TRACE(test);
     auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_TRUE(buffer.HasErrors());
 
     // We should have formed at least one error token.
     bool found_error = false;
@@ -825,7 +821,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
         break;
       }
     }
-    EXPECT_TRUE(found_error) << "`" << test << "`";
+    EXPECT_TRUE(found_error);
   }
 }
 
@@ -936,45 +932,74 @@ TEST_F(LexerTest, TypeLiterals) {
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
-TEST_F(LexerTest, Diagnostics) {
+TEST_F(LexerTest, DiagnosticTrailingComment) {
   llvm::StringLiteral testcase = R"(
     // Hello!
     var String x; // trailing comment
-    //no space after comment
-    "hello\bworld\xab"
-    0x123abc
-    #"
   )";
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
                             DiagnosticAt(3, 19),
                             DiagnosticMessage(HasSubstr("Trailing comment")))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(4, 7),
-                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 12),
-          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 20),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(6, 10),
-          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(7, 5),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
-
   Lex(testcase, consumer);
+}
+
+TEST_F(LexerTest, DiagnosticWhitespace) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(1, 3),
+                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  Lex("//no space after comment", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 8),
+          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
+  Lex(R"("hello\bworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticBadHex) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 9),
+          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  Lex(R"("hello\xabworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticInvalidDigit) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 6),
+          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+  Lex("0x123abc", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(
+                  AllOf(DiagnosticAt(1, 1),
+                        DiagnosticMessage(HasSubstr("missing a terminator")))));
+  Lex(R"(#" ")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(1, 1),
+                  DiagnosticMessage(HasSubstr("unrecognized character")))));
+  Lex("\b", consumer);
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
@@ -990,7 +1015,7 @@ auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   return line.str();
 }
 
-TEST_F(LexerTest, Printing) {
+TEST_F(LexerTest, PrintingBasic) {
   auto buffer = Lex(";");
   ASSERT_FALSE(buffer.HasErrors());
   std::string print_storage;
@@ -1004,13 +1029,47 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
                     "indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
-  // Test kind padding.
-  buffer = Lex("(;foo;)");
+TEST_F(LexerTest, PrintingInteger) {
+  auto buffer = Lex("123");
   ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+                    "column: 1, indent: 1, spelling: '123', value: `123`, "
+                    "has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingReal) {
+  auto buffer = Lex("2.5");
+  ASSERT_FALSE(buffer.HasErrors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(
+      GetAndDropLine(print),
+      StrEq(
+          "token: { index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
+          "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingPadding) {
+  // Test kind padding.
+  auto buffer = Lex("(;foo;)");
+  ASSERT_FALSE(buffer.HasErrors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 0, kind:  'OpenParen', line: 1, column: "
                     "1, indent: 1, spelling: '(', closing_token: 4 }"));
@@ -1031,13 +1090,16 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
                     "8, indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
+TEST_F(LexerTest, PrintingPaddingDigits) {
   // Test digit padding with max values of 9, 10, and 11.
-  buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
+  auto buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
   ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
