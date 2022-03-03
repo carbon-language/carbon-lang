@@ -12,11 +12,11 @@
 #include <cerrno>
 #include <cstdint>
 #include <limits>
-#include <optional>
 #include <system_error>
 #include <variant>
 
 #include "common/check.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/Error.h"
 
