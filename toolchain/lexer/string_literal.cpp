@@ -138,6 +138,8 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
+  // TODO: Detect indent / dedent for multi-line string literals in order to
+  // stop parsing on dedent before a terminator is found.
   for (; cursor < source_text_size; ++cursor) {
     // This switch and loop structure relies on multi-character terminators and
     // escape sequences starting with a predictable character and not containing
@@ -152,13 +154,19 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           // should stop here.
           if (cursor >= source_text_size ||
               (!multi_line && source_text[cursor] == '\n')) {
-            return llvm::None;
+            llvm::StringRef text = source_text.take_front(cursor);
+            return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                      hash_level, multi_line,
+                                      /*is_terminated=*/false);
           }
         }
         break;
       case '\n':
         if (!multi_line) {
-          return llvm::None;
+          llvm::StringRef text = source_text.take_front(cursor);
+          return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                    hash_level, multi_line,
+                                    /*is_terminated=*/false);
         }
         break;
       case '\"': {
@@ -168,15 +176,17 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
-          return LexedStringLiteral(text, content, hash_level, multi_line);
+          return LexedStringLiteral(text, content, hash_level, multi_line,
+                                    /*is_terminated=*/true);
         }
         break;
       }
     }
   }
-  // Let LexError figure out how to recover from an unterminated string
-  // literal.
-  return llvm::None;
+  // No terminator was found.
+  return LexedStringLiteral(source_text, source_text.drop_front(prefix_len),
+                            hash_level, multi_line,
+                            /*is_terminated=*/false);
 }
 
 // Given a string that contains at least one newline, find the indent (the
@@ -407,6 +417,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
+  if (!is_terminated_) {
+    return "";
+  }
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
   return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
