@@ -40,6 +40,7 @@ cc_library(
     hdrs = ["test_helpers.h"],
     deps = [
         "//common:check",
+        "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -160,6 +161,7 @@ cc_library(
         ":token_kind",
         "//common:check",
         "//common:ostream",
+        "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",

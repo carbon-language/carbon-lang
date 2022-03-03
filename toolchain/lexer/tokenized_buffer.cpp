@@ -11,6 +11,7 @@
 #include <string>
 
 #include "common/check.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -901,8 +902,7 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     const char* loc) -> Diagnostic::Location {
-  CHECK(llvm::is_sorted(std::array{buffer_->source_->Text().begin(), loc,
-                                   buffer_->source_->Text().end()}))
+  CHECK(StringRefContainsPointer(buffer_->source_->Text(), loc))
       << "location not within buffer";
   int64_t offset = loc - buffer_->source_->Text().begin();
 
