@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <optional>
 #include <string>
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -13,12 +13,12 @@ namespace Carbon {
 class LexedStringLiteral {
  public:
   // Extract a string literal token from the given text, if it has a suitable
-  // form. Returning std::nullopt indicates no string literal was found;
+  // form. Returning llvm::None indicates no string literal was found;
   // returning an invalid literal indicates a string prefix was found, but it's
   // malformed and is returning a partial string literal to assist error
   // construction.
   static auto Lex(llvm::StringRef source_text)
-      -> std::optional<LexedStringLiteral>;
+      -> llvm::Optional<LexedStringLiteral>;
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.

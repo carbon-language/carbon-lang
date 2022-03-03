@@ -20,7 +20,7 @@ class StringLiteralTest : public ::testing::Test {
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
@@ -85,8 +85,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : valid) {
     SCOPED_TRACE(test);
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.has_value());
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.hasValue());
     if (result) {
       EXPECT_EQ(result->text(), test);
     }
@@ -112,8 +112,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : invalid) {
     SCOPED_TRACE(test);
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.has_value());
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.hasValue());
     if (result) {
       EXPECT_FALSE(result->is_terminated());
     }

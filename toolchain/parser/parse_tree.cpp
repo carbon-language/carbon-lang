@@ -5,10 +5,10 @@
 #include "toolchain/parser/parse_tree.h"
 
 #include <cstdlib>
-#include <optional>
 
 #include "common/check.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"

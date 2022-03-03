@@ -85,11 +85,11 @@ struct WrongRealLiteralExponent : DiagnosticBase<WrongRealLiteralExponent> {
 }  // namespace
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
-    -> std::optional<LexedNumericLiteral> {
+    -> llvm::Optional<LexedNumericLiteral> {
   LexedNumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
-    return std::nullopt;
+    return llvm::None;
   }
 
   bool seen_plus_minus = false;

@@ -5,8 +5,7 @@
 #ifndef TOOLCHAIN_PARSER_PRECEDENCE_H_
 #define TOOLCHAIN_PARSER_PRECEDENCE_H_
 
-#include <optional>
-
+#include "llvm/ADT/Optional.h"
 #include "toolchain/lexer/token_kind.h"
 
 namespace Carbon {
@@ -50,16 +49,16 @@ class PrecedenceGroup {
   static auto ForType() -> PrecedenceGroup;
 
   // Look up the operator information of the given prefix operator token, or
-  // return std::nullopt if the given token is not a prefix operator.
-  static auto ForLeading(TokenKind kind) -> std::optional<PrecedenceGroup>;
+  // return llvm::None if the given token is not a prefix operator.
+  static auto ForLeading(TokenKind kind) -> llvm::Optional<PrecedenceGroup>;
 
   // Look up the operator information of the given infix or postfix operator
-  // token, or return std::nullopt if the given token is not an infix or postfix
+  // token, or return llvm::None if the given token is not an infix or postfix
   // operator. `infix` indicates whether this is a valid infix operator, but is
   // only considered if the same operator symbol is available as both infix and
   // postfix.
   static auto ForTrailing(TokenKind kind, bool infix)
-      -> std::optional<Trailing>;
+      -> llvm::Optional<Trailing>;
 
   friend auto operator==(PrecedenceGroup lhs, PrecedenceGroup rhs) -> bool {
     return lhs.level_ == rhs.level_;

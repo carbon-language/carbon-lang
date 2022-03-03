@@ -194,7 +194,7 @@ auto PrecedenceGroup::ForType() -> PrecedenceGroup {
 }
 
 auto PrecedenceGroup::ForLeading(TokenKind kind)
-    -> std::optional<PrecedenceGroup> {
+    -> llvm::Optional<PrecedenceGroup> {
   switch (kind) {
     case TokenKind::Star():
       return PrecedenceGroup(TermPrefix);
@@ -211,12 +211,12 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
       return PrecedenceGroup(BitwisePrefix);
 
     default:
-      return std::nullopt;
+      return llvm::None;
   }
 }
 
 auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
-    -> std::optional<Trailing> {
+    -> llvm::Optional<Trailing> {
   switch (kind) {
     // Assignment operators.
     case TokenKind::Equal():
@@ -311,7 +311,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       break;
   }
 
-  return std::nullopt;
+  return llvm::None;
 }
 
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)

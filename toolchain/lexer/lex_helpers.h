@@ -5,8 +5,7 @@
 #ifndef TOOLCHAIN_LEXER_LEX_HELPERS_H_
 #define TOOLCHAIN_LEXER_LEX_HELPERS_H_
 
-#include <optional>
-
+#include "llvm/ADT/Optional.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {

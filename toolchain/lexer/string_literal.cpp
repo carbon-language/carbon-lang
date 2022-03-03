@@ -107,7 +107,7 @@ static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
 }
 
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
-    -> std::optional<LexedStringLiteral> {
+    -> llvm::Optional<LexedStringLiteral> {
   int64_t cursor = 0;
   const int64_t source_text_size = source_text.size();
 
@@ -129,7 +129,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   } else if (cursor < source_text_size && source_text[cursor] == '"') {
     ++cursor;
   } else {
-    return std::nullopt;
+    return llvm::None;
   }
 
   const int prefix_len = cursor;
