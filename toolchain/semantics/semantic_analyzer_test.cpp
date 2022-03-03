@@ -24,7 +24,7 @@ using ::testing::Eq;
 class SemanticAnalyzerTest : public ::testing::Test {
  protected:
   auto Analyze(llvm::Twine t) -> Semantics {
-    source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
+    source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
     EXPECT_FALSE(tokenized_buffer->HasErrors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
