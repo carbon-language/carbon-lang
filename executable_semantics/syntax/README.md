@@ -121,8 +121,8 @@ add_operand:
   minus_expression | mul_expression ;
 // This is notionally
 //   add_operand | add_expression
-// but that introduces a reduce-reduce conflict when interpreting a
-// mul_expression as an add_lhs.
+// but that introduces another kind of reduce-reduce conflict, because there
+// would be two ways to interpret a mul_expression as an add_lhs.
 add_lhs:
   minus_expression | add_expression ;
 // A mul_expression is an add_expression, because multiplication is
