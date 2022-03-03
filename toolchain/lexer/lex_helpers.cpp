@@ -8,6 +8,7 @@
 
 namespace Carbon {
 
+namespace {
 struct TooManyDigits : DiagnosticBase<TooManyDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
@@ -22,6 +23,7 @@ struct TooManyDigits : DiagnosticBase<TooManyDigits> {
   size_t count;
   size_t limit;
 };
+}  // namespace
 
 auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
                    llvm::StringRef text) -> bool {
