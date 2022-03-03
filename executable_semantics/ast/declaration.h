@@ -150,7 +150,7 @@ class ClassDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
-                   Nonnull<TuplePattern*> type_params,
+                   std::optional<Nonnull<TuplePattern*>> type_params,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
@@ -162,8 +162,10 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto type_params() const -> const TuplePattern& { return *type_params_; }
-  auto type_params() -> TuplePattern& { return *type_params_; }
+  auto type_params() const -> std::optional<const TuplePattern*> {
+    return type_params_;
+  }
+  auto type_params() -> std::optional<TuplePattern*> { return type_params_; }
 
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
@@ -183,7 +185,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
-  Nonnull<TuplePattern*> type_params_;
+  std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const Value*>> constant_value_;
 };

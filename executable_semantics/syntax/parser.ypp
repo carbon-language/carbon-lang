@@ -130,6 +130,7 @@
 %type <Nonnull<Pattern*>> paren_pattern
 %type <Nonnull<TuplePattern*>> tuple_pattern
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
+%type <std::optional<Nonnull<TuplePattern*>>> type_params
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <Nonnull<AlternativeSignature*>> alternative
@@ -734,10 +735,16 @@ alternative_list_contents:
       $$.push_back(std::move($3));
     }
 ;
+type_params:
+  // Empty
+    { $$ = std::nullopt; }
+| tuple_pattern
+    { $$ = $1; }
+;
 declaration:
   function_declaration
     { $$ = $1; }
-| CLASS identifier maybe_empty_tuple_pattern LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $3, $5); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }

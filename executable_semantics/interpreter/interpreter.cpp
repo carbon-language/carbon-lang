@@ -633,11 +633,15 @@ void Interpreter::StepExp() {
             const ClassDeclaration& class_decl = class_type.declaration();
             RuntimeScope type_params_scope(&heap_);
             BindingMap generic_args;
-            CHECK(PatternMatch(&class_decl.type_params().value(),
-                               act.results()[1], exp.source_loc(),
-                               &type_params_scope, generic_args));
-            return todo_.FinishAction(arena_->New<NominalClassType>(
-                &class_type.declaration(), generic_args));
+            if (class_decl.type_params().has_value()) {
+              CHECK(PatternMatch(&(*class_decl.type_params())->value(),
+                                 act.results()[1], exp.source_loc(),
+                                 &type_params_scope, generic_args));
+              return todo_.FinishAction(arena_->New<NominalClassType>(
+                  &class_type.declaration(), generic_args));
+            } else {
+              FATAL() << "instantiation of non-generic class " << class_type;
+            }
           }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())

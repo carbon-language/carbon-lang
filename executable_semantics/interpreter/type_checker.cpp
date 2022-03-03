@@ -777,9 +777,11 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   .class_type()
                   .declaration();
           BindingMap generic_args;
-          CHECK(PatternMatch(&class_decl.type_params().value(),
-                             InterpExp(&call.argument(), arena_, trace_),
-                             call.source_loc(), std::nullopt, generic_args));
+          if (class_decl.type_params().has_value()) {
+            CHECK(PatternMatch(&(*class_decl.type_params())->value(),
+                               InterpExp(&call.argument(), arena_, trace_),
+                               call.source_loc(), std::nullopt, generic_args));
+          }
           call.set_static_type(
               arena_->New<NominalClassType>(&class_decl, generic_args));
           call.set_value_category(ValueCategory::Let);
@@ -1246,7 +1248,9 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 
 void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope) {
-  TypeCheckPattern(&class_decl->type_params(), std::nullopt, enclosing_scope);
+  if (class_decl->type_params().has_value()) {
+    TypeCheckPattern(*class_decl->type_params(), std::nullopt, enclosing_scope);
+  }
   /*
   for (Nonnull<GenericBinding*> type_param : class_decl->type_params()) {
     TypeCheckExp(&type_param->type(), enclosing_scope);

@@ -312,7 +312,9 @@ static void ResolveNames(Declaration& declaration,
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       class_scope.Add(class_decl.name(), &class_decl);
-      ResolveNames(class_decl.type_params(), class_scope);
+      if (class_decl.type_params().has_value()) {
+        ResolveNames(**class_decl.type_params(), class_scope);
+      }
 
       for (Nonnull<Declaration*> member : class_decl.members()) {
         AddExposedNames(*member, class_scope);

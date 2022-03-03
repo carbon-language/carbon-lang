@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
 // CHECK: expected: i32
-// CHECK: actual: T
+// CHECK: actual: T:! Type
 
 package ExecutableSemanticsTest api;
 
