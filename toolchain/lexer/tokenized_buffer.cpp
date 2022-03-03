@@ -21,6 +21,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lexer/character_set.h"
+#include "toolchain/lexer/lex_helpers.h"
 #include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/lexer/string_literal.h"
 
@@ -402,6 +403,13 @@ class TokenizedBuffer::Lexer {
     };
 
     llvm::StringRef suffix = word.substr(1);
+    if (!CanLexInteger(emitter_, suffix)) {
+      return buffer_.AddToken(
+          {.kind = TokenKind::Error(),
+           .token_line = current_line_,
+           .column = column,
+           .error_length = static_cast<int32_t>(word.size())});
+    }
     llvm::APInt suffix_value;
     if (suffix.getAsInteger(10, suffix_value)) {
       return LexResult::NoMatch();
@@ -690,8 +698,8 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
       << "The token must be a real literal!";
 
   // Note that every real literal is at least three characters long, so we can
-  // safely look at the second character to determine whether we have a decimal
-  // or hexadecimal literal.
+  // safely look at the second character to determine whether we have a
+  // decimal or hexadecimal literal.
   auto& line_info = GetLineInfo(token_info.token_line);
   int64_t token_start = line_info.start + token_info.column;
   char second_char = source_->Text()[token_start + 1];
@@ -766,8 +774,8 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 }
 
 // Compute the printed width of a number. When numbers are printed in decimal,
-// the number of digits needed is is one more than the log-base-10 of the value.
-// We handle a value of `zero` explicitly.
+// the number of digits needed is is one more than the log-base-10 of the
+// value. We handle a value of `zero` explicitly.
 //
 // This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
