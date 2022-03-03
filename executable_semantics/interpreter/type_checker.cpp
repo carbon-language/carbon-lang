@@ -363,11 +363,19 @@ auto TypeChecker::Substitute(
       return arena_->New<PointerType>(
           Substitute(dict, &cast<PointerType>(*type).type()));
     }
+    case Value::Kind::NominalClassType: {
+      const auto& class_type = cast<NominalClassType>(*type);
+      BindingMap type_args;
+      for (const auto& [name, value] : class_type.type_args()) {
+        type_args[name] = Substitute(dict, value);
+      }
+      return arena_->New<NominalClassType>(&class_type.declaration(),
+                                           type_args);
+    }
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
-    case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -487,7 +495,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), t_class.declaration().members());
               member.has_value()) {
-            access.set_static_type(&(*member)->static_type());
+            Nonnull<const Value*> field_type =
+                Substitute(t_class.type_args(), &(*member)->static_type());
+            access.set_static_type(field_type);
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
                 access.set_value_category(access.aggregate().value_category());
@@ -535,7 +545,11 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 if (func->is_method()) {
                   break;
                 }
-                access.set_static_type(&(*member)->static_type());
+                Nonnull<const Value*> field_type = Substitute(
+                    class_type.type_args(), &(*member)->static_type());
+                llvm::outs()
+                    << "and instantiates to type " << *field_type << "\n";
+                access.set_static_type(field_type);
                 access.set_value_category(ValueCategory::Let);
                 return;
               }
@@ -753,10 +767,29 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           call.set_value_category(ValueCategory::Let);
           return;
         }
+        case Value::Kind::TypeOfClassType: {
+          // This case handles the application of a generic class to
+          // a type argument, such as Point(i32).
+          // TODO: create a new TypeofClassType for the instantiated generic
+          // class
+          const ClassDeclaration& class_decl =
+              cast<TypeOfClassType>(call.function().static_type())
+                  .class_type()
+                  .declaration();
+          BindingMap generic_args;
+          CHECK(PatternMatch(&class_decl.type_params().value(),
+                             InterpExp(&call.argument(), arena_, trace_),
+                             call.source_loc(), std::nullopt, generic_args));
+          call.set_static_type(
+              arena_->New<NominalClassType>(&class_decl, generic_args));
+          call.set_value_category(ValueCategory::Let);
+          return;
+        }
         default: {
           FATAL_COMPILATION_ERROR(e->source_loc())
               << "in call, expected a function\n"
-              << *e;
+              << *e << "\nnot an operator of type "
+              << call.function().static_type() << "\n";
         }
       }
       break;
@@ -831,8 +864,9 @@ void TypeChecker::TypeCheckPattern(
         if (IsConcreteType(type)) {
           ExpectType(p->source_loc(), "name binding", type, *expected);
         } else {
+          BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt)) {
+                            std::nullopt, generic_args)) {
             FATAL_COMPILATION_ERROR(binding.type().source_loc())
                 << "Type pattern '" << *type << "' does not match actual type '"
                 << **expected << "'";
@@ -843,6 +877,21 @@ void TypeChecker::TypeCheckPattern(
       ExpectIsConcreteType(binding.source_loc(), type);
       binding.set_static_type(type);
       SetValue(&binding, InterpPattern(&binding, arena_, trace_));
+      return;
+    }
+    case PatternKind::GenericBinding: {
+      auto& binding = cast<GenericBinding>(*p);
+      TypeCheckExp(&binding.type(), impl_scope);
+      Nonnull<const Value*> type = InterpExp(&binding.type(), arena_, trace_);
+      if (expected) {
+        FATAL_COMPILATION_ERROR(binding.type().source_loc())
+            << "Generic binding may not occur in pattern with expected type: "
+            << binding;
+      }
+      binding.set_static_type(type);
+      Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
+      binding.set_constant_value(val);
+      SetValue(&binding, val);
       return;
     }
     case PatternKind::TuplePattern: {
@@ -1197,11 +1246,21 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 
 void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope) {
+  TypeCheckPattern(&class_decl->type_params(), std::nullopt, enclosing_scope);
+  /*
+  for (Nonnull<GenericBinding*> type_param : class_decl->type_params()) {
+    TypeCheckExp(&type_param->type(), enclosing_scope);
+    SetConstantValue(type_param, arena_->New<VariableType>(type_param));
+    type_param->set_static_type(InterpExp(&type_param->type(), arena_, trace_));
+  }
+  */
+
   // The declarations of the members may refer to the class, so we
   // must set the constant value of the class and its static type
   // before we start processing the members.
+  BindingMap type_args;
   Nonnull<NominalClassType*> class_type =
-      arena_->New<NominalClassType>(class_decl);
+      arena_->New<NominalClassType>(class_decl, type_args);
   SetConstantValue(class_decl, class_type);
   class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 

@@ -175,7 +175,8 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
-                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
+                  std::optional<Nonnull<RuntimeScope*>> bindings,
+                  BindingMap& generic_args) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       if (!bindings.has_value()) {
@@ -187,6 +188,11 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       if (placeholder.value_node().has_value()) {
         (*bindings)->Initialize(*placeholder.value_node(), v);
       }
+      return true;
+    }
+    case Value::Kind::VariableType: {
+      const auto& var_type = cast<VariableType>(*p);
+      generic_args[&var_type.binding()] = v;
       return true;
     }
     case Value::Kind::TupleValue:
@@ -201,7 +207,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           }
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                              source_loc, bindings)) {
+                              source_loc, bindings, generic_args)) {
               return false;
             }
           }  // for
@@ -217,7 +223,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
         if (!PatternMatch(p_struct.elements()[i].value,
-                          v_struct.elements()[i].value, source_loc, bindings)) {
+                          v_struct.elements()[i].value, source_loc, bindings,
+                          generic_args)) {
           return false;
         }
       }
@@ -233,7 +240,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             return false;
           }
           return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc,
-                              bindings);
+                              bindings, generic_args);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -244,11 +251,11 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
           if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
-                            bindings)) {
+                            bindings, generic_args)) {
             return false;
           }
           if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
-                            source_loc, bindings)) {
+                            source_loc, bindings, generic_args)) {
             return false;
           }
           return true;
@@ -592,9 +599,10 @@ void Interpreter::StepExp() {
               }
               function_scope.Initialize(impl_bind, witness);
             }
+            BindingMap generic_args;
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),
-                               &function_scope));
+                               &function_scope, generic_args));
             CHECK(function.body().has_value())
                 << "Calling a function that's missing a body";
             return todo_.Spawn(
@@ -608,15 +616,28 @@ void Interpreter::StepExp() {
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);
+            BindingMap generic_args;
             CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                               exp.source_loc(), &method_scope));
+                               exp.source_loc(), &method_scope, generic_args));
             CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
-                               exp.source_loc(), &method_scope));
+                               exp.source_loc(), &method_scope, generic_args));
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*method.body()),
                 std::move(method_scope));
+          }
+          case Value::Kind::NominalClassType: {
+            const NominalClassType& class_type =
+                cast<NominalClassType>(*act.results()[0]);
+            const ClassDeclaration& class_decl = class_type.declaration();
+            RuntimeScope type_params_scope(&heap_);
+            BindingMap generic_args;
+            CHECK(PatternMatch(&class_decl.type_params().value(),
+                               act.results()[1], exp.source_loc(),
+                               &type_params_scope, generic_args));
+            return todo_.FinishAction(arena_->New<NominalClassType>(
+                &class_type.declaration(), generic_args));
           }
           default:
             FATAL_RUNTIME_ERROR(exp.source_loc())
@@ -716,6 +737,10 @@ void Interpreter::StepPattern() {
         return todo_.FinishAction(arena_->New<BindingPlaceholderValue>());
       }
     }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(pattern);
+      return todo_.FinishAction(arena_->New<VariableType>(&binding));
+    }
     case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(pattern);
       if (act.pos() < static_cast<int>(tuple.fields().size())) {
@@ -779,9 +804,10 @@ void Interpreter::StepStmt() {
         }
         auto c = match_stmt.clauses()[clause_num];
         RuntimeScope matches(&heap_);
+        BindingMap generic_args;
         if (PatternMatch(&c.pattern().value(),
                          Convert(act.results()[0], &c.pattern().static_type()),
-                         stmt.source_loc(), &matches)) {
+                         stmt.source_loc(), &matches, generic_args)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
@@ -856,7 +882,8 @@ void Interpreter::StepStmt() {
             &cast<VariableDefinition>(stmt).pattern().value();
 
         RuntimeScope matches(&heap_);
-        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
+        BindingMap generic_args;
+        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches, generic_args))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         todo_.MergeScope(std::move(matches));

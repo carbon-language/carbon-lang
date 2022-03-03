@@ -151,6 +151,69 @@ class TuplePattern : public Pattern {
   std::vector<Nonnull<Pattern*>> fields_;
 };
 
+class GenericBinding : public Pattern {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : Pattern(AstNodeKind::GenericBinding, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
+
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  // The static type of the binding. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the binding. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+  // The impl binding associated with this type variable.
+  auto impl_binding() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_binding_;
+  }
+  // Set the impl binding.
+  void set_impl_binding(Nonnull<const ImplBinding*> binding) {
+    CHECK(!impl_binding_.has_value());
+    impl_binding_ = binding;
+  }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> type_;
+  std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> constant_value_;
+  std::optional<Nonnull<const ImplBinding*>> impl_binding_;
+};
+
+using BindingMap =
+    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.

@@ -29,6 +29,11 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << binding.name() << ": " << binding.type();
       break;
     }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(*this);
+      out << binding.name() << ":! " << binding.type();
+      break;
+    }
     case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";

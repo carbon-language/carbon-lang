@@ -465,14 +465,18 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType), declaration_(declaration) {}
+  NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                   const BindingMap& type_args)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
+  auto type_args() const -> const BindingMap& { return type_args_; }
 
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
@@ -481,6 +485,7 @@ class NominalClassType : public Value {
 
  private:
   Nonnull<const ClassDeclaration*> declaration_;
+  BindingMap type_args_;
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;

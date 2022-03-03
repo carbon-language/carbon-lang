@@ -285,6 +285,14 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::NominalClassType: {
       const NominalClassType& class_type = cast<NominalClassType>(*this);
       out << "class " << class_type.declaration().name();
+      if (class_type.type_args().size() > 0) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : class_type.type_args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
       break;
     }
     case Value::Kind::InterfaceType: {
@@ -302,7 +310,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).binding().name();
+      out << cast<VariableType>(*this).binding();
       break;
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();

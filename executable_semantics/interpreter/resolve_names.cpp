@@ -156,6 +156,14 @@ static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
       }
       break;
     }
+    case PatternKind::GenericBinding: {
+      auto& binding = cast<GenericBinding>(pattern);
+      ResolveNames(binding.type(), enclosing_scope);
+      if (binding.name() != AnonymousName) {
+        enclosing_scope.Add(binding.name(), &binding);
+      }
+      break;
+    }
     case PatternKind::TuplePattern:
       for (Nonnull<Pattern*> field : cast<TuplePattern>(pattern).fields()) {
         ResolveNames(*field, enclosing_scope);
@@ -283,8 +291,8 @@ static void ResolveNames(Declaration& declaration,
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
-        function_scope.Add(binding->name(), binding);
         ResolveNames(binding->type(), function_scope);
+        function_scope.Add(binding->name(), binding);
       }
       if (function.is_method()) {
         ResolveNames(function.me_pattern(), function_scope);
@@ -304,6 +312,8 @@ static void ResolveNames(Declaration& declaration,
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       class_scope.Add(class_decl.name(), &class_decl);
+      ResolveNames(class_decl.type_params(), class_scope);
+
       for (Nonnull<Declaration*> member : class_decl.members()) {
         AddExposedNames(*member, class_scope);
       }

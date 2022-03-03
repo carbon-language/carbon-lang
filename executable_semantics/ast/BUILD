@@ -76,6 +76,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
+        ":pattern",
         ":source_location",
         ":value_category",
         "//common:check",
@@ -125,7 +126,6 @@ cc_library(
     hdrs = ["expression.h"],
     deps = [
         ":ast_node",
-        ":generic_binding",
         ":paren_contents",
         ":source_location",
         ":static_scope",

@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <map>
 #include <optional>
 #include <string>
 #include <variant>
@@ -12,7 +13,6 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
-#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -25,6 +25,7 @@ namespace Carbon {
 
 class Value;
 class VariableType;
+class ImplBinding;
 
 class Expression : public AstNode {
  public:
@@ -353,8 +354,6 @@ class PrimitiveOperatorExpression : public Expression {
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
 };
-
-class ImplBinding;
 
 class CallExpression : public Expression {
  public:
