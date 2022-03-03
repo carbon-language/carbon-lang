@@ -932,6 +932,29 @@ TEST_F(LexerTest, TypeLiterals) {
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
+TEST_F(LexerTest, TypeLiteralTooManyDigits) {
+  std::string code = "i";
+  code.append(10000, '9');
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 2),
+          DiagnosticMessage(HasSubstr("Found a sequence of 10000 digits")))));
+  auto buffer = Lex(code, consumer);
+  EXPECT_TRUE(buffer.HasErrors());
+  ASSERT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Error(),
+                   .line = 1,
+                   .column = 1,
+                   .indent_column = 1,
+                   .text = {code}},
+                  {.kind = TokenKind::EndOfFile(), .line = 1, .column = 10002},
+              }));
+}
+
 TEST_F(LexerTest, DiagnosticTrailingComment) {
   llvm::StringLiteral testcase = R"(
     // Hello!

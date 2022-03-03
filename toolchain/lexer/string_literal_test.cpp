@@ -298,5 +298,14 @@ TEST_F(StringLiteralTest, TabInBlockString) {
   EXPECT_EQ(value, "x\ty\n");
 }
 
+TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
+  std::string text = "u{";
+  text.append(10000, '9');
+  text.append("}");
+  auto value = Parse("\"\\" + text + "\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, text);
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
