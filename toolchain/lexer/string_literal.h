@@ -13,28 +13,34 @@ namespace Carbon {
 class LexedStringLiteral {
  public:
   // Extract a string literal token from the given text, if it has a suitable
-  // form.
+  // form. Returning llvm::None indicates no string literal was found; returning
+  // an invalid literal indicates a string prefix was found, but it's malformed
+  // and is returning a partial string literal to assist error construction.
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedStringLiteral>;
-
-  // Get the text corresponding to this literal.
-  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
-
-  // Determine whether this is a multi-line string literal.
-  [[nodiscard]] auto IsMultiLine() const -> bool { return multi_line_; }
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
       -> std::string;
 
+  // Get the text corresponding to this literal.
+  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
+
+  // Determine whether this is a multi-line string literal.
+  [[nodiscard]] auto is_multi_line() const -> bool { return multi_line_; }
+
+  // Returns true if the string has a valid terminator.
+  [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
+
  private:
   LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
-                     int hash_level, bool multi_line)
+                     int hash_level, bool multi_line, bool is_terminated)
       : text_(text),
         content_(content),
         hash_level_(hash_level),
-        multi_line_(multi_line) {}
+        multi_line_(multi_line),
+        is_terminated_(is_terminated) {}
 
   // The complete text of the string literal.
   llvm::StringRef text_;
@@ -47,6 +53,8 @@ class LexedStringLiteral {
   int hash_level_;
   // Whether this was a multi-line string literal.
   bool multi_line_;
+  // Whether the literal is valid, or should only be used for errors.
+  bool is_terminated_;
 };
 
 }  // namespace Carbon

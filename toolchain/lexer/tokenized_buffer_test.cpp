@@ -280,7 +280,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -289,8 +289,8 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
           {.kind = TokenKind::Error(),
            .line = 1,
            .column = 1,
+           // 💩 takes 4 bytes, and we count column as bytes offset.
            .text = llvm::StringRef("$$💩", 6)},
-          // 💩 takes 4 bytes, and we count column as bytes offset.
           {.kind = TokenKind::Minus(), .line = 1, .column = 7},
           {.kind = TokenKind::Error(), .line = 1, .column = 8, .text = "$"},
           // newline
@@ -304,19 +304,13 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Backslash(),
            .line = 3,
            .column = 1,
-           .text = llvm::StringRef("\"", 1)},
+           .text = "\\"},
+          {.kind = TokenKind::Error(), .line = 3, .column = 2, .text = "\"\\"},
           // newline
-          {.kind = TokenKind::Error(),
-           .line = 4,
-           .column = 1,
-           .text = llvm::StringRef("\"", 1)},
-          {.kind = TokenKind::Backslash(),
-           .line = 4,
-           .column = 2,
-           .text = llvm::StringRef("\\", 1)},
+          {.kind = TokenKind::Error(), .line = 4, .column = 1, .text = "\"x"},
           {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
       }));
 }
@@ -797,24 +791,27 @@ TEST_F(LexerTest, StringLiterals) {
 
 TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
-      "")",        //
-      R"("\)",     //
-      R"("\")",    //
-      R"("\\)",    //
-      R"("\\\")",  //
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
       R"(""")",
       R"("""
-      )",  //
+      )",
       R"("""\)",
       R"(#"""
       """)",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
+    SCOPED_TRACE(test);
     auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_TRUE(buffer.HasErrors());
 
     // We should have formed at least one error token.
     bool found_error = false;
@@ -824,7 +821,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
         break;
       }
     }
-    EXPECT_TRUE(found_error) << "`" << test << "`";
+    EXPECT_TRUE(found_error);
   }
 }
 
@@ -935,45 +932,74 @@ TEST_F(LexerTest, TypeLiterals) {
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
-TEST_F(LexerTest, Diagnostics) {
+TEST_F(LexerTest, DiagnosticTrailingComment) {
   llvm::StringLiteral testcase = R"(
     // Hello!
     var String x; // trailing comment
-    //no space after comment
-    "hello\bworld\xab"
-    0x123abc
-    #"
   )";
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
                             DiagnosticAt(3, 19),
                             DiagnosticMessage(HasSubstr("Trailing comment")))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(4, 7),
-                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 12),
-          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 20),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(6, 10),
-          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(7, 5),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
-
   Lex(testcase, consumer);
+}
+
+TEST_F(LexerTest, DiagnosticWhitespace) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(1, 3),
+                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  Lex("//no space after comment", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 8),
+          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
+  Lex(R"("hello\bworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticBadHex) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 9),
+          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  Lex(R"("hello\xabworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticInvalidDigit) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(1, 6),
+          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+  Lex("0x123abc", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(
+                  AllOf(DiagnosticAt(1, 1),
+                        DiagnosticMessage(HasSubstr("missing a terminator")))));
+  Lex(R"(#" ")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(1, 1),
+                  DiagnosticMessage(HasSubstr("unrecognized character")))));
+  Lex("\b", consumer);
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
