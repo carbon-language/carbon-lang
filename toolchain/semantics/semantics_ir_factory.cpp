@@ -2,9 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantic_analyzer.h"
-
-#include <optional>
+#include "toolchain/semantics/semantics_ir_factory.h"
 
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -13,18 +11,17 @@
 
 namespace Carbon {
 
-auto SemanticAnalyzer::Analyze(const ParseTree& parse_tree,
-                               DiagnosticConsumer& consumer) -> Semantics {
-  SemanticAnalyzer analyzer(parse_tree, consumer);
-  analyzer.ProcessRoots();
-  return analyzer.semantics_;
+auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
+  SemanticsIRFactory builder(parse_tree);
+  builder.ProcessRoots();
+  return builder.semantics_;
 }
 
-void SemanticAnalyzer::ProcessRoots() {
+void SemanticsIRFactory::ProcessRoots() {
   for (ParseTree::Node node : semantics_.parse_tree_->Roots()) {
     switch (semantics_.parse_tree_->GetNodeKind(node)) {
       case ParseNodeKind::FunctionDeclaration():
-        ProcessFunctionNode(semantics_.root_name_scope_, node);
+        ProcessFunctionNode(semantics_.root_block_, node);
         break;
       case ParseNodeKind::FileEnd():
         // No action needed.
@@ -36,14 +33,13 @@ void SemanticAnalyzer::ProcessRoots() {
   }
 }
 
-void SemanticAnalyzer::ProcessFunctionNode(
-    llvm::StringMap<Semantics::NamedEntity>& name_scope,
-    ParseTree::Node decl_node) {
-  llvm::Optional<Semantics::Function> fn = llvm::None;
+void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
+                                             ParseTree::Node decl_node) {
+  llvm::Optional<Semantics::Function> fn;
   for (ParseTree::Node node : semantics_.parse_tree_->Children(decl_node)) {
     switch (semantics_.parse_tree_->GetNodeKind(node)) {
       case ParseNodeKind::DeclaredName():
-        fn = semantics_.AddFunction(emitter_, name_scope, decl_node, node);
+        fn = semantics_.AddFunction(block, decl_node, node);
         break;
       case ParseNodeKind::ParameterList():
         // TODO: Maybe something like Semantics::AddVariable passed to

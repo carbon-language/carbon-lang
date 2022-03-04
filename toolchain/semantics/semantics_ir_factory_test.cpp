@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantic_analyzer.h"
+#include "toolchain/semantics/semantics_ir_factory.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -21,15 +21,15 @@ using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Eq;
 
-class SemanticAnalyzerTest : public ::testing::Test {
+class SemanticsIRFactoryTest : public ::testing::Test {
  protected:
-  auto Analyze(llvm::Twine t) -> Semantics {
+  auto Analyze(llvm::Twine t) -> SemanticsIR {
     source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
     EXPECT_FALSE(tokenized_buffer->HasErrors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->HasErrors());
-    return SemanticAnalyzer::Analyze(*parse_tree, consumer);
+    return SemanticsIRFactory::Build(*parse_tree);
   }
 
   std::optional<SourceBuffer> source_buffer;
@@ -38,24 +38,17 @@ class SemanticAnalyzerTest : public ::testing::Test {
   MockDiagnosticConsumer consumer;
 };
 
-TEST_F(SemanticAnalyzerTest, Empty) {
+TEST_F(SemanticsIRFactoryTest, Empty) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Analyze("");
 }
 
-TEST_F(SemanticAnalyzerTest, FunctionBasic) {
+TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Analyze("fn Foo() {}");
 }
 
-TEST_F(SemanticAnalyzerTest, FunctionDuplicate) {
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 4),
-          DiagnosticMessage(Eq(
-              "Name conflict for `Foo`; previously declared at /text:2:17.")))))
-      .Times(1);
+TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
   Analyze(R"(fn Foo() {}
              fn Foo() {}
             )");
