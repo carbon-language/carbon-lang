@@ -3934,9 +3934,9 @@ impls with a given type structure must be in the same library. Furthermore by
 the [impl declaration access rules](#access), they will be defined in the API
 file for the library if they could match any query from outside the library. If
 there is more than one impl with that type structure, they must be
-[declared](#declaring-implementations) together in a prioritization block. Once
-a type structure is selected for a query, the first impl in the prioritization
-block that matches is selected.
+[defined](#implementing-interfaces) or [declared](#declaring-implementations)
+together in a prioritization block. Once a type structure is selected for a
+query, the first impl in the prioritization block that matches is selected.
 
 **Open question:** How are prioritization blocks written? A block starts with a
 keyword like `match_first` or `impl_priority` and then a sequence of impl
