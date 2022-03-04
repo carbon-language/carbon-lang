@@ -613,6 +613,7 @@ void Interpreter::StepExp() {
             const BoundMethodValue& m =
                 cast<BoundMethodValue>(*act.results()[0]);
             const FunctionDeclaration& method = m.declaration();
+            CHECK(method.is_method());
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);

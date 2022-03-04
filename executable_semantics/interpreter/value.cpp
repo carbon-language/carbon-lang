@@ -40,7 +40,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                 FindMember(f, witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
-          return arena->New<BoundMethodValue>(&fun_decl, v);
+          if (fun_decl.is_method()) {
+            return arena->New<BoundMethodValue>(&fun_decl, v);
+          } else {  // class function
+            return *fun_decl.constant_value();
+          }
         } else {
           FATAL_COMPILATION_ERROR(source_loc)
               << "member " << f << " not in " << *witness;

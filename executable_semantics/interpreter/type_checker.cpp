@@ -565,6 +565,10 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
         }
         case Value::Kind::VariableType: {
+          // This case handles access to a method on a receiver whose type
+          // is a type variable. For example, `x.foo` where the type of
+          // `x` is `T` and `foo` and `T` implements an interface that
+          // includes `foo`.
           const VariableType& var_type = cast<VariableType>(aggregate_type);
           const Value& typeof_var = var_type.binding().static_type();
           switch (typeof_var.kind()) {
@@ -591,10 +595,39 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               break;
             }
             default:
+              FATAL_COMPILATION_ERROR(e->source_loc())
+                  << "field access, unexpected " << aggregate_type
+                  << " of non-interface type " << typeof_var << " in " << *e;
               break;
           }
-          FATAL_COMPILATION_ERROR(e->source_loc())
-              << "field access, unexpected " << aggregate_type << " in " << *e;
+          break;
+        }
+        case Value::Kind::InterfaceType: {
+          // This case handles access to a class function from a type variable.
+          // If `T` is a type variable and `foo` is a class function in an
+          // interface implemented by `T`, then `T.foo` accesses the `foo` class
+          // function of `T`.
+          const VariableType& var_type = cast<VariableType>(
+              *InterpExp(&access.aggregate(), arena_, trace_));
+          const InterfaceType& iface_type = cast<InterfaceType>(aggregate_type);
+          const InterfaceDeclaration& iface_decl = iface_type.declaration();
+          if (std::optional<Nonnull<const Declaration*>> member =
+                  FindMember(access.field(), iface_decl.members());
+              member.has_value()) {
+            const Value& member_type = (*member)->static_type();
+            std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
+                self_map;
+            self_map[iface_decl.self()] = &var_type;
+            Nonnull<const Value*> inst_member_type =
+                Substitute(self_map, &member_type);
+            access.set_static_type(inst_member_type);
+            access.set_impl(*var_type.binding().impl_binding());
+            return;
+          } else {
+            FATAL_COMPILATION_ERROR(e->source_loc())
+                << "field access, " << access.field() << " not in "
+                << iface_decl.name();
+          }
           break;
         }
         default:
