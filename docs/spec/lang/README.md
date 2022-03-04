@@ -39,12 +39,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         sequence of lexical elements.
     -   Whitespace and text comments are discarded, leaving a sequence of
         [tokens](lex.md).
-    -   The tokens are [parsed](parse.md) into an abstract syntax tree.
+    -   The tokens are [parsed](parsing.md) into an abstract syntax tree.
     -   [Unqualified names are bound](names.md) to declarations in the abstract
         syntax tree.
     -   A translated form of each imported [library](libs.md) is located and
         loaded.
-    -   [Semantic analysis](sema.md) is performed: types are determined and
+    -   [Semantic analysis](semantics.md) is performed: types are determined and
         semantic checks are performed for all non-template-dependent constructs
         in the abstract syntax tree, constant expressions are evaluated, and
         templates are instantiated and semantically analyzed.

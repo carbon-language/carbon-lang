@@ -17,12 +17,12 @@ TODO
 
 ## Scopes
 
-1.  A _scope_ is either
+1.  A _scope_ is one of:
 
-    -   the top level in a source file, or
-    -   a pattern scope, or
-    -   a block scope, or
-    -   a type definition.
+    -   The top level in a source file.
+    -   A pattern scope.
+    -   A block scope.
+    -   A type definition.
 
 2.  Every construct that declares a name _binds_ the name to the declared entity
     within the innermost enclosing scope.
