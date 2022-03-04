@@ -4526,9 +4526,28 @@ impl [T:! Type] T as CommonTypeWith(T) { ... }
 
 ### Requirements with `where` constraints
 
-FIXME:
-[discussion in #generics on Discord](https://discord.com/channels/655572317891461132/941071822756143115/941089885475962940),
-[examples of problematic overlap that can't be checked locally](https://gist.github.com/zygoloid/2023db2ac55cd517c6e2732e3c37fd08/revisions)
+An interface implementation requirement with a `where` clause is harder to
+satisfy. Consider an interface `B` that has a requirement that interface `A` is
+also implemented.
+
+```
+interface A(T:! Type) {
+  let Result:! Type;
+}
+interface B(T:! Type) {
+  impl as A(T) where .Result == i32;
+}
+```
+
+An implementation of `B` for a set of types can only be valid if there is a
+visible implementation of `A` with the same `T` parameter for those types with
+the `.Result` associated type set to `i32`. That is
+[not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
+though, unless the implementation of `A` can't be specialized, either because it
+is [marked `final`](#final-impls) or is not
+[parameterized](#parameterized-impls). Implementations in other libraries can't
+make `A` be implemented for fewer types, but can cause `.Result` to have a
+different assignment.
 
 ## Observing a type implements an interface
 
