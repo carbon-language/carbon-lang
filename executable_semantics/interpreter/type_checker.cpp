@@ -800,6 +800,22 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<TypeType>());
       return;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(*e);
+      TypeCheckExp(if_expr.condition(), impl_scope);
+      ExpectType(if_expr.source_loc(), "condition of `if`",
+                 arena_->New<BoolType>(), &if_expr.condition()->static_type());
+
+      // TODO: Compute the common type and convert both operands to it.
+      TypeCheckExp(if_expr.then_expression(), impl_scope);
+      TypeCheckExp(if_expr.else_expression(), impl_scope);
+      ExpectExactType(e->source_loc(), "expression of `if` expression",
+                      &if_expr.then_expression()->static_type(),
+                      &if_expr.else_expression()->static_type());
+      e->set_static_type(&if_expr.then_expression()->static_type());
+      e->set_value_category(ValueCategory::Let);
+      return;
+    }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << *e;
   }

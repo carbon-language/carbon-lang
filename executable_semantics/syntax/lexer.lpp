@@ -88,6 +88,7 @@ RUN                  "__run"
 SEMICOLON            ";"
 SLASH                "/"
 STRING               "String"
+THEN                 "then"
 TRUE                 "true"
 TYPE                 "Type"
 UNDERSCORE           "_"
@@ -185,6 +186,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return SIMPLE_TOKEN(SLASH);               }
 {STRING}              { return SIMPLE_TOKEN(STRING);              }
+{THEN}                { return SIMPLE_TOKEN(THEN);                }
 {TRUE}                { return SIMPLE_TOKEN(TRUE);                }
 {TYPE}                { return SIMPLE_TOKEN(TYPE);                }
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }

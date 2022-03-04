@@ -132,6 +132,13 @@ static void ResolveNames(Expression& expression,
       ResolveNames(cast<IntrinsicExpression>(expression).args(),
                    enclosing_scope);
       break;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(expression);
+      ResolveNames(*if_expr.condition(), enclosing_scope);
+      ResolveNames(*if_expr.then_expression(), enclosing_scope);
+      ResolveNames(*if_expr.else_expression(), enclosing_scope);
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
