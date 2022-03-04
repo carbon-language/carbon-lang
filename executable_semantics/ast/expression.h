@@ -490,6 +490,35 @@ class IntrinsicExpression : public Expression {
   Nonnull<TupleLiteral*> args_;
 };
 
+class IfExpression : public Expression {
+ public:
+  explicit IfExpression(SourceLocation source_loc,
+                        Nonnull<Expression*> condition,
+                        Nonnull<Expression*> then_expression,
+                        Nonnull<Expression*> else_expression)
+      : Expression(AstNodeKind::IfExpression, source_loc),
+        condition_(condition),
+        then_expression_(then_expression),
+        else_expression_(else_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIfExpression(node->kind());
+  }
+
+  auto condition() const -> Nonnull<Expression*> { return condition_; }
+  auto then_expression() const -> Nonnull<Expression*> {
+    return then_expression_;
+  }
+  auto else_expression() const -> Nonnull<Expression*> {
+    return else_expression_;
+  }
+
+ private:
+  Nonnull<Expression*> condition_;
+  Nonnull<Expression*> then_expression_;
+  Nonnull<Expression*> else_expression_;
+};
+
 // An expression whose semantics have not been implemented. This can be used
 // as a placeholder during development, in order to implement and test parsing
 // of a new expression syntax without having to implement its semantics.
