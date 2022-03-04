@@ -4485,6 +4485,17 @@ interface CommonType(T:! Type) {
 }
 ```
 
+Note however that `CommonType` is still incomplete inside its definition, so no
+constraints on members of `CommonType` are allowed.
+
+```
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // ❌ Illegal: `CommonType` is incomplete
+  impl T as CommonType(Self) where .Result == Result;
+}
+```
+
 ## Interface members with definitions
 
 Interfaces may provide definitions for members, such as a function body for an
