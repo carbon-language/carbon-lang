@@ -3933,9 +3933,10 @@ Since at most one library can define impls with a given type structure, all
 impls with a given type structure must be in the same library. Furthermore by
 the [impl declaration access rules](#access), they will be defined in the API
 file for the library if they could match any query from outside the library. If
-there is more than one impl with that type structure, they must be written
-together in a prioritization block. Once a type structure is selected for a
-query, the first impl in the prioritization block that matches is selected.
+there is more than one impl with that type structure, they must be
+[declared](#declaring-implementations) together in a prioritization block. Once
+a type structure is selected for a query, the first impl in the prioritization
+block that matches is selected.
 
 **Open question:** How are prioritization blocks written? A block starts with a
 keyword like `match_first` or `impl_priority` and then a sequence of impl
@@ -4335,8 +4336,9 @@ these rules:
     of the implementation and must match between a forward declaration and
     definition.
 -   You may forward declare an implementation of a defined interface but not an
-    incomplete interface. It may be for any declared type, whether it is
-    incomplete or defined.
+    incomplete interface. This allows the assignment of associated constants in
+    the impl declaration to be verified. A forward impl declaration may be for
+    any declared type, whether it is incomplete or defined.
 -   Every internal implementation must be declared (or defined) inside the scope
     of the class definition. It may also be declared before the class definition
     or defined afterwards. Note that the class itself is incomplete in the scope
