@@ -11,6 +11,6 @@
 
 package ExecutableSemanticsTest api;
 
-var a: b: auto;
+var a: auto;
 
 fn Main() -> i32 { return 0; }
