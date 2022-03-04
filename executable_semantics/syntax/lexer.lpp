@@ -266,8 +266,10 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
-  int val;
-  CHECK(llvm::to_integer(yytext, val));
+  int val = 0;
+  if (!llvm::to_integer(yytext, val)) {
+    FATAL_SYNTAX_ERROR(context) << "Invalid integer literal: " << yytext;
+  }
   return ARG_TOKEN(integer_literal, val);
 }
 
