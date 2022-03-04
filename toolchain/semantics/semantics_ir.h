@@ -16,21 +16,21 @@ namespace Carbon {
 class SemanticsIR {
  public:
   // Provides a link back to an entity in a name scope.
-  class NamedEntity {
+  class Token {
    public:
-    NamedEntity() : NamedEntity(Kind::Invalid, -1) {}
+    Token() : Token(Kind::Invalid, -1) {}
 
    private:
     friend class SemanticsIR;
 
-    // The kind of entity. There should be one entry per list of entities that
-    // needs to be indexed into.
+    // The kind of token. These correspond to the lists on SemanticsIR which
+    // will be indexed into.
     enum class Kind {
       Invalid,
       Function,
     };
 
-    NamedEntity(Kind kind, int32_t index) : kind_(kind), index_(index) {
+    Token(Kind kind, int32_t index) : kind_(kind), index_(index) {
       // TODO: kind_ and index_ are currently unused, this suppresses the
       // warning.
       kind_ = kind;
@@ -45,11 +45,11 @@ class SemanticsIR {
 
   struct Block {
    public:
-    void Add(llvm::StringRef name, NamedEntity entity);
+    void Add(llvm::StringRef name, Token named_entity);
 
    private:
-    llvm::SmallVector<NamedEntity> ordering_;
-    llvm::StringMap<NamedEntity> name_lookup_;
+    llvm::SmallVector<Token> ordering_;
+    llvm::StringMap<Token> name_lookup_;
   };
 
  private:
@@ -64,7 +64,7 @@ class SemanticsIR {
   auto AddFunction(Block& block, ParseTree::Node decl_node,
                    ParseTree::Node name_node) -> Semantics::Function&;
 
-  // All functions from the parse tree.
+  // Indexed by Token::Function.
   llvm::SmallVector<Semantics::Function, 0> functions_;
 
   // The file-level block.

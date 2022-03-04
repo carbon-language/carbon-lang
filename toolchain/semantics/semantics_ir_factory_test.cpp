@@ -18,8 +18,6 @@ namespace Carbon::Testing {
 namespace {
 
 using ::testing::_;
-using ::testing::AllOf;
-using ::testing::Eq;
 
 class SemanticsIRFactoryTest : public ::testing::Test {
  protected:
