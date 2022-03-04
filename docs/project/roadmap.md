@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Objective for 2022: finish 0.1 language, make it public](#objective-for-2022-finish-01-language-make-it-public)
+-   [Objective for 2022: make Carbon public, finish 0.1 language](#objective-for-2022-make-carbon-public-finish-01-language)
     -   [Completing the language design](#completing-the-language-design)
     -   [Going public](#going-public)
 -   [Key results in 2022](#key-results-in-2022)
@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Objective for 2022: finish 0.1 language, make it public
+## Objective for 2022: make Carbon public, finish 0.1 language
 
 We have two primary goals for 2022:
 
@@ -86,7 +86,7 @@ success on this objective:
 
 -   Pull requests authored and reviewed, including proposals, code changes, and
     documentation changes.
--   Contribution to discussions, including Discord, teleconferences, and github
+-   Contribution to discussions, including Discord, teleconferences, and GitHub
     issues.
 
 ### Example ports of C++ libraries to Carbon (100% of [woff2](https://github.com/google/woff2), 99% of [RE2](https://github.com/google/re2))
