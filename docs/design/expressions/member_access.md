@@ -39,14 +39,16 @@ A _member access expression_ allows a member of a value, type, interface,
 namespace, and so on to be accessed by specifying a qualified name for the
 member.
 
-A member access expression is either a _direct_ member access expression of the
+A member access expression is either a _simple_ member access expression of the
 form:
 
 -   _member-access-expression_ ::= _expression_ `.` _word_
 
-or an _indirect_ member access of the form:
+or a _compound_ member access of the form:
 
 -   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
+
+Compound member accesses allow specifying a qualified member name.
 
 For example:
 
@@ -93,9 +95,9 @@ expression is referring to.
 
 ### Package and namespace members
 
-If the first operand is a package or namespace name, the member access must be
-direct. The _word_ must name a member of that package or namespace, and the
-result is the package or namespace member with that name.
+If the first operand is a package or namespace name, the expression must be a
+simple member access expression. The _word_ must name a member of that package
+or namespace, and the result is the package or namespace member with that name.
 
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
@@ -112,7 +114,7 @@ fn CallMyFunction() { MyNS.MyFunction(); }
 let MyNS2:! auto = MyNamespace;
 
 fn CallMyFunction2() {
-  // ❌ Error: cannot perform indirect member access into a namespace.
+  // ❌ Error: cannot perform compound member access into a namespace.
   MyNamespace.(MyNamespace.MyFunction)();
 }
 ```
@@ -144,7 +146,7 @@ the lookup will be performed both in the context of the template definition and
 in the context of the template instantiation, as described in
 [templates and generics](#templates-and-generics).
 
-For a direct member access, the word is looked up in the following types:
+For a simple member access, the word is looked up in the following types:
 
 -   If the first operand can be evaluated and evaluates to a type, that type.
 -   If the type of the first operand can be evaluated, that type.
@@ -153,7 +155,7 @@ For a direct member access, the word is looked up in the following types:
 
 The results of these lookups are [combined](#lookup-ambiguity).
 
-For an indirect member access, the second operand is evaluated as a constant to
+For a compound member access, the second operand is evaluated as a constant to
 determine the member being accessed. The evaluation is required to succeed and
 to result in a member of a type or interface.
 
@@ -466,7 +468,7 @@ base class WidgetBase {
     for (var w: T in v) {
       // ✅ OK. Unqualified lookup for `Draw` finds alias `WidgetBase.Draw`
       // to `Renderable.Draw`, which does not perform `impl` lookup yet.
-      // Then the indirect member access expression performs `impl` lookup
+      // Then the compound member access expression performs `impl` lookup
       // into `impl T as Renderable`, since `T` is known to implement
       // `Renderable`. Finally, the member function is bound to `w` as
       // described in "Instance binding".
@@ -538,7 +540,7 @@ member resolution and `impl` lookup. Evaluating the member access expression
 evaluates `V` and discards the result.
 
 An expression that names an instance member, but for which instance binding is
-not performed, can only be used as the second operand of an indirect member
+not performed, can only be used as the second operand of a compound member
 access or as the target of an `alias` declaration.
 
 ```carbon
@@ -572,8 +574,9 @@ fn CallStaticMethod(c: C) {
 ## Non-vacuous member access restriction
 
 The first operand of a member access expression must be used in some way: a
-member access must either be direct, so the first operand is used for lookup, or
-must result in `impl` lookup, instance binding, or both.
+compound member access must result in `impl` lookup, instance binding, or both.
+In a simple member access, this always holds, because the first operand is
+always used for lookup.
 
 ```
 interface Printable {
@@ -597,11 +600,11 @@ fn MemberAccess(n: i32) {
 
 // ✅ OK, member `Print` of interface `Printable`.
 alias X1 = Printable.Print;
-// ❌ Error, indirect access doesn't perform impl lookup or instance binding.
+// ❌ Error, compound access doesn't perform impl lookup or instance binding.
 alias X2 = Printable.(Printable.Print);
 // ✅ OK, member `Print` of `impl i32 as Printable`.
 alias X3 = i32.(Printable.Print);
-// ❌ Error, indirect access doesn't perform impl lookup or instance binding.
+// ❌ Error, compound access doesn't perform impl lookup or instance binding.
 alias X4 = i32.(i32.(Printable.Print));
 ```
 
