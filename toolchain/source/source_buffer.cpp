@@ -11,16 +11,34 @@
 
 #include <cerrno>
 #include <cstdint>
+#include <limits>
 #include <system_error>
+#include <variant>
 
 #include "common/check.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
+// Verifies that the content size is within limits.
+static auto CheckContentSize(int64_t size) -> llvm::Error {
+  if (size < std::numeric_limits<int32_t>::max()) {
+    return llvm::Error::success();
+  }
+  return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                 "Input too large!");
+}
+
 auto SourceBuffer::CreateFromText(llvm::Twine text, llvm::StringRef filename)
-    -> SourceBuffer {
-  return SourceBuffer(filename, text.str());
+    -> llvm::Expected<SourceBuffer> {
+  std::string buffer = text.str();
+  auto size_check = CheckContentSize(buffer.size());
+  if (size_check) {
+    return size_check;
+  }
+  return SourceBuffer(filename.str(), std::move(buffer));
 }
 
 static auto ErrnoToError(int errno_value) -> llvm::Error {
@@ -30,10 +48,11 @@ static auto ErrnoToError(int errno_value) -> llvm::Error {
 
 auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
     -> llvm::Expected<SourceBuffer> {
-  SourceBuffer buffer(filename);
+  // Add storage to ensure there's a nul-terminator for open().
+  std::string filename_str = filename.str();
 
   errno = 0;
-  int file_descriptor = open(buffer.filename_.c_str(), O_RDONLY);
+  int file_descriptor = open(filename_str.c_str(), O_RDONLY);
   if (file_descriptor == -1) {
     return ErrnoToError(errno);
   }
@@ -50,8 +69,12 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
 
   int64_t size = stat_buffer.st_size;
   if (size == 0) {
-    // Nothing to do for an empty file.
-    return {std::move(buffer)};
+    // Rather than opening an empty file, create an empty buffer.
+    return SourceBuffer(std::move(filename_str), std::string());
+  }
+  auto size_check = CheckContentSize(size);
+  if (size_check) {
+    return size_check;
   }
 
   errno = 0;
@@ -78,24 +101,39 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
     return ErrnoToError(errno);
   }
 
-  buffer.text_ = llvm::StringRef(static_cast<const char*>(mapped_text), size);
-  CHECK(!buffer.text_.empty())
+  return SourceBuffer(
+      std::move(filename_str),
+      llvm::StringRef(static_cast<const char*>(mapped_text), size));
+}
+
+SourceBuffer::SourceBuffer(SourceBuffer&& arg) noexcept
+    // Sets Uninitialized to ensure the input doesn't release mmapped data.
+    : content_mode_(
+          std::exchange(arg.content_mode_, ContentMode::Uninitialized)),
+      filename_(std::move(arg.filename_)),
+      text_storage_(std::move(arg.text_storage_)),
+      text_(content_mode_ == ContentMode::Owned ? text_storage_ : arg.text_) {}
+
+SourceBuffer::SourceBuffer(std::string filename, std::string text)
+    : content_mode_(ContentMode::Owned),
+      filename_(std::move(filename)),
+      text_storage_(std::move(text)),
+      text_(text_storage_) {}
+
+SourceBuffer::SourceBuffer(std::string filename, llvm::StringRef text)
+    : content_mode_(ContentMode::MMapped),
+      filename_(std::move(filename)),
+      text_(text) {
+  CHECK(!text.empty())
       << "Must not have an empty text when we have mapped data from a file!";
-  return {std::move(buffer)};
 }
 
 SourceBuffer::~SourceBuffer() {
-  if (is_string_rep_) {
-    string_storage_.~decltype(string_storage_)();
-    return;
-  }
-
-  if (!text_.empty()) {
+  if (content_mode_ == ContentMode::MMapped) {
     errno = 0;
     int result =
         munmap(const_cast<void*>(static_cast<const void*>(text_.data())),
                text_.size());
-    (void)result;
     CHECK(result != -1) << "Unmapping text failed!";
   }
 }

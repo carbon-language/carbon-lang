@@ -61,11 +61,11 @@ static bool isaIntegerType(mlir::Type ty) {
 }
 
 bool verifyRecordMemberType(mlir::Type ty) {
-  return !(ty.isa<BoxType>() || ty.isa<BoxCharType>() ||
-           ty.isa<BoxProcType>() || ty.isa<ShapeType>() ||
-           ty.isa<ShapeShiftType>() || ty.isa<ShiftType>() ||
-           ty.isa<SliceType>() || ty.isa<FieldType>() || ty.isa<LenType>() ||
-           ty.isa<ReferenceType>() || ty.isa<TypeDescType>());
+  return !(ty.isa<BoxCharType>() || ty.isa<BoxProcType>() ||
+           ty.isa<ShapeType>() || ty.isa<ShapeShiftType>() ||
+           ty.isa<ShiftType>() || ty.isa<SliceType>() || ty.isa<FieldType>() ||
+           ty.isa<LenType>() || ty.isa<ReferenceType>() ||
+           ty.isa<TypeDescType>());
 }
 
 bool verifySameLists(llvm::ArrayRef<RecordType::TypePair> a1,
@@ -642,7 +642,7 @@ unsigned fir::RecordType::getFieldIndex(llvm::StringRef ident) {
   return std::numeric_limits<unsigned>::max();
 }
 
-std::string fir::RecordType::getLoweredName() const {
+std::string fir::RecordType::translateNameToFrontendMangledName() const {
   auto split = getName().split('T');
   std::string name = (split.first + "E.dt." + split.second).str();
   return name;

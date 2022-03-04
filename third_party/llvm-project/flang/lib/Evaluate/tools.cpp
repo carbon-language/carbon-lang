@@ -607,6 +607,9 @@ std::optional<Expr<SomeType>> ConvertToNumeric(int kind, Expr<SomeType> &&x) {
 
 std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &type, Expr<SomeType> &&x) {
+  if (type.IsTypelessIntrinsicArgument()) {
+    return std::nullopt;
+  }
   switch (type.category()) {
   case TypeCategory::Integer:
     if (auto *boz{std::get_if<BOZLiteralConstant>(&x.u)}) {
@@ -650,7 +653,9 @@ std::optional<Expr<SomeType>> ConvertToType(
     break;
   case TypeCategory::Derived:
     if (auto fromType{x.GetType()}) {
-      if (type == *fromType) {
+      if (type.IsTkCompatibleWith(*fromType)) {
+        // "x" could be assigned or passed to "type", or appear in a
+        // structure constructor as a value for a component with "type"
         return std::move(x);
       }
     }
@@ -968,11 +973,18 @@ std::optional<parser::MessageFixedText> CheckProcCompatibility(bool isCall,
   } else if (lhsProcedure->HasExplicitInterface() &&
       !rhsProcedure->HasExplicitInterface()) {
     // Section 10.2.2.4, paragraph 3 prohibits associating a procedure pointer
-    // with an explicit interface with a procedure with an implicit interface
-    msg = "Procedure %s with explicit interface may not be associated with"
-          " procedure designator '%s' with implicit interface"_err_en_US;
+    // with an explicit interface with a procedure whose characteristics don't
+    // match.  That's the case if the target procedure has an implicit
+    // interface.  But this case is allowed by several other compilers as long
+    // as the explicit interface can be called via an implicit interface.
+    if (!lhsProcedure->CanBeCalledViaImplicitInterface()) {
+      msg = "Procedure %s with explicit interface that cannot be called via "
+            "an implicit interface cannot be associated with procedure "
+            "designator with an implicit interface"_err_en_US;
+    }
   } else if (!lhsProcedure->HasExplicitInterface() &&
       rhsProcedure->HasExplicitInterface()) {
+    // OK if the target can be called via an implicit interface
     if (!rhsProcedure->CanBeCalledViaImplicitInterface()) {
       msg = "Procedure %s with implicit interface may not be associated "
             "with procedure designator '%s' with explicit interface that "
@@ -1008,6 +1020,89 @@ static const Symbol *GetLastPointerSymbol(const CoarrayRef &x) {
 }
 const Symbol *GetLastPointerSymbol(const DataRef &x) {
   return std::visit([](const auto &y) { return GetLastPointerSymbol(y); }, x.u);
+}
+
+template <TypeCategory TO, TypeCategory FROM>
+static std::optional<Expr<SomeType>> DataConstantConversionHelper(
+    FoldingContext &context, const DynamicType &toType,
+    const Expr<SomeType> &expr) {
+  DynamicType sizedType{FROM, toType.kind()};
+  if (auto sized{
+          Fold(context, ConvertToType(sizedType, Expr<SomeType>{expr}))}) {
+    if (const auto *someExpr{UnwrapExpr<Expr<SomeKind<FROM>>>(*sized)}) {
+      return std::visit(
+          [](const auto &w) -> std::optional<Expr<SomeType>> {
+            using FromType = typename std::decay_t<decltype(w)>::Result;
+            static constexpr int kind{FromType::kind};
+            if constexpr (IsValidKindOfIntrinsicType(TO, kind)) {
+              if (const auto *fromConst{UnwrapExpr<Constant<FromType>>(w)}) {
+                using FromWordType = typename FromType::Scalar;
+                using LogicalType = value::Logical<FromWordType::bits>;
+                using ElementType =
+                    std::conditional_t<TO == TypeCategory::Logical, LogicalType,
+                        typename LogicalType::Word>;
+                std::vector<ElementType> values;
+                auto at{fromConst->lbounds()};
+                auto shape{fromConst->shape()};
+                for (auto n{GetSize(shape)}; n-- > 0;
+                     fromConst->IncrementSubscripts(at)) {
+                  auto elt{fromConst->At(at)};
+                  if constexpr (TO == TypeCategory::Logical) {
+                    values.emplace_back(std::move(elt));
+                  } else {
+                    values.emplace_back(elt.word());
+                  }
+                }
+                return {AsGenericExpr(AsExpr(Constant<Type<TO, kind>>{
+                    std::move(values), std::move(shape)}))};
+              }
+            }
+            return std::nullopt;
+          },
+          someExpr->u);
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SomeType>> DataConstantConversionExtension(
+    FoldingContext &context, const DynamicType &toType,
+    const Expr<SomeType> &expr0) {
+  Expr<SomeType> expr{Fold(context, Expr<SomeType>{expr0})};
+  if (!IsActuallyConstant(expr)) {
+    return std::nullopt;
+  }
+  if (auto fromType{expr.GetType()}) {
+    if (toType.category() == TypeCategory::Logical &&
+        fromType->category() == TypeCategory::Integer) {
+      return DataConstantConversionHelper<TypeCategory::Logical,
+          TypeCategory::Integer>(context, toType, expr);
+    }
+    if (toType.category() == TypeCategory::Integer &&
+        fromType->category() == TypeCategory::Logical) {
+      return DataConstantConversionHelper<TypeCategory::Integer,
+          TypeCategory::Logical>(context, toType, expr);
+    }
+  }
+  return std::nullopt;
+}
+
+bool IsAllocatableOrPointerObject(
+    const Expr<SomeType> &expr, FoldingContext &context) {
+  const semantics::Symbol *sym{UnwrapWholeSymbolOrComponentDataRef(expr)};
+  return (sym && semantics::IsAllocatableOrPointer(*sym)) ||
+      evaluate::IsObjectPointer(expr, context);
+}
+
+bool MayBePassedAsAbsentOptional(
+    const Expr<SomeType> &expr, FoldingContext &context) {
+  const semantics::Symbol *sym{UnwrapWholeSymbolOrComponentDataRef(expr)};
+  // 15.5.2.12 1. is pretty clear that an unallocated allocatable/pointer actual
+  // may be passed to a non-allocatable/non-pointer optional dummy. Note that
+  // other compilers (like nag, nvfortran, ifort, gfortran and xlf) seems to
+  // ignore this point in intrinsic contexts (e.g CMPLX argument).
+  return (sym && semantics::IsOptional(*sym)) ||
+      IsAllocatableOrPointerObject(expr, context);
 }
 
 } // namespace Fortran::evaluate
@@ -1113,20 +1208,21 @@ bool IsPureProcedure(const Scope &scope) {
 }
 
 bool IsFunction(const Symbol &symbol) {
-  return std::visit(
-      common::visitors{
-          [](const SubprogramDetails &x) { return x.isFunction(); },
-          [&](const SubprogramNameDetails &) {
-            return symbol.test(Symbol::Flag::Function);
-          },
-          [](const ProcEntityDetails &x) {
-            const auto &ifc{x.interface()};
-            return ifc.type() || (ifc.symbol() && IsFunction(*ifc.symbol()));
-          },
-          [](const ProcBindingDetails &x) { return IsFunction(x.symbol()); },
-          [](const auto &) { return false; },
-      },
-      symbol.GetUltimate().details());
+  const Symbol &ultimate{symbol.GetUltimate()};
+  return ultimate.test(Symbol::Flag::Function) ||
+      std::visit(common::visitors{
+                     [](const SubprogramDetails &x) { return x.isFunction(); },
+                     [](const ProcEntityDetails &x) {
+                       const auto &ifc{x.interface()};
+                       return ifc.type() ||
+                           (ifc.symbol() && IsFunction(*ifc.symbol()));
+                     },
+                     [](const ProcBindingDetails &x) {
+                       return IsFunction(x.symbol());
+                     },
+                     [](const auto &) { return false; },
+                 },
+          ultimate.details());
 }
 
 bool IsFunction(const Scope &scope) {
@@ -1420,6 +1516,17 @@ bool SymbolSourcePositionCompare::operator()(
 
 SemanticsContext &Symbol::GetSemanticsContext() const {
   return DEREF(owner_).context();
+}
+
+bool AreTkCompatibleTypes(const DeclTypeSpec *x, const DeclTypeSpec *y) {
+  if (x && y) {
+    if (auto xDt{evaluate::DynamicType::From(*x)}) {
+      if (auto yDt{evaluate::DynamicType::From(*y)}) {
+        return xDt->IsTkCompatibleWith(*yDt);
+      }
+    }
+  }
+  return false;
 }
 
 } // namespace Fortran::semantics

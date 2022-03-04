@@ -18,11 +18,12 @@ if(MLIR_INCLUDE_TESTS)
     MLIRGPUTestPasses
     MLIRLinalgTestPasses
     MLIRMathTestPasses
+    MLIRMemRefTestPasses
     MLIRSCFTestPasses
     MLIRShapeTestPasses
     MLIRSPIRVTestPasses
     MLIRStandardOpsTestPasses
-    MLIRVectorTestPasses
+    MLIRTensorTestPasses
     MLIRTestAnalysis
     MLIRTestDialect
     MLIRTestIR
@@ -30,6 +31,7 @@ if(MLIR_INCLUDE_TESTS)
     MLIRTestReducer
     MLIRTestRewrite
     MLIRTestTransforms
+    MLIRVectorTestPasses
     )
 endif()
 
@@ -37,7 +39,7 @@ set(LIBS
   ${dialect_libs}
   ${conversion_libs}
   ${test_libs}
-  MLIRLoopAnalysis
+  MLIRAffineAnalysis
   MLIRAnalysis
   MLIRDialect
   MLIROptLib

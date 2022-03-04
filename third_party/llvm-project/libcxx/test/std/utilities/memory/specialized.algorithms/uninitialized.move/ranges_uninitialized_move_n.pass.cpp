@@ -7,7 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
-// UNSUPPORTED: libcpp-no-concepts, libcpp-has-no-incomplete-ranges
+// UNSUPPORTED: libcpp-no-concepts
+// UNSUPPORTED: libcpp-has-no-incomplete-ranges
 
 // <memory>
 //
@@ -156,8 +157,8 @@ int main(int, char**) {
   // Conversions.
   {
     constexpr int N = 3;
-    double in[N] = {1.0, 2.0, 3.0};
-    Buffer<int, N> out;
+    int in[N] = {1, 2, 3};
+    Buffer<double, N> out;
 
     std::ranges::uninitialized_move_n(in, N, out.begin(), out.end());
     assert(std::equal(in, in + N, out.begin(), out.end()));

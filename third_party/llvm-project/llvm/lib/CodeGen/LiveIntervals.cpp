@@ -149,7 +149,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       getRegUnit(i);
   }
   LLVM_DEBUG(dump());
-  return true;
+  return false;
 }
 
 void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
@@ -827,6 +827,8 @@ CancelKill:
 
 MachineBasicBlock*
 LiveIntervals::intervalIsInOneMBB(const LiveInterval &LI) const {
+  assert(!LI.empty() && "LiveInterval is empty.");
+
   // A local live range must be fully contained inside the block, meaning it is
   // defined and killed at instructions, not at block boundaries. It is not
   // live in or out of any block.
@@ -911,11 +913,11 @@ static bool hasLiveThroughUse(const MachineInstr *MI, Register Reg) {
   return false;
 }
 
-bool LiveIntervals::checkRegMaskInterference(LiveInterval &LI,
+bool LiveIntervals::checkRegMaskInterference(const LiveInterval &LI,
                                              BitVector &UsableRegs) {
   if (LI.empty())
     return false;
-  LiveInterval::iterator LiveI = LI.begin(), LiveE = LI.end();
+  LiveInterval::const_iterator LiveI = LI.begin(), LiveE = LI.end();
 
   // Use a smaller arrays for local live ranges.
   ArrayRef<SlotIndex> Slots;

@@ -45,7 +45,7 @@ enum Iostat {
   IostatInternalWriteOverrun,
   IostatErrorInFormat,
   IostatErrorInKeyword,
-  IostatEndfileNonSequential,
+  IostatEndfileDirect,
   IostatEndfileUnwritable,
   IostatOpenBadRecl,
   IostatOpenUnknownSize,
@@ -55,6 +55,7 @@ enum Iostat {
   IostatBackspaceNonSequential,
   IostatBackspaceAtFirstRecord,
   IostatRewindNonSequential,
+  IostatWriteAfterEndfile,
 };
 
 const char *IostatErrorString(int);

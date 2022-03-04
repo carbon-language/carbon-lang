@@ -44,6 +44,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    Witness,
     IntType,
     BoolType,
     TypeType,
@@ -52,6 +53,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    InterfaceType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -61,6 +63,7 @@ class Value {
     StringType,
     StringValue,
     TypeOfClassType,
+    TypeOfInterfaceType,
     TypeOfChoiceType,
   };
 
@@ -331,20 +334,20 @@ class BindingPlaceholderValue : public Value {
   explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
 
   // Represents a named placeholder.
-  explicit BindingPlaceholderValue(NamedEntityView named_entity)
+  explicit BindingPlaceholderValue(ValueNodeView value_node)
       : Value(Kind::BindingPlaceholderValue),
-        named_entity_(std::move(named_entity)) {}
+        value_node_(std::move(value_node)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto named_entity() const -> const std::optional<NamedEntityView>& {
-    return named_entity_;
+  auto value_node() const -> const std::optional<ValueNodeView>& {
+    return value_node_;
   }
 
  private:
-  std::optional<NamedEntityView> named_entity_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // The int type.
@@ -382,11 +385,13 @@ class FunctionType : public Value {
  public:
   FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
+               Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         deduced_(deduced),
         parameters_(parameters),
-        return_type_(return_type) {}
+        return_type_(return_type),
+        impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -397,11 +402,17 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  // The bindings for the witness tables (impls) required by the
+  // bounds on the type parameters of the generic function.
+  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+    return impl_bindings_;
+  }
 
  private:
   std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
 // A pointer type.
@@ -463,10 +474,6 @@ class NominalClassType : public Value {
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
 
-  // Return the declaration of the member with the given name.
-  auto FindMember(const std::string& name) const
-      -> std::optional<Nonnull<const Declaration*>>;
-
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
@@ -474,6 +481,46 @@ class NominalClassType : public Value {
 
  private:
   Nonnull<const ClassDeclaration*> declaration_;
+};
+
+auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
+// Return the declaration of the member with the given name.
+auto FindMember(const std::string& name,
+                llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const Declaration*>>;
+
+// An interface type.
+class InterfaceType : public Value {
+ public:
+  InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+      : Value(Kind::InterfaceType), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::InterfaceType;
+  }
+
+  auto declaration() const -> const InterfaceDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const InterfaceDeclaration*> declaration_;
+};
+
+// The witness table for an impl.
+class Witness : public Value {
+ public:
+  Witness(Nonnull<const ImplDeclaration*> declaration)
+      : Value(Kind::Witness), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::Witness;
+  }
+
+  auto declaration() const -> const ImplDeclaration& { return *declaration_; }
+
+ private:
+  Nonnull<const ImplDeclaration*> declaration_;
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
@@ -625,6 +672,21 @@ class TypeOfClassType : public Value {
 
  private:
   Nonnull<const NominalClassType*> class_type_;
+};
+
+class TypeOfInterfaceType : public Value {
+ public:
+  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
+      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfInterfaceType;
+  }
+
+  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
+
+ private:
+  Nonnull<const InterfaceType*> iface_type_;
 };
 
 // The type of an expression whose value is a choice type. Currently there is no

@@ -34,7 +34,6 @@ using characteristics::Procedure;
 class CheckHelper {
 public:
   explicit CheckHelper(SemanticsContext &c) : context_{c} {}
-  CheckHelper(SemanticsContext &c, const Scope &s) : context_{c}, scope_{&s} {}
 
   SemanticsContext &context() { return context_; }
   void Check() { Check(context_.globalScope()); }
@@ -237,8 +236,13 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   if (InPure()) {
     if (IsSaved(symbol)) {
-      messages_.Say(
-          "A pure subprogram may not have a variable with the SAVE attribute"_err_en_US);
+      if (IsInitialized(symbol)) {
+        messages_.Say(
+            "A pure subprogram may not initialize a variable"_err_en_US);
+      } else {
+        messages_.Say(
+            "A pure subprogram may not have a variable with the SAVE attribute"_err_en_US);
+      }
     }
     if (symbol.attrs().test(Attr::VOLATILE)) {
       messages_.Say(

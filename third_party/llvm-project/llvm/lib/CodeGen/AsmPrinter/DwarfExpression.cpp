@@ -287,9 +287,17 @@ bool DwarfExpression::addMachineRegExpression(const TargetRegisterInfo &TRI,
   // expression representing a value, rather than a location.
   if ((!isParameterValue() && !isMemoryLocation() && !HasComplexExpression) ||
       isEntryValue()) {
+    auto FragmentInfo = ExprCursor.getFragmentInfo();
+    unsigned RegSize = 0;
     for (auto &Reg : DwarfRegs) {
+      RegSize += Reg.SubRegSize;
       if (Reg.DwarfRegNo >= 0)
         addReg(Reg.DwarfRegNo, Reg.Comment);
+      if (FragmentInfo)
+        if (RegSize > FragmentInfo->SizeInBits)
+          // If the register is larger than the current fragment stop
+          // once the fragment is covered.
+          break;
       addOpPiece(Reg.SubRegSize);
     }
 
@@ -681,9 +689,25 @@ void DwarfExpression::emitLegacySExt(unsigned FromBits) {
 }
 
 void DwarfExpression::emitLegacyZExt(unsigned FromBits) {
-  // (X & (1 << FromBits - 1))
-  emitOp(dwarf::DW_OP_constu);
-  emitUnsigned((1ULL << FromBits) - 1);
+  // Heuristic to decide the most efficient encoding.
+  // A ULEB can encode 7 1-bits per byte.
+  if (FromBits / 7 < 1+1+1+1+1) {
+    // (X & (1 << FromBits - 1))
+    emitOp(dwarf::DW_OP_constu);
+    emitUnsigned((1ULL << FromBits) - 1);
+  } else {
+    // Note that the DWARF 4 stack consists of pointer-sized elements,
+    // so technically it doesn't make sense to shift left more than 64
+    // bits. We leave that for the consumer to decide though. LLDB for
+    // example uses APInt for the stack elements and can still deal
+    // with this.
+    emitOp(dwarf::DW_OP_lit1);
+    emitOp(dwarf::DW_OP_constu);
+    emitUnsigned(FromBits);
+    emitOp(dwarf::DW_OP_shl);
+    emitOp(dwarf::DW_OP_lit1);
+    emitOp(dwarf::DW_OP_minus);
+  }
   emitOp(dwarf::DW_OP_and);
 }
 

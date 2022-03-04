@@ -62,7 +62,7 @@ void ResourceTracker::makeDefunct() {
   JDAndFlag.store(Val);
 }
 
-ResourceManager::~ResourceManager() {}
+ResourceManager::~ResourceManager() = default;
 
 ResourceTrackerDefunct::ResourceTrackerDefunct(ResourceTrackerSP RT)
     : RT(std::move(RT)) {}
@@ -491,7 +491,7 @@ public:
         LookupSet(std::move(LookupSet)), RequiredState(RequiredState) {
     DefGeneratorCandidates = this->LookupSet;
   }
-  virtual ~InProgressLookupState() {}
+  virtual ~InProgressLookupState() = default;
   virtual void complete(std::unique_ptr<InProgressLookupState> IPLS) = 0;
   virtual void fail(Error Err) = 0;
 
@@ -609,7 +609,7 @@ void LookupState::continueLookup(Error Err) {
   ES.OL_applyQueryPhase1(std::move(IPLS), std::move(Err));
 }
 
-DefinitionGenerator::~DefinitionGenerator() {}
+DefinitionGenerator::~DefinitionGenerator() = default;
 
 JITDylib::~JITDylib() {
   LLVM_DEBUG(dbgs() << "Destroying JITDylib " << getName() << "\n");
@@ -1411,12 +1411,11 @@ void JITDylib::dump(raw_ostream &OS) {
     for (auto &KV : Symbols) {
       OS << "    \"" << *KV.first << "\": ";
       if (auto Addr = KV.second.getAddress())
-        OS << format("0x%016" PRIx64, Addr) << ", " << KV.second.getFlags()
-           << " ";
+        OS << format("0x%016" PRIx64, Addr);
       else
         OS << "<not resolved> ";
 
-      OS << KV.second.getFlags() << " " << KV.second.getState();
+      OS << " " << KV.second.getFlags() << " " << KV.second.getState();
 
       if (KV.second.hasMaterializerAttached()) {
         OS << " (Materializer ";
@@ -1751,7 +1750,7 @@ void JITDylib::transferEmittedNodeDependencies(
   }
 }
 
-Platform::~Platform() {}
+Platform::~Platform() = default;
 
 Expected<DenseMap<JITDylib *, SymbolMap>> Platform::lookupInitSymbols(
     ExecutionSession &ES,
@@ -1869,7 +1868,7 @@ Error ExecutionSession::endSession() {
   // TODO: notifiy platform? run static deinits?
 
   Error Err = Error::success();
-  for (auto &JD : JITDylibsToClose)
+  for (auto &JD : reverse(JITDylibsToClose))
     Err = joinErrors(std::move(Err), JD->clear());
 
   Err = joinErrors(std::move(Err), EPC->disconnect());
@@ -1933,8 +1932,13 @@ Error ExecutionSession::removeJITDylib(JITDylib &JD) {
     JDs.erase(I);
   });
 
-  // Clear the JITDylib.
+  // Clear the JITDylib. Hold on to any error while we clean up the
+  // JITDylib members below.
   auto Err = JD.clear();
+
+  // Notify the platform of the teardown.
+  if (P)
+    Err = joinErrors(std::move(Err), P->teardownJITDylib(JD));
 
   // Set JD to closed state. Clear remaining data structures.
   runSessionLocked([&] {
@@ -1953,19 +1957,22 @@ Error ExecutionSession::removeJITDylib(JITDylib &JD) {
   return Err;
 }
 
-std::vector<JITDylibSP> JITDylib::getDFSLinkOrder(ArrayRef<JITDylibSP> JDs) {
+Expected<std::vector<JITDylibSP>>
+JITDylib::getDFSLinkOrder(ArrayRef<JITDylibSP> JDs) {
   if (JDs.empty())
-    return {};
+    return std::vector<JITDylibSP>();
 
   auto &ES = JDs.front()->getExecutionSession();
-  return ES.runSessionLocked([&]() {
+  return ES.runSessionLocked([&]() -> Expected<std::vector<JITDylibSP>> {
     DenseSet<JITDylib *> Visited;
     std::vector<JITDylibSP> Result;
 
     for (auto &JD : JDs) {
 
-      assert(JD->State == Open && "JD is defunct");
-
+      if (JD->State != Open)
+        return make_error<StringError>(
+            "Error building link order: " + JD->getName() + " is defunct",
+            inconvertibleErrorCode());
       if (Visited.count(JD.get()))
         continue;
 
@@ -1990,18 +1997,19 @@ std::vector<JITDylibSP> JITDylib::getDFSLinkOrder(ArrayRef<JITDylibSP> JDs) {
   });
 }
 
-std::vector<JITDylibSP>
+Expected<std::vector<JITDylibSP>>
 JITDylib::getReverseDFSLinkOrder(ArrayRef<JITDylibSP> JDs) {
-  auto Tmp = getDFSLinkOrder(JDs);
-  std::reverse(Tmp.begin(), Tmp.end());
-  return Tmp;
+  auto Result = getDFSLinkOrder(JDs);
+  if (Result)
+    std::reverse(Result->begin(), Result->end());
+  return Result;
 }
 
-std::vector<JITDylibSP> JITDylib::getDFSLinkOrder() {
+Expected<std::vector<JITDylibSP>> JITDylib::getDFSLinkOrder() {
   return getDFSLinkOrder({this});
 }
 
-std::vector<JITDylibSP> JITDylib::getReverseDFSLinkOrder() {
+Expected<std::vector<JITDylibSP>> JITDylib::getReverseDFSLinkOrder() {
   return getReverseDFSLinkOrder({this});
 }
 

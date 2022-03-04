@@ -8,10 +8,26 @@ configure_lit_site_cfg(
   MAIN_CONFIG
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py
   )
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg.py
+  MAIN_CONFIG
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.cfg.py
+  )
 
 set(BOLT_TEST_PARAMS
   bolt_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
+
+if (BOLT_CLANG_EXE AND NOT "clang" IN_LIST LLVM_ENABLE_PROJECTS)
+  add_executable(clang IMPORTED GLOBAL)
+  set_property(TARGET clang PROPERTY IMPORTED_LOCATION "${BOLT_CLANG_EXE}")
+endif()
+
+if (BOLT_LLD_EXE AND NOT "lld" IN_LIST LLVM_ENABLE_PROJECTS)
+  add_executable(lld IMPORTED GLOBAL)
+  set_property(TARGET lld PROPERTY IMPORTED_LOCATION "${BOLT_LLD_EXE}")
+endif()
 
 list(APPEND BOLT_TEST_DEPS
   clang
@@ -22,6 +38,7 @@ list(APPEND BOLT_TEST_DEPS
   llvm-config
   llvm-bolt
   llvm-boltdiff
+  llvm-bolt-heatmap
   llvm-dwarfdump
   llvm-mc
   llvm-nm

@@ -38,6 +38,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace clang;
 using namespace CodeGen;
@@ -1015,7 +1016,7 @@ static void forConstantArrayExpansion(CodeGenFunction &CGF,
   for (int i = 0, n = CAE->NumElts; i < n; i++) {
     llvm::Value *EltAddr = CGF.Builder.CreateConstGEP2_32(
         BaseAddr.getElementType(), BaseAddr.getPointer(), 0, i);
-    Fn(Address(EltAddr, EltAlign));
+    Fn(Address::deprecated(EltAddr, EltAlign));
   }
 }
 
@@ -1056,10 +1057,19 @@ void CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     // Call EmitStoreOfScalar except when the lvalue is a bitfield to emit a
     // primitive store.
     assert(isa<NoExpansion>(Exp.get()));
-    if (LV.isBitField())
-      EmitStoreThroughLValue(RValue::get(&*AI++), LV);
-    else
-      EmitStoreOfScalar(&*AI++, LV);
+    llvm::Value *Arg = &*AI++;
+    if (LV.isBitField()) {
+      EmitStoreThroughLValue(RValue::get(Arg), LV);
+    } else {
+      // TODO: currently there are some places are inconsistent in what LLVM
+      // pointer type they use (see D118744). Once clang uses opaque pointers
+      // all LLVM pointer types will be the same and we can remove this check.
+      if (Arg->getType()->isPointerTy()) {
+        Address Addr = LV.getAddress(*this);
+        Arg = Builder.CreateBitCast(Arg, Addr.getElementType());
+      }
+      EmitStoreOfScalar(Arg, LV);
+    }
   }
 }
 
@@ -1868,6 +1878,37 @@ void CodeGenModule::getDefaultFunctionAttributes(StringRef Name,
 
     if (CodeGenOpts.SpeculativeLoadHardening)
       FuncAttrs.addAttribute(llvm::Attribute::SpeculativeLoadHardening);
+
+    // Add zero-call-used-regs attribute.
+    switch (CodeGenOpts.getZeroCallUsedRegs()) {
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::Skip:
+      FuncAttrs.removeAttribute("zero-call-used-regs");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::UsedGPRArg:
+      FuncAttrs.addAttribute("zero-call-used-regs", "used-gpr-arg");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::UsedGPR:
+      FuncAttrs.addAttribute("zero-call-used-regs", "used-gpr");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::UsedArg:
+      FuncAttrs.addAttribute("zero-call-used-regs", "used-arg");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::Used:
+      FuncAttrs.addAttribute("zero-call-used-regs", "used");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::AllGPRArg:
+      FuncAttrs.addAttribute("zero-call-used-regs", "all-gpr-arg");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::AllGPR:
+      FuncAttrs.addAttribute("zero-call-used-regs", "all-gpr");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::AllArg:
+      FuncAttrs.addAttribute("zero-call-used-regs", "all-arg");
+      break;
+    case llvm::ZeroCallUsedRegs::ZeroCallUsedRegsKind::All:
+      FuncAttrs.addAttribute("zero-call-used-regs", "all");
+      break;
+    }
   }
 
   if (getLangOpts().assumeFunctionsAreConvergent()) {
@@ -2156,6 +2197,15 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
       FuncAttrs.addAttribute(llvm::Attribute::SpeculativeLoadHardening);
     if (TargetDecl->hasAttr<NoSplitStackAttr>())
       FuncAttrs.removeAttribute("split-stack");
+    if (TargetDecl->hasAttr<ZeroCallUsedRegsAttr>()) {
+      // A function "__attribute__((...))" overrides the command-line flag.
+      auto Kind =
+          TargetDecl->getAttr<ZeroCallUsedRegsAttr>()->getZeroCallUsedRegs();
+      FuncAttrs.removeAttribute("zero-call-used-regs");
+      FuncAttrs.addAttribute(
+          "zero-call-used-regs",
+          ZeroCallUsedRegsAttr::ConvertZeroCallUsedRegsKindToStr(Kind));
+    }
 
     // Add NonLazyBind attribute to function declarations when -fno-plt
     // is used.
@@ -2377,9 +2427,10 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
     }
 
     // Decide whether the argument we're handling could be partially undef
-    bool ArgNoUndef = DetermineNoUndef(ParamType, getTypes(), DL, AI);
-    if (CodeGenOpts.EnableNoundefAttrs && ArgNoUndef)
+    if (CodeGenOpts.EnableNoundefAttrs &&
+        DetermineNoUndef(ParamType, getTypes(), DL, AI)) {
       Attrs.addAttribute(llvm::Attribute::NoUndef);
+    }
 
     // 'restrict' -> 'noalias' is done in EmitFunctionProlog when we
     // have the corresponding parameter variable.  It doesn't make
@@ -2474,6 +2525,20 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
       }
     }
 
+    // From OpenCL spec v3.0.10 section 6.3.5 Alignment of Types:
+    // > For arguments to a __kernel function declared to be a pointer to a
+    // > data type, the OpenCL compiler can assume that the pointee is always
+    // > appropriately aligned as required by the data type.
+    if (TargetDecl && TargetDecl->hasAttr<OpenCLKernelAttr>() &&
+        ParamType->isPointerType()) {
+      QualType PTy = ParamType->getPointeeType();
+      if (!PTy->isIncompleteType() && PTy->isConstantSizeType()) {
+        llvm::Align Alignment =
+            getNaturalPointeeTypeAlignment(ParamType).getAsAlign();
+        Attrs.addAlignmentAttr(Alignment);
+      }
+    }
+
     switch (FI.getExtParameterInfo(ArgNo).getABI()) {
     case ParameterABI::Ordinary:
       break;
@@ -2519,8 +2584,8 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
       unsigned FirstIRArg, NumIRArgs;
       std::tie(FirstIRArg, NumIRArgs) = IRFunctionArgs.getIRArgs(ArgNo);
       for (unsigned i = 0; i < NumIRArgs; i++)
-        ArgAttrs[FirstIRArg + i] =
-            llvm::AttributeSet::get(getLLVMContext(), Attrs);
+        ArgAttrs[FirstIRArg + i] = ArgAttrs[FirstIRArg + i].addAttributes(
+            getLLVMContext(), llvm::AttributeSet::get(getLLVMContext(), Attrs));
     }
   }
   assert(ArgNo == FI.arg_size());
@@ -2620,8 +2685,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // parameter, which is a pointer to the complete memory area.
   Address ArgStruct = Address::invalid();
   if (IRFunctionArgs.hasInallocaArg()) {
-    ArgStruct = Address(Fn->getArg(IRFunctionArgs.getInallocaArgNo()),
-                        FI.getArgStructAlignment());
+    ArgStruct = Address::deprecated(
+        Fn->getArg(IRFunctionArgs.getInallocaArgNo()),
+        FI.getArgStructAlignment());
 
     assert(ArgStruct.getType() == FI.getArgStruct()->getPointerTo());
   }
@@ -2671,8 +2737,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       Address V =
           Builder.CreateStructGEP(ArgStruct, FieldIndex, Arg->getName());
       if (ArgI.getInAllocaIndirect())
-        V = Address(Builder.CreateLoad(V),
-                    getContext().getTypeAlignInChars(Ty));
+        V = Address::deprecated(Builder.CreateLoad(V),
+                                getContext().getTypeAlignInChars(Ty));
       ArgVals.push_back(ParamValue::forIndirect(V));
       break;
     }
@@ -2820,7 +2886,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           assert(pointeeTy->isPointerType());
           Address temp =
             CreateMemTemp(pointeeTy, getPointerAlign(), "swifterror.temp");
-          Address arg = Address(V, getContext().getTypeAlignInChars(pointeeTy));
+          Address arg = Address::deprecated(
+              V, getContext().getTypeAlignInChars(pointeeTy));
           llvm::Value *incomingErrorValue = Builder.CreateLoad(arg);
           Builder.CreateStore(incomingErrorValue, temp);
           V = temp.getPointer();
@@ -3686,7 +3753,7 @@ static AggValueSlot createPlaceholderSlot(CodeGenFunction &CGF,
   CharUnits Align = CharUnits::fromQuantity(4);
   Placeholder = CGF.Builder.CreateAlignedLoad(IRPtrTy, Placeholder, Align);
 
-  return AggValueSlot::forAddr(Address(Placeholder, Align),
+  return AggValueSlot::forAddr(Address(Placeholder, IRTy, Align),
                                Ty.getQualifiers(),
                                AggValueSlot::IsNotDestructed,
                                AggValueSlot::DoesNotNeedGCBarriers,
@@ -3879,9 +3946,8 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   }
 
   // Create the temporary.
-  Address temp = CGF.CreateTempAlloca(destType->getElementType(),
-                                      CGF.getPointerAlign(),
-                                      "icr.temp");
+  Address temp = CGF.CreateTempAlloca(destType->getPointerElementType(),
+                                      CGF.getPointerAlign(), "icr.temp");
   // Loading an l-value can introduce a cleanup if the l-value is __weak,
   // and that cleanup will be conditional if we can't prove that the l-value
   // isn't null, so we need to register a dominating point so that the cleanups
@@ -3891,9 +3957,8 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   // Zero-initialize it if we're not doing a copy-initialization.
   bool shouldCopy = CRE->shouldCopy();
   if (!shouldCopy) {
-    llvm::Value *null =
-      llvm::ConstantPointerNull::get(
-        cast<llvm::PointerType>(destType->getElementType()));
+    llvm::Value *null = llvm::ConstantPointerNull::get(
+        cast<llvm::PointerType>(destType->getPointerElementType()));
     CGF.Builder.CreateStore(null, temp);
   }
 
@@ -3935,7 +4000,7 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
     assert(srcRV.isScalar());
 
     llvm::Value *src = srcRV.getScalarVal();
-    src = CGF.Builder.CreateBitCast(src, destType->getElementType(),
+    src = CGF.Builder.CreateBitCast(src, destType->getPointerElementType(),
                                     "icr.cast");
 
     // Use an ordinary store, not a store-to-lvalue.
@@ -4332,7 +4397,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
                                               type);
       // This unreachable is a temporary marker which will be removed later.
       llvm::Instruction *IsActive = Builder.CreateUnreachable();
-      args.addArgCleanupDeactivation(EHStack.getInnermostEHScope(), IsActive);
+      args.addArgCleanupDeactivation(EHStack.stable_begin(), IsActive);
     }
     return;
   }
@@ -4678,7 +4743,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     AI->setAlignment(Align.getAsAlign());
     AI->setUsedWithInAlloca(true);
     assert(AI->isUsedWithInAlloca() && !AI->isStaticAlloca());
-    ArgMemory = Address(AI, Align);
+    ArgMemory = Address(AI, ArgStruct, Align);
   }
 
   ClangToLLVMArgMapping IRFunctionArgs(CGM.getContext(), CallInfo);
@@ -4776,13 +4841,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         // Store the RValue into the argument struct.
         Address Addr =
             Builder.CreateStructGEP(ArgMemory, ArgInfo.getInAllocaFieldIndex());
-        unsigned AS = Addr.getType()->getPointerAddressSpace();
-        llvm::Type *MemType = ConvertTypeForMem(I->Ty)->getPointerTo(AS);
         // There are some cases where a trivial bitcast is not avoidable.  The
         // definition of a type later in a translation unit may change it's type
         // from {}* to (%struct.foo*)*.
-        if (Addr.getType() != MemType)
-          Addr = Builder.CreateBitCast(Addr, MemType);
+        Addr = Builder.CreateElementBitCast(Addr, ConvertTypeForMem(I->Ty));
         I->copyInto(*this, Addr);
       }
       break;
@@ -4906,7 +4968,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
           QualType pointeeTy = I->Ty->getPointeeType();
           swiftErrorArg =
-            Address(V, getContext().getTypeAlignInChars(pointeeTy));
+            Address::deprecated(V, getContext().getTypeAlignInChars(pointeeTy));
 
           swiftErrorTemp =
             CreateMemTemp(pointeeTy, getPointerAlign(), "swifterror.temp");
@@ -5074,8 +5136,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 #ifndef NDEBUG
         // Assert that these structs have equivalent element types.
         llvm::StructType *FullTy = CallInfo.getArgStruct();
-        llvm::StructType *DeclaredTy = cast<llvm::StructType>(
-            cast<llvm::PointerType>(LastParamTy)->getElementType());
+        llvm::StructType *DeclaredTy =
+            cast<llvm::StructType>(LastParamTy->getPointerElementType());
         assert(DeclaredTy->getNumElements() == FullTy->getNumElements());
         for (llvm::StructType::element_iterator DI = DeclaredTy->element_begin(),
                                                 DE = DeclaredTy->element_end(),

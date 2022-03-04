@@ -799,6 +799,9 @@ def : InstAlias<"jalr $rd, $rs, $offset", (JALR GPR:$rd, GPR:$rs, simm12:$offset
 
 def : InstAlias<"fence", (FENCE 0xF, 0xF)>; // 0xF == iorw
 
+let Predicates = [HasStdExtZihintpause] in
+def : InstAlias<"pause", (FENCE 0x1, 0x0)>; // 0x1 == w
+
 def : InstAlias<"rdinstret $rd", (CSRRS GPR:$rd, INSTRET.Encoding, X0)>;
 def : InstAlias<"rdcycle $rd",   (CSRRS GPR:$rd, CYCLE.Encoding, X0)>;
 def : InstAlias<"rdtime $rd",    (CSRRS GPR:$rd, TIME.Encoding, X0)>;
@@ -1034,6 +1037,23 @@ def mul_const_oneuse : PatFrag<(ops node:$A, node:$B),
   return false;
 }]>;
 
+def sext_oneuse : PatFrag<(ops node:$A), (sext node:$A), [{
+  return N->hasOneUse();
+}]>;
+
+def zext_oneuse : PatFrag<(ops node:$A), (zext node:$A), [{
+  return N->hasOneUse();
+}]>;
+
+def anyext_oneuse : PatFrag<(ops node:$A), (anyext node:$A), [{
+  return N->hasOneUse();
+}]>;
+
+def fpext_oneuse : PatFrag<(ops node:$A),
+                           (any_fpextend node:$A), [{
+  return N->hasOneUse();
+}]>;
+
 /// Simple arithmetic operations
 
 def : PatGprGpr<add, ADD>;
@@ -1166,7 +1186,7 @@ def : Pat<(brind (add GPRJALR:$rs1, simm12:$imm12)),
 // destination.
 // Define AsmString to print "call" when compile with -S flag.
 // Define isCodeGenOnly = 0 to support parsing assembly "call" instruction.
-let isCall = 1, isBarrier = 1, isCodeGenOnly = 0, hasSideEffects = 0,
+let isCall = 1, isBarrier = 1, isCodeGenOnly = 0, Size = 8, hasSideEffects = 0,
     mayStore = 0, mayLoad = 0 in
 def PseudoCALLReg : Pseudo<(outs GPR:$rd), (ins call_symbol:$func), []> {
   let AsmString = "call\t$rd, $func";
@@ -1178,7 +1198,7 @@ def PseudoCALLReg : Pseudo<(outs GPR:$rd), (ins call_symbol:$func), []> {
 // if the offset fits in a signed 21-bit immediate.
 // Define AsmString to print "call" when compile with -S flag.
 // Define isCodeGenOnly = 0 to support parsing assembly "call" instruction.
-let isCall = 1, Defs = [X1], isCodeGenOnly = 0 in
+let isCall = 1, Defs = [X1], isCodeGenOnly = 0, Size = 8 in
 def PseudoCALL : Pseudo<(outs), (ins call_symbol:$func), []> {
   let AsmString = "call\t$func";
 }
@@ -1203,7 +1223,7 @@ def PseudoRET : Pseudo<(outs), (ins), [(riscv_ret_flag)]>,
 // expand to auipc and jalr while encoding.
 // Define AsmString to print "tail" when compile with -S flag.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [X2],
-    isCodeGenOnly = 0 in
+    Size = 8, isCodeGenOnly = 0 in
 def PseudoTAIL : Pseudo<(outs), (ins call_symbol:$dst), []> {
   let AsmString = "tail\t$dst";
 }
@@ -1218,28 +1238,28 @@ def : Pat<(riscv_tail (iPTR tglobaladdr:$dst)),
 def : Pat<(riscv_tail (iPTR texternalsym:$dst)),
           (PseudoTAIL texternalsym:$dst)>;
 
-let isCall = 0, isBarrier = 1, isBranch = 1, isTerminator = 1,
+let isCall = 0, isBarrier = 1, isBranch = 1, isTerminator = 1, Size = 8,
     isCodeGenOnly = 0, hasSideEffects = 0, mayStore = 0, mayLoad = 0 in
 def PseudoJump : Pseudo<(outs GPR:$rd), (ins pseudo_jump_symbol:$target), []> {
   let AsmString = "jump\t$target, $rd";
 }
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCodeGenOnly = 0,
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Size = 8, isCodeGenOnly = 0,
     isAsmParserOnly = 1 in
 def PseudoLLA : Pseudo<(outs GPR:$dst), (ins bare_symbol:$src), [],
                        "lla", "$dst, $src">;
 
-let hasSideEffects = 0, mayLoad = 1, mayStore = 0, isCodeGenOnly = 0,
+let hasSideEffects = 0, mayLoad = 1, mayStore = 0, Size = 8, isCodeGenOnly = 0,
     isAsmParserOnly = 1 in
 def PseudoLA : Pseudo<(outs GPR:$dst), (ins bare_symbol:$src), [],
                       "la", "$dst, $src">;
 
-let hasSideEffects = 0, mayLoad = 1, mayStore = 0, isCodeGenOnly = 0,
+let hasSideEffects = 0, mayLoad = 1, mayStore = 0, Size = 8, isCodeGenOnly = 0,
     isAsmParserOnly = 1 in
 def PseudoLA_TLS_IE : Pseudo<(outs GPR:$dst), (ins bare_symbol:$src), [],
                              "la.tls.ie", "$dst, $src">;
 
-let hasSideEffects = 0, mayLoad = 1, mayStore = 0, isCodeGenOnly = 0,
+let hasSideEffects = 0, mayLoad = 1, mayStore = 0, Size = 8, isCodeGenOnly = 0,
     isAsmParserOnly = 1 in
 def PseudoLA_TLS_GD : Pseudo<(outs GPR:$dst), (ins bare_symbol:$src), [],
                              "la.tls.gd", "$dst, $src">;
@@ -1499,5 +1519,6 @@ include "RISCVInstrInfoF.td"
 include "RISCVInstrInfoD.td"
 include "RISCVInstrInfoC.td"
 include "RISCVInstrInfoZb.td"
+include "RISCVInstrInfoZk.td"
 include "RISCVInstrInfoV.td"
 include "RISCVInstrInfoZfh.td"

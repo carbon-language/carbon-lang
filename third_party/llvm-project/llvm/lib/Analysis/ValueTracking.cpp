@@ -275,13 +275,25 @@ bool llvm::haveNoCommonBitsSet(const Value *LHS, const Value *RHS,
   assert(LHS->getType()->isIntOrIntVectorTy() &&
          "LHS and RHS should be integers");
   // Look for an inverted mask: (X & ~M) op (Y & M).
-  Value *M;
-  if (match(LHS, m_c_And(m_Not(m_Value(M)), m_Value())) &&
-      match(RHS, m_c_And(m_Specific(M), m_Value())))
-    return true;
-  if (match(RHS, m_c_And(m_Not(m_Value(M)), m_Value())) &&
-      match(LHS, m_c_And(m_Specific(M), m_Value())))
-    return true;
+  {
+    Value *M;
+    if (match(LHS, m_c_And(m_Not(m_Value(M)), m_Value())) &&
+        match(RHS, m_c_And(m_Specific(M), m_Value())))
+      return true;
+    if (match(RHS, m_c_And(m_Not(m_Value(M)), m_Value())) &&
+        match(LHS, m_c_And(m_Specific(M), m_Value())))
+      return true;
+  }
+  // Look for: (A & B) op ~(A | B)
+  {
+    Value *A, *B;
+    if (match(LHS, m_And(m_Value(A), m_Value(B))) &&
+        match(RHS, m_Not(m_c_Or(m_Specific(A), m_Specific(B)))))
+      return true;
+    if (match(RHS, m_And(m_Value(A), m_Value(B))) &&
+        match(LHS, m_Not(m_c_Or(m_Specific(A), m_Specific(B)))))
+      return true;
+  }
   IntegerType *IT = cast<IntegerType>(LHS->getType()->getScalarType());
   KnownBits LHSKnown(IT->getBitWidth());
   KnownBits RHSKnown(IT->getBitWidth());
@@ -451,7 +463,12 @@ static void computeKnownBitsMul(const Value *Op0, const Value *Op1, bool NSW,
     }
   }
 
-  Known = KnownBits::mul(Known, Known2);
+  bool SelfMultiply = Op0 == Op1;
+  // TODO: SelfMultiply can be poison, but not undef.
+  if (SelfMultiply)
+    SelfMultiply &=
+        isGuaranteedNotToBeUndefOrPoison(Op0, Q.AC, Q.CxtI, Q.DT, Depth + 1);
+  Known = KnownBits::mul(Known, Known2, SelfMultiply);
 
   // Only make use of no-wrap flags if we failed to compute the sign bit
   // directly.  This matters if the multiplication always overflows, in
@@ -1593,7 +1610,7 @@ static void computeKnownBitsFromOperator(const Operator *I,
         computeKnownBits(I->getOperand(0), Known2, Depth + 1, Q);
         // If we have a known 1, its position is our upper bound.
         unsigned PossibleLZ = Known2.countMaxLeadingZeros();
-        // If this call is undefined for 0, the result will be less than 2^n.
+        // If this call is poison for 0 input, the result will be less than 2^n.
         if (II->getArgOperand(1) == ConstantInt::getTrue(II->getContext()))
           PossibleLZ = std::min(PossibleLZ, BitWidth - 1);
         unsigned LowBits = Log2_32(PossibleLZ)+1;
@@ -1604,7 +1621,7 @@ static void computeKnownBitsFromOperator(const Operator *I,
         computeKnownBits(I->getOperand(0), Known2, Depth + 1, Q);
         // If we have a known 1, its position is our upper bound.
         unsigned PossibleTZ = Known2.countMaxTrailingZeros();
-        // If this call is undefined for 0, the result will be less than 2^n.
+        // If this call is poison for 0 input, the result will be less than 2^n.
         if (II->getArgOperand(1) == ConstantInt::getTrue(II->getContext()))
           PossibleTZ = std::min(PossibleTZ, BitWidth - 1);
         unsigned LowBits = Log2_32(PossibleTZ)+1;
@@ -3248,125 +3265,6 @@ static unsigned ComputeNumSignBitsImpl(const Value *V,
   return std::max(FirstAnswer, Known.countMinSignBits());
 }
 
-/// This function computes the integer multiple of Base that equals V.
-/// If successful, it returns true and returns the multiple in
-/// Multiple. If unsuccessful, it returns false. It looks
-/// through SExt instructions only if LookThroughSExt is true.
-bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
-                           bool LookThroughSExt, unsigned Depth) {
-  assert(V && "No Value?");
-  assert(Depth <= MaxAnalysisRecursionDepth && "Limit Search Depth");
-  assert(V->getType()->isIntegerTy() && "Not integer or pointer type!");
-
-  Type *T = V->getType();
-
-  ConstantInt *CI = dyn_cast<ConstantInt>(V);
-
-  if (Base == 0)
-    return false;
-
-  if (Base == 1) {
-    Multiple = V;
-    return true;
-  }
-
-  ConstantExpr *CO = dyn_cast<ConstantExpr>(V);
-  Constant *BaseVal = ConstantInt::get(T, Base);
-  if (CO && CO == BaseVal) {
-    // Multiple is 1.
-    Multiple = ConstantInt::get(T, 1);
-    return true;
-  }
-
-  if (CI && CI->getZExtValue() % Base == 0) {
-    Multiple = ConstantInt::get(T, CI->getZExtValue() / Base);
-    return true;
-  }
-
-  if (Depth == MaxAnalysisRecursionDepth) return false;
-
-  Operator *I = dyn_cast<Operator>(V);
-  if (!I) return false;
-
-  switch (I->getOpcode()) {
-  default: break;
-  case Instruction::SExt:
-    if (!LookThroughSExt) return false;
-    // otherwise fall through to ZExt
-    LLVM_FALLTHROUGH;
-  case Instruction::ZExt:
-    return ComputeMultiple(I->getOperand(0), Base, Multiple,
-                           LookThroughSExt, Depth+1);
-  case Instruction::Shl:
-  case Instruction::Mul: {
-    Value *Op0 = I->getOperand(0);
-    Value *Op1 = I->getOperand(1);
-
-    if (I->getOpcode() == Instruction::Shl) {
-      ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1);
-      if (!Op1CI) return false;
-      // Turn Op0 << Op1 into Op0 * 2^Op1
-      APInt Op1Int = Op1CI->getValue();
-      uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
-      APInt API(Op1Int.getBitWidth(), 0);
-      API.setBit(BitToSet);
-      Op1 = ConstantInt::get(V->getContext(), API);
-    }
-
-    Value *Mul0 = nullptr;
-    if (ComputeMultiple(Op0, Base, Mul0, LookThroughSExt, Depth+1)) {
-      if (Constant *Op1C = dyn_cast<Constant>(Op1))
-        if (Constant *MulC = dyn_cast<Constant>(Mul0)) {
-          if (Op1C->getType()->getPrimitiveSizeInBits().getFixedSize() <
-              MulC->getType()->getPrimitiveSizeInBits().getFixedSize())
-            Op1C = ConstantExpr::getZExt(Op1C, MulC->getType());
-          if (Op1C->getType()->getPrimitiveSizeInBits().getFixedSize() >
-              MulC->getType()->getPrimitiveSizeInBits().getFixedSize())
-            MulC = ConstantExpr::getZExt(MulC, Op1C->getType());
-
-          // V == Base * (Mul0 * Op1), so return (Mul0 * Op1)
-          Multiple = ConstantExpr::getMul(MulC, Op1C);
-          return true;
-        }
-
-      if (ConstantInt *Mul0CI = dyn_cast<ConstantInt>(Mul0))
-        if (Mul0CI->getValue() == 1) {
-          // V == Base * Op1, so return Op1
-          Multiple = Op1;
-          return true;
-        }
-    }
-
-    Value *Mul1 = nullptr;
-    if (ComputeMultiple(Op1, Base, Mul1, LookThroughSExt, Depth+1)) {
-      if (Constant *Op0C = dyn_cast<Constant>(Op0))
-        if (Constant *MulC = dyn_cast<Constant>(Mul1)) {
-          if (Op0C->getType()->getPrimitiveSizeInBits().getFixedSize() <
-              MulC->getType()->getPrimitiveSizeInBits().getFixedSize())
-            Op0C = ConstantExpr::getZExt(Op0C, MulC->getType());
-          if (Op0C->getType()->getPrimitiveSizeInBits().getFixedSize() >
-              MulC->getType()->getPrimitiveSizeInBits().getFixedSize())
-            MulC = ConstantExpr::getZExt(MulC, Op0C->getType());
-
-          // V == Base * (Mul1 * Op0), so return (Mul1 * Op0)
-          Multiple = ConstantExpr::getMul(MulC, Op0C);
-          return true;
-        }
-
-      if (ConstantInt *Mul1CI = dyn_cast<ConstantInt>(Mul1))
-        if (Mul1CI->getValue() == 1) {
-          // V == Base * Op0, so return Op0
-          Multiple = Op0;
-          return true;
-        }
-    }
-  }
-  }
-
-  // We could not determine if V is a multiple of Base.
-  return false;
-}
-
 Intrinsic::ID llvm::getIntrinsicForCallSite(const CallBase &CB,
                                             const TargetLibraryInfo *TLI) {
   const Function *F = CB.getCalledFunction();
@@ -4678,8 +4576,8 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
       return false;
     const DataLayout &DL = LI->getModule()->getDataLayout();
     return isDereferenceableAndAlignedPointer(
-        LI->getPointerOperand(), LI->getType(), MaybeAlign(LI->getAlign()), DL,
-        CtxI, DT, TLI);
+        LI->getPointerOperand(), LI->getType(), LI->getAlign(), DL, CtxI, DT,
+        TLI);
   }
   case Instruction::Call: {
     auto *CI = cast<const CallInst>(Inst);
@@ -5244,10 +5142,10 @@ static bool isGuaranteedNotToBeUndefOrPoison(const Value *V,
     auto *TI = Dominator->getBlock()->getTerminator();
 
     Value *Cond = nullptr;
-    if (auto BI = dyn_cast<BranchInst>(TI)) {
+    if (auto BI = dyn_cast_or_null<BranchInst>(TI)) {
       if (BI->isConditional())
         Cond = BI->getCondition();
-    } else if (auto SI = dyn_cast<SwitchInst>(TI)) {
+    } else if (auto SI = dyn_cast_or_null<SwitchInst>(TI)) {
       Cond = SI->getCondition();
     }
 
@@ -7250,7 +7148,8 @@ Optional<int64_t> llvm::isPointerOffset(const Value *Ptr1, const Value *Ptr2,
   // potentially variable) indices.  After that they handle some constant
   // offset, which determines their offset from each other.  At this point, we
   // handle no other case.
-  if (!GEP1 || !GEP2 || GEP1->getOperand(0) != GEP2->getOperand(0))
+  if (!GEP1 || !GEP2 || GEP1->getOperand(0) != GEP2->getOperand(0) ||
+      GEP1->getSourceElementType() != GEP2->getSourceElementType())
     return None;
 
   // Skip any common indices and track the GEP types.

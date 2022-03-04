@@ -84,7 +84,7 @@ private:
 
   /// The flag is true upon \p UpdatedCSRs initialization
   /// and false otherwise.
-  bool IsUpdatedCSRsInitialized;
+  bool IsUpdatedCSRsInitialized = false;
 
   /// Contains the updated callee saved register list.
   /// As opposed to the static list defined in register info,
@@ -228,6 +228,16 @@ public:
 
   /// Returns true if the updated CSR list was initialized and false otherwise.
   bool isUpdatedCSRsInitialized() const { return IsUpdatedCSRsInitialized; }
+
+  /// Returns true if a register can be used as an argument to a function.
+  bool isArgumentRegister(const MachineFunction &MF, MCRegister Reg) const;
+
+  /// Returns true if a register is a fixed register.
+  bool isFixedRegister(const MachineFunction &MF, MCRegister Reg) const;
+
+  /// Returns true if a register is a general purpose register.
+  bool isGeneralPurposeRegister(const MachineFunction &MF,
+                                MCRegister Reg) const;
 
   /// Disables the register from the list of CSRs.
   /// I.e. the register will not appear as part of the CSR mask.
@@ -825,23 +835,12 @@ public:
   /// to refer to the designated register.
   void updateDbgUsersToReg(MCRegister OldReg, MCRegister NewReg,
                            ArrayRef<MachineInstr *> Users) const {
-    SmallSet<MCRegister, 4> OldRegUnits;
-    for (MCRegUnitIterator RUI(OldReg, getTargetRegisterInfo()); RUI.isValid();
-         ++RUI)
-      OldRegUnits.insert(*RUI);
-
     // If this operand is a register, check whether it overlaps with OldReg.
     // If it does, replace with NewReg.
-    auto UpdateOp = [this, &NewReg, &OldReg, &OldRegUnits](MachineOperand &Op) {
-      if (Op.isReg()) {
-        for (MCRegUnitIterator RUI(OldReg, getTargetRegisterInfo());
-             RUI.isValid(); ++RUI) {
-          if (OldRegUnits.contains(*RUI)) {
-            Op.setReg(NewReg);
-            break;
-          }
-        }
-      }
+    auto UpdateOp = [this, &NewReg, &OldReg](MachineOperand &Op) {
+      if (Op.isReg() &&
+          getTargetRegisterInfo()->regsOverlap(Op.getReg(), OldReg))
+        Op.setReg(NewReg);
     };
 
     // Iterate through (possibly several) operands to DBG_VALUEs and update

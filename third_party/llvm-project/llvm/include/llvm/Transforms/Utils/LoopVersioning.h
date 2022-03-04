@@ -113,7 +113,7 @@ private:
   Loop *VersionedLoop;
   /// The fall-back loop.  I.e. control flows here if pointers in the
   /// loop may alias (memchecks failed).
-  Loop *NonVersionedLoop;
+  Loop *NonVersionedLoop = nullptr;
 
   /// This maps the instructions from VersionedLoop to their counterpart
   /// in NonVersionedLoop.
@@ -123,7 +123,7 @@ private:
   SmallVector<RuntimePointerCheck, 4> AliasChecks;
 
   /// The set of SCEV checks that we are versioning for.
-  const SCEVUnionPredicate &Preds;
+  const SCEVPredicate &Preds;
 
   /// Maps a pointer to the pointer checking group that the pointer
   /// belongs to.
