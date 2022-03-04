@@ -800,6 +800,22 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<TypeType>());
       return;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(*e);
+      TypeCheckExp(if_expr.condition(), impl_scope);
+      ExpectType(if_expr.source_loc(), "condition of `if`",
+                 arena_->New<BoolType>(), &if_expr.condition()->static_type());
+
+      // TODO: Compute the common type and convert both operands to it.
+      TypeCheckExp(if_expr.then_expression(), impl_scope);
+      TypeCheckExp(if_expr.else_expression(), impl_scope);
+      ExpectExactType(e->source_loc(), "expression of `if` expression",
+                      &if_expr.then_expression()->static_type(),
+                      &if_expr.else_expression()->static_type());
+      e->set_static_type(&if_expr.then_expression()->static_type());
+      e->set_value_category(ValueCategory::Let);
+      return;
+    }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << *e;
   }
@@ -1405,6 +1421,10 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
+      if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
+        FATAL_COMPILATION_ERROR(var.binding().type().source_loc())
+            << "Expected expression for variable type";
+      }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
       TypeCheckPattern(&var.binding(), std::nullopt, impl_scope);
