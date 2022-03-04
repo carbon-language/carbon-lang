@@ -22,7 +22,7 @@ class StringLiteralTest : public ::testing::Test {
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     CHECK(result);
-    EXPECT_EQ(result->Text(), text);
+    EXPECT_EQ(result->text(), text);
     return *result;
   }
 
@@ -84,20 +84,22 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : valid) {
+    SCOPED_TRACE(test);
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue()) << test;
+    EXPECT_TRUE(result.hasValue());
     if (result) {
-      EXPECT_EQ(result->Text(), test);
+      EXPECT_EQ(result->text(), test);
     }
   }
 
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
       "")",
-      R"("\)",  //
+      R"("\)",
       R"("\")",
-      R"("\\)",  //
+      R"("\\)",
       R"("\\\")",
       R"("""
       )",
@@ -105,11 +107,16 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       """)",
       R"(" \
       ")",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
-    EXPECT_FALSE(LexedStringLiteral::Lex(test).hasValue())
-        << "`" << test << "`";
+    SCOPED_TRACE(test);
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.hasValue());
+    if (result) {
+      EXPECT_FALSE(result->is_terminated());
+    }
   }
 }
 
@@ -289,6 +296,15 @@ TEST_F(StringLiteralTest, TabInBlockString) {
   auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
   EXPECT_TRUE(error_tracker.SeenError());
   EXPECT_EQ(value, "x\ty\n");
+}
+
+TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
+  std::string text = "u{";
+  text.append(10000, '9');
+  text.append("}");
+  auto value = Parse("\"\\" + text + "\"");
+  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_EQ(value, text);
 }
 
 }  // namespace
