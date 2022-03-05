@@ -3730,12 +3730,6 @@ types, possibly with different implementations.
 
 In general, `X(T).F` can only mean one thing, regardless of `T`.
 
-**Concern:** The conditional conformance feature makes the question "is this
-interface implemented for this type" undecidable in general.
-[This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
-The acyclic restriction may eliminate this issue, otherwise we will likely need
-some heuristic like a limit on how many steps of recursion are allowed.
-
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
 but bans cases where there could be ambiguity from overlap.
@@ -4551,16 +4545,51 @@ different assignment.
 
 ## Observing a type implements an interface
 
-An [`observe` declaration](#observe-declarations) to show that two types are
-equal so code can pass type checking without explicitly writing casts, without
-requiring the compiler to do a unbounded search that may not terminate. The
-compiler may need another form of `observe` declaration to see that a type
+An [`observe` declaration](#observe-declarations) can be used to show that two
+types are equal so code can pass type checking without explicitly writing casts,
+without requiring the compiler to do a unbounded search that may not terminate.
+The compiler may need another form of `observe` declaration to see that a type
 implements an interface.
 
 ### Observing interface requirements
 
-FIXME:
-[Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+One situation where this occurs is when there is a chain of
+[interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
+Normally, Carbon will only consider the interfaces that are direct requirements
+of the interfaces the type is known to implement. An `observe...is` declaration
+can be used to add an interface that is a direct requirement to the set of
+interfaces whose direct requirements will be considered for that type. This
+allows a developer to provide a proof that there is a sequence of requirements
+that demonstrate that a type implements an interface, as in this example:
+
+```
+interface A { }
+interface B { impl as A; }
+interface C { impl as B; }
+interface D { impl as C; }
+
+fn RequiresA[T:! A](x: T);
+fn RequiresC[T:! C](x: T);
+fn RequiresD[T:! D](x: T) {
+  // ✅ Allowed: `D` directly requires `C` to be implemented.
+  RequiresC(x);
+
+  // ❌ Illegal: No direct connection between `D` and `A`.
+  // RequiresA(x);
+
+  // `T` is `D` and `D` directly requires `C` to be
+  // implemented.
+  observe T is C;
+
+  // `T` is `C` and `C` directly requires `B` to be
+  // implemented.
+  observe T is B;
+
+  // ✅ Allowed: `T` is `B` and `B` directly requires
+  //             `A` to be implemented.
+  RequiresA(x);
+}
+```
 
 FIXME:
 [discussion in #typesystem on Discord](https://discord.com/channels/655572317891461132/708431657849585705/938167784565792848)
@@ -4580,8 +4609,13 @@ impl [T:! B] T as C { }
 impl [T:! C] T as D { }
 
 fn RequiresD(T:! D)(x: T);
+fn RequiresB(T:! B)(x: T);
 
 fn RequiresA(T:! A)(x: T) {
+  // ✅ Allowed: There is a blanket implementation
+  //             of `B` for types implementing `A`.
+  RequiresB(x);
+
   // ❌ Illegal: No implementation of `D` for type
   //             `T` implementing `A`
   // RequiresD(x);
@@ -4730,4 +4764,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
--   [#1088: Generic details 10: interface implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
+-   [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
