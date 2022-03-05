@@ -102,7 +102,8 @@ converted as follows:
     type to `fN`, then the integer operand is converted to `fN`.
 
 More broadly, if one operand is of built-in type and the other operand can be
-implicitly converted to that type, then it is.
+implicitly converted to that type, then it is, unless that behavior is
+[overridden](#extensibility).
 
 A built-in arithmetic operation is performed if, after the above conversion
 step, the operands have the same built-in type. The result type is that type.
@@ -170,8 +171,9 @@ Because floating-point arithmetic follows IEEE 754 rules: overflow results in
 
 ### Strings
 
-Binary `+` performs string concatenation. No other arithmetic operators are
-supported.
+**TODO:** Decide whether strings are built-in types, and whether they support
+`+` for concatenation. See
+[#457](https://github.com/carbon-language/carbon-lang/issues/457).
 
 ## Extensibility
 
@@ -262,7 +264,6 @@ to give the semantics described above.
 -   [Use different precedence groups for division and multiplication](/proposals/p1083.md#use-different-precedence-groups-for-division-and-multiplication)
 -   [Use the same precedence group for modulo and multiplication](/proposals/p1083.md#use-the-same-precedence-group-for-modulo-and-multiplication)
 -   [Use a different spelling for modulo](/proposals/p1083.md#use-a-different-spelling-for-modulo)
--   [Use a different operator for string concatenation](/proposals/p1083.md#use-a-different-operator-for-string-concatenation)
 
 ## References
 

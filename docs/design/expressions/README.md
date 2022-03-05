@@ -104,6 +104,7 @@ graph BT
 
     memberAccess --> parens & braces & unqualifiedName
     negation --> memberAccess
+    %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -----> memberAccess
     multiplication & modulo & as --> negation
     addition --> multiplication
@@ -219,13 +220,13 @@ Most expressions are modeled as operators:
 
 | Category   | Operator                        | Syntax    | Function                                                              |
 | ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
-| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
 | Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
 | Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
 | Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
 | Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |
 | Arithmetic | [`/`](arithmetic.md)            | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
 | Arithmetic | [`%`](arithmetic.md)            | `x % y`   | `x` modulo `y`.                                                       |
+| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
 | Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
 | Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
 | Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
