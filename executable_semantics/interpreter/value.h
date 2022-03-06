@@ -127,6 +127,11 @@ class FunctionValue : public Value {
   explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
+  explicit FunctionValue(
+      Nonnull<const FunctionDeclaration*> declaration,
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
+      : Value(Kind::FunctionValue), declaration_(declaration), impls_(impls) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
   }
@@ -135,8 +140,17 @@ class FunctionValue : public Value {
     return *declaration_;
   }
 
+  // Maps each of the enclosing class's generic parameters to the AST
+  // node that identifies the witness table for the corresponding
+  // argument.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -478,6 +492,22 @@ class NominalClassType : public Value {
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
 
+  // Maps each of the class's generic parameters to the AST node that
+  // identifies the witness table for the corresponding argument.
+  // Should not be called before typechecking, or if the class is not
+  // generic.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impls(
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
+    CHECK(impls_.empty());
+    impls_ = impls;
+  }
+
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
@@ -486,6 +516,7 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;

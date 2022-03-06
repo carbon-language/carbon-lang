@@ -510,15 +510,25 @@ void Interpreter::StepExp() {
         // -> { { v_f :: C, E, F} : S, H}
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
+          if (trace_)
+            llvm::outs() << "*** field access, on generic with impl\n";
           auto witness_addr =
               todo_.ValueOfNode(*access.impl(), access.source_loc());
+          if (trace_)
+            llvm::outs() << "*** obtained witness address\n";
           witness = cast<Witness>(
               heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
                          access.source_loc()));
+          if (trace_)
+            llvm::outs() << "*** found witness\n";
         }
+        if (trace_)
+          llvm::outs() << "*** calling GetField\n";
         FieldPath::Component field(access.field(), witness);
         Nonnull<const Value*> member = act.results()[0]->GetField(
             arena_, FieldPath(field), exp.source_loc());
+        if (trace_)
+          llvm::outs() << "*** finished field access\n";
         return todo_.FinishAction(member);
       }
     }
@@ -583,14 +593,25 @@ void Interpreter::StepExp() {
                 alt.alt_name(), alt.choice_name(), act.results()[1]));
           }
           case Value::Kind::FunctionValue: {
-            const FunctionDeclaration& function =
-                cast<FunctionValue>(*act.results()[0]).declaration();
+            const FunctionValue& fun_val =
+                cast<FunctionValue>(*act.results()[0]);
+            const FunctionDeclaration& function = fun_val.declaration();
+            if (trace_)
+              llvm::outs() << "*** call function " << function.name() << "\n";
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
             // Bring the impl witness tables into scope.
+            std::map<Nonnull<const ImplBinding*>, ValueNodeView> all_impls;
+            // Combine the impls from the function value and the call
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
+              all_impls.emplace(impl_bind, impl_node);
+            }
+            for (const auto& [impl_bind, impl_node] : fun_val.impls()) {
+              all_impls.emplace(impl_bind, impl_node);
+            }
+            for (const auto& [impl_bind, impl_node] : all_impls) {
               Nonnull<const Value*> witness =
                   todo_.ValueOfNode(impl_node, exp.source_loc());
               if (witness->kind() == Value::Kind::LValue) {
@@ -638,8 +659,11 @@ void Interpreter::StepExp() {
               CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                  act.results()[1], exp.source_loc(),
                                  &type_params_scope, generic_args));
-              return todo_.FinishAction(arena_->New<NominalClassType>(
-                  &class_type.declaration(), generic_args));
+              Nonnull<NominalClassType*> inst_class =
+                  arena_->New<NominalClassType>(&class_type.declaration(),
+                                                generic_args);
+              inst_class->set_impls(cast<CallExpression>(exp).impls());
+              return todo_.FinishAction(inst_class);
             } else {
               FATAL() << "instantiation of non-generic class " << class_type;
             }

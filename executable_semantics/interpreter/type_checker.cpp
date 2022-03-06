@@ -403,8 +403,7 @@ auto TypeChecker::Substitute(
   }
 }
 
-void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
-                               const ImplScope& impl_scope) {
+void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking expression " << *e;
     llvm::outs() << "\nconstants: ";
@@ -803,8 +802,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::TypeOfClassType: {
           // This case handles the application of a generic class to
           // a type argument, such as Point(i32).
-          // TODO: create a new TypeofClassType for the instantiated generic
-          // class
           const ClassDeclaration& class_decl =
               cast<TypeOfClassType>(call.function().static_type())
                   .class_type()
@@ -815,8 +812,34 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
           }
-          call.set_static_type(
-              arena_->New<NominalClassType>(&class_decl, generic_args));
+          Nonnull<NominalClassType*> class_type =
+              arena_->New<NominalClassType>(&class_decl, generic_args);
+          // Find impls for all the impl bindings of the class
+          std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
+          for (const auto& [binding, val] : generic_args) {
+            if (binding->impl_binding().has_value()) {
+              Nonnull<const ImplBinding*> impl_binding =
+                  *binding->impl_binding();
+              switch (impl_binding->interface()->kind()) {
+                case Value::Kind::InterfaceType: {
+                  ValueNodeView impl = impl_scope.Resolve(
+                      impl_binding->interface(),
+                      generic_args[binding],  // was impl_binding->type_var()
+                      call.source_loc());
+                  impls.emplace(impl_binding, impl);
+                  break;
+                }
+                case Value::Kind::TypeType:
+                  break;
+                default:
+                  FATAL_COMPILATION_ERROR(e->source_loc())
+                      << "unexpected type of deduced parameter "
+                      << *impl_binding->interface();
+              }
+            }
+          }  // for generic_args
+          call.set_impls(impls);
+          call.set_static_type(class_type);
           call.set_value_category(ValueCategory::Let);
           return;
         }
@@ -875,7 +898,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
 void TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    const ImplScope& impl_scope) {
+    ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -926,7 +949,12 @@ void TypeChecker::TypeCheckPattern(
       binding.set_static_type(type);
       Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
       binding.set_constant_value(val);
+      Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
+          binding.source_loc(), &binding, &binding.static_type());
+      binding.set_impl_binding(impl_binding);
       SetValue(&binding, val);
+      impl_scope.Add(impl_binding->interface(),
+                     *impl_binding->type_var()->constant_value(), impl_binding);
       return;
     }
     case PatternKind::TuplePattern: {
@@ -991,8 +1019,7 @@ void TypeChecker::TypeCheckPattern(
   }
 }
 
-void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
-                                const ImplScope& impl_scope) {
+void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking statement " << *s << "\n";
   }
@@ -1169,7 +1196,7 @@ void TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             const ImplScope& impl_scope) {
+                                             ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
@@ -1252,7 +1279,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 }
 
 void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                               const ImplScope& impl_scope) {
+                                               ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "** checking function " << f->name() << "\n";
   }
@@ -1282,32 +1309,39 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope) {
   if (class_decl->type_params().has_value()) {
-    TypeCheckPattern(*class_decl->type_params(), std::nullopt, enclosing_scope);
-  }
-  /*
-  for (Nonnull<GenericBinding*> type_param : class_decl->type_params()) {
-    TypeCheckExp(&type_param->type(), enclosing_scope);
-    SetConstantValue(type_param, arena_->New<VariableType>(type_param));
-    type_param->set_static_type(InterpExp(&type_param->type(), arena_, trace_));
-  }
-  */
+    ImplScope class_scope;
+    class_scope.AddParent(&enclosing_scope);
+    TypeCheckPattern(*class_decl->type_params(), std::nullopt, class_scope);
 
-  // The declarations of the members may refer to the class, so we
-  // must set the constant value of the class and its static type
-  // before we start processing the members.
-  BindingMap type_args;
-  Nonnull<NominalClassType*> class_type =
-      arena_->New<NominalClassType>(class_decl, type_args);
-  SetConstantValue(class_decl, class_type);
-  class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
+    BindingMap type_args;
+    Nonnull<NominalClassType*> class_type =
+        arena_->New<NominalClassType>(class_decl, type_args);
+    SetConstantValue(class_decl, class_type);
+    class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
-  for (Nonnull<Declaration*> m : class_decl->members()) {
-    DeclareDeclaration(m, enclosing_scope);
+    for (Nonnull<Declaration*> m : class_decl->members()) {
+      DeclareDeclaration(m, class_scope);
+    }
+
+    // TODO: when/how to bring impls in generic class into scope?
+  } else {
+    // The declarations of the members may refer to the class, so we
+    // must set the constant value of the class and its static type
+    // before we start processing the members.
+    BindingMap type_args;
+    Nonnull<NominalClassType*> class_type =
+        arena_->New<NominalClassType>(class_decl, type_args);
+    SetConstantValue(class_decl, class_type);
+    class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
+
+    for (Nonnull<Declaration*> m : class_decl->members()) {
+      DeclareDeclaration(m, enclosing_scope);
+    }
   }
 }
 
 void TypeChecker::TypeCheckClassDeclaration(
-    Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope) {
+    Nonnull<ClassDeclaration*> class_decl, ImplScope& impl_scope) {
   for (Nonnull<Declaration*> m : class_decl->members()) {
     TypeCheckDeclaration(m, impl_scope);
   }
@@ -1331,7 +1365,7 @@ void TypeChecker::DeclareInterfaceDeclaration(
 }
 
 void TypeChecker::TypeCheckInterfaceDeclaration(
-    Nonnull<InterfaceDeclaration*> iface_decl, const ImplScope& impl_scope) {
+    Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& impl_scope) {
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     TypeCheckDeclaration(m, impl_scope);
   }
@@ -1380,7 +1414,7 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                           const ImplScope& impl_scope) {
+                                           ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking " << *impl_decl << "\n";
   }
@@ -1393,7 +1427,7 @@ void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                           const ImplScope& impl_scope) {
+                                           ImplScope& impl_scope) {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     TypeCheckExp(&alternative->signature(), impl_scope);
@@ -1406,7 +1440,7 @@ void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
 }
 
 void TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                             const ImplScope& impl_scope) {
+                                             ImplScope& impl_scope) {
   // Nothing to do here, but perhaps that will change in the future?
 }
 
@@ -1422,7 +1456,7 @@ void TypeChecker::TypeCheck(AST& ast) {
 }
 
 void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
-                                       const ImplScope& impl_scope) {
+                                       ImplScope& impl_scope) {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       TypeCheckInterfaceDeclaration(&cast<InterfaceDeclaration>(*d),

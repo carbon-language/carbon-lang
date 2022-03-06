@@ -13,19 +13,16 @@ package ExecutableSemanticsTest api;
 
 interface Number {
   fn Zero() -> Self;
-  fn Add[me: Self](other: Self) -> Sefl;
+  fn Add[me: Self](other: Self) -> Self;
 }
 
 class Point(T:! Number) {
-
   fn Origin() -> Point(T) {
     return {.x = T.Zero(), .y = T.Zero()};
   }
-
-  fn GetX[me: Point(T)]() -> T {
-    return me.x;
+  fn SumXY[me: Point(T)]() -> T {
+    return me.x.Add(me.y);
   }
-
   var x: T;
   var y: T;
 }
@@ -37,5 +34,5 @@ impl i32 as Number {
 
 fn Main() -> i32 {
   var p: Point(i32) = Point(i32).Origin();
-  return p.GetX();
+  return p.SumXY();
 }

@@ -68,7 +68,9 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
-      if (field == std::nullopt) {
+      if (field.has_value()) {
+        return *field;
+      } else {
         // Look for a method in the object's class
         const NominalClassType& class_type =
             cast<NominalClassType>(object.type());
@@ -83,10 +85,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           return arena->New<BoundMethodValue>(&m.declaration(), &object);
         } else {
           // Found a class function
-          return *func;
+          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
+              &(*func)->declaration(), class_type.impls());
+          return fun;
         }
       }
-      return *field;
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
@@ -104,7 +107,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         FATAL_RUNTIME_ERROR(source_loc)
             << "class function " << f << " not in " << *v;
       }
-      return *fun;
+      return arena->New<FunctionValue>(&(*fun)->declaration(),
+                                       class_type.impls());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -296,6 +300,13 @@ void Value::Print(llvm::raw_ostream& out) const {
           out << sep << bind->name() << " = " << *val;
         }
         out << ")";
+      }
+      if (class_type.impls().size() > 0) {
+        out << " where ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, impl_node] : class_type.impls()) {
+          out << sep << impl_node;
+        }
       }
       break;
     }
