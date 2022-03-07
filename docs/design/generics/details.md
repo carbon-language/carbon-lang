@@ -4591,12 +4591,12 @@ fn RequiresD[T:! D](x: T) {
 }
 ```
 
-FIXME:
-[discussion in #typesystem on Discord](https://discord.com/channels/655572317891461132/708431657849585705/938167784565792848)
-
 ### Observing blanket impls
 
-FIXME: [Blanket impls](#blanket-impls)
+An `observe...is` declaration can also be used to observe that a type implements
+an interface because there is a [blanket impl](#blanket-impls) in terms of
+requirements a type is already known to satisfy. Without an `observe`
+declaration, Carbon will only use blanket impls that are directly satisfied.
 
 ```
 interface A { }
@@ -4633,6 +4633,10 @@ fn RequiresA(T:! A)(x: T) {
   RequiresD(x);
 }
 ```
+
+In the case of an error, a quality Carbon implementation will do a deeper search
+for chains of requirements and blanket impls and suggest `observe` declarations
+that would make the code compile if any solution is found.
 
 ## Future work
 
