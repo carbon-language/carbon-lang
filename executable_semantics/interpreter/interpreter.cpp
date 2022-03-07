@@ -53,7 +53,8 @@ class Interpreter {
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
-        trace_(trace) {}
+        trace_(trace),
+        phase_(phase) {}
 
   ~Interpreter();
 
@@ -88,10 +89,16 @@ class Interpreter {
 
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
-               Nonnull<const Value*> destination_type) const
+               Nonnull<const Value*> destination_type,
+               SourceLocation source_loc) const -> Nonnull<const Value*>;
+
+  auto InstantiateType(Nonnull<const Value*> type,
+                       SourceLocation source_loc) const
       -> Nonnull<const Value*>;
 
   void PrintState(llvm::raw_ostream& out);
+
+  Phase phase() const { return phase_; }
 
   Nonnull<Arena*> arena_;
 
@@ -104,6 +111,7 @@ class Interpreter {
   std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
   bool trace_;
+  Phase phase_;
 };
 
 Interpreter::~Interpreter() {
@@ -359,8 +367,43 @@ void Interpreter::StepLvalue() {
   }
 }
 
+auto Interpreter::InstantiateType(Nonnull<const Value*> type,
+                                  SourceLocation source_loc) const
+    -> Nonnull<const Value*> {
+  switch (type->kind()) {
+    case Value::Kind::VariableType: {
+      Nonnull<const Value*> value =
+          todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc);
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        value = heap_.Read(lvalue->address(), source_loc);
+      }
+      return value;
+    }
+    case Value::Kind::NominalClassType: {
+      const auto& class_type = cast<NominalClassType>(*type);
+      BindingMap inst_type_args;
+      for (const auto& [tyvar, tyarg] : class_type.type_args()) {
+        inst_type_args[tyvar] = InstantiateType(tyarg, source_loc);
+      }
+      std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
+      for (const auto& [bind, impl] : class_type.impls()) {
+        Nonnull<const Value*> witness_addr =
+            todo_.ValueOfNode(impl, source_loc);
+        Nonnull<const Witness*> witness = cast<Witness>(heap_.Read(
+            llvm::cast<LValue>(witness_addr)->address(), source_loc));
+        witnesses[bind] = witness;
+      }
+      return arena_->New<NominalClassType>(&class_type.declaration(),
+                                           inst_type_args, witnesses);
+    }
+    default:
+      return type;
+  }
+}
+
 auto Interpreter::Convert(Nonnull<const Value*> value,
-                          Nonnull<const Value*> destination_type) const
+                          Nonnull<const Value*> destination_type,
+                          SourceLocation source_loc) const
     -> Nonnull<const Value*> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
@@ -407,12 +450,22 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
             std::optional<Nonnull<const Value*>> old_value =
                 struct_val.FindField(field_name);
             new_elements.push_back(
-                {.name = field_name, .value = Convert(*old_value, field_type)});
+                {.name = field_name,
+                 .value = Convert(*old_value, field_type, source_loc)});
           }
           return arena_->New<StructValue>(std::move(new_elements));
         }
-        case Value::Kind::NominalClassType:
-          return arena_->New<NominalClassValue>(destination_type, value);
+        case Value::Kind::NominalClassType: {
+          // If inside a generic with T=i32, we want to create value
+          // of Point(i32) with the right impls.
+          Nonnull<const Value*> inst_dest =
+              InstantiateType(destination_type, source_loc);
+          if (trace_) {
+            llvm::outs() << "instantiating " << *destination_type << "\nto "
+                         << *inst_dest << "\n";
+          }
+          return arena_->New<NominalClassValue>(inst_dest, value);
+        }
         default:
           FATAL() << "Can't convert value " << *value << " to type "
                   << *destination_type;
@@ -426,7 +479,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       std::vector<Nonnull<const Value*>> new_elements;
       for (size_t i = 0; i < tuple->elements().size(); ++i) {
         new_elements.push_back(Convert(tuple->elements()[i],
-                                       destination_tuple_type->elements()[i]));
+                                       destination_tuple_type->elements()[i],
+                                       source_loc));
       }
       return arena_->New<TupleValue>(std::move(new_elements));
     }
@@ -511,7 +565,8 @@ void Interpreter::StepExp() {
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
           if (trace_)
-            llvm::outs() << "*** field access, on generic with impl\n";
+            llvm::outs() << "*** field access " << access.field()
+                         << ", on generic with impl\n";
           auto witness_addr =
               todo_.ValueOfNode(*access.impl(), access.source_loc());
           if (trace_)
@@ -599,24 +654,32 @@ void Interpreter::StepExp() {
             if (trace_)
               llvm::outs() << "*** call function " << function.name() << "\n";
             Nonnull<const Value*> converted_args = Convert(
-                act.results()[1], &function.param_pattern().static_type());
+                act.results()[1], &function.param_pattern().static_type(),
+                exp.source_loc());
             RuntimeScope function_scope(&heap_);
+            // Bring the class type arguments into scope.
+            for (const auto& [bind, val] : fun_val.type_args()) {
+              function_scope.Initialize(bind, val);
+            }
             // Bring the impl witness tables into scope.
-            std::map<Nonnull<const ImplBinding*>, ValueNodeView> all_impls;
-            // Combine the impls from the function value and the call
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
-              all_impls.emplace(impl_bind, impl_node);
-            }
-            for (const auto& [impl_bind, impl_node] : fun_val.impls()) {
-              all_impls.emplace(impl_bind, impl_node);
-            }
-            for (const auto& [impl_bind, impl_node] : all_impls) {
               Nonnull<const Value*> witness =
                   todo_.ValueOfNode(impl_node, exp.source_loc());
               if (witness->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*witness);
                 witness = heap_.Read(lval.address(), exp.source_loc());
+              }
+              if (trace_) {
+                llvm::outs() << "impl scope " << *impl_bind << "\n"
+                             << "=> " << *witness << "\n";
+              }
+              function_scope.Initialize(impl_bind, witness);
+            }
+            for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
+              if (trace_) {
+                llvm::outs() << "impl scope " << *impl_bind << "\n"
+                             << "=> " << *witness << "\n";
               }
               function_scope.Initialize(impl_bind, witness);
             }
@@ -633,16 +696,36 @@ void Interpreter::StepExp() {
           case Value::Kind::BoundMethodValue: {
             const BoundMethodValue& m =
                 cast<BoundMethodValue>(*act.results()[0]);
+            if (trace_) {
+              llvm::outs() << "calling bound method " << m << "\n";
+            }
             const FunctionDeclaration& method = m.declaration();
             CHECK(method.is_method());
-            Nonnull<const Value*> converted_args = Convert(
-                act.results()[1], &method.param_pattern().static_type());
+            Nonnull<const Value*> converted_args =
+                Convert(act.results()[1], &method.param_pattern().static_type(),
+                        exp.source_loc());
             RuntimeScope method_scope(&heap_);
             BindingMap generic_args;
             CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                exp.source_loc(), &method_scope, generic_args));
             CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                exp.source_loc(), &method_scope, generic_args));
+            if (trace_) {
+              llvm::outs() << "obtain witness tables for " << m << "\n";
+            }
+            // Bring the class type arguments into scope.
+            for (const auto& [bind, val] : m.type_args()) {
+              method_scope.Initialize(bind, val);
+            }
+
+            // Bring the impl witness tables into scope.
+            for (const auto& [impl_bind, witness] : m.witnesses()) {
+              if (trace_) {
+                llvm::outs() << "impl scope " << *impl_bind << "\n"
+                             << "=> " << *witness << "\n";
+              }
+              method_scope.Initialize(impl_bind, witness);
+            }
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
@@ -659,11 +742,29 @@ void Interpreter::StepExp() {
               CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                  act.results()[1], exp.source_loc(),
                                  &type_params_scope, generic_args));
-              Nonnull<NominalClassType*> inst_class =
-                  arena_->New<NominalClassType>(&class_type.declaration(),
-                                                generic_args);
-              inst_class->set_impls(cast<CallExpression>(exp).impls());
-              return todo_.FinishAction(inst_class);
+              if (phase() == Phase::RunTime) {
+                std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
+                for (const auto& [impl_bind, impl_node] :
+                     cast<CallExpression>(exp).impls()) {
+                  Nonnull<const Value*> witness =
+                      todo_.ValueOfNode(impl_node, exp.source_loc());
+                  if (witness->kind() == Value::Kind::LValue) {
+                    const LValue& lval = cast<LValue>(*witness);
+                    witness = heap_.Read(lval.address(), exp.source_loc());
+                  }
+                  witnesses[impl_bind] = &cast<Witness>(*witness);
+                }
+                Nonnull<NominalClassType*> inst_class =
+                    arena_->New<NominalClassType>(&class_type.declaration(),
+                                                  generic_args, witnesses);
+                return todo_.FinishAction(inst_class);
+              } else {  // CompileTime
+                Nonnull<NominalClassType*> inst_class =
+                    arena_->New<NominalClassType>(
+                        &class_type.declaration(), generic_args,
+                        cast<CallExpression>(exp).impls());
+                return todo_.FinishAction(inst_class);
+              }
             } else {
               FATAL() << "instantiation of non-generic class " << class_type;
             }
@@ -835,7 +936,8 @@ void Interpreter::StepStmt() {
         RuntimeScope matches(&heap_);
         BindingMap generic_args;
         if (PatternMatch(&c.pattern().value(),
-                         Convert(act.results()[0], &c.pattern().static_type()),
+                         Convert(act.results()[0], &c.pattern().static_type(),
+                                 stmt.source_loc()),
                          stmt.source_loc(), &matches, generic_args)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
@@ -854,8 +956,8 @@ void Interpreter::StepStmt() {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<While>(stmt).condition()));
       } else {
-        Nonnull<const Value*> condition =
-            Convert(act.results().back(), arena_->New<BoolType>());
+        Nonnull<const Value*> condition = Convert(
+            act.results().back(), arena_->New<BoolType>(), stmt.source_loc());
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
           // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
@@ -906,7 +1008,8 @@ void Interpreter::StepStmt() {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         Nonnull<const Value*> v =
-            Convert(act.results()[0], &definition.pattern().static_type());
+            Convert(act.results()[0], &definition.pattern().static_type(),
+                    stmt.source_loc());
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
 
@@ -942,8 +1045,8 @@ void Interpreter::StepStmt() {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         const auto& lval = cast<LValue>(*act.results()[0]);
-        Nonnull<const Value*> rval =
-            Convert(act.results()[1], &assign.lhs().static_type());
+        Nonnull<const Value*> rval = Convert(
+            act.results()[1], &assign.lhs().static_type(), stmt.source_loc());
         heap_.Write(lval.address(), rval, stmt.source_loc());
         return todo_.FinishAction();
       }
@@ -955,8 +1058,8 @@ void Interpreter::StepStmt() {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<If>(stmt).condition()));
       } else if (act.pos() == 1) {
-        Nonnull<const Value*> condition =
-            Convert(act.results()[0], arena_->New<BoolType>());
+        Nonnull<const Value*> condition = Convert(
+            act.results()[0], arena_->New<BoolType>(), stmt.source_loc());
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
@@ -987,7 +1090,8 @@ void Interpreter::StepStmt() {
         const FunctionDeclaration& function = cast<Return>(stmt).function();
         return todo_.UnwindPast(
             *function.body(),
-            Convert(act.results()[0], &function.return_term().static_type()));
+            Convert(act.results()[0], &function.return_term().static_type(),
+                    stmt.source_loc()));
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);

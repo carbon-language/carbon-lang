@@ -812,8 +812,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
           }
-          Nonnull<NominalClassType*> class_type =
-              arena_->New<NominalClassType>(&class_decl, generic_args);
           // Find impls for all the impl bindings of the class
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
           for (const auto& [binding, val] : generic_args) {
@@ -838,7 +836,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
               }
             }
           }  // for generic_args
-          call.set_impls(impls);
+          Nonnull<NominalClassType*> class_type =
+              arena_->New<NominalClassType>(&class_decl, generic_args, impls);
+          call.set_impls(impls);  // needed for T.Zero in Origin
           call.set_static_type(class_type);
           call.set_value_category(ValueCategory::Let);
           return;

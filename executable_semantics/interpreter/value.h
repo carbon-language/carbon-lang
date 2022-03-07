@@ -129,8 +129,12 @@ class FunctionValue : public Value {
 
   explicit FunctionValue(
       Nonnull<const FunctionDeclaration*> declaration,
-      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
-      : Value(Kind::FunctionValue), declaration_(declaration), impls_(impls) {}
+      const BindingMap& type_args,
+      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+      : Value(Kind::FunctionValue),
+        declaration_(declaration),
+        type_args_(type_args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
@@ -140,17 +144,17 @@ class FunctionValue : public Value {
     return *declaration_;
   }
 
-  // Maps each of the enclosing class's generic parameters to the AST
-  // node that identifies the witness table for the corresponding
-  // argument.
-  auto impls() const
-      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
-    return impls_;
+  auto type_args() const -> const BindingMap& { return type_args_; }
+
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+    return witnesses_;
   }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
-  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -162,6 +166,16 @@ class BoundMethodValue : public Value {
         declaration_(declaration),
         receiver_(receiver) {}
 
+  explicit BoundMethodValue(
+      Nonnull<const FunctionDeclaration*> declaration,
+      Nonnull<const Value*> receiver, const BindingMap& type_args,
+      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+      : Value(Kind::BoundMethodValue),
+        declaration_(declaration),
+        receiver_(receiver),
+        type_args_(type_args),
+        witnesses_(wits) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
   }
@@ -172,9 +186,18 @@ class BoundMethodValue : public Value {
 
   auto receiver() const -> Nonnull<const Value*> { return receiver_; }
 
+  auto type_args() const -> const BindingMap& { return type_args_; }
+
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+    return witnesses_;
+  }
+
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
+  BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
 };
 
 // The value of a location in memory.
@@ -479,11 +502,27 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                   const BindingMap& type_args)
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                            const BindingMap& type_args)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         type_args_(type_args) {}
+
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args),
+        impls_(impls) {}
+
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
+      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -501,12 +540,28 @@ class NominalClassType : public Value {
     return impls_;
   }
 
+#if 0
+  // Use constructor instead?
   // Can only be called once, during typechecking.
   void set_impls(
       const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
     CHECK(impls_.empty());
     impls_ = impls;
   }
+#endif
+
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+    return witnesses_;
+  }
+
+#if 0
+  void set_witnesses(
+      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits) {
+    CHECK(witnesses_.empty());
+    witnesses_ = wits;
+  }
+#endif
 
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
@@ -517,6 +572,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   BindingMap type_args_;
   std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
 };
 
 auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;

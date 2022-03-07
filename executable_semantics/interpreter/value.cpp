@@ -82,11 +82,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), &object);
+          return arena->New<BoundMethodValue>(&m.declaration(), &object,
+                                              class_type.type_args(),
+                                              class_type.witnesses());
         } else {
           // Found a class function
           Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
-              &(*func)->declaration(), class_type.impls());
+              &(*func)->declaration(), class_type.type_args(),
+              class_type.witnesses());
           return fun;
         }
       }
@@ -100,6 +103,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     case Value::Kind::NominalClassType: {
+      // Access a class function
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
@@ -108,7 +112,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
-                                       class_type.impls());
+                                       class_type.type_args(),
+                                       class_type.witnesses());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -302,10 +307,17 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << ")";
       }
       if (class_type.impls().size() > 0) {
-        out << " where ";
+        out << " impls ";
         llvm::ListSeparator sep;
-        for (const auto& [impl_bind, impl_node] : class_type.impls()) {
-          out << sep << impl_node;
+        for (const auto& [impl_bind, impl] : class_type.impls()) {
+          out << sep << impl;
+        }
+      }
+      if (class_type.witnesses().size() > 0) {
+        out << " witnesses ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : class_type.witnesses()) {
+          out << sep << *witness;
         }
       }
       break;
@@ -317,7 +329,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::Witness: {
       const auto& witness = cast<Witness>(*this);
-      out << "impl " << *witness.declaration().impl_type() << " as "
+      out << "witness " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
       break;
     }
@@ -637,7 +649,7 @@ auto FindMember(const std::string& name,
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {
-  out << "impl " << *type_var_ << " as " << *iface_;
+  out << "impl binding " << *type_var_ << " as " << *iface_;
 }
 
 }  // namespace Carbon
