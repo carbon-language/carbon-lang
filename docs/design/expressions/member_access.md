@@ -543,16 +543,16 @@ access or as the target of an `alias` declaration.
 
 ```carbon
 class C {
-  fn StaticMethod();
+  fn StaticMemberFunction();
   var field: i32;
   class Nested {}
 }
-fn CallStaticMethod(c: C) {
-  // ✅ OK, calls `C.StaticMethod`.
-  C.StaticMethod();
+fn CallStaticMmberFunction(c: C) {
+  // ✅ OK, calls `C.StaticMmberFunction`.
+  C.StaticMmberFunction();
 
-  // ✅ OK, evaluates expression `c` then calls `C.StaticMethod`.
-  c.StaticMethod();
+  // ✅ OK, evaluates expression `c` then calls `C.StaticMmberFunction`.
+  c.StaticMmberFunction();
 
   // ❌ Error: name of instance member `C.field` can only be used in a
   // member access or alias.

@@ -37,6 +37,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Member functions](#member-functions)
         -   [Class functions](#class-functions)
         -   [Methods](#methods)
+        -   [Extension methods](#extension-methods)
         -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
     -   [Nominal data classes](#nominal-data-classes)
     -   [Member type](#member-type)
@@ -74,6 +75,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -904,11 +907,82 @@ must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
 then match pattern _patt_ against it".
 
+Methods can only be called by performing a member access to
+[bind](expressions/member_access.md#instance-binding) the value of `me` to a
+specific object.
+
+```
+// ❌ Must use member access notation to call a method.
+Circle.Expand(&c, 1.1);
+```
+
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
 the `me` parameter must be in the same list in square brackets `[`...`]`. The
 `me` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
+
+#### Extension methods
+
+A function can have a `me` parameter in its implicit parameter list regardless
+of the scope in which it is declared. Any function with a `me` parameter is a
+[method](#methods), but only those functions declared inside a class are member
+functions. Methods that are neither member functions nor
+[`impl` members](generics/details.md#qualified-member-names) nor adapter
+members, and methods whose `me` parameter does not accept an argument of type
+`Self` or, for `addr me`, `Self*`, are called
+[_extension methods_](https://en.wikipedia.org/wiki/Extension_method).
+
+Extension methods are not found by the name lookup used in
+[simple member access](expressions/member_access.md), so compound member access
+notation must be used to call an extension method:
+
+```
+class Rectangle {
+  var width: i32;
+  var height: i32;
+}
+fn Area[me: Rectangle]() -> i32 { return me.width * me.height; }
+
+var r: Rectangle = {.width = 6, .height = 9};
+// ✅ Finds function `Area` defined above.
+var answer: i32 = r.(Area)();
+// ❌ No function `Area` declared in `Rectangle`.
+var bad_answer: i32 = r.Area();
+```
+
+**Note:** It's also possible to alias an extension method into a class and call
+it using simple member access notation.
+
+The type of `me` is not required to be a class type:
+
+```
+namespace IntUtils;
+fn IntUtils.Abs[me: i32]() -> i32 { return me > 0 ? me : -me; }
+var five: i32 = (-5).(IntUtils.Abs)();
+```
+
+The presence of a `me` parameter does not affect whether a `Self` type is
+available, and the type of `me` does not affect the type of `Self` nor which
+members are accessible:
+
+```
+class Counter {
+  var count: i32;
+}
+class Extender {
+  // ✅ `Self*` here is `Extender*`, even though `me` is of type `Counter*`.
+  fn Add[addr me: Counter*](inc: i32, ext: Self*) {
+    me->count += inc;
+    // ✅ Can access private member of `Extender`.
+    ++ext->times_added_to_counter;
+  }
+  private var times_added_to_counter: i32 = 0;
+}
+fn Run(c: Counter, e: Extender) {
+  c.(Extender.Add)(5, &e);
+}
+```
 
 #### Name lookup in member function definitions
 
@@ -1923,3 +1997,13 @@ comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
+
+## Alternatives considered
+
+-   **TODO:** Fill this in.
+-   [Disallow extension methods](/proposals/p1122.md#alternatives-considered)
+
+## References
+
+-   Proposal
+    [#1122: Extension methods](https://github.com/carbon-language/carbon-lang/pull/1122).
