@@ -892,7 +892,7 @@ var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
 Assert(Math.Abs(c.Diameter() - 3.0) < 0.001);
 c.Expand(0.5);
 Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
-// ❌ Must use member access notation to call a method.
+// ❌ Cannot call a method directly.
 Circle.Expand(&c, 1.1);
 ```
 
