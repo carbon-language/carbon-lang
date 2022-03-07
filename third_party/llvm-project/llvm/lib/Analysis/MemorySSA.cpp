@@ -38,6 +38,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Use.h"
 #include "llvm/InitializePasses.h"
@@ -732,7 +733,7 @@ template <class AliasAnalysisType> class ClobberWalker {
   struct generic_def_path_iterator
       : public iterator_facade_base<generic_def_path_iterator<T, Walker>,
                                     std::forward_iterator_tag, T *> {
-    generic_def_path_iterator() {}
+    generic_def_path_iterator() = default;
     generic_def_path_iterator(Walker *W, ListIndex N) : W(W), N(N) {}
 
     T &operator*() const { return curNode(); }
@@ -1265,8 +1266,8 @@ void MemorySSA::markUnreachableAsLiveOnEntry(BasicBlock *BB) {
 }
 
 MemorySSA::MemorySSA(Function &Func, AliasAnalysis *AA, DominatorTree *DT)
-    : AA(nullptr), DT(DT), F(Func), LiveOnEntryDef(nullptr), Walker(nullptr),
-      SkipWalker(nullptr), NextID(0) {
+    : DT(DT), F(Func), LiveOnEntryDef(nullptr), Walker(nullptr),
+      SkipWalker(nullptr) {
   // Build MemorySSA using a batch alias analysis. This reuses the internal
   // state that AA collects during an alias()/getModRefInfo() call. This is
   // safe because there are no CFG changes while building MemorySSA and can

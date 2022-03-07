@@ -18,7 +18,6 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 
 namespace llvm {
 
@@ -108,7 +107,7 @@ public:
 
   ScopedPrinter(raw_ostream &OS,
                 ScopedPrinterKind Kind = ScopedPrinterKind::Base)
-      : OS(OS), IndentLevel(0), Kind(Kind) {}
+      : OS(OS), Kind(Kind) {}
 
   ScopedPrinterKind getKind() const { return Kind; }
 
@@ -116,14 +115,14 @@ public:
     return SP->getKind() == ScopedPrinterKind::Base;
   }
 
-  virtual ~ScopedPrinter() {}
+  virtual ~ScopedPrinter() = default;
 
   void flush() { OS.flush(); }
 
   void indent(int Levels = 1) { IndentLevel += Levels; }
 
   void unindent(int Levels = 1) {
-    IndentLevel = std::max(0, IndentLevel - Levels);
+    IndentLevel = IndentLevel > Levels ? IndentLevel - Levels : 0;
   }
 
   void resetIndent() { IndentLevel = 0; }
@@ -499,7 +498,7 @@ private:
   }
 
   raw_ostream &OS;
-  int IndentLevel;
+  int IndentLevel = 0;
   StringRef Prefix;
   ScopedPrinterKind Kind;
 };
@@ -793,13 +792,13 @@ private:
 struct DelimitedScope {
   DelimitedScope(ScopedPrinter &W) : W(&W) {}
   DelimitedScope() : W(nullptr) {}
-  virtual ~DelimitedScope(){};
+  virtual ~DelimitedScope() = default;
   virtual void setPrinter(ScopedPrinter &W) = 0;
   ScopedPrinter *W;
 };
 
 struct DictScope : DelimitedScope {
-  explicit DictScope() {}
+  explicit DictScope() = default;
   explicit DictScope(ScopedPrinter &W) : DelimitedScope(W) { W.objectBegin(); }
 
   DictScope(ScopedPrinter &W, StringRef N) : DelimitedScope(W) {
@@ -818,7 +817,7 @@ struct DictScope : DelimitedScope {
 };
 
 struct ListScope : DelimitedScope {
-  explicit ListScope() {}
+  explicit ListScope() = default;
   explicit ListScope(ScopedPrinter &W) : DelimitedScope(W) { W.arrayBegin(); }
 
   ListScope(ScopedPrinter &W, StringRef N) : DelimitedScope(W) {

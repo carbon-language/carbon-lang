@@ -14,13 +14,13 @@
 #include "ScriptParser.h"
 #include "Config.h"
 #include "Driver.h"
-#include "InputSection.h"
 #include "LinkerScript.h"
 #include "OutputSections.h"
 #include "ScriptLexer.h"
+#include "SymbolTable.h"
 #include "Symbols.h"
 #include "Target.h"
-#include "lld/Common/Memory.h"
+#include "lld/Common/CommonLinkerContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
@@ -31,7 +31,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/TimeProfiler.h"
 #include <cassert>
 #include <limits>
@@ -290,7 +289,7 @@ void ScriptParser::addFile(StringRef s) {
     SmallString<128> pathData;
     StringRef path = (config->sysroot + s).toStringRef(pathData);
     if (sys::fs::exists(path))
-      driver->addFile(saver.save(path), /*withLOption=*/false);
+      driver->addFile(saver().save(path), /*withLOption=*/false);
     else
       setError("cannot find " + s + " inside " + config->sysroot);
     return;
@@ -304,7 +303,7 @@ void ScriptParser::addFile(StringRef s) {
     if (config->sysroot.empty())
       driver->addFile(s.substr(1), /*withLOption=*/false);
     else
-      driver->addFile(saver.save(config->sysroot + "/" + s.substr(1)),
+      driver->addFile(saver().save(config->sysroot + "/" + s.substr(1)),
                       /*withLOption=*/false);
   } else if (s.startswith("-l")) {
     // Case 3: search in the list of library paths.
@@ -327,7 +326,7 @@ void ScriptParser::addFile(StringRef s) {
     } else {
       // Finally, search in the list of library paths.
       if (Optional<std::string> path = findFromSearchPaths(s))
-        driver->addFile(saver.save(*path), /*withLOption=*/true);
+        driver->addFile(saver().save(*path), /*withLOption=*/true);
       else
         setError("unable to find " + s);
     }
@@ -787,19 +786,45 @@ Expr ScriptParser::readAssert() {
   };
 }
 
+#define ECase(X)                                                               \
+  { #X, X }
+constexpr std::pair<const char *, unsigned> typeMap[] = {
+    ECase(SHT_PROGBITS),   ECase(SHT_NOTE),       ECase(SHT_NOBITS),
+    ECase(SHT_INIT_ARRAY), ECase(SHT_FINI_ARRAY), ECase(SHT_PREINIT_ARRAY),
+};
+#undef ECase
+
 // Tries to read the special directive for an output section definition which
-// can be one of following: "(NOLOAD)", "(COPY)", "(INFO)" or "(OVERLAY)".
-// Tok1 and Tok2 are next 2 tokens peeked. See comment for readSectionAddressType below.
+// can be one of following: "(NOLOAD)", "(COPY)", "(INFO)", "(OVERLAY)", and
+// "(TYPE=<value>)".
+// Tok1 and Tok2 are next 2 tokens peeked. See comment for
+// readSectionAddressType below.
 bool ScriptParser::readSectionDirective(OutputSection *cmd, StringRef tok1, StringRef tok2) {
   if (tok1 != "(")
     return false;
-  if (tok2 != "NOLOAD" && tok2 != "COPY" && tok2 != "INFO" && tok2 != "OVERLAY")
+  if (tok2 != "NOLOAD" && tok2 != "COPY" && tok2 != "INFO" &&
+      tok2 != "OVERLAY" && tok2 != "TYPE")
     return false;
 
   expect("(");
   if (consume("NOLOAD")) {
-    cmd->noload = true;
     cmd->type = SHT_NOBITS;
+    cmd->typeIsSet = true;
+  } else if (consume("TYPE")) {
+    expect("=");
+    StringRef value = peek();
+    auto it = llvm::find_if(typeMap, [=](auto e) { return e.first == value; });
+    if (it != std::end(typeMap)) {
+      // The value is a recognized literal SHT_*.
+      cmd->type = it->second;
+      skip();
+    } else if (value.startswith("SHT_")) {
+      setError("unknown section type " + value);
+    } else {
+      // Otherwise, read an expression.
+      cmd->type = readExpr()().getValue();
+    }
+    cmd->typeIsSet = true;
   } else {
     skip(); // This is "COPY", "INFO" or "OVERLAY".
     cmd->nonAlloc = true;
@@ -820,7 +845,11 @@ bool ScriptParser::readSectionDirective(OutputSection *cmd, StringRef tok1, Stri
 // https://sourceware.org/binutils/docs/ld/Output-Section-Address.html
 // https://sourceware.org/binutils/docs/ld/Output-Section-Type.html
 void ScriptParser::readSectionAddressType(OutputSection *cmd) {
-  if (readSectionDirective(cmd, peek(), peek2()))
+  // Temporarily set inExpr to support TYPE=<value> without spaces.
+  bool saved = std::exchange(inExpr, true);
+  bool isDirective = readSectionDirective(cmd, peek(), peek2());
+  inExpr = saved;
+  if (isDirective)
     return;
 
   cmd->addrExpr = readExpr();

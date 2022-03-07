@@ -86,6 +86,12 @@ def FeatureScalarFlatScratchInsts : SubtargetFeature<"scalar-flat-scratch-insts"
   "Have s_scratch_* flat memory instructions"
 >;
 
+def FeatureEnableFlatScratch : SubtargetFeature<"enable-flat-scratch",
+  "EnableFlatScratch",
+  "true",
+  "Use scratch_* flat memory instructions to access scratch"
+>;
+
 def FeatureAddNoCarryInsts : SubtargetFeature<"add-no-carry-insts",
   "AddNoCarryInsts",
   "true",
@@ -610,12 +616,6 @@ def FeatureDsSrc2Insts : SubtargetFeature<"ds-src2-insts",
   "Has ds_*_src2 instructions"
 >;
 
-def FeatureRegisterBanking : SubtargetFeature<"register-banking",
-  "HasRegisterBanking",
-  "true",
-  "Has register banking"
->;
-
 def FeatureVOP3Literal : SubtargetFeature<"vop3-literal",
   "HasVOP3Literal",
   "true",
@@ -826,7 +826,7 @@ def FeatureGFX10 : GCNSubtargetFeatureGeneration<"GFX10",
    FeatureSDWA, FeatureSDWAOmod, FeatureSDWAScalar, FeatureSDWASdst,
    FeatureFlatInstOffsets, FeatureFlatGlobalInsts, FeatureFlatScratchInsts,
    FeatureAddNoCarryInsts, FeatureFmaMixInsts, FeatureGFX8Insts,
-   FeatureNoSdstCMPX, FeatureVscnt, FeatureRegisterBanking,
+   FeatureNoSdstCMPX, FeatureVscnt,
    FeatureVOP3Literal, FeatureDPP8, FeatureExtendedImageInsts,
    FeatureNoDataDepHazard, FeaturePkFmacF16Inst,
    FeatureGFX10A16, FeatureSMemTimeInst, FeatureFastDenormalF32, FeatureG16,

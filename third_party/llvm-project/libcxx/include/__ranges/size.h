@@ -19,17 +19,17 @@
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_RANGES)
+#if !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 namespace ranges {
   template<class>
   inline constexpr bool disable_sized_range = false;
-}
+} // namespace ranges
 
 // [range.prim.size]
 
@@ -94,10 +94,10 @@ namespace __size {
     template<__difference _Tp>
     [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr __integer_like auto operator()(_Tp&& __t) const
         noexcept(noexcept(ranges::end(__t) - ranges::begin(__t))) {
-      return _VSTD::__to_unsigned_like(ranges::end(__t) - ranges::begin(__t));
+      return std::__to_unsigned_like(ranges::end(__t) - ranges::begin(__t));
     }
   };
-}
+} // namespace __size
 
 inline namespace __cpo {
   inline constexpr auto size = __size::__fn{};
@@ -121,14 +121,14 @@ namespace __ssize {
         return static_cast<_Signed>(ranges::size(__t));
     }
   };
-}
+} // namespace __ssize
 
 inline namespace __cpo {
   inline constexpr auto ssize = __ssize::__fn{};
 } // namespace __cpo
 } // namespace ranges
 
-#endif // !defined(_LIBCPP_HAS_NO_RANGES)
+#endif // !defined(_LIBCPP_HAS_NO_CONCEPTS) && !defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)
 
 _LIBCPP_END_NAMESPACE_STD
 

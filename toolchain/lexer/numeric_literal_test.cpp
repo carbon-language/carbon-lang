@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
@@ -23,6 +24,7 @@ using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Property;
 using ::testing::Truly;
+using ::testing::VariantWith;
 
 class NumericLiteralTest : public ::testing::Test {
  protected:
@@ -30,7 +32,7 @@ class NumericLiteralTest : public ::testing::Test {
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
-    assert(result);
+    CHECK(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
@@ -43,15 +45,6 @@ class NumericLiteralTest : public ::testing::Test {
 
   ErrorTrackingDiagnosticConsumer error_tracker;
 };
-
-// TODO: Use gmock's VariantWith once it exists.
-template <typename T, typename M>
-auto VariantWith(M value_matcher) -> decltype(auto) {
-  return Truly([=](auto&& variant) {
-    const T* value = std::get_if<T>(&variant);
-    return value && ::testing::Matches(value_matcher)(*value);
-  });
-}
 
 // Matcher for signed llvm::APInt.
 auto IsSignedInteger(int64_t value) -> Matcher<llvm::APInt> {

@@ -20,6 +20,7 @@
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/State.h"
 
 #include <mutex>
@@ -66,8 +67,7 @@ lldb::ProcessSP ScriptedProcess::CreateInstance(lldb::TargetSP target_sp,
 
   if (error.Fail() || !process_sp || !process_sp->m_script_object_sp ||
       !process_sp->m_script_object_sp->IsValid()) {
-    LLDB_LOGF(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS), "%s",
-              error.AsCString());
+    LLDB_LOGF(GetLog(LLDBLog::Process), "%s", error.AsCString());
     return nullptr;
   }
 
@@ -164,9 +164,6 @@ Status ScriptedProcess::DoLaunch(Module *exe_module,
 
   SetPrivateState(eStateStopped);
 
-  UpdateThreadListIfNeeded();
-  GetThreadList();
-
   return {};
 }
 
@@ -178,7 +175,7 @@ void ScriptedProcess::DidLaunch() {
 Status ScriptedProcess::DoResume() {
   CheckInterpreterAndScriptObject();
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(LLDBLog::Process);
   // FIXME: Fetch data from thread.
   const StateType thread_resume_state = eStateRunning;
   LLDB_LOGF(log, "ScriptedProcess::%s thread_resume_state = %s", __FUNCTION__,
@@ -202,7 +199,7 @@ Status ScriptedProcess::DoResume() {
 Status ScriptedProcess::DoStop() {
   CheckInterpreterAndScriptObject();
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(LLDBLog::Process);
 
   if (GetInterface().ShouldStop()) {
     SetPrivateState(eStateStopped);
@@ -225,8 +222,8 @@ bool ScriptedProcess::IsAlive() {
 size_t ScriptedProcess::DoReadMemory(lldb::addr_t addr, void *buf, size_t size,
                                      Status &error) {
   if (!m_interpreter)
-    return GetInterface().ErrorWithMessage<size_t>(LLVM_PRETTY_FUNCTION,
-                                                   "No interpreter.", error);
+    return ScriptedInterface::ErrorWithMessage<size_t>(
+        LLVM_PRETTY_FUNCTION, "No interpreter.", error);
 
   lldb::DataExtractorSP data_extractor_sp =
       GetInterface().ReadMemoryAtAddress(addr, size, error);
@@ -238,7 +235,7 @@ size_t ScriptedProcess::DoReadMemory(lldb::addr_t addr, void *buf, size_t size,
       0, data_extractor_sp->GetByteSize(), buf, size, GetByteOrder());
 
   if (!bytes_copied || bytes_copied == LLDB_INVALID_OFFSET)
-    return GetInterface().ErrorWithMessage<size_t>(
+    return ScriptedInterface::ErrorWithMessage<size_t>(
         LLVM_PRETTY_FUNCTION, "Failed to copy read memory to buffer.", error);
 
   return size;
@@ -248,8 +245,8 @@ ArchSpec ScriptedProcess::GetArchitecture() {
   return GetTarget().GetArchitecture();
 }
 
-Status ScriptedProcess::GetMemoryRegionInfo(lldb::addr_t load_addr,
-                                            MemoryRegionInfo &region) {
+Status ScriptedProcess::DoGetMemoryRegionInfo(lldb::addr_t load_addr,
+                                              MemoryRegionInfo &region) {
   CheckInterpreterAndScriptObject();
 
   Status error;
@@ -296,7 +293,7 @@ bool ScriptedProcess::DoUpdateThreadList(ThreadList &old_thread_list,
   ScriptLanguage language = m_interpreter->GetLanguage();
 
   if (language != eScriptLanguagePython)
-    return GetInterface().ErrorWithMessage<bool>(
+    return ScriptedInterface::ErrorWithMessage<bool>(
         LLVM_PRETTY_FUNCTION,
         llvm::Twine("ScriptInterpreter language (" +
                     llvm::Twine(m_interpreter->LanguageToString(language)) +
@@ -304,19 +301,60 @@ bool ScriptedProcess::DoUpdateThreadList(ThreadList &old_thread_list,
             .str(),
         error);
 
-  lldb::ThreadSP thread_sp;
-  thread_sp = std::make_shared<ScriptedThread>(*this, error);
+  StructuredData::DictionarySP thread_info_sp = GetInterface().GetThreadsInfo();
 
-  if (!thread_sp || error.Fail())
-    return GetInterface().ErrorWithMessage<bool>(LLVM_PRETTY_FUNCTION,
-                                                 error.AsCString(), error);
+  // FIXME: Need to sort the dictionary otherwise the thread ids won't match the
+  // thread indices.
 
-  RegisterContextSP reg_ctx_sp = thread_sp->GetRegisterContext();
-  if (!reg_ctx_sp)
-    return GetInterface().ErrorWithMessage<bool>(
-        LLVM_PRETTY_FUNCTION, "Invalid Register Context", error);
+  if (!thread_info_sp)
+    return ScriptedInterface::ErrorWithMessage<bool>(
+        LLVM_PRETTY_FUNCTION,
+        "Couldn't fetch thread list from Scripted Process.", error);
 
-  new_thread_list.AddThread(thread_sp);
+  auto create_scripted_thread =
+      [this, &old_thread_list, &error,
+       &new_thread_list](ConstString key, StructuredData::Object *val) -> bool {
+    if (!val)
+      return ScriptedInterface::ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION, "Invalid thread info object", error);
+
+    lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
+    if (!llvm::to_integer(key.AsCString(), tid))
+      return ScriptedInterface::ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION, "Invalid thread id", error);
+
+    if (ThreadSP thread_sp =
+            old_thread_list.FindThreadByID(tid, false /*=can_update*/)) {
+      // If the thread was already in the old_thread_list,
+      // just add it back to the new_thread_list.
+      new_thread_list.AddThread(thread_sp);
+      return true;
+    }
+
+    auto thread_or_error = ScriptedThread::Create(*this, val->GetAsGeneric());
+
+    if (!thread_or_error)
+      return ScriptedInterface::ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION, toString(thread_or_error.takeError()), error);
+
+    ThreadSP thread_sp = thread_or_error.get();
+    lldbassert(thread_sp && "Couldn't initialize scripted thread.");
+
+    RegisterContextSP reg_ctx_sp = thread_sp->GetRegisterContext();
+    if (!reg_ctx_sp)
+      return ScriptedInterface::ErrorWithMessage<bool>(
+          LLVM_PRETTY_FUNCTION,
+          llvm::Twine("Invalid Register Context for thread " +
+                      llvm::Twine(key.AsCString()))
+              .str(),
+          error);
+
+    new_thread_list.AddThread(thread_sp);
+
+    return true;
+  };
+
+  thread_info_sp->ForEach(create_scripted_thread);
 
   return new_thread_list.GetSize(false) > 0;
 }

@@ -26,6 +26,11 @@ auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string = false)
 auto ParseBlockStringLiteral(llvm::StringRef source)
     -> llvm::Expected<std::string>;
 
+// Returns true if the pointer is in the string ref (including equality with
+// `ref.end()`). This should be used instead of `<=` comparisons for
+// correctness.
+auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
+
 }  // namespace Carbon
 
 #endif  // COMMON_STRING_HELPERS_H_

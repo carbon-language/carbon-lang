@@ -297,8 +297,7 @@ HexagonTargetMachine::getTargetTransformInfo(const Function &F) {
   return TargetTransformInfo(HexagonTTIImpl(this, F));
 }
 
-
-HexagonTargetMachine::~HexagonTargetMachine() {}
+HexagonTargetMachine::~HexagonTargetMachine() = default;
 
 namespace {
 /// Hexagon Code Generator Pass Configuration Options.
@@ -345,6 +344,7 @@ void HexagonPassConfig::addIRPasses() {
     if (EnableInitialCFGCleanup)
       addPass(createCFGSimplificationPass(SimplifyCFGOptions()
                                               .forwardSwitchCondToPhi(true)
+                                              .convertSwitchRangeToICmp(true)
                                               .convertSwitchToLookupTable(true)
                                               .needCanonicalLoops(false)
                                               .hoistCommonInsts(true)

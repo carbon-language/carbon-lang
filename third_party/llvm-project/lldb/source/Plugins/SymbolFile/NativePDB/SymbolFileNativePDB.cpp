@@ -29,6 +29,7 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
@@ -79,6 +80,8 @@ static lldb::LanguageType TranslateLanguage(PDB_Lang lang) {
     return lldb::LanguageType::eLanguageTypeC;
   case PDB_Lang::Swift:
     return lldb::LanguageType::eLanguageTypeSwift;
+  case PDB_Lang::Rust:
+    return lldb::LanguageType::eLanguageTypeRust;
   default:
     return lldb::LanguageType::eLanguageTypeUnknown;
   }
@@ -302,8 +305,8 @@ void SymbolFileNativePDB::InitializeObject() {
   auto ts_or_err = m_objfile_sp->GetModule()->GetTypeSystemForLanguage(
       lldb::eLanguageTypeC_plus_plus);
   if (auto err = ts_or_err.takeError()) {
-    LLDB_LOG_ERROR(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_SYMBOLS),
-                   std::move(err), "Failed to initialize");
+    LLDB_LOG_ERROR(GetLog(LLDBLog::Symbols), std::move(err),
+                   "Failed to initialize");
   } else {
     ts_or_err->SetSymbolFile(this);
     auto *clang = llvm::cast_or_null<TypeSystemClang>(&ts_or_err.get());
@@ -1118,8 +1121,13 @@ bool SymbolFileNativePDB::ParseLineTable(CompileUnit &comp_unit) {
 
         uint32_t lno = cur_info.getStartLine();
 
-        line_set.emplace(addr, lno, 0, file_index, is_statement, false,
-                         is_prologue, is_epilogue, false);
+        LineTable::Entry new_entry(addr, lno, 0, file_index, is_statement, false,
+                                 is_prologue, is_epilogue, false);
+        // Terminal entry has lower precedence than new entry.
+        auto iter = line_set.find(new_entry);
+        if (iter != line_set.end() && iter->is_terminal_entry)
+          line_set.erase(iter);
+        line_set.insert(new_entry);
 
         if (line_entry.GetRangeBase() != LLDB_INVALID_ADDRESS) {
           line_entry.SetRangeEnd(addr);
@@ -1448,14 +1456,17 @@ size_t SymbolFileNativePDB::ParseBlocksRecursive(Function &func) {
   // After we iterate through inline sites inside the function, we already get
   // all the info needed, removing from the map to save memory.
   std::set<uint64_t> remove_uids;
-  auto parse_inline_sites = [&](SymbolKind kind, PdbCompilandSymId id) {
-    if (kind != S_INLINESITE)
-      return false;
-    GetOrCreateBlock(id);
-    remove_uids.insert(toOpaqueUid(id));
-    return true;
+  auto parse_blocks = [&](SymbolKind kind, PdbCompilandSymId id) {
+    if (kind == S_GPROC32 || kind == S_LPROC32 || kind == S_BLOCK32 ||
+        kind == S_INLINESITE) {
+      GetOrCreateBlock(id);
+      if (kind == S_INLINESITE)
+        remove_uids.insert(toOpaqueUid(id));
+      return true;
+    }
+    return false;
   };
-  size_t count = ParseSymbolArrayInScope(func_id, parse_inline_sites);
+  size_t count = ParseSymbolArrayInScope(func_id, parse_blocks);
   for (uint64_t uid : remove_uids) {
     m_inline_sites.erase(uid);
   }

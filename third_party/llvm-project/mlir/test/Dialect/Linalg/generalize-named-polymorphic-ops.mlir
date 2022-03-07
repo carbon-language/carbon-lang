@@ -207,6 +207,35 @@ func @generalize_pooling_nhwc_sum_i32(%input : tensor<1x4x16x1xi32>, %shape: ten
 
 // -----
 
+func @generalize_fill_0d(%value: f64, %O: tensor<f32>) -> tensor<f32> {
+  %0 = linalg.fill_tensor ins(%value: f64) outs(%O : tensor<f32>) -> tensor<f32>
+  return %0: tensor<f32>
+}
+
+// CHECK-DAG: #[[$MAP0:.+]] = affine_map<() -> ()>
+
+// CHECK-LABEL: @generalize_fill_0d
+// CHECK:      linalg.generic
+// CHECK-SAME: indexing_maps = [#[[$MAP0]], #[[$MAP0]]]
+// CHECK-SAME: iterator_types = []
+
+// -----
+
+func @generalize_fill_2d(%value: f64, %O: memref<16x32xf32>) {
+  linalg.fill_tensor ins(%value: f64) outs(%O : memref<16x32xf32>)
+  return
+}
+
+// CHECK-DAG: #[[$MAP0:.+]] = affine_map<(d0, d1) -> ()>
+// CHECK-DAG: #[[$MAP1:.+]] = affine_map<(d0, d1) -> (d0, d1)>
+
+// CHECK-LABEL: @generalize_fill
+// CHECK:      linalg.generic
+// CHECK-SAME: indexing_maps = [#[[$MAP0]], #[[$MAP1]]]
+// CHECK-SAME: iterator_types = ["parallel", "parallel"]
+
+// -----
+
 func @generalize_fill_rng_2d_f32(%min: f64, %max: f64, %seed: i32, %O: tensor<16x32xf32>) -> tensor<16x32xf32> {
   %0 = linalg.fill_rng_2d ins(%min, %max, %seed: f64, f64, i32) outs(%O : tensor<16x32xf32>) -> tensor<16x32xf32>
   return %0: tensor<16x32xf32>
@@ -258,7 +287,7 @@ func @generalize_soft_plus_2d_f32(%input: tensor<16x32xf32>, %output: tensor<16x
 //      CHECK: %[[C1:.+]] = arith.constant 1.000000e+00 : f32
 //      CHECK: ^{{.*}}(%[[IN:.+]]: f32, %[[OUT:.+]]: f32
 // CHECK-NEXT:   %[[EXP:.+]] = math.exp %[[IN]] : f32
-// CHECK-NEXT:   %[[SUM:.+]] = arith.addf %[[C1]], %[[EXP]] : f32
+// CHECK-NEXT:   %[[SUM:.+]] = arith.addf %[[EXP]], %[[C1]] : f32
 // CHECK-NEXT:   %[[LOG:.+]] = math.log %[[SUM]] : f32
 // CHECK-NEXT:   linalg.yield %[[LOG]] : f32
 // CHECK-NEXT: -> tensor<16x32xf32>

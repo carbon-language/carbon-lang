@@ -318,8 +318,9 @@ protected:
     return B.CreateBitCast(V, Ty);
   }
   Address EnforceType(CGBuilderTy &B, Address V, llvm::Type *Ty) {
-    if (V.getType() == Ty) return V;
-    return B.CreateBitCast(V, Ty);
+    if (V.getType() == Ty)
+      return V;
+    return B.CreateElementBitCast(V, Ty->getPointerElementType());
   }
 
   // Some zeros used for GEPs in lots of places.
@@ -1263,8 +1264,8 @@ class CGObjCGNUstep2 : public CGObjCGNUstep {
   llvm::Value *GetClassNamed(CodeGenFunction &CGF,
                              const std::string &Name,
                              bool isWeak) override {
-    return CGF.Builder.CreateLoad(Address(GetClassVar(Name, isWeak),
-          CGM.getPointerAlign()));
+    return CGF.Builder.CreateLoad(
+        Address::deprecated(GetClassVar(Name, isWeak), CGM.getPointerAlign()));
   }
   int32_t FlagsForOwnership(Qualifiers::ObjCLifetime Ownership) {
     // typedef enum {
@@ -2347,9 +2348,10 @@ llvm::Value *CGObjCGNU::GetTypedSelector(CodeGenFunction &CGF, Selector Sel,
     }
   }
   if (!SelValue) {
-    SelValue = llvm::GlobalAlias::create(
-        SelectorTy->getElementType(), 0, llvm::GlobalValue::PrivateLinkage,
-        ".objc_selector_" + Sel.getAsString(), &TheModule);
+    SelValue = llvm::GlobalAlias::create(SelectorTy->getPointerElementType(), 0,
+                                         llvm::GlobalValue::PrivateLinkage,
+                                         ".objc_selector_" + Sel.getAsString(),
+                                         &TheModule);
     Types.emplace_back(TypeEncoding, SelValue);
   }
 
@@ -2576,14 +2578,16 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
       if (IsClassMessage)  {
         if (!MetaClassPtrAlias) {
           MetaClassPtrAlias = llvm::GlobalAlias::create(
-              IdTy->getElementType(), 0, llvm::GlobalValue::InternalLinkage,
+              IdTy->getPointerElementType(), 0,
+              llvm::GlobalValue::InternalLinkage,
               ".objc_metaclass_ref" + Class->getNameAsString(), &TheModule);
         }
         ReceiverClass = MetaClassPtrAlias;
       } else {
         if (!ClassPtrAlias) {
           ClassPtrAlias = llvm::GlobalAlias::create(
-              IdTy->getElementType(), 0, llvm::GlobalValue::InternalLinkage,
+              IdTy->getPointerElementType(), 0,
+              llvm::GlobalValue::InternalLinkage,
               ".objc_class_ref" + Class->getNameAsString(), &TheModule);
         }
         ReceiverClass = ClassPtrAlias;
@@ -3706,7 +3710,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   GenerateProtocolHolderCategory();
 
   llvm::StructType *selStructTy =
-    dyn_cast<llvm::StructType>(SelectorTy->getElementType());
+      dyn_cast<llvm::StructType>(SelectorTy->getPointerElementType());
   llvm::Type *selStructPtrTy = SelectorTy;
   if (!selStructTy) {
     selStructTy = llvm::StructType::get(CGM.getLLVMContext(),
