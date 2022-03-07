@@ -575,7 +575,6 @@ class NominalClassType : public Value {
   std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
 };
 
-auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
 // Return the declaration of the member with the given name.
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)

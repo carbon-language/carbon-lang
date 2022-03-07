@@ -437,6 +437,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return true;
     }
     case Value::Kind::NominalClassType:
+      // TODO: take type_args into account -Jeremy
       return cast<NominalClassType>(*t1).declaration().name() ==
              cast<NominalClassType>(*t2).declaration().name();
     case Value::Kind::InterfaceType:
@@ -616,23 +617,6 @@ auto NominalClassType::FindFunction(const std::string& name) const
     }
   }
   return std::nullopt;
-}
-
-auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
-  std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        field_types.push_back({.name = var.binding().name(),
-                               .value = &var.binding().static_type()});
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return field_types;
 }
 
 auto FindMember(const std::string& name,

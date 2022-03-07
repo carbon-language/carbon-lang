@@ -32,9 +32,9 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static void ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
-                                Nonnull<const Value*> param,
-                                Nonnull<const Value*> arg);
+  void ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
+                         Nonnull<const Value*> param,
+                         Nonnull<const Value*> arg);
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -116,6 +116,25 @@ class TypeChecker {
   // type pattern or a non-type value.
   void ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value);
+
+  auto FieldTypes(const NominalClassType& class_type)
+      -> std::vector<NamedValue>;
+
+  // Returns true if source_fields and destination_fields contain the same set
+  // of names, and each value in source_fields is implicitly convertible to
+  // the corresponding value in destination_fields. All values in both arguments
+  // must be types.
+  auto FieldTypesImplicitlyConvertible(
+      llvm::ArrayRef<NamedValue> source_fields,
+      llvm::ArrayRef<NamedValue> destination_fields);
+
+  // Returns true if *source is implicitly convertible to *destination. *source
+  // and *destination must be concrete types.
+  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                               Nonnull<const Value*> destination) -> bool;
+
+  void ExpectType(SourceLocation source_loc, const std::string& context,
+                  Nonnull<const Value*> expected, Nonnull<const Value*> actual);
 
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,
