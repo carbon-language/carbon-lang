@@ -892,10 +892,12 @@ var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
 Assert(Math.Abs(c.Diameter() - 3.0) < 0.001);
 c.Expand(0.5);
 Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
+// ❌ Must use member access notation to call a method.
+Circle.Expand(&c, 1.1);
 ```
 
 -   Methods are called using using the dot `.` member syntax, `c.Diameter()` and
-    `c.Expand(`...`)`.
+    `c.Expand(`...`)`, and cannot be called directly.
 -   `Diameter` computes and returns the diameter of the circle without modifying
     the `Circle` instance. This is signified using `[me: Self]` in the method
     declaration.
@@ -906,15 +908,6 @@ The pattern '`addr` _patt_' means "first take the address of the argument, which
 must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
 then match pattern _patt_ against it".
-
-Methods can only be called by performing a member access to
-[bind](expressions/member_access.md#instance-binding) the value of `me` to a
-specific object.
-
-```
-// ❌ Must use member access notation to call a method.
-Circle.Expand(&c, 1.1);
-```
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
