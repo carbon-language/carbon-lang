@@ -144,16 +144,14 @@ class BindingPattern : public Pattern {
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
-  // Gets the value category of this pattern. Can only be called after
+  // Returns the value category of this pattern. Can only be called after
   // typechecking.
   auto value_category() const -> ValueCategory {
     return value_category_.value();
   }
 
   // Returns whether the value category has been set. Should only be called
-  // during typechecking: before typechecking it's false if "var" or "let"
-  // hasn't been explicitly specified for this pattern, and after typechecking
-  // it's guaranteed to be true.
+  // during typechecking.
   auto has_value_category() const -> bool {
     return value_category_.has_value();
   }
