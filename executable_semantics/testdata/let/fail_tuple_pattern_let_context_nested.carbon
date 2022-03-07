@@ -7,14 +7,11 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_tuple_pattern_var_context.carbon:18: Cannot assign to rvalue 'c'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_tuple_pattern_let_context_nested.carbon:15: syntax error, unexpected LET
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
-  var (var a: auto, b: auto, let c:auto, d: auto) = (1, 2, 3, 4);
-  a = 0;
-  b = 0;
-  c = 0;
+  let (var a: auto, b: auto, c:auto, var (d: auto, let e:auto)) = (1, 2, 3, (4, 5));
   return 0;
 }

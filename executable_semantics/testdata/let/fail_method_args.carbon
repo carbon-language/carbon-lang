@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_method_args.carbon:21: Cannot assign to rvalue 'me.x'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_method_args.carbon:21: Cannot assign to rvalue 'x'
 
 package ExecutableSemanticsTest api;
 
@@ -18,7 +18,7 @@ class Point {
   }
 
   fn SetX[me: Point](x :i32) {
-    me.x = x;
+    x = 10;
   }
 
   var x: i32;

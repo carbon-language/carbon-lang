@@ -97,6 +97,26 @@ class AutoPattern : public Pattern {
   }
 };
 
+class VarContextPattern : public Pattern {
+ public:
+  explicit VarContextPattern(SourceLocation source_loc,
+                             Nonnull<Pattern*> pattern)
+      : Pattern(AstNodeKind::VarContextPattern, source_loc),
+        pattern_(pattern) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVarContextPattern(node->kind());
+  }
+
+  auto pattern() const -> const Pattern& { return *pattern_; }
+  auto pattern() -> Pattern& { return *pattern_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+ private:
+  Nonnull<Pattern*> pattern_;
+};
+
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
 class BindingPattern : public Pattern {

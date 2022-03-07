@@ -856,6 +856,14 @@ void TypeChecker::TypeCheckPattern(
       SetValue(p, InterpPattern(p, arena_, trace_));
       return;
     }
+    case PatternKind::VarContextPattern:
+      auto& let_var_pattern = cast<VarContextPattern>(*p);
+
+      TypeCheckPattern(&let_var_pattern.pattern(), expected,
+                       let_var_pattern.value_category());
+      SetStaticType(&let_var_pattern, &let_var_pattern.pattern().static_type());
+      SetValue(&let_var_pattern,
+               InterpPattern(&let_var_pattern, arena_, trace_));
   }
 }
 

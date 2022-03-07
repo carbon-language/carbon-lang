@@ -727,6 +727,13 @@ void Interpreter::StepPattern() {
       } else {
         return todo_.FinishAction(act.results()[0]);
       }
+    case PatternKind::VarContextPattern:
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<PatternAction>(
+            &cast<VarContextPattern>(pattern).pattern()));
+      } else {
+        return todo_.FinishAction(act.results()[0]);
+      }
   }
 }
 

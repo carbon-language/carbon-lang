@@ -2,18 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{executable_semantics} %s 2>&1 | \
+// RUN: %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_tuple_pattern_let_context_implicit.carbon:17: Cannot assign to rvalue 'c'
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
+choice Ints {
+  None,
+  One(i32),
+  Two(i32,i32)
+}
+
 fn Main() -> i32 {
-  let (var a: auto, b: auto, c:auto, d: auto) = (1, 2, 3, 4);
-  a = 0;
-  c = 0; // should fail
+  let (var Ints.Two(a1: auto, var a2: auto), ((b: auto, var c:auto), var (d: auto, e:auto))) = (Ints.Two(1, 10), ((2, 3), (4, 5)));
+  a1 = 0;
+  a2 = 0;
+  c = 0;
+  d = 0;
+  e = 0;
   return 0;
 }

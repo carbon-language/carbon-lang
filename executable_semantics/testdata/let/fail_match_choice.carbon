@@ -25,7 +25,7 @@ fn Main() -> i32 {
       x = 2;
     case Ints.None() =>
       n = n - 1;
-    case Ints.Two(x: auto, let y: auto) => {
+    case Ints.Two(x: auto, y: auto) => {
       x = 0;
     }
   }
