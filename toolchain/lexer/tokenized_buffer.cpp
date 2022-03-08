@@ -909,7 +909,7 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 }
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
-    const char* loc) -> Diagnostic::Location {
+    const char* loc) -> DiagnosticLocation {
   CHECK(StringRefContainsPointer(buffer_->source_->Text(), loc))
       << "location not within buffer";
   int64_t offset = loc - buffer_->source_->Text().begin();
@@ -952,7 +952,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
 }
 
 auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
-    -> Diagnostic::Location {
+    -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   auto& token_info = buffer_->GetTokenInfo(token);
   auto& line_info = buffer_->GetLineInfo(token_info.token_line);

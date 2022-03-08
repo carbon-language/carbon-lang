@@ -30,19 +30,18 @@ struct Diagnostic {
     Error,
   };
 
-  struct Location {
-    // Name of the file or buffer that this diagnostic refers to.
-    std::string file_name;
-    // 1-based line number.
-    int32_t line_number;
-    // 1-based column number.
-    int32_t column_number;
-  };
-
   Level level;
-  Location location;
   llvm::StringRef short_name;
   std::string message;
+};
+
+struct DiagnosticLocation {
+  // Name of the file or buffer that this diagnostic refers to.
+  std::string file_name;
+  // 1-based line number.
+  int32_t line_number;
+  // 1-based column number.
+  int32_t column_number;
 };
 
 // Receives diagnostics as they are emitted.
@@ -51,7 +50,8 @@ class DiagnosticConsumer {
   virtual ~DiagnosticConsumer() = default;
 
   // Handle a diagnostic.
-  virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
+  virtual auto HandleDiagnostic(const Diagnostic& diagnostic,
+                                const DiagnosticLocation& loc) -> void = 0;
 };
 
 // An interface that can translate some representation of a location into a
@@ -65,7 +65,7 @@ class DiagnosticLocationTranslator {
   virtual ~DiagnosticLocationTranslator() = default;
 
   [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> Diagnostic::Location = 0;
+      -> DiagnosticLocation = 0;
 };
 
 // CRTP base class for diagnostics. `DiagnosticEmitter` requires `ShortName` and
@@ -122,9 +122,9 @@ class DiagnosticEmitter {
     // TODO: Encode the diagnostic kind in the Diagnostic object rather than
     // hardcoding an "error: " prefix.
     consumer_->HandleDiagnostic({.level = Diagnostic::Error,
-                                 .location = translator_->GetLocation(location),
                                  .short_name = DiagnosticT::ShortName,
-                                 .message = diag.Format()});
+                                 .message = diag.Format()},
+                                translator_->GetLocation(location));
   }
 
   // Emits a stateless error unconditionally.
@@ -144,11 +144,10 @@ class DiagnosticEmitter {
     if (f(diag)) {
       // TODO: Encode the diagnostic kind in the Diagnostic object rather than
       // hardcoding a "warning: " prefix.
-      consumer_->HandleDiagnostic(
-          {.level = Diagnostic::Warning,
-           .location = translator_->GetLocation(location),
-           .short_name = DiagnosticT::ShortName,
-           .message = diag.Format()});
+      consumer_->HandleDiagnostic({.level = Diagnostic::Warning,
+                                   .short_name = DiagnosticT::ShortName,
+                                   .message = diag.Format()},
+                                  translator_->GetLocation(location));
     }
   }
 
@@ -159,10 +158,11 @@ class DiagnosticEmitter {
 
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
   struct Consumer : DiagnosticConsumer {
-    auto HandleDiagnostic(const Diagnostic& d) -> void override {
-      if (!d.location.file_name.empty()) {
-        llvm::errs() << d.location.file_name << ":" << d.location.line_number
-                     << ":" << d.location.column_number << ": ";
+    auto HandleDiagnostic(const Diagnostic& d, const DiagnosticLocation& loc)
+        -> void override {
+      if (!loc.file_name.empty()) {
+        llvm::errs() << loc.file_name << ":" << loc.line_number << ":"
+                     << loc.column_number << ": ";
       }
 
       llvm::errs() << d.message << "\n";
@@ -179,9 +179,10 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
-  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
+  auto HandleDiagnostic(const Diagnostic& diagnostic,
+                        const DiagnosticLocation& loc) -> void override {
     seen_error_ |= diagnostic.level == Diagnostic::Error;
-    next_consumer_->HandleDiagnostic(diagnostic);
+    next_consumer_->HandleDiagnostic(diagnostic, loc);
   }
 
   // Returns whether we've seen an error since the last reset.

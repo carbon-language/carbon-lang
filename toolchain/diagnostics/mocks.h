@@ -13,26 +13,16 @@ namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  MOCK_METHOD(void, HandleDiagnostic, (const Diagnostic& diagnostic),
+  MOCK_METHOD(void, HandleDiagnostic,
+              (const Diagnostic& diagnostic, const DiagnosticLocation& loc),
               (override));
 };
 
 // Matcher `DiagnosticAt` matches the location of a diagnostic.
-MATCHER_P2(DiagnosticAt, line, column, "") {
-  const Diagnostic& diag = arg;
-  const Diagnostic::Location& loc = diag.location;
-  if (loc.line_number != line) {
-    *result_listener << "\nExpected diagnostic on line " << line
-                     << " but diagnostic is on line " << loc.line_number << ".";
-    return false;
-  }
-  if (loc.column_number != column) {
-    *result_listener << "\nExpected diagnostic on column " << column
-                     << " but diagnostic is on column " << loc.column_number
-                     << ".";
-    return false;
-  }
-  return true;
+inline auto DiagnosticAt(int line, int column) {
+  return testing::AllOf(
+      testing::Field(&DiagnosticLocation::line_number, line),
+      testing::Field(&DiagnosticLocation::column_number, column));
 }
 
 inline auto DiagnosticLevel(Diagnostic::Level level) -> auto {
@@ -57,6 +47,7 @@ namespace Carbon {
 
 // Printing helper for tests.
 void PrintTo(const Diagnostic& diagnostic, std::ostream* os);
+void PrintTo(const DiagnosticLocation& loc, std::ostream* os);
 
 }  // namespace Carbon
 

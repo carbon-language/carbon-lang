@@ -32,7 +32,7 @@ struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
 };
 
 struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
-  auto GetLocation(int n) -> Diagnostic::Location override {
+  auto GetLocation(int n) -> DiagnosticLocation override {
     return {.file_name = "test", .line_number = 1, .column_number = n};
   }
 };
@@ -42,14 +42,16 @@ TEST(DiagTest, EmitErrors) {
   Testing::MockDiagnosticConsumer consumer;
   DiagnosticEmitter<int> emitter(translator, consumer);
 
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(1, 1), DiagnosticMessage("M1"),
-                                  DiagnosticShortName("fake-diagnostic"))));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(1, 2), DiagnosticMessage("M2"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticLevel(Diagnostic::Error),
+                                     DiagnosticMessage("M1"),
+                                     DiagnosticShortName("fake-diagnostic")),
+                               DiagnosticAt(1, 1)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticLevel(Diagnostic::Error),
+                                     DiagnosticMessage("M2"),
+                                     DiagnosticShortName("fake-diagnostic")),
+                               DiagnosticAt(1, 2)));
 
   emitter.EmitError<FakeDiagnostic>(1, {.message = "M1"});
   emitter.EmitError<FakeDiagnostic>(2, {.message = "M2"});
@@ -62,14 +64,16 @@ TEST(DiagTest, EmitWarnings) {
   Testing::MockDiagnosticConsumer consumer;
   DiagnosticEmitter<int> emitter(translator, consumer);
 
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Warning),
-                                  DiagnosticAt(1, 3), DiagnosticMessage("M1"),
-                                  DiagnosticShortName("fake-diagnostic"))));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Warning),
-                                  DiagnosticAt(1, 5), DiagnosticMessage("M3"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticLevel(Diagnostic::Warning),
+                                     DiagnosticMessage("M1"),
+                                     DiagnosticShortName("fake-diagnostic")),
+                               DiagnosticAt(1, 3)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticLevel(Diagnostic::Warning),
+                                     DiagnosticMessage("M3"),
+                                     DiagnosticShortName("fake-diagnostic")),
+                               DiagnosticAt(1, 5)));
 
   emitter.EmitWarningIf<FakeDiagnostic>(3, [](FakeDiagnostic& diagnostic) {
     diagnostic.message = "M1";

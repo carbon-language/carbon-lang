@@ -23,6 +23,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
@@ -1144,7 +1145,7 @@ TEST_F(ParseTreeTest, StructErrors) {
   for (const Testcase& testcase : testcases) {
     TokenizedBuffer tokens = GetTokenizedBuffer(testcase.input);
     Testing::MockDiagnosticConsumer consumer;
-    EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher));
+    EXPECT_CALL(consumer, HandleDiagnostic(testcase.diag_matcher, _));
     ParseTree tree = ParseTree::Parse(tokens, consumer);
     EXPECT_TRUE(tree.HasErrors());
   }
@@ -1257,10 +1258,10 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   // Recursion might be exceeded multiple times due to quirks in parse tree
   // handling; we only need to be sure it's hit at least once for test
   // correctness.
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
-          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+  EXPECT_CALL(consumer, HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+                                             "Exceeded recursion limit ({0})",
+                                             ParseTree::StackDepthLimit)),
+                                         _))
       .Times(AtLeast(1));
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());

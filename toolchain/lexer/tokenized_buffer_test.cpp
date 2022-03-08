@@ -939,9 +939,9 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 2),
-          DiagnosticMessage(HasSubstr("Found a sequence of 10000 digits")))));
+      HandleDiagnostic(
+          DiagnosticMessage(HasSubstr("Found a sequence of 10000 digits")),
+          DiagnosticAt(1, 2)));
   auto buffer = Lex(code, consumer);
   EXPECT_TRUE(buffer.HasErrors());
   ASSERT_THAT(buffer,
@@ -962,18 +962,18 @@ TEST_F(LexerTest, DiagnosticTrailingComment) {
   )";
 
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
-                            DiagnosticAt(3, 19),
-                            DiagnosticMessage(HasSubstr("Trailing comment")))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(DiagnosticMessage(HasSubstr("Trailing comment")),
+                               DiagnosticAt(3, 19)));
   Lex(testcase, consumer);
 }
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(1, 3),
-                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(HasSubstr("Whitespace is required")),
+                       DiagnosticAt(1, 3)));
   Lex("//no space after comment", consumer);
 }
 
@@ -981,9 +981,9 @@ TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 8),
-          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
+      HandleDiagnostic(
+          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")),
+          DiagnosticAt(1, 8)));
   Lex(R"("hello\bworld")", consumer);
 }
 
@@ -991,9 +991,9 @@ TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 9),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+      HandleDiagnostic(
+          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")),
+          DiagnosticAt(1, 9)));
   Lex(R"("hello\xabworld")", consumer);
 }
 
@@ -1001,27 +1001,27 @@ TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(
       consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 6),
-          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+      HandleDiagnostic(
+          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")),
+          DiagnosticAt(1, 6)));
   Lex("0x123abc", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(
-                  AllOf(DiagnosticAt(1, 1),
-                        DiagnosticMessage(HasSubstr("missing a terminator")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(HasSubstr("missing a terminator")),
+                       DiagnosticAt(1, 1)));
   Lex(R"(#" ")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(1, 1),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(HasSubstr("unrecognized character")),
+                       DiagnosticAt(1, 1)));
   Lex("\b", consumer);
 }
 

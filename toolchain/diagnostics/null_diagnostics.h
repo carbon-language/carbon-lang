@@ -13,7 +13,7 @@ template <typename LocationT>
 inline auto NullDiagnosticLocationTranslator()
     -> DiagnosticLocationTranslator<LocationT>& {
   struct Translator : DiagnosticLocationTranslator<LocationT> {
-    auto GetLocation(LocationT) -> Diagnostic::Location override { return {}; }
+    auto GetLocation(LocationT) -> DiagnosticLocation override { return {}; }
   };
   static auto* translator = new Translator;
   return *translator;
@@ -21,7 +21,8 @@ inline auto NullDiagnosticLocationTranslator()
 
 inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
   struct Consumer : DiagnosticConsumer {
-    auto HandleDiagnostic(const Diagnostic& d) -> void override {}
+    auto HandleDiagnostic(const Diagnostic& d, const DiagnosticLocation& loc)
+        -> void override {}
   };
   static auto* consumer = new Consumer;
   return *consumer;
