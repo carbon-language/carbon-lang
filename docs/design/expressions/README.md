@@ -245,8 +245,8 @@ fn Run(args: Span(StringView)) {
 
 ## Alternatives considered
 
-Other expression documents will list more references; this lists references not
-noted elsewhere.
+Other expression documents will list more alternatives; this lists alternatives
+not noted elsewhere.
 
 -   [Total order](/proposals/p0555.md#total-order)
 -   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)
