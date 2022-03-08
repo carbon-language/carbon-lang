@@ -114,27 +114,31 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
 
 // Look for the `me` parameter in the `deduced_parameters_`
 // and put it in the `me_pattern_`.
-void FunctionDeclaration::ResolveDeducedAndReceiver(
-    const std::vector<Nonnull<AstNode*>>& deduced_params) {
+auto FunctionDeclaration::ResolveDeducedAndReceiver(
+    SourceLocation source_loc,
+    const std::vector<Nonnull<AstNode*>>& deduced_params,
+    std::vector<Nonnull<GenericBinding*>>& resolved_params,
+    std::optional<Nonnull<BindingPattern*>>& me_pattern) -> llvm::Error {
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
-        deduced_parameters_.push_back(&cast<GenericBinding>(*param));
+        resolved_params.push_back(&cast<GenericBinding>(*param));
         break;
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
-        if (me_pattern_.has_value() || bp->name() != "me") {
-          FATAL_COMPILATION_ERROR(source_loc())
-              << "illegal binding pattern in implicit parameter list";
+        if (me_pattern.has_value() || bp->name() != "me") {
+          return FATAL_COMPILATION_ERROR(source_loc)
+                 << "illegal binding pattern in implicit parameter list";
         }
-        me_pattern_ = bp;
+        me_pattern = bp;
         break;
       }
       default:
-        FATAL_COMPILATION_ERROR(source_loc())
-            << "illegal AST node in implicit parameter list";
+        return FATAL_COMPILATION_ERROR(source_loc)
+               << "illegal AST node in implicit parameter list";
     }
   }
+  return llvm::Error::success();
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

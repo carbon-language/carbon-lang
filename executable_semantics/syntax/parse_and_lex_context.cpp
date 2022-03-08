@@ -6,11 +6,8 @@
 
 namespace Carbon {
 
-auto ParseAndLexContext::PrintDiagnostic(const std::string& message) -> void {
-  // TODO: Do we really want this to be fatal?  It makes the comment and the
-  // name a lie, and renders some of the other yyparse() result propagation code
-  // moot.
-  FATAL_COMPILATION_ERROR(source_loc()) << message;
+auto ParseAndLexContext::RecordError(const std::string& message) -> void {
+  error_messages_.push_back(message);
 }
 
 }  // namespace Carbon

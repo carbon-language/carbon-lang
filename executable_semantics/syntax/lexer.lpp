@@ -13,15 +13,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   #include "executable_semantics/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
 
-  // Prints a newline in trace mode because trace prints an incomplete line
-  // "Reading a token: " which can prevent LIT from finding expected patterns.
-  #define FATAL_SYNTAX_ERROR(context)                                       \
-    RAW_EXITING_STREAM() << (context.trace() ? "\n" : "")                   \
-                         << "COMPILATION ERROR: " << (context.source_loc()) \
-                         << ": "
+  // Reads and returns a single character. Reports an error on EOF.
+  auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
 
-  // Reads and returns a single character. Fails on EOF.
-  char ReadChar(yyscan_t yyscanner, const Carbon::ParseAndLexContext& context);
+  // Formats a message from `error`. Returns the error token as a convenience.
+  auto FatalSyntaxError(Carbon::ParseAndLexContext& context, llvm::Error error)
+      -> Carbon::Parser::symbol_type;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -127,6 +124,9 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
   #define ARG_TOKEN(name, arg) \
     Carbon::Parser::make_##name(arg, context.current_token_position);
+
+  // TODO: use `YYerror` token once bison is upgraded to at least 3.5.
+  #define ERROR_TOKEN SIMPLE_TOKEN(END_OF_FILE)
 %}
 
 %%
@@ -256,7 +256,14 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {intrinsic_identifier} {
   BEGIN(AFTER_OPERAND);
-  return ARG_TOKEN(intrinsic_identifier, yytext);
+  llvm::Expected<Carbon::IntrinsicExpression::Intrinsic> intrinsic =
+      Carbon::IntrinsicExpression::FindIntrinsic(yytext, context.source_loc());
+  if (intrinsic) {
+    return ARG_TOKEN(intrinsic_identifier, *intrinsic);
+  } else {
+    context.RecordError(llvm::toString(intrinsic.takeError()));
+    return ERROR_TOKEN;
+  }
 }
 
 {identifier} {
@@ -278,7 +285,9 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
-    FATAL_SYNTAX_ERROR(context) << "Invalid escaping in string: " << yytext;
+    return FatalSyntaxError(context, Carbon::ErrorBuilder()
+                                         << "Invalid escaping in string: "
+                                         << yytext);
   }
   return ARG_TOKEN(string_literal, *unescaped);
 }
@@ -289,24 +298,33 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   // Scans for the closing """, checking for possible escape sequences
   // like \""".
   for (;;) {
-    char c = ReadChar(yyscanner, context);
+    int c = ReadChar(yyscanner, context);
+    if (c <= 0)
+      return ERROR_TOKEN;
     s.push_back(c);
     if (c != '"' && c != '\\') {
       continue;
     }
     if (c == '\\') {
       // \" in \""" is not a terminator.
-      s.push_back(ReadChar(yyscanner, context));
+      c = ReadChar(yyscanner, context);
+      if (c <= 0)
+        return ERROR_TOKEN;
+      s.push_back(c);
       continue;
     }
 
     c = ReadChar(yyscanner, context);
+    if (c <= 0)
+      return ERROR_TOKEN;
     s.push_back(c);
     if (c != '"') {
       continue;
     }
 
     c = ReadChar(yyscanner, context);
+    if (c <= 0)
+      return ERROR_TOKEN;
     s.push_back(c);
     if (c == '"') {
       break;
@@ -314,8 +332,9 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   }
   llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
   if (!block_string) {
-    FATAL_SYNTAX_ERROR(context)
-        << "Invalid block string: " << toString(block_string.takeError());
+    return FatalSyntaxError(context, Carbon::ErrorBuilder()
+                                         << "Invalid block string: "
+                                         << toString(block_string.takeError()));
   }
   return ARG_TOKEN(string_literal, *block_string);
 }
@@ -342,17 +361,31 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 . {
-  FATAL_SYNTAX_ERROR(context)
-      << "invalid character '\\x" << llvm::toHex(llvm::StringRef(yytext, 1))
-      << "' in source file.";
+  return FatalSyntaxError(
+      context, Carbon::ErrorBuilder() << "invalid character '\\x"
+                                      << llvm::toHex(llvm::StringRef(yytext, 1))
+                                      << "' in source file.");
 }
 
 %%
 
-char ReadChar(yyscan_t yyscanner, const Carbon::ParseAndLexContext& context) {
+auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
   const int c = yyinput(yyscanner);
-  if (c == EOF) {
-    FATAL_SYNTAX_ERROR(context) << "Unexpected end of file";
+  if (c <= 0) {
+    context.RecordError("Unexpected end of file");
   }
   return c;
+}
+
+auto FatalSyntaxError(Carbon::ParseAndLexContext& context, llvm::Error error)
+-> Carbon::Parser::symbol_type {
+  // Prints a newline in trace mode because trace prints an incomplete line
+  // "Reading a token: " which can prevent LIT from finding expected patterns.
+  std::string message;
+  llvm::raw_string_ostream(message)
+      << (context.trace() ? "\n" : "")
+      << "COMPILATION ERROR: " << (context.source_loc()) << ": "
+      << llvm::toString(std::move(error));
+  context.RecordError(message);
+  return ERROR_TOKEN;
 }

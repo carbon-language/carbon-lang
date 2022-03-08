@@ -17,6 +17,8 @@ cc_library(
     hdrs = ["error.h"],
     deps = [
         "//common:check",
+        "//executable_semantics/ast:source_location",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -26,6 +28,7 @@ cc_test(
     deps = [
         ":error",
         "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
     ],
 )
 

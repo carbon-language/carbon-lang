@@ -82,20 +82,36 @@ class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
+  template <typename A>
+  static auto MakeFunctionDeclaration(
+      SourceLocation source_loc, std::string name,
+      std::vector<Nonnull<AstNode*>> deduced_params,
+      std::optional<Nonnull<BindingPattern*>> me_pattern,
+      Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
+      std::optional<Nonnull<Block*>> body, A& arena)
+      -> llvm::Expected<Nonnull<FunctionDeclaration*>> {
+    std::vector<Nonnull<GenericBinding*>> resolved_params;
+    std::optional<Nonnull<BindingPattern*>> resolved_me_pattern = me_pattern;
+    RETURN_IF_ERROR(ResolveDeducedAndReceiver(
+        source_loc, deduced_params, resolved_params, resolved_me_pattern));
+    return arena.template New<FunctionDeclaration>(
+        source_loc, name, resolved_params, resolved_me_pattern, param_pattern,
+        return_term, body);
+  }
+
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<Nonnull<AstNode*>> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<BindingPattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
+        deduced_parameters_(std::move(deduced_params)),
         me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body) {
-    ResolveDeducedAndReceiver(deduced_params);
-  }
+        body_(body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -134,8 +150,13 @@ class FunctionDeclaration : public Declaration {
 
   bool is_method() const { return me_pattern_.has_value(); }
 
+  static auto ResolveDeducedAndReceiver(
+      SourceLocation source_loc,
+      const std::vector<Nonnull<AstNode*>>& deduced_params,
+      std::vector<Nonnull<GenericBinding*>>& resolved_params,
+      std::optional<Nonnull<BindingPattern*>>& me_pattern) -> llvm::Error;
+
  private:
-  void ResolveDeducedAndReceiver(const std::vector<Nonnull<AstNode*>>&);
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<BindingPattern*>> me_pattern_;

@@ -11,7 +11,7 @@
 namespace Carbon {
 
 // Resolves names (IdentifierExpressions) in the AST.
-void ResolveNames(AST& ast);
+auto ResolveNames(AST& ast) -> llvm::Error;
 
 }  // namespace Carbon
 

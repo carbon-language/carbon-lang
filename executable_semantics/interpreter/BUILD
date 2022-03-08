@@ -77,6 +77,7 @@ cc_library(
         "//common:ostream",
         "//executable_semantics/ast",
         "//executable_semantics/common:arena",
+        "@llvm-project//llvm:Support",
     ],
 )
 

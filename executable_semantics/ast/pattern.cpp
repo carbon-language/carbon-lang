@@ -72,22 +72,14 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-    -> FieldAccessExpression& {
+auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
+    -> llvm::Expected<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->source_loc())
-        << "Alternative pattern must have the form of a field access.";
+    return FATAL_PROGRAM_ERROR(alternative->source_loc())
+           << "Alternative pattern must have the form of a field access.";
   }
-  return cast<FieldAccessExpression>(*alternative);
+  return &cast<FieldAccessExpression>(*alternative);
 }
-
-AlternativePattern::AlternativePattern(SourceLocation source_loc,
-                                       Nonnull<Expression*> alternative,
-                                       Nonnull<TuplePattern*> arguments)
-    : Pattern(AstNodeKind::AlternativePattern, source_loc),
-      choice_type_(&RequireFieldAccess(alternative).aggregate()),
-      alternative_name_(RequireFieldAccess(alternative).field()),
-      arguments_(arguments) {}
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)

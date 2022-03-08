@@ -7,6 +7,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -49,7 +50,7 @@ void ActionStack::Initialize(ValueNodeView value_node,
 
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
-    -> Nonnull<const Value*> {
+    -> llvm::Expected<Nonnull<const Value*>> {
   if (std::optional<Nonnull<const Value*>> constant_value =
           value_node.constant_value();
       constant_value.has_value()) {
@@ -74,9 +75,9 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
       return *result;
     }
   }
-  // TODO: Move these errors to name resolution and explain them more clearly.
-  FATAL_RUNTIME_ERROR(source_loc)
-      << "could not find `" << value_node.base() << "`";
+  // TODO: Move these errors to compile time and explain them more clearly.
+  return FATAL_RUNTIME_ERROR(source_loc)
+         << "could not find `" << value_node.base() << "`";
 }
 
 void ActionStack::MergeScope(RuntimeScope scope) {
@@ -110,7 +111,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
   fragment.StoreReversed(std::move(reversed_todo));
 }
 
-void ActionStack::FinishAction() {
+auto ActionStack::FinishAction() -> llvm::Error {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::ExpressionAction:
@@ -123,9 +124,10 @@ void ActionStack::FinishAction() {
     case Action::Kind::DeclarationAction:
       PopScopes();
   }
+  return llvm::Error::success();
 }
 
-void ActionStack::FinishAction(Nonnull<const Value*> result) {
+auto ActionStack::FinishAction(Nonnull<const Value*> result) -> llvm::Error {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::StatementAction:
@@ -139,19 +141,23 @@ void ActionStack::FinishAction(Nonnull<const Value*> result) {
       PopScopes();
       SetResult(result);
   }
+  return llvm::Error::success();
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child) {
+auto ActionStack::Spawn(std::unique_ptr<Action> child) -> llvm::Error {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
+  return llvm::Error::success();
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope) {
+auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
+    -> llvm::Error {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
+  return llvm::Error::success();
 }
 
 void ActionStack::RunAgain() {
