@@ -42,6 +42,7 @@ class ImplBinding : public AstNode {
     return InheritsFromImplBinding(node->kind());
   }
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   // The binding for the type variable.
   auto type_var() const -> Nonnull<const GenericBinding*> { return type_var_; }

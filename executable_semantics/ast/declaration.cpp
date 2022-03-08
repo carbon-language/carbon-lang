@@ -81,6 +81,50 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void Declaration::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+      out << iface_decl.name();
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      const auto& impl_decl = cast<ImplDeclaration>(*this);
+      switch (impl_decl.kind()) {
+        case ImplKind::InternalImpl:
+          break;
+        case ImplKind::ExternalImpl:
+          out << "external ";
+          break;
+      }
+      out << "impl " << *impl_decl.impl_type() << " as "
+          << impl_decl.interface();
+      break;
+    }
+    case DeclarationKind::FunctionDeclaration:
+      out << cast<FunctionDeclaration>(*this).name();
+      break;
+
+    case DeclarationKind::ClassDeclaration: {
+      const auto& class_decl = cast<ClassDeclaration>(*this);
+      out << class_decl.name();
+      break;
+    }
+
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(*this);
+      out << choice.name();
+      break;
+    }
+
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(*this);
+      out << var.binding().name();
+      break;
+    }
+  }
+}
+
 auto GetName(const Declaration& declaration) -> std::optional<std::string> {
   switch (declaration.kind()) {
     case DeclarationKind::FunctionDeclaration:
@@ -101,6 +145,8 @@ auto GetName(const Declaration& declaration) -> std::optional<std::string> {
 void GenericBinding::Print(llvm::raw_ostream& out) const {
   out << name() << ":! " << type();
 }
+
+void GenericBinding::PrintID(llvm::raw_ostream& out) const { out << name(); }
 
 void ReturnTerm::Print(llvm::raw_ostream& out) const {
   switch (kind_) {
@@ -163,6 +209,10 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
   out << "alt " << name() << " " << signature();
+}
+
+void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
+  out << name();
 }
 
 }  // namespace Carbon

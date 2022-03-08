@@ -40,6 +40,7 @@ class Declaration : public AstNode {
   auto operator=(const Declaration&) -> Declaration& = delete;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDeclaration(node->kind());
@@ -199,6 +200,7 @@ class AlternativeSignature : public AstNode {
         signature_(signature) {}
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativeSignature(node->kind());

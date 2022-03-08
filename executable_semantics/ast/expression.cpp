@@ -200,4 +200,63 @@ void Expression::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void Expression::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case ExpressionKind::IndexExpression:
+    case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::TupleLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::StructTypeLiteral:
+    case ExpressionKind::CallExpression:
+    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::IntrinsicExpression:
+      out << "...";
+      break;
+    case ExpressionKind::IntLiteral:
+      out << cast<IntLiteral>(*this).value();
+      break;
+    case ExpressionKind::BoolLiteral:
+      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
+      break;
+    case ExpressionKind::IdentifierExpression:
+      out << cast<IdentifierExpression>(*this).name();
+      break;
+    case ExpressionKind::BoolTypeLiteral:
+      out << "Bool";
+      break;
+    case ExpressionKind::IntTypeLiteral:
+      out << "i32";
+      break;
+    case ExpressionKind::StringLiteral:
+      out << "\"";
+      out.write_escaped(cast<StringLiteral>(*this).value());
+      out << "\"";
+      break;
+    case ExpressionKind::StringTypeLiteral:
+      out << "String";
+      break;
+    case ExpressionKind::TypeTypeLiteral:
+      out << "Type";
+      break;
+    case ExpressionKind::ContinuationTypeLiteral:
+      out << "Continuation";
+      break;
+    case ExpressionKind::FunctionTypeLiteral: {
+      const auto& fn = cast<FunctionTypeLiteral>(*this);
+      out << "fn " << fn.parameter() << " -> " << fn.return_type();
+      break;
+    }
+    case ExpressionKind::UnimplementedExpression: {
+      const auto& unimplemented = cast<UnimplementedExpression>(*this);
+      out << "UnimplementedExpression<" << unimplemented.label() << ">(";
+      llvm::ListSeparator sep;
+      for (Nonnull<const AstNode*> child : unimplemented.children()) {
+        out << sep << *child;
+      }
+      out << ")";
+      break;
+    }
+  }
+}
+
 }  // namespace Carbon

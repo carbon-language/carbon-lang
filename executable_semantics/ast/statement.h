@@ -29,6 +29,7 @@ class Statement : public AstNode {
   ~Statement() override = 0;
 
   void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, out); }
+  void PrintID(llvm::raw_ostream& out) const override { PrintDepth(1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   static auto classof(const AstNode* node) {

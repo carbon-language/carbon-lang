@@ -642,4 +642,8 @@ void ImplBinding::Print(llvm::raw_ostream& out) const {
   out << "impl binding " << *type_var_ << " as " << *iface_;
 }
 
+void ImplBinding::PrintID(llvm::raw_ostream& out) const {
+  out << *type_var_ << " as " << *iface_;
+}
+
 }  // namespace Carbon

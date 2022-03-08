@@ -81,6 +81,9 @@ class TypeChecker {
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 ImplScope& enclosing_scope);
 
+  // Add the impls from the pattern into the given `impl_scope`.
+  void PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
+
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.

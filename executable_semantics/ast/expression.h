@@ -32,6 +32,7 @@ class Expression : public AstNode {
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) {
     return InheritsFromExpression(node->kind());

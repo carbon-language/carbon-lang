@@ -43,7 +43,7 @@ static constexpr bool ImplementsValueNode = false;
   auto value_category() const -> ValueCategory;
 
   // Print the node for diagnostic or tracing purposes.
-  void Print(llvm::raw_ostream& out) const;
+  void PrintID(llvm::raw_ostream& out) const;
 
 
 */
@@ -70,7 +70,7 @@ class ValueNodeView {
             }),
         print_([](const AstNode& base, llvm::raw_ostream& out) -> void {
           // TODO: change this to print a summary of the node
-          return llvm::cast<NodeType>(base).Print(out);
+          return llvm::cast<NodeType>(base).PrintID(out);
         }),
         static_type_([](const AstNode& base) -> const Value& {
           return llvm::cast<NodeType>(base).static_type();

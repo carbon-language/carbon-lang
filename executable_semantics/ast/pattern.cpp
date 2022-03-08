@@ -56,6 +56,37 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void Pattern::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case PatternKind::AutoPattern:
+      out << "auto";
+      break;
+    case PatternKind::BindingPattern: {
+      const auto& binding = cast<BindingPattern>(*this);
+      out << binding.name();
+      break;
+    }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(*this);
+      out << binding.name();
+      break;
+    }
+    case PatternKind::TuplePattern: {
+      out << "(...)";
+      break;
+    }
+    case PatternKind::AlternativePattern: {
+      const auto& alternative = cast<AlternativePattern>(*this);
+      out << alternative.choice_type() << "." << alternative.alternative_name()
+          << "(...)";
+      break;
+    }
+    case PatternKind::ExpressionPattern:
+      out << "...";
+      break;
+  }
+}
+
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Nonnull<Pattern*> {

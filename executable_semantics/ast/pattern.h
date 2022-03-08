@@ -38,6 +38,7 @@ class Pattern : public AstNode {
   ~Pattern() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromPattern(node->kind());
@@ -162,6 +163,7 @@ class GenericBinding : public Pattern {
         type_(type) {}
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromGenericBinding(node->kind());
