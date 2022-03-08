@@ -25,12 +25,12 @@ fn Origin[U :! Number](other: U) -> Point(U) {
   return {.x = U.Zero(), .y = U.Zero()};
 }
 
-fn Clone[U :! Number](me: Point(U)) -> Point(U) {
-  return {.x = me.x, .y = me.y};
+fn Clone[U :! Number](other: Point(U)) -> Point(U) {
+  return {.x = other.x, .y = other.y};
 }
 
-fn SumXY[U :! Number](me: Point(U)) -> U {
-  return me.x.Add(me.y);
+fn SumXY[U :! Number](other: Point(U)) -> U {
+  return other.x.Add(other.y);
 }
 
 external impl i32 as Number {

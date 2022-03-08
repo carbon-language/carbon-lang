@@ -23,7 +23,7 @@ class Point(T:! Number) {
   fn SumXY(p: Point(T)) -> T {
     return p.x.Add(p.y);
   }
-  fn SumFn(x: T) -> (__Fn(Point(T)) -> T) {
+  fn SumFn() -> (__Fn(Point(T)) -> T) {
     return Point(T).SumXY;
   }
   var x: T;
@@ -37,5 +37,5 @@ external impl i32 as Number {
 
 fn Main() -> i32 {
   var p: Point(i32) = Point(i32).Origin();
-  return p.SumFn(2)(p);
+  return p.SumFn()(p);
 }
