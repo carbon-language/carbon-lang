@@ -751,9 +751,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  fun_t.impl_bindings()) {
               switch (impl_binding->interface()->kind()) {
                 case Value::Kind::InterfaceType: {
-                  ValueNodeView impl = impl_scope.Resolve(
-                      impl_binding->interface(),
-                      deduced_args[impl_binding->type_var()], e->source_loc());
+                  ASSIGN_OR_RETURN(
+                      ValueNodeView impl,
+                      impl_scope.Resolve(impl_binding->interface(),
+                                         deduced_args[impl_binding->type_var()],
+                                         e->source_loc()));
                   impls.emplace(impl_binding, impl);
                   break;
                 }
