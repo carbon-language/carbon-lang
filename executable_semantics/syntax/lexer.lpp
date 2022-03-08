@@ -277,7 +277,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   BEGIN(AFTER_OPERAND);
   int val = 0;
   if (!llvm::to_integer(yytext, val)) {
-    FATAL_SYNTAX_ERROR(context) << "Invalid integer literal: " << yytext;
+    return FatalSyntaxError(
+        context, llvm::formatv("Invalid integer literal: {0}", yytext));
   }
   return ARG_TOKEN(integer_literal, val);
 }

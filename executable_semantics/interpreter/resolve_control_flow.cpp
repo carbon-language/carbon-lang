@@ -139,14 +139,14 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> llvm::Error {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
-        ResolveControlFlow(member);
+        RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : impl_decl.members()) {
-        ResolveControlFlow(member);
+        RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
     }

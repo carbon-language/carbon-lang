@@ -27,7 +27,7 @@ static auto AddExposedNames(const Declaration& declaration,
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(declaration);
-      enclosing_scope.Add(iface_decl.name(), &iface_decl);
+      RETURN_IF_ERROR(enclosing_scope.Add(iface_decl.name(), &iface_decl));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -142,9 +142,11 @@ static auto ResolveNames(Expression& expression,
       break;
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(expression);
-      ResolveNames(*if_expr.condition(), enclosing_scope);
-      ResolveNames(*if_expr.then_expression(), enclosing_scope);
-      ResolveNames(*if_expr.else_expression(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(*if_expr.condition(), enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(*if_expr.then_expression(), enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(*if_expr.else_expression(), enclosing_scope));
       break;
     }
     case ExpressionKind::BoolTypeLiteral:
@@ -280,24 +282,24 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       auto& iface = cast<InterfaceDeclaration>(declaration);
       StaticScope iface_scope;
       iface_scope.AddParent(&enclosing_scope);
-      iface_scope.Add("Self", iface.self());
+      RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       for (Nonnull<Declaration*> member : iface.members()) {
-        AddExposedNames(*member, iface_scope);
+        RETURN_IF_ERROR(AddExposedNames(*member, iface_scope));
       }
       for (Nonnull<Declaration*> member : iface.members()) {
-        ResolveNames(*member, iface_scope);
+        RETURN_IF_ERROR(ResolveNames(*member, iface_scope));
       }
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl = cast<ImplDeclaration>(declaration);
-      ResolveNames(impl.interface(), enclosing_scope);
-      ResolveNames(*impl.impl_type(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), enclosing_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
-        AddExposedNames(*member, enclosing_scope);
+        RETURN_IF_ERROR(AddExposedNames(*member, enclosing_scope));
       }
       for (Nonnull<Declaration*> member : impl.members()) {
-        ResolveNames(*member, enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(*member, enclosing_scope));
       }
       break;
     }

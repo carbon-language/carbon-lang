@@ -30,7 +30,8 @@ auto StructValue::FindField(const std::string& name) const
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
-                      SourceLocation source_loc) -> Nonnull<const Value*> {
+                      SourceLocation source_loc)
+    -> llvm::Expected<Nonnull<const Value*>> {
   const std::string& f = field.name();
 
   if (field.witness().has_value()) {

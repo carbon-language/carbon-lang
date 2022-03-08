@@ -58,7 +58,8 @@ class TypeChecker {
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  void TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope);
+  auto TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope)
+      -> llvm::Error;
 
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the
@@ -66,49 +67,53 @@ class TypeChecker {
   // declaration. It does not involve type checking statements and
   // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
-  void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
+  auto DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope)
+      -> llvm::Error;
 
-  void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                  const ImplScope& enclosing_scope);
+  auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                  const ImplScope& enclosing_scope)
+      -> llvm::Error;
 
-  void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                               ImplScope& enclosing_scope);
+  auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                               ImplScope& enclosing_scope) -> llvm::Error;
 
-  void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                   ImplScope& enclosing_scope);
+  auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                   ImplScope& enclosing_scope) -> llvm::Error;
 
-  void DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              ImplScope& enclosing_scope);
+  auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                              ImplScope& enclosing_scope) -> llvm::Error;
 
-  void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                const ImplScope& enclosing_scope);
+  auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                const ImplScope& enclosing_scope)
+      -> llvm::Error;
 
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d,
-                            const ImplScope& impl_scope);
+  auto TypeCheckDeclaration(Nonnull<Declaration*> d,
+                            const ImplScope& impl_scope) -> llvm::Error;
 
   // Type check the body of the function.
-  void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                    const ImplScope& impl_scope);
+  auto TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                    const ImplScope& impl_scope) -> llvm::Error;
 
   // Type check all the members of the class.
-  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                                 const ImplScope& impl_scope);
+  auto TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                                 const ImplScope& impl_scope) -> llvm::Error;
 
   // Type check all the members of the interface.
-  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                     const ImplScope& impl_scope);
+  auto TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                     const ImplScope& impl_scope)
+      -> llvm::Error;
 
   // Type check all the members of the implementation.
-  void TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                const ImplScope& impl_scope);
+  auto TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                                const ImplScope& impl_scope) -> llvm::Error;
 
   // This currently does nothing, but perhaps that will change in the future.
-  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                  const ImplScope& impl_scope);
+  auto TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                  const ImplScope& impl_scope) -> llvm::Error;
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.

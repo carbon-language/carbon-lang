@@ -40,7 +40,7 @@ auto StaticScope::TryResolve(const std::string& name,
   }
   std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    ASSIGN_OR_RETURN(std::optional<NamedEntityView> parent_result,
+    ASSIGN_OR_RETURN(std::optional<ValueNodeView> parent_result,
                      parent->TryResolve(name, source_loc));
     if (parent_result && result.has_value() && *parent_result != *result) {
       return FATAL_COMPILATION_ERROR(source_loc)

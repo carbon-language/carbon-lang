@@ -293,7 +293,7 @@ auto Interpreter::StepLvalue() -> llvm::Error {
       // -> { {E(x) :: C, E, F} :: S, H}
       ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
-          todo_.ValueOfName(cast<IdentifierExpression>(exp).value_node(),
+          todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
                             exp.source_loc()));
       CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
@@ -521,15 +521,19 @@ auto Interpreter::StepExp() -> llvm::Error {
         // -> { { v_f :: C, E, F} : S, H}
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
-          auto witness_addr =
-              todo_.ValueOfNode(*access.impl(), access.source_loc());
-          witness = cast<Witness>(
+          ASSIGN_OR_RETURN(
+              auto witness_addr,
+              todo_.ValueOfNode(*access.impl(), access.source_loc()));
+          ASSIGN_OR_RETURN(
+              Nonnull<const Value*> witness_value,
               heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
                          access.source_loc()));
+          witness = cast<Witness>(witness_value);
         }
         FieldPath::Component field(access.field(), witness);
-        Nonnull<const Value*> member = act.results()[0]->GetField(
-            arena_, FieldPath(field), exp.source_loc());
+        ASSIGN_OR_RETURN(Nonnull<const Value*> member,
+                         act.results()[0]->GetField(arena_, FieldPath(field),
+                                                    exp.source_loc()));
         return todo_.FinishAction(member);
       }
     }
@@ -539,7 +543,7 @@ auto Interpreter::StepExp() -> llvm::Error {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
-          todo_.ValueOfName(ident.value_node(), ident.source_loc()));
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         ASSIGN_OR_RETURN(value,
                          heap_.Read(lvalue->address(), exp.source_loc()));
@@ -605,11 +609,12 @@ auto Interpreter::StepExp() -> llvm::Error {
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
-              Nonnull<const Value*> witness =
-                  todo_.ValueOfNode(impl_node, exp.source_loc());
+              ASSIGN_OR_RETURN(Nonnull<const Value*> witness,
+                               todo_.ValueOfNode(impl_node, exp.source_loc()));
               if (witness->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*witness);
-                witness = heap_.Read(lval.address(), exp.source_loc());
+                ASSIGN_OR_RETURN(witness,
+                                 heap_.Read(lval.address(), exp.source_loc()));
               }
               function_scope.Initialize(impl_bind, witness);
             }

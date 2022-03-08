@@ -48,7 +48,7 @@ class ActionStack {
 
   // Returns the value bound to `value_node`. If `value_node` is a local
   // variable, this will be an LValue.
-  auto ValueOfName(ValueNodeView value_node, SourceLocation source_loc) const
+  auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
       -> llvm::Expected<Nonnull<const Value*>>;
 
   // Merges `scope` into the innermost scope currently on the stack.
