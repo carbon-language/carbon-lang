@@ -762,9 +762,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 case Value::Kind::TypeType:
                   break;
                 default:
-                  FATAL_COMPILATION_ERROR(e->source_loc())
-                      << "unexpected type of deduced parameter "
-                      << *impl_binding->interface();
+                  return FATAL_COMPILATION_ERROR(e->source_loc())
+                         << "unexpected type of deduced parameter "
+                         << *impl_binding->interface();
               }
             }
             call.set_impls(impls);

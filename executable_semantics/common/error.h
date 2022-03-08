@@ -30,7 +30,7 @@ class ErrorBuilder {
 
   // Accumulates string message.
   template <typename T>
-  auto operator<<(const T& message) -> ErrorBuilder& {
+  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
     out_ << message;
     return *this;
   }
