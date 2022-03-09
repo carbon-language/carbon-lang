@@ -180,20 +180,14 @@ class GenericBinding : public Pattern {
   auto type() -> Expression& { return *type_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
+    return std::nullopt;
   }
+
   auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
     return compile_time_value_;
   }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
-
   void set_compile_time_value(Nonnull<const Value*> value) {
     CHECK(!compile_time_value_.has_value());
     compile_time_value_ = value;
@@ -212,7 +206,6 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
-  std::optional<Nonnull<const Value*>> constant_value_;
   std::optional<Nonnull<const Value*>> compile_time_value_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };

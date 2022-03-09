@@ -453,14 +453,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return arena_->New<StructValue>(std::move(new_elements));
         }
         case Value::Kind::NominalClassType: {
-          // If inside a generic with T=i32, we want to create value
-          // of Point(i32) with the right impls.
+          // Instantiate the `destintation_type` to obtain the runtime
+          // type of the object.
           Nonnull<const Value*> inst_dest =
               InstantiateType(destination_type, source_loc);
-          if (trace_) {
-            llvm::outs() << "instantiating " << *destination_type << "\nto "
-                         << *inst_dest << "\n";
-          }
           return arena_->New<NominalClassValue>(inst_dest, value);
         }
         default:
@@ -561,26 +557,15 @@ void Interpreter::StepExp() {
         // -> { { v_f :: C, E, F} : S, H}
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
-          if (trace_)
-            llvm::outs() << "*** field access " << access.field()
-                         << ", on generic with impl\n";
           auto witness_addr =
               todo_.ValueOfNode(*access.impl(), access.source_loc());
-          if (trace_)
-            llvm::outs() << "*** obtained witness address\n";
           witness = cast<Witness>(
               heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
                          access.source_loc()));
-          if (trace_)
-            llvm::outs() << "*** found witness\n";
         }
-        if (trace_)
-          llvm::outs() << "*** calling GetField\n";
         FieldPath::Component field(access.field(), witness);
         Nonnull<const Value*> member = act.results()[0]->GetField(
             arena_, FieldPath(field), exp.source_loc());
-        if (trace_)
-          llvm::outs() << "*** finished field access\n";
         return todo_.FinishAction(member);
       }
     }
@@ -673,17 +658,9 @@ void Interpreter::StepExp() {
                 const LValue& lval = cast<LValue>(*witness);
                 witness = heap_.Read(lval.address(), exp.source_loc());
               }
-              if (trace_) {
-                llvm::outs() << "impl scope " << *impl_bind << "\n"
-                             << "=> " << *witness << "\n";
-              }
               function_scope.Initialize(impl_bind, witness);
             }
             for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
-              if (trace_) {
-                llvm::outs() << "impl scope " << *impl_bind << "\n"
-                             << "=> " << *witness << "\n";
-              }
               function_scope.Initialize(impl_bind, witness);
             }
             BindingMap generic_args;
@@ -699,9 +676,6 @@ void Interpreter::StepExp() {
           case Value::Kind::BoundMethodValue: {
             const BoundMethodValue& m =
                 cast<BoundMethodValue>(*act.results()[0]);
-            if (trace_) {
-              llvm::outs() << "calling bound method " << m << "\n";
-            }
             const FunctionDeclaration& method = m.declaration();
             CHECK(method.is_method());
             Nonnull<const Value*> converted_args =
@@ -713,9 +687,6 @@ void Interpreter::StepExp() {
                                exp.source_loc(), &method_scope, generic_args));
             CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                exp.source_loc(), &method_scope, generic_args));
-            if (trace_) {
-              llvm::outs() << "obtain witness tables for " << m << "\n";
-            }
             // Bring the class type arguments into scope.
             for (const auto& [bind, val] : m.type_args()) {
               method_scope.Initialize(bind, val);
@@ -723,10 +694,6 @@ void Interpreter::StepExp() {
 
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, witness] : m.witnesses()) {
-              if (trace_) {
-                llvm::outs() << "impl scope " << *impl_bind << "\n"
-                             << "=> " << *witness << "\n";
-              }
               method_scope.Initialize(impl_bind, witness);
             }
             CHECK(method.body().has_value())

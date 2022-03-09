@@ -36,15 +36,22 @@ static constexpr bool ImplementsValueNode = false;
   with a value, such as declarations and bindings. The interface consists of
   the following methods:
 
+  // Returns the value associated with the node at runtime.
+  // This is called by the interpreter, not the type checker.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>>;
+
+  // Returns the value associated with the node at compile time.
+  // This is called by the type checker, not the interpreter.
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>>;
+
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
 
   // Returns the value category of an IdentifierExpression that names *this.
   auto value_category() const -> ValueCategory;
 
-  // Print the node for diagnostic or tracing purposes.
+  // Print the node's identity (e.g. its name).
   void PrintID(llvm::raw_ostream& out) const;
-
 
 */
 // TODO: consider turning the above documentation into real code, as sketched

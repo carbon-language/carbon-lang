@@ -590,8 +590,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                 }
                 Nonnull<const Value*> field_type = Substitute(
                     class_type.type_args(), &(*member)->static_type());
-                llvm::outs()
-                    << "and instantiates to type " << *field_type << "\n";
                 access.set_static_type(field_type);
                 access.set_value_category(ValueCategory::Let);
                 return;
@@ -796,18 +794,11 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
       TypeCheckExp(&call.argument(), impl_scope);
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
-          if (trace_)
-            llvm::outs() << "checking function call at type: "
-                         << call.function().static_type() << "\n";
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           Nonnull<const Value*> parameters = &fun_t.parameters();
           Nonnull<const Value*> return_type = &fun_t.return_type();
           if (!fun_t.deduced().empty()) {
             BindingMap deduced_type_args;
-            if (trace_)
-              llvm::outs() << "performing type argument deduction: "
-                           << *parameters << " and "
-                           << call.argument().static_type() << "\n";
             ArgumentDeduction(e->source_loc(), deduced_type_args, parameters,
                               &call.argument().static_type());
             call.set_deduced_args(deduced_type_args);
@@ -823,13 +814,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                     << "in " << call;
               }
             }
-            if (trace_)
-              llvm::outs() << "substituting deduced type arguments\n";
             parameters = Substitute(deduced_type_args, parameters);
             return_type = Substitute(deduced_type_args, return_type);
-            if (trace_)
-              llvm::outs() << "parameters: " << *parameters
-                           << "\nreturn: " << *return_type << "\n";
 
             // Find impls for all the impl bindings of the function
             std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
@@ -853,11 +839,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
               }
             }
             call.set_impls(impls);
-          } else {
-            if (trace_)
-              llvm::outs() << "checking argument type "
-                           << call.argument().static_type()
-                           << " to parameter type " << *parameters << "\n";
+          } else {  // No deduced parameters.
+                    // Check that the argument types are convertible to the
+                    // parameter types
             ExpectType(e->source_loc(), "call", parameters,
                        &call.argument().static_type());
           }
@@ -868,8 +852,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
         case Value::Kind::TypeOfClassType: {
           // This case handles the application of a generic class to
           // a type argument, such as Point(i32).
-          if (trace_)
-            llvm::outs() << "checking instantiation of generic class\n";
           const ClassDeclaration& class_decl =
               cast<TypeOfClassType>(call.function().static_type())
                   .class_type()
@@ -883,8 +865,6 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                                call.source_loc(), std::nullopt, generic_args));
           }
           // Find impls for all the impl bindings of the class
-          if (trace_)
-            llvm::outs() << "finding impls\n";
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
           for (const auto& [binding, val] : generic_args) {
             if (binding->impl_binding().has_value()) {
@@ -893,8 +873,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
               switch (impl_binding->interface()->kind()) {
                 case Value::Kind::InterfaceType: {
                   ValueNodeView impl = impl_scope.Resolve(
-                      impl_binding->interface(),
-                      generic_args[binding],  // was impl_binding->type_var()
+                      impl_binding->interface(), generic_args[binding],
                       call.source_loc());
                   impls.emplace(impl_binding, impl);
                   break;
@@ -910,13 +889,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
           }  // for generic_args
           Nonnull<NominalClassType*> class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
-          if (trace_)
-            llvm::outs() << "created class type " << *class_type << "\n";
           call.set_impls(impls);
           call.set_static_type(class_type);
           call.set_value_category(ValueCategory::Let);
-          if (trace_)
-            llvm::outs() << "finished checking call " << call << "\n";
           return;
         }
         default: {
@@ -1055,16 +1030,11 @@ void TypeChecker::TypeCheckPattern(
       }
       binding.set_static_type(type);
       Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
-      // binding.set_constant_value(val);
       binding.set_compile_time_value(val);
       Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
           binding.source_loc(), &binding, &binding.static_type());
       binding.set_impl_binding(impl_binding);
       SetValue(&binding, val);
-      if (trace_) {
-        llvm::outs() << "in TypeCheckPattern, GenericBinding, " << *impl_binding
-                     << "\n";
-      }
       impl_scope.Add(impl_binding->interface(),
                      *impl_binding->type_var()->compile_time_value(),
                      impl_binding);
@@ -1072,8 +1042,6 @@ void TypeChecker::TypeCheckPattern(
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      if (trace_)
-        llvm::outs() << "checking tuple pattern: " << tuple << "\n";
       std::vector<Nonnull<const Value*>> field_types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
@@ -1095,11 +1063,7 @@ void TypeChecker::TypeCheckPattern(
                        << "\n";
         field_types.push_back(&field->static_type());
       }
-      if (trace_)
-        llvm::outs() << "finished checking tuple pattern elements\n";
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
-      if (trace_)
-        llvm::outs() << "tuple pattern type: " << tuple.static_type() << "\n";
       SetValue(&tuple, InterpPattern(&tuple, arena_, trace_));
       return;
     }
@@ -1353,9 +1317,6 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt, function_scope);
-  if (trace_)
-    llvm::outs() << "param_pattern type: " << f->param_pattern().static_type()
-                 << "\n";
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
