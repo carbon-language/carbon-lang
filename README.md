@@ -15,8 +15,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <a href="#join-us">Join us</a>
 </p>
 
-<a href="docs/images/snippets.md#quicksort"><img src="docs/images/quicksort_snippet.svg" align="right" width="575" alt="Quicksort code in Carbon.  Follow the link to read more."></a>
+<a href="docs/images/snippets.md#quicksort">
+<img src="docs/images/quicksort_snippet.svg" align="right" width="575"
+     alt="Quicksort code in Carbon. Follow the link to read more.">
+</a>
 
+<!-- Don't let the text wrap too narrowly to the left of the above image. -->
 <div><img src="docs/images/bumper.png">
 
 **Fast and works with C++**</div>
@@ -69,14 +73,14 @@ familiar. C++ code like this:
 
 <a href="docs/images/snippets.md#c">
 <img src="docs/images/cpp_snippet.svg" width="600"
-alt="A snippet of C++ code.  Follow the link to read it.">
+     alt="A snippet of C++ code. Follow the link to read it.">
 </a>
 
 can be mechanically transformed to Carbon, like so:
 
 <a href="docs/images/snippets.md#carbon">
 <img src="docs/images/carbon_snippet.svg" width="600"
-alt="A snippet of converted Carbon code.  Follow the link to read it.">
+     alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
 
 without loss of performance or readability. Yet, translating C++ to Carbon isn't
@@ -87,7 +91,7 @@ your performance-critical code. For example:
 
 <a href="docs/images/snippets.md#mixed">
 <img src="docs/images/mixed_snippet.svg" width="600"
-alt="A snippet of mixed Carbon and C++ code.  Follow the link to read it.">
+     alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
 </a>
 
 In terms of safety, any language that can seamlessly call C++ will not be
