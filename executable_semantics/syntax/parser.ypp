@@ -586,7 +586,7 @@ non_expression_pattern:
         $$ = *alternative_pattern;
       } else {
         context.RecordSyntaxError(
-            "Alternative pattern must have the form of a field access.");
+            llvm::toString(alternative_pattern.takeError()));
         YYERROR;
       }
     }
