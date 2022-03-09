@@ -1,0 +1,326 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+syntax = "proto2";
+
+package Carbon.Fuzzing;
+
+message LibraryName {
+  optional string package_name = 1;
+  optional string path = 2;
+}
+
+// Expressions.
+
+message CallExpression {
+  optional Expression function = 1;
+  optional Expression argument = 2;
+}
+
+message FunctionTypeLiteral {
+  optional Expression parameter = 1;
+  optional Expression return_type = 2;
+}
+
+message FieldAccessExpression {
+  optional string field = 1;
+  optional Expression aggregate = 2;
+}
+
+message IndexExpression {
+  optional Expression aggregate = 1;
+  optional Expression offset = 2;
+}
+
+message UnaryOperatorExpression {
+  enum UnaryOperator {
+    OP_ADDRESS_OF = 1;
+    OP_DEREF = 2;
+    OP_NEG = 3;
+    OP_NOT = 4;
+    OP_PTR = 5;
+  }
+  optional UnaryOperator op = 1;
+  optional Expression arg = 2;
+}
+
+message BinaryOperatorExpression {
+  enum BinaryOperator {
+    OP_ADD = 1;
+    OP_AND = 2;
+    OP_EQ = 3;
+    OP_MUL = 4;
+    OP_OR = 5;
+    OP_SUB = 6;
+  }
+  optional BinaryOperator op = 1;
+  optional Expression lhs = 2;
+  optional Expression rhs = 3;
+}
+
+message TupleLiteralExpression {
+  repeated Expression field = 1;
+}
+
+message FieldInitializer {
+  optional string name = 1;
+  optional Expression expression = 2;
+}
+
+message StructLiteralExpression {
+  repeated FieldInitializer field = 1;
+}
+
+message StructTypeLiteralExpression {
+  repeated FieldInitializer field = 1;
+}
+
+message IdentifierExpression {
+  optional string name = 1;
+}
+
+message IntrinsicExpression {
+  enum Intrinsic {
+    INTRINSIC_PRINT = 1;
+  }
+  optional Intrinsic intrinsic = 1;
+  optional TupleLiteralExpression argument = 2;
+}
+
+message IfExpression {
+  optional Expression condition = 1;
+  optional Expression then_expression = 2;
+  optional Expression else_expression = 3;
+}
+
+message BoolTypeLiteral {}
+
+message BoolLiteral {
+  optional bool value = 1;
+}
+
+message IntTypeLiteral {}
+message ContinuationTypeLiteral {}
+
+message IntLiteral {
+  optional int64 value = 1;
+}
+
+message StringLiteral {
+  optional string value = 1;
+}
+
+message StringTypeLiteral {}
+message TypeTypeLiteral {}
+
+message UnimplementedExpression {}
+
+message Expression {
+  oneof kind {
+    // TODO: make names match to Carbon cpp code - add _expression, etc.
+    CallExpression call = 1;
+    FunctionTypeLiteral function_type = 2;
+    FieldAccessExpression field_access = 3;
+    IndexExpression index = 4;
+    UnaryOperatorExpression unary_operator = 5;
+    BinaryOperatorExpression binary_operator = 6;
+    TupleLiteralExpression tuple_literal = 7;
+    StructLiteralExpression struct_literal = 8;
+    StructTypeLiteralExpression struct_type_literal = 9;
+    IdentifierExpression identifier = 10;
+    IntrinsicExpression intrinsic = 11;
+    IfExpression if_expression = 12;
+    BoolTypeLiteral bool_type_literal = 13;
+    BoolLiteral bool_literal = 14;
+    IntTypeLiteral int_type_literal = 15;
+    ContinuationTypeLiteral continuation_type_literal = 16;
+    IntLiteral int_literal = 17;
+    StringLiteral string_literal = 18;
+    StringTypeLiteral string_type_literal = 19;
+    TypeTypeLiteral type_type_literal = 20;
+    UnimplementedExpression unimplemented_expression = 21;
+  }
+}
+
+// Patterns.
+
+message BindingPattern {
+  optional string name = 1;
+  optional Pattern type = 2;
+}
+
+message TuplePattern {
+  repeated Pattern field = 1;
+}
+
+message AlternativePattern {
+  optional Expression choice_type = 1;
+  optional string alternative_name = 2;
+  optional TuplePattern arguments = 3;
+}
+
+message ExpressionPattern {
+  optional Expression expression = 1;
+}
+
+message AutoPattern {}
+
+message Pattern {
+  oneof kind {
+    BindingPattern binding_pattern = 1;
+    TuplePattern tuple_pattern = 2;
+    AlternativePattern alternative_pattern = 3;
+    ExpressionPattern expression_pattern = 4;
+    AutoPattern auto_pattern = 5;
+  }
+}
+
+// Statements.
+
+message ExpressionStatement {
+  optional Expression expression = 1;
+}
+
+message AssignStatement {
+  optional Expression lhs = 1;
+  optional Expression rhs = 2;
+}
+
+message VariableDefinitionStatement {
+  optional Pattern pattern = 1;
+  optional Expression init = 2;
+}
+
+message IfStatement {
+  optional Expression condition = 1;
+  optional BlockStatement then_block = 2;
+  optional BlockStatement else_block = 3;
+}
+
+message ReturnStatement {
+  optional Expression expression = 1;  // Can be omitted.
+}
+
+message BlockStatement {
+  repeated Statement statement = 1;
+}
+
+message WhileStatement {
+  optional Expression condition = 1;
+  optional BlockStatement body = 2;
+}
+
+message MatchClause {
+  optional Pattern pattern = 1;
+  optional Statement statement = 2;
+}
+
+message MatchStatement {
+  optional Expression expression = 1;
+  repeated MatchClause clause = 2;
+}
+
+message ContinuationStatement {
+  optional string name = 1;
+  optional BlockStatement body = 2;
+}
+
+message RunStatement {
+  optional Expression argument = 1;
+}
+
+message AwaitStatement {}
+
+message BreakStatement {}
+message ContinueStatement {}
+
+message Statement {
+  oneof kind {
+    ExpressionStatement expression_statement = 1;
+    AssignStatement assign = 2;
+    VariableDefinitionStatement variable_definition = 3;
+    IfStatement if_statement = 4;
+    ReturnStatement return_statement = 5;
+    BlockStatement block = 6;
+    WhileStatement while_statement = 7;
+    MatchStatement match = 8;
+    ContinuationStatement continuation = 9;
+    RunStatement run = 10;
+    AwaitStatement await = 11;
+    BreakStatement break_statement = 12;
+    ContinueStatement continue_statement = 13;
+  }
+}
+
+// Declarations.
+
+message ReturnTerm {
+  enum ReturnKind {
+    RK_OMITTED = 1;
+    RK_AUTO = 2;
+    RK_EXPRESSION = 3;
+  }
+  optional ReturnKind kind = 1;
+  optional Expression type = 2;
+}
+
+message GenericBinding {
+  optional string name = 1;
+  optional Expression type = 2;
+}
+
+message FunctionDeclaration {
+  optional string name = 1;
+  repeated GenericBinding deduced_parameter = 2;
+  optional BindingPattern me_pattern = 3;
+  optional TuplePattern param_pattern = 4;
+  optional ReturnTerm return_term = 5;
+  optional BlockStatement body = 6;
+}
+
+message ClassDeclaration {
+  optional string name = 1;
+  repeated Declaration member = 2;
+}
+
+message AlternativeSignature {
+  optional string name = 1;
+  optional Expression signature = 2;
+}
+
+message ChoiceDeclaration {
+  optional string name = 1;
+  repeated AlternativeSignature alternative = 2;
+}
+
+message VariableDeclaration {
+  optional BindingPattern binding = 1;
+  optional Expression initializer = 2;
+}
+
+message InterfaceDeclaration {
+  // TODO: xx
+}
+
+message ImplDeclaration {
+  // TODO: xx
+}
+
+message Declaration {
+  oneof kind {
+    FunctionDeclaration function = 1;
+    ClassDeclaration class_declaration = 2;
+    ChoiceDeclaration choice = 3;
+    VariableDeclaration variable = 4;
+    InterfaceDeclaration interface = 5;
+    ImplDeclaration impl = 6;
+  }
+}
+
+message CompilationUnit {
+  optional LibraryName package_statement = 1;
+  optional bool is_api = 2;
+  repeated LibraryName import_statement = 3;
+  repeated Declaration declaration = 4;
+}

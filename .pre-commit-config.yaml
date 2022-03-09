@@ -97,7 +97,7 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.(carbon|ypp)$'
+          - '\.(carbon|ypp|proto)$'
           - ''
           - '// '
           - ''
