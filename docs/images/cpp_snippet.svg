@@ -152,7 +152,7 @@
     cout &lt;&lt; e &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>;
   }
   cout &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span>Total: <span class="pl-pds">"</span></span> &lt;&lt;  sum &lt;&lt; <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>;
-  }
+}
 
 
 </pre>

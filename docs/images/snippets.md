@@ -61,7 +61,7 @@ void PrintWithTotal(v: Vector(u64)) {
     sum += e;
     Console.Print(e, "\n");
   }
-  Console.Print("Total: ", sum, "\
+  Console.Print("Total: ", sum, "\n")
 }
 ```
 
