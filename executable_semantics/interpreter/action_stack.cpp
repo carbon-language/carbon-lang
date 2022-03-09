@@ -50,6 +50,22 @@ void ActionStack::Initialize(ValueNodeView value_node,
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
+  switch (phase_) {
+    case Phase::CompileTime:
+      if (std::optional<Nonnull<const Value*>> compile_time_value =
+              value_node.compile_time_value();
+          compile_time_value.has_value()) {
+        return *compile_time_value;
+      }
+      break;
+    case Phase::RunTime:
+      if (std::optional<Nonnull<const Value*>> constant_value =
+              value_node.constant_value();
+          constant_value.has_value()) {
+        return *constant_value;
+      }
+      break;
+  }
   for (const std::unique_ptr<Action>& action : todo_) {
     // TODO: have static name resolution identify the scope of value_node
     // as an AstNode, and then perform lookup _only_ on the Action associated
@@ -62,14 +78,6 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
         return *result;
       }
     }
-  }
-  // Putting this after the above search through the action stack so
-  // that we can put T=i32 on the action stack at runtime, overriding
-  // the T=T that we use while type checking a generic.
-  if (std::optional<Nonnull<const Value*>> constant_value =
-          value_node.constant_value();
-      constant_value.has_value()) {
-    return *constant_value;
   }
   if (globals_.has_value()) {
     std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);

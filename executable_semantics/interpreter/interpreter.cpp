@@ -28,9 +28,6 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Selects between compile-time and run-time behavior.
-enum class Phase { CompileTime, RunTime };
-
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
   switch (phase) {
@@ -661,6 +658,12 @@ void Interpreter::StepExp() {
             for (const auto& [bind, val] : fun_val.type_args()) {
               function_scope.Initialize(bind, val);
             }
+            // Bring the deduced type arguments into scope.
+            for (const auto& [bind, val] :
+                 cast<CallExpression>(exp).deduced_args()) {
+              function_scope.Initialize(bind, val);
+            }
+
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {

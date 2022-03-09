@@ -810,6 +810,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                            << call.argument().static_type() << "\n";
             ArgumentDeduction(e->source_loc(), deduced_type_args, parameters,
                               &call.argument().static_type());
+            call.set_deduced_args(deduced_type_args);
             for (Nonnull<const GenericBinding*> deduced_param :
                  fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
@@ -978,7 +979,8 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
       CHECK(binding.impl_binding().has_value());
       Nonnull<const ImplBinding*> impl_binding = *binding.impl_binding();
       impl_scope.Add(impl_binding->interface(),
-                     *impl_binding->type_var()->constant_value(), impl_binding);
+                     *impl_binding->type_var()->compile_time_value(),
+                     impl_binding);
       return;
     }
     case PatternKind::TuplePattern: {
@@ -1051,13 +1053,10 @@ void TypeChecker::TypeCheckPattern(
             << "Generic binding may not occur in pattern with expected type: "
             << binding;
       }
-      if (trace_)
-        llvm::outs() << "type of GenericBinding: " << *type << "\n";
       binding.set_static_type(type);
       Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
-      if (trace_)
-        llvm::outs() << "val of GenericBinding: " << *val << "\n";
-      binding.set_constant_value(val);
+      // binding.set_constant_value(val);
+      binding.set_compile_time_value(val);
       Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
           binding.source_loc(), &binding, &binding.static_type());
       binding.set_impl_binding(impl_binding);
@@ -1067,7 +1066,8 @@ void TypeChecker::TypeCheckPattern(
                      << "\n";
       }
       impl_scope.Add(impl_binding->interface(),
-                     *impl_binding->type_var()->constant_value(), impl_binding);
+                     *impl_binding->type_var()->compile_time_value(),
+                     impl_binding);
       return;
     }
     case PatternKind::TuplePattern: {
@@ -1325,7 +1325,8 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type(), impl_scope);
-    SetConstantValue(deduced, arena_->New<VariableType>(deduced));
+    // SetConstantValue(deduced, arena_->New<VariableType>(deduced));
+    deduced->set_compile_time_value(arena_->New<VariableType>(deduced));
     deduced->set_static_type(InterpExp(&deduced->type(), arena_, trace_));
   }
   // Create the impl_bindings
@@ -1341,9 +1342,9 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   ImplScope function_scope;
   function_scope.AddParent(&impl_scope);
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    CHECK(impl_binding->type_var()->constant_value().has_value());
+    CHECK(impl_binding->type_var()->compile_time_value().has_value());
     function_scope.Add(impl_binding->interface(),
-                       *impl_binding->type_var()->constant_value(),
+                       *impl_binding->type_var()->compile_time_value(),
                        impl_binding);
   }
   // Type check the receiver pattern
@@ -1417,9 +1418,9 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     function_scope.AddParent(&impl_scope);
     for (Nonnull<const ImplBinding*> impl_binding :
          cast<FunctionType>(f->static_type()).impl_bindings()) {
-      CHECK(impl_binding->type_var()->constant_value().has_value());
+      CHECK(impl_binding->type_var()->compile_time_value().has_value());
       function_scope.Add(impl_binding->interface(),
-                         *impl_binding->type_var()->constant_value(),
+                         *impl_binding->type_var()->compile_time_value(),
                          impl_binding);
     }
     if (trace_)
@@ -1508,7 +1509,9 @@ void TypeChecker::DeclareInterfaceDeclaration(
   TypeCheckExp(&iface_decl->self()->type(), enclosing_scope);
   iface_decl->self()->set_static_type(
       arena_->New<VariableType>(iface_decl->self()));
-  SetConstantValue(iface_decl->self(), &iface_decl->self()->static_type());
+  // SetConstantValue(iface_decl->self(), &iface_decl->self()->static_type());
+  iface_decl->self()->set_compile_time_value(
+      &iface_decl->self()->static_type());
 
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     DeclareDeclaration(m, enclosing_scope);

@@ -359,6 +359,11 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
+class GenericBinding;
+
+using BindingMap =
+    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -393,10 +398,17 @@ class CallExpression : public Expression {
     impls_ = impls;
   }
 
+  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+
+  void set_deduced_args(const BindingMap& deduced_args) {
+    deduced_args_ = deduced_args;
+  }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
   std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  BindingMap deduced_args_;
 };
 
 class FunctionTypeLiteral : public Expression {

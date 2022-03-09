@@ -348,6 +348,9 @@ class Continuation : public Statement {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
   std::string name_;

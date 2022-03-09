@@ -53,6 +53,9 @@ class ImplBinding : public AstNode {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
   // The static type of the impl. Cannot be called before typechecking.
   auto static_type() const -> const Value& { return **static_type_; }

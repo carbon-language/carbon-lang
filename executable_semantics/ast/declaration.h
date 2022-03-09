@@ -125,6 +125,9 @@ class FunctionDeclaration : public Declaration {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
 
   // Sets the value returned by constant_value(). Can only be called once,
   // during typechecking.
@@ -174,6 +177,9 @@ class ClassDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 
@@ -240,6 +246,9 @@ class ChoiceDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 
@@ -312,6 +321,9 @@ class InterfaceDeclaration : public Declaration {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
 
   // Sets the value returned by constant_value(). Can only be called once,
   // during typechecking.
@@ -364,6 +376,9 @@ class ImplDeclaration : public Declaration {
   }
   // Return the witness table for this impl.
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
   void set_constant_value(Nonnull<const Value*> value) {
