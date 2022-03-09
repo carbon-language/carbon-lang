@@ -18,7 +18,6 @@ namespace Carbon {
 
 // A helper class for accumulating error message and converting to either
 // llvm::Error or llvm::Expected.
-// macros.
 class ErrorBuilder {
  public:
   explicit ErrorBuilder(std::optional<SourceLocation> loc = std::nullopt)
@@ -64,20 +63,20 @@ class ErrorBuilder {
 // error option is provided as a fallback for cases that don't fit those
 // classifications.
 
-#define RAW_ERROR_BUILDER() Carbon::ErrorBuilder()
-
-#define FATAL_PROGRAM_ERROR_NO_LINE() RAW_ERROR_BUILDER() << "PROGRAM ERROR: "
+#define FATAL_PROGRAM_ERROR_NO_LINE() \
+  Carbon::ErrorBuilder() << "PROGRAM ERROR: "
 
 #define FATAL_PROGRAM_ERROR(line) \
   FATAL_PROGRAM_ERROR_NO_LINE() << (line) << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
-  RAW_ERROR_BUILDER() << "COMPILATION ERROR: "
+  Carbon::ErrorBuilder() << "COMPILATION ERROR: "
 
 #define FATAL_COMPILATION_ERROR(line) \
   FATAL_COMPILATION_ERROR_NO_LINE() << (line) << ": "
 
-#define FATAL_RUNTIME_ERROR_NO_LINE() RAW_ERROR_BUILDER() << "RUNTIME ERROR: "
+#define FATAL_RUNTIME_ERROR_NO_LINE() \
+  Carbon::ErrorBuilder() << "RUNTIME ERROR: "
 
 #define FATAL_RUNTIME_ERROR(line) \
   FATAL_RUNTIME_ERROR_NO_LINE() << (line) << ": "
