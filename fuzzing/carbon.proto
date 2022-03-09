@@ -321,6 +321,6 @@ message Declaration {
 message CompilationUnit {
   optional LibraryName package_statement = 1;
   optional bool is_api = 2;
-  repeated LibraryName import_statement = 3;
+  // TODO xx repeated LibraryName import_statement = 3;
   repeated Declaration declaration = 4;
 }
