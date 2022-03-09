@@ -176,16 +176,16 @@ class AlternativePattern : public Pattern {
  public:
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
-  template <typename A>
-  static auto MakeAlternativePattern(SourceLocation source_loc,
+  static auto MakeAlternativePattern(Nonnull<Arena*> arena,
+                                     SourceLocation source_loc,
                                      Nonnull<Expression*> alternative,
-                                     Nonnull<TuplePattern*> arguments, A& arena)
+                                     Nonnull<TuplePattern*> arguments)
       -> llvm::Expected<Nonnull<AlternativePattern*>> {
     ASSIGN_OR_RETURN(FieldAccessExpression * field_access,
                      RequireFieldAccess(alternative));
-    return arena.template New<AlternativePattern>(
-        source_loc, &field_access->aggregate(), field_access->field(),
-        arguments);
+    return arena->New<AlternativePattern>(source_loc,
+                                          &field_access->aggregate(),
+                                          field_access->field(), arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type

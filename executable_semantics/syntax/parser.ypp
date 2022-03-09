@@ -583,8 +583,8 @@ non_expression_pattern:
 | postfix_expression tuple_pattern
     {
       llvm::Expected<Nonnull<AlternativePattern*>> alternative_pattern =
-          AlternativePattern::MakeAlternativePattern(context.source_loc(), $1,
-                                                     $2, *arena);
+          AlternativePattern::MakeAlternativePattern(
+              arena, context.source_loc(), $1, $2);
       if (alternative_pattern) {
         $$ = *alternative_pattern;
       } else {
@@ -805,7 +805,7 @@ function_declaration:
     {
       llvm::Expected<FunctionDeclaration*> fn =
           FunctionDeclaration::MakeFunctionDeclaration(
-              context.source_loc(), $2, $3, $4, $5, $6, $7, *arena);
+              arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
       if (fn) {
         $$ = *fn;
       } else {
@@ -817,7 +817,7 @@ function_declaration:
     {
       llvm::Expected<FunctionDeclaration*> fn =
           FunctionDeclaration::MakeFunctionDeclaration(
-              context.source_loc(), $2, $3, $4, $5, $6, std::nullopt, *arena);
+              arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
       if (fn) {
         $$ = *fn;
       } else {

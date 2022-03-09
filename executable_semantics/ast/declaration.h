@@ -82,22 +82,13 @@ class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  template <typename A>
   static auto MakeFunctionDeclaration(
-      SourceLocation source_loc, std::string name,
+      Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
       std::vector<Nonnull<AstNode*>> deduced_params,
       std::optional<Nonnull<BindingPattern*>> me_pattern,
       Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
-      std::optional<Nonnull<Block*>> body, A& arena)
-      -> llvm::Expected<Nonnull<FunctionDeclaration*>> {
-    std::vector<Nonnull<GenericBinding*>> resolved_params;
-    std::optional<Nonnull<BindingPattern*>> resolved_me_pattern = me_pattern;
-    RETURN_IF_ERROR(ResolveDeducedAndReceiver(
-        source_loc, deduced_params, resolved_params, resolved_me_pattern));
-    return arena.template New<FunctionDeclaration>(
-        source_loc, name, resolved_params, resolved_me_pattern, param_pattern,
-        return_term, body);
-  }
+      std::optional<Nonnull<Block*>> body)
+      -> llvm::Expected<Nonnull<FunctionDeclaration*>>;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
@@ -148,13 +139,7 @@ class FunctionDeclaration : public Declaration {
     constant_value_ = value;
   }
 
-  bool is_method() const { return me_pattern_.has_value(); }
-
-  static auto ResolveDeducedAndReceiver(
-      SourceLocation source_loc,
-      const std::vector<Nonnull<AstNode*>>& deduced_params,
-      std::vector<Nonnull<GenericBinding*>>& resolved_params,
-      std::optional<Nonnull<BindingPattern*>>& me_pattern) -> llvm::Error;
+  auto is_method() const -> bool { return me_pattern_.has_value(); }
 
  private:
   std::string name_;

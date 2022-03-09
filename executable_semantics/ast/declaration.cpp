@@ -112,13 +112,16 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-// Look for the `me` parameter in the `deduced_parameters_`
-// and put it in the `me_pattern_`.
-auto FunctionDeclaration::ResolveDeducedAndReceiver(
-    SourceLocation source_loc,
-    const std::vector<Nonnull<AstNode*>>& deduced_params,
-    std::vector<Nonnull<GenericBinding*>>& resolved_params,
-    std::optional<Nonnull<BindingPattern*>>& me_pattern) -> llvm::Error {
+auto FunctionDeclaration::MakeFunctionDeclaration(
+    Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
+    std::vector<Nonnull<AstNode*>> deduced_params,
+    std::optional<Nonnull<BindingPattern*>> me_pattern,
+    Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
+    std::optional<Nonnull<Block*>> body)
+    -> llvm::Expected<Nonnull<FunctionDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  // Look for the `me` parameter in the `deduced_parameters`
+  // and put it in the `me_pattern`.
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
@@ -138,7 +141,9 @@ auto FunctionDeclaration::ResolveDeducedAndReceiver(
                << "illegal AST node in implicit parameter list";
     }
   }
-  return llvm::Error::success();
+  return arena->New<FunctionDeclaration>(source_loc, name, resolved_params,
+                                         me_pattern, param_pattern, return_term,
+                                         body);
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
