@@ -52,7 +52,7 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
 
 void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
-  // CHECK(!value_node.constant_value().has_value()); -Jeremy
+  CHECK(!value_node.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
