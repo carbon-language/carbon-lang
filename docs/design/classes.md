@@ -950,9 +950,12 @@ it using simple member access notation.
 The type of `me` is not required to be a class type:
 
 ```
-namespace IntUtils;
-fn IntUtils.Abs[me: i32]() -> i32 { return me > 0 ? me : -me; }
-var five: i32 = (-5).(IntUtils.Abs)();
+namespace PairUtils;
+fn PairUtils.Sum[U:! Type, T:! AddableWith(U), me: (T, U)]() -> T.Result {
+  let (t: T, u: U) = me;
+  return t + u;
+}
+var five: i32 = (2, 3).(PairUtils.Sum)();
 ```
 
 The presence of a `me` parameter does not affect whether a `Self` type is
