@@ -33,8 +33,8 @@ class TypeChecker {
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
   void ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
-                         Nonnull<const Value*> param,
-                         Nonnull<const Value*> arg);
+                         Nonnull<const Value*> param_type,
+                         Nonnull<const Value*> arg_type);
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.

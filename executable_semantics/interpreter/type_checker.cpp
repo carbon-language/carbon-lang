@@ -195,6 +195,13 @@ auto TypeChecker::IsImplicitlyConvertible(Nonnull<const Value*> source,
         default:
           return false;
       }
+    case Value::Kind::TypeType:
+      switch (destination->kind()) {
+        case Value::Kind::InterfaceType:
+          return true;
+        default:
+          return false;
+      }
     default:
       return false;
   }
@@ -214,27 +221,27 @@ void TypeChecker::ExpectType(SourceLocation source_loc,
 
 void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
                                     BindingMap& deduced,
-                                    Nonnull<const Value*> param,
-                                    Nonnull<const Value*> arg) {
-  switch (param->kind()) {
+                                    Nonnull<const Value*> param_type,
+                                    Nonnull<const Value*> arg_type) {
+  switch (param_type->kind()) {
     case Value::Kind::VariableType: {
-      const auto& var_type = cast<VariableType>(*param);
-      auto [it, success] = deduced.insert({&var_type.binding(), arg});
+      const auto& var_type = cast<VariableType>(*param_type);
+      auto [it, success] = deduced.insert({&var_type.binding(), arg_type});
       if (!success) {
         // TODO: can we allow implicit conversions here?
-        ExpectExactType(source_loc, "argument deduction", it->second, arg);
+        ExpectExactType(source_loc, "argument deduction", it->second, arg_type);
       }
       return;
     }
     case Value::Kind::TupleValue: {
-      if (arg->kind() != Value::Kind::TupleValue) {
+      if (arg_type->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "type error in argument deduction\n"
-            << "expected: " << *param << "\n"
-            << "actual: " << *arg;
+            << "expected: " << *param_type << "\n"
+            << "actual: " << *arg_type;
       }
-      const auto& param_tup = cast<TupleValue>(*param);
-      const auto& arg_tup = cast<TupleValue>(*arg);
+      const auto& param_tup = cast<TupleValue>(*param_type);
+      const auto& arg_tup = cast<TupleValue>(*arg_type);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "mismatch in tuple sizes, expected "
@@ -248,14 +255,14 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       return;
     }
     case Value::Kind::StructType: {
-      if (arg->kind() != Value::Kind::StructType) {
+      if (arg_type->kind() != Value::Kind::StructType) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "type error in argument deduction\n"
-            << "expected: " << *param << "\n"
-            << "actual: " << *arg;
+            << "expected: " << *param_type << "\n"
+            << "actual: " << *arg_type;
       }
-      const auto& param_struct = cast<StructType>(*param);
-      const auto& arg_struct = cast<StructType>(*arg);
+      const auto& param_struct = cast<StructType>(*param_type);
+      const auto& arg_struct = cast<StructType>(*arg_type);
       if (param_struct.fields().size() != arg_struct.fields().size()) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "mismatch in struct field counts, expected "
@@ -274,14 +281,14 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       return;
     }
     case Value::Kind::FunctionType: {
-      if (arg->kind() != Value::Kind::FunctionType) {
+      if (arg_type->kind() != Value::Kind::FunctionType) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "type error in argument deduction\n"
-            << "expected: " << *param << "\n"
-            << "actual: " << *arg;
+            << "expected: " << *param_type << "\n"
+            << "actual: " << *arg_type;
       }
-      const auto& param_fn = cast<FunctionType>(*param);
-      const auto& arg_fn = cast<FunctionType>(*arg);
+      const auto& param_fn = cast<FunctionType>(*param_type);
+      const auto& arg_fn = cast<FunctionType>(*arg_type);
       // TODO: handle situation when arg has deduced parameters.
       ArgumentDeduction(source_loc, deduced, &param_fn.parameters(),
                         &arg_fn.parameters());
@@ -290,14 +297,15 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       return;
     }
     case Value::Kind::PointerType: {
-      if (arg->kind() != Value::Kind::PointerType) {
+      if (arg_type->kind() != Value::Kind::PointerType) {
         FATAL_COMPILATION_ERROR(source_loc)
             << "type error in argument deduction\n"
-            << "expected: " << *param << "\n"
-            << "actual: " << *arg;
+            << "expected: " << *param_type << "\n"
+            << "actual: " << *arg_type;
       }
-      ArgumentDeduction(source_loc, deduced, &cast<PointerType>(*param).type(),
-                        &cast<PointerType>(*arg).type());
+      ArgumentDeduction(source_loc, deduced,
+                        &cast<PointerType>(*param_type).type(),
+                        &cast<PointerType>(*arg_type).type());
       return;
     }
     // Nothing to do in the case for `auto`.
@@ -305,10 +313,10 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       return;
     }
     case Value::Kind::NominalClassType: {
-      const auto& param_class_type = cast<NominalClassType>(*param);
-      switch (arg->kind()) {
+      const auto& param_class_type = cast<NominalClassType>(*param_type);
+      switch (arg_type->kind()) {
         case Value::Kind::NominalClassType: {
-          const auto& arg_class_type = cast<NominalClassType>(*arg);
+          const auto& arg_class_type = cast<NominalClassType>(*arg_type);
           if (param_class_type.declaration().name() ==
               arg_class_type.declaration().name()) {
             for (const auto& [ty, param_ty] : param_class_type.type_args()) {
@@ -324,8 +332,8 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       }
       FATAL_COMPILATION_ERROR(source_loc)
           << "type error in argument deduction\n"
-          << "expected: " << *param << "\n"
-          << "actual: " << *arg;
+          << "expected: " << *param_type << "\n"
+          << "actual: " << *arg_type;
     }
     // For the following cases, we check for type convertability.
     case Value::Kind::ContinuationType:
@@ -338,7 +346,7 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-      ExpectType(source_loc, "argument deduction", param, arg);
+      ExpectType(source_loc, "argument deduction", param_type, arg_type);
       return;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
@@ -355,7 +363,8 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-      FATAL() << "In ArgumentDeduction: expected type, not value " << *param;
+      FATAL() << "In ArgumentDeduction: expected type, not value "
+              << *param_type;
   }
 }
 
@@ -619,6 +628,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                 Nonnull<const Value*> inst_member_type =
                     Substitute(self_map, &member_type);
                 access.set_static_type(inst_member_type);
+                CHECK(var_type.binding().impl_binding().has_value());
                 access.set_impl(*var_type.binding().impl_binding());
                 return;
               } else {
@@ -655,6 +665,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             Nonnull<const Value*> inst_member_type =
                 Substitute(self_map, &member_type);
             access.set_static_type(inst_member_type);
+            CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
             return;
           } else {
@@ -782,26 +793,29 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
       TypeCheckExp(&call.function(), impl_scope);
+      TypeCheckExp(&call.argument(), impl_scope);
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
+          if (trace_)
+            llvm::outs() << "checking function call at type: "
+                         << call.function().static_type() << "\n";
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
-          TypeCheckExp(&call.argument(), impl_scope);
           Nonnull<const Value*> parameters = &fun_t.parameters();
           Nonnull<const Value*> return_type = &fun_t.return_type();
           if (!fun_t.deduced().empty()) {
-            BindingMap deduced_args;
+            BindingMap deduced_type_args;
             if (trace_)
               llvm::outs() << "performing type argument deduction: "
                            << *parameters << " and "
                            << call.argument().static_type() << "\n";
-            ArgumentDeduction(e->source_loc(), deduced_args, parameters,
+            ArgumentDeduction(e->source_loc(), deduced_type_args, parameters,
                               &call.argument().static_type());
             for (Nonnull<const GenericBinding*> deduced_param :
                  fun_t.deduced()) {
               // TODO: change the following to a CHECK once the real checking
               // has been added to the type checking of function signatures.
-              if (auto it = deduced_args.find(deduced_param);
-                  it == deduced_args.end()) {
+              if (auto it = deduced_type_args.find(deduced_param);
+                  it == deduced_type_args.end()) {
                 FATAL_COMPILATION_ERROR(e->source_loc())
                     << "could not deduce type argument for type parameter "
                     << deduced_param->name() << "\n"
@@ -810,8 +824,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             }
             if (trace_)
               llvm::outs() << "substituting deduced type arguments\n";
-            parameters = Substitute(deduced_args, parameters);
-            return_type = Substitute(deduced_args, return_type);
+            parameters = Substitute(deduced_type_args, parameters);
+            return_type = Substitute(deduced_type_args, return_type);
             if (trace_)
               llvm::outs() << "parameters: " << *parameters
                            << "\nreturn: " << *return_type << "\n";
@@ -824,7 +838,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                 case Value::Kind::InterfaceType: {
                   ValueNodeView impl = impl_scope.Resolve(
                       impl_binding->interface(),
-                      deduced_args[impl_binding->type_var()], e->source_loc());
+                      deduced_type_args[impl_binding->type_var()],
+                      e->source_loc());
                   impls.emplace(impl_binding, impl);
                   break;
                 }
@@ -838,6 +853,10 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             }
             call.set_impls(impls);
           } else {
+            if (trace_)
+              llvm::outs() << "checking argument type "
+                           << call.argument().static_type()
+                           << " to parameter type " << *parameters << "\n";
             ExpectType(e->source_loc(), "call", parameters,
                        &call.argument().static_type());
           }
@@ -848,17 +867,23 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
         case Value::Kind::TypeOfClassType: {
           // This case handles the application of a generic class to
           // a type argument, such as Point(i32).
+          if (trace_)
+            llvm::outs() << "checking instantiation of generic class\n";
           const ClassDeclaration& class_decl =
               cast<TypeOfClassType>(call.function().static_type())
                   .class_type()
                   .declaration();
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
+            if (trace_)
+              llvm::outs() << "pattern matching type params and args ";
             CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
           }
           // Find impls for all the impl bindings of the class
+          if (trace_)
+            llvm::outs() << "finding impls\n";
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
           for (const auto& [binding, val] : generic_args) {
             if (binding->impl_binding().has_value()) {
@@ -884,9 +909,13 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
           }  // for generic_args
           Nonnull<NominalClassType*> class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
-          call.set_impls(impls);  // needed for T.Zero in Origin
+          if (trace_)
+            llvm::outs() << "created class type " << *class_type << "\n";
+          call.set_impls(impls);
           call.set_static_type(class_type);
           call.set_value_category(ValueCategory::Let);
+          if (trace_)
+            llvm::outs() << "finished checking call " << call << "\n";
           return;
         }
         default: {
@@ -1022,8 +1051,12 @@ void TypeChecker::TypeCheckPattern(
             << "Generic binding may not occur in pattern with expected type: "
             << binding;
       }
+      if (trace_)
+        llvm::outs() << "type of GenericBinding: " << *type << "\n";
       binding.set_static_type(type);
       Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
+      if (trace_)
+        llvm::outs() << "val of GenericBinding: " << *val << "\n";
       binding.set_constant_value(val);
       Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
           binding.source_loc(), &binding, &binding.static_type());
@@ -1039,6 +1072,8 @@ void TypeChecker::TypeCheckPattern(
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
+      if (trace_)
+        llvm::outs() << "checking tuple pattern: " << tuple << "\n";
       std::vector<Nonnull<const Value*>> field_types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
         FATAL_COMPILATION_ERROR(p->source_loc()) << "didn't expect a tuple";
@@ -1055,9 +1090,16 @@ void TypeChecker::TypeCheckPattern(
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
         TypeCheckPattern(field, expected_field_type, impl_scope);
+        if (trace_)
+          llvm::outs() << "finished checking tuple pattern field " << *field
+                       << "\n";
         field_types.push_back(&field->static_type());
       }
+      if (trace_)
+        llvm::outs() << "finished checking tuple pattern elements\n";
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
+      if (trace_)
+        llvm::outs() << "tuple pattern type: " << tuple.static_type() << "\n";
       SetValue(&tuple, InterpPattern(&tuple, arena_, trace_));
       return;
     }
@@ -1299,6 +1341,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   ImplScope function_scope;
   function_scope.AddParent(&impl_scope);
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
+    CHECK(impl_binding->type_var()->constant_value().has_value());
     function_scope.Add(impl_binding->interface(),
                        *impl_binding->type_var()->constant_value(),
                        impl_binding);
@@ -1309,6 +1352,9 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   // Type check the parameter pattern
   TypeCheckPattern(&f->param_pattern(), std::nullopt, function_scope);
+  if (trace_)
+    llvm::outs() << "param_pattern type: " << f->param_pattern().static_type()
+                 << "\n";
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
@@ -1352,7 +1398,8 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
 
   if (trace_) {
-    llvm::outs() << "** finished declaring function " << f->name() << "\n";
+    llvm::outs() << "** finished declaring function " << f->name()
+                 << " of type " << f->static_type() << "\n";
   }
   return;
 }
@@ -1370,6 +1417,7 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     function_scope.AddParent(&impl_scope);
     for (Nonnull<const ImplBinding*> impl_binding :
          cast<FunctionType>(f->static_type()).impl_bindings()) {
+      CHECK(impl_binding->type_var()->constant_value().has_value());
       function_scope.Add(impl_binding->interface(),
                          *impl_binding->type_var()->constant_value(),
                          impl_binding);

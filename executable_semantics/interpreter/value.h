@@ -540,28 +540,10 @@ class NominalClassType : public Value {
     return impls_;
   }
 
-#if 0
-  // Use constructor instead?
-  // Can only be called once, during typechecking.
-  void set_impls(
-      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
-    CHECK(impls_.empty());
-    impls_ = impls;
-  }
-#endif
-
   auto witnesses() const
       -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
     return witnesses_;
   }
-
-#if 0
-  void set_witnesses(
-      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits) {
-    CHECK(witnesses_.empty());
-    witnesses_ = wits;
-  }
-#endif
 
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.

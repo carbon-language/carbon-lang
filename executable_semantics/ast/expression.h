@@ -45,7 +45,10 @@ class Expression : public AstNode {
   }
 
   // The static type of this expression. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.

@@ -51,7 +51,10 @@ class Pattern : public AstNode {
   }
 
   // The static type of this pattern. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
@@ -173,16 +176,6 @@ class GenericBinding : public Pattern {
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
 
-  // The static type of the binding. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
-
-  // Sets the static type of the binding. Can only be called once, during
-  // typechecking.
-  void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
-    static_type_ = type;
-  }
-
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
@@ -208,7 +201,6 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
-  std::optional<Nonnull<const Value*>> static_type_;
   std::optional<Nonnull<const Value*>> constant_value_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };

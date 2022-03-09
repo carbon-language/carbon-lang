@@ -39,6 +39,6 @@ external impl i32 as Number {
 }
 
 fn Main() -> i32 {
-  var p: Point(i32) = Origin(1);
+  var p: Point(i32) = Origin(0);
   return SumXY(Clone(p));
 }
