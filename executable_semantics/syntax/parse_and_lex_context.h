@@ -20,7 +20,7 @@ class ParseAndLexContext {
   ParseAndLexContext(Nonnull<const std::string*> input_file_name, bool trace)
       : input_file_name_(input_file_name), trace_(trace) {}
 
-  // Formats ands records a lexer error. Returns  error token as a convenience.
+  // Formats ands records a lexer error. Returns an error token as a convenience.
   auto RecordLexerError(const std::string& message) -> Parser::symbol_type;
 
   auto RecordError(const std::string& message) -> void;
