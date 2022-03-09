@@ -16,11 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   // Reads and returns a single character. Reports an error on EOF.
   auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
-
-  // Formats a message from `error`. Returns the error token as a convenience.
-  auto FatalSyntaxError(Carbon::ParseAndLexContext& context,
-                        const std::string& message)
-      -> Carbon::Parser::symbol_type;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -126,9 +121,6 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
   #define ARG_TOKEN(name, arg) \
     Carbon::Parser::make_##name(arg, context.current_token_position);
-
-  // TODO: use `YYerror` token once bison is upgraded to at least 3.5.
-  #define ERROR_TOKEN SIMPLE_TOKEN(END_OF_FILE)
 %}
 
 %%
@@ -263,8 +255,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   if (intrinsic) {
     return ARG_TOKEN(intrinsic_identifier, *intrinsic);
   } else {
-    context.RecordError(llvm::toString(intrinsic.takeError()));
-    return ERROR_TOKEN;
+    return context.RecordLexerError(llvm::toString(intrinsic.takeError()));
   }
 }
 
@@ -277,8 +268,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   BEGIN(AFTER_OPERAND);
   int val = 0;
   if (!llvm::to_integer(yytext, val)) {
-    return FatalSyntaxError(
-        context, llvm::formatv("Invalid integer literal: {0}", yytext));
+    return context.RecordLexerError(
+        llvm::formatv("Invalid integer literal: {0}", yytext));
   }
   return ARG_TOKEN(integer_literal, val);
 }
@@ -288,8 +279,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
-    return FatalSyntaxError(
-        context, llvm::formatv("Invalid escaping in string: {0}", yytext));
+    return context.RecordLexerError(
+        llvm::formatv("Invalid escaping in string: {0}", yytext));
   }
   return ARG_TOKEN(string_literal, *unescaped);
 }
@@ -302,7 +293,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   for (;;) {
     int c = ReadChar(yyscanner, context);
     if (c <= 0)
-      return ERROR_TOKEN;
+      return SIMPLE_TOKEN(END_OF_FILE);
     s.push_back(c);
     if (c != '"' && c != '\\') {
       continue;
@@ -311,14 +302,14 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       // \" in \""" is not a terminator.
       c = ReadChar(yyscanner, context);
       if (c <= 0)
-        return ERROR_TOKEN;
+        return SIMPLE_TOKEN(END_OF_FILE);
       s.push_back(c);
       continue;
     }
 
     c = ReadChar(yyscanner, context);
     if (c <= 0)
-      return ERROR_TOKEN;
+      return SIMPLE_TOKEN(END_OF_FILE);
     s.push_back(c);
     if (c != '"') {
       continue;
@@ -326,7 +317,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
     c = ReadChar(yyscanner, context);
     if (c <= 0)
-      return ERROR_TOKEN;
+      return SIMPLE_TOKEN(END_OF_FILE);
     s.push_back(c);
     if (c == '"') {
       break;
@@ -334,9 +325,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   }
   llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
   if (!block_string) {
-    return FatalSyntaxError(context,
-                            llvm::formatv("Invalid block string: {0}",
-                                          toString(block_string.takeError())));
+    return context.RecordLexerError(llvm::formatv(
+        "Invalid block string: {0}", toString(block_string.takeError())));
   }
   return ARG_TOKEN(string_literal, *block_string);
 }
@@ -363,9 +353,9 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 . {
-  return FatalSyntaxError(
-      context, llvm::formatv("invalid character '\\x{0}' in source file.",
-                             llvm::toHex(llvm::StringRef(yytext, 1))));
+  return context.RecordLexerError(
+      llvm::formatv("invalid character '\\x{0}' in source file.",
+                    llvm::toHex(llvm::StringRef(yytext, 1))));
 }
 
 %%
@@ -376,16 +366,4 @@ auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
     context.RecordError("Unexpected end of file");
   }
   return c;
-}
-
-auto FatalSyntaxError(Carbon::ParseAndLexContext& context, const std::string& message)
--> Carbon::Parser::symbol_type {
-  // Prints a newline in trace mode because trace prints an incomplete line
-  // "Reading a token: " which can prevent LIT from finding expected patterns.
-  std::string full_message;
-  llvm::raw_string_ostream(full_message)
-      << (context.trace() ? "\n" : "")
-      << "COMPILATION ERROR: " << (context.source_loc()) << ": " << message;
-  context.RecordError(full_message);
-  return ERROR_TOKEN;
 }
