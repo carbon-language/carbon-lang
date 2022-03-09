@@ -255,7 +255,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   if (intrinsic) {
     return ARG_TOKEN(intrinsic_identifier, *intrinsic);
   } else {
-    return context.RecordLexerError(llvm::toString(intrinsic.takeError()));
+    return context.RecordSyntaxError(llvm::toString(intrinsic.takeError()));
   }
 }
 
@@ -268,7 +268,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   BEGIN(AFTER_OPERAND);
   int val = 0;
   if (!llvm::to_integer(yytext, val)) {
-    return context.RecordLexerError(
+    return context.RecordSyntaxError(
         llvm::formatv("Invalid integer literal: {0}", yytext));
   }
   return ARG_TOKEN(integer_literal, val);
@@ -279,7 +279,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
-    return context.RecordLexerError(
+    return context.RecordSyntaxError(
         llvm::formatv("Invalid escaping in string: {0}", yytext));
   }
   return ARG_TOKEN(string_literal, *unescaped);
@@ -325,7 +325,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   }
   llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
   if (!block_string) {
-    return context.RecordLexerError(llvm::formatv(
+    return context.RecordSyntaxError(llvm::formatv(
         "Invalid block string: {0}", toString(block_string.takeError())));
   }
   return ARG_TOKEN(string_literal, *block_string);
@@ -353,7 +353,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 . {
-  return context.RecordLexerError(
+  return context.RecordSyntaxError(
       llvm::formatv("invalid character '\\x{0}' in source file.",
                     llvm::toHex(llvm::StringRef(yytext, 1))));
 }
@@ -363,7 +363,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
   const int c = yyinput(yyscanner);
   if (c <= 0) {
-    context.RecordError("Unexpected end of file");
+    context.RecordSyntaxError("Unexpected end of file");
   }
   return c;
 }

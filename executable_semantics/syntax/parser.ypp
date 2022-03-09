@@ -86,10 +86,7 @@
 
 %code {
   void Carbon::Parser::error(const location_type&, const std::string& message) {
-    std::string full_message;
-    llvm::raw_string_ostream(full_message)
-        << "COMPILATION ERROR: " << context.source_loc() << ": " << message;
-    context.RecordError(full_message);
+    context.RecordSyntaxError(message);
   }
 }  // %code
 
@@ -588,7 +585,7 @@ non_expression_pattern:
       if (alternative_pattern) {
         $$ = *alternative_pattern;
       } else {
-        context.RecordError(
+        context.RecordSyntaxError(
             "Alternative pattern must have the form of a field access.");
         YYERROR;
       }
@@ -809,7 +806,7 @@ function_declaration:
       if (fn) {
         $$ = *fn;
       } else {
-        context.RecordError(llvm::toString(fn.takeError()));
+        context.RecordSyntaxError(llvm::toString(fn.takeError()));
         YYERROR;
       }
     }
@@ -821,7 +818,7 @@ function_declaration:
       if (fn) {
         $$ = *fn;
       } else {
-        context.RecordError(llvm::toString(fn.takeError()));
+        context.RecordSyntaxError(llvm::toString(fn.takeError()));
         YYERROR;
       }
     }

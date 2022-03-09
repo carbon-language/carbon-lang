@@ -22,9 +22,9 @@ class ParseAndLexContext {
 
   // Formats ands records a lexer error. Returns an error token as a
   // convenience.
-  auto RecordLexerError(const std::string& message) -> Parser::symbol_type;
-
-  auto RecordError(const std::string& message) -> void;
+  auto RecordSyntaxError(const std::string& message,
+                         bool prefix_with_newline = false)
+      -> Parser::symbol_type;
 
   auto source_loc() const -> SourceLocation {
     return SourceLocation(input_file_name_,
