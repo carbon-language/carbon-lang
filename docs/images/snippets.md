@@ -15,7 +15,7 @@ fn Partition[T:! Comparable & Movable](s: Span(T))
      -> i32 {
   var i: i32 = -1;
 
-  for (var j: i32 in s.Indices()) {
+  for (j: i32 in s.Indices()) {
     if (s[j] <= s.Last()) {
       ++i;
       Swap(&s[i], &s[j]);
