@@ -10,7 +10,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
     -   [Unqualified name lookup](#unqualified-name-lookup)
         -   [Alternatives](#alternatives)
@@ -20,13 +19,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
 ## Overview
 
 Names are always introduced into some scope which defines where they can be
@@ -35,13 +27,12 @@ facility for introducing a dedicated named scope just like C++, but we traverse
 nested names in a uniform way with `.`-separated names:
 
 ```
-namespace Foo {
-  namespace Bar {
-    alias ??? MyInt = Int;
-  }
-}
+namespace Foo;
+namespace Foo.Bar;
+alias Foo.Bar.MyInt = i32;
 
 fn F(x: Foo.Bar.MyInt);
+fn Foo.G(y: Bar.MyInt);
 ```
 
 Carbon packages are also namespaces so to get to an imported name from the
