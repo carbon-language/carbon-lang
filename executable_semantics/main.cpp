@@ -34,7 +34,7 @@ static void AddPrelude(
 }
 
 // Prints an error message and returns error code value.
-int PrintError(llvm::Error error) {
+auto PrintError(llvm::Error error) -> int {
   int error_value = 1;
   llvm::handleAllErrors(std::move(error),
                         [&error_value](const llvm::ErrorInfoBase& e) {

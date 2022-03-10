@@ -62,6 +62,9 @@ class ErrorBuilder {
 // runtime error. Use CHECK/FATAL for internal errors. The generic program
 // error option is provided as a fallback for cases that don't fit those
 // classifications.
+//
+// TODO: replace below macro invocations with direct `return ErrorBuilder() <<
+// xx` calls.
 
 #define FATAL_PROGRAM_ERROR_NO_LINE() \
   Carbon::ErrorBuilder() << "PROGRAM ERROR: "

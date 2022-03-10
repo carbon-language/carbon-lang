@@ -66,13 +66,17 @@ void PrintTo(T* p, std::ostream* out) {
 }
 
 namespace Internal {
-template <class, class = void>
+
+// A trait for determining the existence of operator<<(llvm::raw_ostream&, const
+// T&).
+template <typename T, typename = void>
 struct HasLlvmRawOstreamOp : std::false_type {};
 
 template <typename T>
 struct HasLlvmRawOstreamOp<
     T, std::void_t<decltype(std::declval<llvm::raw_ostream&>()
                             << std::declval<const T&>())>> : std::true_type {};
+
 }  // namespace Internal
 
 }  // namespace Carbon

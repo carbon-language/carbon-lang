@@ -580,8 +580,7 @@ non_expression_pattern:
 | postfix_expression tuple_pattern
     {
       llvm::Expected<Nonnull<AlternativePattern*>> alternative_pattern =
-          AlternativePattern::MakeAlternativePattern(
-              arena, context.source_loc(), $1, $2);
+          AlternativePattern::Create(arena, context.source_loc(), $1, $2);
       if (alternative_pattern) {
         $$ = *alternative_pattern;
       } else {
@@ -800,9 +799,8 @@ receiver:
 function_declaration:
   FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
-      llvm::Expected<FunctionDeclaration*> fn =
-          FunctionDeclaration::MakeFunctionDeclaration(
-              arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+      llvm::Expected<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
       if (fn) {
         $$ = *fn;
       } else {
@@ -812,9 +810,8 @@ function_declaration:
     }
 | FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      llvm::Expected<FunctionDeclaration*> fn =
-          FunctionDeclaration::MakeFunctionDeclaration(
-              arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+      llvm::Expected<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
       if (fn) {
         $$ = *fn;
       } else {

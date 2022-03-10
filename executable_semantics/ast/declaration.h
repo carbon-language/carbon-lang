@@ -82,12 +82,13 @@ class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  static auto MakeFunctionDeclaration(
-      Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
-      std::vector<Nonnull<AstNode*>> deduced_params,
-      std::optional<Nonnull<BindingPattern*>> me_pattern,
-      Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
-      std::optional<Nonnull<Block*>> body)
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     std::string name,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     std::optional<Nonnull<BindingPattern*>> me_pattern,
+                     Nonnull<TuplePattern*> param_pattern,
+                     ReturnTerm return_term,
+                     std::optional<Nonnull<Block*>> body)
       -> llvm::Expected<Nonnull<FunctionDeclaration*>>;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,

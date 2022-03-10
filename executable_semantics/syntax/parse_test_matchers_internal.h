@@ -36,9 +36,9 @@ class ParsedAsMatcher {
 
   auto MatchAndExplain(const llvm::Expected<AST>& result,
                        ::testing::MatchResultListener* listener) const -> bool {
-    auto& r = const_cast<llvm::Expected<AST>&>(result);
-    if (!r) {
-      *listener << "holds error message << " << llvm::toString(r.takeError());
+    if (result.errorIsA<llvm::ErrorInfoBase>()) {
+      // TODO: is there a const-friendly way to get the error message?
+      *listener << "is a failed parse";
       return false;
     } else {
       *listener << "is a successful parse whose ";

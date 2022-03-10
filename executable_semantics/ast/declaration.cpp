@@ -112,7 +112,7 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto FunctionDeclaration::MakeFunctionDeclaration(
+auto FunctionDeclaration::Create(
     Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
     std::vector<Nonnull<AstNode*>> deduced_params,
     std::optional<Nonnull<BindingPattern*>> me_pattern,
