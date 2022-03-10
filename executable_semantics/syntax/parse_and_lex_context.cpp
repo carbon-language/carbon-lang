@@ -12,6 +12,7 @@ auto ParseAndLexContext::RecordSyntaxError(const std::string& message,
   // Optionally adds a newline in trace mode because trace prints an incomplete
   // line "Reading a token: " which can prevent LIT from finding expected
   // patterns.
+  // TODO: support formatting of `SourceLocation` instances with formatv().
   std::string full_message;
   llvm::raw_string_ostream(full_message)
       << (prefix_with_newline && trace() ? "\n" : "")
