@@ -93,7 +93,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
 -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
-    -   [Declaring interfaces](#declaring-interfaces)
+    -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
     -   [Declaring implementations](#declaring-implementations)
     -   [Declaration examples](#declaration-examples)
     -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
@@ -4285,47 +4285,50 @@ differences between the Carbon and Rust plans:
 
 ## Forward declarations and cyclic references
 
-Interfaces and their implementations may be forward declared and then later
-defined. This is needed to allow cyclic references, for example when declaring
-the edges and nodes of a graph. It is also a tool that may be used to make code
-more readable.
+Interfaces, named constraints, and their implementations may be forward declared
+and then later defined. This is needed to allow cyclic references, for example
+when declaring the edges and nodes of a graph. It is also a tool that may be
+used to make code more readable.
 
-The [interface](#interfaces) and [implementation](#implementing-interfaces)
-sections describe the syntax for their _definition_, which consists of a
-declaration followed by a body contained in curly braces `{` ... `}`. A _forward
-declaration_ is a declaration followed by a semicolon `;`. A forward declaration
-is a promise that the entity being declared will be defined later. Between the
-first declaration of an entity, which may be in a forward declaration or the
-first part of a definition, and the end of the definition the interface or
-implementation is called _incomplete_. There are additional restrictions on how
-the name of an incomplete entity may be used.
+The [interface](#interfaces), [named constraint](#named-constraints), and
+[implementation](#implementing-interfaces) sections describe the syntax for
+their _definition_, which consists of a declaration followed by a body contained
+in curly braces `{` ... `}`. A _forward declaration_ is a declaration followed
+by a semicolon `;`. A forward declaration is a promise that the entity being
+declared will be defined later. Between the first declaration of an entity,
+which may be in a forward declaration or the first part of a definition, and the
+end of the definition the interface or implementation is called _incomplete_.
+There are additional restrictions on how the name of an incomplete entity may be
+used.
 
-### Declaring interfaces
+### Declaring interfaces and named constraints
 
-The declaration for an interface consists of:
+The declaration for an interface or named constraint consists of:
 
--   the keyword introducer `interface`,
--   the name of the interface, and
+-   an optional access-control keyword,
+-   the keyword introducer `interface`, `constraint`, or `template constraint`,
+-   the name of the interface or constraint, and
 -   the parameter list, if any.
 
-The name of an interface can not be used until its first declaration is
-complete. In particular, it is illegal to use the name of the interface in the
-parameter list. There is a
+The name of an interface or constraint can not be used until its first
+declaration is complete. In particular, it is illegal to use the name of the
+interface in its parameter list. There is a
 [workaround](#interfaces-with-parameters-constrained-by-the-same-interface) for
 the use cases when this would come up.
 
-An interface may be forward declared subject to these rules:
+An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
 -   The declaration part of a forward declaration and the corresponding
     definition must match.
--   An incomplete interface may be used in constraints in declarations of types
-    or functions.
--   An attempt to define the body of a generic function using that interface as
-    a constraint is illegal.
--   Any name lookup into an incomplete interface is an error. For example, it is
-    illegal to attempt to access a member of an interface using
-    `MyInterface.MemberName`.
+-   An incomplete interface or named constraint may be used as constraints in
+    declarations of types or functions.
+-   An attempt to define the body of a generic function using an incomplete
+    interface or named constraint is illegal.
+-   Any name lookup into an incomplete interface or named constraint is an
+    error. For example, it is illegal to attempt to access a member of an
+    interface using `MyInterface.MemberName` or constrain a member using a
+    `where` clause.
 
 ### Declaring implementations
 
@@ -4464,37 +4467,45 @@ In this example, `NodeInterface` has an `EdgeType` associated type that is
 constrained to implement `EdgeInterface`, and `EdgeInterface` has a `NodeType`
 associated type that is constrained to implement `NodeInterface`. Furthermore,
 the `NodeType` of an `EdgeType` is the original type, and the other way around.
+This is accomplished by naming and then forward declaring the constraints that
+can't be stated directly:
 
 ```
-// Forward declaration of interface
-interface EdgeInterface;
+// Forward declare interfaces used in
+// parameter lists of constraints.
+interface Edge;
+interface Node;
 
-// Definition that only uses the declaration of
-// `EdgeInterface`, not its definition.
-interface NodeBootstrap {
-  let EdgeType:! EdgeInterface;
+// Forward declare named constraints used in
+// interface definitions.
+private constraint EdgeFor(N:! Node);
+private constraint NodeFor(E:! Edge);
+
+// Define interfaces using named constraints.
+interface Edge {
+  let NodeType:! NodeFor(Self);
+  fn Head[me: Self]() -> NodeType;
+}
+interface Node {
+  let EdgeType:! EdgeFor(Self);
   fn Edges[me: Self]() -> Vector(EdgeType);
 }
 
-// Now can define `EdgeInterface` in terms of
-// `NodeBootstrap`.
-interface EdgeInterface {
-  let NodeType:! NodeBootstrap where .EdgeType == Self;
-  fn Head[me: Self]() -> NodeType;
+// Now that the interfaces are defined, can
+// refer to members of the interface, so it is
+// now legal to define the named constraints.
+private constraint EdgeFor(N:! Node) {
+  extends Edge where .NodeType == N;
 }
-
-// Make `NodeInterface` a named constraint defined in
-// terms of `NodeBootstrap`, adding in constraints that
-// couldn't be written until `EdgeInterface` was defined.
-constraint NodeInterface {
-  extends NodeBootsrap where .EdgeType.NodeType == Self;
+private constraint NodeFor(E:! Edge) {
+  extends Node where .EdgeType == E;
 }
 ```
 
 ### Interfaces with parameters constrained by the same interface
 
 To work around
-[the restriction about not being able to name an interface in its parameter list](#declaring-interfaces),
+[the restriction about not being able to name an interface in its parameter list](#declaring-interfaces-and-named-constraints),
 instead include that requirement in the body of the interface.
 
 ```
