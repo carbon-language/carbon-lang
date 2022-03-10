@@ -302,9 +302,9 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     if (c == '\\') {
       // \" in \""" is not a terminator.
       c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
+      if (c <= 0) {
+        return SIMPLE_TOKEN(END_OF_FILE);
+      }
       s.push_back(c);
       continue;
     }

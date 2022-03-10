@@ -38,9 +38,9 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
 }
 
 static auto ExpectExactType(SourceLocation source_loc,
-                                   const std::string& context,
-                                   Nonnull<const Value*> expected,
-                                   Nonnull<const Value*> actual) ->llvm::Error{
+                            const std::string& context,
+                            Nonnull<const Value*> expected,
+                            Nonnull<const Value*> actual) -> llvm::Error {
   if (!TypeEqual(expected, actual)) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "type error in " << context << "\n"
@@ -51,8 +51,8 @@ static auto ExpectExactType(SourceLocation source_loc,
 }
 
 static auto ExpectPointerType(SourceLocation source_loc,
-                                     const std::string& context,
-                                     Nonnull<const Value*> actual) ->llvm::Error{
+                              const std::string& context,
+                              Nonnull<const Value*> actual) -> llvm::Error {
   if (actual->kind() != Value::Kind::PointerType) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "type error in " << context << "\n"

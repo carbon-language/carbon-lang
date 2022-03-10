@@ -32,10 +32,9 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static auto ArgumentDeduction(SourceLocation source_loc,
-                                       BindingMap& deduced,
-                                       Nonnull<const Value*> param,
-                                       Nonnull<const Value*> arg) -> llvm::Error;
+  static auto ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg) -> llvm::Error;
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
