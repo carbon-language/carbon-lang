@@ -330,7 +330,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
   if (!block_string) {
     return context.RecordSyntaxError(llvm::formatv(
-        "Invalid block string: {0}", toString(block_string.takeError())));
+        "Invalid block string: {0}", llvm::toString(block_string.takeError())));
   }
   return ARG_TOKEN(string_literal, *block_string);
 }
