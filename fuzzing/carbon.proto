@@ -35,6 +35,7 @@ message IndexExpression {
 
 message UnaryOperatorExpression {
   enum UnaryOperator {
+    OP_UNKNOWN = 0;
     OP_ADDRESS_OF = 1;
     OP_DEREF = 2;
     OP_NEG = 3;
@@ -47,6 +48,7 @@ message UnaryOperatorExpression {
 
 message BinaryOperatorExpression {
   enum BinaryOperator {
+    OP_UNKNOWN = 0;
     OP_ADD = 1;
     OP_AND = 2;
     OP_EQ = 3;
@@ -82,6 +84,7 @@ message IdentifierExpression {
 
 message IntrinsicExpression {
   enum Intrinsic {
+    INTRINSIC_UNKNOWN = 0;
     INTRINSIC_PRINT = 1;
   }
   optional Intrinsic intrinsic = 1;
@@ -118,7 +121,6 @@ message UnimplementedExpression {}
 
 message Expression {
   oneof kind {
-    // TODO: make names match to Carbon cpp code - add _expression, etc.
     CallExpression call = 1;
     FunctionTypeLiteral function_type = 2;
     FieldAccessExpression field_access = 3;
@@ -257,6 +259,7 @@ message Statement {
 
 message ReturnTerm {
   enum ReturnKind {
+    RK_UNKNOWN = 0;
     RK_OMITTED = 1;
     RK_AUTO = 2;
     RK_EXPRESSION = 3;
@@ -300,11 +303,22 @@ message VariableDeclaration {
 }
 
 message InterfaceDeclaration {
-  // TODO: xx
+  optional string name = 1;
+  repeated Declaration member = 2;
+  optional GenericBinding self = 3;
 }
 
 message ImplDeclaration {
-  // TODO: xx
+  enum ImplKind {
+    IMPL_UNKNONW = 0;
+    INTERNAL_IMPL = 1;
+    EXTERNAL_IMPL = 2;
+  }
+
+  optional ImplKind kind = 1;
+  optional Expression impl_type = 2;
+  optional Expression interface = 3;
+  repeated Declaration member = 4;
 }
 
 message Declaration {
@@ -321,6 +335,6 @@ message Declaration {
 message CompilationUnit {
   optional LibraryName package_statement = 1;
   optional bool is_api = 2;
-  // TODO xx repeated LibraryName import_statement = 3;
-  repeated Declaration declaration = 4;
+  repeated Declaration declaration = 3;
+  // TODO Add support for imports if they are useful in fuzzing.
 }

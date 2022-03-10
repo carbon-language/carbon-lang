@@ -30,7 +30,7 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
 
 # Allows to ignore some types of headers which are not currently detactable
 # via parsing bazel rules.
-IGNORE_HEADER_REGEX = re.compile("^.*\\.pb\\.h$")
+IGNORE_HEADER_REGEX = re.compile("(^.*\\.pb\\.h$)|(^.*google/protobuf/.*$)")
 
 
 class Rule(NamedTuple):

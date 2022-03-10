@@ -8,6 +8,7 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/generic_binding.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -264,7 +265,7 @@ auto ExpressionToProto(const Expression& expression) -> Fuzzing::Expression {
       break;
 
     case ExpressionKind::UnimplementedExpression:
-      expression_proto.mutable_unimplemented_expression();  // TODO
+      expression_proto.mutable_unimplemented_expression();
       break;
   }
   return expression_proto;
@@ -448,6 +449,14 @@ auto ReturnTermToProto(const ReturnTerm& return_term) -> Fuzzing::ReturnTerm {
   return return_term_proto;
 }
 
+auto GenericBindingToProto(const GenericBinding& binding)
+    -> Fuzzing::GenericBinding {
+  Fuzzing::GenericBinding binding_proto;
+  binding_proto.set_name(binding.name());
+  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+  return binding_proto;
+}
+
 auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
@@ -458,9 +467,8 @@ auto DeclarationToProto(const Declaration& declaration)
       function_proto->set_name(function.name());
       for (Nonnull<const GenericBinding*> binding :
            function.deduced_parameters()) {
-        auto* binding_proto = function_proto->add_deduced_parameter();
-        binding_proto->set_name(binding->name());
-        *binding_proto->mutable_type() = ExpressionToProto(binding->type());
+        *function_proto->add_deduced_parameter() =
+            GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
         *function_proto->mutable_me_pattern() =
@@ -515,12 +523,33 @@ auto DeclarationToProto(const Declaration& declaration)
     }
 
     case DeclarationKind::InterfaceDeclaration: {
-      // TODO: xx
+      const auto& interface = cast<InterfaceDeclaration>(declaration);
+      auto* interface_proto = declaration_proto.mutable_interface();
+      interface_proto->set_name(interface.name());
+      for (const auto& member : interface.members()) {
+        *interface_proto->add_member() = DeclarationToProto(*member);
+      }
+      *interface_proto->mutable_self() =
+          GenericBindingToProto(*interface.self());
       break;
     }
 
     case DeclarationKind::ImplDeclaration: {
-      // TODO: xx
+      const auto& impl = cast<ImplDeclaration>(declaration);
+      auto* impl_proto = declaration_proto.mutable_impl();
+      switch (impl.kind()) {
+        case ImplKind::InternalImpl:
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::INTERNAL_IMPL);
+          break;
+        case ImplKind::ExternalImpl:
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::EXTERNAL_IMPL);
+          break;
+      }
+      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
+      *impl_proto->mutable_interface() = ExpressionToProto(impl.interface());
+      for (const auto& member : impl.members()) {
+        *impl_proto->add_member() = DeclarationToProto(*member);
+      }
       break;
     }
   }
@@ -534,9 +563,6 @@ Fuzzing::CompilationUnit CarbonToProto(const AST& ast) {
   *compilation_unit.mutable_package_statement() =
       LibraryNameToProto(ast.package);
   compilation_unit.set_is_api(ast.is_api);
-  for (const LibraryName& import : ast.imports) {
-    *compilation_unit.add_import_statement() = LibraryNameToProto(import);
-  }
   for (const Declaration* declaration : ast.declarations) {
     *compilation_unit.add_declaration() = DeclarationToProto(*declaration);
   }

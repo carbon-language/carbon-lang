@@ -12,7 +12,24 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:generic_binding",
         "//fuzzing:carbon_cc_proto",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ast_to_proto_test",
+    srcs = ["ast_to_proto_test.cpp"],
+    copts = [
+        "-Wno-thread-safety-reference",
+        "-Wno-implicit-fallthrough",
+    ],
+    deps = [
+        ":ast_to_proto_lib",
+        "//executable_semantics/syntax",
+        "//fuzzing:carbon_cc_proto",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
