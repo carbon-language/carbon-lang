@@ -574,7 +574,7 @@ auto Interpreter::StepExp() -> llvm::Error {
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        ASSIGN_OR_RETURN(auto value,
+        ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                          EvalPrim(op.op(), act.results(), exp.source_loc()));
         return todo_.FinishAction(value);
       }
