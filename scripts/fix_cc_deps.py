@@ -28,6 +28,10 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x)
 }
 
+# Allows to ignore some types of headers which are not currently detactable
+# via parsing bazel rules.
+IGNORE_HEADER_REGEX = re.compile("(^.*\\.pb\\.h$)|(^.*google/protobuf/.*$)")
+
 
 class Rule(NamedTuple):
     # For cc_* rules:
@@ -155,6 +159,12 @@ def get_missing_deps(
                 r'^#include "([^"]+)"', f.read(), re.MULTILINE
             ):
                 if header in rule_files:
+                    continue
+                if IGNORE_HEADER_REGEX.match(header):
+                    print(
+                        f"Ignored missing #include '{header}' in "
+                        f"'{source_file}'"
+                    )
                     continue
                 if header not in header_to_rule_map:
                     exit(
