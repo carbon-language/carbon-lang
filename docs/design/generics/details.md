@@ -4464,9 +4464,9 @@ impl MyClass as Interface6 { }
 
 ### Example of declaring interfaces with cyclic references
 
-In this example, `NodeInterface` has an `EdgeType` associated type that is
-constrained to implement `EdgeInterface`, and `EdgeInterface` has a `NodeType`
-associated type that is constrained to implement `NodeInterface`. Furthermore,
+In this example, `Node` has an `EdgeType` associated type that is
+constrained to implement `Edge`, and `Edge` has a `NodeType`
+associated type that is constrained to implement `Node`. Furthermore,
 the `NodeType` of an `EdgeType` is the original type, and the other way around.
 This is accomplished by naming and then forward declaring the constraints that
 can't be stated directly:
@@ -4719,7 +4719,7 @@ interface TotalOrder {
   final fn TotalGreater[me: Self](right: Self) -> bool;
 }
 // `TotalOrder` is considered complete at this point, even
-// though `TotalOrder.TotalGreater` is still incomplete.
+// though `TotalOrder.TotalGreater` is not yet defined.
 fn TotalOrder.TotalGreater[me: Self](right: Self) -> bool {
  return right.TotalLess(me);
 }
