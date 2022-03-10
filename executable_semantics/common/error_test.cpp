@@ -13,17 +13,17 @@ namespace {
 
 using ::testing::Eq;
 
-auto GetError(std::string_view message) -> llvm::Error {
+auto MakeError(std::string_view message) -> llvm::Error {
   return llvm::make_error<llvm::StringError>(message,
                                              llvm::inconvertibleErrorCode());
 }
 
-auto GetSuccess() -> llvm::Error { return llvm::Error::success(); }
+auto MakeSuccess() -> llvm::Error { return llvm::Error::success(); }
 
-auto GetInt(int value) -> llvm::Expected<int> { return value; }
+auto MakeInt(int value) -> llvm::Expected<int> { return value; }
 
-auto GetFailedInt(std::string_view message) -> llvm::Expected<int> {
-  return GetError(message);
+auto MakeFailedInt(std::string_view message) -> llvm::Expected<int> {
+  return MakeError(message);
 }
 
 TEST(ErrorTest, FatalProgramError) {
@@ -48,8 +48,8 @@ TEST(ErrorTest, FatalProgramErrorLine) {
 
 TEST(ErrorTest, ReturnIfErrorNoError) {
   auto result = []() -> llvm::Error {
-    RETURN_IF_ERROR(GetSuccess());
-    RETURN_IF_ERROR(GetSuccess());
+    RETURN_IF_ERROR(MakeSuccess());
+    RETURN_IF_ERROR(MakeSuccess());
     return llvm::Error::success();
   }();
   EXPECT_FALSE(result);
@@ -57,8 +57,8 @@ TEST(ErrorTest, ReturnIfErrorNoError) {
 
 TEST(ErrorTest, ReturnIfErrorHasError) {
   auto result = []() -> llvm::Error {
-    RETURN_IF_ERROR(GetSuccess());
-    RETURN_IF_ERROR(GetError("error"));
+    RETURN_IF_ERROR(MakeSuccess());
+    RETURN_IF_ERROR(MakeError("error"));
     return llvm::Error::success();
   }();
   ASSERT_TRUE(!!result);
@@ -67,11 +67,11 @@ TEST(ErrorTest, ReturnIfErrorHasError) {
 
 TEST(ErrorTest, AssignOrReturnNoError) {
   auto result = []() -> llvm::Expected<int> {
-    RETURN_IF_ERROR(GetSuccess());
-    ASSIGN_OR_RETURN(int a, GetInt(1));
-    ASSIGN_OR_RETURN(const int b, GetInt(2));
+    RETURN_IF_ERROR(MakeSuccess());
+    ASSIGN_OR_RETURN(int a, MakeInt(1));
+    ASSIGN_OR_RETURN(const int b, MakeInt(2));
     int c = 0;
-    ASSIGN_OR_RETURN(c, GetInt(3));
+    ASSIGN_OR_RETURN(c, MakeInt(3));
     return a + b + c;
   }();
   ASSERT_TRUE(!!result);
@@ -80,7 +80,7 @@ TEST(ErrorTest, AssignOrReturnNoError) {
 
 TEST(ErrorTest, AssignOrReturnHasDirectError) {
   auto result = []() -> llvm::Expected<int> {
-    RETURN_IF_ERROR(GetError("error"));
+    RETURN_IF_ERROR(MakeError("error"));
     return 0;
   }();
   ASSERT_FALSE(result);
@@ -88,7 +88,7 @@ TEST(ErrorTest, AssignOrReturnHasDirectError) {
 
 TEST(ErrorTest, AssignOrReturnHasErrorInExpected) {
   auto result = []() -> llvm::Expected<int> {
-    ASSIGN_OR_RETURN(int a, GetFailedInt("error"));
+    ASSIGN_OR_RETURN(int a, MakeFailedInt("error"));
     return a;
   }();
   ASSERT_FALSE(result);
