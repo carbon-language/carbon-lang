@@ -95,15 +95,13 @@ class AutoPattern : public Pattern {
   }
 };
 
-class VarContextPattern : public Pattern {
+class VarPattern : public Pattern {
  public:
-  explicit VarContextPattern(SourceLocation source_loc,
-                             Nonnull<Pattern*> pattern)
-      : Pattern(AstNodeKind::VarContextPattern, source_loc),
-        pattern_(pattern) {}
+  explicit VarPattern(SourceLocation source_loc, Nonnull<Pattern*> pattern)
+      : Pattern(AstNodeKind::VarPattern, source_loc), pattern_(pattern) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromVarContextPattern(node->kind());
+    return InheritsFromVarPattern(node->kind());
   }
 
   auto pattern() const -> const Pattern& { return *pattern_; }

@@ -5,7 +5,7 @@
 root class AstNode;
 abstract class Pattern : AstNode;
   class AutoPattern : Pattern;
-  class VarContextPattern : Pattern;
+  class VarPattern : Pattern;
   class BindingPattern : Pattern;
   class TuplePattern : Pattern;
   class AlternativePattern : Pattern;

@@ -48,17 +48,8 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     case PatternKind::ExpressionPattern:
       out << cast<ExpressionPattern>(*this).expression();
       break;
-    case PatternKind::VarContextPattern:
-      const auto& let_var_pattern = cast<VarContextPattern>(*this);
-      switch (let_var_pattern.value_category()) {
-        case ValueCategory::Let:
-          out << "let";
-          break;
-        case ValueCategory::Var:
-          out << "var";
-          break;
-      }
-      out << let_var_pattern.pattern();
+    case PatternKind::VarPattern:
+      out << "var" << cast<VarPattern>(*this).pattern();
       break;
   }
 }

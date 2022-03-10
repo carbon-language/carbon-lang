@@ -576,7 +576,7 @@ maybe_var_pattern:
   non_expression_pattern
     { $$ = $1; }
 | VAR non_expression_pattern
-    { $$ = arena->New<VarContextPattern>(context.source_loc(), $2); }
+    { $$ = arena->New<VarPattern>(context.source_loc(), $2); }
 ;
 non_expression_pattern:
   AUTO

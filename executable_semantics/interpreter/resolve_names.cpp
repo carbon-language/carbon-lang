@@ -180,8 +180,8 @@ static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
       break;
     case PatternKind::AutoPattern:
       break;
-    case PatternKind::VarContextPattern:
-      ResolveNames(cast<VarContextPattern>(pattern).pattern(), enclosing_scope);
+    case PatternKind::VarPattern:
+      ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope);
       break;
   }
 }
