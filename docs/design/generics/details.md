@@ -4495,10 +4495,10 @@ interface Node {
 // Now that the interfaces are defined, can
 // refer to members of the interface, so it is
 // now legal to define the named constraints.
-private constraint EdgeFor(N:! Node) {
+constraint EdgeFor(N:! Node) {
   extends Edge where .NodeType == N;
 }
-private constraint NodeFor(E:! Edge) {
+constraint NodeFor(E:! Edge) {
   extends Node where .EdgeType == E;
 }
 ```
@@ -4527,6 +4527,25 @@ interface CommonType(T:! Type) {
   let Result:! Type;
   // ❌ Illegal: `CommonType` is incomplete
   impl T as CommonType(Self) where .Result == Result;
+}
+```
+
+Instead, a forward-declared named constraint can be used in place of the
+constraint that can only be defined later. This is
+[the same strategy used to work around cyclic references](#example-of-declaring-interfaces-with-cyclic-references).
+
+```
+private constraint CommonTypeResult(T:! Type, R:! Type);
+
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // ✅ Allowed: `CommonTypeResult` is incomplete, but
+  //             no members are accessed.
+  impl T as CommonTypeResult(Self, Result);
+}
+
+constraint CommonTypeResult(T:! Type, R:! Type) {
+  extends CommonType(T) where .Result == R;
 }
 ```
 
