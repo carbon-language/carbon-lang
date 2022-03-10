@@ -5,37 +5,109 @@
 #ifndef EXECUTABLE_SEMANTICS_COMMON_ERROR_H_
 #define EXECUTABLE_SEMANTICS_COMMON_ERROR_H_
 
+#include <optional>
+
 #include "common/check.h"
+#include "executable_semantics/ast/source_location.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
-// Prints an error and exits. This should be used for non-recoverable errors
-// with user input.
+// A helper class for accumulating error message and converting to either
+// llvm::Error or llvm::Expected.
+class ErrorBuilder {
+ public:
+  explicit ErrorBuilder(std::optional<SourceLocation> loc = std::nullopt)
+      : out_(message_) {
+    if (loc.has_value()) {
+      out_ << *loc << ": ";
+    }
+  }
+
+  // Accumulates string message.
+  template <typename T>
+  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+    out_ << message;
+    return *this;
+  }
+
+  operator llvm::Error() { return ConvertToError(); }
+
+  template <typename T>
+  operator llvm::Expected<T>() {
+    return ConvertToError();
+  }
+
+ private:
+  llvm::Error ConvertToError() {
+    return llvm::make_error<llvm::StringError>(message_,
+                                               llvm::inconvertibleErrorCode());
+  }
+
+  std::string message_;
+  llvm::raw_string_ostream out_;
+};
+
+// Builds an llvm::Error instance with the specified message. This should be
+// used for non-recoverable errors with user input.
 //
 // For example:
-//   FATAL_PROGRAM_ERROR(line_num) << "Line is bad!";
-//   FATAL_PROGRAM_ERROR_NO_LINE() << "Application is bad!";
+//   return FATAL_PROGRAM_ERROR(line_num) << "Line is bad!";
+//   return FATAL_PROGRAM_ERROR_NO_LINE() << "Application is bad!";
 //
 // Where possible, try to identify the error as a compilation or
-// runtime error. Use CHECK/FATAL for internal errors. The generic program error
-// option is provided as a fallback for cases that don't fit those
+// runtime error. Use CHECK/FATAL for internal errors. The generic program
+// error option is provided as a fallback for cases that don't fit those
 // classifications.
+//
+// TODO: replace below macro invocations with direct `return ErrorBuilder() <<
+// xx` calls.
 
-#define FATAL_PROGRAM_ERROR_NO_LINE() RAW_EXITING_STREAM() << "PROGRAM ERROR: "
+#define FATAL_PROGRAM_ERROR_NO_LINE() \
+  Carbon::ErrorBuilder() << "PROGRAM ERROR: "
 
 #define FATAL_PROGRAM_ERROR(line) \
   FATAL_PROGRAM_ERROR_NO_LINE() << (line) << ": "
 
 #define FATAL_COMPILATION_ERROR_NO_LINE() \
-  RAW_EXITING_STREAM() << "COMPILATION ERROR: "
+  Carbon::ErrorBuilder() << "COMPILATION ERROR: "
 
 #define FATAL_COMPILATION_ERROR(line) \
   FATAL_COMPILATION_ERROR_NO_LINE() << (line) << ": "
 
-#define FATAL_RUNTIME_ERROR_NO_LINE() RAW_EXITING_STREAM() << "RUNTIME ERROR: "
+#define FATAL_RUNTIME_ERROR_NO_LINE() \
+  Carbon::ErrorBuilder() << "RUNTIME ERROR: "
 
 #define FATAL_RUNTIME_ERROR(line) \
   FATAL_RUNTIME_ERROR_NO_LINE() << (line) << ": "
+
+// Macro hackery to get a unique variable name.
+#define MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
+#define MAKE_UNIQUE_NAME(a, b, c) MAKE_UNIQUE_NAME_IMPL(a, b, c)
+
+// llvm::Error's operator bool() returns true if the Error is in failure state.
+#define RETURN_IF_ERROR_IMPL(unique_name, expr)          \
+  if (llvm::Error unique_name = (expr); !!unique_name) { \
+    return unique_name;                                  \
+  }
+
+#define RETURN_IF_ERROR(expr) \
+  RETURN_IF_ERROR_IMPL(       \
+      MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+
+#define ASSIGN_OR_RETURN_IMPL(unique_name, var, expr) \
+  auto unique_name = (expr);                          \
+  if (!unique_name) {                                 \
+    return unique_name.takeError();                   \
+  }                                                   \
+  var = std::move(*unique_name);
+
+#define ASSIGN_OR_RETURN(var, expr) \
+  ASSIGN_OR_RETURN_IMPL(            \
+      MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), var, expr)
 
 }  // namespace Carbon
 

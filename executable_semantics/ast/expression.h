@@ -465,11 +465,15 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(std::string_view intrinsic_name,
-                               Nonnull<TupleLiteral*> args,
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> llvm::Expected<Intrinsic>;
+
+  explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
       : Expression(AstNodeKind::IntrinsicExpression, source_loc),
-        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        intrinsic_(intrinsic),
         args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -481,11 +485,6 @@ class IntrinsicExpression : public Expression {
   auto args() -> TupleLiteral& { return *args_; }
 
  private:
-  // Returns the enumerator corresponding to the intrinsic named `name`,
-  // or raises a fatal compile error if there is no such enumerator.
-  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
-      -> Intrinsic;
-
   Intrinsic intrinsic_;
   Nonnull<TupleLiteral*> args_;
 };

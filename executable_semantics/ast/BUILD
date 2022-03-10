@@ -205,6 +205,7 @@ cc_library(
         "//common:check",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

@@ -62,6 +62,7 @@
   #include "common/check.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
   #include "llvm/ADT/StringExtras.h"
+  #include "llvm/Support/raw_ostream.h"
 }  // %code top
 
 %code requires {
@@ -85,13 +86,13 @@
 
 %code {
   void Carbon::Parser::error(const location_type&, const std::string& message) {
-    context.PrintDiagnostic(message);
+    context.RecordSyntaxError(message);
   }
 }  // %code
 
 %token <int> integer_literal
 %token <std::string> identifier
-%token <std::string> intrinsic_identifier
+%token <IntrinsicExpression::Intrinsic> intrinsic_identifier
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
@@ -577,7 +578,17 @@ non_expression_pattern:
 | paren_pattern
     { $$ = $1; }
 | postfix_expression tuple_pattern
-    { $$ = arena->New<AlternativePattern>(context.source_loc(), $1, $2); }
+    {
+      llvm::Expected<Nonnull<AlternativePattern*>> alternative_pattern =
+          AlternativePattern::Create(arena, context.source_loc(), $1, $2);
+      if (alternative_pattern) {
+        $$ = *alternative_pattern;
+      } else {
+        context.RecordSyntaxError(
+            llvm::toString(alternative_pattern.takeError()));
+        YYERROR;
+      }
+    }
 ;
 binding_lhs:
   identifier { $$ = $1; }
@@ -788,13 +799,25 @@ receiver:
 function_declaration:
   FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
-      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           $6, $7);
+      llvm::Expected<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+      if (fn) {
+        $$ = *fn;
+      } else {
+        context.RecordSyntaxError(llvm::toString(fn.takeError()));
+        YYERROR;
+      }
     }
 | FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           $6, std::nullopt);
+      llvm::Expected<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+      if (fn) {
+        $$ = *fn;
+      } else {
+        context.RecordSyntaxError(llvm::toString(fn.takeError()));
+        YYERROR;
+      }
     }
 ;
 variable_declaration: identifier COLON pattern

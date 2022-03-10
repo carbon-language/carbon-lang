@@ -65,6 +65,20 @@ void PrintTo(T* p, std::ostream* out) {
   }
 }
 
+namespace Internal {
+
+// A trait for determining the existence of operator<<(llvm::raw_ostream&, const
+// T&).
+template <typename T, typename = void>
+struct HasLlvmRawOstreamOp : std::false_type {};
+
+template <typename T>
+struct HasLlvmRawOstreamOp<
+    T, std::void_t<decltype(std::declval<llvm::raw_ostream&>()
+                            << std::declval<const T&>())>> : std::true_type {};
+
+}  // namespace Internal
+
 }  // namespace Carbon
 
 namespace llvm {
@@ -86,10 +100,12 @@ namespace llvm {
 // supporting `std::ostream` isn't a priority for LLVM so we handle it locally
 // instead.
 template <typename S, typename T,
+          // S is-a ostream.
           typename = std::enable_if_t<std::is_base_of_v<
               std::ostream, std::remove_reference_t<std::remove_cv_t<S>>>>,
-          typename = std::enable_if_t<!std::is_same_v<
-              std::remove_reference_t<std::remove_cv_t<T>>, raw_ostream>>>
+          // T can be streamed to an llvm::raw_ostream.
+          typename =
+              std::enable_if_t<Carbon::Internal::HasLlvmRawOstreamOp<T>::value>>
 auto operator<<(S& standard_out, const T& value) -> S& {
   raw_os_ostream(standard_out) << value;
   return standard_out;

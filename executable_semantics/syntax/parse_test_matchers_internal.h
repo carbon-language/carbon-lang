@@ -12,6 +12,8 @@
 #include <variant>
 
 #include "executable_semantics/syntax/parse.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::TestingInternal {
 
@@ -32,14 +34,15 @@ class ParsedAsMatcher {
     DescribeToImpl(out, /*negated=*/true);
   }
 
-  auto MatchAndExplain(const std::variant<AST, SyntaxErrorCode>& result,
+  auto MatchAndExplain(const llvm::Expected<AST>& result,
                        ::testing::MatchResultListener* listener) const -> bool {
-    if (std::holds_alternative<SyntaxErrorCode>(result)) {
-      *listener << "holds error code " << std::get<SyntaxErrorCode>(result);
+    if (result.errorIsA<llvm::ErrorInfoBase>()) {
+      // TODO: is there a const-friendly way to get the error message?
+      *listener << "is a failed parse";
       return false;
     } else {
       *listener << "is a successful parse whose ";
-      return ast_matcher_.MatchAndExplain(std::get<AST>(result), listener);
+      return ast_matcher_.MatchAndExplain(*result, listener);
     }
   }
 

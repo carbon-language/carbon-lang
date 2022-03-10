@@ -16,6 +16,7 @@
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/nonnull.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -133,7 +134,7 @@ class StaticScope {
  public:
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
-  void Add(std::string name, ValueNodeView entity);
+  auto Add(std::string name, ValueNodeView entity) -> llvm::Error;
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -145,14 +146,14 @@ class StaticScope {
   // scope, or reports a compilation error at `source_loc` there isn't exactly
   // one such definition.
   auto Resolve(const std::string& name, SourceLocation source_loc) const
-      -> ValueNodeView;
+      -> llvm::Expected<ValueNodeView>;
 
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
   // than one definition is found.
   auto TryResolve(const std::string& name, SourceLocation source_loc) const
-      -> std::optional<ValueNodeView>;
+      -> llvm::Expected<std::optional<ValueNodeView>>;
 
   // Maps locally declared names to their entities.
   std::unordered_map<std::string, ValueNodeView> declared_names_;

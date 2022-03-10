@@ -12,6 +12,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -29,7 +30,8 @@ auto StructValue::FindField(const std::string& name) const
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
-                      SourceLocation source_loc) -> Nonnull<const Value*> {
+                      SourceLocation source_loc)
+    -> llvm::Expected<Nonnull<const Value*>> {
   const std::string& f = field.name();
 
   if (field.witness().has_value()) {
@@ -42,8 +44,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           return arena->New<BoundMethodValue>(&fun_decl, v);
         } else {
-          FATAL_COMPILATION_ERROR(source_loc)
-              << "member " << f << " not in " << *witness;
+          return FATAL_COMPILATION_ERROR(source_loc)
+                 << "member " << f << " not in " << *witness;
         }
       }
       default:
@@ -55,7 +57,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "member " << f << " not in " << *v;
       }
       return *field;
     }
@@ -71,8 +74,9 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          FATAL_RUNTIME_ERROR(source_loc)
-              << "member " << f << " not in " << *v << " or its " << class_type;
+          return FATAL_RUNTIME_ERROR(source_loc)
+                 << "member " << f << " not in " << *v << " or its "
+                 << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
@@ -87,8 +91,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "alternative " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
@@ -97,8 +101,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "class function " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "class function " << f << " not in " << *v;
       }
       return *fun;
     }
@@ -108,10 +112,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 }
 
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                     SourceLocation source_loc) const -> Nonnull<const Value*> {
+                     SourceLocation source_loc) const
+    -> llvm::Expected<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    value = GetMember(arena, value, field, source_loc);
+    ASSIGN_OR_RETURN(value, GetMember(arena, value, field, source_loc));
   }
   return value;
 }
@@ -121,7 +126,7 @@ static auto SetFieldImpl(
     std::vector<FieldPath::Component>::const_iterator path_begin,
     std::vector<FieldPath::Component>::const_iterator path_end,
     Nonnull<const Value*> field_value, SourceLocation source_loc)
-    -> Nonnull<const Value*> {
+    -> llvm::Expected<Nonnull<const Value*>> {
   if (path_begin == path_end) {
     return field_value;
   }
@@ -133,11 +138,12 @@ static auto SetFieldImpl(
                                return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "field " << (*path_begin).name() << " not in " << *value;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "field " << (*path_begin).name() << " not in " << *value;
       }
-      it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
-                               field_value, source_loc);
+      ASSIGN_OR_RETURN(it->value,
+                       SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                                    field_value, source_loc));
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
@@ -150,11 +156,13 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        FATAL_RUNTIME_ERROR(source_loc) << "index " << (*path_begin).name()
-                                        << " out of range in " << *value;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "index " << (*path_begin).name() << " out of range in "
+               << *value;
       }
-      elements[index] = SetFieldImpl(arena, elements[index], path_begin + 1,
-                                     path_end, field_value, source_loc);
+      ASSIGN_OR_RETURN(elements[index],
+                       SetFieldImpl(arena, elements[index], path_begin + 1,
+                                    path_end, field_value, source_loc));
       return arena->New<TupleValue>(elements);
     }
     default:
@@ -164,7 +172,8 @@ static auto SetFieldImpl(
 
 auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
-                     SourceLocation source_loc) const -> Nonnull<const Value*> {
+                     SourceLocation source_loc) const
+    -> llvm::Expected<Nonnull<const Value*>> {
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
                       path.components_.begin(), path.components_.end(),
                       field_value, source_loc);

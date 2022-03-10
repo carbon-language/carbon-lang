@@ -23,10 +23,10 @@ fn Foo() {}
 
 TEST(ParseTest, ParseFromString) {
   Arena arena;
-  std::variant<AST, SyntaxErrorCode> parse_result =
+  llvm::Expected<AST> parse_result =
       ParseFromString(&arena, "file.carbon", FileContents, /*trace=*/false);
-  ASSERT_TRUE(std::holds_alternative<AST>(parse_result));
-  EXPECT_EQ(std::get<AST>(parse_result).declarations.size(), 1);
+  ASSERT_TRUE(!!parse_result);
+  EXPECT_EQ(parse_result->declarations.size(), 1);
 }
 
 }  // namespace

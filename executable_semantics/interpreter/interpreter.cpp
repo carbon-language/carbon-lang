@@ -21,6 +21,7 @@
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
@@ -58,7 +59,7 @@ class Interpreter {
   ~Interpreter();
 
   // Runs all the steps of `action`.
-  void RunAllSteps(std::unique_ptr<Action> action);
+  auto RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error;
 
   // The result produced by the `action` argument of the most recent
   // RunAllSteps call. Cannot be called if `action` was an action that doesn't
@@ -66,25 +67,26 @@ class Interpreter {
   auto result() const -> Nonnull<const Value*> { return todo_.result(); }
 
  private:
-  void Step();
+  auto Step() -> llvm::Error;
 
   // State transitions for expressions.
-  void StepExp();
+  auto StepExp() -> llvm::Error;
   // State transitions for lvalues.
-  void StepLvalue();
+  auto StepLvalue() -> llvm::Error;
   // State transitions for patterns.
-  void StepPattern();
+  auto StepPattern() -> llvm::Error;
   // State transition for statements.
-  void StepStmt();
+  auto StepStmt() -> llvm::Error;
   // State transition for declarations.
-  void StepDeclaration();
+  auto StepDeclaration() -> llvm::Error;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
 
   auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
-                SourceLocation source_loc) -> Nonnull<const Value*>;
+                SourceLocation source_loc)
+      -> llvm::Expected<Nonnull<const Value*>>;
 
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
@@ -129,7 +131,8 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
 
 auto Interpreter::EvalPrim(Operator op,
                            const std::vector<Nonnull<const Value*>>& args,
-                           SourceLocation source_loc) -> Nonnull<const Value*> {
+                           SourceLocation source_loc)
+    -> llvm::Expected<Nonnull<const Value*>> {
   switch (op) {
     case Operator::Neg:
       return arena_->New<IntValue>(-cast<IntValue>(*args[0]).value());
@@ -175,13 +178,14 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
-                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
+                  std::optional<Nonnull<RuntimeScope*>> bindings)
+    -> llvm::Expected<bool> {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       if (!bindings.has_value()) {
         // TODO: move this to typechecker.
-        FATAL_COMPILATION_ERROR(source_loc)
-            << "Name bindings are not supported in this context";
+        return FATAL_COMPILATION_ERROR(source_loc)
+               << "Name bindings are not supported in this context";
       }
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
@@ -195,13 +199,16 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
           if (p_tup.elements().size() != v_tup.elements().size()) {
-            FATAL_PROGRAM_ERROR(source_loc)
-                << "arity mismatch in tuple pattern match:\n  pattern: "
-                << p_tup << "\n  value: " << v_tup;
+            return FATAL_PROGRAM_ERROR(source_loc)
+                   << "arity mismatch in tuple pattern match:\n  pattern: "
+                   << p_tup << "\n  value: " << v_tup;
           }
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
-            if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                              source_loc, bindings)) {
+            ASSIGN_OR_RETURN(
+                const bool matches,
+                PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
+                             source_loc, bindings));
+            if (!matches) {
               return false;
             }
           }  // for
@@ -216,8 +223,11 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       CHECK(p_struct.elements().size() == v_struct.elements().size());
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
-        if (!PatternMatch(p_struct.elements()[i].value,
-                          v_struct.elements()[i].value, source_loc, bindings)) {
+        ASSIGN_OR_RETURN(
+            const bool matches,
+            PatternMatch(p_struct.elements()[i].value,
+                         v_struct.elements()[i].value, source_loc, bindings));
+        if (!matches) {
           return false;
         }
       }
@@ -243,12 +253,17 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
-          if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
-                            bindings)) {
+          ASSIGN_OR_RETURN(const bool params_match,
+                           PatternMatch(&p_fn.parameters(), &v_fn.parameters(),
+                                        source_loc, bindings));
+          if (!params_match) {
             return false;
           }
-          if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
-                            source_loc, bindings)) {
+          ASSIGN_OR_RETURN(
+              const bool return_type_matches,
+              PatternMatch(&p_fn.return_type(), &v_fn.return_type(), source_loc,
+                           bindings));
+          if (!return_type_matches) {
             return false;
           }
           return true;
@@ -265,7 +280,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   }
 }
 
-void Interpreter::StepLvalue() {
+auto Interpreter::StepLvalue() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
   if (trace_) {
@@ -276,8 +291,10 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Nonnull<const Value*> value = todo_.ValueOfNode(
-          cast<IdentifierExpression>(exp).value_node(), exp.source_loc());
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
+                            exp.source_loc()));
       CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
@@ -427,7 +444,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
-void Interpreter::StepExp() {
+auto Interpreter::StepExp() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
   if (trace_) {
@@ -450,8 +467,8 @@ void Interpreter::StepExp() {
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
-          FATAL_RUNTIME_ERROR_NO_LINE()
-              << "index " << i << " out of range in " << tuple;
+          return FATAL_RUNTIME_ERROR_NO_LINE()
+                 << "index " << i << " out of range in " << tuple;
         }
         return todo_.FinishAction(tuple.elements()[i]);
       }
@@ -504,15 +521,19 @@ void Interpreter::StepExp() {
         // -> { { v_f :: C, E, F} : S, H}
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
-          auto witness_addr =
-              todo_.ValueOfNode(*access.impl(), access.source_loc());
-          witness = cast<Witness>(
+          ASSIGN_OR_RETURN(
+              auto witness_addr,
+              todo_.ValueOfNode(*access.impl(), access.source_loc()));
+          ASSIGN_OR_RETURN(
+              Nonnull<const Value*> witness_value,
               heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
                          access.source_loc()));
+          witness = cast<Witness>(witness_value);
         }
         FieldPath::Component field(access.field(), witness);
-        Nonnull<const Value*> member = act.results()[0]->GetField(
-            arena_, FieldPath(field), exp.source_loc());
+        ASSIGN_OR_RETURN(Nonnull<const Value*> member,
+                         act.results()[0]->GetField(arena_, FieldPath(field),
+                                                    exp.source_loc()));
         return todo_.FinishAction(member);
       }
     }
@@ -520,10 +541,12 @@ void Interpreter::StepExp() {
       CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Nonnull<const Value*> value =
-          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
-        value = heap_.Read(lvalue->address(), exp.source_loc());
+        ASSIGN_OR_RETURN(value,
+                         heap_.Read(lvalue->address(), exp.source_loc()));
       }
       return todo_.FinishAction(value);
     }
@@ -551,8 +574,9 @@ void Interpreter::StepExp() {
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        return todo_.FinishAction(
-            EvalPrim(op.op(), act.results(), exp.source_loc()));
+        ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                         EvalPrim(op.op(), act.results(), exp.source_loc()));
+        return todo_.FinishAction(value);
       }
     }
     case ExpressionKind::CallExpression:
@@ -585,11 +609,12 @@ void Interpreter::StepExp() {
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
-              Nonnull<const Value*> witness =
-                  todo_.ValueOfNode(impl_node, exp.source_loc());
+              ASSIGN_OR_RETURN(Nonnull<const Value*> witness,
+                               todo_.ValueOfNode(impl_node, exp.source_loc()));
               if (witness->kind() == Value::Kind::LValue) {
                 const LValue& lval = cast<LValue>(*witness);
-                witness = heap_.Read(lval.address(), exp.source_loc());
+                ASSIGN_OR_RETURN(witness,
+                                 heap_.Read(lval.address(), exp.source_loc()));
               }
               function_scope.Initialize(impl_bind, witness);
             }
@@ -609,10 +634,16 @@ void Interpreter::StepExp() {
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);
-            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                               exp.source_loc(), &method_scope));
-            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
-                               exp.source_loc(), &method_scope));
+            ASSIGN_OR_RETURN(
+                const bool me_pattern_matches,
+                PatternMatch(&method.me_pattern().value(), m.receiver(),
+                             exp.source_loc(), &method_scope));
+            CHECK(me_pattern_matches);
+            ASSIGN_OR_RETURN(
+                const bool param_pattern_matches,
+                PatternMatch(&method.param_pattern().value(), converted_args,
+                             exp.source_loc(), &method_scope));
+            CHECK(param_pattern_matches);
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
@@ -620,8 +651,8 @@ void Interpreter::StepExp() {
                 std::move(method_scope));
           }
           default:
-            FATAL_RUNTIME_ERROR(exp.source_loc())
-                << "in call, expected a function, not " << *act.results()[0];
+            return FATAL_RUNTIME_ERROR(exp.source_loc())
+                   << "in call, expected a function, not " << *act.results()[0];
         }
       } else if (act.pos() == 3) {
         if (act.results().size() < 3) {
@@ -711,7 +742,7 @@ void Interpreter::StepExp() {
   }  // switch (exp->kind)
 }
 
-void Interpreter::StepPattern() {
+auto Interpreter::StepPattern() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   const Pattern& pattern = cast<PatternAction>(act).pattern();
   if (trace_) {
@@ -771,7 +802,7 @@ void Interpreter::StepPattern() {
   }
 }
 
-void Interpreter::StepStmt() {
+auto Interpreter::StepStmt() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
   if (trace_) {
@@ -795,15 +826,19 @@ void Interpreter::StepStmt() {
         }
         auto c = match_stmt.clauses()[clause_num];
         RuntimeScope matches(&heap_);
-        if (PatternMatch(&c.pattern().value(),
+        ASSIGN_OR_RETURN(
+            const bool value_matches,
+            PatternMatch(&c.pattern().value(),
                          Convert(act.results()[0], &c.pattern().static_type()),
-                         stmt.source_loc(), &matches)) {
+                         stmt.source_loc(), &matches));
+        if (value_matches) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
           return todo_.Spawn(std::make_unique<StatementAction>(&c.statement()));
         } else {
-          return todo_.RunAgain();
+          todo_.RunAgain();
+          return llvm::Error::success();
         }
       }
     }
@@ -832,13 +867,15 @@ void Interpreter::StepStmt() {
       CHECK(act.pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      return todo_.UnwindPast(&cast<Break>(stmt).loop());
+      todo_.UnwindPast(&cast<Break>(stmt).loop());
+      return llvm::Error::success();
     }
     case StatementKind::Continue: {
       CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      return todo_.UnwindTo(&cast<Continue>(stmt).loop());
+      todo_.UnwindTo(&cast<Continue>(stmt).loop());
+      return llvm::Error::success();
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -872,7 +909,9 @@ void Interpreter::StepStmt() {
             &cast<VariableDefinition>(stmt).pattern().value();
 
         RuntimeScope matches(&heap_);
-        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
+        ASSIGN_OR_RETURN(const bool pattern_matches,
+                         PatternMatch(p, v, stmt.source_loc(), &matches));
+        CHECK(pattern_matches)
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         todo_.MergeScope(std::move(matches));
@@ -904,7 +943,7 @@ void Interpreter::StepStmt() {
         const auto& lval = cast<LValue>(*act.results()[0]);
         Nonnull<const Value*> rval =
             Convert(act.results()[1], &assign.lhs().static_type());
-        heap_.Write(lval.address(), rval, stmt.source_loc());
+        RETURN_IF_ERROR(heap_.Write(lval.address(), rval, stmt.source_loc()));
         return todo_.FinishAction();
       }
     }
@@ -945,9 +984,10 @@ void Interpreter::StepStmt() {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return todo_.UnwindPast(
+        todo_.UnwindPast(
             *function.body(),
             Convert(act.results()[0], &function.return_term().static_type()));
+        return llvm::Error::success();
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);
@@ -969,18 +1009,20 @@ void Interpreter::StepStmt() {
         return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
       } else if (act.pos() == 1) {
         // Push the continuation onto the current stack.
-        return todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
+        todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
+        return llvm::Error::success();
       } else {
         return todo_.FinishAction();
       }
     }
     case StatementKind::Await:
       CHECK(act.pos() == 0);
-      return todo_.Suspend();
+      todo_.Suspend();
+      return llvm::Error::success();
   }
 }
 
-void Interpreter::StepDeclaration() {
+auto Interpreter::StepDeclaration() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
   if (trace_) {
@@ -1012,72 +1054,78 @@ void Interpreter::StepDeclaration() {
 }
 
 // State transition.
-void Interpreter::Step() {
+auto Interpreter::Step() -> llvm::Error {
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LValAction:
-      StepLvalue();
+      RETURN_IF_ERROR(StepLvalue());
       break;
     case Action::Kind::ExpressionAction:
-      StepExp();
+      RETURN_IF_ERROR(StepExp());
       break;
     case Action::Kind::PatternAction:
-      StepPattern();
+      RETURN_IF_ERROR(StepPattern());
       break;
     case Action::Kind::StatementAction:
-      StepStmt();
+      RETURN_IF_ERROR(StepStmt());
       break;
     case Action::Kind::DeclarationAction:
-      StepDeclaration();
+      RETURN_IF_ERROR(StepDeclaration());
       break;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction escaped ActionStack";
   }  // switch
+  return llvm::Error::success();
 }
 
-void Interpreter::RunAllSteps(std::unique_ptr<Action> action) {
+auto Interpreter::RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error {
   if (trace_) {
     PrintState(llvm::outs());
   }
   todo_.Start(std::move(action));
   while (!todo_.IsEmpty()) {
-    Step();
+    RETURN_IF_ERROR(Step());
     if (trace_) {
       PrintState(llvm::outs());
     }
   }
+  return llvm::Error::success();
 }
 
-auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int {
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace)
+    -> llvm::Expected<int> {
   Interpreter interpreter(Phase::RunTime, arena, trace);
   if (trace) {
     llvm::outs() << "********** initializing globals **********\n";
   }
 
   for (Nonnull<Declaration*> declaration : ast.declarations) {
-    interpreter.RunAllSteps(std::make_unique<DeclarationAction>(declaration));
+    RETURN_IF_ERROR(interpreter.RunAllSteps(
+        std::make_unique<DeclarationAction>(declaration)));
   }
 
   if (trace) {
     llvm::outs() << "********** calling main function **********\n";
   }
 
-  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(*ast.main_call));
+  RETURN_IF_ERROR(interpreter.RunAllSteps(
+      std::make_unique<ExpressionAction>(*ast.main_call)));
 
   return cast<IntValue>(*interpreter.result()).value();
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
-    -> Nonnull<const Value*> {
+    -> llvm::Expected<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace);
-  interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e));
+  RETURN_IF_ERROR(
+      interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
   return interpreter.result();
 }
 
 auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
-    -> Nonnull<const Value*> {
+    -> llvm::Expected<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace);
-  interpreter.RunAllSteps(std::make_unique<PatternAction>(p));
+  RETURN_IF_ERROR(interpreter.RunAllSteps(std::make_unique<PatternAction>(p)));
   return interpreter.result();
 }
 

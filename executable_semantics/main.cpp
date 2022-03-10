@@ -21,16 +21,27 @@
 static void AddPrelude(
     std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
     std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
-  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> parse_result =
+  llvm::Expected<Carbon::AST> parse_result =
       Carbon::Parse(arena, prelude_file_name, false);
-  if (std::holds_alternative<Carbon::SyntaxErrorCode>(parse_result)) {
+  if (!parse_result) {
     // Try again with tracing, to help diagnose the problem.
-    Carbon::Parse(arena, prelude_file_name, true);
-    FATAL() << "Failed to parse prelude.";
+    parse_result = Carbon::Parse(arena, prelude_file_name, true);
+    FATAL() << "Failed to parse prelude: " << parse_result.takeError();
   }
-  const auto& prelude = std::get<Carbon::AST>(parse_result);
+  const auto& prelude = *parse_result;
   declarations->insert(declarations->begin(), prelude.declarations.begin(),
                        prelude.declarations.end());
+}
+
+// Prints an error message and returns error code value.
+auto PrintError(llvm::Error error) -> int {
+  int error_value = 1;
+  llvm::handleAllErrors(std::move(error),
+                        [&error_value](const llvm::ErrorInfoBase& e) {
+                          llvm::errs() << e.message() << "\n";
+                          error_value = e.convertToErrorCode().value();
+                        });
+  return error_value;
 }
 
 auto main(int argc, char* argv[]) -> int {
@@ -56,18 +67,16 @@ auto main(int argc, char* argv[]) -> int {
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
   Carbon::Arena arena;
-  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+  llvm::Expected<Carbon::AST> ast =
       Carbon::Parse(&arena, input_file_name, trace_option);
-
-  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
-    // Diagnostic already reported to std::cerr; this is just a return code.
-    return *error;
+  if (!ast) {
+    return PrintError(ast.takeError());
   }
-  auto& ast = std::get<Carbon::AST>(ast_or_error);
-
-  AddPrelude(prelude_file_name, &arena, &ast.declarations);
+  AddPrelude(prelude_file_name, &arena, &ast->declarations);
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(&arena, std::get<Carbon::AST>(ast_or_error),
-                      trace_option);
+  llvm::Expected<int> result = Carbon::ExecProgram(&arena, *ast, trace_option);
+  if (!result) {
+    return PrintError(result.takeError());
+  }
 }

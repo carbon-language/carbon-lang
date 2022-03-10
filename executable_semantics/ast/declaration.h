@@ -82,20 +82,28 @@ class FunctionDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     std::string name,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     std::optional<Nonnull<BindingPattern*>> me_pattern,
+                     Nonnull<TuplePattern*> param_pattern,
+                     ReturnTerm return_term,
+                     std::optional<Nonnull<Block*>> body)
+      -> llvm::Expected<Nonnull<FunctionDeclaration*>>;
+
   FunctionDeclaration(SourceLocation source_loc, std::string name,
-                      std::vector<Nonnull<AstNode*>> deduced_params,
+                      std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<BindingPattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
       : Declaration(AstNodeKind::FunctionDeclaration, source_loc),
         name_(std::move(name)),
+        deduced_parameters_(std::move(deduced_params)),
         me_pattern_(me_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body) {
-    ResolveDeducedAndReceiver(deduced_params);
-  }
+        body_(body) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -132,10 +140,9 @@ class FunctionDeclaration : public Declaration {
     constant_value_ = value;
   }
 
-  bool is_method() const { return me_pattern_.has_value(); }
+  auto is_method() const -> bool { return me_pattern_.has_value(); }
 
  private:
-  void ResolveDeducedAndReceiver(const std::vector<Nonnull<AstNode*>>&);
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<BindingPattern*>> me_pattern_;

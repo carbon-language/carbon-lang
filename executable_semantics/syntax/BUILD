@@ -30,6 +30,7 @@ cc_library(
     deps = [
         ":syntax",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

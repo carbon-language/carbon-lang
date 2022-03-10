@@ -20,8 +20,11 @@ class ParseAndLexContext {
   ParseAndLexContext(Nonnull<const std::string*> input_file_name, bool trace)
       : input_file_name_(input_file_name), trace_(trace) {}
 
-  // Writes a syntax error diagnostic containing message to standard error.
-  auto PrintDiagnostic(const std::string& message) -> void;
+  // Formats ands records a lexer error. Returns an error token as a
+  // convenience.
+  auto RecordSyntaxError(const std::string& message,
+                         bool prefix_with_newline = false)
+      -> Parser::symbol_type;
 
   auto source_loc() const -> SourceLocation {
     return SourceLocation(input_file_name_,
@@ -33,12 +36,18 @@ class ParseAndLexContext {
   // The source range of the token being (or just) lex'd.
   location current_token_position;
 
+  auto error_messages() const -> const std::vector<std::string> {
+    return error_messages_;
+  }
+
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
   Nonnull<const std::string*> input_file_name_;
 
   bool trace_;
+
+  std::vector<std::string> error_messages_;
 };
 
 }  // namespace Carbon

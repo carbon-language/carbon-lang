@@ -49,7 +49,7 @@ class ActionStack {
   // Returns the value bound to `value_node`. If `value_node` is a local
   // variable, this will be an LValue.
   auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
-      -> Nonnull<const Value*>;
+      -> llvm::Expected<Nonnull<const Value*>>;
 
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
@@ -76,13 +76,13 @@ class ActionStack {
 
   // Finishes execution of the current Action. If `result` is specified, it
   // represents the result of that Action.
-  void FinishAction();
-  void FinishAction(Nonnull<const Value*> result);
+  auto FinishAction() -> llvm::Error;
+  auto FinishAction(Nonnull<const Value*> result) -> llvm::Error;
 
   // Advances the current action one step, and push `child` onto the stack.
   // If `scope` is specified, `child` will be executed in that scope.
-  void Spawn(std::unique_ptr<Action> child);
-  void Spawn(std::unique_ptr<Action> child, RuntimeScope scope);
+  auto Spawn(std::unique_ptr<Action> child) -> llvm::Error;
+  auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope) -> llvm::Error;
 
   // Advances the current action one step.
   void RunAgain();
