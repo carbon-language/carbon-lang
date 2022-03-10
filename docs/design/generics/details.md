@@ -4302,25 +4302,45 @@ the name of an incomplete entity may be used.
 
 ### Declaring interfaces
 
+The declaration for an interface consists of:
+
+-   the keyword introducer `interface`,
+-   the name of the interface, and
+-   the parameter list, if any.
+
+The name of an interface can not be used until its first declaration is
+complete. In particular, it is illegal to use the name of the interface in the
+parameter list. There is a
+[workaround](#interfaces-with-parameters-constrained-by-the-same-interface) for
+the use cases when this would come up.
+
 An interface may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
--   The declaration includes the parameter list for the interface.
 -   The declaration part of a forward declaration and the corresponding
     definition must match.
--   The name of the interface must not be used until after the parameter list of
-    the declaration. In particular, it is illegal to use the name of the
-    interface in the parameter list. There is a
-    [workaround](#interfaces-with-parameters-constrained-by-the-same-interface)
-    for the use cases when this would come up.
 -   An incomplete interface may be used in constraints in declarations of types
     or functions.
--   Any name lookup into an incomplete interface is an error. For example, an
-    attempt to access a member of an interface using `MyInterface.MemberName` or
-    an attempt to define the body of a generic function using that interface as
+-   An attempt to define the body of a generic function using that interface as
     a constraint is illegal.
+-   Any name lookup into an incomplete interface is an error. For example, it is
+    illegal to attempt to access a member of an interface using
+    `MyInterface.MemberName`.
 
 ### Declaring implementations
+
+The declaration of an interface implementation consists of:
+
+-   an optional `external` keyword,
+-   the keyword introducer `impl`,
+-   an optional deduced parameter list in square brackets `[`...`]`,
+-   a type, including an optional argument list,
+-   the keyword `as`, and
+-   a [type-of-type](#type-of-types), including an optional
+    [argument list](#parameterized-interfaces) and
+    [`where` clause](#where-constraints) assigning
+    [associated constants](#associated-constants) and
+    [associated types](#associated-types).
 
 An implementation of an interface for a type may be forward declared subject to
 these rules:
@@ -4331,13 +4351,13 @@ these rules:
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
     `where` clause. If a later declaration repeats the `where` clause, it must
-    match.
--   The keyword `external`, when it precedes `impl`, is part of the declaration
-    of the implementation and must match between a forward declaration and
-    definition.
+    match in that it produces the associated constants with the same values if
+    the original `where` clause is ignored.
+-   The presence of the keyword `external` before `impl` must match between a
+    forward declaration and definition.
 -   You may forward declare an implementation of a defined interface but not an
     incomplete interface. This allows the assignment of associated constants in
-    the impl declaration to be verified. A forward impl declaration may be for
+    the `impl` declaration to be verified. A forward impl declaration may be for
     any declared type, whether it is incomplete or defined.
 -   Every internal implementation must be declared (or defined) inside the scope
     of the class definition. It may also be declared before the class definition
