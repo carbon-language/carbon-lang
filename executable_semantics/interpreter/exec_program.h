@@ -14,7 +14,7 @@
 namespace Carbon {
 
 // Runs the top-level declaration list.
-void ExecProgram(Nonnull<Arena*> arena, AST ast);
+void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace);
 
 }  // namespace Carbon
 

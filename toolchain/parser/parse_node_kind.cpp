@@ -13,7 +13,7 @@ auto ParseNodeKind::GetName() const -> llvm::StringRef {
 #define CARBON_PARSE_NODE_KIND(Name) #Name,
 #include "toolchain/parser/parse_node_kind.def"
   };
-  return Names[static_cast<int>(kind)];
+  return Names[static_cast<int>(kind_)];
 }
 
 }  // namespace Carbon

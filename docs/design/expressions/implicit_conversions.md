@@ -17,11 +17,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Examples](#examples)
 -   [Built-in types](#built-in-types)
     -   [Data types](#data-types)
-    -   [Equivalent types](#equivalent-types)
+    -   [Same type](#same-type)
     -   [Pointer conversions](#pointer-conversions)
-        -   [Pointer conversion examples](#pointer-conversion-examples)
     -   [Type-of-types](#type-of-types)
--   [Semantics](#semantics)
+-   [Consistency with `as`](#consistency-with-as)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -121,8 +120,8 @@ An integer constant can be implicitly converted to any type `iM`, `uM`, or `fM`
 in which that value can be exactly represented. A floating-point constant can be
 implicitly converted to any type `fM` in which that value is between the least
 representable finite value and the greatest representable finite value
-(inclusive), and does not fall exactly half-way between two representable
-values, and converts to the nearest representable finite value.
+(inclusive), and converts to the nearest representable finite value, with ties
+broken by picking the value for which the mantissa is even.
 
 The above conversions are also precisely those that C++ considers non-narrowing,
 except:
@@ -141,55 +140,20 @@ except:
     have singleton types; see issue
     [#508](https://github.com/carbon-language/carbon-lang/issues/508).
 
-### Equivalent types
+### Same type
 
-The following conversion is available:
+The following conversion is available for every type `T`:
 
--   `T` -> `U` if `T` is equivalent to `U`
-
-Two types are equivalent if they can be used interchangeably, implicitly: they
-have the same set of values with the same meaning and the same representation,
-with the same set of capabilities and constraints, where the only difference is
-how the type interprets operations on values of that type.
-
-`T` is equivalent to `U` if:
-
--   `T` is the same type as `U`, or
--   `T` is the facet type `U as SomeInterface`, or
--   `U` is the facet type `T as SomeInterface`, or
--   `T` is `A*`, `U` is `B*`, and `A` is equivalent to `B`, or
--   for some type `V`, `T` is equivalent to `V` and `V` is equivalent to `U`.
-
-**Note:** More type equivalence rules are expected to be added over time.
-
-A prerequisite for types being equivalent is that they are
-[compatible](../generics/terminology.md#compatible-types), and in particular
-that they have the same set of values and the same representation for those
-values. However, types being compatible does not imply that an implicit
-conversion, or even an explicit cast, between those types is necessarily valid.
-This is because the type of a value models not only the representation of the
-value but also the capabilities that a user of the value has to interact with
-the value. Two compatible types may expose different capabilities, such as the
-capability to mutate the object or to access its implementation details, and
-conversions between such types may require an explicit cast if the conversion is
-possible at all.
+-   `T` -> `T`
 
 ### Pointer conversions
 
 The following pointer conversion is available:
 
--   `T*` -> `U*` if `T` is a subtype of `U`.
+-   `T*` -> `U*` if `T` is a class derived from the class `U`.
 
-`T` is a subtype of `U` if:
-
--   `T` is equivalent to `U`, as described above, or
--   `T` is equivalent to a class derived from a class equivalent to `U`.
-
-**Note:** More type subtyping rules are expected to be added over time.
-
-`T*` is not necessarily a subtype of `U*` even if `T` is a subtype of `U`. For
-example, we can convert `Derived*` to `Base*`, but cannot convert `Derived**` to
-`Base**` because that would allow storing a `Derived2*` into a `Derived*`:
+Even though we can convert `Derived*` to `Base*`, we cannot convert `Derived**`
+to `Base**` because that would allow storing a `Derived2*` into a `Derived*`:
 
 ```
 abstract class Base {}
@@ -203,41 +167,6 @@ var r: Base** = &p;
 *r = q;
 ```
 
-**Note:** If we add `const` qualification, we could treat `const T*` as a
-subtype of `const U*` if `T` is a subtype of `U`, and could treat `T` as a
-subtype of `const T`.
-
-#### Pointer conversion examples
-
-With these classes:
-
-```
-base class C;
-let F: auto = C as Hashable;
-class D extends C;
-```
-
-These implicit pointer conversions are permitted:
-
--   `D*` -> `C*`: `D` is a subtype of `C`
--   `F*` -> `C*`: `F` is equivalent to `C`, so `F` is a subtype of `C`
--   `C*` -> `F*`: `C` is equivalent to `F`, so `C` is a subtype of `F`
--   `F**` -> `C**`: `F` is equivalent to `C`, so `F*` is equivalent to `C*`, so
-    `F*` is a subtype of `C*`
--   `D*` -> `F*`: `D` is derived from `C` and `C` is equivalent to `D`, so `D`
-    is a subtype of `F`
-
-These implicit pointer conversions are disallowed:
-
--   `C*` -> `D*`: `C` is not a subtype of `D`
--   `D**` -> `C**`: `D*` is not a subtype of `C*`
-
-Note that "equivalent to" means we can freely convert back and forwards; the
-difference in the types is just changing which operations are surfaced, not
-changing anything about the interpretation or switching between different
-abstractions. In contrast, "subtype of" permits conversion from a more specific
-type to a more general type, so the reverse conversion is not necessarily valid.
-
 ### Type-of-types
 
 A type `T` with [type-of-type](../generics/terminology.md#type-of-type) `TT1`
@@ -245,36 +174,32 @@ can be implicitly converted to the type-of-type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-type-of-types)
 of `TT2`.
 
-## Semantics
+## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
-permitted, always has the same meaning as the explicit cast expression `E as U`.
-Moreover, such an implicit conversion is expected to exactly preserve the value.
-For example, `(E as U) as T`, if valid, should be expected to result in the same
-value as produced by `E`.
-
-**Note:** The explicit cast expression syntax has not yet been decided. The use
-of `E as T` in this document is provisional.
+permitted, always has the same meaning as the
+[explicit cast expression `E as U`](as_expressions.md). Moreover, because such
+an implicit conversion is expected to exactly preserve the value,
+`(E as U) as T`, if valid, should be expected to result in the same value as
+produced by `E` even if the `as T` cast cannot be performed as an implicit
+conversion.
 
 ## Extensibility
 
 Implicit conversions can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `ImplicitAs` interface:
+[classes](../classes.md) by implementing the `ImplicitAs` interface, which
+extends
+[the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
 
 ```
-interface As(Dest:! Type) {
-  fn Convert[me: Self]() -> Dest;
+interface ImplicitAs(Dest:! Type) extends As(Dest) {
+  // Inherited from As(Dest):
+  // fn Convert[me: Self]() -> Dest;
 }
-interface ImplicitAs(Dest:! Type) extends As(Dest) {}
 ```
 
 When attempting to implicitly convert an expression `x` to type `U`, the
 expression is rewritten to `x.(ImplicitAs(U).Convert)()`.
-
-**Note:** The `As` interface is intended to be used as the implementation
-vehicle for explicit casts: `x as U` would be rewritten as
-`x.(As(U).Convert)()`. However, the explicit cast expression syntax has not yet
-been decided, so this rewrite is provisional.
 
 Note that implicit conversions are not transitive. Even if an
 `impl A as ImplicitAs(B)` and an `impl B as ImplicitAs(C)` are both provided, an
@@ -285,13 +210,15 @@ types.
 
 ## Alternatives considered
 
--   [Provide lossy and non-semantics-preserving implicit conversions from C++](/docs/proposals/p0820.md#c-conversions)
--   [Provide no implicit conversions](/docs/proposals/p0820.md#no-conversions)
--   [Provide no extensibility](/docs/proposals/p0820.md#no-extensibility)
--   [Apply implicit conversions transitively](/docs/proposals/p0820.md#transitivity)
+-   [Provide lossy and non-semantics-preserving implicit conversions from C++](/proposals/p0820.md#c-conversions)
+-   [Provide no implicit conversions](/proposals/p0820.md#no-conversions)
+-   [Provide no extensibility](/proposals/p0820.md#no-extensibility)
+-   [Apply implicit conversions transitively](/proposals/p0820.md#transitivity)
 
 ## References
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
-    [#820: implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
+    [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
+-   Proposal
+    [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).

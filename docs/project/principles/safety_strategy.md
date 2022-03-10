@@ -173,7 +173,8 @@ build modes rather than adding more.
 Over time, safety should [evolve](../goals.md#software-and-language-evolution)
 using a hybrid compile-time and runtime safety approach to eventually provide a
 similar level of safety to a language that puts more emphasis on guaranteed
-safety, such as [Rust](#guaranteed-safety-by-default-rusts-model). However,
+safety, such as
+[Rust](#guaranteed-compile-time-memory-safety-using-borrow-checking). However,
 while Carbon may _encourage_ developers to modify code in support of more
 efficient safety checks, it will remain important to improve the safety of code
 for developers who cannot invest into safety-specific code modifications.

@@ -1,4 +1,4 @@
-# Carbon: Generics goals
+# Generics: Goals
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -27,6 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Predictability](#predictability)
     -   [Dispatch control](#dispatch-control)
     -   [Upgrade path from templates](#upgrade-path-from-templates)
+    -   [Path from regular functions](#path-from-regular-functions)
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
     -   [Learn from others](#learn-from-others)
@@ -38,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template use cases that are out of scope](#template-use-cases-that-are-out-of-scope)
     -   [Generics will be checked when defined](#generics-will-be-checked-when-defined)
     -   [Specialization strategy](#specialization-strategy)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -133,7 +135,8 @@ templates, so it is written as if Carbon will have its own templating system. It
 is assumed to be similar to C++ templates with some specific changes:
 
 -   It may have some limitations to be more compatible with generics, much like
-    how we [restrict overloading](#generics-instead-of-open-overloading).
+    how we
+    [restrict overloading](#generics-instead-of-open-overloading-and-adl).
 -   We likely will have a different method of selecting between different
     template instantiations, since
     [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
@@ -436,14 +439,21 @@ Carbon. This gives us these sub-goals:
 If Carbon does not end up having direct support for templates, the transition
 will necessarily be less incremental.
 
+### Path from regular functions
+
+Replacing a regular, non-parameterized function with a generic function should
+not affect existing callers of the function. There may be some differences, such
+as when taking the address of the function, but ordinary calls should not see
+any difference. In particular, the return type of a generic function should
+match, without any type erasure or additional named members.
+
 ### Coherence
 
-We want the generics system to have the _coherence_ property. This means that
-there is a single answer to the question "what is the implementation of this
-interface for this type, if any?" independent of context, such as the libraries
-imported into a given file. Since a generic function only depends on interface
-implementations, they will always behave consistently on a given type,
-independent of context. For more on this, see
+We want the generics system to have the
+[_coherence_ property](terminology.md#coherence), so that the implementation of
+an interface for a type is well defined. Since a generic function only depends
+on interface implementations, they will always behave consistently on a given
+type, independent of context. For more on this, see
 [this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
 Coherence greatly simplifies the language design, since it reduces the need for
@@ -459,8 +469,8 @@ It also has a number of benefits for users:
     Carbon template on that type.
 
 The main downside of coherence is that there are some capabilities we would like
-for interfaces which are in tension with the coherence property. For example, we
-would like to address
+for interfaces that are in tension with having an orphan rule limiting where
+implementations may be defined. For example, we would like to address
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions#another-clojure-solution-using-protocols).
 We can get some of the way there by allowing the implementation of an interface
 for a type to be defined with either the interface or the type. But some use
@@ -486,8 +496,8 @@ approaches that could work:
     interface implementations. This is the approach used by Rust
     ([1](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types),
     [2](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial)).
--   Carbon could support
-    [scoped conformances](https://forums.swift.org/t/scoped-conformances/37159).
+
+Alternatives to coherence are discussed in [an appendix](appendix-coherence.md).
 
 ### No novel name lookup
 
@@ -531,7 +541,8 @@ are complicated and
 
 ### Interfaces are nominal
 
-Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
+Interfaces can either be [structural](terminology.md#structural-interfaces), as
+in Go, or [nominal](terminology.md#nominal-interfaces), as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
 nominal interfaces only match if there is an explicit declaration stating that
 the interface is implemented for that specific type. Carbon will support nominal
@@ -667,3 +678,8 @@ cases.
 Lastly, runtime specialization is out of scope as an implementation strategy.
 That is, some language runtimes JIT a specialization when it is first needed,
 but it is not a goal for Carbon to support such an implementation strategy.
+
+## References
+
+-   [#24: Generics goals](https://github.com/carbon-language/carbon-lang/pull/24)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)

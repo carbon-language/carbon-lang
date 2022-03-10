@@ -27,40 +27,45 @@ class Dictionary {
 
     // Node cells are part of a "persistent data structure" and are thus
     // immutable.
-    Node& operator=(const Node&) = delete;
-    Node& operator=(Node&&) = delete;
+    auto operator=(const Node&) -> Node& = delete;
+    auto operator=(Node&&) -> Node& = delete;
   };
 
   // A forward iterator over elements of a `Node` list.
   struct Iterator {
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using value_type = typename Node::ValueType;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using difference_type = std::ptrdiff_t;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using pointer = const value_type*;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using reference = const value_type&;
+    // NOLINTNEXTLINE(readability-identifier-naming)
     using iterator_category = std::forward_iterator_tag;
 
-    Iterator(std::optional<Nonnull<Node*>> x) : p(x) {}
-    Iterator(const Iterator& iter) : p(iter.p) {}
-    Iterator& operator++() {
-      p = (*p)->next;
+    explicit Iterator(std::optional<Nonnull<Node*>> x) : p_(x) {}
+    Iterator(const Iterator& iter) : p_(iter.p_) {}
+    auto operator++() -> Iterator& {
+      p_ = (*p_)->next;
       return *this;
     }
-    Iterator operator++(int) {
+    auto operator++(int) -> Iterator {
       Iterator tmp(*this);
       operator++();
       return tmp;
     }
-    bool operator==(const Iterator& rhs) const { return p == rhs.p; }
-    bool operator!=(const Iterator& rhs) const { return p != rhs.p; }
-    const value_type& operator*() { return (*p)->curr; }
-    const value_type* operator->() { return &(*p)->curr; }
+    auto operator==(const Iterator& rhs) const -> bool { return p_ == rhs.p_; }
+    auto operator!=(const Iterator& rhs) const -> bool { return p_ != rhs.p_; }
+    auto operator*() -> const value_type& { return (*p_)->curr; }
+    auto operator->() -> const value_type* { return &(*p_)->curr; }
 
    private:
-    std::optional<Nonnull<Node*>> p;
+    std::optional<Nonnull<Node*>> p_;
   };
 
   // Create an empty dictionary.
-  explicit Dictionary(Nonnull<Arena*> arena) : arena(arena) {}
+  explicit Dictionary(Nonnull<Arena*> arena) : arena_(arena) {}
 
   // Return the value associated with the given key.
   // Time complexity: O(n) where n is the number of times
@@ -77,21 +82,21 @@ class Dictionary {
   // Associate the value v with key k in the dictionary.
   // Time complexity: O(1).
   auto Set(const K& k, const V& v) -> void {
-    head = arena->New<Node>(std::make_pair(k, v), head);
+    head_ = arena_->New<Node>(std::make_pair(k, v), head_);
   }
 
-  bool IsEmpty() { return !head; }
+  auto IsEmpty() -> bool { return !head_; }
 
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.
-  auto begin() const -> Iterator { return Iterator(head); }
+  auto begin() const -> Iterator { return Iterator(head_); }
 
   // The position one past that of the last element.
   auto end() const -> Iterator { return Iterator(std::nullopt); }
 
  private:
-  std::optional<Nonnull<Node*>> head;
-  Nonnull<Arena*> arena;
+  std::optional<Nonnull<Node*>> head_;
+  Nonnull<Arena*> arena_;
 };
 
 }  // namespace Carbon

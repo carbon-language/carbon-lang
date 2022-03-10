@@ -6,7 +6,6 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "diagnostic_emitter",
-    srcs = ["diagnostic_emitter.cpp"],
     hdrs = ["diagnostic_emitter.h"],
     deps = ["@llvm-project//llvm:Support"],
 )
@@ -23,23 +22,23 @@ cc_library(
 cc_library(
     name = "mocks",
     testonly = 1,
+    srcs = ["mocks.cpp"],
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
     ],
 )
 
 cc_test(
     name = "diagnostic_emitter_test",
+    size = "small",
     srcs = ["diagnostic_emitter_test.cpp"],
     deps = [
         ":diagnostic_emitter",
         ":mocks",
+        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
     ],
 )

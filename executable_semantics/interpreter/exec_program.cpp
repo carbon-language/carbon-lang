@@ -4,65 +4,52 @@
 
 #include "executable_semantics/interpreter/exec_program.h"
 
+#include <variant>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/tracing_flag.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/interpreter/resolve_control_flow.h"
+#include "executable_semantics/interpreter/resolve_names.h"
 #include "executable_semantics/interpreter/type_checker.h"
 
 namespace Carbon {
 
-// Adds builtins, currently only Print(). Note Print() is experimental, not
-// standardized, but is made available for printing state in tests.
-static void AddIntrinsics(
-    Nonnull<Arena*> arena,
-    std::vector<Nonnull<const Declaration*>>* declarations) {
-  SourceLocation loc("<intrinsic>", 0);
-  std::vector<TuplePattern::Field> print_fields = {TuplePattern::Field(
-      "0",
-      arena->New<BindingPattern>(
-          loc, "format_str",
-          arena->New<ExpressionPattern>(arena->New<StringTypeLiteral>(loc))))};
-  auto print_return =
-      arena->New<Return>(loc,
-                         arena->New<IntrinsicExpression>(
-                             IntrinsicExpression::IntrinsicKind::Print),
-                         false);
-  auto print = arena->New<FunctionDeclaration>(arena->New<FunctionDefinition>(
-      loc, "Print", std::vector<GenericBinding>(),
-      arena->New<TuplePattern>(loc, print_fields),
-      arena->New<ExpressionPattern>(arena->New<TupleLiteral>(loc)),
-      /*is_omitted_return_type=*/false, print_return));
-  declarations->insert(declarations->begin(), print);
-}
-
-void ExecProgram(Nonnull<Arena*> arena, AST ast) {
-  AddIntrinsics(arena, &ast.declarations);
-  if (tracing_output) {
+void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
+  if (trace) {
     llvm::outs() << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
       llvm::outs() << *decl;
     }
+  }
+  SourceLocation source_loc("<Main()>", 0);
+  ast.main_call = arena->New<CallExpression>(
+      source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
+      arena->New<TupleLiteral>(source_loc));
+  // Although name resolution is currently done once, generic programming
+  // (particularly templates) may require more passes.
+  if (trace) {
+    llvm::outs() << "********** resolving names **********\n";
+  }
+  ResolveNames(ast);
+  if (trace) {
+    llvm::outs() << "********** resolving control flow **********\n";
+  }
+  ResolveControlFlow(ast);
+  if (trace) {
     llvm::outs() << "********** type checking **********\n";
   }
-  TypeChecker type_checker(arena);
-  TypeChecker::TypeCheckContext p = type_checker.TopLevel(ast.declarations);
-  TypeEnv top = p.types;
-  Env ct_top = p.values;
-  std::vector<Nonnull<const Declaration*>> new_decls;
-  for (const auto decl : ast.declarations) {
-    new_decls.push_back(type_checker.MakeTypeChecked(decl, top, ct_top));
-  }
-  if (tracing_output) {
+  TypeChecker(arena, trace).TypeCheck(ast);
+  if (trace) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
-    for (const auto decl : new_decls) {
+    for (const auto decl : ast.declarations) {
       llvm::outs() << *decl;
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = Interpreter(arena).InterpProgram(new_decls);
+  int result = InterpProgram(ast, arena, trace);
   llvm::outs() << "result: " << result << "\n";
 }
 

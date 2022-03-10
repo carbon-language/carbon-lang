@@ -4,39 +4,41 @@
 
 #include "toolchain/lexer/string_literal.h"
 
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
+#include "toolchain/lexer/lex_helpers.h"
 
 namespace Carbon {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 struct ContentBeforeStringTerminator
-    : SimpleDiagnostic<ContentBeforeStringTerminator> {
+    : DiagnosticBase<ContentBeforeStringTerminator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Only whitespace is permitted before the closing `\"\"\"` of a "
       "multi-line string.";
 };
 
-struct UnicodeEscapeTooLarge : SimpleDiagnostic<UnicodeEscapeTooLarge> {
+struct UnicodeEscapeTooLarge : DiagnosticBase<UnicodeEscapeTooLarge> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Code point specified by `\\u{...}` escape is greater than 0x10FFFF.";
 };
 
-struct UnicodeEscapeSurrogate : SimpleDiagnostic<UnicodeEscapeSurrogate> {
+struct UnicodeEscapeSurrogate : DiagnosticBase<UnicodeEscapeSurrogate> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Code point specified by `\\u{...}` escape is a surrogate character.";
 };
 
 struct UnicodeEscapeMissingBracedDigits
-    : SimpleDiagnostic<UnicodeEscapeMissingBracedDigits> {
+    : DiagnosticBase<UnicodeEscapeMissingBracedDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Escape sequence `\\u` must be followed by a braced sequence of "
@@ -44,30 +46,30 @@ struct UnicodeEscapeMissingBracedDigits
 };
 
 struct HexadecimalEscapeMissingDigits
-    : SimpleDiagnostic<HexadecimalEscapeMissingDigits> {
+    : DiagnosticBase<HexadecimalEscapeMissingDigits> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Escape sequence `\\x` must be followed by two "
       "uppercase hexadecimal digits, for example `\\x0F`.";
 };
 
-struct DecimalEscapeSequence : SimpleDiagnostic<DecimalEscapeSequence> {
+struct DecimalEscapeSequence : DiagnosticBase<DecimalEscapeSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead of "
       "`\\0` if the next character is a digit.";
 };
 
-struct UnknownEscapeSequence {
+struct UnknownEscapeSequence : DiagnosticBase<UnknownEscapeSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
 
-  char first;
-
   auto Format() -> std::string { return llvm::formatv(Message, first).str(); }
+
+  char first;
 };
 
-struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
+struct MismatchedIndentInString : DiagnosticBase<MismatchedIndentInString> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Indentation does not match that of the closing \"\"\" in multi-line "
@@ -75,89 +77,117 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
 };
 
 struct InvalidHorizontalWhitespaceInString
-    : SimpleDiagnostic<InvalidHorizontalWhitespaceInString> {
+    : DiagnosticBase<InvalidHorizontalWhitespaceInString> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr llvm::StringLiteral Message =
       "Whitespace other than plain space must be expressed with an escape "
       "sequence in a string literal.";
 };
 
-// Find and return the opening characters of a multi-line string literal,
+static constexpr char MultiLineIndicator[] = R"(""")";
+
+// Return the number of opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
-static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  llvm::StringRef remaining = source_text;
-  if (!remaining.consume_front(R"(""")")) {
-    return llvm::StringRef();
+static auto GetMultiLineStringLiteralPrefixSize(llvm::StringRef source_text)
+    -> int {
+  if (!source_text.startswith(MultiLineIndicator)) {
+    return 0;
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  remaining = remaining.drop_until(
-      [](char c) { return c == '"' || c == '#' || c == '\n'; });
-  if (!remaining.consume_front("\n")) {
-    return llvm::StringRef();
+  auto prefix_end =
+      source_text.find_first_of("#\n\"", strlen(MultiLineIndicator));
+  if (prefix_end == llvm::StringRef::npos || source_text[prefix_end] != '\n') {
+    return 0;
   }
 
-  return source_text.take_front(remaining.begin() - source_text.begin());
+  // Include the newline on return.
+  return prefix_end + 1;
 }
 
-// If source_text begins with a string literal token, extract and return
-// information on that token.
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedStringLiteral> {
-  const char* begin = source_text.begin();
+  int64_t cursor = 0;
+  const int64_t source_text_size = source_text.size();
 
-  int hash_level = 0;
-  while (source_text.consume_front("#")) {
-    ++hash_level;
+  // Determine the number of hashes prefixing.
+  while (cursor < source_text_size && source_text[cursor] == '#') {
+    ++cursor;
   }
+  const int hash_level = cursor;
 
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
 
-  llvm::StringRef multi_line_prefix =
-      TakeMultiLineStringLiteralPrefix(source_text);
-  bool multi_line = !multi_line_prefix.empty();
+  const int multi_line_prefix_size =
+      GetMultiLineStringLiteralPrefixSize(source_text.substr(hash_level));
+  const bool multi_line = multi_line_prefix_size > 0;
   if (multi_line) {
-    source_text = source_text.drop_front(multi_line_prefix.size());
-    terminator = R"(""")";
-  } else if (!source_text.consume_front("\"")) {
+    cursor += multi_line_prefix_size;
+    terminator = MultiLineIndicator;
+  } else if (cursor < source_text_size && source_text[cursor] == '"') {
+    ++cursor;
+  } else {
     return llvm::None;
   }
+
+  const int prefix_len = cursor;
 
   // The terminator and escape sequence marker require a number of '#'s
   // matching the leading sequence of '#'s.
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  const char* content_begin = source_text.begin();
-  const char* content_end = content_begin;
-  while (!source_text.consume_front(terminator)) {
-    // Let LexError figure out how to recover from an unterminated string
-    // literal.
-    if (source_text.empty()) {
-      return llvm::None;
+  // TODO: Detect indent / dedent for multi-line string literals in order to
+  // stop parsing on dedent before a terminator is found.
+  for (; cursor < source_text_size; ++cursor) {
+    // This switch and loop structure relies on multi-character terminators and
+    // escape sequences starting with a predictable character and not containing
+    // embedded and unescaped terminators or newlines.
+    switch (source_text[cursor]) {
+      case '\\':
+        if (escape.size() == 1 ||
+            source_text.substr(cursor).startswith(escape)) {
+          cursor += escape.size();
+          // If there's either not a character following the escape, or it's a
+          // single-line string and the escaped character is a newline, we
+          // should stop here.
+          if (cursor >= source_text_size ||
+              (!multi_line && source_text[cursor] == '\n')) {
+            llvm::StringRef text = source_text.take_front(cursor);
+            return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                      hash_level, multi_line,
+                                      /*is_terminated=*/false);
+          }
+        }
+        break;
+      case '\n':
+        if (!multi_line) {
+          llvm::StringRef text = source_text.take_front(cursor);
+          return LexedStringLiteral(text, text.drop_front(prefix_len),
+                                    hash_level, multi_line,
+                                    /*is_terminated=*/false);
+        }
+        break;
+      case '\"': {
+        if (terminator.size() == 1 ||
+            source_text.substr(cursor).startswith(terminator)) {
+          llvm::StringRef text =
+              source_text.substr(0, cursor + terminator.size());
+          llvm::StringRef content =
+              source_text.substr(prefix_len, cursor - prefix_len);
+          return LexedStringLiteral(text, content, hash_level, multi_line,
+                                    /*is_terminated=*/true);
+        }
+        break;
+      }
     }
-
-    // Consume an escape sequence marker if present.
-    (void)source_text.consume_front(escape);
-
-    // Then consume one more character, either of the content or of an
-    // escape sequence. This can be a newline in a multi-line string literal.
-    // This relies on multi-character escape sequences not containing an
-    // embedded and unescaped terminator or newline.
-    if (!multi_line && source_text.startswith("\n")) {
-      return llvm::None;
-    }
-    source_text = source_text.substr(1);
-    content_end = source_text.begin();
   }
-
-  return LexedStringLiteral(
-      llvm::StringRef(begin, source_text.begin() - begin),
-      llvm::StringRef(content_begin, content_end - content_begin), hash_level,
-      multi_line);
+  // No terminator was found.
+  return LexedStringLiteral(source_text, source_text.drop_front(prefix_len),
+                            hash_level, multi_line,
+                            /*is_terminated=*/false);
 }
 
 // Given a string that contains at least one newline, find the indent (the
@@ -199,6 +229,9 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         std::string& result) -> bool {
   unsigned code_point;
+  if (!CanLexInteger(emitter, digits)) {
+    return false;
+  }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
     emitter.EmitError<UnicodeEscapeTooLarge>(digits.begin());
     return false;
@@ -232,7 +265,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  assert(!content.empty() && "should have escaped closing delimiter");
+  CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
@@ -351,8 +384,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        assert(contents.front() != ' ' &&
-               "should not have stopped at a plain space");
+        CHECK(contents.front() != ' ')
+            << "should not have stopped at a plain space";
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
@@ -388,9 +421,12 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
+  if (!is_terminated_) {
+    return "";
+  }
   llvm::StringRef indent =
-      multi_line ? CheckIndent(emitter, text, content) : llvm::StringRef();
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content, hash_level,
+      multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
+  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
                                               indent);
 }
 

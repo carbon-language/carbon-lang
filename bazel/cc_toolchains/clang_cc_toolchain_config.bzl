@@ -528,11 +528,10 @@ def _impl(ctx):
                 actions = all_compile_actions,
                 flag_groups = [flag_group(flags = [
                     # Enable libc++'s debug features.
-                    "-D_LIBCXX_DEBUG=1",
+                    "-D_LIBCPP_DEBUG=1",
                 ])],
                 with_features = [
-                    with_feature_set(features = ["dbg"]),
-                    with_feature_set(features = ["fastbuild"]),
+                    with_feature_set(not_features = ["opt"]),
                 ],
             ),
         ],

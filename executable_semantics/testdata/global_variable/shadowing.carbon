@@ -2,14 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: executable_semantics %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/shadowing.carbon:21: type error in return
-// CHECK: expected: ()
-// CHECK: actual: i32
+// RUN: %{executable_semantics} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{executable_semantics} --trace %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{executable_semantics} %s
+// CHECK: result: 0
 
 package ExecutableSemanticsTest api;
 
@@ -17,10 +15,10 @@ package ExecutableSemanticsTest api;
 
 var x: i32 = 1;
 
-fn identity(x: i32) {
+fn identity(x: i32) -> i32 {
   return x;
 }
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return identity(0);
 }

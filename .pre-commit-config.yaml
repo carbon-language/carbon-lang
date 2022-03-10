@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Update versions with:
-#   pre-commit autoupdate --freeze
+#   pre-commit autoupdate --freeze && pre-commit run -a
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 38b88246ccc552bffaaf54259d064beeee434539 # frozen: v4.0.1
+    rev: 8fe62d14e0b4d7d845a7022c5c2c3ae41bdd3f26 # frozen: v4.1.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -27,13 +27,67 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
-  - repo: https://github.com/mattlqx/pre-commit-search-and-replace
-    rev: 417c99dafb534d7517d9abc17f0293de3c915a72 # frozen: v1.0.5
-    hooks:
-      - id: search-and-replace
-        files: '\.md$'
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
+    rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
+    hooks:
+      - id: check-google-doc-style
+      - id: markdown-toc
+  - repo: local
+    hooks:
+      - id: executable-semantics-format-grammar
+        name: Format the executable_semantics grammar file
+        entry: executable_semantics/syntax/format_grammar.py
+        language: python
+        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
+        pass_filenames: false
+      - id: fix-cc-deps
+        name: Fix missing C++ deps
+        entry: scripts/fix_cc_deps.py
+        language: python
+        files: ^.*/(BUILD|[^/]+\.(h|cpp))$
+        pass_filenames: false
+
+  # Formatters should be run late so that they can re-format any prior changes.
+  - repo: https://github.com/psf/black
+    rev: fc0be6eb1e2a96091e6f64009ee5e9081bf8b6c6 # frozen: 22.1.0
+    hooks:
+      - id: black
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 1fc50313b6e8c2580c4736af57575e0b7de1501c # frozen: v13.0.0
+    hooks:
+      - id: clang-format
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: ea782651a7e32f40a3d13b76c79d5a2474ee8723 # frozen: v2.5.1
+    hooks:
+      - id: prettier
+  - repo: local
+    hooks:
+      - id: buildifier
+        name: Bazel buildifier
+        entry: scripts/run_buildifier.py
+        language: python
+        files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
+
+  # Run linters last, as formatters and other checks may fix issues.
+  - repo: local
+    hooks:
+      - id: forbid-llvm-googletest
+        name: Checks for deps on LLVM's version of GoogleTest
+        entry: scripts/forbid_llvm_googletest.py
+        language: python
+        files: ^.*/BUILD$
+        pass_filenames: false
+  - repo: https://github.com/PyCQA/flake8
+    rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
+    hooks:
+      - id: flake8
+  - repo: https://github.com/codespell-project/codespell
+    rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
+    hooks:
+      - id: codespell
+        args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
+  - repo: https://github.com/google/pre-commit-tool-hooks
+    rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:
       - id: check-copyright
         args:
@@ -43,27 +97,12 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.carbon$'
+          - '\.(carbon|ypp)$'
           - ''
           - '// '
           - ''
           - --custom_format
-          - '\.lpp$'
-          - '/*'
-          - ''
-          - '*/'
-          - --custom_format
-          - '\.ypp$'
-          - ''
-          - '// '
-          - ''
-          - --custom_format
-          - '\.l$'
-          - '/*'
-          - ''
-          - '*/'
-          - --custom_format
-          - '\.y$'
+          - '\.(l|lpp|y)$'
           - '/*'
           - ''
           - '*/'
@@ -76,46 +115,19 @@ repos:
               .*\.svg|
               .*/testdata/.*\.golden
           )$
-      - id: check-google-doc-style
-      - id: markdown-toc
-  - repo: https://github.com/codespell-project/codespell
-    rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
-    hooks:
-      - id: codespell
-        args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
-  - repo: local
-    hooks:
-      - id: executable-semantics-format-grammar
-        name: Format the executable_semantics grammar file
-        entry: executable_semantics/syntax/format_grammar.py
-        language: python
-        files: ^executable_semantics/syntax/parser.ypp$
-        pass_filenames: false
-  # Formatters should be run late so that they can re-format any prior changes.
-  - repo: https://github.com/psf/black
-    rev: 911470a610e47d9da5ea938b0887c3df62819b85 # frozen: 21.9b0
-    hooks:
-      - id: black
-  - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: a0f1c385f6a50581983008c8737ca72473ecf3ad
-    hooks:
-      - id: bazel-buildifier
-      - id: clang-format-whole-file
-        types: [c++]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 6e24ff01ab7d5e64045599b81c4cd34d6a6a7159 # frozen: v2.4.1
-    hooks:
-      - id: prettier
-  # Run linters last, as formatters and other checks may fix issues.
-  - repo: https://github.com/PyCQA/flake8
-    rev: dcd740bc0ebaf2b3d43e59a0060d157c97de13f3 # frozen: 3.9.2
-    hooks:
-      - id: flake8
+      - id: check-links
+        name: Check links in non-proposal files
+        exclude: ^proposals/.*$
+      - id: check-links
+        name: Check links in proposal files
+        args: ['--anchors-only']
+        files: ^proposals/.*$
 
 # Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.
 exclude: |
   (?x)^(
       third_party/examples/.*/carbon/.*|
+      third_party/llvm-project/.*|
       .*/fuzzer_corpus/.*
   )$

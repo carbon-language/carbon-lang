@@ -33,7 +33,7 @@ def _detect_system_clang(repository_ctx):
         return repository_ctx.path(cc)
 
     # Try looking on the path. We check for the specific versioned name and then the normal name.
-    system_clang = repository_ctx.which("clang-12")
+    system_clang = repository_ctx.which("clang-13")
     if not system_clang:
         system_clang = repository_ctx.which("clang")
         if not system_clang:

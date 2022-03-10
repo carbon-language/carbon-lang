@@ -6,4 +6,4 @@
 # https://github.com/bazelbuild/bazel.
 # TODO: Temporarily using pre-release versions due to a python3 fix. This can
 # switch to stable versions post-release.
-USE_BAZEL_VERSION=5.0.0-pre.20210810.4
+USE_BAZEL_VERSION=5.0.0-pre.20211011.2

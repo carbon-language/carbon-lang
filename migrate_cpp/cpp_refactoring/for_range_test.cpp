@@ -6,7 +6,7 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher_test_base.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 class ForRangeTest : public MatcherTestBase<ForRangeFactory> {};
@@ -49,4 +49,4 @@ TEST_F(ForRangeTest, NoSpace) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

@@ -1,4 +1,4 @@
-# Carbon generics overview
+# Generics: Overview
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -27,13 +27,16 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Generic type parameters](#generic-type-parameters)
     -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
     -   [Combining interfaces](#combining-interfaces)
-        -   [Structural interfaces](#structural-interfaces)
+        -   [Named constraints](#named-constraints)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
     -   [Interface input and output types](#interface-input-and-output-types)
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Constraints](#constraints)
+    -   [Parameterized impls](#parameterized-impls)
 -   [Future work](#future-work)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -78,14 +81,15 @@ Summary of how Carbon generics work:
 -   A function with a generic type parameter can have the same function body as
     an unparameterized one. Functions can freely mix generic, template, and
     regular parameters.
--   Interfaces can require other interfaces be implemented, or
-    [extend](terminology.md#extending-an-interface) them.
+-   Interfaces can require other interfaces be implemented.
+-   Interfaces can [extend](terminology.md#extending-an-interface) required
+    interfaces.
 -   The `&` operation on type-of-types allows you conveniently combine
     interfaces. It gives you all the names that don't conflict.
 -   You may also declare a new type-of-type directly using
-    ["structural interfaces"](terminology.md#structural-interfaces). Structural
-    interfaces can express requirements that multiple interfaces be implemented,
-    and give you control over how name conflicts are handled.
+    ["named constraints"](terminology.md#named-constraints). Named constraints
+    can express requirements that multiple interfaces be implemented, and give
+    you control over how name conflicts are handled.
 -   Alternatively, you may resolve name conflicts by using a qualified syntax to
     directly call a function from a specific interface.
 
@@ -96,7 +100,7 @@ instead of making near-duplicates for very similar situations, much like C++
 templates. For example, instead of having one function per type-you-can-sort:
 
 ```
-fn SortInt32Vector(a: Vector(Int32)*) { ... }
+fn SortInt32Vector(a: Vector(i32)*) { ... }
 fn SortStringVector(a: Vector(String)*) { ... }
 ...
 ```
@@ -108,9 +112,10 @@ elements:
 fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `!` to indicate that the parameter named `T` is generic.
+The syntax above adds a `!` to indicate that the parameter named `T` is generic
+and the caller will have to provide a value known at compile time.
 
-Given an `Int32` vector `iv`, `SortVector(Int32, &iv)` is equivalent to
+Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
 `SortVector(String, &sv)` is equivalent to `SortStringVector(&sv)`. Thus, we can
 sort any vector containing comparable elements using this single `SortVector`
@@ -152,7 +157,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](that: Self) -> Bool;
+  fn Less[me: Self](rhs: Self) -> Bool;
 }
 ```
 
@@ -166,8 +171,7 @@ do some checking given a function definition, but more checking of the
 definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
-Note: The doc on [Generics terminology](terminology.md) goes into more detail
-about the
+Note: [Generics terminology](terminology.md) goes into more detail about the
 [differences between generics and templates](terminology.md#generic-versus-template-parameters).
 
 ### Implementing interfaces
@@ -193,8 +197,8 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // means all names of `Printable`, such as `F`, are included as a part
-  // of the `Song` API.
+  // without the keyword `external` means all names of `Printable`, such
+  // as `F`, are included as a part of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
     fn Print[me: Song]() { ... }
@@ -206,19 +210,23 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](that: Self) -> Bool { ... }
+  fn Less[me: Self](rhs: Self) -> Bool { ... }
 }
 ```
 
-Implementations may be defined within the class definition itself or externally.
-External implementations may be defined in the library defining the interface.
+Implementations may be defined within the class definition itself or
+out-of-line. Implementations may optionally be start with the `external` keyword
+to say the members of the interface are not unqualified members of the class.
+Out-of-line implementations must be external. External implementations may be
+defined in the library defining either the class or the interface.
 
 #### Qualified and unqualified access
 
-The methods of an interface implemented within the class definition may be
-called with the unqualified syntax. All methods of implemented interfaces may be
-called with the qualified syntax, whether they are defined internally or
-externally.
+The methods of an interface implemented internally within the class definition
+may be called with the ordinary unqualified member syntax. Methods of all
+implemented interfaces may be called with the
+[qualified member syntax](terminology.md#qualified-and-unqualified-member-names),
+whether they are defined internally or externally.
 
 ```
 var song: Song;
@@ -240,17 +248,22 @@ specific type value assigned to `T` is not known when type checking the
 `SortVector` function. Instead it is the constraints on `T` that let the
 compiler know what operations may be performed on values of type `T`. Those
 constraints are represented by the type of `T`, a
-[**_type-of-type_**](terminology.md#type-constraints).
+[**_type-of-type_**](terminology.md#type-of-type).
 
 In general, a type-of-type describes the capabilities of a type, while a type
-defines specific implementations of those capabilities.
+defines specific implementations of those capabilities. An interface, like
+`Comparable`, may be used as a type-of-type. In that case, the constraint on the
+type is that it must implement the interface `Comparable`.
 
-An interface, like `Comparable`, may be used as a type-of-type. In that case,
-the constraint on the type is that it must implement the interface `Comparable`.
 A type-of-type also defines a set of names and a mapping to corresponding
-qualified names. You may combine interfaces into new type-of-types using
+qualified names. Those names are used for
+[unqualfied member lookup](terminology.md#qualified-and-unqualified-member-names)
+in scopes where the value of the type is not known, such as when the type is a
+generic parameter.
+
+You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
-[structural interfaces](#structural-interfaces).
+[named constraints](#named-constraints).
 
 ### Generic functions
 
@@ -279,7 +292,7 @@ SortVectorDeduced(&anIntVector);
 SortVectorDeduced(&aStringVector);
 ```
 
-and the compiler deduces that the `T` argument should be set to `Int32` or
+and the compiler deduces that the `T` argument should be set to `i32` or
 `String` from the type of the argument.
 
 Deduced arguments are always determined from the call and its explicit
@@ -326,7 +339,7 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](that: Self) -> Bool;
+  fn IsEqual[me: Self](rhs: Self) -> Bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
@@ -337,33 +350,33 @@ interface Iterable {
 ```
 
 The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
-another interface. If interface `Child` extends interface `Parent`, `Parent`'s
-interface is both required and all its methods are included in `Child`'s
+another interface. If interface `Derived` extends interface `Base`, `Base`'s
+interface is both required and all its methods are included in `Derived`'s
 interface.
 
 ```
 // `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[me: Self]() -> UInt64;
+  fn Hash[me: Self]() -> u64;
 }
 ```
 
-A type may implement the parent interface implicitly by implementing all the
-methods in the child implementation.
+A type may implement the base interface implicitly by implementing all the
+methods in the implementation of the derived interface.
 
 ```
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[me: Key](that: Key) -> Bool { ... }
-    fn Hash[me: Key]() -> UInt64 { ... }
+    fn IsEqual[me: Key](rhs: Key) -> Bool { ... }
+    fn Hash[me: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -379,17 +392,17 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[me: Self]() -> (Int, Int);
+  fn GetCenter[me: Self]() -> (i32, i32);
   // Draw the object to the screen
   fn Draw[me: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr me: Self*](player: Int);
+  fn SetWinner[addr me: Self*](player: i32);
   // Indicate the game was a draw
   fn Draw[addr me: Self*]();
 }
 
-fn F[T:! Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
+fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
   game_state->SetWinner(1);
   return game_state->Center();
 }
@@ -405,16 +418,16 @@ fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
 }
 ```
 
-#### Structural interfaces
+#### Named constraints
 
 You may also declare a new type-of-type directly using
-["structural interfaces"](terminology.md#structural-interfaces). Structural
-interfaces can express requirements that multiple interfaces be implemented, and
-give you control over how name conflicts are handled. Structural interfaces have
-other applications and capabilities not covered here.
+["named constraints"](terminology.md#named-constraints). Named constraints can
+express requirements that multiple interfaces be implemented, and give you
+control over how name conflicts are handled. Named constraints have other
+applications and capabilities not covered here.
 
 ```
-structural interface Combined {
+constraint Combined {
   impl as Renderable;
   impl as EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
@@ -430,7 +443,7 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
   }
   game_state->Draw_Renderable();
   // Can still use qualified syntax for names
-  // not defined in the structural interface
+  // not defined in the named constraint
   return game_state->(Renderable.Center)();
 }
 ```
@@ -439,7 +452,10 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 
 Inside a generic function, the API of a type argument is
 [erased](terminology.md#type-erasure) except for the names defined in the
-type-of-type.
+type-of-type. An equivalent model is to say an
+[archetype](terminology.md#archetype) is used for type checking and name lookup
+when the actual type is not known in that scope. The archetype has members
+dictated by the type-of-type.
 
 For example: If there were a class `CDCover` defined this way:
 
@@ -459,21 +475,17 @@ fn PrintIt[T:! Printable](p: T*) {
 }
 ```
 
-At that point, two erasures occur:
-
--   All of `CDCover`'s API _except_ `Printable` is erased during the cast from
-    `CDCover` to `Printable`, which is the [facet](terminology.md#facets) type
-    `CDCover as Printable`.
--   When you call `PrintIt`, the type connection to `CDCover` is lost. Outside
-    of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
-    Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
+Inside `PrintIt`, `T` is an archetype with the API of `Printable`. A call to
+`PrintIt` with a value of type `CDCover` erases everything except the members or
+`Printable`. This includes the type connection to `CDCover`, so it is illegal to
+cast from `T` to `CDCover`.
 
 ### Adapting types
 
-Carbon has a mechanism called "adapting types" to create new types that are
-compatible with existing types but with different interface implementations.
-This could be used to add or replace implementations, or define implementations
-for reuse.
+Carbon has a mechanism called [adapting types](terminology.md#adapting-a-type))
+to create new types that are [compatible](terminology.md#compatible-types) with
+existing types but with different interface implementations. This could be used
+to add or replace implementations, or define implementations for reuse.
 
 In this example, we have multiple ways of sorting a collection of `Song` values.
 
@@ -560,13 +572,59 @@ fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
 fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
 ```
 
+### Constraints
+
+Type-of-types can be further constrained using a `where` clause:
+
+```
+fn FindFirstPrime[T:! Container where .Element == i32]
+    (c: T, i: i32) -> Optional(i32) {
+  // The elements of `c` have type `T.Element`, which is `i32`.
+  ...
+}
+
+fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+  // The type of the elements of `c` is not known, but we do know
+  // that type satisfies the `Printable` interface.
+  ...
+}
+```
+
+Constraints limit the types that the generic function can operate on, but
+increase the knowledge that may be used in the body of the function to operate
+on values of those types.
+
+Constraints are also used when implementing an interface to specify the values
+of associated types (and other associated constants).
+
+```
+class Vector(T:! Movable) {
+  impl as Stack where .ElementType = T { ... }
+}
+```
+
+### Parameterized impls
+
+Implementations can be parameterized to apply to multiple types. Those
+parameters can have constraints to restrict when the implementation applies.
+When multiple implementations apply, there is a rule to pick which one is
+considered the most specific:
+
+-   All type parameters in each `impl` declaration are replaced with question
+    marks `?`. This is called the type structure of the `impl` declaration.
+-   Given two type structures, find the first difference when read from
+    left-to-right. The one with a `?` is less specific, the one with a concrete
+    type name in that position is more specific.
+-   If there is more than one `impl` declaration with the most specific type
+    structure, pick the one listed first in the priority ordering.
+
+To ensure [coherence](goals.md#coherence), an `impl` may only be declared in a
+library defining some name from its type structure. If a library defines
+multiple implementations with the same type structure, they must be listed in
+priority order in a prioritization block.
+
 ## Future work
 
--   Other kinds of constraints will be finalized.
--   Implementations can be parameterized to apply to multiple types. These
-    implementations would be restricted to various conditions are true for the
-    parameters. When there are two implementations that can apply, there is a
-    specialization rule that picks the more specific one.
 -   Support functions should have a way to accept types that types that vary at
     runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
@@ -577,3 +635,12 @@ fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
     interfaces and other ways to reuse code across implementations.
 -   There should be a way to define generic associated and higher-ranked/kinded
     types.
+
+## References
+
+-   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
+-   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+-   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+-   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)

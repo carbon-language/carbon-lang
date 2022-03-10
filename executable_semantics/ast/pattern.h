@@ -10,10 +10,17 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/ast_rtti.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
+
+class Value;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -23,46 +30,68 @@ namespace Carbon {
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Pattern {
+class Pattern : public AstNode {
  public:
-  enum class Kind {
-    AutoPattern,
-    BindingPattern,
-    TuplePattern,
-    AlternativePattern,
-    ExpressionPattern,
-  };
-
   Pattern(const Pattern&) = delete;
-  Pattern& operator=(const Pattern&) = delete;
+  auto operator=(const Pattern&) -> Pattern& = delete;
+
+  ~Pattern() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromPattern(node->kind());
+  }
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
+  auto kind() const -> PatternKind {
+    return static_cast<PatternKind>(root_kind());
+  }
 
-  auto SourceLoc() const -> SourceLocation { return loc; }
+  // The static type of this pattern. Cannot be called before typechecking.
+  auto static_type() const -> const Value& { return **static_type_; }
 
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  // Sets the static type of this expression. Can only be called once, during
+  // typechecking.
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
+
+  // The value of this pattern. Cannot be called before typechecking.
+  // TODO rename to avoid confusion with BindingPattern::constant_value
+  auto value() const -> const Value& { return **value_; }
+
+  // Sets the value of this pattern. Can only be called once, during
+  // typechecking.
+  void set_value(Nonnull<const Value*> value) { value_ = value; }
+
+  // Returns whether the value has been set. Should only be called
+  // during typechecking: before typechecking it's guaranteed to be false,
+  // and after typechecking it's guaranteed to be true.
+  auto has_value() const -> bool { return value_.has_value(); }
 
  protected:
   // Constructs a Pattern representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
+  // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
+  Pattern(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
-  const Kind tag;
-  SourceLocation loc;
+  std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> value_;
 };
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
-  explicit AutoPattern(SourceLocation loc) : Pattern(Kind::AutoPattern, loc) {}
+  explicit AutoPattern(SourceLocation source_loc)
+      : Pattern(AstNodeKind::AutoPattern, source_loc) {}
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::AutoPattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAutoPattern(node->kind());
   }
 };
 
@@ -70,71 +99,71 @@ class AutoPattern : public Pattern {
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  BindingPattern(SourceLocation loc, std::optional<std::string> name,
-                 Nonnull<const Pattern*> type)
-      : Pattern(Kind::BindingPattern, loc), name(std::move(name)), type(type) {}
+  using ImplementsCarbonValueNode = void;
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::BindingPattern;
+  BindingPattern(SourceLocation source_loc, std::string name,
+                 Nonnull<Pattern*> type)
+      : Pattern(AstNodeKind::BindingPattern, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBindingPattern(node->kind());
   }
 
-  // The name this pattern binds, if any.
-  auto Name() const -> const std::optional<std::string>& { return name; }
+  // The name this pattern binds, if any. If equal to AnonymousName, indicates
+  // that this BindingPattern does not bind a name, which in turn means it
+  // should not be used as a ValueNode.
+  auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
-  auto Type() const -> Nonnull<const Pattern*> { return type; }
+  auto type() const -> const Pattern& { return *type_; }
+  auto type() -> Pattern& { return *type_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
-  std::optional<std::string> name;
-  Nonnull<const Pattern*> type;
+  std::string name_;
+  Nonnull<Pattern*> type_;
 };
 
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
-  // Represents a portion of a tuple pattern corresponding to a single field.
-  struct Field {
-    Field(std::string name, Nonnull<const Pattern*> pattern)
-        : name(std::move(name)), pattern(pattern) {}
+  TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
+      : Pattern(AstNodeKind::TuplePattern, source_loc),
+        fields_(std::move(fields)) {}
 
-    // The field name. Cannot be empty
-    std::string name;
-
-    // The pattern the field must match.
-    Nonnull<const Pattern*> pattern;
-  };
-
-  TuplePattern(SourceLocation loc, std::vector<Field> fields)
-      : Pattern(Kind::TuplePattern, loc), fields(std::move(fields)) {}
-
-  // Converts tuple_literal to a TuplePattern, by wrapping each field in an
-  // ExpressionPattern.
-  //
-  // REQUIRES: tuple_literal->Tag() == Expression::Kind::TupleLiteral
-  TuplePattern(Nonnull<Arena*> arena, Nonnull<const Expression*> tuple_literal);
-
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::TuplePattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromTuplePattern(node->kind());
   }
 
-  auto Fields() const -> const std::vector<Field>& { return fields; }
+  auto fields() const -> llvm::ArrayRef<Nonnull<const Pattern*>> {
+    return fields_;
+  }
+  auto fields() -> llvm::ArrayRef<Nonnull<Pattern*>> { return fields_; }
 
  private:
-  std::vector<Field> fields;
+  std::vector<Nonnull<Pattern*>> fields_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
-auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const Pattern*>;
+    -> Nonnull<Pattern*>;
 
 // Converts paren_contents to a TuplePattern, interpreting the parentheses as
 // forming a tuple.
-auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
+                                   SourceLocation source_loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const TuplePattern*>;
+    -> Nonnull<TuplePattern*>;
 
 // Converts `contents` to ParenContents<Pattern> by replacing each Expression
 // with an ExpressionPattern.
@@ -148,51 +177,56 @@ class AlternativePattern : public Pattern {
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
-  AlternativePattern(SourceLocation loc, Nonnull<const Expression*> choice_type,
+  AlternativePattern(SourceLocation source_loc,
+                     Nonnull<Expression*> choice_type,
                      std::string alternative_name,
-                     Nonnull<const TuplePattern*> arguments)
-      : Pattern(Kind::AlternativePattern, loc),
-        choice_type(choice_type),
-        alternative_name(std::move(alternative_name)),
-        arguments(arguments) {}
+                     Nonnull<TuplePattern*> arguments)
+      : Pattern(AstNodeKind::AlternativePattern, source_loc),
+        choice_type_(choice_type),
+        alternative_name_(std::move(alternative_name)),
+        arguments_(arguments) {}
 
   // Constructs an AlternativePattern that matches the alternative specified
   // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(SourceLocation loc, Nonnull<const Expression*> alternative,
-                     Nonnull<const TuplePattern*> arguments);
+  AlternativePattern(SourceLocation source_loc,
+                     Nonnull<Expression*> alternative,
+                     Nonnull<TuplePattern*> arguments);
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::AlternativePattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAlternativePattern(node->kind());
   }
 
-  auto ChoiceType() const -> Nonnull<const Expression*> { return choice_type; }
-  auto AlternativeName() const -> const std::string& {
-    return alternative_name;
+  auto choice_type() const -> const Expression& { return *choice_type_; }
+  auto choice_type() -> Expression& { return *choice_type_; }
+  auto alternative_name() const -> const std::string& {
+    return alternative_name_;
   }
-  auto Arguments() const -> Nonnull<const TuplePattern*> { return arguments; }
+  auto arguments() const -> const TuplePattern& { return *arguments_; }
+  auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
-  Nonnull<const Expression*> choice_type;
-  std::string alternative_name;
-  Nonnull<const TuplePattern*> arguments;
+  Nonnull<Expression*> choice_type_;
+  std::string alternative_name_;
+  Nonnull<TuplePattern*> arguments_;
 };
 
 // A pattern that matches a value if it is equal to the value of a given
 // expression.
 class ExpressionPattern : public Pattern {
  public:
-  ExpressionPattern(Nonnull<const Expression*> expression)
-      : Pattern(Kind::ExpressionPattern, expression->SourceLoc()),
-        expression(expression) {}
+  explicit ExpressionPattern(Nonnull<Expression*> expression)
+      : Pattern(AstNodeKind::ExpressionPattern, expression->source_loc()),
+        expression_(expression) {}
 
-  static auto classof(const Pattern* pattern) -> bool {
-    return pattern->Tag() == Kind::ExpressionPattern;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromExpressionPattern(node->kind());
   }
 
-  auto Expression() const -> Nonnull<const Expression*> { return expression; }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
 
  private:
-  Nonnull<const Carbon::Expression*> expression;
+  Nonnull<Expression*> expression_;
 };
 
 }  // namespace Carbon

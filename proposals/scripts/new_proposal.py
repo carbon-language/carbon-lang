@@ -200,6 +200,8 @@ def main() -> None:
             "Proposals",
             "--reviewer",
             "carbon-language/carbon-leads",
+            "--repo",
+            "carbon-language/carbon-lang",
             "--title",
             title,
             "--body",

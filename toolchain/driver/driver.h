@@ -23,12 +23,12 @@ class Driver {
  public:
   // Default constructed driver uses stderr for all error and informational
   // output.
-  Driver() : output_stream(llvm::outs()), error_stream(llvm::errs()) {}
+  Driver() : output_stream_(llvm::outs()), error_stream_(llvm::errs()) {}
 
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
   Driver(llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream)
-      : output_stream(output_stream), error_stream(error_stream) {}
+      : output_stream_(output_stream), error_stream_(error_stream) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -71,8 +71,8 @@ class Driver {
   auto ReportExtraArgs(llvm::StringRef subcommand_text,
                        llvm::ArrayRef<llvm::StringRef> args) -> void;
 
-  llvm::raw_ostream& output_stream;
-  llvm::raw_ostream& error_stream;
+  llvm::raw_ostream& output_stream_;
+  llvm::raw_ostream& error_stream_;
 };
 
 }  // namespace Carbon

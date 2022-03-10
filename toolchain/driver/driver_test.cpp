@@ -4,40 +4,28 @@
 
 #include "toolchain/driver/driver.h"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::ElementsAre;
-using ::testing::Eq;
 using ::testing::HasSubstr;
-using ::testing::NotNull;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 /// A raw_ostream that makes it easy to repeatedly check streamed output.
 class RawTestOstream : public llvm::raw_ostream {
-  std::string buffer;
-
-  void write_impl(const char* ptr, size_t size) override {
-    buffer.append(ptr, ptr + size);
-  }
-
-  [[nodiscard]] auto current_pos() const -> uint64_t override {
-    return buffer.size();
-  }
-
  public:
   ~RawTestOstream() override {
     flush();
-    if (!buffer.empty()) {
-      ADD_FAILURE() << "Unchecked output:\n" << buffer;
+    if (!buffer_.empty()) {
+      ADD_FAILURE() << "Unchecked output:\n" << buffer_;
     }
   }
 
@@ -45,10 +33,21 @@ class RawTestOstream : public llvm::raw_ostream {
   /// back to empty.
   auto TakeStr() -> std::string {
     flush();
-    std::string result = std::move(buffer);
-    buffer.clear();
+    std::string result = std::move(buffer_);
+    buffer_.clear();
     return result;
   }
+
+ private:
+  void write_impl(const char* ptr, size_t size) override {
+    buffer_.append(ptr, ptr + size);
+  }
+
+  [[nodiscard]] auto current_pos() const -> uint64_t override {
+    return buffer_.size();
+  }
+
+  std::string buffer_;
 };
 
 TEST(DriverTest, FullCommandErrors) {
@@ -235,4 +234,4 @@ TEST(DriverTest, DumpParseTree) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

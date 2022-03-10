@@ -17,91 +17,77 @@ namespace Carbon {
 
 using llvm::cast;
 
+Pattern::~Pattern() = default;
+
 void Pattern::Print(llvm::raw_ostream& out) const {
-  switch (Tag()) {
-    case Kind::AutoPattern:
+  switch (kind()) {
+    case PatternKind::AutoPattern:
       out << "auto";
       break;
-    case Kind::BindingPattern: {
+    case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*this);
-      if (binding.Name().has_value()) {
-        out << *binding.Name();
-      } else {
-        out << "_";
-      }
-      out << ": " << *binding.Type();
+      out << binding.name() << ": " << binding.type();
       break;
     }
-    case Kind::TuplePattern: {
+    case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";
       llvm::ListSeparator sep;
-      for (const TuplePattern::Field& field : tuple.Fields()) {
-        out << sep << field.name << " = " << *field.pattern;
+      for (Nonnull<const Pattern*> field : tuple.fields()) {
+        out << sep << *field;
       }
       out << ")";
       break;
     }
-    case Kind::AlternativePattern: {
+    case PatternKind::AlternativePattern: {
       const auto& alternative = cast<AlternativePattern>(*this);
-      out << *alternative.ChoiceType() << "." << alternative.AlternativeName()
-          << *alternative.Arguments();
+      out << alternative.choice_type() << "." << alternative.alternative_name()
+          << alternative.arguments();
       break;
     }
-    case Kind::ExpressionPattern:
-      out << *cast<ExpressionPattern>(*this).Expression();
+    case PatternKind::ExpressionPattern:
+      out << cast<ExpressionPattern>(*this).expression();
       break;
   }
 }
 
-TuplePattern::TuplePattern(Nonnull<Arena*> arena,
-                           Nonnull<const Expression*> tuple_literal)
-    : Pattern(Kind::TuplePattern, tuple_literal->SourceLoc()) {
-  const auto& tuple = cast<TupleLiteral>(*tuple_literal);
-  for (const FieldInitializer& init : tuple.Fields()) {
-    fields.push_back(
-        Field(init.name, arena->New<ExpressionPattern>(init.expression)));
-  }
-}
-
-auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const Pattern*> {
-  std::optional<Nonnull<const Pattern*>> single_term =
-      paren_contents.SingleTerm();
+    -> Nonnull<Pattern*> {
+  std::optional<Nonnull<Pattern*>> single_term = paren_contents.SingleTerm();
   if (single_term.has_value()) {
     return *single_term;
   } else {
-    return TuplePatternFromParenContents(arena, loc, paren_contents);
+    return TuplePatternFromParenContents(arena, source_loc, paren_contents);
   }
 }
 
-auto TuplePatternFromParenContents(Nonnull<Arena*> arena, SourceLocation loc,
+auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
+                                   SourceLocation source_loc,
                                    const ParenContents<Pattern>& paren_contents)
-    -> Nonnull<const TuplePattern*> {
-  return arena->New<TuplePattern>(
-      loc, paren_contents.TupleElements<TuplePattern::Field>(loc));
+    -> Nonnull<TuplePattern*> {
+  return arena->New<TuplePattern>(source_loc, paren_contents.elements);
 }
 
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-static const FieldAccessExpression& RequireFieldAccess(
-    Nonnull<const Expression*> alternative) {
-  if (alternative->Tag() != Expression::Kind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->SourceLoc())
+static auto RequireFieldAccess(Nonnull<Expression*> alternative)
+    -> FieldAccessExpression& {
+  if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
+    FATAL_PROGRAM_ERROR(alternative->source_loc())
         << "Alternative pattern must have the form of a field access.";
   }
   return cast<FieldAccessExpression>(*alternative);
 }
 
-AlternativePattern::AlternativePattern(SourceLocation loc,
-                                       Nonnull<const Expression*> alternative,
-                                       Nonnull<const TuplePattern*> arguments)
-    : Pattern(Kind::AlternativePattern, loc),
-      choice_type(RequireFieldAccess(alternative).Aggregate()),
-      alternative_name(RequireFieldAccess(alternative).Field()),
-      arguments(arguments) {}
+AlternativePattern::AlternativePattern(SourceLocation source_loc,
+                                       Nonnull<Expression*> alternative,
+                                       Nonnull<TuplePattern*> arguments)
+    : Pattern(AstNodeKind::AlternativePattern, source_loc),
+      choice_type_(&RequireFieldAccess(alternative).aggregate()),
+      alternative_name_(RequireFieldAccess(alternative).field()),
+      arguments_(arguments) {}
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)
@@ -109,9 +95,7 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
   ParenContents<Pattern> result = {
       .elements = {}, .has_trailing_comma = contents.has_trailing_comma};
   for (const auto& element : contents.elements) {
-    result.elements.push_back(
-        {.name = element.name,
-         .term = arena->New<ExpressionPattern>(element.term)});
+    result.elements.push_back(arena->New<ExpressionPattern>(element));
   }
   return result;
 }

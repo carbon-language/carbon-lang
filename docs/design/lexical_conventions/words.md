@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Keywords](#keywords)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -25,7 +26,58 @@ The exact lexical form of words has not yet been settled. However, Carbon will
 follow lexical conventions for identifiers based on
 [Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
 the precise rules are decided; see the
-[Unicode source files](/proposals/p0142.md#characters-in-identifiers) proposal.
+[Unicode source files](/proposals/p0142.md#characters-in-identifiers-and-whitespace)
+proposal.
+
+## Keywords
+
+The following words are interpreted as keywords:
+
+-   `abstract`
+-   `addr`
+-   `alias`
+-   `and`
+-   `api`
+-   `as`
+-   `auto`
+-   `base`
+-   `break`
+-   `case`
+-   `class`
+-   `constraint`
+-   `continue`
+-   `default`
+-   `else`
+-   `extends`
+-   `external`
+-   `final`
+-   `fn`
+-   `for`
+-   `friend`
+-   `if`
+-   `impl`
+-   `import`
+-   `interface`
+-   `is`
+-   `let`
+-   `library`
+-   `match`
+-   `namespace`
+-   `not`
+-   `observe`
+-   `or`
+-   `override`
+-   `package`
+-   `partial`
+-   `private`
+-   `protected`
+-   `return`
+-   `returned`
+-   `then`
+-   `var`
+-   `virtual`
+-   `where`
+-   `while`
 
 ## Alternatives considered
 

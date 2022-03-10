@@ -7,6 +7,33 @@ load("@mypy_integration//:mypy.bzl", "mypy_test")
 package(default_visibility = ["//executable_semantics:__pkg__"])
 
 cc_library(
+    name = "bison_wrap",
+    hdrs = ["bison_wrap.h"],
+    deps = ["//common:check"],
+)
+
+cc_test(
+    name = "parse_test",
+    srcs = ["parse_test.cpp"],
+    deps = [
+        ":syntax",
+        "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "parse_test_matchers",
+    testonly = 1,
+    srcs = ["parse_test_matchers_internal.h"],
+    hdrs = ["parse_test_matchers.h"],
+    deps = [
+        ":syntax",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
@@ -22,11 +49,13 @@ cc_library(
     ],
     # Disable warnings for generated code.
     copts = [
+        "-Wno-implicit-fallthrough",  # Needed to make yyinput() code compile.
         "-Wno-unneeded-internal-declaration",
         "-Wno-unused-function",
         "-Wno-writable-strings",
     ],
     deps = [
+        ":bison_wrap",
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
@@ -34,9 +63,11 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",
+        "//executable_semantics/ast:pattern",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
-        "//executable_semantics/common:tracing_flag",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -91,4 +122,15 @@ mypy_test(
     name = "format_grammar_mypy_test",
     include_imports = True,
     deps = [":format_grammar_lib"],
+)
+
+cc_test(
+    name = "unimplemented_example_test",
+    srcs = ["unimplemented_example_test.cpp"],
+    deps = [
+        ":parse_test_matchers",
+        ":syntax",
+        "//executable_semantics/ast:ast_test_matchers",
+        "@com_google_googletest//:gtest_main",
+    ],
 )

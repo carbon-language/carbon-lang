@@ -1,0 +1,14 @@
+# RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
+
+ "as space
+ trimmed
+
+ specific
+
+ escaped	\
+ none"
+
+# FIXME: The string below should actually be
+#   "as space trimmed\nspecific\nescaped\tnone", but the parser currently has
+#   a bug when parsing multiline quoted strings.
+# CHECK: !!str "as space\n trimmed\n specific\n escaped\t none"

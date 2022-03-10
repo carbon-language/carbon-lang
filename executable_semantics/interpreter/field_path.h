@@ -9,9 +9,12 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/static_scope.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
+
+class Witness;
 
 // Given some initial Value, a FieldPath identifies a sub-Value within it,
 // in much the same way that a file path identifies a file within some
@@ -29,8 +32,33 @@ class FieldPath {
   // Constructs an empty FieldPath.
   FieldPath() = default;
 
+  // A single component of the FieldPath, which is typically the name
+  // of a field. However, inside a generic, when there is a field
+  // access on something of a generic type, e.g., `T`, then we also
+  // need `witness`, a pointer to the witness table containing that field.
+  class Component {
+   public:
+    explicit Component(std::string name) : name_(std::move(name)) {}
+    Component(std::string name, std::optional<Nonnull<const Witness*>> witness)
+        : name_(std::move(name)), witness_(witness) {}
+
+    auto name() const -> const std::string& { return name_; }
+
+    auto witness() const -> std::optional<Nonnull<const Witness*>> {
+      return witness_;
+    }
+
+    void Print(llvm::raw_ostream& out) const { out << name_; }
+
+   private:
+    std::string name_;
+    std::optional<Nonnull<const Witness*>> witness_;
+  };
+
   // Constructs a FieldPath consisting of a single step.
-  explicit FieldPath(std::string name) : components({std::move(name)}) {}
+  explicit FieldPath(std::string name)
+      : components_({Component(std::move(name))}) {}
+  explicit FieldPath(const Component& f) : components_({f}) {}
 
   FieldPath(const FieldPath&) = default;
   FieldPath(FieldPath&&) = default;
@@ -38,15 +66,15 @@ class FieldPath {
   auto operator=(FieldPath&&) -> FieldPath& = default;
 
   // Returns whether *this is empty.
-  auto IsEmpty() const -> bool { return components.empty(); }
+  auto IsEmpty() const -> bool { return components_.empty(); }
 
   // Appends `name` to the end of *this.
   auto Append(std::string name) -> void {
-    components.push_back(std::move(name));
+    components_.push_back(Component(std::move(name)));
   }
 
   void Print(llvm::raw_ostream& out) const {
-    for (const std::string& component : components) {
+    for (const Component& component : components_) {
       out << "." << component;
     }
   }
@@ -58,7 +86,7 @@ class FieldPath {
   // another Value, so its implementation details are tied to the implementation
   // details of Value.
   friend class Value;
-  std::vector<std::string> components;
+  std::vector<Component> components_;
 };
 
 }  // namespace Carbon

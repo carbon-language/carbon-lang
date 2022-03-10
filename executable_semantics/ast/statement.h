@@ -5,247 +5,306 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 #define EXECUTABLE_SEMANTICS_AST_STATEMENT_H_
 
+#include <utility>
 #include <vector>
 
 #include "common/ostream.h"
+#include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-class Statement {
+class FunctionDeclaration;
+
+class Statement : public AstNode {
  public:
-  enum class Kind {
-    ExpressionStatement,
-    Assign,
-    VariableDefinition,
-    If,
-    Return,
-    Sequence,
-    Block,
-    While,
-    Break,
-    Continue,
-    Match,
-    Continuation,  // Create a first-class continuation.
-    Run,           // Run a continuation to the next await or until it finishes.
-    Await,         // Pause execution of the continuation.
-  };
+  ~Statement() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, out); }
+  void PrintDepth(int depth, llvm::raw_ostream& out) const;
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromStatement(node->kind());
+  }
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
-  auto Tag() const -> Kind { return tag; }
-
-  auto SourceLoc() const -> SourceLocation { return loc; }
-
-  void Print(llvm::raw_ostream& out) const { PrintDepth(-1, out); }
-  void PrintDepth(int depth, llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  auto kind() const -> StatementKind {
+    return static_cast<StatementKind>(root_kind());
+  }
 
  protected:
-  // Constructs an Statement representing syntax at the given line number.
-  // `tag` must be the enumerator corresponding to the most-derived type being
-  // constructed.
-  Statement(Kind tag, SourceLocation loc) : tag(tag), loc(loc) {}
-
- private:
-  const Kind tag;
-  SourceLocation loc;
-};
-
-class ExpressionStatement : public Statement {
- public:
-  ExpressionStatement(SourceLocation loc, Nonnull<const Expression*> exp)
-      : Statement(Kind::ExpressionStatement, loc), exp(exp) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::ExpressionStatement;
-  }
-
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-
- private:
-  Nonnull<const Expression*> exp;
-};
-
-class Assign : public Statement {
- public:
-  Assign(SourceLocation loc, Nonnull<const Expression*> lhs,
-         Nonnull<const Expression*> rhs)
-      : Statement(Kind::Assign, loc), lhs(lhs), rhs(rhs) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Assign;
-  }
-
-  auto Lhs() const -> Nonnull<const Expression*> { return lhs; }
-  auto Rhs() const -> Nonnull<const Expression*> { return rhs; }
-
- private:
-  Nonnull<const Expression*> lhs;
-  Nonnull<const Expression*> rhs;
-};
-
-class VariableDefinition : public Statement {
- public:
-  VariableDefinition(SourceLocation loc, Nonnull<const Pattern*> pat,
-                     Nonnull<const Expression*> init)
-      : Statement(Kind::VariableDefinition, loc), pat(pat), init(init) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::VariableDefinition;
-  }
-
-  auto Pat() const -> Nonnull<const Pattern*> { return pat; }
-  auto Init() const -> Nonnull<const Expression*> { return init; }
-
- private:
-  Nonnull<const Pattern*> pat;
-  Nonnull<const Expression*> init;
-};
-
-class If : public Statement {
- public:
-  If(SourceLocation loc, Nonnull<const Expression*> cond,
-     Nonnull<const Statement*> then_stmt,
-     std::optional<Nonnull<const Statement*>> else_stmt)
-      : Statement(Kind::If, loc),
-        cond(cond),
-        then_stmt(then_stmt),
-        else_stmt(else_stmt) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::If;
-  }
-
-  auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto ThenStmt() const -> Nonnull<const Statement*> { return then_stmt; }
-  auto ElseStmt() const -> std::optional<Nonnull<const Statement*>> {
-    return else_stmt;
-  }
-
- private:
-  Nonnull<const Expression*> cond;
-  Nonnull<const Statement*> then_stmt;
-  std::optional<Nonnull<const Statement*>> else_stmt;
-};
-
-class Return : public Statement {
- public:
-  Return(Nonnull<Arena*> arena, SourceLocation loc)
-      : Return(loc, arena->New<TupleLiteral>(loc), true) {}
-  Return(SourceLocation loc, Nonnull<const Expression*> exp,
-         bool is_omitted_exp)
-      : Statement(Kind::Return, loc),
-        exp(exp),
-        is_omitted_exp(is_omitted_exp) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Return;
-  }
-
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto IsOmittedExp() const -> bool { return is_omitted_exp; }
-
- private:
-  Nonnull<const Expression*> exp;
-  bool is_omitted_exp;
-};
-
-class Sequence : public Statement {
- public:
-  Sequence(SourceLocation loc, Nonnull<const Statement*> stmt,
-           std::optional<Nonnull<const Statement*>> next)
-      : Statement(Kind::Sequence, loc), stmt(stmt), next(next) {}
-
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Sequence;
-  }
-
-  auto Stmt() const -> Nonnull<const Statement*> { return stmt; }
-  auto Next() const -> std::optional<Nonnull<const Statement*>> { return next; }
-
- private:
-  Nonnull<const Statement*> stmt;
-  std::optional<Nonnull<const Statement*>> next;
+  Statement(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 };
 
 class Block : public Statement {
  public:
-  Block(SourceLocation loc, std::optional<Nonnull<const Statement*>> stmt)
-      : Statement(Kind::Block, loc), stmt(stmt) {}
+  Block(SourceLocation source_loc, std::vector<Nonnull<Statement*>> statements)
+      : Statement(AstNodeKind::Block, source_loc),
+        statements_(std::move(statements)) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Block;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBlock(node->kind());
   }
 
-  auto Stmt() const -> std::optional<Nonnull<const Statement*>> { return stmt; }
+  auto statements() const -> llvm::ArrayRef<Nonnull<const Statement*>> {
+    return statements_;
+  }
+  auto statements() -> llvm::MutableArrayRef<Nonnull<Statement*>> {
+    return statements_;
+  }
 
  private:
-  std::optional<Nonnull<const Statement*>> stmt;
+  std::vector<Nonnull<Statement*>> statements_;
+};
+
+class ExpressionStatement : public Statement {
+ public:
+  ExpressionStatement(SourceLocation source_loc,
+                      Nonnull<Expression*> expression)
+      : Statement(AstNodeKind::ExpressionStatement, source_loc),
+        expression_(expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromExpressionStatement(node->kind());
+  }
+
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+
+ private:
+  Nonnull<Expression*> expression_;
+};
+
+class Assign : public Statement {
+ public:
+  Assign(SourceLocation source_loc, Nonnull<Expression*> lhs,
+         Nonnull<Expression*> rhs)
+      : Statement(AstNodeKind::Assign, source_loc), lhs_(lhs), rhs_(rhs) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAssign(node->kind());
+  }
+
+  auto lhs() const -> const Expression& { return *lhs_; }
+  auto lhs() -> Expression& { return *lhs_; }
+  auto rhs() const -> const Expression& { return *rhs_; }
+  auto rhs() -> Expression& { return *rhs_; }
+
+ private:
+  Nonnull<Expression*> lhs_;
+  Nonnull<Expression*> rhs_;
+};
+
+class VariableDefinition : public Statement {
+ public:
+  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
+                     Nonnull<Expression*> init)
+      : Statement(AstNodeKind::VariableDefinition, source_loc),
+        pattern_(pattern),
+        init_(init) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVariableDefinition(node->kind());
+  }
+
+  auto pattern() const -> const Pattern& { return *pattern_; }
+  auto pattern() -> Pattern& { return *pattern_; }
+  auto init() const -> const Expression& { return *init_; }
+  auto init() -> Expression& { return *init_; }
+
+ private:
+  Nonnull<Pattern*> pattern_;
+  Nonnull<Expression*> init_;
+};
+
+class If : public Statement {
+ public:
+  If(SourceLocation source_loc, Nonnull<Expression*> condition,
+     Nonnull<Block*> then_block, std::optional<Nonnull<Block*>> else_block)
+      : Statement(AstNodeKind::If, source_loc),
+        condition_(condition),
+        then_block_(then_block),
+        else_block_(else_block) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIf(node->kind());
+  }
+
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+  auto then_block() const -> const Block& { return *then_block_; }
+  auto then_block() -> Block& { return *then_block_; }
+  auto else_block() const -> std::optional<Nonnull<const Block*>> {
+    return else_block_;
+  }
+  auto else_block() -> std::optional<Nonnull<Block*>> { return else_block_; }
+
+ private:
+  Nonnull<Expression*> condition_;
+  Nonnull<Block*> then_block_;
+  std::optional<Nonnull<Block*>> else_block_;
+};
+
+class Return : public Statement {
+ public:
+  Return(Nonnull<Arena*> arena, SourceLocation source_loc)
+      : Return(source_loc, arena->New<TupleLiteral>(source_loc), true) {}
+  Return(SourceLocation source_loc, Nonnull<Expression*> expression,
+         bool is_omitted_expression)
+      : Statement(AstNodeKind::Return, source_loc),
+        expression_(expression),
+        is_omitted_expression_(is_omitted_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromReturn(node->kind());
+  }
+
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+  auto is_omitted_expression() const -> bool { return is_omitted_expression_; }
+
+  // The AST node representing the function body this statement returns from.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto function() const -> const FunctionDeclaration& { return **function_; }
+  auto function() -> FunctionDeclaration& { return **function_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_function(Nonnull<FunctionDeclaration*> function) {
+    CHECK(!function_.has_value());
+    function_ = function;
+  }
+
+ private:
+  Nonnull<Expression*> expression_;
+  bool is_omitted_expression_;
+  std::optional<Nonnull<FunctionDeclaration*>> function_;
 };
 
 class While : public Statement {
  public:
-  While(SourceLocation loc, Nonnull<const Expression*> cond,
-        Nonnull<const Statement*> body)
-      : Statement(Kind::While, loc), cond(cond), body(body) {}
+  While(SourceLocation source_loc, Nonnull<Expression*> condition,
+        Nonnull<Block*> body)
+      : Statement(AstNodeKind::While, source_loc),
+        condition_(condition),
+        body_(body) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::While;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromWhile(node->kind());
   }
 
-  auto Cond() const -> Nonnull<const Expression*> { return cond; }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
 
  private:
-  Nonnull<const Expression*> cond;
-  Nonnull<const Statement*> body;
+  Nonnull<Expression*> condition_;
+  Nonnull<Block*> body_;
 };
 
 class Break : public Statement {
  public:
-  explicit Break(SourceLocation loc) : Statement(Kind::Break, loc) {}
+  explicit Break(SourceLocation source_loc)
+      : Statement(AstNodeKind::Break, source_loc) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Break;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBreak(node->kind());
   }
+
+  // The AST node representing the loop this statement breaks out of.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> const Statement& { return **loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Continue : public Statement {
  public:
-  explicit Continue(SourceLocation loc) : Statement(Kind::Continue, loc) {}
+  explicit Continue(SourceLocation source_loc)
+      : Statement(AstNodeKind::Continue, source_loc) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Continue;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromContinue(node->kind());
   }
+
+  // The AST node representing the loop this statement continues.
+  // Can only be called after ResolveControlFlow has visited this node.
+  //
+  // Note that this function does not represent an edge in the tree
+  // structure of the AST: the return value is not a child of this node,
+  // but an ancestor.
+  auto loop() const -> const Statement& { return **loop_; }
+
+  // Can only be called once, by ResolveControlFlow.
+  void set_loop(Nonnull<const Statement*> loop) {
+    CHECK(!loop_.has_value());
+    loop_ = loop;
+  }
+
+ private:
+  std::optional<Nonnull<const Statement*>> loop_;
 };
 
 class Match : public Statement {
  public:
-  Match(
-      SourceLocation loc, Nonnull<const Expression*> exp,
-      std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>
-          clauses)
-      : Statement(Kind::Match, loc), exp(exp), clauses(std::move(clauses)) {}
+  class Clause {
+   public:
+    Clause(Nonnull<Pattern*> pattern, Nonnull<Statement*> statement)
+        : pattern_(pattern), statement_(statement) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Match;
+    auto pattern() const -> const Pattern& { return *pattern_; }
+    auto pattern() -> Pattern& { return *pattern_; }
+    auto statement() const -> const Statement& { return *statement_; }
+    auto statement() -> Statement& { return *statement_; }
+
+   private:
+    Nonnull<Pattern*> pattern_;
+    Nonnull<Statement*> statement_;
+  };
+
+  Match(SourceLocation source_loc, Nonnull<Expression*> expression,
+        std::vector<Clause> clauses)
+      : Statement(AstNodeKind::Match, source_loc),
+        expression_(expression),
+        clauses_(std::move(clauses)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMatch(node->kind());
   }
 
-  auto Exp() const -> Nonnull<const Expression*> { return exp; }
-  auto Clauses() const -> const std::vector<
-      std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>& {
-    return clauses;
-  }
+  auto expression() const -> const Expression& { return *expression_; }
+  auto expression() -> Expression& { return *expression_; }
+  auto clauses() const -> llvm::ArrayRef<Clause> { return clauses_; }
+  auto clauses() -> llvm::MutableArrayRef<Clause> { return clauses_; }
 
  private:
-  Nonnull<const Expression*> exp;
-  std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>
-      clauses;
+  Nonnull<Expression*> expression_;
+  std::vector<Clause> clauses_;
 };
 
 // A continuation statement.
@@ -255,24 +314,44 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  Continuation(SourceLocation loc, std::string continuation_variable,
-               Nonnull<const Statement*> body)
-      : Statement(Kind::Continuation, loc),
-        continuation_variable(std::move(continuation_variable)),
-        body(body) {}
+  using ImplementsCarbonValueNode = void;
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Continuation;
+  Continuation(SourceLocation source_loc, std::string name,
+               Nonnull<Block*> body)
+      : Statement(AstNodeKind::Continuation, source_loc),
+        name_(std::move(name)),
+        body_(body) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromContinuation(node->kind());
   }
 
-  auto ContinuationVariable() const -> const std::string& {
-    return continuation_variable;
+  auto name() const -> const std::string& { return name_; }
+  auto body() const -> const Block& { return *body_; }
+  auto body() -> Block& { return *body_; }
+
+  // The static type of the continuation. Cannot be called before typechecking.
+  //
+  // This will always be ContinuationType, but we must set it dynamically in
+  // the typechecker because this code can't depend on ContinuationType.
+  auto static_type() const -> const Value& { return **static_type_; }
+
+  // Sets the static type of the continuation. Can only be called once,
+  // during typechecking.
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
   }
-  auto Body() const -> Nonnull<const Statement*> { return body; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
-  std::string continuation_variable;
-  Nonnull<const Statement*> body;
+  std::string name_;
+  Nonnull<Block*> body_;
+  std::optional<Nonnull<const Value*>> static_type_;
 };
 
 // A run statement.
@@ -280,17 +359,18 @@ class Continuation : public Statement {
 //     __run <argument>;
 class Run : public Statement {
  public:
-  Run(SourceLocation loc, Nonnull<const Expression*> argument)
-      : Statement(Kind::Run, loc), argument(argument) {}
+  Run(SourceLocation source_loc, Nonnull<Expression*> argument)
+      : Statement(AstNodeKind::Run, source_loc), argument_(argument) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Run;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromRun(node->kind());
   }
 
-  auto Argument() const -> Nonnull<const Expression*> { return argument; }
+  auto argument() const -> const Expression& { return *argument_; }
+  auto argument() -> Expression& { return *argument_; }
 
  private:
-  Nonnull<const Expression*> argument;
+  Nonnull<Expression*> argument_;
 };
 
 // An await statement.
@@ -298,10 +378,11 @@ class Run : public Statement {
 //    __await;
 class Await : public Statement {
  public:
-  explicit Await(SourceLocation loc) : Statement(Kind::Await, loc) {}
+  explicit Await(SourceLocation source_loc)
+      : Statement(AstNodeKind::Await, source_loc) {}
 
-  static auto classof(const Statement* stmt) -> bool {
-    return stmt->Tag() == Kind::Await;
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAwait(node->kind());
   }
 };
 

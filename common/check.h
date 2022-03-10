@@ -5,61 +5,15 @@
 #ifndef COMMON_CHECK_H_
 #define COMMON_CHECK_H_
 
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/raw_ostream.h"
+#include "common/check_internal.h"
 
 namespace Carbon {
 
-// Wraps a stream and exiting for fatal errors.
-class ExitingStream {
- public:
-  [[noreturn]] ~ExitingStream() {
-    // Finish with a newline.
-    llvm::errs() << "\n";
-    if (treat_as_bug) {
-      std::abort();
-    } else {
-      std::exit(-1);
-    }
-  }
-
-  // Indicates that initial input is in, so this is where a ": " should be added
-  // before user input.
-  ExitingStream& AddSeparator() {
-    separator = true;
-    return *this;
-  }
-
-  // Indicates that the program is exiting due to a bug in the program, rather
-  // than, e.g., invalid input.
-  ExitingStream& TreatAsBug() {
-    treat_as_bug = true;
-    return *this;
-  }
-
-  // If the bool cast occurs, it's because the condition is false. This supports
-  // && short-circuiting the creation of ExitingStream.
-  explicit operator bool() const { return true; }
-
-  // Forward output to llvm::errs.
-  template <typename T>
-  ExitingStream& operator<<(const T& message) {
-    if (separator) {
-      llvm::errs() << ": ";
-      separator = false;
-    }
-    llvm::errs() << message;
-    return *this;
-  }
-
- private:
-  // Whether a separator should be printed if << is used again.
-  bool separator = false;
-
-  // Whether the program is exiting due to a bug.
-  bool treat_as_bug = false;
-};
+// Raw exiting stream. This should be used when building other forms of exiting
+// macros like those below. It evaluates to a temporary `ExitingStream` object
+// that can be manipulated, streamed into, and then will exit the program.
+#define RAW_EXITING_STREAM() \
+  Carbon::Internal::ExitingStream::Helper() | Carbon::Internal::ExitingStream()
 
 // Checks the given condition, and if it's false, prints a stack, streams the
 // error message, then exits. This should be used for unexpected errors, such as
@@ -67,17 +21,28 @@ class ExitingStream {
 //
 // For example:
 //   CHECK(is_valid) << "Data is not valid!";
-#define CHECK(condition)                                                      \
-  (!(condition)) && (Carbon::ExitingStream() << "CHECK failure: " #condition) \
-                        .AddSeparator()                                       \
-                        .TreatAsBug()
+#define CHECK(condition)                                                  \
+  (condition) ? (void)0                                                   \
+              : RAW_EXITING_STREAM().TreatAsBug()                         \
+                    << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
+                    << ": " #condition                                    \
+                    << Carbon::Internal::ExitingStream::AddSeparator()
+
+// DCHECK calls CHECK in debug mode, and does nothing otherwise.
+#ifndef NDEBUG
+#define DCHECK(condition) CHECK(condition)
+#else
+#define DCHECK(condition) CHECK(true || (condition))
+#endif
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL() Carbon::ExitingStream().TreatAsBug() << "FATAL: "
+#define FATAL()                     \
+  RAW_EXITING_STREAM().TreatAsBug() \
+      << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
 
 }  // namespace Carbon
 

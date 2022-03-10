@@ -30,7 +30,7 @@ conventions for the language design, where they have been established.
 ## General
 
 The language design documentation follows the
-[style conventions](/CONTRIBUTING.html#google-docs-and-markdown) for Carbon
+[style conventions](/CONTRIBUTING.md#google-docs-and-markdown) for Carbon
 documentation.
 
 ## Linking
@@ -42,7 +42,7 @@ documentation.
 -   Links to specific sections of a proposal should link to the repository copy
     of the proposal file, using the section title or other appropriate link
     text. For example,
-    `[Painting details](/docs/proposals/p0123.md#painting-details)`
+    `[Painting details](/proposals/p0123.md#painting-details)`
 
 ## Document structure
 
@@ -75,7 +75,7 @@ that were considered, along with references to the proposals in which those
 designs were discussed. For example:
 
 ```md
--   [Paint widgets from bottom to top](/docs/proposals/p0123.md#alternatives-considered).
+-   [Paint widgets from bottom to top](/proposals/p0123.md#alternatives-considered).
 ```
 
 ### References

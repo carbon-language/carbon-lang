@@ -4,13 +4,14 @@
 
 #include "toolchain/lexer/token_kind.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <cstring>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::MatchesRegex;
@@ -90,4 +91,4 @@ TEST(TokenKindTest, SymbolsInDescendingLength) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

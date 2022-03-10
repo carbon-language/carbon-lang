@@ -46,6 +46,8 @@
 %parse-param {std::optional<AST>* ast}
 
 // No shift-reduce conflicts are expected.
+// See README.md#precedence-and-associativity for a description of how
+// operator precedence is expressed.
 %expect 0
 
 // -----------------------------------------------------------------------------
@@ -68,11 +70,11 @@
   #include "executable_semantics/ast/ast.h"
   #include "executable_semantics/ast/declaration.h"
   #include "executable_semantics/ast/expression.h"
-  #include "executable_semantics/ast/function_definition.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
+  #include "executable_semantics/syntax/bison_wrap.h"
 
   namespace Carbon {
   class ParseAndLexContext;
@@ -89,58 +91,88 @@
 
 %token <int> integer_literal
 %token <std::string> identifier
+%token <std::string> intrinsic_identifier
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
+%type <ImplKind> impl_kind
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
-%type <Nonnull<const Declaration*>> declaration
-%type <Nonnull<const FunctionDefinition*>> function_declaration
-%type <Nonnull<const FunctionDefinition*>> function_definition
-%type <std::vector<Nonnull<const Declaration*>>> declaration_list
-%type <Nonnull<const Statement*>> statement
-%type <Nonnull<const Statement*>> if_statement
-%type <std::optional<Nonnull<const Statement*>>> optional_else
-%type <std::pair<Nonnull<const Expression*>, bool>> return_expression
-%type <Nonnull<const Statement*>> block
-%type <std::optional<Nonnull<const Statement*>>> statement_list
-%type <Nonnull<const Expression*>> expression
-%type <GenericBinding> generic_binding
-%type <std::vector<GenericBinding>> deduced_params
-%type <std::vector<GenericBinding>> deduced_param_list
-%type <Nonnull<const Pattern*>> pattern
-%type <Nonnull<const Pattern*>> non_expression_pattern
-%type <std::pair<Nonnull<const Expression*>, bool>> return_type
-%type <Nonnull<const Expression*>> paren_expression
-%type <Nonnull<const Expression*>> tuple
-%type <std::optional<std::string>> binding_lhs
-%type <Nonnull<const BindingPattern*>> variable_declaration
-%type <Nonnull<Member*>> member
-%type <std::vector<Nonnull<Member*>>> member_list
-%type <ParenContents<Expression>::Element> paren_expression_element
+%type <Nonnull<Declaration*>> declaration
+%type <Nonnull<FunctionDeclaration*>> function_declaration
+%type <std::vector<Nonnull<Declaration*>>> declaration_list
+%type <Nonnull<Statement*>> statement
+%type <Nonnull<If*>> if_statement
+%type <std::optional<Nonnull<Block*>>> optional_else
+%type <std::pair<Nonnull<Expression*>, bool>> return_expression
+%type <Nonnull<Block*>> nonempty_block
+%type <Nonnull<Block*>> block
+%type <std::vector<Nonnull<Statement*>>> statement_list
+%type <Nonnull<Expression*>> primary_expression
+%type <Nonnull<Expression*>> postfix_expression
+%type <Nonnull<Expression*>> ref_deref_expression
+%type <Nonnull<Expression*>> type_expression
+%type <Nonnull<Expression*>> fn_type_expression
+%type <Nonnull<Expression*>> minus_expression
+%type <Nonnull<Expression*>> multiplicative_operand
+%type <Nonnull<Expression*>> multiplicative_lhs
+%type <Nonnull<Expression*>> multiplicative_expression
+%type <Nonnull<Expression*>> additive_operand
+%type <Nonnull<Expression*>> additive_lhs
+%type <Nonnull<Expression*>> additive_expression
+%type <Nonnull<Expression*>> unimpl_expression
+%type <Nonnull<Expression*>> value_expression
+%type <Nonnull<Expression*>> comparison_operand
+%type <Nonnull<Expression*>> comparison_expression
+%type <Nonnull<Expression*>> not_expression
+%type <Nonnull<Expression*>> predicate_expression
+%type <Nonnull<Expression*>> and_or_operand
+%type <Nonnull<Expression*>> and_lhs
+%type <Nonnull<Expression*>> and_expression
+%type <Nonnull<Expression*>> or_lhs
+%type <Nonnull<Expression*>> or_expression
+%type <Nonnull<Expression*>> statement_expression
+%type <Nonnull<Expression*>> if_expression
+%type <Nonnull<Expression*>> expression
+%type <Nonnull<GenericBinding*>> generic_binding
+%type <std::vector<Nonnull<AstNode*>>> deduced_params
+%type <std::vector<Nonnull<AstNode*>>> deduced_param_list
+%type <Nonnull<Pattern*>> pattern
+%type <Nonnull<Pattern*>> non_expression_pattern
+%type <BisonWrap<ReturnTerm>> return_term
+%type <Nonnull<Expression*>> paren_expression
+%type <Nonnull<StructLiteral*>> struct_literal
+%type <std::vector<FieldInitializer>> struct_literal_contents
+%type <Nonnull<StructTypeLiteral*>> struct_type_literal
+%type <std::vector<FieldInitializer>> struct_type_literal_contents
+%type <Nonnull<TupleLiteral*>> tuple
+%type <std::string> binding_lhs
+%type <std::optional<Nonnull<BindingPattern*>>> receiver
+%type <Nonnull<BindingPattern*>> variable_declaration
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
-%type <Nonnull<const Pattern*>> paren_pattern
-%type <Nonnull<const TuplePattern*>> tuple_pattern
-%type <Nonnull<const TuplePattern*>> maybe_empty_tuple_pattern
+%type <Nonnull<Pattern*>> paren_pattern
+%type <Nonnull<TuplePattern*>> tuple_pattern
+%type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
 %type <ParenContents<Pattern>> paren_pattern_base
-%type <ParenContents<Pattern>::Element> paren_pattern_element
 %type <ParenContents<Pattern>> paren_pattern_contents
-%type <std::pair<std::string, Nonnull<const Expression*>>> alternative
-%type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list
-%type <std::vector<std::pair<std::string, Nonnull<const Expression*>>>> alternative_list_contents
-%type <std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>> clause
-%type <std::vector<std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>>> clause_list
+%type <Nonnull<AlternativeSignature*>> alternative
+%type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list
+%type <std::vector<Nonnull<AlternativeSignature*>>> alternative_list_contents
+%type <BisonWrap<Match::Clause>> clause
+%type <std::vector<Match::Clause>> clause_list
 
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  AMPERSAND
   AND
   API
   ARROW
+  AS
   AUTO
   AWAIT
   BOOL
@@ -159,12 +191,14 @@
   ELSE
   EQUAL
   EQUAL_EQUAL
+  EXTERNAL
   FALSE
   FN
-  FNTY
+  FN_TYPE
   IF
   IMPL
   IMPORT
+  INTERFACE
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
@@ -184,9 +218,11 @@
   SEMICOLON
   SLASH
   STRING
+  THEN
   TRUE
   TYPE
   UNDERSCORE
+  UNIMPL_EXAMPLE
   VAR
   WHILE
   // table-end
@@ -201,30 +237,6 @@
   PREFIX_STAR "prefix *"
   POSTFIX_STAR "postfix *"
   BINARY_STAR "binary *"
-;
-
-%precedence FNARROW
-%precedence LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
-%precedence COLON_BANG COLON COMMA DOUBLE_ARROW
-%left OR AND
-%nonassoc EQUAL_EQUAL
-%left PLUS MINUS
-%left BINARY_STAR
-%precedence NOT UNARY_MINUS PREFIX_STAR
-// We need to give the `UNARY_STAR` token a precedence, rather than overriding
-// the precedence of the `expression UNARY_STAR` rule below, because bison
-// compares the precedence of the final token (for a shift) to the precedence
-// of the other rule (for a reduce) when attempting to resolve a shift-reduce
-// conflict. See https://stackoverflow.com/a/26188429/1041090. When UNARY_STAR
-// is the final token of a rule, it must be a postfix usage, so we give it the
-// same precedence as POSTFIX_STAR.
-%precedence POSTFIX_STAR UNARY_STAR
-%left PERIOD ARROW
-%precedence
-  LEFT_PARENTHESIS
-  RIGHT_PARENTHESIS
-  LEFT_SQUARE_BRACKET
-  RIGHT_SQUARE_BRACKET
 ;
 
 %start input
@@ -266,132 +278,229 @@ api_or_impl:
 | IMPL
     { $$ = false; }
 ;
-expression:
+primary_expression:
   identifier
-    { $$ = arena->New<IdentifierExpression>(context.SourceLoc(), $1); }
-| expression designator
-    { $$ = arena->New<FieldAccessExpression>(context.SourceLoc(), $1, $2); }
-| expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
-    { $$ = arena->New<IndexExpression>(context.SourceLoc(), $1, $3); }
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), $1); }
 | integer_literal
-    { $$ = arena->New<IntLiteral>(context.SourceLoc(), $1); }
+    { $$ = arena->New<IntLiteral>(context.source_loc(), $1); }
 | string_literal
-    { $$ = arena->New<StringLiteral>(context.SourceLoc(), $1); }
+    { $$ = arena->New<StringLiteral>(context.source_loc(), $1); }
 | TRUE
-    { $$ = arena->New<BoolLiteral>(context.SourceLoc(), true); }
+    { $$ = arena->New<BoolLiteral>(context.source_loc(), true); }
 | FALSE
-    { $$ = arena->New<BoolLiteral>(context.SourceLoc(), false); }
+    { $$ = arena->New<BoolLiteral>(context.source_loc(), false); }
 | sized_type_literal
     {
       int val;
       CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
       CHECK($1[0] == 'i' && val == 32)
           << "Only i32 is supported for now: " << $1;
-      $$ = arena->New<IntTypeLiteral>(context.SourceLoc());
+      $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
 | STRING
-    { $$ = arena->New<StringTypeLiteral>(context.SourceLoc()); }
+    { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
 | BOOL
-    { $$ = arena->New<BoolTypeLiteral>(context.SourceLoc()); }
+    { $$ = arena->New<BoolTypeLiteral>(context.source_loc()); }
 | TYPE
-    { $$ = arena->New<TypeTypeLiteral>(context.SourceLoc()); }
+    { $$ = arena->New<TypeTypeLiteral>(context.source_loc()); }
 | CONTINUATION_TYPE
-    { $$ = arena->New<ContinuationTypeLiteral>(context.SourceLoc()); }
+    { $$ = arena->New<ContinuationTypeLiteral>(context.source_loc()); }
 | paren_expression { $$ = $1; }
-| expression EQUAL_EQUAL expression
+| struct_literal { $$ = $1; }
+| struct_type_literal { $$ = $1; }
+;
+postfix_expression:
+  primary_expression
+| postfix_expression designator
+    { $$ = arena->New<FieldAccessExpression>(context.source_loc(), $1, $2); }
+| postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
+    { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }
+| intrinsic_identifier tuple
+    { $$ = arena->New<IntrinsicExpression>($1, $2, context.source_loc()); }
+| postfix_expression tuple
+    { $$ = arena->New<CallExpression>(context.source_loc(), $1, $2); }
+| postfix_expression POSTFIX_STAR
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Eq,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::Ptr,
+          std::vector<Nonnull<Expression*>>({$1}));
     }
-| expression PLUS expression
+| postfix_expression UNARY_STAR
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Add,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::Ptr,
+          std::vector<Nonnull<Expression*>>({$1}));
     }
-| expression MINUS expression
+;
+ref_deref_expression:
+  postfix_expression
+| PREFIX_STAR ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Sub,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$2}));
     }
-| expression BINARY_STAR expression
+| UNARY_STAR ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Mul,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::Deref,
+          std::vector<Nonnull<Expression*>>({$2}));
     }
-| expression AND expression
+| AMPERSAND ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::And,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::AddressOf,
+          std::vector<Nonnull<Expression*>>({$2}));
     }
-| expression OR expression
+;
+fn_type_expression:
+  FN_TYPE tuple ARROW type_expression
+    { $$ = arena->New<FunctionTypeLiteral>(context.source_loc(), $2, $4); }
+;
+type_expression:
+  ref_deref_expression
+| fn_type_expression
+;
+minus_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  MINUS ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Or,
-          std::vector<Nonnull<const Expression*>>({$1, $3}));
+          context.source_loc(), Operator::Neg,
+          std::vector<Nonnull<Expression*>>({$2}));
     }
-| NOT expression
+;
+multiplicative_operand:
+  ref_deref_expression
+| minus_expression
+;
+multiplicative_lhs:
+  ref_deref_expression
+| multiplicative_expression
+;
+multiplicative_expression:
+  minus_expression
+| multiplicative_lhs BINARY_STAR multiplicative_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Not,
-          std::vector<Nonnull<const Expression*>>({$2}));
+          context.source_loc(), Operator::Mul,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
-| MINUS expression %prec UNARY_MINUS
+;
+additive_operand:
+  ref_deref_expression
+| multiplicative_expression
+;
+additive_lhs:
+  ref_deref_expression
+| additive_expression
+;
+additive_expression:
+  multiplicative_expression
+| additive_lhs PLUS additive_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Neg,
-          std::vector<Nonnull<const Expression*>>({$2}));
+          context.source_loc(), Operator::Add,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
-| PREFIX_STAR expression
+| additive_lhs MINUS additive_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Deref,
-          std::vector<Nonnull<const Expression*>>({$2}));
+          context.source_loc(), Operator::Sub,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
-| UNARY_STAR expression %prec PREFIX_STAR
+;
+unimpl_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  ref_deref_expression UNIMPL_EXAMPLE ref_deref_expression
+    {
+      $$ = arena->New<UnimplementedExpression>(context.source_loc(),
+                                               "ExampleInfix", $1, $3);
+    }
+;
+value_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  additive_expression
+| fn_type_expression
+| unimpl_expression
+;
+comparison_operand:
+  ref_deref_expression
+| value_expression
+;
+comparison_expression:
+  value_expression
+| comparison_operand EQUAL_EQUAL comparison_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Deref,
-          std::vector<Nonnull<const Expression*>>({$2}));
+          context.source_loc(), Operator::Eq,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
-| expression tuple
-    { $$ = arena->New<CallExpression>(context.SourceLoc(), $1, $2); }
-| expression POSTFIX_STAR
+;
+not_expression:
+  NOT ref_deref_expression
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Ptr,
-          std::vector<Nonnull<const Expression*>>({$1}));
+          context.source_loc(), Operator::Not,
+          std::vector<Nonnull<Expression*>>({$2}));
     }
-| expression UNARY_STAR
+;
+predicate_expression:
+  // ref_deref_expression excluded due to precedence diamond.
+  not_expression
+| comparison_expression
+;
+and_or_operand:
+  ref_deref_expression
+| predicate_expression
+;
+and_lhs:
+  and_or_operand
+| and_expression
+;
+and_expression:
+  // predicate_expression excluded due to precedence diamond.
+  and_lhs AND and_or_operand
     {
       $$ = arena->New<PrimitiveOperatorExpression>(
-          context.SourceLoc(), Operator::Ptr,
-          std::vector<Nonnull<const Expression*>>({$1}));
+          context.source_loc(), Operator::And,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
-| FNTY tuple return_type
+;
+or_lhs:
+  and_or_operand
+| or_expression
+;
+or_expression:
+  // predicate_expression excluded due to precedence diamond.
+  or_lhs OR and_or_operand
     {
-      auto [return_exp, is_omitted_exp] = $3;
-      $$ = arena->New<FunctionTypeLiteral>(context.SourceLoc(), $2, return_exp,
-                                           is_omitted_exp);
+      $$ = arena->New<PrimitiveOperatorExpression>(
+          context.source_loc(), Operator::Or,
+          std::vector<Nonnull<Expression*>>({$1, $3}));
     }
+;
+statement_expression:
+  ref_deref_expression
+| predicate_expression
+| and_expression
+| or_expression
+;
+if_expression:
+  statement_expression
+| IF expression THEN if_expression ELSE if_expression
+    { $$ = arena->New<IfExpression>(context.source_loc(), $2, $4, $6); }
+;
+expression:
+  if_expression
 ;
 designator: PERIOD identifier { $$ = $2; }
 ;
 paren_expression: paren_expression_base
-    { $$ = ExpressionFromParenContents(arena, context.SourceLoc(), $1); }
+    { $$ = ExpressionFromParenContents(arena, context.source_loc(), $1); }
 ;
 tuple: paren_expression_base
-    { $$ = TupleExpressionFromParenContents(arena, context.SourceLoc(), $1); }
-;
-paren_expression_element:
-  expression
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL expression
-    { $$ = {.name = $1, .term = $3}; }
+    { $$ = TupleExpressionFromParenContents(arena, context.source_loc(), $1); }
 ;
 paren_expression_base:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -405,13 +514,47 @@ paren_expression_base:
     }
 ;
 paren_expression_contents:
-  paren_expression_element
+  expression
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_expression_element
+| paren_expression_contents COMMA expression
     {
       $$ = $1;
       $$.elements.push_back($3);
     }
+;
+
+struct_literal:
+  LEFT_CURLY_BRACE struct_literal_contents RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
+| LEFT_CURLY_BRACE struct_literal_contents COMMA RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructLiteral>(context.source_loc(), $2); }
+;
+struct_literal_contents:
+  designator EQUAL expression
+    { $$ = {FieldInitializer($1, $3)}; }
+| struct_literal_contents COMMA designator EQUAL expression
+    {
+      $$ = $1;
+      $$.push_back(FieldInitializer($3, $5));
+    }
+;
+
+struct_type_literal:
+  LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.source_loc()); }
+| LEFT_CURLY_BRACE struct_type_literal_contents RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }
+| LEFT_CURLY_BRACE struct_type_literal_contents COMMA RIGHT_CURLY_BRACE
+    { $$ = arena->New<StructTypeLiteral>(context.source_loc(), $2); }
+;
+struct_type_literal_contents:
+  designator COLON expression
+    { $$ = {FieldInitializer($1, $3)}; }
+| struct_type_literal_contents COMMA designator COLON expression
+  {
+    $$ = $1;
+    $$.push_back(FieldInitializer($3, $5));
+  }
 ;
 
 // In many cases, using `pattern` recursively will result in ambiguities.
@@ -428,20 +571,20 @@ pattern:
 ;
 non_expression_pattern:
   AUTO
-    { $$ = arena->New<AutoPattern>(context.SourceLoc()); }
+    { $$ = arena->New<AutoPattern>(context.source_loc()); }
 | binding_lhs COLON pattern
-    { $$ = arena->New<BindingPattern>(context.SourceLoc(), $1, $3); }
+    { $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3); }
 | paren_pattern
     { $$ = $1; }
-| expression tuple_pattern
-    { $$ = arena->New<AlternativePattern>(context.SourceLoc(), $1, $2); }
+| postfix_expression tuple_pattern
+    { $$ = arena->New<AlternativePattern>(context.source_loc(), $1, $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
-| UNDERSCORE { $$ = std::nullopt; }
+| UNDERSCORE { $$ = AnonymousName; }
 ;
 paren_pattern: paren_pattern_base
-    { $$ = PatternFromParenContents(arena, context.SourceLoc(), $1); }
+    { $$ = PatternFromParenContents(arena, context.source_loc(), $1); }
 ;
 paren_pattern_base:
   LEFT_PARENTHESIS paren_pattern_contents RIGHT_PARENTHESIS
@@ -458,33 +601,26 @@ paren_pattern_base:
 // is very different from the corresponding expression rule because is has to
 // enforce that requirement.
 paren_pattern_contents:
-  paren_pattern_element
+  non_expression_pattern
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA paren_pattern_element
+| paren_expression_contents COMMA non_expression_pattern
     {
       $$ = ParenExpressionToParenPattern(arena, $1);
       $$.elements.push_back($3);
     }
-| paren_pattern_contents COMMA paren_expression_element
+| paren_pattern_contents COMMA expression
     {
       $$ = $1;
-      $$.elements.push_back({.name = $3.name,
-                             .term = arena->New<ExpressionPattern>($3.term)});
+      $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
-| paren_pattern_contents COMMA paren_pattern_element
+| paren_pattern_contents COMMA non_expression_pattern
     {
       $$ = $1;
       $$.elements.push_back($3);
     }
 ;
-paren_pattern_element:
-  non_expression_pattern
-    { $$ = {.name = std::nullopt, .term = $1}; }
-| designator EQUAL non_expression_pattern
-    { $$ = {.name = $1, .term = $3}; }
-;
 tuple_pattern: paren_pattern_base
-    { $$ = TuplePatternFromParenContents(arena, context.SourceLoc(), $1); }
+    { $$ = TuplePatternFromParenContents(arena, context.source_loc(), $1); }
 ;
 // Unlike most `pattern` nonterminals, this one overlaps with `expression`,
 // so it should be used only when prior context (such as an introducer)
@@ -492,25 +628,22 @@ tuple_pattern: paren_pattern_base
 maybe_empty_tuple_pattern:
   LEFT_PARENTHESIS RIGHT_PARENTHESIS
     {
-      $$ = arena->New<TuplePattern>(context.SourceLoc(),
-                                    std::vector<TuplePattern::Field>());
+      $$ = arena->New<TuplePattern>(context.source_loc(),
+                                    std::vector<Nonnull<Pattern*>>());
     }
 | tuple_pattern
     { $$ = $1; }
 ;
+
 clause:
   CASE pattern DOUBLE_ARROW statement
-    {
-      $$ =
-          std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>($2, $4);
-    }
+    { $$ = Match::Clause($2, $4); }
 | DEFAULT DOUBLE_ARROW statement
     {
-      auto vp = arena -> New<BindingPattern>(
-                    context.SourceLoc(), std::nullopt,
-                    arena->New<AutoPattern>(context.SourceLoc()));
-      $$ =
-          std::pair<Nonnull<const Pattern*>, Nonnull<const Statement*>>(vp, $3);
+      $$ = Match::Clause(arena->New<BindingPattern>(
+                             context.source_loc(), std::string(AnonymousName),
+                             arena->New<AutoPattern>(context.source_loc())),
+                         $3);
     }
 ;
 clause_list:
@@ -523,81 +656,105 @@ clause_list:
     }
 ;
 statement:
-  expression EQUAL expression SEMICOLON
-    { $$ = arena->New<Assign>(context.SourceLoc(), $1, $3); }
+  statement_expression EQUAL expression SEMICOLON
+    { $$ = arena->New<Assign>(context.source_loc(), $1, $3); }
 | VAR pattern EQUAL expression SEMICOLON
-    { $$ = arena->New<VariableDefinition>(context.SourceLoc(), $2, $4); }
-| expression SEMICOLON
-    { $$ = arena->New<ExpressionStatement>(context.SourceLoc(), $1); }
+    { $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4); }
+| statement_expression SEMICOLON
+    { $$ = arena->New<ExpressionStatement>(context.source_loc(), $1); }
 | if_statement
     { $$ = $1; }
 | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block
-    { $$ = arena->New<While>(context.SourceLoc(), $3, $5); }
+    { $$ = arena->New<While>(context.source_loc(), $3, $5); }
 | BREAK SEMICOLON
-    { $$ = arena->New<Break>(context.SourceLoc()); }
+    { $$ = arena->New<Break>(context.source_loc()); }
 | CONTINUE SEMICOLON
-    { $$ = arena->New<Continue>(context.SourceLoc()); }
+    { $$ = arena->New<Continue>(context.source_loc()); }
 | RETURN return_expression SEMICOLON
     {
       auto [return_exp, is_omitted_exp] = $2;
-      $$ = arena->New<Return>(context.SourceLoc(), return_exp, is_omitted_exp);
+      $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
     }
-| block
+// We disallow empty blocks in places where an arbitrary statement can occur
+// in order to avoid ambiguity with the empty struct literal `{}`. We can
+// allow non-empty blocks because a non-empty struct literal always starts with
+// a designator, and a block never does, so one token of lookahead suffices
+// to disambiguate. As of this writing, the "official" resolution of this
+// ambiguity is an open question (see
+// https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals)
+| nonempty_block
     { $$ = $1; }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Match>(context.SourceLoc(), $3, $6); }
-| CONTINUATION identifier statement
-    { $$ = arena->New<Continuation>(context.SourceLoc(), $2, $3); }
+    { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
+| CONTINUATION identifier block
+    { $$ = arena->New<Continuation>(context.source_loc(), $2, $3); }
 | RUN expression SEMICOLON
-    { $$ = arena->New<Run>(context.SourceLoc(), $2); }
+    { $$ = arena->New<Run>(context.source_loc(), $2); }
 | AWAIT SEMICOLON
-    { $$ = arena->New<Await>(context.SourceLoc()); }
+    { $$ = arena->New<Await>(context.source_loc()); }
 ;
 if_statement:
   IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS block optional_else
-    { $$ = arena->New<If>(context.SourceLoc(), $3, $5, $6); }
+    { $$ = arena->New<If>(context.source_loc(), $3, $5, $6); }
 ;
 optional_else:
   // Empty
     { $$ = std::nullopt; }
 | ELSE if_statement
-    { $$ = $2; }
+    {
+      $$ = arena->New<Block>(context.source_loc(),
+                             std::vector<Nonnull<Statement*>>({$2}));
+    }
 | ELSE block
     { $$ = $2; }
 ;
 return_expression:
   // Empty
-    { $$ = {arena->New<TupleLiteral>(context.SourceLoc()), true}; }
+    { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
 | expression
     { $$ = {$1, false}; }
 ;
 statement_list:
   // Empty
-    { $$ = std::nullopt; }
-| statement statement_list
-    { $$ = arena->New<Sequence>(context.SourceLoc(), $1, $2); }
+    { $$ = {}; }
+| statement_list statement
+    {
+      $$ = std::move($1);
+      $$.push_back($2);
+    }
 ;
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<Block>(context.SourceLoc(), $2); }
+    { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
-return_type:
+nonempty_block:
+  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
+    {
+      $2.push_back($3);
+      $$ = arena->New<Block>(context.source_loc(), std::move($2));
+    }
+;
+return_term:
   // Empty
-    { $$ = {arena->New<TupleLiteral>(context.SourceLoc()), true}; }
-| ARROW expression %prec FNARROW
-    { $$ = {$2, false}; }
+    { $$ = ReturnTerm::Omitted(context.source_loc()); }
+| ARROW AUTO
+    { $$ = ReturnTerm::Auto(context.source_loc()); }
+| ARROW expression
+    { $$ = ReturnTerm::Explicit($2); }
 ;
 generic_binding:
   identifier COLON_BANG expression
-    { $$ = GenericBinding({.name = std::move($1), .type = $3}); }
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
+    }
 ;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | generic_binding
     {
-      $$ = std::vector<GenericBinding>();
+      $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
 | generic_binding COMMA deduced_param_list
@@ -605,64 +762,52 @@ deduced_param_list:
       $$ = $3;
       $$.push_back($1);
     }
+| variable_declaration
+    {
+      $$ = std::vector<Nonnull<AstNode*>>();
+      $$.push_back($1);
+    }
+| variable_declaration COMMA deduced_param_list
+    {
+      $$ = $3;
+      $$.push_back($1);
+    }
 ;
 deduced_params:
   // Empty
-    { $$ = std::vector<GenericBinding>(); }
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
-function_definition:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type block
-    {
-      auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
-          context.SourceLoc(), $2, $3, $4,
-          arena->New<ExpressionPattern>(return_exp), is_omitted_exp, $6);
-    }
-| FN identifier deduced_params maybe_empty_tuple_pattern DOUBLE_ARROW expression
-  SEMICOLON
-    {
-      // The return type is not considered "omitted" because it's automatic from
-      // the expression.
-      $$ = arena->New<FunctionDefinition>(
-          context.SourceLoc(), $2, $3, $4,
-          arena->New<AutoPattern>(context.SourceLoc()), true,
-          arena->New<Return>(context.SourceLoc(), $6, true));
-    }
+receiver:
+  // Empty
+    { $$ = std::nullopt; }
+| LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
+    { $$ = $2; }
 ;
 function_declaration:
-  FN identifier deduced_params maybe_empty_tuple_pattern return_type SEMICOLON
+  FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
-      auto [return_exp, is_omitted_exp] = $5;
-      $$ = arena->New<FunctionDefinition>(
-          context.SourceLoc(), $2, $3, $4,
-          arena->New<ExpressionPattern>(return_exp), is_omitted_exp,
-          std::nullopt);
+      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
+                                           $6, $7);
+    }
+| FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
+    {
+      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
+                                           $6, std::nullopt);
     }
 ;
 variable_declaration: identifier COLON pattern
-    { $$ = arena->New<BindingPattern>(context.SourceLoc(), $1, $3); }
-;
-member: VAR variable_declaration SEMICOLON
-    { $$ = arena->New<FieldMember>(context.SourceLoc(), $2); }
-;
-member_list:
-  // Empty
-    { $$ = {}; }
-| member_list member
-    {
-      $$ = $1;
-      $$.push_back($2);
-    }
+    { $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3); }
 ;
 alternative:
   identifier tuple
-    { $$ = std::pair<std::string, Nonnull<const Expression*>>($1, $2); }
+    { $$ = arena->New<AlternativeSignature>(context.source_loc(), $1, $2); }
 | identifier
     {
-      $$ = std::pair<std::string, Nonnull<const Expression*>>(
-          $1, arena->New<TupleLiteral>(context.SourceLoc()));
+      $$ = arena->New<AlternativeSignature>(
+          context.source_loc(), $1,
+          arena->New<TupleLiteral>(context.source_loc()));
     }
 ;
 alternative_list:
@@ -675,24 +820,42 @@ alternative_list:
 ;
 alternative_list_contents:
   alternative
-    { $$ = {$1}; }
+    { $$ = {std::move($1)}; }
 | alternative_list_contents COMMA alternative
     {
       $$ = $1;
-      $$.push_back($3);
+      $$.push_back(std::move($3));
     }
 ;
 declaration:
-  function_definition
-    { $$ = arena->New<FunctionDeclaration>($1); }
-| function_declaration
-    { $$ = arena->New<FunctionDeclaration>($1); }
-| CLASS identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ClassDeclaration>(context.SourceLoc(), $2, $4); }
+  function_declaration
+    { $$ = $1; }
+| CLASS identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $4); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ChoiceDeclaration>(context.SourceLoc(), $2, $4); }
+    { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
+| VAR variable_declaration SEMICOLON
+    {
+      $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
+                                           std::nullopt);
+    }
 | VAR variable_declaration EQUAL expression SEMICOLON
-    { $$ = arena->New<VariableDeclaration>(context.SourceLoc(), $2, $4); }
+    { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4); }
+| INTERFACE identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+    {
+      auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
+      auto self =
+          arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
+      $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, self, $4);
+    }
+| impl_kind IMPL expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<ImplDeclaration>(context.source_loc(), $1, $3, $5, $7); }
+;
+impl_kind:
+  // Internal
+    { $$ = Carbon::ImplKind::InternalImpl; }
+| EXTERNAL
+    { $$ = Carbon::ImplKind::ExternalImpl; }
 ;
 declaration_list:
   // Empty
@@ -700,7 +863,7 @@ declaration_list:
 | declaration_list declaration
     {
       $$ = $1;
-      $$.push_back(Nonnull<const Declaration*>($2));
+      $$.push_back(Nonnull<Declaration*>($2));
     }
 ;
 %%

@@ -423,7 +423,7 @@ early on:
 
 1. Bring another person into the review to help address the specific issue.
    Typically they should at least be a code owner, and may usefully be a
-   [Carbon lead](groups.md#carbon-leads-1).
+   [Carbon lead](groups.md#carbon-leads).
 
 2. Ask the specific question in a broader forum, such as Discord, in order to
    get a broad set of perspectives on a particular area or issue.

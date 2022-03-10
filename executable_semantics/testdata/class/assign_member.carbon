@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: executable_semantics %s
+// RUN: %{executable_semantics} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{executable_semantics} --trace %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{executable_semantics} %s
 // CHECK: result: 0
 
 package ExecutableSemanticsTest api;
@@ -16,8 +16,8 @@ class Point {
   var y: i32;
 }
 
-fn main() -> i32 {
-  var p1: auto = Point(.x = 1, .y = 2);
+fn Main() -> i32 {
+  var p1: Point = {.x = 1, .y = 2};
   var p2: auto = p1;
   p2.x = 3;
   return p1.x - 1;

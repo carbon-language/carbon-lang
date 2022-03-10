@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: not executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: not executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: executable_semantics %s
-// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_order.carbon:17: could not find `y`
+// RUN: %{not} %{executable_semantics} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
+// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: %{executable_semantics} %s
+// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_order.carbon:17: could not find `y: i32`
 
 package ExecutableSemanticsTest api;
 
@@ -18,6 +18,6 @@ var x: i32 = y;
 
 var y: i32 = 0;
 
-fn main() -> i32 {
+fn Main() -> i32 {
   return x;
 }

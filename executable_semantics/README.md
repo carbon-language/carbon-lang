@@ -6,129 +6,114 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains a work-in-progress executable semantics. It started as
-an executable semantics for Featherweight C and it is migrating into an
-executable semantics for the Carbon language. It includes a parser, type
-checker, and abstract machine.
+`executable_semantics` is an implementation of Carbon whose primary purpose is
+to act as a clear specification of the language. As an extension of that goal,
+it can also be used as a platform for prototyping and validating changes to the
+language. Consequently, it prioritizes straightforward, readable code over
+performance, diagnostic quality, and other conventional implementation
+priorities. In other words, its intended audience is people working on the
+design of Carbon, and it is not intended for real-world Carbon programming on
+any scale. See the [`toolchain`](/toolchain/) directory for a separate
+implementation that's focused on the needs of Carbon users.
 
-This language currently includes several kinds of values: integer, booleans,
-functions, and structs. A kind of safe union, called a `choice`, is in progress.
-Regarding control-flow, it includes if statements, while loops, break, continue,
-function calls, and a variant of `switch` called `match` is in progress.
+## Overview
 
-The grammar of the language matches the one in Proposal
-[#162](https://github.com/carbon-language/carbon-lang/pull/162). The type
-checker and abstract machine do not yet have a corresponding proposal.
-Nevertheless they are present here to help test the parser but should not be
-considered definitive.
+`executable_semantics` represents Carbon code using an abstract syntax tree
+(AST), which is defined in the [`ast`](ast/) directory. The [`syntax`](syntax/)
+directory contains lexer and parser, which define how the AST is generated from
+Carbon code. The [`interpreter`](interpreter/) directory contains the remainder
+of the implementation.
 
-The parser is implemented using the flex and bison parser generator tools.
+`executable_semantics` is an interpreter rather than a compiler, although it
+attempts to separate compile time from run time, since that separation is an
+important constraint on Carbon's design.
 
--   [`syntax.lpp`](syntax/syntax.lpp) the lexer specification
--   [`syntax.ypp`](syntax/syntax.ypp) the grammar
+## Programming conventions
 
-The parser translates program text into an abstract syntax tree (AST), defined
-in the [ast](ast/) subdirectory.
+The class hierarchies in `executable_semantics` are built to support
+[LLVM-style RTTI](https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html), and
+define a `kind` accessor that returns an enum identifying the concrete type.
+`executable_semantics` typically relies less on virtual dispatch, and more on
+using `kind` as the key of a `switch` and then down-casting in the individual
+cases. As a result, adding a new derived class to a hierarchy requires updating
+existing code to handle it. It is generally better to avoid defining `default`
+cases for RTTI switches, so that the compiler can help ensure the code is
+updated when a new type is added.
 
-The [type checker](interpreter/typecheck.h) defines what it means for an AST to
-be a valid program. The type checker prints an error and exits if the AST is
-invalid.
+`executable_semantics` never uses plain pointer types directly. Instead, we use
+the [`Nonnull<T*>`](common/nonnull.h) alias for pointers that are not nullable,
+or `std::optional<Nonnull<T*>>` for pointers that are nullable.
 
-The parser and type checker together specify the static (compile-time)
-semantics.
+Many of the most commonly-used objects in `executable_semantics` have lifetimes
+that are tied to the lifespan of the entire Carbon program. We manage the
+lifetimes of those objects by allocating them through an
+[`Arena`](common/arena.h) object, which can allocate objects of arbitrary types,
+and retains ownership of them. As of this writing, all of `executable_semantics`
+uses a single `Arena` object, we may introduce multiple `Arena`s for different
+lifetime groups in the future.
 
-The dynamic (run-time) semantics is specified by an abstract machine. Abstract
-machines have several positive characteristics that make them good for
-specification:
+For simplicity, `executable_semantics` generally treats all errors as fatal.
+Errors caused by bugs in the user-provided Carbon code should be reported with
+the macros in [`error.h`](common/error.h). Errors caused by bugs in
+`executable_semantics` itself should be reported with
+[`CHECK` or `FATAL`](../common/check.h).
 
--   abstract machines operate on the AST of the program (and not some
-    lower-level representation such as bytecode) so they directly connect the
-    program to its behavior
+## Example Programs (Regression Tests)
 
--   abstract machines can easily handle language features with complex
-    control-flow, such as goto, exceptions, coroutines, and even first-class
-    continuations.
+The [`testdata/`](testdata/) subdirectory includes some example programs with
+expected output.
 
-The one down-side of abstract machines is that they are not as simple as a
-definitional interpreter (a recursive function that interprets the program), but
-it is more difficult to handle complex control flow in a definitional
-interpreter.
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
+boilerplate at the top:
 
-[InterpProgram()](interpreter/interpreter.h) runs an abstract machine using the
-[interpreter](interpreter/), as described below.
+```carbon
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// RUN: executable_semantics %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
+// RUN: executable_semantics --trace %s 2>&1 | \
+// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
+// AUTOUPDATE: executable_semantics %s
+// CHECK: result: 0
 
-## Abstract Machine
+package ExecutableSemanticsTest api;
+```
 
-The abstract machine implements a state-transition system. The state is defined
-by the `State` structure, which includes three components: the procedure call
-stack, the heap, and the function definitions. The `Step` function updates the
-state by executing a little bit of the program. The `Step` function is called
-repeatedly to execute the entire program.
+To explain this boilerplate:
 
-An implementation of the language (such as a compiler) must be observationally
-equivalent to this abstract machine. The notion of observation is different for
-each language, and can include things like input and output. This language is
-currently so simple that the only thing that is observable is the final result,
-an integer. So an implementation must produce the same final result as the one
-produces by the abstract machine. In particular, an implementation does **not**
-have to mimic each step of the abstract machine and does not have to use the
-same kinds of data structures to store the state of the program.
+-   The standard copyright is expected.
+-   The `RUN` lines indicate two commands for `lit` to execute using the file:
+    one without `--trace` output, one with.
+    -   Output is piped to `FileCheck` for verification.
+    -   Setting `-allow-unused-prefixes` to false when processing the ordinary
+        output, and true when handling the `--trace` output, allows us to omit
+        the tracing output from the `CHECK` lines, while ensuring they cover all
+        non-tracing output.
+    -   Setting `-match-full-lines` in both cases indicates that each `CHECK`
+        line must match a complete output line, with no extra characters before
+        or after the `CHECK` pattern.
+    -   `RUN:` will be followed by the `not` command when failure is expected.
+        In particular, `RUN: not executable_semantics ...`.
+    -   `%s` is a
+        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
+        for the path to the given test file.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
+    inserted immediately below by the `./update_checks.py` script.
+-   The `CHECK` lines indicate expected output, verified by `FileCheck`.
+    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
+        braces indicate a contained regular expression.
+-   The `package` is required in all test files, per normal Carbon syntax rules.
 
-A procedure call frame, defined by the `Frame` structure, includes a pointer to
-the function being called, the environment that maps variables to their
-addresses, and a to-do list of actions. Each action corresponds to an expression
-or statement in the program. The `Action` structure represents an action. An
-action often spawns other actions that needs to be completed first and
-afterwards uses their results to complete its action. To keep track of this
-process, each action includes a position field `pos` that stores an integer that
-starts at `-1` and increments as the action makes progress. For example, suppose
-the action associated with an addition expression `e1 + e2` is at the top of the
-to-do list:
+### Useful commands
 
-    (e1 + e2) [-1] :: ...
+-   `./update_checks.py` -- Updates expected output.
+-   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 
-When this action kicks off (in the `StepExp` function), it increments `pos` to
-`0` and pushes `e1` onto the to-do list, so the top of the todo list now looks
-like:
-
-    e1 [-1] :: (e1 + e2) [0] :: ...
-
-Skipping over the processing of `e1`, it eventually turns into an integer value
-`n1`:
-
-    n1 :: (e1 + e2) [0]
-
-Because there is a value at the top of the to-do list, the `Step` function
-invokes `HandleValue` which then dispatches on the next action on the to-do
-list, in this case the addition. The addition action spawns an action for
-subexpression `e2`, increments `pos` to `1`, and remembers `n1`.
-
-    e2 [-1] :: (e1 + e2) [1](n1) :: ...
-
-Skipping over the processing of `e2`, it eventually turns into an integer value
-`n2`:
-
-    n2 :: (e1 + e2) [1](n1) :: ...
-
-Again the `Step` function invokes `HandleValue` and dispatches to the addition
-action which performs the arithmetic and pushes the result on the to-do list.
-Let `n3` be the sum of `n1` and `n2`.
-
-    n3 :: ...
-
-The heap is an array of values. It is used to store anything that is mutable,
-including function parameters and local variables. An address is simply an index
-into the array. The assignment operation stores the value of the right-hand side
-into the heap at the index specified by the address of the left-hand side
-lvalue.
-
-Function calls push a new frame on the stack and the `return` statement pops a
-frame off the stack. The parameter passing semantics is call-by-value, so the
-machine applies `CopyVal` to the incoming arguments and the outgoing return
-value. Also, the machine kills the values stored in the parameters and local
-variables when the function call is complete.
-
-## Experimental: Delimited Continuations
+## Experimental feature: Delimited Continuations
 
 Delimited continuations provide a kind of resumable exception with first-class
 continuations. The point of experimenting with this feature is not to say that
@@ -179,7 +164,7 @@ The first time increments `x` to `1` and the second time increments `x` to `2`,
 so the expected result of this program is `2`.
 
 ```carbon
-fn main() -> Int {
+fn Main() -> Int {
   var Int: x = 0;
   __continuation k {
     x = x + 1;
@@ -209,58 +194,3 @@ We adapted the feature to operate in a more imperative manner. The
 `shift` to pause and capture the continuation object. The `__run` feature is
 equivalent to calling the continuation. The `__await` feature is equivalent to a
 `shift` except that it updates the continuation in place.
-
-## Example Programs (Regression Tests)
-
-The [`testdata/`](testdata/) subdirectory includes some example programs with
-expected output.
-
-These tests make use of LLVM's
-[lit](https://llvm.org/docs/CommandGuide/lit.html) and
-[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
-boilerplate at the top:
-
-```carbon
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-// RUN: executable_semantics %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes=false %s
-// RUN: executable_semantics --trace %s 2>&1 | \
-// RUN:   FileCheck --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: executable_semantics %s
-// CHECK: result: 0
-
-package ExecutableSemanticsTest api;
-```
-
-To explain this boilerplate:
-
--   The standard copyright is expected.
--   The `RUN` lines indicate two commands for `lit` to execute using the file:
-    one without `--trace` output, one with.
-    -   Output is piped to `FileCheck` for verification.
-    -   `-allow-unused-prefixes` controls that output of the command without
-        `--trace` should _precisely_ match `CHECK` lines, whereas the command
-        with `--trace` will be a superset.
-    -   `RUN:` will be followed by the `not` command when failure is expected.
-        In particular, `RUN: not executable_semantics ...`.
-    -   `%s` is a
-        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
-        for the path to the given test file.
--   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
-    inserted immediately below by the `./update_checks.py` script.
--   The `CHECK` lines indicate expected output, verified by `FileCheck`.
-    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
-        braces indicate a contained regular expression.
--   The `package` is required in all test files, per normal Carbon syntax rules.
-
-Useful commands are:
-
--   `./update_checks.py` -- Updates expected output.
--   `bazel test :executable_semantics_lit_test --test_output=errors` -- Runs
-    tests and prints any errors.
--   `bazel test :executable_semantics_lit_test --test_output=errors --test_arg=--filter=basic_syntax/.*`
-    -- Only runs tests in the `basic_syntax` directory; `--filter` is a regular
-    expression.

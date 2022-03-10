@@ -6,7 +6,7 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher_test_base.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 class FnInserterTest : public MatcherTestBase<FnInserterFactory> {};
@@ -90,4 +90,4 @@ TEST_F(FnInserterTest, LegacyReturn) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

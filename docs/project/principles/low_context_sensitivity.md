@@ -1,4 +1,4 @@
-# Carbon: Low context-sensitivity principle
+# Principle: Low context-sensitivity
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -153,13 +153,13 @@ in Carbon that reflect applications of this principle:
 -   Carbon doesn't provide an analogy to C++'s
     [`using namespace`](https://en.cppreference.com/w/cpp/language/namespace#Using-directives)
     or a
-    ["wildcard imports" mechanisms](/docs/design/code_and_name_organization/#broader-imports-either-all-names-or-arbitrary-code)
+    ["wildcard imports" mechanisms](/proposals/p0107.md#broader-imports-either-all-names-or-arbitrary-code)
     that merge the names from one namespace into another. Either would introduce
     ambiguity in where a name is coming from, making the code more
     context-sensitive.
 
 -   Carbon doesn't support large blocks of code
-    [inside a namespace declaration](/docs/design/code_and_name_organization/#scoped-namespaces),
+    [inside a namespace declaration](/proposals/p0107.md#scoped-namespaces),
     where the reader would have to search for the beginning of the block to see
     what namespace applies.
 
