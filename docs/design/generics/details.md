@@ -4305,7 +4305,7 @@ used.
 
 The declaration for an interface or named constraint consists of:
 
--   an optional access-control keyword,
+-   an optional access-control keyword like `private`,
 -   the keyword introducer `interface`, `constraint`, or `template constraint`,
 -   the name of the interface or constraint, and
 -   the parameter list, if any.
@@ -4319,6 +4319,7 @@ the use cases when this would come up.
 An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
+-   Only the first declaration will have an access-control keyword.
 -   The declaration part of a forward declaration and the corresponding
     definition must match.
 -   An incomplete interface or named constraint may be used as constraints in
@@ -4334,13 +4335,13 @@ An interface or named constraint may be forward declared subject to these rules:
 
 The declaration of an interface implementation consists of:
 
--   an optional `external` keyword,
+-   optional modifier keywords `final`, `external`,
 -   the keyword introducer `impl`,
 -   an optional deduced parameter list in square brackets `[`...`]`,
--   a type, including an optional argument list,
+-   a type, including an optional parameter pattern,
 -   the keyword `as`, and
 -   a [type-of-type](#type-of-types), including an optional
-    [argument list](#parameterized-interfaces) and
+    [parameter pattern](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) and
     [associated types](#associated-types).
