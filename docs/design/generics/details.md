@@ -4361,7 +4361,7 @@ these rules:
     forward declaration and definition.
 -   You may forward declare an implementation of a defined interface but not an
     incomplete interface. This allows the assignment of associated constants in
-    the `impl` declaration to be verified. A forward impl declaration may be for
+    the `impl` declaration to be verified. An impl forward declaration may be for
     any declared type, whether it is incomplete or defined.
 -   Every internal implementation must be declared (or defined) inside the scope
     of the class definition. It may also be declared before the class definition
