@@ -840,6 +840,10 @@ void TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
+      if (!GetBindings(binding.type()).empty()) {
+        FATAL_COMPILATION_ERROR(binding.type().source_loc())
+            << "The type of a binding pattern cannot contain bindings.";
+      }
       TypeCheckPattern(&binding.type(), std::nullopt, impl_scope);
       Nonnull<const Value*> type =
           InterpPattern(&binding.type(), arena_, trace_);
