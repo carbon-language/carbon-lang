@@ -4464,12 +4464,11 @@ impl MyClass as Interface6 { }
 
 ### Example of declaring interfaces with cyclic references
 
-In this example, `Node` has an `EdgeType` associated type that is
-constrained to implement `Edge`, and `Edge` has a `NodeType`
-associated type that is constrained to implement `Node`. Furthermore,
-the `NodeType` of an `EdgeType` is the original type, and the other way around.
-This is accomplished by naming and then forward declaring the constraints that
-can't be stated directly:
+In this example, `Node` has an `EdgeType` associated type that is constrained to
+implement `Edge`, and `Edge` has a `NodeType` associated type that is
+constrained to implement `Node`. Furthermore, the `NodeType` of an `EdgeType` is
+the original type, and the other way around. This is accomplished by naming and
+then forward declaring the constraints that can't be stated directly:
 
 ```
 // Forward declare interfaces used in
