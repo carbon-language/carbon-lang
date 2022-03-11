@@ -251,10 +251,12 @@ class VariableDeclaration : public Declaration {
  public:
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
-                      std::optional<Nonnull<Expression*>> initializer)
+                      std::optional<Nonnull<Expression*>> initializer,
+                      ValueCategory value_category)
       : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
-        initializer_(initializer) {}
+        initializer_(initializer),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDeclaration(node->kind());
@@ -264,6 +266,7 @@ class VariableDeclaration : public Declaration {
   auto binding() -> BindingPattern& { return *binding_; }
   auto initializer() const -> const Expression& { return **initializer_; }
   auto initializer() -> Expression& { return **initializer_; }
+  auto value_category() const -> ValueCategory { return value_category_; }
 
   bool has_initializer() const { return initializer_.has_value(); }
 
@@ -273,6 +276,7 @@ class VariableDeclaration : public Declaration {
   // missing name.
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
+  ValueCategory value_category_;
 };
 
 class InterfaceDeclaration : public Declaration {
