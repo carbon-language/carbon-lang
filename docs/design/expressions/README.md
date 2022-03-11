@@ -135,11 +135,11 @@ keyword and is not preceded by a period (`.`).
 
 ### Qualified names and member access
 
-A _qualified name_ is a word that is prefixed by a period. Qualified names
-appear in the following contexts:
+A _qualified name_ is a word that appears immediately after a period. Qualified
+names appear in the following contexts:
 
 -   [Designators](/docs/design/classes.md#literals): `.` _word_
--   [Direct member access expressions](member_access.md): _expression_ `.`
+-   [Simple member access expressions](member_access.md): _expression_ `.`
     _word_
 
 ```
@@ -183,10 +183,10 @@ fn J() {
 ```
 
 Member access expressions associate left-to-right. If the member name is more
-complex than a single _word_, an indirect member access expression can be used,
+complex than a single _word_, a compound member access expression can be used,
 with parentheses around the member name:
 
--   _expression_ `.` `(` _member-access-expression_ `)`
+-   _expression_ `.` `(` _expression_ `)`
 
 ```
 interface I { fn F[me: Self](); }
@@ -245,8 +245,8 @@ fn Run(args: Span(StringView)) {
 
 ## Alternatives considered
 
-Other expression documents will list more references; this lists references not
-noted elsewhere.
+Other expression documents will list more alternatives; this lists alternatives
+not noted elsewhere.
 
 -   [Total order](/proposals/p0555.md#total-order)
 -   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)

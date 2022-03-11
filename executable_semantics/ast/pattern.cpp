@@ -54,6 +54,39 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
+// Equivalent to `GetBindings`, but stores its output in `bindings` instead of
+// returning it.
+static void GetBindingsImpl(
+    const Pattern& pattern,
+    std::vector<Nonnull<const BindingPattern*>>& bindings) {
+  switch (pattern.kind()) {
+    case PatternKind::BindingPattern:
+      bindings.push_back(&cast<BindingPattern>(pattern));
+      return;
+    case PatternKind::TuplePattern:
+      for (const Pattern* field : cast<TuplePattern>(pattern).fields()) {
+        GetBindingsImpl(*field, bindings);
+      }
+      return;
+    case PatternKind::AlternativePattern:
+      GetBindingsImpl(cast<AlternativePattern>(pattern).arguments(), bindings);
+      return;
+    case PatternKind::AutoPattern:
+    case PatternKind::ExpressionPattern:
+      return;
+    case PatternKind::VarPattern:
+      GetBindingsImpl(cast<VarPattern>(pattern).pattern(), bindings);
+      return;
+  }
+}
+
+auto GetBindings(const Pattern& pattern)
+    -> std::vector<Nonnull<const BindingPattern*>> {
+  std::vector<Nonnull<const BindingPattern*>> result;
+  GetBindingsImpl(pattern, result);
+  return result;
+}
+
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,
                               const ParenContents<Pattern>& paren_contents)
     -> Nonnull<Pattern*> {
