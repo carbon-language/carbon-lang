@@ -823,7 +823,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
 void TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    const ImplScope& impl_scope) {
+    const ImplScope& impl_scope, ValueCategory enclosing_value_category) {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -844,7 +844,8 @@ void TypeChecker::TypeCheckPattern(
         FATAL_COMPILATION_ERROR(binding.type().source_loc())
             << "The type of a binding pattern cannot contain bindings.";
       }
-      TypeCheckPattern(&binding.type(), std::nullopt, impl_scope);
+      TypeCheckPattern(&binding.type(), std::nullopt, impl_scope,
+                       enclosing_value_category);
       Nonnull<const Value*> type =
           InterpPattern(&binding.type(), arena_, trace_);
       if (expected) {
@@ -863,6 +864,10 @@ void TypeChecker::TypeCheckPattern(
       ExpectIsConcreteType(binding.source_loc(), type);
       binding.set_static_type(type);
       SetValue(&binding, InterpPattern(&binding, arena_, trace_));
+
+      if (!binding.has_value_category()) {
+        binding.set_value_category(enclosing_value_category);
+      }
       return;
     }
     case PatternKind::TuplePattern: {
@@ -882,7 +887,8 @@ void TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
-        TypeCheckPattern(field, expected_field_type, impl_scope);
+        TypeCheckPattern(field, expected_field_type, impl_scope,
+                         enclosing_value_category);
         field_types.push_back(&field->static_type());
       }
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
@@ -912,7 +918,8 @@ void TypeChecker::TypeCheckPattern(
             << "'" << alternative.alternative_name()
             << "' is not an alternative of " << choice_type;
       }
-      TypeCheckPattern(&alternative.arguments(), *parameter_types, impl_scope);
+      TypeCheckPattern(&alternative.arguments(), *parameter_types, impl_scope,
+                       enclosing_value_category);
       alternative.set_static_type(&choice_type);
       SetValue(&alternative, InterpPattern(&alternative, arena_, trace_));
       return;
@@ -924,6 +931,14 @@ void TypeChecker::TypeCheckPattern(
       SetValue(p, InterpPattern(p, arena_, trace_));
       return;
     }
+    case PatternKind::VarPattern:
+      auto& let_var_pattern = cast<VarPattern>(*p);
+
+      TypeCheckPattern(&let_var_pattern.pattern(), expected, impl_scope,
+                       let_var_pattern.value_category());
+      let_var_pattern.set_static_type(&let_var_pattern.pattern().static_type());
+      SetValue(&let_var_pattern,
+               InterpPattern(&let_var_pattern, arena_, trace_));
   }
 }
 
@@ -939,7 +954,7 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       std::vector<Match::Clause> new_clauses;
       for (auto& clause : match.clauses()) {
         TypeCheckPattern(&clause.pattern(), &match.expression().static_type(),
-                         impl_scope);
+                         impl_scope, ValueCategory::Let);
         TypeCheckStmt(&clause.statement(), impl_scope);
       }
       return;
@@ -967,7 +982,8 @@ void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& var = cast<VariableDefinition>(*s);
       TypeCheckExp(&var.init(), impl_scope);
       const Value& rhs_ty = var.init().static_type();
-      TypeCheckPattern(&var.pattern(), &rhs_ty, impl_scope);
+      TypeCheckPattern(&var.pattern(), &rhs_ty, impl_scope,
+                       var.value_category());
       return;
     }
     case StatementKind::Assign: {
@@ -1117,10 +1133,12 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   // Type check the receiver pattern
   if (f->is_method()) {
-    TypeCheckPattern(&f->me_pattern(), std::nullopt, impl_scope);
+    TypeCheckPattern(&f->me_pattern(), std::nullopt, impl_scope,
+                     ValueCategory::Let);
   }
   // Type check the parameter pattern
-  TypeCheckPattern(&f->param_pattern(), std::nullopt, impl_scope);
+  TypeCheckPattern(&f->param_pattern(), std::nullopt, impl_scope,
+                   ValueCategory::Let);
 
   // Create the impl_bindings
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -1431,7 +1449,8 @@ void TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
-      TypeCheckPattern(&var.binding(), std::nullopt, impl_scope);
+      TypeCheckPattern(&var.binding(), std::nullopt, impl_scope,
+                       var.value_category());
       Nonnull<const Value*> declared_type = InterpExp(&type, arena_, trace_);
       var.set_static_type(declared_type);
       break;

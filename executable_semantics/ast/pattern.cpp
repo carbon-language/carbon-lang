@@ -48,6 +48,9 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     case PatternKind::ExpressionPattern:
       out << cast<ExpressionPattern>(*this).expression();
       break;
+    case PatternKind::VarPattern:
+      out << "var" << cast<VarPattern>(*this).pattern();
+      break;
   }
 }
 
@@ -70,6 +73,9 @@ static void GetBindingsImpl(
       return;
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:
+      return;
+    case PatternKind::VarPattern:
+      GetBindingsImpl(cast<VarPattern>(pattern).pattern(), bindings);
       return;
   }
 }
