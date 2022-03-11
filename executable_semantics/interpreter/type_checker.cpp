@@ -870,6 +870,10 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
+      if (!GetBindings(binding.type()).empty()) {
+        return FATAL_COMPILATION_ERROR(binding.type().source_loc())
+               << "The type of a binding pattern cannot contain bindings.";
+      }
       RETURN_IF_ERROR(
           TypeCheckPattern(&binding.type(), std::nullopt, impl_scope));
       ASSIGN_OR_RETURN(Nonnull<const Value*> type,
@@ -879,11 +883,8 @@ auto TypeChecker::TypeCheckPattern(
           RETURN_IF_ERROR(
               ExpectType(p->source_loc(), "name binding", type, *expected));
         } else {
-          ASSIGN_OR_RETURN(
-              const bool matches,
-              PatternMatch(type, *expected, binding.type().source_loc(),
-                           std::nullopt));
-          if (!matches) {
+          if (!PatternMatch(type, *expected, binding.type().source_loc(),
+                            std::nullopt)) {
             return FATAL_COMPILATION_ERROR(binding.type().source_loc())
                    << "Type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";

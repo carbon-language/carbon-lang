@@ -84,6 +84,12 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
+class BindingPattern;
+
+// Returns all `BindingPattern`s in the AST subtree rooted at `pattern`.
+auto GetBindings(const Pattern& pattern)
+    -> std::vector<Nonnull<const BindingPattern*>>;
+
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:

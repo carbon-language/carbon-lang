@@ -49,7 +49,7 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
                                 Nonnull<const Value*> v,
                                 SourceLocation source_loc,
                                 std::optional<Nonnull<RuntimeScope*>> bindings)
-    -> llvm::Expected<bool>;
+    -> bool;
 
 }  // namespace Carbon
 

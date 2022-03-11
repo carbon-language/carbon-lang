@@ -178,15 +178,10 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
-                  std::optional<Nonnull<RuntimeScope*>> bindings)
-    -> llvm::Expected<bool> {
+                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
-      if (!bindings.has_value()) {
-        // TODO: move this to typechecker.
-        return FATAL_COMPILATION_ERROR(source_loc)
-               << "Name bindings are not supported in this context";
-      }
+      CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
         (*bindings)->Initialize(*placeholder.value_node(), v);
@@ -198,17 +193,10 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::TupleValue: {
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
-          if (p_tup.elements().size() != v_tup.elements().size()) {
-            return FATAL_PROGRAM_ERROR(source_loc)
-                   << "arity mismatch in tuple pattern match:\n  pattern: "
-                   << p_tup << "\n  value: " << v_tup;
-          }
+          CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
-            ASSIGN_OR_RETURN(
-                const bool matches,
-                PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                             source_loc, bindings));
-            if (!matches) {
+            if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
+                              source_loc, bindings)) {
               return false;
             }
           }  // for
@@ -223,11 +211,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       CHECK(p_struct.elements().size() == v_struct.elements().size());
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
-        ASSIGN_OR_RETURN(
-            const bool matches,
-            PatternMatch(p_struct.elements()[i].value,
-                         v_struct.elements()[i].value, source_loc, bindings));
-        if (!matches) {
+        if (!PatternMatch(p_struct.elements()[i].value,
+                          v_struct.elements()[i].value, source_loc, bindings)) {
           return false;
         }
       }
@@ -253,17 +238,12 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
-          ASSIGN_OR_RETURN(const bool params_match,
-                           PatternMatch(&p_fn.parameters(), &v_fn.parameters(),
-                                        source_loc, bindings));
-          if (!params_match) {
+          if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
+                            bindings)) {
             return false;
           }
-          ASSIGN_OR_RETURN(
-              const bool return_type_matches,
-              PatternMatch(&p_fn.return_type(), &v_fn.return_type(), source_loc,
-                           bindings));
-          if (!return_type_matches) {
+          if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
+                            source_loc, bindings)) {
             return false;
           }
           return true;
@@ -634,16 +614,10 @@ auto Interpreter::StepExp() -> llvm::Error {
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
             RuntimeScope method_scope(&heap_);
-            ASSIGN_OR_RETURN(
-                const bool me_pattern_matches,
-                PatternMatch(&method.me_pattern().value(), m.receiver(),
-                             exp.source_loc(), &method_scope));
-            CHECK(me_pattern_matches);
-            ASSIGN_OR_RETURN(
-                const bool param_pattern_matches,
-                PatternMatch(&method.param_pattern().value(), converted_args,
-                             exp.source_loc(), &method_scope));
-            CHECK(param_pattern_matches);
+            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                               exp.source_loc(), &method_scope));
+            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                               exp.source_loc(), &method_scope));
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
@@ -826,12 +800,9 @@ auto Interpreter::StepStmt() -> llvm::Error {
         }
         auto c = match_stmt.clauses()[clause_num];
         RuntimeScope matches(&heap_);
-        ASSIGN_OR_RETURN(
-            const bool value_matches,
-            PatternMatch(&c.pattern().value(),
+        if (PatternMatch(&c.pattern().value(),
                          Convert(act.results()[0], &c.pattern().static_type()),
-                         stmt.source_loc(), &matches));
-        if (value_matches) {
+                         stmt.source_loc(), &matches)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
@@ -909,9 +880,7 @@ auto Interpreter::StepStmt() -> llvm::Error {
             &cast<VariableDefinition>(stmt).pattern().value();
 
         RuntimeScope matches(&heap_);
-        ASSIGN_OR_RETURN(const bool pattern_matches,
-                         PatternMatch(p, v, stmt.source_loc(), &matches));
-        CHECK(pattern_matches)
+        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         todo_.MergeScope(std::move(matches));
