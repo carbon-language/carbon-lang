@@ -59,6 +59,7 @@ class Interpreter {
   ~Interpreter();
 
   // Runs all the steps of `action`.
+  // It's not safe to call `RunAllSteps()` or `action` after an error.
   auto RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error;
 
   // The result produced by the `action` argument of the most recent

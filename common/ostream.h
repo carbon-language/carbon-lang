@@ -70,12 +70,12 @@ namespace Internal {
 // A trait for determining the existence of operator<<(llvm::raw_ostream&, const
 // T&).
 template <typename T, typename = void>
-struct HasLlvmRawOstreamOp : std::false_type {};
+static constexpr bool HasLlvmRawOstreamOp = false;
 
 template <typename T>
-struct HasLlvmRawOstreamOp<
+static constexpr bool HasLlvmRawOstreamOp<
     T, std::void_t<decltype(std::declval<llvm::raw_ostream&>()
-                            << std::declval<const T&>())>> : std::true_type {};
+                            << std::declval<const T&>())>> = true;
 
 }  // namespace Internal
 
@@ -104,8 +104,7 @@ template <typename S, typename T,
           typename = std::enable_if_t<std::is_base_of_v<
               std::ostream, std::remove_reference_t<std::remove_cv_t<S>>>>,
           // T can be streamed to an llvm::raw_ostream.
-          typename =
-              std::enable_if_t<Carbon::Internal::HasLlvmRawOstreamOp<T>::value>>
+          typename = std::enable_if_t<Carbon::Internal::HasLlvmRawOstreamOp<T>>>
 auto operator<<(S& standard_out, const T& value) -> S& {
   raw_os_ostream(standard_out) << value;
   return standard_out;

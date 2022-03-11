@@ -23,6 +23,10 @@ class TypeChecker {
   explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
       : arena_(arena), trace_(trace) {}
 
+  // Type-checks `ast` and sets properties such as `static_type`, as documented
+  // on the individual nodes.
+  // On failure, `ast` is left in a partial state and should not be further
+  // processed.
   auto TypeCheck(AST& ast) -> llvm::Error;
 
  private:

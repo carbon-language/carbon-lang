@@ -12,6 +12,8 @@ namespace Carbon {
 
 // Resolves non-local control-flow edges, such as `break` and `return`, in the
 // given AST.
+// On failure, `ast` is left in a partial state and should not be further
+// processed.
 auto ResolveControlFlow(AST& ast) -> llvm::Error;
 
 }  // namespace Carbon

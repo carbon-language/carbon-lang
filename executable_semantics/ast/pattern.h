@@ -186,7 +186,7 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> llvm::Expected<Nonnull<AlternativePattern*>> {
-    ASSIGN_OR_RETURN(FieldAccessExpression * field_access,
+    ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
                      RequireFieldAccess(alternative));
     return arena->New<AlternativePattern>(source_loc,
                                           &field_access->aggregate(),
