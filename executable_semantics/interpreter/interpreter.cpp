@@ -178,11 +178,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
-      if (!bindings.has_value()) {
-        // TODO: move this to typechecker.
-        FATAL_COMPILATION_ERROR(source_loc)
-            << "Name bindings are not supported in this context";
-      }
+      CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
         (*bindings)->Initialize(*placeholder.value_node(), v);
@@ -194,11 +190,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::TupleValue: {
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
-          if (p_tup.elements().size() != v_tup.elements().size()) {
-            FATAL_PROGRAM_ERROR(source_loc)
-                << "arity mismatch in tuple pattern match:\n  pattern: "
-                << p_tup << "\n  value: " << v_tup;
-          }
+          CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
                               source_loc, bindings)) {
