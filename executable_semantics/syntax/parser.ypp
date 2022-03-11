@@ -142,7 +142,6 @@
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
 %type <std::vector<Nonnull<AstNode*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
-%type <Nonnull<Pattern*>> maybe_var_pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
 %type <BisonWrap<ReturnTerm>> return_term
 %type <Nonnull<Expression*>> paren_expression
@@ -567,16 +566,10 @@ struct_type_literal_contents:
 // `pattern` are structured to be disjoint from `expression`, unless otherwise
 // specified.
 pattern:
-  maybe_var_pattern
+  non_expression_pattern
     { $$ = $1; }
 | expression
     { $$ = arena->New<ExpressionPattern>($1); }
-;
-maybe_var_pattern:
-  non_expression_pattern
-    { $$ = $1; }
-| VAR non_expression_pattern
-    { $$ = arena->New<VarPattern>(context.source_loc(), $2); }
 ;
 non_expression_pattern:
   AUTO
@@ -590,6 +583,8 @@ non_expression_pattern:
     { $$ = $1; }
 | postfix_expression tuple_pattern
     { $$ = arena->New<AlternativePattern>(context.source_loc(), $1, $2); }
+| VAR non_expression_pattern
+    { $$ = arena->New<VarPattern>(context.source_loc(), $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
@@ -613,9 +608,9 @@ paren_pattern_base:
 // is very different from the corresponding expression rule because is has to
 // enforce that requirement.
 paren_pattern_contents:
-  maybe_var_pattern
+  non_expression_pattern
     { $$ = {.elements = {$1}, .has_trailing_comma = false}; }
-| paren_expression_contents COMMA maybe_var_pattern
+| paren_expression_contents COMMA non_expression_pattern
     {
       $$ = ParenExpressionToParenPattern(arena, $1);
       $$.elements.push_back($3);
@@ -625,7 +620,7 @@ paren_pattern_contents:
       $$ = $1;
       $$.elements.push_back(arena->New<ExpressionPattern>($3));
     }
-| paren_pattern_contents COMMA maybe_var_pattern
+| paren_pattern_contents COMMA non_expression_pattern
     {
       $$ = $1;
       $$.elements.push_back($3);
