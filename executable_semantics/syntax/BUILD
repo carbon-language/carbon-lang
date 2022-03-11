@@ -4,7 +4,10 @@
 
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
-package(default_visibility = ["//executable_semantics:__pkg__"])
+package(
+    default_visibility = ["//executable_semantics:__pkg__"],
+    features = ["strict_cpp_compilation"],
+)
 
 cc_library(
     name = "bison_wrap",
@@ -53,6 +56,7 @@ cc_library(
         "-Wno-unneeded-internal-declaration",
         "-Wno-unused-function",
         "-Wno-writable-strings",
+        "-Wno-unused-parameter",
     ],
     deps = [
         ":bison_wrap",

@@ -128,9 +128,6 @@ def _impl(ctx):
                             "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
-                            # We use partial sets of designated initializers in
-                            # test code.
-                            "-Wno-missing-field-initializers",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],
@@ -262,6 +259,19 @@ def _impl(ctx):
                 ],
             ),
         ],
+    )
+
+    # Turns on the flags turned off by `default_flags_feature`.
+    # Intended for compiling Carbon-owned sources.
+    strict_cpp_compilation = feature(
+        enabled = False,
+        name = "strict_cpp_compilation",
+        flag_sets = [flag_set(
+            actions = all_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-Wunused-parameter",
+            ])],
+        )],
     )
 
     # Handle different levels of optimization with individual features so that
@@ -744,6 +754,7 @@ def _impl(ctx):
     # Start off adding the baseline features.
     features += [
         default_flags_feature,
+        strict_cpp_compilation,
         minimal_optimization_flags,
         default_optimization_flags,
         minimal_debug_info_flags,

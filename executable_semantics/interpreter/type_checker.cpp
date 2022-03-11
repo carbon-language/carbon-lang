@@ -1325,8 +1325,8 @@ void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
 }
 
-void TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                             const ImplScope& impl_scope) {
+void TypeChecker::TypeCheckChoiceDeclaration(
+    Nonnull<ChoiceDeclaration*> /*choice*/, const ImplScope& /*impl_scope*/) {
   // Nothing to do here, but perhaps that will change in the future?
 }
 

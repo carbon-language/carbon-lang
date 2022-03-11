@@ -6,8 +6,8 @@
 
 namespace Carbon {
 
-Semantics Semantics::Analyze(const ParseTree& parse_tree,
-                             DiagnosticConsumer& consumer) {
+Semantics Semantics::Analyze(const ParseTree& /*parse_tree*/,
+                             DiagnosticConsumer& /*consumer*/) {
   Semantics semantics;
   return semantics;
 }

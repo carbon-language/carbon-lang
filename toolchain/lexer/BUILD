@@ -4,7 +4,10 @@
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_visibility = ["//visibility:public"],
+    features = ["strict_cpp_compilation"],
+)
 
 cc_library(
     name = "token_kind",

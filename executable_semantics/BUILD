@@ -4,10 +4,13 @@
 
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
-package(default_visibility = [
-    "//bazel/check_deps:__pkg__",
-    "//executable_semantics:__subpackages__",
-])
+package(
+    default_visibility = [
+        "//bazel/check_deps:__pkg__",
+        "//executable_semantics:__subpackages__",
+    ],
+    features = ["strict_cpp_compilation"],
+)
 
 cc_binary(
     name = "executable_semantics",

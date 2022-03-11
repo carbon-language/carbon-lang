@@ -70,7 +70,8 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
       return std::nullopt;
     }
     default:
-      FATAL() << "expected an interface, not " << *iface_type;
+      FATAL() << "expected an interface, not " << *iface_type << " defined at "
+              << source_loc;
       break;
   }
 }
