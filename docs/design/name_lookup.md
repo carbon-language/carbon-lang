@@ -11,6 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+    -   [Scopes](#scopes)
+    -   [Same name](#same-name)
     -   [Unqualified name lookup](#unqualified-name-lookup)
         -   [Alternatives](#alternatives)
     -   [Name lookup for common, standard types](#name-lookup-for-common-standard-types)
@@ -46,6 +48,52 @@ Note that libraries (unlike packages) do **not** introduce a scope, they share
 the scope of their package. This is based on the observation that in practice, a
 fairly coarse scoping tends to work best, with some degree of global registry to
 establish a unique package name.
+
+### Scopes
+
+### Same name
+
+Two _word_\s represent the _same name_ if they are identical after conversion
+into
+[Unicode Normalization Form C](https://unicode.org/reports/tr15/#Norm_Forms).
+
+Two _word_\s represent _similar names_ if they are
+[confusable](http://www.unicode.org/reports/tr39/#Confusable_Detection), that
+is, they have the same skeleton as defined in Unicode UAX #39. Note that words
+that represent the same name also represent similar names.
+
+Any lookup into a scope looks for not only declarations of the same name being
+queried, but also for similar names. If any lookup finds a name that is similar
+to that being looked up, but not the same, the program is invalid.
+
+```
+// The name of this function contains a single code point:
+// U+00C5 LATIN CAPITAL LETTER A WITH RING ABOVE
+fn Å() {}
+
+// The name of this function contains two code points:
+// U+00E5 LATIN CAPITAL LETTER A
+// U+030A COMBINING RING ABOVE
+// ... which normalize in NFC to U+00C5.
+// This redeclares the function declared above.
+fn Å() {}
+
+class X {
+  // The name of this function contains two code points:
+  // U+0410 CYRILLIC CAPITAL LETTER A
+  // U+030A COMBINING RING ABOVE
+  // ... which are unchanged by normalization into NFC.
+  // This name is similar to that of the previous functions, but not the same.
+  fn А̊() {}
+
+  fn B() {
+    // This is U+00C5. However, this call is invalid because name lookup
+    // searches the scope of class `X` which contains the similar name
+    // U+0410 U+030A.
+    Å();
+  }
+}
+```
 
 ### Unqualified name lookup
 
