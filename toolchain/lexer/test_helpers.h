@@ -5,10 +5,13 @@
 #ifndef TOOLCHAIN_LEXER_TEST_HELPERS_H_
 #define TOOLCHAIN_LEXER_TEST_HELPERS_H_
 
+#include <gmock/gmock.h>
+
 #include <array>
 #include <string>
 
-#include "gmock/gmock.h"
+#include "common/check.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -26,8 +29,8 @@ class SingleTokenDiagnosticTranslator
       : token_(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
-    assert(llvm::is_sorted(std::array{token_.begin(), pos, token_.end()}) &&
-           "invalid diagnostic location");
+    CHECK(StringRefContainsPointer(token_, pos))
+        << "invalid diagnostic location";
     llvm::StringRef prefix = token_.take_front(pos - token_.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
     if (before_last_newline.size() == prefix.size()) {

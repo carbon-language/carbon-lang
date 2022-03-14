@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "common/check.h"
+
 namespace Carbon {
 
 namespace {
@@ -120,9 +122,8 @@ struct OperatorPriorityTable {
     for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
         if (table[a][b] == OperatorPriority::LeftFirst) {
-          if (table[b][a] == OperatorPriority::LeftFirst) {
-            throw "inconsistent lookup table entries";
-          }
+          CHECK(table[b][a] != OperatorPriority::LeftFirst)
+              << "inconsistent lookup table entries";
           table[b][a] = OperatorPriority::RightFirst;
         }
       }
@@ -164,16 +165,14 @@ struct OperatorPriorityTable {
   constexpr void ConsistencyCheck() {
     for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
       if (level != Highest) {
-        if (table[Highest][level] != OperatorPriority::LeftFirst ||
-            table[level][Highest] != OperatorPriority::RightFirst) {
-          throw "Highest is not highest priority";
-        }
+        CHECK(table[Highest][level] == OperatorPriority::LeftFirst &&
+              table[level][Highest] == OperatorPriority::RightFirst)
+            << "Highest is not highest priority";
       }
       if (level != Lowest) {
-        if (table[Lowest][level] != OperatorPriority::RightFirst ||
-            table[level][Lowest] != OperatorPriority::LeftFirst) {
-          throw "Lowest is not lowest priority";
-        }
+        CHECK(table[Lowest][level] == OperatorPriority::RightFirst &&
+              table[level][Lowest] == OperatorPriority::LeftFirst)
+            << "Lowest is not lowest priority";
       }
     }
   }
@@ -200,7 +199,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
     case TokenKind::Star():
       return PrecedenceGroup(TermPrefix);
 
-    case TokenKind::NotKeyword():
+    case TokenKind::Not():
       return PrecedenceGroup(LogicalPrefix);
 
     case TokenKind::Minus():
@@ -234,9 +233,9 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = CompoundAssignment, .is_binary = true};
 
     // Logical operators.
-    case TokenKind::AndKeyword():
+    case TokenKind::And():
       return Trailing{.level = LogicalAnd, .is_binary = true};
-    case TokenKind::OrKeyword():
+    case TokenKind::Or():
       return Trailing{.level = LogicalOr, .is_binary = true};
 
     // Bitwise operators.
@@ -244,7 +243,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = BitwiseAnd, .is_binary = true};
     case TokenKind::Pipe():
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::XorKeyword():
+    case TokenKind::Xor():
       return Trailing{.level = BitwiseXor, .is_binary = true};
     case TokenKind::GreaterGreater():
     case TokenKind::LessLess():
@@ -283,7 +282,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 
     // Prefix-only operators.
     case TokenKind::Tilde():
-    case TokenKind::NotKeyword():
+    case TokenKind::Not():
       break;
 
     // Symbolic tokens that might be operators eventually.

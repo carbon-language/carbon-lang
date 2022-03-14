@@ -15,6 +15,32 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+      out << "interface " << iface_decl.name() << " {\n";
+      for (Nonnull<Declaration*> m : iface_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      const auto& impl_decl = cast<ImplDeclaration>(*this);
+      switch (impl_decl.kind()) {
+        case ImplKind::InternalImpl:
+          break;
+        case ImplKind::ExternalImpl:
+          out << "external ";
+          break;
+      }
+      out << "impl " << *impl_decl.impl_type() << " as "
+          << impl_decl.interface() << " {\n";
+      for (Nonnull<Declaration*> m : impl_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
@@ -22,7 +48,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
       out << "class " << class_decl.name() << " {\n";
-      for (Nonnull<Member*> m : class_decl.members()) {
+      for (Nonnull<Declaration*> m : class_decl.members()) {
         out << *m;
       }
       out << "}\n";
@@ -41,9 +67,30 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      out << "var " << var.binding() << " = " << var.initializer() << "\n";
+      out << "var " << var.binding();
+      if (var.has_initializer()) {
+        out << " = " << var.initializer();
+      }
+      out << ";\n";
       break;
     }
+  }
+}
+
+auto GetName(const Declaration& declaration) -> std::optional<std::string> {
+  switch (declaration.kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      return cast<FunctionDeclaration>(declaration).name();
+    case DeclarationKind::ClassDeclaration:
+      return cast<ClassDeclaration>(declaration).name();
+    case DeclarationKind::ChoiceDeclaration:
+      return cast<ChoiceDeclaration>(declaration).name();
+    case DeclarationKind::InterfaceDeclaration:
+      return cast<InterfaceDeclaration>(declaration).name();
+    case DeclarationKind::VariableDeclaration:
+      return cast<VariableDeclaration>(declaration).binding().name();
+    case DeclarationKind::ImplDeclaration:
+      return std::nullopt;
   }
 }
 
@@ -59,8 +106,34 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
       out << "-> auto";
       return;
     case ReturnKind::Expression:
+      CHECK(type_expression_.has_value());
       out << "-> " << **type_expression_;
       return;
+  }
+}
+
+// Look for the `me` parameter in the `deduced_parameters_`
+// and put it in the `me_pattern_`.
+void FunctionDeclaration::ResolveDeducedAndReceiver(
+    const std::vector<Nonnull<AstNode*>>& deduced_params) {
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        deduced_parameters_.push_back(&cast<GenericBinding>(*param));
+        break;
+      case AstNodeKind::BindingPattern: {
+        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
+        if (me_pattern_.has_value() || bp->name() != "me") {
+          FATAL_COMPILATION_ERROR(source_loc())
+              << "illegal binding pattern in implicit parameter list";
+        }
+        me_pattern_ = bp;
+        break;
+      }
+      default:
+        FATAL_COMPILATION_ERROR(source_loc())
+            << "illegal AST node in implicit parameter list";
+    }
   }
 }
 

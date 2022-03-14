@@ -6,7 +6,6 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "diagnostic_emitter",
-    srcs = ["diagnostic_emitter.cpp"],
     hdrs = ["diagnostic_emitter.h"],
     deps = ["@llvm-project//llvm:Support"],
 )
@@ -23,6 +22,7 @@ cc_library(
 cc_library(
     name = "mocks",
     testonly = 1,
+    srcs = ["mocks.cpp"],
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
@@ -33,6 +33,7 @@ cc_library(
 
 cc_test(
     name = "diagnostic_emitter_test",
+    size = "small",
     srcs = ["diagnostic_emitter_test.cpp"],
     deps = [
         ":diagnostic_emitter",

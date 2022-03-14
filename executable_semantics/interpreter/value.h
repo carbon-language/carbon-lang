@@ -36,12 +36,15 @@ class Value {
   enum class Kind {
     IntValue,
     FunctionValue,
+    BoundMethodValue,
+    PointerValue,
     LValue,
     BoolValue,
     StructValue,
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    Witness,
     IntType,
     BoolType,
     TypeType,
@@ -50,6 +53,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    InterfaceType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -58,6 +62,9 @@ class Value {
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
+    TypeOfClassType,
+    TypeOfInterfaceType,
+    TypeOfChoiceType,
   };
 
   Value(const Value&) = delete;
@@ -132,6 +139,30 @@ class FunctionValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
 };
 
+// A bound method value. It includes the receiver object.
+class BoundMethodValue : public Value {
+ public:
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+                            Nonnull<const Value*> receiver)
+      : Value(Kind::BoundMethodValue),
+        declaration_(declaration),
+        receiver_(receiver) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::BoundMethodValue;
+  }
+
+  auto declaration() const -> const FunctionDeclaration& {
+    return *declaration_;
+  }
+
+  auto receiver() const -> Nonnull<const Value*> { return receiver_; }
+
+ private:
+  Nonnull<const FunctionDeclaration*> declaration_;
+  Nonnull<const Value*> receiver_;
+};
+
 // The value of a location in memory.
 class LValue : public Value {
  public:
@@ -140,6 +171,22 @@ class LValue : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::LValue;
+  }
+
+  auto address() const -> const Address& { return value_; }
+
+ private:
+  Address value_;
+};
+
+// A pointer value
+class PointerValue : public Value {
+ public:
+  explicit PointerValue(Address value)
+      : Value(Kind::PointerValue), value_(std::move(value)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::PointerValue;
   }
 
   auto address() const -> const Address& { return value_; }
@@ -193,7 +240,7 @@ class StructValue : public Value {
   std::vector<NamedValue> elements_;
 };
 
-// A value of a nominal class type.
+// A value of a nominal class type, i.e., an object.
 class NominalClassValue : public Value {
  public:
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits)
@@ -208,7 +255,7 @@ class NominalClassValue : public Value {
 
  private:
   Nonnull<const Value*> type_;
-  Nonnull<const Value*> inits_;
+  Nonnull<const Value*> inits_;  // The initializing StructValue.
 };
 
 // An alternative constructor value.
@@ -283,23 +330,24 @@ class TupleValue : public Value {
 // A binding placeholder value.
 class BindingPlaceholderValue : public Value {
  public:
-  // nullopt represents the `_` placeholder.
-  BindingPlaceholderValue(std::optional<std::string> name,
-                          Nonnull<const Value*> type)
+  // Represents the `_` placeholder.
+  explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
+
+  // Represents a named placeholder.
+  explicit BindingPlaceholderValue(ValueNodeView value_node)
       : Value(Kind::BindingPlaceholderValue),
-        name_(std::move(name)),
-        type_(type) {}
+        value_node_(std::move(value_node)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto name() const -> const std::optional<std::string>& { return name_; }
-  auto type() const -> const Value& { return *type_; }
+  auto value_node() const -> const std::optional<ValueNodeView>& {
+    return value_node_;
+  }
 
  private:
-  std::optional<std::string> name_;
-  Nonnull<const Value*> type_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // The int type.
@@ -337,11 +385,13 @@ class FunctionType : public Value {
  public:
   FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
+               Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         deduced_(deduced),
         parameters_(parameters),
-        return_type_(return_type) {}
+        return_type_(return_type),
+        impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -352,11 +402,17 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  // The bindings for the witness tables (impls) required by the
+  // bounds on the type parameters of the generic function.
+  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+    return impl_bindings_;
+  }
 
  private:
   std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
 // A pointer type.
@@ -409,26 +465,65 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(std::string name, std::vector<NamedValue> fields,
-                   std::vector<NamedValue> methods)
-      : Value(Kind::NominalClassType),
-        name_(std::move(name)),
-        fields_(std::move(fields)),
-        methods_(std::move(methods)) {}
+  NominalClassType(Nonnull<const ClassDeclaration*> declaration)
+      : Value(Kind::NominalClassType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
-  auto name() const -> const std::string& { return name_; }
-  auto fields() const -> llvm::ArrayRef<NamedValue> { return fields_; }
-  auto methods() const -> llvm::ArrayRef<NamedValue> { return methods_; }
+  auto declaration() const -> const ClassDeclaration& { return *declaration_; }
+
+  // Returns the value of the function named `name` in this class, or
+  // nullopt if there is no such function.
+  auto FindFunction(const std::string& name) const
+      -> std::optional<Nonnull<const FunctionValue*>>;
 
  private:
-  std::string name_;
-  std::vector<NamedValue> fields_;
-  std::vector<NamedValue> methods_;
+  Nonnull<const ClassDeclaration*> declaration_;
 };
+
+auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
+// Return the declaration of the member with the given name.
+auto FindMember(const std::string& name,
+                llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const Declaration*>>;
+
+// An interface type.
+class InterfaceType : public Value {
+ public:
+  InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+      : Value(Kind::InterfaceType), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::InterfaceType;
+  }
+
+  auto declaration() const -> const InterfaceDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const InterfaceDeclaration*> declaration_;
+};
+
+// The witness table for an impl.
+class Witness : public Value {
+ public:
+  Witness(Nonnull<const ImplDeclaration*> declaration)
+      : Value(Kind::Witness), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::Witness;
+  }
+
+  auto declaration() const -> const ImplDeclaration& { return *declaration_; }
+
+ private:
+  Nonnull<const ImplDeclaration*> declaration_;
+};
+
+auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
 
 // A choice type.
 class ChoiceType : public Value {
@@ -467,17 +562,17 @@ class ContinuationType : public Value {
 // A variable type.
 class VariableType : public Value {
  public:
-  explicit VariableType(std::string name)
-      : Value(Kind::VariableType), name_(std::move(name)) {}
+  explicit VariableType(Nonnull<const GenericBinding*> binding)
+      : Value(Kind::VariableType), binding_(binding) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::VariableType;
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto binding() const -> const GenericBinding& { return *binding_; }
 
  private:
-  std::string name_;
+  Nonnull<const GenericBinding*> binding_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -560,9 +655,61 @@ class StringValue : public Value {
   std::string value_;
 };
 
+// The type of an expression whose value is a class type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ClassName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfClassType : public Value {
+ public:
+  explicit TypeOfClassType(Nonnull<const NominalClassType*> class_type)
+      : Value(Kind::TypeOfClassType), class_type_(class_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfClassType;
+  }
+
+  auto class_type() const -> const NominalClassType& { return *class_type_; }
+
+ private:
+  Nonnull<const NominalClassType*> class_type_;
+};
+
+class TypeOfInterfaceType : public Value {
+ public:
+  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
+      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfInterfaceType;
+  }
+
+  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
+
+ private:
+  Nonnull<const InterfaceType*> iface_type_;
+};
+
+// The type of an expression whose value is a choice type. Currently there is no
+// way to explicitly name such a type in Carbon code, but we are tentatively
+// using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
+// something like that becoming valid Carbon syntax.
+class TypeOfChoiceType : public Value {
+ public:
+  explicit TypeOfChoiceType(Nonnull<const ChoiceType*> choice_type)
+      : Value(Kind::TypeOfChoiceType), choice_type_(choice_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfChoiceType;
+  }
+
+  auto choice_type() const -> const ChoiceType& { return *choice_type_; }
+
+ private:
+  Nonnull<const ChoiceType*> choice_type_;
+};
+
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
-auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
-                SourceLocation source_loc) -> bool;
+auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 }  // namespace Carbon
 

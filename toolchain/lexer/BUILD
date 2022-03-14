@@ -11,11 +11,15 @@ cc_library(
     srcs = ["token_kind.cpp"],
     hdrs = ["token_kind.h"],
     textual_hdrs = ["token_registry.def"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(
     name = "token_kind_test",
+    size = "small",
     srcs = ["token_kind_test.cpp"],
     deps = [
         ":token_kind",
@@ -31,11 +35,24 @@ cc_library(
 )
 
 cc_library(
+    name = "lex_helpers",
+    srcs = ["lex_helpers.cpp"],
+    hdrs = ["lex_helpers.h"],
+    deps = [
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "test_helpers",
     testonly = 1,
     hdrs = ["test_helpers.h"],
     deps = [
+        "//common:check",
+        "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -46,17 +63,33 @@ cc_library(
     hdrs = ["numeric_literal.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
 )
 
+cc_binary(
+    name = "numeric_literal_benchmark",
+    testonly = 1,
+    srcs = ["numeric_literal_benchmark.cpp"],
+    deps = [
+        ":numeric_literal",
+        "//common:check",
+        "//toolchain/diagnostics:null_diagnostics",
+        "@com_github_google_benchmark//:benchmark_main",
+    ],
+)
+
 cc_test(
     name = "numeric_literal_test",
+    size = "small",
     srcs = ["numeric_literal_test.cpp"],
     deps = [
         ":numeric_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -66,6 +99,7 @@ cc_test(
 
 cc_fuzz_test(
     name = "numeric_literal_fuzzer",
+    size = "small",
     srcs = ["numeric_literal_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/numeric_literal/*"]),
     deps = [
@@ -82,17 +116,31 @@ cc_library(
     hdrs = ["string_literal.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
 )
 
+cc_binary(
+    name = "string_literal_benchmark",
+    testonly = 1,
+    srcs = ["string_literal_benchmark.cpp"],
+    deps = [
+        ":string_literal",
+        "@com_github_google_benchmark//:benchmark_main",
+    ],
+)
+
 cc_test(
     name = "string_literal_test",
+    size = "small",
     srcs = ["string_literal_test.cpp"],
     deps = [
         ":string_literal",
         ":test_helpers",
+        "//common:check",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest_main",
@@ -102,10 +150,12 @@ cc_test(
 
 cc_fuzz_test(
     name = "string_literal_fuzzer",
+    size = "small",
     srcs = ["string_literal_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/string_literal/*"]),
     deps = [
         ":string_literal",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
@@ -118,10 +168,13 @@ cc_library(
     hdrs = ["tokenized_buffer.h"],
     deps = [
         ":character_set",
+        ":lex_helpers",
         ":numeric_literal",
         ":string_literal",
         ":token_kind",
+        "//common:check",
         "//common:ostream",
+        "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
@@ -134,6 +187,7 @@ cc_library(
     hdrs = ["tokenized_buffer_test_helpers.h"],
     deps = [
         ":tokenized_buffer",
+        "//common:check",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -141,6 +195,7 @@ cc_library(
 
 cc_test(
     name = "tokenized_buffer_test",
+    size = "small",
     srcs = ["tokenized_buffer_test.cpp"],
     deps = [
         ":tokenized_buffer",
@@ -155,10 +210,12 @@ cc_test(
 
 cc_fuzz_test(
     name = "tokenized_buffer_fuzzer",
+    size = "small",
     srcs = ["tokenized_buffer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/tokenized_buffer/*"]),
     deps = [
         ":tokenized_buffer",
+        "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",

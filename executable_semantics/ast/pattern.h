@@ -15,6 +15,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
@@ -29,7 +30,7 @@ class Value;
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
-class Pattern : public virtual AstNode {
+class Pattern : public AstNode {
  public:
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
@@ -53,14 +54,13 @@ class Pattern : public virtual AstNode {
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value of this pattern. Cannot be called before typechecking.
+  // TODO rename to avoid confusion with BindingPattern::constant_value
   auto value() const -> const Value& { return **value_; }
 
   // Sets the value of this pattern. Can only be called once, during
@@ -76,7 +76,8 @@ class Pattern : public virtual AstNode {
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Pattern() = default;
+  Pattern(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -87,7 +88,7 @@ class Pattern : public virtual AstNode {
 class AutoPattern : public Pattern {
  public:
   explicit AutoPattern(SourceLocation source_loc)
-      : AstNode(AstNodeKind::AutoPattern, source_loc) {}
+      : Pattern(AstNodeKind::AutoPattern, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAutoPattern(node->kind());
@@ -96,11 +97,13 @@ class AutoPattern : public Pattern {
 
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
-class BindingPattern : public Pattern, public NamedEntity {
+class BindingPattern : public Pattern {
  public:
-  BindingPattern(SourceLocation source_loc, std::optional<std::string> name,
+  using ImplementsCarbonValueNode = void;
+
+  BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type)
-      : AstNode(AstNodeKind::BindingPattern, source_loc),
+      : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type) {}
 
@@ -108,15 +111,23 @@ class BindingPattern : public Pattern, public NamedEntity {
     return InheritsFromBindingPattern(node->kind());
   }
 
-  // The name this pattern binds, if any.
-  auto name() const -> const std::optional<std::string>& { return name_; }
+  // The name this pattern binds, if any. If equal to AnonymousName, indicates
+  // that this BindingPattern does not bind a name, which in turn means it
+  // should not be used as a ValueNode.
+  auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+
  private:
-  std::optional<std::string> name_;
+  std::string name_;
   Nonnull<Pattern*> type_;
 };
 
@@ -124,7 +135,7 @@ class BindingPattern : public Pattern, public NamedEntity {
 class TuplePattern : public Pattern {
  public:
   TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
-      : AstNode(AstNodeKind::TuplePattern, source_loc),
+      : Pattern(AstNodeKind::TuplePattern, source_loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -170,7 +181,7 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> choice_type,
                      std::string alternative_name,
                      Nonnull<TuplePattern*> arguments)
-      : AstNode(AstNodeKind::AlternativePattern, source_loc),
+      : Pattern(AstNodeKind::AlternativePattern, source_loc),
         choice_type_(choice_type),
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
@@ -204,7 +215,7 @@ class AlternativePattern : public Pattern {
 class ExpressionPattern : public Pattern {
  public:
   explicit ExpressionPattern(Nonnull<Expression*> expression)
-      : AstNode(AstNodeKind::ExpressionPattern, expression->source_loc()),
+      : Pattern(AstNodeKind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
 
   static auto classof(const AstNode* node) -> bool {

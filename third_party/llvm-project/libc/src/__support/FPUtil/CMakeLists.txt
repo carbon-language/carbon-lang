@@ -1,0 +1,35 @@
+add_header_library(
+  fputil
+  HDRS
+    FEnvImpl.h
+    BasicOperations.h
+    DivisionAndRemainderOperations.h
+    FEnvUtils.h
+    FloatProperties.h
+    FPBits.h
+    BasicOperations.h
+    ManipulationFunctions.h
+    NearestIntegerOperations.h
+    NormalFloat.h
+    PlatformDefs.h
+    PolyEval.h
+    UInt.h
+    XFloat.h
+  DEPENDS
+    libc.include.math
+    libc.include.errno
+    libc.include.fenv
+    libc.src.__support.common
+    libc.src.__support.CPP.standalone_cpp
+)
+
+add_header_library(
+  sqrt
+  HDRS
+    sqrt.h
+  DEPENDS
+    .fputil
+    libc.src.__support.FPUtil.generic.sqrt
+)
+
+add_subdirectory(generic)

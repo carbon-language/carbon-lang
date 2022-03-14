@@ -10,8 +10,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
-namespace Carbon {
-
+namespace Carbon::Testing {
 namespace {
 
 // Not much to test here, so just verify that the API compiles and returns the
@@ -23,4 +22,4 @@ namespace {
 #include "toolchain/parser/parse_node_kind.def"
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

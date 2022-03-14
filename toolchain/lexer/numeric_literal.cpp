@@ -6,20 +6,22 @@
 
 #include <bitset>
 
+#include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
+#include "toolchain/lexer/lex_helpers.h"
 
 namespace Carbon {
 
 namespace {
-struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
+struct EmptyDigitSequence : DiagnosticBase<EmptyDigitSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
 };
 
-struct InvalidDigit {
+struct InvalidDigit : DiagnosticBase<InvalidDigit> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -34,18 +36,18 @@ struct InvalidDigit {
   int radix;
 };
 
-struct InvalidDigitSeparator : SimpleDiagnostic<InvalidDigitSeparator> {
+struct InvalidDigitSeparator : DiagnosticBase<InvalidDigitSeparator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
 };
 
-struct IrregularDigitSeparators {
+struct IrregularDigitSeparators : DiagnosticBase<IrregularDigitSeparators> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-irregular-digit-separators";
 
   auto Format() -> std::string {
-    assert((radix == 10 || radix == 16) && "unexpected radix");
+    CHECK((radix == 10 || radix == 16)) << "unexpected radix: " << radix;
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
@@ -57,19 +59,19 @@ struct IrregularDigitSeparators {
   int radix;
 };
 
-struct UnknownBaseSpecifier : SimpleDiagnostic<UnknownBaseSpecifier> {
+struct UnknownBaseSpecifier : DiagnosticBase<UnknownBaseSpecifier> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
 };
 
-struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
+struct BinaryRealLiteral : DiagnosticBase<BinaryRealLiteral> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Binary real number literals are not supported.";
 };
 
-struct WrongRealLiteralExponent {
+struct WrongRealLiteralExponent : DiagnosticBase<WrongRealLiteralExponent> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   auto Format() -> std::string {
@@ -79,6 +81,7 @@ struct WrongRealLiteralExponent {
 
   char expected;
 };
+
 }  // namespace
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
@@ -127,7 +130,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
         IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
-      assert(!seen_plus_minus && "should only consume one + or -");
+      CHECK(!seen_plus_minus) << "should only consume one + or -";
       seen_plus_minus = true;
       continue;
     }
@@ -313,7 +316,8 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 auto LexedNumericLiteral::Parser::CheckDigitSequence(
     llvm::StringRef text, int radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
-  assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+  CHECK((radix == 2 || radix == 10 || radix == 16))
+      << "unknown radix: " << radix;
 
   std::bitset<256> valid_digits;
   if (radix == 2) {
@@ -364,6 +368,10 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
   }
 
+  if (!CanLexInteger(emitter_, text)) {
+    return {.ok = false};
+  }
+
   return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
 }
 
@@ -371,8 +379,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
-  assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
-         "given wrong number of digit separators");
+  DCHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
+      << "given wrong number of digit separators: " << num_digit_separators;
 
   if (radix == 2) {
     // There are no restrictions on digit separator placement for binary
@@ -380,8 +388,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     return;
   }
 
-  assert((radix == 10 || radix == 16) &&
-         "unexpected radix for digit separator checks");
+  CHECK((radix == 10 || radix == 16))
+      << "unexpected radix " << radix << " for digit separator checks";
 
   auto diagnose_irregular_digit_separators = [&]() {
     emitter_.EmitError<IrregularDigitSeparators>(text.begin(),

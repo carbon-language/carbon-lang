@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -19,23 +20,20 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_test_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
-using Carbon::Testing::DiagnosticMessage;
-using Carbon::Testing::ExpectedNode;
-using Carbon::Testing::MatchParseTreeNodes;
-using namespace Carbon::Testing::NodeMatchers;
+using ::testing::AtLeast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Ne;
 using ::testing::StrEq;
-namespace Yaml = Carbon::Testing::Yaml;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
-    source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
+    source_storage.push_front(
+        std::move(*SourceBuffer::CreateFromText(t.str())));
     return source_storage.front();
   }
 
@@ -426,12 +424,6 @@ TEST_F(ParseTreeTest, Operators) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
       "  n = a * b + c * d = d * d << e & f - not g;\n"
-      "  ++++n;\n"
-      "  n++++;\n"
-      "  a and b and c;\n"
-      "  a and b or c;\n"
-      "  a or b and c;\n"
-      "  not a and not b and not c;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
@@ -439,56 +431,135 @@ TEST_F(ParseTreeTest, Operators) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {MatchFunctionWithBody(
-               MatchExpressionStatement(MatchInfixOperator(
-                   MatchNameReference("n"), "=",
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchInfixOperator(
+               MatchNameReference("n"), "=",
+               MatchInfixOperator(
                    MatchInfixOperator(
-                       MatchInfixOperator(
-                           MatchInfixOperator(MatchNameReference("a"), "*",
-                                              MatchNameReference("b")),
-                           "+",
-                           MatchInfixOperator(MatchNameReference("c"), "*",
-                                              MatchNameReference("d"))),
-                       "=",
+                       MatchInfixOperator(MatchNameReference("a"), "*",
+                                          MatchNameReference("b")),
+                       "+",
+                       MatchInfixOperator(MatchNameReference("c"), "*",
+                                          MatchNameReference("d"))),
+                   "=",
+                   MatchInfixOperator(
+                       HasError,
                        MatchInfixOperator(
                            HasError,
                            MatchInfixOperator(
                                HasError,
-                               MatchInfixOperator(
-                                   HasError,
-                                   MatchInfixOperator(MatchNameReference("d"),
-                                                      "*",
-                                                      MatchNameReference("d")),
-                                   "<<", MatchNameReference("e")),
-                               "&", MatchNameReference("f")),
-                           "-",
-                           MatchPrefixOperator("not",
-                                               MatchNameReference("g")))))),
-               MatchExpressionStatement(MatchPrefixOperator(
-                   "++", MatchPrefixOperator("++", MatchNameReference("n")))),
-               MatchExpressionStatement(MatchPostfixOperator(
-                   MatchPostfixOperator(MatchNameReference("n"), "++"), "++")),
-               MatchExpressionStatement(MatchInfixOperator(
-                   MatchInfixOperator(MatchNameReference("a"), "and",
-                                      MatchNameReference("b")),
-                   "and", MatchNameReference("c"))),
-               MatchExpressionStatement(MatchInfixOperator(
-                   HasError,
-                   MatchInfixOperator(MatchNameReference("a"), "and",
-                                      MatchNameReference("b")),
-                   "or", MatchNameReference("c"))),
-               MatchExpressionStatement(MatchInfixOperator(
-                   HasError,
-                   MatchInfixOperator(MatchNameReference("a"), "or",
-                                      MatchNameReference("b")),
-                   "and", MatchNameReference("c"))),
-               MatchExpressionStatement(MatchInfixOperator(
-                   MatchInfixOperator(
-                       MatchPrefixOperator("not", MatchNameReference("a")),
-                       "and",
-                       MatchPrefixOperator("not", MatchNameReference("b"))),
-                   "and",
-                   MatchPrefixOperator("not", MatchNameReference("c"))))),
+                               MatchInfixOperator(MatchNameReference("d"), "*",
+                                                  MatchNameReference("d")),
+                               "<<", MatchNameReference("e")),
+                           "&", MatchNameReference("f")),
+                       "-",
+                       MatchPrefixOperator("not", MatchNameReference("g"))))))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsPrefixUnary) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  ++++n;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchPrefixOperator(
+               "++", MatchPrefixOperator("++", MatchNameReference("n"))))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsPostfixUnary) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  n++++;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchPostfixOperator(
+               MatchPostfixOperator(MatchNameReference("n"), "++"), "++"))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsAssociative) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  a and b and c;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchInfixOperator(
+               MatchInfixOperator(MatchNameReference("a"), "and",
+                                  MatchNameReference("b")),
+               "and", MatchNameReference("c")))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsMissingPrecedence1) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  a and b or c;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchInfixOperator(
+               HasError,
+               MatchInfixOperator(MatchNameReference("a"), "and",
+                                  MatchNameReference("b")),
+               "or", MatchNameReference("c")))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsMissingPrecedence2) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  a or b and c;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchInfixOperator(
+               HasError,
+               MatchInfixOperator(MatchNameReference("a"), "or",
+                                  MatchNameReference("b")),
+               "and", MatchNameReference("c")))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, OperatorsMissingPrecedenceForNot) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  not a and not b and not c;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchExpressionStatement(MatchInfixOperator(
+               MatchInfixOperator(
+                   MatchPrefixOperator("not", MatchNameReference("a")), "and",
+                   MatchPrefixOperator("not", MatchNameReference("b"))),
+               "and", MatchPrefixOperator("not", MatchNameReference("c"))))),
            MatchFileEnd()}));
 }
 
@@ -1159,5 +1230,56 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
                              {"text", ""}}}));
 }
 
+TEST_F(ParseTreeTest, ParenMatchRegression) {
+  // A regression test that the search for the closing `)` doesn't end early on
+  // the closing `}` when it skips over the nested scope.
+  TokenizedBuffer tokens = GetTokenizedBuffer("var = (foo {})");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+  EXPECT_THAT(
+      tree, MatchParseTreeNodes(
+                {MatchVariableDeclaration(
+                     HasError, MatchVariableInitializer(
+                                   "=", MatchParenExpression(
+                                            HasError, MatchNameReference("foo"),
+                                            MatchParenExpressionEnd()))),
+                 MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, RecursionLimit) {
+  std::string code = "fn Foo() { return ";
+  code.append(10000, '(');
+  code.append(10000, ')');
+  code += "; }";
+  TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  ASSERT_FALSE(tokens.HasErrors());
+  Testing::MockDiagnosticConsumer consumer;
+  // Recursion might be exceeded multiple times due to quirks in parse tree
+  // handling; we only need to be sure it's hit at least once for test
+  // correctness.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(DiagnosticMessage(llvm::formatv(
+          "Exceeded recursion limit ({0})", ParseTree::StackDepthLimit))))
+      .Times(AtLeast(1));
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+}
+
+TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
+  // Stack depth errors could cause ParsePostfixExpression to infinitely loop
+  // when calling children and those children error. Because of the fragility of
+  // stack depth, this tries a few different values.
+  for (int n = 0; n <= 10; ++n) {
+    std::string code = "var x: auto = ";
+    code.append(ParseTree::StackDepthLimit - n, '*');
+    code += "(z);";
+    TokenizedBuffer tokens = GetTokenizedBuffer(code);
+    ASSERT_FALSE(tokens.HasErrors());
+    ParseTree tree = ParseTree::Parse(tokens, consumer);
+    EXPECT_TRUE(tree.HasErrors());
+  }
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

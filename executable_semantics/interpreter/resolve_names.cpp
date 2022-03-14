@@ -8,7 +8,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -21,24 +20,19 @@ namespace Carbon {
 // Adds the names exposed by the given AST node to enclosing_scope.
 static void AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope);
-static void AddExposedNames(const Member& member, StaticScope& enclosing_scope);
-
-static void AddExposedNames(const Member& member,
-                            StaticScope& enclosing_scope) {
-  switch (member.kind()) {
-    case MemberKind::FieldMember: {
-      const auto& field = cast<FieldMember>(member);
-      if (field.binding().name().has_value()) {
-        enclosing_scope.Add(*field.binding().name(), &field.binding());
-      }
-      break;
-    }
-  }
-}
 
 static void AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface_decl = cast<InterfaceDeclaration>(declaration);
+      enclosing_scope.Add(iface_decl.name(), &iface_decl);
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      // Nothing to do here
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       enclosing_scope.Add(func.name(), &func);
@@ -56,8 +50,8 @@ static void AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::VariableDeclaration:
       auto& var = cast<VariableDeclaration>(declaration);
-      if (var.binding().name().has_value()) {
-        enclosing_scope.Add(*(var.binding().name()), &var.binding());
+      if (var.binding().name() != AnonymousName) {
+        enclosing_scope.Add(var.binding().name(), &var.binding());
       }
       return;
   }
@@ -77,7 +71,6 @@ static void ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope);
 static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope);
 static void ResolveNames(Statement& statement, StaticScope& enclosing_scope);
-static void ResolveNames(Member& member, StaticScope& enclosing_scope);
 static void ResolveNames(Declaration& declaration,
                          StaticScope& enclosing_scope);
 
@@ -131,7 +124,7 @@ static void ResolveNames(Expression& expression,
       break;
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
-      identifier.set_named_entity(
+      identifier.set_value_node(
           enclosing_scope.Resolve(identifier.name(), identifier.source_loc()));
       break;
     }
@@ -139,6 +132,13 @@ static void ResolveNames(Expression& expression,
       ResolveNames(cast<IntrinsicExpression>(expression).args(),
                    enclosing_scope);
       break;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(expression);
+      ResolveNames(*if_expr.condition(), enclosing_scope);
+      ResolveNames(*if_expr.then_expression(), enclosing_scope);
+      ResolveNames(*if_expr.else_expression(), enclosing_scope);
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
@@ -158,8 +158,8 @@ static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
       ResolveNames(binding.type(), enclosing_scope);
-      if (binding.name().has_value()) {
-        enclosing_scope.Add(*binding.name(), &binding);
+      if (binding.name() != AnonymousName) {
+        enclosing_scope.Add(binding.name(), &binding);
       }
       break;
     }
@@ -241,7 +241,7 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
     }
     case StatementKind::Continuation: {
       auto& continuation = cast<Continuation>(statement);
-      enclosing_scope.Add(continuation.continuation_variable(), &continuation);
+      enclosing_scope.Add(continuation.name(), &continuation);
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
       ResolveNames(cast<Continuation>(statement).body(), continuation_scope);
@@ -257,16 +257,34 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
   }
 }
 
-static void ResolveNames(Member& member, StaticScope& enclosing_scope) {
-  switch (member.kind()) {
-    case MemberKind::FieldMember:
-      ResolveNames(cast<FieldMember>(member).binding(), enclosing_scope);
-  }
-}
-
 static void ResolveNames(Declaration& declaration,
                          StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface = cast<InterfaceDeclaration>(declaration);
+      StaticScope iface_scope;
+      iface_scope.AddParent(&enclosing_scope);
+      iface_scope.Add("Self", iface.self());
+      for (Nonnull<Declaration*> member : iface.members()) {
+        AddExposedNames(*member, iface_scope);
+      }
+      for (Nonnull<Declaration*> member : iface.members()) {
+        ResolveNames(*member, iface_scope);
+      }
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl = cast<ImplDeclaration>(declaration);
+      ResolveNames(impl.interface(), enclosing_scope);
+      ResolveNames(*impl.impl_type(), enclosing_scope);
+      for (Nonnull<Declaration*> member : impl.members()) {
+        AddExposedNames(*member, enclosing_scope);
+      }
+      for (Nonnull<Declaration*> member : impl.members()) {
+        ResolveNames(*member, enclosing_scope);
+      }
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(declaration);
       StaticScope function_scope;
@@ -274,6 +292,9 @@ static void ResolveNames(Declaration& declaration,
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         function_scope.Add(binding->name(), binding);
         ResolveNames(binding->type(), function_scope);
+      }
+      if (function.is_method()) {
+        ResolveNames(function.me_pattern(), function_scope);
       }
       ResolveNames(function.param_pattern(), function_scope);
       if (function.return_term().type_expression().has_value()) {
@@ -289,10 +310,11 @@ static void ResolveNames(Declaration& declaration,
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
-      for (Nonnull<Member*> member : class_decl.members()) {
+      class_scope.Add(class_decl.name(), &class_decl);
+      for (Nonnull<Declaration*> member : class_decl.members()) {
         AddExposedNames(*member, class_scope);
       }
-      for (Nonnull<Member*> member : class_decl.members()) {
+      for (Nonnull<Declaration*> member : class_decl.members()) {
         ResolveNames(*member, class_scope);
       }
       break;
@@ -316,7 +338,9 @@ static void ResolveNames(Declaration& declaration,
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       ResolveNames(var.binding(), enclosing_scope);
-      ResolveNames(var.initializer(), enclosing_scope);
+      if (var.has_initializer()) {
+        ResolveNames(var.initializer(), enclosing_scope);
+      }
       break;
     }
   }
@@ -330,9 +354,7 @@ void ResolveNames(AST& ast) {
   for (auto declaration : ast.declarations) {
     ResolveNames(*declaration, file_scope);
   }
-  if (ast.main_call.has_value()) {
-    ResolveNames(**ast.main_call, file_scope);
-  }
+  ResolveNames(**ast.main_call, file_scope);
 }
 
 }  // namespace Carbon

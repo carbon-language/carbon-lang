@@ -6,7 +6,8 @@
 
 #include <gtest/gtest.h>
 
-namespace Carbon {
+namespace Carbon::Testing {
+namespace {
 
 TEST(CheckTest, CheckTrue) { CHECK(true); }
 
@@ -50,4 +51,5 @@ TEST(ErrorTest, FatalNoReturnRequired) {
                "FATAL failure at common/check_test.cpp:.+: msg\n");
 }
 
-}  // namespace Carbon
+}  // namespace
+}  // namespace Carbon::Testing

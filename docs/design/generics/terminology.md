@@ -33,9 +33,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Qualified and unqualified member names](#qualified-and-unqualified-member-names)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
+-   [Coherence](#coherence)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
--   [Facet type](#facet-type)
+-   [Archetype](#archetype)
 -   [Extending an interface](#extending-an-interface)
 -   [Witness tables](#witness-tables)
     -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
@@ -438,6 +439,26 @@ required, an [implicit conversion](../expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
+## Coherence
+
+A generics system has the _implementation coherence_ property, or simply
+_coherence_, if there is a single answer to the question "what is the
+implementation of this interface for this type, if any?" independent of context,
+such as the libraries imported into a given file.
+
+This is typically enforced by making sure the definition of the implementation
+must be imported if you import both the interface and the type. This may be done
+by requiring the implementation to be in the same library as the interface or
+type. This is called an _orphan rule_, meaning we don't allow an implementation
+that is not with either of its parents (parent type or parent interface).
+
+Note that in addition to an orphan rule that implementations are visible when
+queried, coherence also requires a rule for resolving what happens if there are
+multiple non-orphan implementations. In Rust, this is called the
+[overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check).
+This could be just producing an error in that situation, or picking one using
+some specialization rule.
+
 ## Adapting a type
 
 A type can be adapted by creating a new type that is
@@ -452,11 +473,12 @@ between those two types without any dynamic checks or danger of
 [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
 This is called "newtype" in Rust, and is used for capturing additional
-information in types to improve type safety of move some checking to compile
+information in types to improve type safety by moving some checking to compile
 time ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
 [2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
 [3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html))
-and as a workaround for Rust's orphan rules for coherence.
+and as a workaround for
+[Rust's orphan rules for coherence](https://github.com/Ixrec/rust-orphan-rules#why-are-the-orphan-rules-controversial).
 
 ## Type erasure
 
@@ -476,26 +498,17 @@ The term "type erasure" can also refer to
 which includes erasing the identity of type parameters. This is not the meaning
 of "type erasure" used in Carbon.
 
-## Facet type
+## Archetype
 
-A facet type is a [compatible type](#compatible-types) of some original type
-written by the user, that has a specific API. This API might correspond to a
-specific [interface](#interface), or the API required by particular
-[type constraints](#type-constraints). In either case, the API can be specified
-using a [type-of-type](#type-of-type). Casting a type to a type-of-type results
-in a facet type, with data representation matching the original type and API
-matching the type-of-type.
+A placeholder type is used when type checking a function in place of a generic
+type parameter. This allows type checking when the specific type to be used is
+not known at type checking time. The type satisfies just its constraint and no
+more, so it acts as the most general type satisfying the interface. In this way
+the archetype is the supertype of all types satisfying the interface.
 
-Casting to a facet type is one way of modeling compile-time
-[type erasure](#type-erasure) when calling a generic function. It is also a way
-of accessing APIs for a type that would otherwise be hidden, possibly to avoid a
-name conflict or because the implementation of that API was external to the
-definition of the type.
-
-A facet type associated with a specific interface, corresponds to the
-[impl](#impls-implementations-of-interfaces) of that interface for the type.
-Using such a facet type removes ambiguity about where to find the declaration
-and definition of any accessed methods.
+In addition to satisfying all the requirements of its constraint, the archetype
+also has the member names of its constraint. Effectively it is considered to
+[implement the constraint internally](#internal-impl).
 
 ## Extending an interface
 
@@ -506,14 +519,15 @@ interface.
 
 ## Witness tables
 
-For witness tables, values passed to a generic parameter are compiled into a
-table of required functionality. That table is then filled in for a given
-passed-in type with references to the implementation on the original type. The
-generic is implemented using calls into entries in the witness table, which turn
-into calls to the original type. This doesn't necessarily imply a runtime
-indirection: it may be a purely compile-time separation of concerns. However, it
-insists on a full abstraction boundary between the generic user of a type and
-the concrete implementation.
+[Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
+are an implementation strategy where values passed to a generic parameter are
+compiled into a table of required functionality. That table is then filled in
+for a given passed-in type with references to the implementation on the original
+type. The generic is implemented using calls into entries in the witness table,
+which turn into calls to the original type. This doesn't necessarily imply a
+runtime indirection: it may be a purely compile-time separation of concerns.
+However, it insists on a full abstraction boundary between the generic user of a
+type and the concrete implementation.
 
 A simple way to imagine a witness table is as a struct of function pointers, one
 per method in the interface. However, in practice, it's more complex because it
@@ -641,11 +655,11 @@ class ListIterator(ElementType:! Type) {
 }
 class List(ElementType:! Type) {
   // Iterator type is determined by the container type.
-  let IteratorType:! Iterator = ListIterator(ElementType);
-  fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
-    ...
+  impl as Container where .IteratorType = ListIterator(ElementType) {
+    fn Insert[addr me: Self*](position: IteratorType, value: ElementType) {
+      ...
+    }
   }
-  impl as Container;
 }
 ```
 
@@ -668,18 +682,9 @@ interface Addable(T:! Type) {
 An `i32` value might support addition with `i32`, `u16`, and `f64` values.
 
 ```
-impl i32 as Addable(i32) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(u16) {
-  let ResultType:! Type = i32;
-  // ...
-}
-impl i32 as Addable(f64) {
-  let ResultType:! Type = f64;
-  // ...
-}
+impl i32 as Addable(i32) where .ResultType = i32 { ... }
+impl i32 as Addable(u16) where .ResultType = i32 { ... }
+impl i32 as Addable(f64) where .ResultType = f64 { ... }
 ```
 
 To write a generic function requiring a parameter to be `Addable`, there needs
@@ -735,12 +740,11 @@ A type-of-type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
 as [type constraints](#type-constraints). For template parameters, that is all a
 type-of-type does. For generic parameters, it also determines the API that is
-available in the body of the function. Calling a function with a type `T` passed
-to a generic type parameter `U` with type-of-type `I`, ends up setting `U` to
-the facet type `T as I`. This has the API determined by `I`, with the
-implementation of that API coming from `T`.
+available in the body of the function.
 
 ## References
 
 -   [#447: Generics terminology](https://github.com/carbon-language/carbon-lang/pull/447)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+-   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)

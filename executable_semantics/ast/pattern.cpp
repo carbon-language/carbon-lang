@@ -26,12 +26,7 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       break;
     case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(*this);
-      if (binding.name().has_value()) {
-        out << *binding.name();
-      } else {
-        out << "_";
-      }
-      out << ": " << binding.type();
+      out << binding.name() << ": " << binding.type();
       break;
     }
     case PatternKind::TuplePattern: {
@@ -89,7 +84,7 @@ static auto RequireFieldAccess(Nonnull<Expression*> alternative)
 AlternativePattern::AlternativePattern(SourceLocation source_loc,
                                        Nonnull<Expression*> alternative,
                                        Nonnull<TuplePattern*> arguments)
-    : AstNode(AstNodeKind::AlternativePattern, source_loc),
+    : Pattern(AstNodeKind::AlternativePattern, source_loc),
       choice_type_(&RequireFieldAccess(alternative).aggregate()),
       alternative_name_(RequireFieldAccess(alternative).field()),
       arguments_(arguments) {}

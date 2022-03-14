@@ -12,8 +12,11 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
+#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
@@ -21,20 +24,10 @@
 namespace Carbon {
 
 class Value;
-class NamedEntity;
+class VariableType;
 
-class Expression : public virtual AstNode {
+class Expression : public AstNode {
  public:
-  // The value category of a Carbon expression indicates whether it evaluates
-  // to a variable or a value. A variable can be mutated, and can have its
-  // address taken, whereas a value cannot.
-  enum class ValueCategory {
-    // A variable. This roughly corresponds to a C/C++ lvalue.
-    Var,
-    // A value. This roughly corresponds to a C/C++ rvalue.
-    Let,
-  };
-
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
@@ -54,12 +47,10 @@ class Expression : public virtual AstNode {
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value category of this expression. Cannot be called before
   // typechecking.
@@ -76,7 +67,8 @@ class Expression : public virtual AstNode {
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Expression() = default;
+  Expression(AstNodeKind kind, SourceLocation source_loc)
+      : AstNode(kind, source_loc) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -104,6 +96,7 @@ class FieldInitializer {
 
 enum class Operator {
   Add,
+  AddressOf,
   And,
   Deref,
   Eq,
@@ -121,7 +114,7 @@ auto ToString(Operator op) -> std::string_view;
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
-      : AstNode(AstNodeKind::IdentifierExpression, source_loc),
+      : Expression(AstNodeKind::IdentifierExpression, source_loc),
         name_(std::move(name)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -130,25 +123,20 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
-  // Returns the NamedEntity this identifier refers to. Cannot be called before
-  // name resolution.
-  auto named_entity() const -> const NamedEntity& { return **named_entity_; }
+  // Returns the ValueNodeView this identifier refers to. Cannot be called
+  // before name resolution.
+  auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
-  // Sets the value returned by named_entity. Can be called only once,
+  // Sets the value returned by value_node. Can be called only once,
   // during name resolution.
-  void set_named_entity(Nonnull<const NamedEntity*> named_entity) {
-    CHECK(!named_entity_.has_value());
-    named_entity_ = named_entity;
+  void set_value_node(ValueNodeView value_node) {
+    CHECK(!value_node_.has_value());
+    value_node_ = std::move(value_node);
   }
-
-  // Returns true if set_named_entity has been called. Should be used only
-  // for debugging purposes.
-  // TODO: remove this once we no longer need the CHECKs that use it.
-  auto has_named_entity() const -> bool { return named_entity_.has_value(); }
 
  private:
   std::string name_;
-  std::optional<Nonnull<const NamedEntity*>> named_entity_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -156,7 +144,7 @@ class FieldAccessExpression : public Expression {
   explicit FieldAccessExpression(SourceLocation source_loc,
                                  Nonnull<Expression*> aggregate,
                                  std::string field)
-      : AstNode(AstNodeKind::FieldAccessExpression, source_loc),
+      : Expression(AstNodeKind::FieldAccessExpression, source_loc),
         aggregate_(aggregate),
         field_(std::move(field)) {}
 
@@ -168,9 +156,23 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
+  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
+  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const ImplBinding*> impl) {
+    CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
+  std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -178,7 +180,7 @@ class IndexExpression : public Expression {
   explicit IndexExpression(SourceLocation source_loc,
                            Nonnull<Expression*> aggregate,
                            Nonnull<Expression*> offset)
-      : AstNode(AstNodeKind::IndexExpression, source_loc),
+      : Expression(AstNodeKind::IndexExpression, source_loc),
         aggregate_(aggregate),
         offset_(offset) {}
 
@@ -199,7 +201,7 @@ class IndexExpression : public Expression {
 class IntLiteral : public Expression {
  public:
   explicit IntLiteral(SourceLocation source_loc, int value)
-      : AstNode(AstNodeKind::IntLiteral, source_loc), value_(value) {}
+      : Expression(AstNodeKind::IntLiteral, source_loc), value_(value) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntLiteral(node->kind());
@@ -214,7 +216,7 @@ class IntLiteral : public Expression {
 class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)
-      : AstNode(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
+      : Expression(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolLiteral(node->kind());
@@ -229,7 +231,7 @@ class BoolLiteral : public Expression {
 class StringLiteral : public Expression {
  public:
   explicit StringLiteral(SourceLocation source_loc, std::string value)
-      : AstNode(AstNodeKind::StringLiteral, source_loc),
+      : Expression(AstNodeKind::StringLiteral, source_loc),
         value_(std::move(value)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -245,7 +247,7 @@ class StringLiteral : public Expression {
 class StringTypeLiteral : public Expression {
  public:
   explicit StringTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::StringTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::StringTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStringTypeLiteral(node->kind());
@@ -259,7 +261,7 @@ class TupleLiteral : public Expression {
 
   explicit TupleLiteral(SourceLocation source_loc,
                         std::vector<Nonnull<Expression*>> fields)
-      : AstNode(AstNodeKind::TupleLiteral, source_loc),
+      : Expression(AstNodeKind::TupleLiteral, source_loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -285,7 +287,8 @@ class StructLiteral : public Expression {
  public:
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
-      : AstNode(AstNodeKind::StructLiteral, loc), fields_(std::move(fields)) {
+      : Expression(AstNodeKind::StructLiteral, loc),
+        fields_(std::move(fields)) {
     CHECK(!fields_.empty())
         << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
   }
@@ -311,7 +314,7 @@ class StructTypeLiteral : public Expression {
 
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
-      : AstNode(AstNodeKind::StructTypeLiteral, loc),
+      : Expression(AstNodeKind::StructTypeLiteral, loc),
         fields_(std::move(fields)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -330,7 +333,7 @@ class PrimitiveOperatorExpression : public Expression {
   explicit PrimitiveOperatorExpression(
       SourceLocation source_loc, Operator op,
       std::vector<Nonnull<Expression*>> arguments)
-      : AstNode(AstNodeKind::PrimitiveOperatorExpression, source_loc),
+      : Expression(AstNodeKind::PrimitiveOperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
 
@@ -351,12 +354,14 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
+class ImplBinding;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
                           Nonnull<Expression*> function,
                           Nonnull<Expression*> argument)
-      : AstNode(AstNodeKind::CallExpression, source_loc),
+      : Expression(AstNodeKind::CallExpression, source_loc),
         function_(function),
         argument_(argument) {}
 
@@ -369,9 +374,26 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
+  // Maps each of `function`'s generic parameters to the AST node
+  // that identifies the witness table for the corresponding argument.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impls(
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
+    CHECK(impls_.empty());
+    impls_ = impls;
+  }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -379,7 +401,7 @@ class FunctionTypeLiteral : public Expression {
   explicit FunctionTypeLiteral(SourceLocation source_loc,
                                Nonnull<Expression*> parameter,
                                Nonnull<Expression*> return_type)
-      : AstNode(AstNodeKind::FunctionTypeLiteral, source_loc),
+      : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
         return_type_(return_type) {}
 
@@ -400,7 +422,7 @@ class FunctionTypeLiteral : public Expression {
 class BoolTypeLiteral : public Expression {
  public:
   explicit BoolTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::BoolTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::BoolTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolTypeLiteral(node->kind());
@@ -410,7 +432,7 @@ class BoolTypeLiteral : public Expression {
 class IntTypeLiteral : public Expression {
  public:
   explicit IntTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::IntTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::IntTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntTypeLiteral(node->kind());
@@ -420,7 +442,7 @@ class IntTypeLiteral : public Expression {
 class ContinuationTypeLiteral : public Expression {
  public:
   explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromContinuationTypeLiteral(node->kind());
@@ -430,7 +452,7 @@ class ContinuationTypeLiteral : public Expression {
 class TypeTypeLiteral : public Expression {
  public:
   explicit TypeTypeLiteral(SourceLocation source_loc)
-      : AstNode(AstNodeKind::TypeTypeLiteral, source_loc) {}
+      : Expression(AstNodeKind::TypeTypeLiteral, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTypeTypeLiteral(node->kind());
@@ -446,7 +468,7 @@ class IntrinsicExpression : public Expression {
   explicit IntrinsicExpression(std::string_view intrinsic_name,
                                Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
-      : AstNode(AstNodeKind::IntrinsicExpression, source_loc),
+      : Expression(AstNodeKind::IntrinsicExpression, source_loc),
         intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
         args_(args) {}
 
@@ -468,6 +490,35 @@ class IntrinsicExpression : public Expression {
   Nonnull<TupleLiteral*> args_;
 };
 
+class IfExpression : public Expression {
+ public:
+  explicit IfExpression(SourceLocation source_loc,
+                        Nonnull<Expression*> condition,
+                        Nonnull<Expression*> then_expression,
+                        Nonnull<Expression*> else_expression)
+      : Expression(AstNodeKind::IfExpression, source_loc),
+        condition_(condition),
+        then_expression_(then_expression),
+        else_expression_(else_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIfExpression(node->kind());
+  }
+
+  auto condition() const -> Nonnull<Expression*> { return condition_; }
+  auto then_expression() const -> Nonnull<Expression*> {
+    return then_expression_;
+  }
+  auto else_expression() const -> Nonnull<Expression*> {
+    return else_expression_;
+  }
+
+ private:
+  Nonnull<Expression*> condition_;
+  Nonnull<Expression*> then_expression_;
+  Nonnull<Expression*> else_expression_;
+};
+
 // An expression whose semantics have not been implemented. This can be used
 // as a placeholder during development, in order to implement and test parsing
 // of a new expression syntax without having to implement its semantics.
@@ -480,7 +531,7 @@ class UnimplementedExpression : public Expression {
   template <typename... Children>
   UnimplementedExpression(SourceLocation source_loc, std::string label,
                           Children... children)
-      : AstNode(AstNodeKind::UnimplementedExpression, source_loc),
+      : Expression(AstNodeKind::UnimplementedExpression, source_loc),
         label_(std::move(label)) {
     AddChildren(children...);
   }

@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 
+#include "common/check.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -16,46 +17,81 @@
 
 namespace Carbon {
 
-struct UnexpectedTokenInCodeBlock
-    : SimpleDiagnostic<UnexpectedTokenInCodeBlock> {
+struct StackLimitExceeded : DiagnosticBase<StackLimitExceeded> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+
+  static auto Format() -> std::string {
+    return llvm::formatv("Exceeded recursion limit ({0})",
+                         ParseTree::StackDepthLimit);
+  }
+};
+
+// Manages the parser's stack depth, particularly decrementing on destruction.
+// This should only be instantiated through RETURN_IF_STACK_LIMITED.
+class ParseTree::Parser::ScopedStackStep {
+ public:
+  explicit ScopedStackStep(ParseTree::Parser* parser) : parser_(parser) {
+    ++parser_->stack_depth_;
+  }
+  ~ScopedStackStep() { --parser_->stack_depth_; }
+
+  auto VerifyUnderLimit() -> bool {
+    if (parser_->stack_depth_ >= StackDepthLimit) {
+      parser_->emitter_.EmitError<StackLimitExceeded>(*parser_->position_);
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  ParseTree::Parser* parser_;
+};
+
+// Encapsulates checking the stack and erroring if needed. This should be called
+// at the start of every parse function.
+#define RETURN_IF_STACK_LIMITED(error_return_expr) \
+  ScopedStackStep scoped_stack_step(this);         \
+  if (!scoped_stack_step.VerifyUnderLimit()) {     \
+    return (error_return_expr);                    \
+  }
+
+struct UnexpectedTokenInCodeBlock : DiagnosticBase<UnexpectedTokenInCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected token in code block.";
 };
 
-struct ExpectedFunctionName : SimpleDiagnostic<ExpectedFunctionName> {
+struct ExpectedFunctionName : DiagnosticBase<ExpectedFunctionName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected function name after `fn` keyword.";
 };
 
-struct ExpectedFunctionParams : SimpleDiagnostic<ExpectedFunctionParams> {
+struct ExpectedFunctionParams : DiagnosticBase<ExpectedFunctionParams> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected `(` after function name.";
 };
 
-struct ExpectedFunctionBodyOrSemi
-    : SimpleDiagnostic<ExpectedFunctionBodyOrSemi> {
+struct ExpectedFunctionBodyOrSemi : DiagnosticBase<ExpectedFunctionBodyOrSemi> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected function definition or `;` after function declaration.";
 };
 
-struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
+struct ExpectedVariableName : DiagnosticBase<ExpectedVariableName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected pattern in `var` declaration.";
 };
 
-struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
+struct ExpectedParameterName : DiagnosticBase<ExpectedParameterName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected parameter declaration.";
 };
 
-struct ExpectedStructLiteralField
-    : SimpleDiagnostic<ExpectedStructLiteralField> {
+struct ExpectedStructLiteralField : DiagnosticBase<ExpectedStructLiteralField> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
 
   auto Format() -> std::string {
@@ -77,23 +113,23 @@ struct ExpectedStructLiteralField
   bool can_be_value;
 };
 
-struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
+struct UnrecognizedDeclaration : DiagnosticBase<UnrecognizedDeclaration> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unrecognized declaration introducer.";
 };
 
-struct ExpectedCodeBlock : SimpleDiagnostic<ExpectedCodeBlock> {
+struct ExpectedCodeBlock : DiagnosticBase<ExpectedCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected braced code block.";
 };
 
-struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
+struct ExpectedExpression : DiagnosticBase<ExpectedExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected expression.";
 };
 
-struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
+struct ExpectedParenAfter : DiagnosticBase<ExpectedParenAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `(` after `{0}`.";
 
@@ -104,7 +140,7 @@ struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
   TokenKind introducer;
 };
 
-struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
+struct ExpectedCloseParen : DiagnosticBase<ExpectedCloseParen> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected tokens before `)`.";
@@ -114,13 +150,13 @@ struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
 };
 
 struct ExpectedSemiAfterExpression
-    : SimpleDiagnostic<ExpectedSemiAfterExpression> {
+    : DiagnosticBase<ExpectedSemiAfterExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected `;` after expression.";
 };
 
-struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
+struct ExpectedSemiAfter : DiagnosticBase<ExpectedSemiAfter> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `;` after `{0}`.";
 
@@ -131,15 +167,14 @@ struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
   TokenKind preceding;
 };
 
-struct ExpectedIdentifierAfterDot
-    : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
+struct ExpectedIdentifierAfterDot : DiagnosticBase<ExpectedIdentifierAfterDot> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected identifier after `.`.";
 };
 
 struct UnexpectedTokenAfterListElement
-    : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
+    : DiagnosticBase<UnexpectedTokenAfterListElement> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message = "Expected `,` or `{0}`.";
 
@@ -151,7 +186,7 @@ struct UnexpectedTokenAfterListElement
 };
 
 struct BinaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<BinaryOperatorRequiresWhitespace> {
+    : DiagnosticBase<BinaryOperatorRequiresWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace missing {0} binary operator.";
@@ -170,8 +205,7 @@ struct BinaryOperatorRequiresWhitespace
   bool has_trailing_space;
 };
 
-struct UnaryOperatorHasWhitespace
-    : SimpleDiagnostic<UnaryOperatorHasWhitespace> {
+struct UnaryOperatorHasWhitespace : DiagnosticBase<UnaryOperatorHasWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is not allowed {0} this unary operator.";
@@ -184,7 +218,7 @@ struct UnaryOperatorHasWhitespace
 };
 
 struct UnaryOperatorRequiresWhitespace
-    : SimpleDiagnostic<UnaryOperatorRequiresWhitespace> {
+    : DiagnosticBase<UnaryOperatorRequiresWhitespace> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr const char* Message =
       "Whitespace is required {0} this unary operator.";
@@ -197,7 +231,7 @@ struct UnaryOperatorRequiresWhitespace
 };
 
 struct OperatorRequiresParentheses
-    : SimpleDiagnostic<OperatorRequiresParentheses> {
+    : DiagnosticBase<OperatorRequiresParentheses> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Parentheses are required to disambiguate operator precedence.";
@@ -210,11 +244,11 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
       emitter_(emitter),
       position_(tokens_.Tokens().begin()),
       end_(tokens_.Tokens().end()) {
-  assert(std::find_if(position_, end_,
-                      [&](TokenizedBuffer::Token t) {
-                        return tokens_.GetKind(t) == TokenKind::EndOfFile();
-                      }) != end_ &&
-         "No EndOfFileToken in token buffer.");
+  CHECK(std::find_if(position_, end_,
+                     [&](TokenizedBuffer::Token t) {
+                       return tokens_.GetKind(t) == TokenKind::EndOfFile();
+                     }) != end_)
+      << "No EndOfFileToken in token buffer.";
 }
 
 auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
@@ -237,17 +271,17 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position_);
 
-  assert(tree.Verify() && "Parse tree built but does not verify!");
+  CHECK(tree.Verify()) << "Parse tree built but does not verify!";
   return tree;
 }
 
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
-  assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
-  assert(NextTokenIs(kind) && "The current token is the wrong kind!");
+  CHECK(kind != TokenKind::EndOfFile()) << "Cannot consume the EOF token!";
+  CHECK(NextTokenIs(kind)) << "The current token is the wrong kind!";
   TokenizedBuffer::Token t = *position_;
   ++position_;
-  assert(position_ != end_ &&
-         "Reached end of tokens without finding EOF token.");
+  CHECK(position_ != end_)
+      << "Reached end of tokens without finding EOF token.";
   return t;
 }
 
@@ -323,9 +357,9 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
 }
 
 auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
-  assert(t >= *position_ && "Tried to skip backwards.");
+  CHECK(t >= *position_) << "Tried to skip backwards.";
   position_ = TokenizedBuffer::TokenIterator(t);
-  assert(position_ != end_ && "Skipped past EOF.");
+  CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
 auto ParseTree::Parser::FindNextOf(
@@ -346,6 +380,8 @@ auto ParseTree::Parser::FindNextOf(
     } else if (kind.IsOpeningSymbol()) {
       new_position =
           TokenizedBuffer::TokenIterator(tokens_.GetMatchedClosingToken(token));
+      // Advance past the closing token.
+      ++new_position;
     } else {
       ++new_position;
     }
@@ -448,7 +484,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
         auto end_of_element = FindNextOf({TokenKind::Comma(), close});
         // The lexer guarantees that parentheses are balanced.
-        assert(end_of_element && "missing matching `)` for `(`");
+        CHECK(end_of_element) << "missing matching `)` for `(`";
         SkipTo(*end_of_element);
       }
 
@@ -470,6 +506,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 }
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   if (NextTokenIs(TokenKind::Identifier()) &&
       tokens_.GetKind(*(position_ + 1)) == TokenKind::Colon()) {
     // identifier `:` type
@@ -496,10 +533,12 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   return ParsePattern(PatternKind::Parameter);
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> bool {
+  RETURN_IF_STACK_LIMITED(false);
   auto start = GetSubtreeStartPosition();
 
   auto params = ParseParenList(
@@ -526,6 +565,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   llvm::Optional<TokenizedBuffer::Token> maybe_open_curly =
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
@@ -561,13 +601,14 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
+  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::Fn());
   auto start = GetSubtreeStartPosition();
 
   auto add_error_function_node = [&] {
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
+  RETURN_IF_STACK_LIMITED(add_error_function_node());
 
   auto handle_semi_in_error_recovery = [&](TokenizedBuffer::Token semi) {
     return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
@@ -622,8 +663,12 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   // `var` pattern [= expression] `;`
-  TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
+  TokenizedBuffer::Token var_token = Consume(TokenKind::Var());
   auto start = GetSubtreeStartPosition();
+
+  RETURN_IF_STACK_LIMITED(AddNode(ParseNodeKind::VariableDeclaration(),
+                                  var_token, start,
+                                  /*has_error=*/true));
 
   auto pattern = ParsePattern(PatternKind::Variable);
   if (!pattern) {
@@ -659,10 +704,11 @@ auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
-    case TokenKind::FnKeyword():
+    case TokenKind::Fn():
       return ParseFunctionDeclaration();
-    case TokenKind::VarKeyword():
+    case TokenKind::Var():
       return ParseVariableDeclaration();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
@@ -691,6 +737,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // parenthesized-expression ::= `(` expression `)`
   // tuple-literal ::= `(` `)`
   //               ::= `(` expression `,` [expression-list [`,`]] `)`
@@ -713,6 +760,7 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // braced-expression ::= `{` [field-value-list] `}`
   //                   ::= `{` field-type-list `}`
   // field-value-list ::= field-value [`,`]
@@ -756,10 +804,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         }
 
         // Work out the kind of this element
-        Kind elem_kind =
-            (NextTokenIs(TokenKind::Equal())
-                 ? Value
-                 : NextTokenIs(TokenKind::Colon()) ? Type : Unknown);
+        Kind elem_kind = (NextTokenIs(TokenKind::Equal())   ? Value
+                          : NextTokenIs(TokenKind::Colon()) ? Type
+                                                            : Unknown);
         if (elem_kind == Unknown || (kind != Unknown && elem_kind != kind)) {
           return diagnose_invalid_syntax();
         }
@@ -787,6 +834,7 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   llvm::Optional<ParseNodeKind> kind;
   switch (NextTokenKind()) {
     case TokenKind::Identifier():
@@ -844,6 +892,7 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
 
 auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // `(` expression-list[opt] `)`
   //
   // expression-list ::= expression
@@ -859,9 +908,11 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
 }
 
 auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
   llvm::Optional<Node> expression = ParsePrimaryExpression();
 
+  TokenizedBuffer::TokenIterator last_position = position_;
   while (true) {
     switch (NextTokenKind()) {
       case TokenKind::Period():
@@ -873,10 +924,16 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
         expression = ParseCallExpression(start, !expression);
         break;
 
-      default: {
+      default:
         return expression;
-      }
     }
+    // This is subject to an infinite loop if a child call fails, so monitor for
+    // stalling.
+    if (last_position == position_) {
+      CHECK(expression == llvm::None);
+      return expression;
+    }
+    last_position = position_;
   }
 }
 
@@ -907,7 +964,7 @@ static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
 }
 
 auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
-  assert(!AtEndOfFile() && "Expected an operator token.");
+  CHECK(!AtEndOfFile()) << "Expected an operator token.";
 
   bool leading_space = tokens_.HasLeadingWhitespace(*position_);
   bool trailing_space = tokens_.HasTrailingWhitespace(*position_);
@@ -990,6 +1047,7 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
 
 auto ParseTree::Parser::ParseOperatorExpression(
     PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
 
   llvm::Optional<Node> lhs;
@@ -1062,14 +1120,17 @@ auto ParseTree::Parser::ParseOperatorExpression(
 }
 
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
 }
 
 auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   return ParseOperatorExpression(PrecedenceGroup::ForType());
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   TokenizedBuffer::Token start_token = *position_;
   auto start = GetSubtreeStartPosition();
 
@@ -1098,6 +1159,7 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   // `(` expression `)`
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
@@ -1122,14 +1184,14 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
-  auto if_token = Consume(TokenKind::IfKeyword());
-  auto cond = ParseParenCondition(TokenKind::IfKeyword());
+  auto if_token = Consume(TokenKind::If());
+  auto cond = ParseParenCondition(TokenKind::If());
   auto then_case = ParseCodeBlock();
   bool else_has_errors = false;
-  if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
+  if (ConsumeAndAddLeafNodeIf(TokenKind::Else(),
                               ParseNodeKind::IfStatementElse())) {
     // 'else if' is permitted as a special case.
-    if (NextTokenIs(TokenKind::IfKeyword())) {
+    if (NextTokenIs(TokenKind::If())) {
       else_has_errors = !ParseIfStatement();
     } else {
       else_has_errors = !ParseCodeBlock();
@@ -1140,9 +1202,10 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
-  auto while_token = Consume(TokenKind::WhileKeyword());
-  auto cond = ParseParenCondition(TokenKind::WhileKeyword());
+  auto while_token = Consume(TokenKind::While());
+  auto cond = ParseParenCondition(TokenKind::While());
   auto body = ParseCodeBlock();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
                  /*has_error=*/!cond || !body);
@@ -1151,8 +1214,9 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                               KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   auto keyword_kind = NextTokenKind();
-  assert(keyword_kind.IsKeyword());
+  CHECK(keyword_kind.IsKeyword());
 
   auto start = GetSubtreeStartPosition();
   auto keyword = Consume(keyword_kind);
@@ -1175,25 +1239,26 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
 }
 
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
+  RETURN_IF_STACK_LIMITED(llvm::None);
   switch (NextTokenKind()) {
-    case TokenKind::VarKeyword():
+    case TokenKind::Var():
       return ParseVariableDeclaration();
 
-    case TokenKind::IfKeyword():
+    case TokenKind::If():
       return ParseIfStatement();
 
-    case TokenKind::WhileKeyword():
+    case TokenKind::While():
       return ParseWhileStatement();
 
-    case TokenKind::ContinueKeyword():
+    case TokenKind::Continue():
       return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),
                                    KeywordStatementArgument::None);
 
-    case TokenKind::BreakKeyword():
+    case TokenKind::Break():
       return ParseKeywordStatement(ParseNodeKind::BreakStatement(),
                                    KeywordStatementArgument::None);
 
-    case TokenKind::ReturnKeyword():
+    case TokenKind::Return():
       return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
                                    KeywordStatementArgument::Optional);
 

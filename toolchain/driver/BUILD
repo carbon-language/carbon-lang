@@ -22,6 +22,7 @@ cc_library(
 
 cc_test(
     name = "driver_test",
+    size = "small",
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
@@ -34,6 +35,7 @@ cc_test(
 
 cc_fuzz_test(
     name = "driver_fuzzer",
+    size = "small",
     srcs = ["driver_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
@@ -50,13 +52,3 @@ cc_binary(
         "@llvm-project//llvm:Support",
     ],
 )
-
-# FIXME: No support for LLVM's lit-style command line & FileCheck tests.
-#
-#lit_test(
-#    name = "carbon_test.carbon",
-#    data = [
-#        ":carbon",
-#        "@llvm-project//llvm:FileCheck",
-#    ],
-#)

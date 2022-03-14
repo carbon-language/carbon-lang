@@ -10,6 +10,7 @@ cc_library(
     deps = [
         ":declaration",
         ":library_name",
+        "//executable_semantics/common:nonnull",
     ],
 )
 
@@ -22,6 +23,7 @@ cc_library(
     ],
     deps = [
         ":source_location",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -68,6 +70,22 @@ cc_test(
 )
 
 cc_library(
+    name = "generic_binding",
+    hdrs = [
+        "generic_binding.h",
+    ],
+    deps = [
+        ":ast_node",
+        ":source_location",
+        ":value_category",
+        "//common:check",
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -75,11 +93,26 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":member",
+        ":generic_binding",
         ":pattern",
+        ":return_term",
         ":source_location",
         ":statement",
         ":static_scope",
+        ":value_category",
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "return_term",
+    hdrs = ["return_term.h"],
+    deps = [
+        ":expression",
+        ":source_location",
+        "//common:check",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
@@ -92,7 +125,11 @@ cc_library(
     hdrs = ["expression.h"],
     deps = [
         ":ast_node",
+        ":generic_binding",
         ":paren_contents",
+        ":source_location",
+        ":static_scope",
+        ":value_category",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
@@ -107,18 +144,9 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
+        "//executable_semantics/common:arena",
         "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "member",
-    srcs = ["member.cpp"],
-    hdrs = ["member.h"],
-    deps = [
-        ":pattern",
-        ":source_location",
-        "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -145,6 +173,7 @@ cc_library(
         ":expression",
         ":source_location",
         ":static_scope",
+        ":value_category",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
@@ -156,8 +185,10 @@ cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
+        ":expression",
         ":paren_contents",
         ":pattern",
+        "//executable_semantics/common:arena",
         "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
@@ -170,8 +201,10 @@ cc_library(
     deps = [
         ":ast_node",
         ":source_location",
-        "//executable_semantics/common:arena",
+        ":value_category",
+        "//common:check",
         "//executable_semantics/common:error",
+        "//executable_semantics/common:nonnull",
     ],
 )
 
@@ -192,10 +225,18 @@ cc_library(
         ":ast_node",
         ":expression",
         ":pattern",
+        ":return_term",
         ":source_location",
+        ":static_scope",
+        ":value_category",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "value_category",
+    hdrs = ["value_category.h"],
 )

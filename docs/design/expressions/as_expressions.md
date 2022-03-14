@@ -77,6 +77,13 @@ var m: auto = b as (bool as Hashable);
 var m: auto = b as T as U;
 ```
 
+**Note:** `b as (bool as Hashable)` is valid but not useful, because
+[the second operand of `as` is implicitly converted to type `Type`](#extensibility).
+This expression therefore has the same interpretation as `b as bool`.
+
+**TODO:** We should consider making `as` expressions left-associative now that
+facet types have been removed from the language.
+
 The `as` operator has lower precedence than operators that visually bind
 tightly:
 
@@ -164,12 +171,16 @@ interface As(Dest:! Type) {
 
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
 
+**Note:** This rewrite causes the expression `U` to be implicitly converted to
+type `Type`. The program is invalid if this conversion is not possible.
+
 ## Alternatives considered
 
--   [Do not distinguish between safe and unsafe casts](/docs/proposals/p0845.md#merge-as-and-assume_as)
--   [Do not distinguish between `as` and implicit conversions](/docs/proposals/p0845.md#as-only-performs-implicit-conversions)
--   [Allow `iN as bool`](/docs/proposals/p0845.md#integer-to-bool-conversions)
--   [Disallow `bool as iN`](/docs/proposals/p0845.md#bool-to-integer-conversions)
+-   [Allow `as` to perform some unsafe conversions](/proposals/p0845.md#allow-as-to-perform-some-unsafe-conversions)
+-   [Allow `as` to perform two's complement truncation](/proposals/p0845.md#allow-as-to-perform-twos-complement-truncation)
+-   [`as` only performs implicit conversions](/proposals/p0845.md#as-only-performs-implicit-conversions)
+-   [Integer to bool conversions](/proposals/p0845.md#integer-to-bool-conversions)
+-   [Bool to integer conversions](/proposals/p0845.md#bool-to-integer-conversions)
 
 ## References
 

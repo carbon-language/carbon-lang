@@ -12,10 +12,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   #include "executable_semantics/syntax/parse_and_lex_context.h"
   #include "executable_semantics/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
+
+  // Prints a newline in trace mode because trace prints an incomplete line
+  // "Reading a token: " which can prevent LIT from finding expected patterns.
+  #define FATAL_SYNTAX_ERROR(context)                                       \
+    RAW_EXITING_STREAM() << (context.trace() ? "\n" : "")                   \
+                         << "COMPILATION ERROR: " << (context.source_loc()) \
+                         << ": "
+
+  // Reads and returns a single character. Fails on EOF.
+  char ReadChar(yyscan_t yyscanner, const Carbon::ParseAndLexContext& context);
 %}
 
 /* Turn off legacy bits we don't need. */
-%option noyywrap nounput nodefault noinput
+%option noyywrap nounput nodefault
 
 %option reentrant
 
@@ -28,9 +38,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
+AMPERSAND            "&"
 AND                  "and"
 API                  "api"
 ARROW                "->"
+AS                   "as"
 AUTO                 "auto"
 AWAIT                "__await"
 BOOL                 "Bool"
@@ -49,12 +61,14 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+INTERFACE            "interface"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
@@ -74,6 +88,7 @@ RUN                  "__run"
 SEMICOLON            ";"
 SLASH                "/"
 STRING               "String"
+THEN                 "then"
 TRUE                 "true"
 TYPE                 "Type"
 UNDERSCORE           "_"
@@ -124,9 +139,11 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 %}
 
  /* table-begin */
+{AMPERSAND}           { return SIMPLE_TOKEN(AMPERSAND);           }
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }
+{AS}                  { return SIMPLE_TOKEN(AS);                  }
 {AUTO}                { return SIMPLE_TOKEN(AUTO);                }
 {AWAIT}               { return SIMPLE_TOKEN(AWAIT);               }
 {BOOL}                { return SIMPLE_TOKEN(BOOL);                }
@@ -145,12 +162,14 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {ELSE}                { return SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return SIMPLE_TOKEN(EQUAL);               }
+{EXTERNAL}            { return SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
+{INTERFACE}           { return SIMPLE_TOKEN(INTERFACE);           }
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
@@ -167,6 +186,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return SIMPLE_TOKEN(SLASH);               }
 {STRING}              { return SIMPLE_TOKEN(STRING);              }
+{THEN}                { return SIMPLE_TOKEN(THEN);                }
 {TRUE}                { return SIMPLE_TOKEN(TRUE);                }
 {TYPE}                { return SIMPLE_TOKEN(TYPE);                }
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
@@ -246,8 +266,10 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
-  int val;
-  CHECK(llvm::to_integer(yytext, val));
+  int val = 0;
+  if (!llvm::to_integer(yytext, val)) {
+    FATAL_SYNTAX_ERROR(context) << "Invalid integer literal: " << yytext;
+  }
   return ARG_TOKEN(integer_literal, val);
 }
 
@@ -256,15 +278,46 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
-    if (context.trace()) {
-      // Print a newline because trace prints an incomplete line
-      // "Reading a token: ".
-      llvm::errs() << "\n";
-    }
-    FATAL_COMPILATION_ERROR(context.source_loc())
-        << "Invalid escaping in string: " << yytext;
+    FATAL_SYNTAX_ERROR(context) << "Invalid escaping in string: " << yytext;
   }
   return ARG_TOKEN(string_literal, *unescaped);
+}
+
+\"\"\" {
+  // Block string literal.
+  std::string s(yytext);
+  // Scans for the closing """, checking for possible escape sequences
+  // like \""".
+  for (;;) {
+    char c = ReadChar(yyscanner, context);
+    s.push_back(c);
+    if (c != '"' && c != '\\') {
+      continue;
+    }
+    if (c == '\\') {
+      // \" in \""" is not a terminator.
+      s.push_back(ReadChar(yyscanner, context));
+      continue;
+    }
+
+    c = ReadChar(yyscanner, context);
+    s.push_back(c);
+    if (c != '"') {
+      continue;
+    }
+
+    c = ReadChar(yyscanner, context);
+    s.push_back(c);
+    if (c == '"') {
+      break;
+    }
+  }
+  llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
+  if (!block_string) {
+    FATAL_SYNTAX_ERROR(context)
+        << "Invalid block string: " << toString(block_string.takeError());
+  }
+  return ARG_TOKEN(string_literal, *block_string);
 }
 
 {one_line_comment} {
@@ -289,14 +342,17 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 . {
-  if (context.trace()) {
-    // Print a newline because trace prints an incomplete line
-    // "Reading a token: ".
-    llvm::errs() << "\n";
-  }
-  FATAL_COMPILATION_ERROR(context.source_loc())
+  FATAL_SYNTAX_ERROR(context)
       << "invalid character '\\x" << llvm::toHex(llvm::StringRef(yytext, 1))
       << "' in source file.";
 }
 
 %%
+
+char ReadChar(yyscan_t yyscanner, const Carbon::ParseAndLexContext& context) {
+  const int c = yyinput(yyscanner);
+  if (c == EOF) {
+    FATAL_SYNTAX_ERROR(context) << "Unexpected end of file";
+  }
+  return c;
+}

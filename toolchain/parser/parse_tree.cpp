@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 
+#include "common/check.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Sequence.h"
@@ -21,7 +22,8 @@ namespace Carbon {
 
 auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
     -> ParseTree {
-  TokenizedBuffer::TokenLocationTranslator translator(tokens);
+  TokenizedBuffer::TokenLocationTranslator translator(
+      tokens, /*last_line_lexed_to_column=*/nullptr);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
@@ -119,12 +121,12 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     }
 
     // This node is finished, so close it up.
-    assert(n_impl.subtree_size == 1 &&
-           "Subtree size must always be a positive integer!");
+    CHECK(n_impl.subtree_size == 1)
+        << "Subtree size must always be a positive integer!";
     output << "}";
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
-    assert(next_depth <= depth && "Cannot have the next depth increase!");
+    CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
     for (int close_children_count : llvm::seq(0, depth - next_depth)) {
       (void)close_children_count;
       output << "]}";

@@ -8,11 +8,15 @@ cc_library(
     name = "source_buffer",
     srcs = ["source_buffer.cpp"],
     hdrs = ["source_buffer.h"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(
     name = "source_buffer_test",
+    size = "small",
     srcs = ["source_buffer_test.cpp"],
     deps = [
         ":source_buffer",

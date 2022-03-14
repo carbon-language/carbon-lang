@@ -17,20 +17,97 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void ActionStack::Start(std::unique_ptr<Action> action, Scope scope) {
+void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
+  llvm::ListSeparator sep(" :: ");
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      out << sep << *action->scope();
+    }
+  }
+  if (globals_.has_value()) {
+    out << sep << *globals_;
+  }
+  // TODO: should we print constants as well?
+}
+
+void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
-  todo_ = {};
-  todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
+  CHECK(todo_.IsEmpty());
   todo_.Push(std::move(action));
 }
 
-auto ActionStack::CurrentScope() const -> Scope& {
+void ActionStack::Initialize(ValueNodeView value_node,
+                             Nonnull<const Value*> value) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
-      return *action->scope();
+      action->scope()->Initialize(value_node, value);
+      return;
     }
   }
+  globals_->Initialize(value_node, value);
+}
+
+auto ActionStack::ValueOfNode(ValueNodeView value_node,
+                              SourceLocation source_loc) const
+    -> Nonnull<const Value*> {
+  if (std::optional<Nonnull<const Value*>> constant_value =
+          value_node.constant_value();
+      constant_value.has_value()) {
+    return *constant_value;
+  }
+  for (const std::unique_ptr<Action>& action : todo_) {
+    // TODO: have static name resolution identify the scope of value_node
+    // as an AstNode, and then perform lookup _only_ on the Action associated
+    // with that node. This will help keep unwanted dynamic-scoping behavior
+    // from sneaking in.
+    if (action->scope().has_value()) {
+      std::optional<Nonnull<const Value*>> result =
+          action->scope()->Get(value_node);
+      if (result.has_value()) {
+        return *result;
+      }
+    }
+  }
+  if (globals_.has_value()) {
+    std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
+    if (result.has_value()) {
+      return *result;
+    }
+  }
+  // TODO: Move these errors to name resolution and explain them more clearly.
+  FATAL_RUNTIME_ERROR(source_loc)
+      << "could not find `" << value_node.base() << "`";
+}
+
+void ActionStack::MergeScope(RuntimeScope scope) {
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      action->scope()->Merge(std::move(scope));
+      return;
+    }
+  }
+  if (globals_.has_value()) {
+    globals_->Merge(std::move(scope));
+    return;
+  }
   FATAL() << "No current scope";
+}
+
+void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
+                                     Nonnull<const Statement*> body) {
+  std::vector<Nonnull<const RuntimeScope*>> scopes;
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (action->scope().has_value()) {
+      scopes.push_back(&*action->scope());
+    }
+  }
+  // We don't capture globals_ or constants_ because they're global.
+
+  std::vector<std::unique_ptr<Action>> reversed_todo;
+  reversed_todo.push_back(std::make_unique<StatementAction>(body));
+  reversed_todo.push_back(
+      std::make_unique<ScopeAction>(RuntimeScope::Capture(scopes)));
+  fragment.StoreReversed(std::move(reversed_todo));
 }
 
 void ActionStack::FinishAction() {
@@ -39,12 +116,12 @@ void ActionStack::FinishAction() {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      FATAL() << "This kind of action must produce a result.";
+      FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
+    case Action::Kind::DeclarationAction:
       PopScopes();
-      CHECK(!IsEmpty());
   }
 }
 
@@ -52,7 +129,8 @@ void ActionStack::FinishAction(Nonnull<const Value*> result) {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::StatementAction:
-      FATAL() << "Statements cannot produce results.";
+    case Action::Kind::DeclarationAction:
+      FATAL() << "This kind of Action cannot produce results: " << *act;
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:
@@ -69,7 +147,7 @@ void ActionStack::Spawn(std::unique_ptr<Action> child) {
   todo_.Push(std::move(child));
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child, Scope scope) {
+void ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope) {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));

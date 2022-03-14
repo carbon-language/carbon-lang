@@ -18,12 +18,8 @@ contributions.
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
         -   [`python3` and `pip3`](#python3-and-pip3)
-    -   [Linux only](#linux-only)
-        -   [`go get`](#go-get)
-        -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
     -   [pre-commit](#pre-commit)
@@ -61,10 +57,6 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git submodule update --init --depth=1` to sync submodules if you'll be
-        building c++ code or working on the compiler.
-    -   `git config core.fsmonitor rs-git-fsmonitor` to set up
-        [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the
     project root. All tests should pass.
@@ -115,38 +107,6 @@ periodically run `pip3 list --outdated`, then `pip3 install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
 
-### Linux only
-
-Linux-specific package managers are typically used for packages which work
-through [brew](#brew) on MacOS, but not on Linux.
-
-Installation instructions assume Debian- or Ubuntu-based Linux distributions
-with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
-
-#### `go get`
-
-[go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
-
-Our recommended way of installing is:
-
-```bash
-apt install golang
-```
-
-To get the latest version of `go` packages, it will be necessary to periodically
-re-run the original `go get ...` command used to install the package.
-
-#### Cargo (optional)
-
-Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux.
-
-Our recommended way of installing is to run
-[the canonical install command](https://rustup.rs/).
-
-To get the latest version of `cargo` packages, it will be necessary to
-periodically re-run the original `cargo install ...` command used.
-
 ## Main tools
 
 These tools are key for contributions, primarily focused on validating
@@ -164,34 +124,14 @@ Our recommended way of installing is:
 brew install bazelisk
 ```
 
-### buildifier
-
-[Buildifier](https://github.com/bazelbuild/buildtools/tree/master/buildifier) is
-a tool for formatting Bazel BUILD files, and is distributing separately from
-Bazel.
-
-Our recommended way of installing is:
-
--   Linux:
-
-    ```bash
-    go get github.com/bazelbuild/buildtools/buildifier
-    ```
-
--   MacOS:
-
-    ```bash
-    brew install buildifier
-    ```
-
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
 compile and link Carbon as part of its build. Their source code are also
-provided through git submodules for incorporation into Carbon or Carbon tools as
-libraries. While the source submodule tracks upstream LLVM, the project expects
-the LLVM 12 release (or newer) to be installed with Clang and other tools in
-your `PATH` for use in building Carbon itself.
+provided in a [third_party subtree](/third_party/llvm-project) for incorporation
+into Carbon or Carbon tools as libraries. While the subtree tracks upstream
+LLVM, the project expects the LLVM 12 release (or newer) to be installed with
+Clang and other tools in your `PATH` for use in building Carbon itself.
 
 Our recommended way of installing is:
 
@@ -281,12 +221,12 @@ than a separate install. They are noted here mainly to help findability.
 the PR and proposal file for a new proposal. It's documented in
 [the proposal template](/proposals/scripts/template.md).
 
-**NOTE**: This requires installing [the gh CLI](#gh).
+**NOTE**: This requires installing [the gh CLI](#gh-cli).
 
 #### pr_comments.py
 
-[pr_comments.py](/github/pr_comments.py) is a helper for scanning comments in
-GitHub. It's particularly intended to help find threads which need to be
+[pr_comments.py](/github_tools/pr_comments.py) is a helper for scanning comments
+in GitHub. It's particularly intended to help find threads which need to be
 resolved.
 
 Options can be seen with `-h`. A couple key options to be aware of are:
@@ -331,13 +271,21 @@ repositories. See the page for installation instructions.
 
 ### `rs-git-fsmonitor` and Watchman
 
+> **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
+> `pre-commit` deleting files. If you see files being deleted, disable
+> `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
+
 [rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
 monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
-git on large repositories, such as `carbon-lang` when submodules are synced.
+git on large repositories, such as `carbon-lang`.
 
 Our recommended way of installing is:
 
 -   Linux:
+
+    > If you don't have Rust's [Cargo](https://doc.rust-lang.org/cargo/) package
+    > manager, install it first with
+    > [the official install command](https://rustup.rs/).
 
     ```bash
     brew install watchman

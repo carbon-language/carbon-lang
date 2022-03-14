@@ -6,42 +6,29 @@
 #include <cstdint>
 #include <cstring>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
-  // We need two bytes of data to compute a file name length.
-  if (size < 2) {
+  // Ignore large inputs.
+  // TODO: See tokenized_buffer_fuzzer.cpp.
+  if (size > 100000) {
     return 0;
   }
-  uint16_t raw_filename_length;
-  std::memcpy(&raw_filename_length, data, 2);
-  data += 2;
-  size -= 2;
-  std::size_t filename_length = raw_filename_length;
 
-  // We need enough data to populate this filename length.
-  if (size < filename_length) {
-    return 0;
-  }
-  llvm::StringRef filename(reinterpret_cast<const char*>(data),
-                           filename_length);
-  data += filename_length;
-  size -= filename_length;
-
-  // The rest of the data is the source text.
   auto source = SourceBuffer::CreateFromText(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
+      llvm::StringRef(reinterpret_cast<const char*>(data), size));
 
   // Lex the input.
-  auto tokens = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
+  auto tokens = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (tokens.HasErrors()) {
     return 0;
   }
@@ -55,9 +42,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // In the absence of parse errors, we should have exactly as many nodes as
   // tokens.
-  assert(tree.Size() == tokens.Size() && "Unexpected number of tree nodes!");
+  CHECK(tree.Size() == tokens.Size()) << "Unexpected number of tree nodes!";
 
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

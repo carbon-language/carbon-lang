@@ -5,40 +5,30 @@
 #include <cstdint>
 #include <cstring>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
-  // We need two bytes of data to compute a file name length.
-  if (size < 2) {
+  // Ignore large inputs.
+  // TODO: Investigate replacement with an error limit. Content with errors on
+  // escaped quotes (`\"` repeated) have O(M * N) behavior for M errors in a
+  // file length N, so either that will need to also be fixed or M will need to
+  // shrink for large (1MB+) inputs.
+  // This also affects parse_tree_fuzzer.cpp.
+  if (size > 100000) {
     return 0;
   }
-  uint16_t raw_filename_length;
-  std::memcpy(&raw_filename_length, data, 2);
-  data += 2;
-  size -= 2;
-  size_t filename_length = raw_filename_length;
-
-  // We need enough data to populate this filename length.
-  if (size < filename_length) {
-    return 0;
-  }
-  llvm::StringRef filename(reinterpret_cast<const char*>(data),
-                           filename_length);
-  data += filename_length;
-  size -= filename_length;
-
-  // The rest of the data is the source text.
   auto source = SourceBuffer::CreateFromText(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
+      llvm::StringRef(reinterpret_cast<const char*>(data), size));
 
-  auto buffer = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
+  auto buffer = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (buffer.HasErrors()) {
     return 0;
   }
@@ -49,16 +39,14 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   // token stream.
   for (TokenizedBuffer::Token token : buffer.Tokens()) {
     int line_number = buffer.GetLineNumber(token);
-    (void)line_number;
-    assert(line_number > 0 && "Invalid line number!");
-    assert(line_number < INT_MAX && "Invalid line number!");
+    CHECK(line_number > 0) << "Invalid line number!";
+    CHECK(line_number < INT_MAX) << "Invalid line number!";
     int column_number = buffer.GetColumnNumber(token);
-    (void)column_number;
-    assert(column_number > 0 && "Invalid line number!");
-    assert(column_number < INT_MAX && "Invalid line number!");
+    CHECK(column_number > 0) << "Invalid line number!";
+    CHECK(column_number < INT_MAX) << "Invalid line number!";
   }
 
   return 0;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

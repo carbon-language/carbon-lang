@@ -100,7 +100,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     }
     case StatementKind::Continuation: {
       const auto& cont = cast<Continuation>(*this);
-      out << "continuation " << cont.continuation_variable() << " ";
+      out << "continuation " << cont.name() << " ";
       if (depth < 0 || depth > 1) {
         out << "\n";
       }

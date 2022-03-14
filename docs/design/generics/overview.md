@@ -34,6 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
+    -   [Parameterized impls](#parameterized-impls)
 -   [Future work](#future-work)
 -   [References](#references)
 
@@ -196,8 +197,8 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // means all names of `Printable`, such as `F`, are included as a part
-  // of the `Song` API.
+  // without the keyword `external` means all names of `Printable`, such
+  // as `F`, are included as a part of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
     fn Print[me: Song]() { ... }
@@ -250,12 +251,17 @@ constraints are represented by the type of `T`, a
 [**_type-of-type_**](terminology.md#type-of-type).
 
 In general, a type-of-type describes the capabilities of a type, while a type
-defines specific implementations of those capabilities.
+defines specific implementations of those capabilities. An interface, like
+`Comparable`, may be used as a type-of-type. In that case, the constraint on the
+type is that it must implement the interface `Comparable`.
 
-An interface, like `Comparable`, may be used as a type-of-type. In that case,
-the constraint on the type is that it must implement the interface `Comparable`.
 A type-of-type also defines a set of names and a mapping to corresponding
-qualified names. You may combine interfaces into new type-of-types using
+qualified names. Those names are used for
+[unqualfied member lookup](terminology.md#qualified-and-unqualified-member-names)
+in scopes where the value of the type is not known, such as when the type is a
+generic parameter.
+
+You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
@@ -446,7 +452,10 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 
 Inside a generic function, the API of a type argument is
 [erased](terminology.md#type-erasure) except for the names defined in the
-type-of-type.
+type-of-type. An equivalent model is to say an
+[archetype](terminology.md#archetype) is used for type checking and name lookup
+when the actual type is not known in that scope. The archetype has members
+dictated by the type-of-type.
 
 For example: If there were a class `CDCover` defined this way:
 
@@ -466,14 +475,10 @@ fn PrintIt[T:! Printable](p: T*) {
 }
 ```
 
-At that point, two erasures occur:
-
--   All of `CDCover`'s API _except_ `Printable` is erased during the cast from
-    `CDCover` to `Printable`, which is the [facet](terminology.md#facets) type
-    `CDCover as Printable`.
--   When you call `PrintIt`, the type connection to `CDCover` is lost. Outside
-    of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
-    Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
+Inside `PrintIt`, `T` is an archetype with the API of `Printable`. A call to
+`PrintIt` with a value of type `CDCover` erases everything except the members or
+`Printable`. This includes the type connection to `CDCover`, so it is illegal to
+cast from `T` to `CDCover`.
 
 ### Adapting types
 
@@ -589,12 +594,37 @@ Constraints limit the types that the generic function can operate on, but
 increase the knowledge that may be used in the body of the function to operate
 on values of those types.
 
+Constraints are also used when implementing an interface to specify the values
+of associated types (and other associated constants).
+
+```
+class Vector(T:! Movable) {
+  impl as Stack where .ElementType = T { ... }
+}
+```
+
+### Parameterized impls
+
+Implementations can be parameterized to apply to multiple types. Those
+parameters can have constraints to restrict when the implementation applies.
+When multiple implementations apply, there is a rule to pick which one is
+considered the most specific:
+
+-   All type parameters in each `impl` declaration are replaced with question
+    marks `?`. This is called the type structure of the `impl` declaration.
+-   Given two type structures, find the first difference when read from
+    left-to-right. The one with a `?` is less specific, the one with a concrete
+    type name in that position is more specific.
+-   If there is more than one `impl` declaration with the most specific type
+    structure, pick the one listed first in the priority ordering.
+
+To ensure [coherence](goals.md#coherence), an `impl` may only be declared in a
+library defining some name from its type structure. If a library defines
+multiple implementations with the same type structure, they must be listed in
+priority order in a prioritization block.
+
 ## Future work
 
--   Implementations can be parameterized to apply to multiple types. These
-    implementations would be restricted to various conditions are true for the
-    parameters. When there are two implementations that can apply, there is a
-    specialization rule that picks the more specific one.
 -   Support functions should have a way to accept types that types that vary at
     runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
@@ -611,3 +641,6 @@ on values of those types.
 -   [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+-   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+-   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+-   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)

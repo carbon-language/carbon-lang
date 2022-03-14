@@ -5,6 +5,7 @@
 #include "executable_semantics/interpreter/resolve_control_flow.h"
 
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/error.h"
 #include "llvm/Support/Casting.h"
@@ -110,16 +111,47 @@ static void ResolveControlFlow(Nonnull<Statement*> statement,
   }
 }
 
+void ResolveControlFlow(Nonnull<Declaration*> declaration) {
+  switch (declaration->kind()) {
+    case DeclarationKind::FunctionDeclaration: {
+      auto& function = cast<FunctionDeclaration>(*declaration);
+      if (function.body().has_value()) {
+        FunctionData data = {.declaration = &function};
+        ResolveControlFlow(*function.body(), std::nullopt, &data);
+      }
+      break;
+    }
+    case DeclarationKind::ClassDeclaration: {
+      auto& class_decl = cast<ClassDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : class_decl.members()) {
+        ResolveControlFlow(member);
+      }
+      break;
+    }
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : iface_decl.members()) {
+        ResolveControlFlow(member);
+      }
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl_decl = cast<ImplDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : impl_decl.members()) {
+        ResolveControlFlow(member);
+      }
+      break;
+    }
+    case DeclarationKind::ChoiceDeclaration:
+    case DeclarationKind::VariableDeclaration:
+      // do nothing
+      break;
+  }
+}
+
 void ResolveControlFlow(AST& ast) {
   for (auto declaration : ast.declarations) {
-    if (declaration->kind() != DeclarationKind::FunctionDeclaration) {
-      continue;
-    }
-    auto& function = cast<FunctionDeclaration>(*declaration);
-    if (function.body().has_value()) {
-      FunctionData data = {.declaration = &function};
-      ResolveControlFlow(*function.body(), std::nullopt, &data);
-    }
+    ResolveControlFlow(declaration);
   }
 }
 

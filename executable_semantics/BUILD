@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/testing:lit_test.bzl", "lit_test")
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
 package(default_visibility = [
@@ -21,16 +20,6 @@ cc_binary(
         "//executable_semantics/syntax",
         "@llvm-project//llvm:Support",
     ],
-)
-
-lit_test(
-    name = "executable_semantics_lit_test",
-    data = [
-        ":executable_semantics",
-        "@llvm-project//llvm:FileCheck",
-        "@llvm-project//llvm:not",
-    ],
-    test_dir = "testdata",
 )
 
 py_binary(

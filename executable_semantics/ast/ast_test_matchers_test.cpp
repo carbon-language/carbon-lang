@@ -13,7 +13,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/arena.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 namespace {
 
 using ::testing::_;
@@ -104,7 +104,7 @@ TEST(MatchesReturnTest, BasicUsage) {
 TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, &params,
+  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
                            ReturnTerm::Omitted(DummyLoc), &body);
 
   EXPECT_THAT(decl, MatchesFunctionDeclaration());
@@ -117,7 +117,7 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   EXPECT_THAT(decl,
               Not(MatchesFunctionDeclaration().WithBody(MatchesLiteral(0))));
 
-  FunctionDeclaration forward_decl(DummyLoc, "Foo", {}, &params,
+  FunctionDeclaration forward_decl(DummyLoc, "Foo", {}, std::nullopt, &params,
                                    ReturnTerm::Omitted(DummyLoc), std::nullopt);
   EXPECT_THAT(forward_decl, MatchesFunctionDeclaration().WithName("Foo"));
   EXPECT_THAT(forward_decl, Not(MatchesFunctionDeclaration().WithBody(_)));
@@ -150,7 +150,7 @@ TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
 TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, &params,
+  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
                            ReturnTerm::Omitted(DummyLoc), &body);
   AST ast = {.declarations = {&decl}};
 
@@ -159,4 +159,4 @@ TEST(ASTDeclarationsTest, BasicUsage) {
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing

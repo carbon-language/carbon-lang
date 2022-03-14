@@ -12,5 +12,6 @@ cc_library(
     deps = [
         "//common:ostream",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )

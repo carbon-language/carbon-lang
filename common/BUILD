@@ -24,7 +24,7 @@ cc_test(
 
 cc_library(
     name = "indirect_value",
-    srcs = ["indirect_value.h"],
+    hdrs = ["indirect_value.h"],
 )
 
 cc_test(
@@ -66,5 +66,6 @@ cc_test(
     deps = [
         ":string_helpers",
         "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
     ],
 )

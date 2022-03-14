@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_index_var.carbon:17: could not find `index`
+// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_index_var.carbon:17: could not find `index: i32`
 
 package ExecutableSemanticsTest api;
 

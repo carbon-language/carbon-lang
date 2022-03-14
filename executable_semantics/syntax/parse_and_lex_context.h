@@ -23,12 +23,12 @@ class ParseAndLexContext {
   // Writes a syntax error diagnostic containing message to standard error.
   auto PrintDiagnostic(const std::string& message) -> void;
 
-  auto source_loc() -> SourceLocation {
+  auto source_loc() const -> SourceLocation {
     return SourceLocation(input_file_name_,
                           static_cast<int>(current_token_position.begin.line));
   }
 
-  auto trace() -> bool { return trace_; }
+  auto trace() const -> bool { return trace_; }
 
   // The source range of the token being (or just) lex'd.
   location current_token_position;

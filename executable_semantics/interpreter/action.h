@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_ACTION_H_
 
+#include <map>
 #include <vector>
 
 #include "common/ostream.h"
@@ -19,45 +20,62 @@
 
 namespace Carbon {
 
-using Env = Dictionary<std::string, AllocationId>;
-
-// A Scope represents the name lookup environment associated with an Action,
-// including any variables that are local to that action. Local variables
-// will be deallocated from the Carbon Heap when the Scope is destroyed.
-class Scope {
+// A RuntimeScope manages and provides access to the storage for names that are
+// not compile-time constants.
+class RuntimeScope {
  public:
-  // Constructs a Scope whose name environment is `values`, containing the local
-  // variables in `locals`. The elements of `locals` must also be keys in
-  // `values`, and their values must be allocated in `heap`.
-  Scope(Env values, std::vector<std::string> locals,
-        Nonnull<HeapAllocationInterface*> heap)
-      : values_(values), locals_(std::move(locals)), heap_(heap) {}
+  // Returns a RuntimeScope whose Get() operation for a given name returns the
+  // storage owned by the first entry in `scopes` that defines that name. This
+  // behavior is closely analogous to a `[&]` capture in C++, hence the name.
+  // `scopes` must contain at least one entry, and all entries must be backed
+  // by the same Heap.
+  static auto Capture(const std::vector<Nonnull<const RuntimeScope*>>& scopes)
+      -> RuntimeScope;
 
-  // Equivalent to `Scope(values, {}, heap)`.
-  Scope(Env values, Nonnull<HeapAllocationInterface*> heap)
-      : Scope(values, std::vector<std::string>(), heap) {}
+  // Constructs a RuntimeScope that allocates storage in `heap`.
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
-  // Moving a Scope transfers ownership of its local variables.
-  Scope(Scope&&) noexcept;
-  auto operator=(Scope&&) noexcept -> Scope&;
+  // Moving a RuntimeScope transfers ownership of its allocations.
+  RuntimeScope(RuntimeScope&&) noexcept;
+  auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
-  ~Scope();
+  // Deallocates any allocations in this scope from `heap`.
+  ~RuntimeScope();
 
-  // Binds `name` to the value of `allocation` in `heap`, and takes
-  // ownership of it.
-  void AddLocal(const std::string& name, AllocationId allocation) {
-    values_.Set(name, allocation);
-    locals_.push_back(name);
-  }
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  auto values() const -> Env { return values_; }
+  // Allocates storage for `value_node` in `heap`, and initializes it with
+  // `value`.
+  void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
+
+  // Transfers the names and allocations from `other` into *this. The two
+  // scopes must not define the same name, and must be backed by the same Heap.
+  void Merge(RuntimeScope other);
+
+  // Returns the local storage for value_node, if it has storage local to
+  // this scope.
+  auto Get(ValueNodeView value_node) const
+      -> std::optional<Nonnull<const LValue*>>;
 
  private:
-  Env values_;
-  std::vector<std::string> locals_;
+  std::map<ValueNodeView, Nonnull<const LValue*>> locals_;
+  std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
 
+// An Action represents the current state of a self-contained computation,
+// usually associated with some AST node, such as evaluation of an expression or
+// execution of a statement. Execution of an action is divided into a series of
+// steps, and the `pos` field typically counts the number of steps executed.
+//
+// They should be destroyed as soon as they are done executing, in order to
+// clean up the associated Carbon scope, and consequently they should not be
+// allocated on an Arena. Actions are typically owned by the ActionStack.
+//
+// The actual behavior of an Action step is defined by Interpreter::Step, not by
+// Action or its subclasses.
+// TODO: consider moving this logic to a virtual method `Step`.
 class Action {
  public:
   enum class Kind {
@@ -65,58 +83,53 @@ class Action {
     ExpressionAction,
     PatternAction,
     StatementAction,
+    DeclarationAction,
     ScopeAction,
   };
 
   Action(const Value&) = delete;
   auto operator=(const Value&) -> Action& = delete;
 
-  void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
+  virtual ~Action() = default;
 
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
+  // Resets this Action to its initial state.
   void Clear() {
     CHECK(!scope_.has_value());
     pos_ = 0;
     results_.clear();
   }
 
-  // Associates this action with a new scope, with initial state `scope`.
-  // Values that are local to this scope will be deallocated when this
-  // Action is completed or unwound. Can only be called once on a given
-  // Action.
-  void StartScope(Scope scope) {
-    CHECK(!scope_.has_value());
-    scope_ = std::move(scope);
-  }
-
-  // Returns the scope associated with this Action, if any.
-  auto scope() -> std::optional<Scope>& { return scope_; }
-
-  static void PrintList(const Stack<Nonnull<Action*>>& ls,
-                        llvm::raw_ostream& out);
-
-  void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
   auto kind() const -> Kind { return kind_; }
 
-  // The position or state of the action. Starts at 0 and goes up to the number
-  // of subexpressions.
-  //
-  // pos indicates how many of the entries in the following `results` vector
-  // will be filled in the next time this action is active.
-  // For each i < pos, results[i] contains a pointer to a Value.
+  // The position or state of the action. Starts at 0 and is typically
+  // incremented after each step.
   auto pos() const -> int { return pos_; }
-
   void set_pos(int pos) { this->pos_ = pos; }
 
-  // Results from a subexpression.
+  // The results of any Actions spawned by this Action.
   auto results() const -> const std::vector<Nonnull<const Value*>>& {
     return results_;
   }
 
-  virtual ~Action() = default;
+  // Appends `result` to `results`.
+  void AddResult(Nonnull<const Value*> result) { results_.push_back(result); }
+
+  // Returns the scope associated with this Action, if any.
+  auto scope() -> std::optional<RuntimeScope>& { return scope_; }
+
+  // Associates this action with a new scope, with initial state `scope`.
+  // Values that are local to this scope will be deallocated when this
+  // Action is completed or unwound. Can only be called once on a given
+  // Action.
+  void StartScope(RuntimeScope scope) {
+    CHECK(!scope_.has_value());
+    scope_ = std::move(scope);
+  }
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
@@ -126,7 +139,7 @@ class Action {
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
-  std::optional<Scope> scope_;
+  std::optional<RuntimeScope> scope_;
 
   const Kind kind_;
 };
@@ -203,13 +216,31 @@ class StatementAction : public Action {
   Nonnull<const Statement*> statement_;
 };
 
+// Action which implements the run-time effects of executing a Declaration.
+// Does not produce a result.
+class DeclarationAction : public Action {
+ public:
+  explicit DeclarationAction(Nonnull<const Declaration*> declaration)
+      : Action(Kind::DeclarationAction), declaration_(declaration) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::DeclarationAction;
+  }
+
+  // The Declaration this Action executes.
+  auto declaration() const -> const Declaration& { return *declaration_; }
+
+ private:
+  Nonnull<const Declaration*> declaration_;
+};
+
 // Action which does nothing except introduce a new scope into the action
 // stack. This is useful when a distinct scope doesn't otherwise have an
 // Action it can naturally be associated with. ScopeActions are not associated
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  explicit ScopeAction(Scope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(RuntimeScope scope) : Action(Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 
