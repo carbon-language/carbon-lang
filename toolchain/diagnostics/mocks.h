@@ -48,7 +48,7 @@ namespace Carbon {
 
 // Printing helpers for tests.
 void PrintTo(const Diagnostic& diagnostic, std::ostream* os);
-void PrintTo(DiagnosticKind level, std::ostream* os);
+void PrintTo(DiagnosticKind kind, std::ostream* os);
 void PrintTo(DiagnosticLevel level, std::ostream* os);
 
 }  // namespace Carbon

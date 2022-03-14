@@ -18,10 +18,7 @@ void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
       << diagnostic.format_fn(diagnostic) << "\"}";
 }
 
-void PrintTo(DiagnosticKind level, std::ostream* os) {
-  // TODO
-  *os << static_cast<int>(level);
-}
+void PrintTo(DiagnosticKind kind, std::ostream* os) { *os << kind.Name(); }
 
 void PrintTo(DiagnosticLevel level, std::ostream* os) {
   *os << (level == DiagnosticLevel::Error ? "Error" : "Warning");

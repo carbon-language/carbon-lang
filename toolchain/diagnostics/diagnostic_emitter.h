@@ -17,21 +17,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/diagnostics/diagnostic_kind.h"
 
 namespace Carbon {
-
-// An enumeration of all diagnostics provided by the toolchain. Diagnostics must
-// be added to diagnostic_registry.def, and defined locally to where they're
-// used using the `DIAGNOSTIC` macro.
-//
-// Diagnostic definitions are decentralized because placing all diagnostic
-// definitions centrally is expected to create a compilation bottleneck
-// long-term, and we also see value to keeping diagnostic format strings close
-// to the consuming code.
-enum class DiagnosticKind {
-#define DIAGNOSTIC_KIND(DiagnosticName) DiagnosticName,
-#include "toolchain/diagnostics/diagnostic_registry.def"
-};
 
 enum class DiagnosticLevel : int8_t {
   // A warning diagnostic, indicating a likely problem with the program.
@@ -46,9 +34,9 @@ enum class DiagnosticLevel : int8_t {
 //              llvm::StringRef, llvm::StringRef);
 //
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                      \
-  static constexpr auto DiagnosticName =                                    \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
+#define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                        \
+  static constexpr auto DiagnosticName =                                      \
+      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName(), \
                                             DiagnosticLevel::Level, Format);
 
 // Provides a definition of a diagnostic with a custom formatter. The custom
@@ -62,11 +50,11 @@ enum class DiagnosticLevel : int8_t {
 //                              radix == 16 ? "hexadecimal" : "decimal");
 //       },
 //       int);
-#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,  \
-                                  ...)                                      \
-  static constexpr auto DiagnosticName =                                    \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
-                                            DiagnosticLevel::Level, Format, \
+#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,    \
+                                  ...)                                        \
+  static constexpr auto DiagnosticName =                                      \
+      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName(), \
+                                            DiagnosticLevel::Level, Format,   \
                                             FormatFn);
 
 struct DiagnosticLocation {

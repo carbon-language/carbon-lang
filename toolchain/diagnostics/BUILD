@@ -13,10 +13,39 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "diagnostic_emitter_test",
+    size = "small",
+    srcs = ["diagnostic_emitter_test.cpp"],
+    deps = [
+        ":diagnostic_emitter",
+        ":mocks",
+        "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "diagnostic_kind",
+    srcs = ["diagnostic_kind.cpp"],
     hdrs = ["diagnostic_kind.h"],
-    textual_hdrs = ["diagnostic_registry.def"],
+    textual_hdrs = [
+        "diagnostic_registry.def",
+    ],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "diagnostic_kind_test",
+    size = "small",
+    srcs = ["diagnostic_kind_test.cpp"],
+    deps = [
+        ":diagnostic_kind",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -36,18 +65,6 @@ cc_library(
     deps = [
         ":diagnostic_emitter",
         "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "diagnostic_emitter_test",
-    size = "small",
-    srcs = ["diagnostic_emitter_test.cpp"],
-    deps = [
-        ":diagnostic_emitter",
-        ":mocks",
-        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
