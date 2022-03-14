@@ -8,17 +8,13 @@ namespace Carbon {
 
 void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
   // TODO: Get diagnostic.kind as a string.
-  *os << "Diagnostic{";
-  PrintTo(diagnostic.kind, os);
-  *os << ", ";
+  *os << "Diagnostic{" << diagnostic.kind << ", ";
   PrintTo(diagnostic.level, os);
   *os << ", " << diagnostic.location.file_name << ":"
       << diagnostic.location.line_number << ":"
       << diagnostic.location.column_number << ", \""
       << diagnostic.format_fn(diagnostic) << "\"}";
 }
-
-void PrintTo(DiagnosticKind kind, std::ostream* os) { *os << kind.Name(); }
 
 void PrintTo(DiagnosticLevel level, std::ostream* os) {
   *os << (level == DiagnosticLevel::Error ? "Error" : "Warning");

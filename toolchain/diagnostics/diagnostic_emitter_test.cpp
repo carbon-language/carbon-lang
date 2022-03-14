@@ -68,8 +68,5 @@ TEST_F(DiagnosticEmitterTest, EmitCustomFormat) {
   emitter_.Emit(1, TestDiagnostic);
 }
 
-// DIAGNOSTIC_WITH_ARGS(TwoArgDiagnostic, Error, "arg0: `{0}` arg1: `{1}`",
-//                      (int32_t, int32_t));
-
 }  // namespace
 }  // namespace Carbon::Testing
