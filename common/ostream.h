@@ -13,7 +13,7 @@
 
 namespace Carbon {
 
-// True if T has a method `void Print(llvm::raw_ostream& out) const`
+// True if T has a method `void Print(llvm::raw_ostream& out) const`.
 template <typename T>
 static constexpr bool HasPrintMethod = Requires<const T, llvm::raw_ostream>(
     [](auto&& t, auto&& out) -> decltype(t.Print(out)) {});
