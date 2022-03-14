@@ -225,7 +225,7 @@ class TokenizedBuffer::Lexer {
           buffer_.literal_int_storage_.push_back(std::move(value.mantissa));
           buffer_.literal_int_storage_.push_back(std::move(value.exponent));
           CHECK(buffer_.GetRealLiteral(token).IsDecimal() ==
-                (value.radix == 10));
+                (value.radix == LexedNumericLiteral::Radix::Decimal));
           return token;
         },
         [&](LexedNumericLiteral::UnrecoverableError) {

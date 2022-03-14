@@ -121,7 +121,7 @@ class LexedNumericLiteral::Parser {
   auto Check() -> bool;
 
   // Get the radix of this token. One of 2, 10, or 16.
-  auto GetRadix() -> int { return radix_; }
+  auto GetRadix() -> Radix { return radix_; }
 
   // Get the mantissa of this token's value.
   auto GetMantissa() -> llvm::APInt;
@@ -136,10 +136,10 @@ class LexedNumericLiteral::Parser {
     bool has_digit_separators = false;
   };
 
-  auto CheckDigitSequence(llvm::StringRef text, int radix,
+  auto CheckDigitSequence(llvm::StringRef text, Radix radix,
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult;
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
+  auto CheckDigitSeparatorPlacement(llvm::StringRef text, Radix radix,
                                     int num_digit_separators) -> void;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
@@ -151,7 +151,7 @@ class LexedNumericLiteral::Parser {
 
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
   // or '0x', respectively.
-  int radix_ = 10;
+  Radix radix_ = Radix::Decimal;
 
   // The various components of a numeric literal:
   //
@@ -174,9 +174,9 @@ LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
     : emitter_(emitter), literal_(literal) {
   int_part_ = literal.text_.substr(0, literal.radix_point_);
   if (int_part_.consume_front("0x")) {
-    radix_ = 16;
+    radix_ = Radix::Hexadecimal;
   } else if (int_part_.consume_front("0b")) {
-    radix_ = 2;
+    radix_ = Radix::Binary;
   }
 
   fract_part_ = literal.text_.substr(
@@ -203,7 +203,8 @@ auto LexedNumericLiteral::Parser::Check() -> bool {
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 2), and this routine is given the
 // "123.456" to parse as the mantissa.
-static auto ParseInteger(llvm::StringRef digits, int radix, bool needs_cleaning)
+static auto ParseInteger(llvm::StringRef digits,
+                         LexedNumericLiteral::Radix radix, bool needs_cleaning)
     -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
@@ -215,7 +216,7 @@ static auto ParseInteger(llvm::StringRef digits, int radix, bool needs_cleaning)
   }
 
   llvm::APInt value;
-  if (digits.getAsInteger(radix, value)) {
+  if (digits.getAsInteger(static_cast<int>(radix), value)) {
     llvm_unreachable("should never fail");
   }
   return value;
@@ -232,7 +233,8 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
   // and the position of the radix point.
   llvm::APInt exponent(64, 0);
   if (!exponent_part_.empty()) {
-    exponent = ParseInteger(exponent_part_, 10, exponent_needs_cleaning_);
+    exponent =
+        ParseInteger(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
 
     // The exponent is a signed integer, and the number we just parsed is
     // non-negative, so ensure we have a wide enough representation to
@@ -248,7 +250,7 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 
   // Each character after the decimal point reduces the effective exponent.
   int excess_exponent = fract_part_.size();
-  if (radix_ == 16) {
+  if (radix_ == Radix::Hexadecimal) {
     excess_exponent *= 4;
   }
   exponent -= excess_exponent;
@@ -267,24 +269,25 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 // contains only digits in the specified base, and that any digit separators
 // are present and correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSequence(
-    llvm::StringRef text, int radix, bool allow_digit_separators)
+    llvm::StringRef text, Radix radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
-  CHECK((radix == 2 || radix == 10 || radix == 16))
-      << "unknown radix: " << radix;
-
   std::bitset<256> valid_digits;
-  if (radix == 2) {
-    for (char c : "01") {
-      valid_digits[static_cast<unsigned char>(c)] = true;
-    }
-  } else if (radix == 10) {
-    for (char c : "0123456789") {
-      valid_digits[static_cast<unsigned char>(c)] = true;
-    }
-  } else {
-    for (char c : "0123456789ABCDEF") {
-      valid_digits[static_cast<unsigned char>(c)] = true;
-    }
+  switch (radix) {
+    case Radix::Binary:
+      for (char c : "01") {
+        valid_digits[static_cast<unsigned char>(c)] = true;
+      }
+      break;
+    case Radix::Decimal:
+      for (char c : "0123456789") {
+        valid_digits[static_cast<unsigned char>(c)] = true;
+      }
+      break;
+    case Radix::Hexadecimal:
+      for (char c : "0123456789ABCDEF") {
+        valid_digits[static_cast<unsigned char>(c)] = true;
+      }
+      break;
   }
 
   int num_digit_separators = 0;
@@ -332,18 +335,15 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // Given a number with digit separators, check that the digit separators are
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
-    llvm::StringRef text, int radix, int num_digit_separators) -> void {
+    llvm::StringRef text, Radix radix, int num_digit_separators) -> void {
   DCHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
       << "given wrong number of digit separators: " << num_digit_separators;
 
-  if (radix == 2) {
+  if (radix == Radix::Binary) {
     // There are no restrictions on digit separator placement for binary
     // literals.
     return;
   }
-
-  CHECK((radix == 10 || radix == 16))
-      << "unexpected radix " << radix << " for digit separator checks";
 
   auto diagnose_irregular_digit_separators = [&]() {
     emitter_.Emit(text.begin(), IrregularDigitSeparators, radix);
@@ -351,7 +351,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
   // For decimal and hexadecimal digit sequences, digit separators must form
   // groups of 3 or 4 digits (4 or 5 characters), respectively.
-  int stride = (radix == 10 ? 4 : 5);
+  int stride = (radix == Radix::Decimal ? 4 : 5);
   int remaining_digit_separators = num_digit_separators;
   auto pos = text.end();
   while (pos - text.begin() >= stride) {
@@ -372,7 +372,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
-  if (radix_ == 10 && int_part_.startswith("0") && int_part_ != "0") {
+  if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
+      int_part_ != "0") {
     emitter_.Emit(int_part_.begin(), UnknownBaseSpecifier);
     return false;
   }
@@ -393,7 +394,7 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
     return true;
   }
 
-  if (radix_ == 2) {
+  if (radix_ == Radix::Binary) {
     emitter_.Emit(literal_.text_.begin() + literal_.radix_point_,
                   BinaryRealLiteral);
     // Carry on and parse the binary real literal anyway.
@@ -413,14 +414,14 @@ auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
     return true;
   }
 
-  char expected_exponent_kind = (radix_ == 10 ? 'e' : 'p');
+  char expected_exponent_kind = (radix_ == Radix::Decimal ? 'e' : 'p');
   if (literal_.text_[literal_.exponent_] != expected_exponent_kind) {
     emitter_.Emit(literal_.text_.begin() + literal_.exponent_,
                   WrongRealLiteralExponent, expected_exponent_kind);
     return false;
   }
 
-  auto exponent_result = CheckDigitSequence(exponent_part_, 10);
+  auto exponent_result = CheckDigitSequence(exponent_part_, Radix::Decimal);
   exponent_needs_cleaning_ = exponent_result.has_digit_separators;
   return exponent_result.ok;
 }
@@ -438,9 +439,11 @@ auto LexedNumericLiteral::ComputeValue(
     return IntegerValue{.value = parser.GetMantissa()};
   }
 
-  return RealValue{.radix = (parser.GetRadix() == 10 ? 10 : 2),
-                   .mantissa = parser.GetMantissa(),
-                   .exponent = parser.GetExponent()};
+  return RealValue{
+      .radix = (parser.GetRadix() == Radix::Decimal ? Radix::Decimal
+                                                    : Radix::Binary),
+      .mantissa = parser.GetMantissa(),
+      .exponent = parser.GetExponent()};
 }
 
 }  // namespace Carbon
