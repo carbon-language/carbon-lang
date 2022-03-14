@@ -24,6 +24,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
@@ -937,11 +938,10 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   code.append(10000, '9');
 
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 2),
-          DiagnosticMessage(HasSubstr("Found a sequence of 10000 digits")))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TooManyDigits,
+                                            DiagnosticLevel::Error, 1, 2,
+                                            HasSubstr(" 100000 "))));
   auto buffer = Lex(code, consumer);
   EXPECT_TRUE(buffer.HasErrors());
   ASSERT_THAT(buffer,
@@ -962,66 +962,57 @@ TEST_F(LexerTest, DiagnosticTrailingComment) {
   )";
 
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
-                            DiagnosticAt(3, 19),
-                            DiagnosticMessage(HasSubstr("Trailing comment")))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TrailingComment,
+                                            DiagnosticLevel::Error, 3, 19, _)));
   Lex(testcase, consumer);
 }
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(1, 3),
-                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::NoWhitespaceAfterCommentIntroducer,
+                            DiagnosticLevel::Error, 1, 3, _)));
   Lex("//no space after comment", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 8),
-          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::UnknownEscapeSequence,
+                            DiagnosticLevel::Error, 1, 8, HasSubstr("`b`"))));
   Lex(R"("hello\bworld")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 9),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::HexadecimalEscapeMissingDigits,
+                            DiagnosticLevel::Error, 1, 9, _)));
   Lex(R"("hello\xabworld")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(1, 6),
-          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::InvalidDigit,
+                            DiagnosticLevel::Error, 1, 6, HasSubstr("'a'"))));
   Lex("0x123abc", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
-              HandleDiagnostic(
-                  AllOf(DiagnosticAt(1, 1),
-                        DiagnosticMessage(HasSubstr("missing a terminator")))));
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::UnterminatedString,
+                                            DiagnosticLevel::Error, 1, 1, _)));
   Lex(R"(#" ")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(1, 1),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            IsDiagnostic(DiagnosticKind::UnrecognizedCharacters,
+                                         DiagnosticLevel::Error, 1, 1, _)));
   Lex("\b", consumer);
 }
 

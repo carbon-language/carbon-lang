@@ -7,7 +7,16 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "diagnostic_emitter",
     hdrs = ["diagnostic_emitter.h"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        ":diagnostic_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "diagnostic_kind",
+    hdrs = ["diagnostic_kind.h"],
+    textual_hdrs = ["diagnostic_registry.def"],
 )
 
 cc_library(

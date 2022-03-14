@@ -17,14 +17,7 @@
 
 namespace Carbon {
 
-struct StackLimitExceeded : DiagnosticBase<StackLimitExceeded> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-
-  static auto Format() -> std::string {
-    return llvm::formatv("Exceeded recursion limit ({0})",
-                         ParseTree::StackDepthLimit);
-  }
-};
+DIAGNOSTIC(StackLimitExceeded, Error, "Exceeded recursion limit ({0})", int);
 
 // Manages the parser's stack depth, particularly decrementing on destruction.
 // This should only be instantiated through RETURN_IF_STACK_LIMITED.
@@ -37,7 +30,8 @@ class ParseTree::Parser::ScopedStackStep {
 
   auto VerifyUnderLimit() -> bool {
     if (parser_->stack_depth_ >= StackDepthLimit) {
-      parser_->emitter_.EmitError<StackLimitExceeded>(*parser_->position_);
+      parser_->emitter_.Emit(*parser_->position_, StackLimitExceeded,
+                             ParseTree::StackDepthLimit);
       return false;
     }
     return true;
@@ -55,45 +49,16 @@ class ParseTree::Parser::ScopedStackStep {
     return (error_return_expr);                    \
   }
 
-struct UnexpectedTokenInCodeBlock : DiagnosticBase<UnexpectedTokenInCodeBlock> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Unexpected token in code block.";
-};
-
-struct ExpectedFunctionName : DiagnosticBase<ExpectedFunctionName> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected function name after `fn` keyword.";
-};
-
-struct ExpectedFunctionParams : DiagnosticBase<ExpectedFunctionParams> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected `(` after function name.";
-};
-
-struct ExpectedFunctionBodyOrSemi : DiagnosticBase<ExpectedFunctionBodyOrSemi> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected function definition or `;` after function declaration.";
-};
-
-struct ExpectedVariableName : DiagnosticBase<ExpectedVariableName> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected pattern in `var` declaration.";
-};
-
-struct ExpectedParameterName : DiagnosticBase<ExpectedParameterName> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected parameter declaration.";
-};
-
-struct ExpectedStructLiteralField : DiagnosticBase<ExpectedStructLiteralField> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-
+DIAGNOSTIC(ExpectedFunctionName, Error,
+           "Expected function name after `fn` keyword.");
+DIAGNOSTIC(ExpectedFunctionParams, Error, "Expected `(` after function name.");
+DIAGNOSTIC(ExpectedFunctionBodyOrSemi, Error,
+           "Expected function definition or `;` after function declaration.");
+DIAGNOSTIC(ExpectedVariableName, Error,
+           "Expected pattern in `var` declaration.");
+DIAGNOSTIC(ExpectedParameterName, Error, "Expected parameter declaration.");
+DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}.", bool, bool);
+/*
   auto Format() -> std::string {
     std::string result = "Expected ";
     if (can_be_type) {
@@ -111,87 +76,26 @@ struct ExpectedStructLiteralField : DiagnosticBase<ExpectedStructLiteralField> {
 
   bool can_be_type;
   bool can_be_value;
-};
+*/
+DIAGNOSTIC(UnrecognizedDeclaration, Error,
+           "Unrecognized declaration introducer.");
 
-struct UnrecognizedDeclaration : DiagnosticBase<UnrecognizedDeclaration> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Unrecognized declaration introducer.";
-};
+DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
+DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
+DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.", TokenKind);
+DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
+DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
+           "Expected `;` after expression.");
+DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.", TokenKind);
+DIAGNOSTIC(ExpectedIdentifierAfterDot, Error, "Expected identifier after `.`.");
+DIAGNOSTIC(UnexpectedTokenAfterListElement, Error, "Expected `,` or `{0}`.",
+           TokenKind);
 
-struct ExpectedCodeBlock : DiagnosticBase<ExpectedCodeBlock> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message = "Expected braced code block.";
-};
+DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
+           "Whitespace missing {0} binary operator.", bool, bool);
 
-struct ExpectedExpression : DiagnosticBase<ExpectedExpression> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message = "Expected expression.";
-};
-
-struct ExpectedParenAfter : DiagnosticBase<ExpectedParenAfter> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message = "Expected `(` after `{0}`.";
-
-  auto Format() -> std::string {
-    return llvm::formatv(Message, introducer.GetFixedSpelling()).str();
-  }
-
-  TokenKind introducer;
-};
-
-struct ExpectedCloseParen : DiagnosticBase<ExpectedCloseParen> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Unexpected tokens before `)`.";
-
-  // TODO: Include the location of the matching open paren in the diagnostic.
-  TokenizedBuffer::Token open_paren;
-};
-
-struct ExpectedSemiAfterExpression
-    : DiagnosticBase<ExpectedSemiAfterExpression> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected `;` after expression.";
-};
-
-struct ExpectedSemiAfter : DiagnosticBase<ExpectedSemiAfter> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message = "Expected `;` after `{0}`.";
-
-  auto Format() -> std::string {
-    return llvm::formatv(Message, preceding.GetFixedSpelling()).str();
-  }
-
-  TokenKind preceding;
-};
-
-struct ExpectedIdentifierAfterDot : DiagnosticBase<ExpectedIdentifierAfterDot> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected identifier after `.`.";
-};
-
-struct UnexpectedTokenAfterListElement
-    : DiagnosticBase<UnexpectedTokenAfterListElement> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message = "Expected `,` or `{0}`.";
-
-  auto Format() -> std::string {
-    return llvm::formatv(Message, close.GetFixedSpelling()).str();
-  }
-
-  TokenKind close;
-};
-
-struct BinaryOperatorRequiresWhitespace
-    : DiagnosticBase<BinaryOperatorRequiresWhitespace> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message =
-      "Whitespace missing {0} binary operator.";
-
-  auto Format() -> std::string {
+/*
+  auto Format()->std::string {
     const char* position = "around";
     if (has_leading_space) {
       position = "after";
@@ -204,38 +108,29 @@ struct BinaryOperatorRequiresWhitespace
   bool has_leading_space;
   bool has_trailing_space;
 };
+*/
 
-struct UnaryOperatorHasWhitespace : DiagnosticBase<UnaryOperatorHasWhitespace> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message =
-      "Whitespace is not allowed {0} this unary operator.";
+DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
+           "Whitespace is not allowed {0} this unary operator.", bool);
 
-  auto Format() -> std::string {
+/*
+  auto Format()->std::string {
     return llvm::formatv(Message, prefix ? "after" : "before");
   }
-
-  bool prefix;
 };
+*/
 
-struct UnaryOperatorRequiresWhitespace
-    : DiagnosticBase<UnaryOperatorRequiresWhitespace> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr const char* Message =
-      "Whitespace is required {0} this unary operator.";
+DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
+           "Whitespace is required {0} this unary operator.", bool);
 
-  auto Format() -> std::string {
+/*
+  auto Format()->std::string {
     return llvm::formatv(Message, prefix ? "before" : "after");
   }
+*/
 
-  bool prefix;
-};
-
-struct OperatorRequiresParentheses
-    : DiagnosticBase<OperatorRequiresParentheses> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Parentheses are required to disambiguate operator precedence.";
-};
+DIAGNOSTIC(OperatorRequiresParentheses, Error,
+           "Parentheses are required to disambiguate operator precedence.");
 
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
@@ -444,8 +339,8 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
     return close_paren;
   }
 
-  emitter_.EmitError<ExpectedCloseParen>(*position_,
-                                         {.open_paren = open_paren});
+  // TODO: Include the location of the matching open_paren in the diagnostic.
+  emitter_.Emit(*position_, ExpectedCloseParen);
   SkipTo(tokens_.GetMatchedClosingToken(open_paren));
   AddLeafNode(kind, Consume(TokenKind::CloseParen()));
   return llvm::None;
@@ -477,8 +372,7 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
       if (!NextTokenIsOneOf({close, TokenKind::Comma()})) {
         if (!element_error) {
-          emitter_.EmitError<UnexpectedTokenAfterListElement>(*position_,
-                                                              {.close = close});
+          emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close);
         }
         has_errors = true;
 
@@ -521,11 +415,11 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 
   switch (kind) {
     case PatternKind::Parameter:
-      emitter_.EmitError<ExpectedParameterName>(*position_);
+      emitter_.Emit(*position_, ExpectedParameterName);
       break;
 
     case PatternKind::Variable:
-      emitter_.EmitError<ExpectedVariableName>(*position_);
+      emitter_.Emit(*position_, ExpectedVariableName);
       break;
   }
 
@@ -570,7 +464,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
-    emitter_.EmitError<ExpectedCodeBlock>(*position_);
+    emitter_.Emit(*position_, ExpectedCodeBlock);
     return ParseStatement();
   }
   TokenizedBuffer::Token open_curly = *maybe_open_curly;
@@ -617,7 +511,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                         ParseNodeKind::DeclaredName());
   if (!name_n) {
-    emitter_.EmitError<ExpectedFunctionName>(*position_);
+    emitter_.Emit(*position_, ExpectedFunctionName);
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
@@ -627,7 +521,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   TokenizedBuffer::Token open_paren = *position_;
   if (tokens_.GetKind(open_paren) != TokenKind::OpenParen()) {
-    emitter_.EmitError<ExpectedFunctionParams>(open_paren);
+    emitter_.Emit(open_paren, ExpectedFunctionParams);
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
   }
@@ -648,7 +542,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
-    emitter_.EmitError<ExpectedFunctionBodyOrSemi>(*position_);
+    emitter_.Emit(*position_, ExpectedFunctionBodyOrSemi);
     if (tokens_.GetLine(*position_) == tokens_.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
       SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
@@ -688,7 +582,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   auto semi = ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd());
   if (!semi) {
-    emitter_.EmitError<ExpectedSemiAfterExpression>(*position_);
+    emitter_.Emit(*position_, ExpectedSemiAfterExpression);
     SkipPastLikelyEnd(var_token, [&](TokenizedBuffer::Token semi) {
       return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
     });
@@ -720,7 +614,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   }
 
   // We didn't recognize an introducer for a valid declaration.
-  emitter_.EmitError<UnrecognizedDeclaration>(*position_);
+  emitter_.Emit(*position_, UnrecognizedDeclaration);
 
   // Skip forward past any end of a declaration we simply didn't understand so
   // that we can find the start of the next declaration or the end of a scope.
@@ -781,9 +675,10 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         auto start_elem = GetSubtreeStartPosition();
 
         auto diagnose_invalid_syntax = [&] {
-          emitter_.EmitError<ExpectedStructLiteralField>(
-              *position_,
-              {.can_be_type = kind != Value, .can_be_value = kind != Type});
+          bool can_be_type = kind != Value;
+          bool can_be_value = kind != Type;
+          emitter_.Emit(*position_, ExpectedStructLiteralField, can_be_type,
+                        can_be_value);
           return llvm::None;
         };
 
@@ -857,7 +752,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
       return ParseBraceExpression();
 
     default:
-      emitter_.EmitError<ExpectedExpression>(*position_);
+      emitter_.Emit(*position_, ExpectedExpression);
       return llvm::None;
   }
 
@@ -874,7 +769,7 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   if (name) {
     AddLeafNode(ParseNodeKind::DesignatedName(), *name);
   } else {
-    emitter_.EmitError<ExpectedIdentifierAfterDot>(*position_);
+    emitter_.Emit(*position_, ExpectedIdentifierAfterDot);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
     if (NextTokenKind().IsKeyword()) {
@@ -997,10 +892,9 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
     if (!is_valid_as_infix) {
-      emitter_.EmitError<BinaryOperatorRequiresWhitespace>(
-          *position_,
-          {.has_leading_space = tokens_.HasLeadingWhitespace(*position_),
-           .has_trailing_space = tokens_.HasTrailingWhitespace(*position_)});
+      emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace,
+                    tokens_.HasLeadingWhitespace(*position_),
+                    tokens_.HasTrailingWhitespace(*position_));
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -1010,13 +904,11 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     if (NextTokenKind().IsSymbol() &&
         (prefix ? tokens_.HasTrailingWhitespace(*position_)
                 : tokens_.HasLeadingWhitespace(*position_))) {
-      emitter_.EmitError<UnaryOperatorHasWhitespace>(*position_,
-                                                     {.prefix = prefix});
+      emitter_.Emit(*position_, UnaryOperatorHasWhitespace, prefix);
     }
     // Pre/postfix operators must not satisfy the infix operator rules.
     if (is_valid_as_infix) {
-      emitter_.EmitError<UnaryOperatorRequiresWhitespace>(*position_,
-                                                          {.prefix = prefix});
+      emitter_.Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }
@@ -1063,7 +955,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
-      emitter_.EmitError<OperatorRequiresParentheses>(*position_);
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
     } else {
       // Check that this operator follows the proper whitespace rules.
       DiagnoseOperatorFixity(OperatorFixity::Prefix);
@@ -1096,7 +988,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // Either the LHS operator and this operator are ambiguous, or the
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
-      emitter_.EmitError<OperatorRequiresParentheses>(*position_);
+      emitter_.Emit(*position_, OperatorRequiresParentheses);
       lhs = llvm::None;
     } else {
       DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
@@ -1142,7 +1034,7 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   }
 
   if (!has_errors) {
-    emitter_.EmitError<ExpectedSemiAfterExpression>(*position_);
+    emitter_.Emit(*position_, ExpectedSemiAfterExpression);
   }
 
   if (auto recovery_node =
@@ -1164,8 +1056,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
   if (!open_paren) {
-    emitter_.EmitError<ExpectedParenAfter>(*position_,
-                                           {.introducer = introducer});
+    emitter_.Emit(*position_, ExpectedParenAfter, introducer);
   }
 
   auto expr = ParseExpression();
@@ -1231,8 +1122,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   auto semi =
       ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
   if (!semi) {
-    emitter_.EmitError<ExpectedSemiAfter>(*position_,
-                                          {.preceding = keyword_kind});
+    emitter_.Emit(*position_, ExpectedSemiAfter, keyword_kind);
     // FIXME: Try to skip to a semicolon to recover.
   }
   return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
