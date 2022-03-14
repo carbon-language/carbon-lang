@@ -57,7 +57,7 @@ enum class DiagnosticLevel : int8_t {
 // For example:
 //   DIAGNOSTIC_WITH_FORMAT_FN(
 //       MyDiagnostic, Error, "Number is {0}.",
-//       [](const char* format, int radix) {
+//       [](llvm::StringLiteral format, int radix) {
 //         return llvm::formatv(format,
 //                              radix == 16 ? "hexadecimal" : "decimal");
 //       },
@@ -84,8 +84,6 @@ struct DiagnosticLocation {
 // An instance of a single error or warning.  Information about the diagnostic
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
-  using FormatFnType = std::function<std::string(const Diagnostic&)>;
-
   // The diagnostic's kind.
   const DiagnosticKind kind;
 
@@ -100,7 +98,7 @@ struct Diagnostic {
   const std::any format_args;
 
   // Returns the formatted string.
-  const FormatFnType format_fn;
+  const std::function<std::string(const Diagnostic&)> format_fn;
 };
 
 // Receives diagnostics as they are emitted.
@@ -132,28 +130,22 @@ namespace Internal {
 // This stores static information about a diagnostic category.
 template <typename... Args>
 struct DiagnosticBase {
-  using RawFormatFnType =
-      std::function<std::string(llvm::StringLiteral, const Args&... args)>;
+  // This is the underlying format function type. It's wrapped for Diagnostic in
+  // order to hide Args type information.
+  using RawFormatFnType = std::string (*)(llvm::StringLiteral format,
+                                          const Args&... args);
 
   constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                            llvm::StringLiteral format,
-                           RawFormatFnType raw_format_fn = &DefaultFormatFn)
-      : Kind(kind),
-        Level(level),
-        Format(format),
-        // This translates from Diagnostic's std::any to call raw_format_fn with
-        // typed arguments.
-        FormatFn([raw_format_fn](const Diagnostic& diagnostic) -> std::string {
-          return std::apply(
-              raw_format_fn,
-              std::any_cast<std::tuple<llvm::StringLiteral, Args...>>(
-                  diagnostic.format_args));
-        }) {}
+                           RawFormatFnType raw_format_fn = &DefaultRawFormatFn)
+      : Kind(kind), Level(level), Format(format), RawFormatFn(raw_format_fn) {}
 
-  // A generic format function, used when format_fn isn't provided.
-  static auto DefaultFormatFn(llvm::StringLiteral format, const Args&... args) {
-    return llvm::formatv(format.data(), args...);
-  }
+  // Calls raw_format_fn with the diagnostic's arguments.
+  auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
+    return std::apply(RawFormatFn,
+                      std::any_cast<std::tuple<llvm::StringLiteral, Args...>>(
+                          diagnostic.format_args));
+  };
 
   // The diagnostic's kind.
   const DiagnosticKind Kind;
@@ -161,8 +153,16 @@ struct DiagnosticBase {
   const DiagnosticLevel Level;
   // The diagnostic's format for llvm::formatv.
   const llvm::StringLiteral Format;
+
+ private:
+  // A generic format function, used when format_fn isn't provided.
+  static auto DefaultRawFormatFn(llvm::StringLiteral format,
+                                 const Args&... args) -> std::string {
+    return llvm::formatv(format.data(), args...);
+  }
+
   // The function to use for formatting.
-  const Diagnostic::FormatFnType FormatFn;
+  const RawFormatFnType RawFormatFn;
 };
 
 }  // namespace Internal
@@ -192,15 +192,17 @@ class DiagnosticEmitter {
   // may outlive the `Emit` call.
   template <typename... Args>
   void Emit(
-      LocationT location, Internal::DiagnosticBase<Args...> diagnostic,
+      LocationT location,
+      const Internal::DiagnosticBase<Args...>& diagnostic_base,
       // Disable type deduction based on `args`; `diagnostic` still applies.
       typename std::common_type_t<Args>... args) {
     consumer_->HandleDiagnostic({
-        .kind = diagnostic.Kind,
-        .level = diagnostic.Level,
+        .kind = diagnostic_base.Kind,
+        .level = diagnostic_base.Level,
         .location = translator_->GetLocation(location),
-        .format_args = std::make_tuple(diagnostic.Format, args...),
-        .format_fn = &Internal::DiagnosticBase<Args...>::FormatDiagnostic,
+        .format_args = std::make_tuple(diagnostic_base.Format, args...),
+        .format_fn = [&diagnostic_base](const Diagnostic& diagnostic)
+            -> std::string { return diagnostic_base.FormatFn(diagnostic); },
     });
   }
 

@@ -935,24 +935,26 @@ TEST_F(LexerTest, TypeLiterals) {
 
 TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   std::string code = "i";
-  code.append(10000, '9');
+  constexpr int Count = 10000;
+  code.append(Count, '9');
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TooManyDigits,
-                                            DiagnosticLevel::Error, 1, 2,
-                                            HasSubstr(" 100000 "))));
+              HandleDiagnostic(IsDiagnostic(
+                  DiagnosticKind::TooManyDigits, DiagnosticLevel::Error, 1, 2,
+                  HasSubstr(llvm::formatv(" {0} ", Count)))));
   auto buffer = Lex(code, consumer);
   EXPECT_TRUE(buffer.HasErrors());
-  ASSERT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Error(),
-                   .line = 1,
-                   .column = 1,
-                   .indent_column = 1,
-                   .text = {code}},
-                  {.kind = TokenKind::EndOfFile(), .line = 1, .column = 10002},
-              }));
+  ASSERT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::Error(),
+           .line = 1,
+           .column = 1,
+           .indent_column = 1,
+           .text = {code}},
+          {.kind = TokenKind::EndOfFile(), .line = 1, .column = Count + 2},
+      }));
 }
 
 TEST_F(LexerTest, DiagnosticTrailingComment) {

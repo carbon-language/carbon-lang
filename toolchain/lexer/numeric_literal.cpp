@@ -14,22 +14,33 @@
 
 namespace Carbon {
 
+// Adapts Radix for use with formatv.
+static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
+    -> llvm::raw_ostream& {
+  switch (radix) {
+    case LexedNumericLiteral::Radix::Binary:
+      out << "binary";
+      break;
+    case LexedNumericLiteral::Radix::Decimal:
+      out << "decimal";
+      break;
+    case LexedNumericLiteral::Radix::Hexadecimal:
+      out << "hexadecimal";
+      break;
+  }
+  return out;
+}
+
 DIAGNOSTIC(InvalidDigitSeparator, Error,
            "Misplaced digit separator in numeric literal.");
-// TODO: Custom formatting
 DIAGNOSTIC(InvalidDigit, Error, "Invalid digit '{0}' in {1} numeric literal.",
-           char, llvm::StringRef);
+           char, LexedNumericLiteral::Radix);
 DIAGNOSTIC(EmptyDigitSequence, Error,
            "Empty digit sequence in numeric literal.");
-// TODO: Custom formatting
-DIAGNOSTIC_WITH_FORMAT_FN(
-    IrregularDigitSeparators, Error,
-    "Digit separators in {0} number should appear every {1} characters "
-    "from the right.",
-    [](llvm::StringLiteral(radix == 10 ? "decimal" : "hexadecimal"),
-       (radix == 10 ? 3 : 4));
-
-    int);
+DIAGNOSTIC(IrregularDigitSeparators, Error,
+           "Digit separators in {0} number should appear every {1} characters "
+           "from the right.",
+           LexedNumericLiteral::Radix, int);
 DIAGNOSTIC(UnknownBaseSpecifier, Error,
            "Unknown base specifier in numeric literal.");
 DIAGNOSTIC(BinaryRealLiteral, Error,
@@ -309,9 +320,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       continue;
     }
 
-    emitter_.Emit(
-        text.begin() + i, InvalidDigit, c,
-        (radix == 2 ? "binary" : (radix == 16 ? "hexadecimal" : "decimal")));
+    emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
     return {.ok = false};
   }
 
@@ -346,7 +355,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   }
 
   auto diagnose_irregular_digit_separators = [&]() {
-    emitter_.Emit(text.begin(), IrregularDigitSeparators, radix);
+    emitter_.Emit(text.begin(), IrregularDigitSeparators, radix,
+                  radix == Radix::Decimal ? 3 : 4);
   };
 
   // For decimal and hexadecimal digit sequences, digit separators must form

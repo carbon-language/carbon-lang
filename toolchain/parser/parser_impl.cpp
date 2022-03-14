@@ -49,6 +49,30 @@ class ParseTree::Parser::ScopedStackStep {
     return (error_return_expr);                    \
   }
 
+// A relative location for characters in errors.
+enum class RelativeLocation : int8_t {
+  Around,
+  After,
+  Before,
+};
+
+// Adapts RelativeLocation for use with formatv.
+static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
+    -> llvm::raw_ostream& {
+  switch (loc) {
+    case RelativeLocation::Around:
+      out << "around";
+      break;
+    case RelativeLocation::After:
+      out << "after";
+      break;
+    case RelativeLocation::Before:
+      out << "before";
+      break;
+  }
+  return out;
+}
+
 DIAGNOSTIC(ExpectedFunctionName, Error,
            "Expected function name after `fn` keyword.");
 DIAGNOSTIC(ExpectedFunctionParams, Error, "Expected `(` after function name.");
@@ -57,29 +81,17 @@ DIAGNOSTIC(ExpectedFunctionBodyOrSemi, Error,
 DIAGNOSTIC(ExpectedVariableName, Error,
            "Expected pattern in `var` declaration.");
 DIAGNOSTIC(ExpectedParameterName, Error, "Expected parameter declaration.");
-DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}.", bool, bool);
-/*
-  auto Format() -> std::string {
-    std::string result = "Expected ";
-    if (can_be_type) {
-      result += "`.field: type`";
-    }
-    if (can_be_type && can_be_value) {
-      result += " or ";
-    }
-    if (can_be_value) {
-      result += "`.field = value`";
-    }
-    result += ".";
-    return result;
-  }
-
-  bool can_be_type;
-  bool can_be_value;
-*/
+DIAGNOSTIC_WITH_FORMAT_FN(
+    ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
+    [](llvm::StringLiteral format, const bool& can_be_type,
+       const bool& can_be_value) -> std::string {
+      return llvm::formatv(format.data(), can_be_type ? "`.field: type`" : "",
+                           (can_be_type && can_be_value) ? " or " : "",
+                           can_be_value ? "`.field = value`" : "");
+    },
+    bool, bool);
 DIAGNOSTIC(UnrecognizedDeclaration, Error,
            "Unrecognized declaration introducer.");
-
 DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
 DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
 DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.", TokenKind);
@@ -90,45 +102,13 @@ DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.", TokenKind);
 DIAGNOSTIC(ExpectedIdentifierAfterDot, Error, "Expected identifier after `.`.");
 DIAGNOSTIC(UnexpectedTokenAfterListElement, Error, "Expected `,` or `{0}`.",
            TokenKind);
-
 DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-           "Whitespace missing {0} binary operator.", bool, bool);
-
-/*
-  auto Format()->std::string {
-    const char* position = "around";
-    if (has_leading_space) {
-      position = "after";
-    } else if (has_trailing_space) {
-      position = "before";
-    }
-    return llvm::formatv(Message, position);
-  }
-
-  bool has_leading_space;
-  bool has_trailing_space;
-};
-*/
-
+           "Whitespace missing {0} binary operator.", RelativeLocation);
 DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-           "Whitespace is not allowed {0} this unary operator.", bool);
-
-/*
-  auto Format()->std::string {
-    return llvm::formatv(Message, prefix ? "after" : "before");
-  }
-};
-*/
-
+           "Whitespace is not allowed {0} this unary operator.",
+           RelativeLocation);
 DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-           "Whitespace is required {0} this unary operator.", bool);
-
-/*
-  auto Format()->std::string {
-    return llvm::formatv(Message, prefix ? "before" : "after");
-  }
-*/
-
+           "Whitespace is required {0} this unary operator.", RelativeLocation);
 DIAGNOSTIC(OperatorRequiresParentheses, Error,
            "Parentheses are required to disambiguate operator precedence.");
 
@@ -893,8 +873,11 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Infix operators must satisfy the infix operator rules.
     if (!is_valid_as_infix) {
       emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace,
-                    tokens_.HasLeadingWhitespace(*position_),
-                    tokens_.HasTrailingWhitespace(*position_));
+                    tokens_.HasLeadingWhitespace(*position_)
+                        ? RelativeLocation::After
+                        : (tokens_.HasTrailingWhitespace(*position_)
+                               ? RelativeLocation::Before
+                               : RelativeLocation::Around));
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -904,11 +887,15 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     if (NextTokenKind().IsSymbol() &&
         (prefix ? tokens_.HasTrailingWhitespace(*position_)
                 : tokens_.HasLeadingWhitespace(*position_))) {
-      emitter_.Emit(*position_, UnaryOperatorHasWhitespace, prefix);
+      emitter_.Emit(
+          *position_, UnaryOperatorHasWhitespace,
+          prefix ? RelativeLocation::After : RelativeLocation::Before);
     }
     // Pre/postfix operators must not satisfy the infix operator rules.
     if (is_valid_as_infix) {
-      emitter_.Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+      emitter_.Emit(
+          *position_, UnaryOperatorRequiresWhitespace,
+          prefix ? RelativeLocation::Before : RelativeLocation::After);
     }
   }
 }
