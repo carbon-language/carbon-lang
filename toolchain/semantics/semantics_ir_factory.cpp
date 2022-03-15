@@ -18,8 +18,8 @@ auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
 }
 
 void SemanticsIRFactory::ProcessRoots() {
-  for (ParseTree::Node node : semantics_.parse_tree_->Roots()) {
-    switch (semantics_.parse_tree_->GetNodeKind(node)) {
+  for (ParseTree::Node node : semantics_.parse_tree_->roots()) {
+    switch (semantics_.parse_tree_->node_kind(node)) {
       case ParseNodeKind::FunctionDeclaration():
         ProcessFunctionNode(semantics_.root_block_, node);
         break;
@@ -28,7 +28,7 @@ void SemanticsIRFactory::ProcessRoots() {
         break;
       default:
         FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->GetNodeKind(node).GetName();
+                << semantics_.parse_tree_->node_kind(node).name();
     }
   }
 }
@@ -36,8 +36,8 @@ void SemanticsIRFactory::ProcessRoots() {
 void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
                                              ParseTree::Node decl_node) {
   llvm::Optional<Semantics::Function> fn;
-  for (ParseTree::Node node : semantics_.parse_tree_->Children(decl_node)) {
-    switch (semantics_.parse_tree_->GetNodeKind(node)) {
+  for (ParseTree::Node node : semantics_.parse_tree_->children(decl_node)) {
+    switch (semantics_.parse_tree_->node_kind(node)) {
       case ParseNodeKind::DeclaredName():
         fn = semantics_.AddFunction(block, decl_node, node);
         break;
@@ -50,7 +50,7 @@ void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
         break;
       default:
         FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->GetNodeKind(node).GetName();
+                << semantics_.parse_tree_->node_kind(node).name();
     }
   }
 }

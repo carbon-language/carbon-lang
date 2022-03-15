@@ -24,9 +24,9 @@ class SemanticsIRFactoryTest : public ::testing::Test {
   auto Analyze(llvm::Twine t) -> SemanticsIR {
     source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
-    EXPECT_FALSE(tokenized_buffer->HasErrors());
+    EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
-    EXPECT_FALSE(parse_tree->HasErrors());
+    EXPECT_FALSE(parse_tree->has_errors());
     return SemanticsIRFactory::Build(*parse_tree);
   }
 
