@@ -30,7 +30,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
     -   [Internal impl](#internal-impl)
     -   [External impl](#external-impl)
--   [Qualified and unqualified member names](#qualified-and-unqualified-member-names)
+-   [Member access](#member-access)
+    -   [Simple member access](#simple-member-access)
+    -   [Compound member access using qualified names](#compound-member-access-using-qualified-names)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Coherence](#coherence)
@@ -357,28 +359,51 @@ constraint as a way to implement all of the interfaces it requires.
 
 A type that implements an interface _internally_ has all the named members of
 the interface as named members of the type. This means that the members of the
-interface may be accessed as either
-[unqualified or qualified members](#qualified-and-unqualified-member-names).
+interface are available by way of both
+[simple member access and compound member access using qualified names](#member-access).
 
 ### External impl
 
 In contrast, a type that implements an interface _externally_ does not include
 the named members of the interface in the type. The members of the interface are
-still implemented by the type, though, and so may be accessed using the
-[qualified names](#qualified-and-unqualified-member-names) of those members.
+still implemented by the type, though, and so may be accessed using
+[compound member access using the qualified names](#compound-member-access-using-qualified-names)
+of those members.
 
-## Qualified and unqualified member names
+## Member access
 
-A qualified member includes both the name of the interface defining the member
-and the name of the member. So if `String` implements `Comparable` which has a
-`Less` method, and `s1` and `s2` are variables of type `String`, then the `Less`
+There are two different kinds of member access: _simple_ and _compound_. There
+is a [member access design document](/docs/design/expressions/member_access.md)
+with the details, but a summary of how they apply to generics is given here.
+
+### Simple member access
+
+Simple member access has the from `object.member`, where `member` is a word
+naming a member of `object`. This form may be used to access members of
+interfaces [implemented internally](#internal-impl) by the type of `object`.
+
+If `String` implements `Printable` internally, then `s1.Print()` calls the
+`Print` method of `Printable` using simple member access. In this case, the name
+`Print` is used without qualifying it with the name of the interface it is a
+member of since it is recognized as a member of the type itself as well.
+
+### Compound member access using qualified names
+
+Compound member access has the form `object.(expression)`, where `expression` is
+resolved in the containing scope. This expression may be the _qualified member
+name_ of an interface member, that consists of the name of the interface,
+possibly qualified with a package or namespace name, a dot `.` and the name of
+the member.
+
+For example, if the `Comparable` interface has a `Less` member method, then the
+qualified name of that member is `Comparable.Less`. So if `String` implements
+`Comparable`, and `s1` and `s2` are variables of type `String`, then the `Less`
 method may be called using the qualified member name by writing
 `s1.(Comparable.Less)(s2)`.
 
-If the interface is implemented internally, then the method can be called using
-the unqualified syntax as well. If `String` implements `Printable` internally,
-then `s1.Print()` calls the `Print` method of `Printable` as an unqualified
-member.
+This form may be used to access any member of an interface implemented for a
+type, whether it is implemented [internally](#internal-impl) or
+[externally](#external-impl).
 
 ## Compatible types
 
