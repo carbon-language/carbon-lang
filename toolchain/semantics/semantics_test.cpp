@@ -34,7 +34,7 @@ class ParseTreeTest : public ::testing::Test {
 TEST_F(ParseTreeTest, Empty) {
   // TODO: Validate the returned Semantics object.
   Analyze("");
-  ASSERT_FALSE(parse_tree->HasErrors());
+  ASSERT_FALSE(parse_tree->has_errors());
 }
 
 }  // namespace
