@@ -20,7 +20,7 @@ TEST(SourceBufferTest, StringRep) {
   EXPECT_EQ("Hello World", buffer->text());
 }
 
-TEST(SourceBufferText, StringRepWithfilename) {
+TEST(SourceBufferText, StringRepWithFilename) {
   // Give a custom filename.
   auto buffer =
       SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
