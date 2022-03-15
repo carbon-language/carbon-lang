@@ -23,6 +23,25 @@ cc_test(
 )
 
 cc_library(
+    name = "error",
+    hdrs = ["error.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "error_test",
+    srcs = ["error_test.cpp"],
+    deps = [
+        ":error",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "indirect_value",
     hdrs = ["indirect_value.h"],
 )
@@ -50,6 +69,7 @@ cc_library(
     hdrs = ["string_helpers.h"],
     deps = [
         ":check",
+        ":error",
         "@llvm-project//llvm:Support",
     ],
 )
