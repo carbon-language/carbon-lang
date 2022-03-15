@@ -46,12 +46,12 @@ class LexedNumericLiteral {
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedNumericLiteral>;
 
-  // Get the text corresponding to this literal.
-  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
-
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const -> Value;
+
+  // Get the text corresponding to this literal.
+  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
 
  private:
   class Parser;
