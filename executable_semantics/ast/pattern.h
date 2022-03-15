@@ -84,6 +84,12 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
+class BindingPattern;
+
+// Returns all `BindingPattern`s in the AST subtree rooted at `pattern`.
+auto GetBindings(const Pattern& pattern)
+    -> std::vector<Nonnull<const BindingPattern*>>;
+
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
@@ -95,6 +101,24 @@ class AutoPattern : public Pattern {
   }
 };
 
+class VarPattern : public Pattern {
+ public:
+  explicit VarPattern(SourceLocation source_loc, Nonnull<Pattern*> pattern)
+      : Pattern(AstNodeKind::VarPattern, source_loc), pattern_(pattern) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVarPattern(node->kind());
+  }
+
+  auto pattern() const -> const Pattern& { return *pattern_; }
+  auto pattern() -> Pattern& { return *pattern_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+ private:
+  Nonnull<Pattern*> pattern_;
+};
+
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
 class BindingPattern : public Pattern {
@@ -102,10 +126,12 @@ class BindingPattern : public Pattern {
   using ImplementsCarbonValueNode = void;
 
   BindingPattern(SourceLocation source_loc, std::string name,
-                 Nonnull<Pattern*> type)
+                 Nonnull<Pattern*> type,
+                 std::optional<ValueCategory> value_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
-        type_(type) {}
+        type_(type),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -120,7 +146,24 @@ class BindingPattern : public Pattern {
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  // Returns the value category of this pattern. Can only be called after
+  // typechecking.
+  auto value_category() const -> ValueCategory {
+    return value_category_.value();
+  }
+
+  // Returns whether the value category has been set. Should only be called
+  // during typechecking.
+  auto has_value_category() const -> bool {
+    return value_category_.has_value();
+  }
+
+  // Sets the value category of the variable being bound. Can only be called
+  // once during typechecking
+  void set_value_category(ValueCategory vc) {
+    CHECK(!value_category_.has_value());
+    value_category_ = vc;
+  }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
@@ -129,6 +172,7 @@ class BindingPattern : public Pattern {
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
+  std::optional<ValueCategory> value_category_;
 };
 
 // A pattern that matches a tuple value field-wise.
