@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implementing interfaces](#implementing-interfaces)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
-    -   [Qualified member names](#qualified-member-names)
+    -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Generics](#generics)
     -   [Return type](#return-type)
@@ -188,9 +188,9 @@ This includes members of `ConvertibleToString` that are not explicitly named in
 the `impl` definition but have defaults. Whether the implementation is defined
 as [internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
-for a `Song` value `s` by writing a
-[qualified](terminology.md#compound-member-access-using-qualified-names)
-function call, like `s.(ConvertibleToString.ToString)()`.
+for a `Song` value `s` by a writing function call
+[using the compound member access syntax with the qualified name](terminology.md#compound-member-access-using-qualified-names),
+like `s.(ConvertibleToString.ToString)()`.
 
 If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
@@ -405,8 +405,9 @@ Carbon requires `impl`s defined in a different library to be `external` so that
 the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
 conflicting names that both affected the API of a single type. As a consequence
-of this restriction, you can find all the names of direct (unqualified) members
-of a type in the definition of that type. The only thing that may be in another
+of this restriction, you can find all the names of direct members (those
+available by [simple member access](terminology.md#simple-member-access)) of a
+type in the definition of that type. The only thing that may be in another
 library is an `impl` of an interface.
 
 You might also use `external impl` to implement an interface for a type to avoid
@@ -476,8 +477,10 @@ same library as the class?
 different files based on explicit configuration in that file. For example, we
 could support a declaration that a given interface or a given method of an
 interface is "in scope" for a particular type in this file. With that
-declaration, the method could be called unqualified. This avoids most concerns
-arising from name collisions between interfaces. It has a few downsides though:
+declaration, the method could be called using
+[simple member access](terminology.md#simple-member-access). This avoids most
+concerns arising from name collisions between interfaces. It has a few downsides
+though:
 
 -   It increases variability between files, since the same type will have
     different APIs depending on these declarations. This makes it harder to
@@ -495,12 +498,14 @@ Swift and Rust, we don't allow a type's API to be modified outside its
 definition. So in Carbon a type's API is consistent no matter what is imported,
 unlike Swift and Rust.
 
-### Qualified member names
+### Qualified member names and compound member access
 
 Given a value of type `Point3` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using the member's
-_qualified name_, whether or not the implementation is done externally with an
-`external impl` declaration:
+_qualified name_ using
+[the compound member access syntax](terminology.md#simple-member-access),
+whether or not the implementation is done externally with an `external impl`
+declaration:
 
 ```
 var p1: Point3 = {.x = 1.0, .y = 2.0};
@@ -581,7 +586,9 @@ present in the signature of the function to type check the body of
 
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
-to adding a `Vector` qualification to all unqualified member accesses of `T`:
+to adding a `Vector`
+[qualification](#qualified-member-names-and-compound-member-access) to replace
+all simple member accesses of `T`:
 
 ```
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
@@ -785,7 +792,8 @@ signatures. Implementing `Vector` would not imply an implementation of
 An interface's name may be used in a few different contexts:
 
 -   to define [an `impl` for a type](#implementing-interfaces),
--   as a namespace name in [a qualified name](#qualified-member-names), and
+-   as a namespace name in
+    [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [type-of-type](terminology.md#type-of-type) for
     [a generic type parameter](#generics).
 
@@ -806,7 +814,8 @@ aliases for the corresponding qualified names inside `Vector` as a namespace.
 
 The requirements determine which types are values of a given type-of-type. The
 set of names in a type-of-type determines the API of a generic type value and
-define the result of qualified member name lookup.
+define the result of [member access](/docs/design/expressions/member_access.md)
+into the type-of-type.
 
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
@@ -875,9 +884,8 @@ members of those interfaces.
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
 associated type, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint ignores the
-unqualified member names defined for a type, but a template constraint can
-depend on them.
+inside a `template constraint`. Note that a generic constraint ignores the names
+of members defined for a type, but a template constraint can depend on them.
 
 There is an analogy between declarations used in a `constraint` and in an
 `interface` definition. If an `interface` `I` has (non-`alias`) declarations
@@ -1036,8 +1044,8 @@ constraint {
 ```
 
 Conflicts can be resolved at the call site using
-[the qualified name syntax](#qualified-member-names), or by defining a named
-constraint explicitly and renaming the methods:
+[the compound member access syntax using qualified names](#qualified-member-names-and-compound-member-access),
+or by defining a named constraint explicitly and renaming the methods:
 
 ```
 constraint RenderableAndEndOfGame {
@@ -1561,7 +1569,7 @@ adapter SongByTitle for Song {
 }
 ```
 
-or using qualified names:
+or using qualified names with the compound member access syntax:
 
 ```
 adapter SongByTitle for Song {
@@ -2580,14 +2588,13 @@ fn Contains
 the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
 However, inside the body of `Contains`, `CT.ElementType` will only act like the
 implementation of `Comparable` is [external](#external-impl). That is, items
-from the `needles` container won't have an unqualified `Compare` method member,
-but can still be implicitly converted to `Comparable` and can still call
-`Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
-The rule is that an `==` `where` constraint between two type variables does not
-modify the set of unqualified member names of either type. (If you write
+from the `needles` container won't directly have a `Compare` method member, but
+can still be implicitly converted to `Comparable` and can still call `Compare`
+using the compound member access syntax, `needle.(Comparable.Compare)(elt)`. The
+rule is that an `==` `where` constraint between two type variables does not
+modify the set of member names of either type. (If you write
 `where .ElementType = String` with a `=` and a concrete type, then
-`.ElementType` is actually set to `String` including the complete unqualified
-`String` API.)
+`.ElementType` is actually set to `String` including the complete `String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -2876,9 +2883,9 @@ This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
 **Note:** These implied constraints affect the _requirements_ of a generic type
-parameter, but not its _unqualified member names_. This way you can always look
-at the declaration to see how name resolution works, without having to look up
-the definitions of everything it is used as an argument to.
+parameter, but not its _member names_. This way you can always look at the
+declaration to see how name resolution works, without having to look up the
+definitions of everything it is used as an argument to.
 
 **Limitation:** To limit readability concerns and ambiguity, this feature is
 limited to a single signature. Consider this interface declaration:
