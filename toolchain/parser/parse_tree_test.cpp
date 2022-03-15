@@ -75,8 +75,8 @@ TEST_F(ParseTreeTest, EmptyDeclaration) {
   EXPECT_THAT(tree.GetNodeKind(eof), Eq(ParseNodeKind::FileEnd()));
 
   auto t = tree.GetNodeToken(n);
-  ASSERT_THAT(tokens.Tokens().begin(), Ne(tokens.Tokens().end()));
-  EXPECT_THAT(t, Eq(*tokens.Tokens().begin()));
+  ASSERT_THAT(tokens.tokens().begin(), Ne(tokens.tokens().end()));
+  EXPECT_THAT(t, Eq(*tokens.tokens().begin()));
   EXPECT_THAT(tokens.GetTokenText(t), Eq(";"));
 
   EXPECT_THAT(tree.Children(n).begin(), Eq(tree.Children(n).end()));
@@ -1253,7 +1253,7 @@ TEST_F(ParseTreeTest, RecursionLimit) {
   code.append(10000, ')');
   code += "; }";
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
-  ASSERT_FALSE(tokens.HasErrors());
+  ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
   // Recursion might be exceeded multiple times due to quirks in parse tree
   // handling; we only need to be sure it's hit at least once for test
@@ -1276,7 +1276,7 @@ TEST_F(ParseTreeTest, ParsePostfixExpressionRegression) {
     code.append(ParseTree::StackDepthLimit - n, '*');
     code += "(z);";
     TokenizedBuffer tokens = GetTokenizedBuffer(code);
-    ASSERT_FALSE(tokens.HasErrors());
+    ASSERT_FALSE(tokens.has_errors());
     ParseTree tree = ParseTree::Parse(tokens, consumer);
     EXPECT_TRUE(tree.HasErrors());
   }

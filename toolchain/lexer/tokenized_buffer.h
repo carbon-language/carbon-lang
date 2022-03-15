@@ -272,16 +272,6 @@ class TokenizedBuffer {
   static auto Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
       -> TokenizedBuffer;
 
-  // Returns true if the buffer has errors that are detectable at lexing time.
-  [[nodiscard]] auto HasErrors() const -> bool { return has_errors_; }
-
-  [[nodiscard]] auto Tokens() const -> llvm::iterator_range<TokenIterator> {
-    return llvm::make_range(TokenIterator(Token(0)),
-                            TokenIterator(Token(token_infos_.size())));
-  }
-
-  [[nodiscard]] auto Size() const -> int { return token_infos_.size(); }
-
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
 
@@ -364,6 +354,16 @@ class TokenizedBuffer {
   // Prints a description of a single token.  See `print` for details on the
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
+
+  // Returns true if the buffer has errors that are detectable at lexing time.
+  [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
+
+  [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
+    return llvm::make_range(TokenIterator(Token(0)),
+                            TokenIterator(Token(token_infos_.size())));
+  }
+
+  [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
 
  private:
   // Implementation detail struct implementing the actual lexer logic.
