@@ -223,7 +223,7 @@ class TokenizedBuffer::Lexer {
     }
 
     int int_column = current_column_;
-    int token_size = literal->Text().size();
+    int token_size = literal->text().size();
     current_column_ += token_size;
     source_text = source_text.drop_front(token_size);
 
@@ -440,8 +440,8 @@ class TokenizedBuffer::Lexer {
       open_groups_.pop_back();
       token_emitter_.EmitError<MismatchedClosing>(opening_token);
 
-      CHECK(!buffer_.Tokens().empty()) << "Must have a prior opening token!";
-      Token prev_token = buffer_.Tokens().end()[-1];
+      CHECK(!buffer_.tokens().empty()) << "Must have a prior opening token!";
+      Token prev_token = buffer_.tokens().end()[-1];
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
@@ -644,7 +644,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     llvm::Optional<LexedNumericLiteral> relexed_token =
         LexedNumericLiteral::Lex(source_->Text().substr(token_start));
     CHECK(relexed_token) << "Could not reform numeric literal token.";
-    return relexed_token->Text();
+    return relexed_token->text();
   }
 
   // Refer back to the source text to find the original spelling, including
@@ -741,7 +741,7 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
 
 auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
   auto it = TokenIterator(token);
-  return it == Tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
+  return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
 }
 
 auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
@@ -799,17 +799,17 @@ auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
 }
 
 auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
-  if (Tokens().begin() == Tokens().end()) {
+  if (tokens().begin() == tokens().end()) {
     return;
   }
 
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
-  for (Token token : Tokens()) {
+  for (Token token : tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
-  for (Token token : Tokens()) {
+  for (Token token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }

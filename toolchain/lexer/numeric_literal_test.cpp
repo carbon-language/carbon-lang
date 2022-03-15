@@ -33,7 +33,7 @@ class NumericLiteralTest : public ::testing::Test {
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     CHECK(result);
-    EXPECT_EQ(result->Text(), text);
+    EXPECT_EQ(result->text(), text);
     return *result;
   }
 
