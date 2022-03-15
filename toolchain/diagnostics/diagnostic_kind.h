@@ -47,11 +47,11 @@ class DiagnosticKind {
     return lhs.kind_value_ != rhs.kind_value_;
   }
 
-  // Get a friendly name for the token for logging or debugging.
-  auto Name() const -> llvm::StringRef;
-
   // Prints the DiagnosticKind, typically for diagnostics.
-  void Print(llvm::raw_ostream& out) const { out << Name(); }
+  void Print(llvm::raw_ostream& out) const { out << name(); }
+
+  // Get a friendly name for the token for logging or debugging.
+  auto name() const -> llvm::StringRef;
 
  private:
   constexpr explicit DiagnosticKind(KindEnum kind_value)

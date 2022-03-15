@@ -6,7 +6,7 @@
 
 namespace Carbon {
 
-auto DiagnosticKind::Name() const -> llvm::StringRef {
+auto DiagnosticKind::name() const -> llvm::StringRef {
   static constexpr llvm::StringLiteral Names[] = {
 #define DIAGNOSTIC_KIND(DiagnosticName) #DiagnosticName,
 #include "toolchain/diagnostics/diagnostic_registry.def"

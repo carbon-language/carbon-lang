@@ -11,7 +11,7 @@ namespace Carbon::Testing {
 namespace {
 
 TEST(DiagnosticKindTest, Name) {
-  EXPECT_EQ(DiagnosticKind::TestDiagnostic().Name(), "TestDiagnostic");
+  EXPECT_EQ(DiagnosticKind::TestDiagnostic().name(), "TestDiagnostic");
 }
 
 }  // namespace
