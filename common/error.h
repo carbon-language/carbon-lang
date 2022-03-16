@@ -20,7 +20,7 @@ class [[nodiscard]] Error {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine message) : message_(message.str()) {
-    CHECK(!message_->empty()) << "Errors must have a message.";
+    CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
   Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
@@ -30,14 +30,14 @@ class [[nodiscard]] Error {
 
   // Returns the error message.
   // REQUIRES: `ok()` is false.
-  auto message() const -> const std::string& { return *message_; }
+  auto message() const -> const std::string& { return message_; }
 
  private:
   // The success state constructor.
   Error() = default;
 
   // The error message. Set to nullopt for success.
-  std::optional<std::string> message_;
+  std::string message_;
 };
 
 // Holds a value of type `T`, or an Error explaining why the value is
