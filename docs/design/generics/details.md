@@ -95,6 +95,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
     -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
     -   [Declaring implementations](#declaring-implementations)
+    -   [Matching and agreeing](#matching-and-agreeing)
     -   [Declaration examples](#declaration-examples)
     -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
     -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
@@ -4319,13 +4320,15 @@ the use cases when this would come up.
 An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
--   Only the first declaration will have an access-control keyword.
--   The declaration part of a forward declaration and the corresponding
-    definition must match.
+-   Only the first declaration may have an access-control keyword.
 -   An incomplete interface or named constraint may be used as constraints in
-    declarations of types or functions.
+    declarations of types, functions, interfaces, or named constraints. This
+    includes an `impl as` or `extends` declaration inside an interface or named
+    constraint.
 -   An attempt to define the body of a generic function using an incomplete
     interface or named constraint is illegal.
+-   An attempt to call a generic function using an incomplete interface or named
+    constraint in its signature is illegal.
 -   Any name lookup into an incomplete interface or named constraint is an
     error. For example, it is illegal to attempt to access a member of an
     interface using `MyInterface.MemberName` or constrain a member using a
@@ -4354,15 +4357,15 @@ these rules:
     the definition in an impl file.
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
-    `where` clause. If a later declaration repeats the `where` clause, it must
-    match in that it produces the associated constants with the same values if
-    the original `where` clause is ignored.
--   The presence of the keyword `external` before `impl` must match between a
-    forward declaration and definition.
+    `where` clause. Later declarations may omit the `where` clause by writing
+    `where _` instead.
 -   You may forward declare an implementation of a defined interface but not an
     incomplete interface. This allows the assignment of associated constants in
     the `impl` declaration to be verified. An impl forward declaration may be
-    for any declared type, whether it is incomplete or defined.
+    for any declared type, whether it is incomplete or defined. Note that this
+    does not apply to `impl as` declarations in an interface or named constraint
+    definition, as those are considered interface requirements not forward
+    declarations.
 -   Every internal implementation must be declared (or defined) inside the scope
     of the class definition. It may also be declared before the class definition
     or defined afterwards. Note that the class itself is incomplete in the scope
@@ -4376,6 +4379,46 @@ these rules:
     an [impl lookup](#impl-lookup) query in the same file, must be declared
     before the query. This can be done with a definition or a forward
     declaration.
+
+### Matching and agreeing
+
+Carbon needs to determine if two declarations match in order to say which
+definition a forward declaration corresponds to and to verify that nothing is
+defined twice. Declarations that match must also agree, meaning they are
+consistent with each other.
+
+Interface and named constraint declarations match if their names are the same
+after name and alias resolution. To agree:
+
+-   The introducer keyword or keywords much be the same.
+-   The types and order of parameters in the parameter list, if any, must match.
+    The parameter names may be omitted, but if they are included in both
+    declarations, they must match.
+-   Types agree if they correspond to the same expression tree, after name and
+    alias resolution and canonicalization of parentheses. Note that no other
+    evaluation of type expressions is performed.
+
+Interface implementation declarations match if the type and interface
+expressions match:
+
+-   `Self` is considered to match its meaning in the scope it is used. So in
+    `class MyClass { ... }`, `Self` is considered an alias for `MyClass`.
+-   If the type part is omitted, it is considered to match `Self` in the current
+    context.
+-   Types match if they have the same name after name and alias resolution and
+    the same parameters, or are the same type parameter.
+-   Interfaces match if they have the same name after name and alias resolution
+    and the same parameters. Note that a named constraint that is equivalent to
+    an interface, as in `constraint Equivalent { extends MyInterface; }`, is not
+    considered to match.
+
+For implementations to agree:
+
+-   The presence of modifier keywords such as `external` before `impl` must
+    match between a forward declaration and definition.
+-   If a both declarations include `where` clauses, that is neither use
+    `where _`, they must match in that they produce the associated constants
+    with the same values considered separately.
 
 ### Declaration examples
 
