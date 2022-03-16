@@ -15,6 +15,7 @@
 namespace Carbon {
 
 // Tracks an error message.
+[[nodiscard]]
 class Error {
  public:
   // Represents a success state.
@@ -25,7 +26,6 @@ class Error {
     CHECK(!message_->empty()) << "Errors must have a message.";
   }
 
-  // Moves held state.
   Error(Error&& other) noexcept
       : used_(other.used_), message_(std::move(other.message_)) {
     // Prevent the other from checking on destruction.
@@ -44,7 +44,8 @@ class Error {
     return !message_.has_value();
   }
 
-  // Returns the error message. Examine `ok()` first.
+  // Returns the error message.
+  // REQUIRES: `ok()` is false.
   auto message() const -> const std::string& {
     CHECK(!ok());
     return *message_;
@@ -54,15 +55,15 @@ class Error {
   // The success state constructor.
   Error() = default;
 
-  // Used to verify that the held state is examined, preventing dropping
-  // values.
+  // Indicates whether the held state has been examined.
   mutable bool used_ = false;
 
   // The error message. Set to nullopt for success.
   std::optional<std::string> message_;
 };
 
-// Used when a function may return either an Error or a result on success.
+// Holds a value of type `T`, or an Error explaining why the value is
+// unavailable.
 template <typename T>
 class ErrorOr {
  public:
@@ -94,13 +95,15 @@ class ErrorOr {
     return std::holds_alternative<T>(val_);
   }
 
-  // Returns the contained error. Examine `ok()` first.
-  auto error() -> Error& {
+  // Returns the contained error.
+  // REQUIRES: `ok()` is false.
+  auto error() const -> const Error& {
     CHECK(!ok());
     return std::get<Error>(val_);
   }
 
-  // Returns the contained value. Examine `ok()` first.
+  // Returns the contained value.
+  // REQUIRES: `ok()` is true.
   auto operator*() -> T& {
     CHECK(ok());
     return std::get<T>(val_);
