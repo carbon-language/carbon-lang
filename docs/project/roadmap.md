@@ -10,50 +10,84 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Objective for 2021: speed up Carbon development](#objective-for-2021-speed-up-carbon-development)
--   [Key results in 2021](#key-results-in-2021)
-    -   [Broaden core team representation so no organization is >50%](#broaden-core-team-representation-so-no-organization-is-50)
+-   [Objective for 2022: make Carbon public, finish 0.1 language](#objective-for-2022-make-carbon-public-finish-01-language)
+    -   [Completing the language design](#completing-the-language-design)
+    -   [Going public](#going-public)
+-   [Key results in 2022](#key-results-in-2022)
+    -   [Broaden participation so no organization is >50%](#broaden-participation-so-no-organization-is-50)
     -   [Example ports of C++ libraries to Carbon (100% of woff2, 99% of RE2)](#example-ports-of-c-libraries-to-carbon-100-of-woff2-99-of-re2)
         -   [Language design covers the syntax and semantics of the example port code.](#language-design-covers-the-syntax-and-semantics-of-the-example-port-code)
     -   [Demo implementation of core features with working examples](#demo-implementation-of-core-features-with-working-examples)
     -   [Executable semantic specification for core features with test cases](#executable-semantic-specification-for-core-features-with-test-cases)
--   [Beyond 2021](#beyond-2021)
-    -   [Potential 2022 goals: finish 0.1 language, make it public](#potential-2022-goals-finish-01-language-make-it-public)
+-   [Beyond 2022](#beyond-2022)
     -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
     -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-_ship_-10-language--organization)
 
 <!-- tocstop -->
 
-## Objective for 2021: speed up Carbon development
+## Objective for 2022: make Carbon public, finish 0.1 language
 
-The main objective of the Carbon project in 2021 is to speed up the development
-of the project, even while it remains both an experiment and private. This will
-require improving at least two dimensions:
+We have two primary goals for 2022:
 
--   Increase the investment by existing individuals and organizations.
--   Increase the breadth of different individuals and organizations investing in
-    Carbon.
+-   Shift the experiment to being public.
+-   Reach the point where the core language design is substantially complete.
 
-We expect to make progress on this objective in 2021 primarily by making
-Carbon's design more concrete and with a more specific and easily understood
-value proposition. As a result, our key results are primarily around specific
-artifacts that we think will help support the scaling up of Carbon development
-efforts.
+### Completing the language design
 
-We also need to identify key missing participants and onboard them
-throughout 2021.
+By the end of 2022, the core Carbon language design should be substantially
+complete, including designs for expressions and statements, classes, generics
+and templates, core built-in types and interfaces such as integers and pointers,
+and interoperability with C++. The design choices made to reach this point are
+expected to be experimental, and many of them may need revisiting before we
+reach 1.0, but the broad shape of the language should be clear at this point,
+and it should be possible to write non-trivial Carbon programs.
 
-## Key results in 2021
+An initial rough framework for the core standard library functionality should be
+provided, as necessary to support the core language components. A largely
+complete implementation of the core language design should be available in
+executable semantics. The toolchain should be able to parse the core language
+design, with some support for name lookup and type-checking.
+
+We should have begun writing non-trivial portions of the standard library, such
+as common higher-level data structures and algorithms.
+
+### Going public
+
+At some point in 2022 we should shift the experiment to be public. This will
+allow us to significantly expand both those directly involved and contributing
+to Carbon but also those able to evaluate and give us feedback.
+
+We don't expect Carbon to shift away from an experiment until after it becomes
+public and after we have been able to collect and incorporate a reasonable
+amount of feedback from the broader industry and community. This feedback will
+be central in determining whether Carbon should continue past the experimental
+stage.
+
+## Key results in 2022
 
 There are several milestones that we believe are on the critical path to
 successfully achieving our main goal for the year, and point to concrete areas
 of focus for the project.
 
-### Broaden core team representation so no organization is >50%
+### Broaden participation so no organization is >50%
 
-Our goal is that no single organization makes up >50% of the core team to ensure
-that we are including as broad and representative a set of perspectives in the
-evolution of Carbon as possible.
+Our goal is that no single organization makes up >50% of participation in the
+Carbon project, to ensure that we are including as broad and representative a
+set of perspectives in the evolution of Carbon as possible.
+
+As a proxy for the amount of participation, we will count the number of active
+participants from each organization in 2022, with the aim that each organization
+is represented by less than 50% of all active participatnts.
+
+There are many ways in which someone could be an active participant, and when
+the leads come to reflect on this at the end of the year, we expect this to be a
+judgment call. We will consider at least the following when measuring our
+success on this objective:
+
+-   Pull requests authored and reviewed, including proposals, code changes, and
+    documentation changes.
+-   Contribution to discussions, including Discord, teleconferences, and GitHub
+    issues.
 
 ### Example ports of C++ libraries to Carbon (100% of [woff2](https://github.com/google/woff2), 99% of [RE2](https://github.com/google/re2))
 
@@ -85,8 +119,8 @@ overarching value proposition.
 #### Language design covers the syntax and semantics of the example port code.
 
 We should have a clear understanding of the syntax and semantics used by these
-example ports. While this should include accepted proposals, it doesn't
-necessarily require either formal specification or implementation.
+example ports. We should be able to demonstrate that self-contained portions of
+the ported code work correctly using the executable semantics implementation.
 
 ### Demo implementation of core features with working examples
 
@@ -133,40 +167,16 @@ ensure the language and implementation both support use cases like formatting.
 
 This should include both a human readable rendering of the formal semantics as
 well as an execution environment to run test cases through those semantics. The
-core features which should be covered by these semantics are:
+implementation should cover enough of the core language that example code, such
+as the above ports of woff2 and RE2 and the Carbon standard library, can be
+verified with the executable semantics implementation.
 
--   User-defined types, functions, namespaces, packages, and importing.
--   Basic generic functions and types using interfaces.
--   Sum types sufficient for optional-types to model nullable pointers.
-
-This is intentionally a subset of the features covered by the demo
-implementation. The intent is to reflect that _completing_ coverage of the
-features in the specification is a slightly lower priority, and instead we
-should rapidly spike out as complete of a demo as possible and come back to the
-semantics if possible.
-
-## Beyond 2021
+## Beyond 2022
 
 Longer term goals are hard to pin down and always subject to change, but we want
 to give an idea of what kinds of things are expected at a high level further out
-in order to illustrate how the goals and priorities we have in 2021 feed into
+in order to illustrate how the goals and priorities we have in 2022 feed into
 subsequent years.
-
-### Potential 2022 goals: finish 0.1 language, make it public
-
-We expect that at some point in 2022 we will need to shift the experiment to be
-public. This will allow us to significantly expand both those directly involved
-and contributing to Carbon but also those able to evaluate and give us feedback.
-
-We don't expect Carbon to shift away from an experiment until after it becomes
-public and after we have been able to collect and incorporate a reasonable
-amount of feedback from the broader industry and community.
-
-We'll also need to start broadening our scope:
-
--   Expand the standard library to at least cover everything needed for self
-    hosting.
--   Develop initial C++ to Carbon migration tooling.
 
 ### Potential 2023 goals: finish 0.2 language, stop experimenting
 
@@ -188,6 +198,8 @@ Some concrete goals that might show up in this time frame:
 -   Migration tooling sufficient to use with real-world libraries and systems.
     This might be used to help with self-hosting Carbon, as well as by initial
     early adopters evaluating Carbon.
+-   Create a foundation or similar organization to manage the Carbon project,
+    separate from any corporate entities that fund work on Carbon.
 
 ### Potential 2024-2025 goals: _ship_ 1.0 language & organization
 
