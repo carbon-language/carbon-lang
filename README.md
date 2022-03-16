@@ -44,8 +44,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   Batteries-included approach: compiler, libraries, docs, tools, package
     manager, and more
 
-<hr>
-
 ## Carbon goals
 
 We believe Carbon must support:
