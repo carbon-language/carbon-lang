@@ -32,9 +32,6 @@ class [[nodiscard]] Error {
   auto message() const -> const std::string& { return message_; }
 
  private:
-  // The success state constructor.
-  Error() = default;
-
   // The error message.
   std::string message_;
 };
