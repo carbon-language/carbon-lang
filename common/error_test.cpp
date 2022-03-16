@@ -30,14 +30,6 @@ TEST(ErrorTest, ErrorOr) {
 
 TEST(ErrorTest, ErrorOrValue) { EXPECT_TRUE(ErrorOr<int>(0).ok()); }
 
-TEST(ErrorTest, ErrorOrUnused) {
-  ASSERT_DEATH({ ErrorOr<int> err(Error("test")); }, "CHECK failure at");
-}
-
-TEST(ErrorTest, ErrorOrUnusedVal) {
-  ASSERT_DEATH({ ErrorOr<int> err(0); }, "CHECK failure at");
-}
-
 auto IndirectErrorOrTest() -> ErrorOr<int> { return Error("test"); }
 
 TEST(ErrorTest, IndirectErrorOr) { EXPECT_FALSE(IndirectErrorOrTest().ok()); }
