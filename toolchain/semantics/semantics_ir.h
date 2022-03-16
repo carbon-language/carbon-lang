@@ -15,7 +15,7 @@ namespace Carbon {
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
-  // Provides a link back to an entity in a name scope.
+  // Provides a link back to a semantic node in a name scope.
   class Token {
    public:
     Token() : Token(Kind::Invalid, -1) {}

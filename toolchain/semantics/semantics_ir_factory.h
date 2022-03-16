@@ -16,15 +16,14 @@ namespace Carbon {
 // The main semantic analysis entry.
 class SemanticsIRFactory {
  public:
-  // Runs semantic analysis on a ParseTree in order to generate the resulting
-  // Semantics.
+  // Builds the SemanticsIR without doing any substantial semantic analysis.
   static auto Build(const ParseTree& parse_tree) -> SemanticsIR;
 
  private:
   explicit SemanticsIRFactory(const ParseTree& parse_tree)
       : semantics_(parse_tree) {}
 
-  // Processes the roots of the ParseTree into the Semantics, transitively
+  // Processes the roots of the ParseTree into semantics_, transitively
   // handling children.
   void ProcessRoots();
 
