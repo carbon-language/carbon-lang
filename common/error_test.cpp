@@ -11,24 +11,20 @@ namespace {
 
 TEST(ErrorTest, Error) {
   Error err("test");
-  EXPECT_FALSE(err.ok());
   EXPECT_EQ(err.message(), "test");
 }
 
-TEST(ErrorTest, Success) { EXPECT_TRUE(Error::Success().ok()); }
-
-TEST(ErrorTest, ErrorUnused) {
-  ASSERT_DEATH({ Error err("test"); }, "CHECK failure at");
+TEST(ErrorTest, ErrorEmptyString) {
+  ASSERT_DEATH({ Error err(""); }, "CHECK failure at");
 }
 
 auto IndirectError() -> Error { return Error("test"); }
 
-TEST(ErrorTest, IndirectError) { EXPECT_FALSE(IndirectError().ok()); }
+TEST(ErrorTest, IndirectError) { EXPECT_EQ(IndirectError().message(), "test"); }
 
 TEST(ErrorTest, ErrorOr) {
   ErrorOr<int> err(Error("test"));
   EXPECT_FALSE(err.ok());
-  EXPECT_FALSE(err.error().ok());
   EXPECT_EQ(err.error().message(), "test");
 }
 
@@ -42,13 +38,18 @@ TEST(ErrorTest, ErrorOrUnusedVal) {
   ASSERT_DEATH({ ErrorOr<int> err(0); }, "CHECK failure at");
 }
 
-TEST(ErrorTest, ErrorOrSuccess) {
-  ASSERT_DEATH({ ErrorOr<int> err(Error::Success()); }, "CHECK failure at");
-}
-
 auto IndirectErrorOrTest() -> ErrorOr<int> { return Error("test"); }
 
 TEST(ErrorTest, IndirectErrorOr) { EXPECT_FALSE(IndirectErrorOrTest().ok()); }
+
+struct Val {
+  int val;
+};
+
+TEST(ErrorTest, ErrorOrArrowOp) {
+  ErrorOr<Val> err({1});
+  EXPECT_EQ(err->val, 1);
+}
 
 }  // namespace
 }  // namespace Carbon::Testing
