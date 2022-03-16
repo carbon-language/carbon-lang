@@ -269,6 +269,7 @@ class ParseTree::Node {
   friend PostorderIterator;
   friend SiblingIterator;
 
+  // Value for uninitialized nodes.
   static constexpr int InvalidValue = -1;
 
   // Constructs a node with a specific index into the parse tree's postorder
