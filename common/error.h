@@ -41,8 +41,7 @@ class [[nodiscard]] Error {
 };
 
 // Holds a value of type `T`, or an Error explaining why the value is
-// unavailable. The contents must be examined, or the application will
-// CHECK-fail on destruction.
+// unavailable.
 template <typename T>
 class ErrorOr {
  public:
@@ -57,19 +56,10 @@ class ErrorOr {
   ErrorOr(T val) : val_(std::move(val)) {}
 
   // Moves held state.
-  ErrorOr(ErrorOr&& other) noexcept
-      : used_(other.used_), val_(std::move(other.val_)) {
-    // Prevent the other from checking on destruction.
-    other.used_ = true;
-  }
-
-  ~ErrorOr() { CHECK(used_); }
+  ErrorOr(ErrorOr&& other) noexcept : val_(std::move(other.val_)) {}
 
   // Returns true for success.
-  auto ok() const -> bool {
-    used_ = true;
-    return std::holds_alternative<T>(val_);
-  }
+  auto ok() const -> bool { return std::holds_alternative<T>(val_); }
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
@@ -107,10 +97,6 @@ class ErrorOr {
   }
 
  private:
-  // Used to verify that the held state is examined, preventing dropping
-  // values.
-  mutable bool used_ = false;
-
   // Either an error message or
   std::variant<Error, T> val_;
 };
