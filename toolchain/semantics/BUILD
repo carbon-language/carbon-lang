@@ -5,19 +5,45 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "semantics",
-    srcs = ["semantics.cpp"],
-    hdrs = ["semantics.h"],
+    name = "function",
+    hdrs = ["function.h"],
     deps = ["//toolchain/parser:parse_tree"],
 )
 
-cc_test(
-    name = "semantics_test",
-    size = "small",
-    srcs = ["semantics_test.cpp"],
+cc_library(
+    name = "semantics_ir",
+    srcs = ["semantics_ir.cpp"],
+    hdrs = ["semantics_ir.h"],
     deps = [
-        ":semantics",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        ":function",
+        "//common:check",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "semantics_ir_factory",
+    srcs = ["semantics_ir_factory.cpp"],
+    hdrs = ["semantics_ir_factory.h"],
+    deps = [
+        ":semantics_ir",
+        "//common:check",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_node_kind",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "semantics_ir_factory_test",
+    size = "small",
+    srcs = ["semantics_ir_factory_test.cpp"],
+    deps = [
+        ":semantics_ir_factory",
+        "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
