@@ -5,7 +5,6 @@
 #ifndef COMMON_ERROR_H_
 #define COMMON_ERROR_H_
 
-#include <optional>
 #include <string>
 
 #include "common/check.h"
@@ -36,7 +35,7 @@ class [[nodiscard]] Error {
   // The success state constructor.
   Error() = default;
 
-  // The error message. Set to nullopt for success.
+  // The error message.
   std::string message_;
 };
 
