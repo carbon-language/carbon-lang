@@ -259,18 +259,25 @@ class ParseTree::Node {
   // Prints the node index.
   auto Print(llvm::raw_ostream& output) const -> void;
 
+  // Returns true if the node is valid; in other words, it was not default
+  // initialized.
+  auto is_valid() -> bool { return index_ != InvalidValue; }
+
  private:
   friend ParseTree;
   friend Parser;
   friend PostorderIterator;
   friend SiblingIterator;
 
+  // Value for uninitialized nodes.
+  static constexpr int InvalidValue = -1;
+
   // Constructs a node with a specific index into the parse tree's postorder
   // sequence of node implementations.
   explicit Node(int index) : index_(index) {}
 
   // The index of this node's implementation in the postorder sequence.
-  int32_t index_;
+  int32_t index_ = InvalidValue;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
