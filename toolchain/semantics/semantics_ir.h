@@ -16,9 +16,9 @@ namespace Carbon {
 class SemanticsIR {
  public:
   // Provides a link back to a semantic node in a name scope.
-  class Token {
+  class Node {
    public:
-    Token() : Token(Kind::Invalid, -1) {}
+    Node() : Node(Kind::Invalid, -1) {}
 
    private:
     friend class SemanticsIR;
@@ -30,7 +30,7 @@ class SemanticsIR {
       Function,
     };
 
-    Token(Kind kind, int32_t index) : kind_(kind), index_(index) {
+    Node(Kind kind, int32_t index) : kind_(kind), index_(index) {
       // TODO: kind_ and index_ are currently unused, this suppresses the
       // warning.
       kind_ = kind;
@@ -45,11 +45,11 @@ class SemanticsIR {
 
   struct Block {
    public:
-    void Add(llvm::StringRef name, Token named_entity);
+    void Add(llvm::StringRef name, Node named_entity);
 
    private:
-    llvm::SmallVector<Token> ordering_;
-    llvm::StringMap<Token> name_lookup_;
+    llvm::SmallVector<Node> ordering_;
+    llvm::StringMap<Node> name_lookup_;
   };
 
  private:

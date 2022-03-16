@@ -144,9 +144,6 @@ class ParseTree {
   class Parser;
   friend Parser;
 
-  // Allow the location translator access for tokens_.
-  friend class ParseTreeNodeLocationTranslator;
-
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
@@ -262,10 +259,6 @@ class ParseTree::Node {
   // Prints the node index.
   auto Print(llvm::raw_ostream& output) const -> void;
 
-  // Returns true if the node is valid; in other words, it was not default
-  // initialized.
-  auto is_valid() -> bool { return index_ != -1; }
-
  private:
   friend ParseTree;
   friend Parser;
@@ -277,7 +270,7 @@ class ParseTree::Node {
   explicit Node(int index) : index_(index) {}
 
   // The index of this node's implementation in the postorder sequence.
-  int32_t index_ = -1;
+  int32_t index_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
