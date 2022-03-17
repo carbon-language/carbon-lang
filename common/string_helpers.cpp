@@ -27,11 +27,6 @@ static auto FromHex(char c) -> std::optional<char> {
   return std::nullopt;
 }
 
-// Creates an error instance with the specified `message`.
-static auto MakeError(llvm::Twine message) -> llvm::Expected<std::string> {
-  return llvm::createStringError(llvm::inconvertibleErrorCode(), message);
-}
-
 auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
     -> std::optional<std::string> {
   std::string ret;
@@ -112,23 +107,22 @@ auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
   return ret;
 }
 
-auto ParseBlockStringLiteral(llvm::StringRef source)
-    -> llvm::Expected<std::string> {
+auto ParseBlockStringLiteral(llvm::StringRef source) -> ErrorOr<std::string> {
   llvm::SmallVector<llvm::StringRef> lines;
   source.split(lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/true);
   if (lines.size() < 2) {
-    return MakeError("Too few lines");
+    return Error("Too few lines");
   }
 
   llvm::StringRef first = lines[0];
   if (!first.consume_front(TripleQuotes)) {
-    return MakeError("Should start with triple quotes: " + first);
+    return Error("Should start with triple quotes: " + first);
   }
   first = first.rtrim(HorizontalWhitespaceChars);
   // Remaining chars, if any, are a file type indicator.
   if (first.find_first_of("\"#") != llvm::StringRef::npos ||
       first.find_first_of(HorizontalWhitespaceChars) != llvm::StringRef::npos) {
-    return MakeError("Invalid characters in file type indicator: " + first);
+    return Error("Invalid characters in file type indicator: " + first);
   }
 
   llvm::StringRef last = lines[lines.size() - 1];
@@ -136,7 +130,7 @@ auto ParseBlockStringLiteral(llvm::StringRef source)
   last = last.ltrim(HorizontalWhitespaceChars);
   const size_t indent = last_length - last.size();
   if (last != TripleQuotes) {
-    return MakeError("Should end with triple quotes: " + last);
+    return Error("Should end with triple quotes: " + last);
   }
 
   std::string parsed;
@@ -149,8 +143,8 @@ auto ParseBlockStringLiteral(llvm::StringRef source)
       line = "";
     } else {
       if (first_non_ws < indent) {
-        return MakeError("Wrong indent for line: " + line + ", expected " +
-                         llvm::Twine(indent));
+        return Error("Wrong indent for line: " + line + ", expected " +
+                     llvm::Twine(indent));
       }
       line = line.drop_front(indent).rtrim(HorizontalWhitespaceChars);
     }
@@ -159,7 +153,7 @@ auto ParseBlockStringLiteral(llvm::StringRef source)
     std::optional<std::string> unescaped = UnescapeStringLiteral(
         (line + "\n").toStringRef(buffer), /*is_block_string=*/true);
     if (!unescaped.has_value()) {
-      return MakeError("Invalid escaping in " + line);
+      return Error("Invalid escaping in " + line);
     }
     // A \<newline> string collapses into nothing.
     if (!unescaped->empty()) {
