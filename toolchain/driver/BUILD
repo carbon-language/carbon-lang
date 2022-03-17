@@ -13,6 +13,7 @@ cc_library(
     textual_hdrs = ["flags.def"],
     deps = [
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
@@ -27,6 +28,7 @@ cc_test(
     deps = [
         ":driver",
         "//toolchain/common:yaml_test_helpers",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
