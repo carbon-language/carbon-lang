@@ -96,6 +96,9 @@ class DiagnosticConsumer {
 
   // Handle a diagnostic.
   virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
+
+  // Flushes any buffered input.
+  virtual auto Flush() -> void {}
 };
 
 // An interface that can translate some representation of a location into a
