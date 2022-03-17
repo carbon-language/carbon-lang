@@ -4362,7 +4362,7 @@ these rules:
     or defined afterwards. Note that the class itself is incomplete in the scope
     of the class definition, but member function bodies defined inline are
     processed
-    <!-- [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions). -->
+    [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
 -   For [coherence](goals.md#coherence), we require that any impl that matches
     an [impl lookup](#impl-lookup) query in the same file, must be declared
     before the query. This can be done with a definition or a forward
