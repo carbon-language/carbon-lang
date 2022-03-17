@@ -43,5 +43,11 @@ TEST(ErrorTest, ErrorOrArrowOp) {
   EXPECT_EQ(err->val, 1);
 }
 
+auto IndirectErrorOrSuccessTest() -> ErrorOr<Success> { return Success(); }
+
+TEST(ErrorTest, IndirectErrorOrSuccess) {
+  EXPECT_TRUE(IndirectErrorOrSuccessTest().ok());
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
