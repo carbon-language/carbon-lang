@@ -31,7 +31,6 @@ class [[nodiscard]] Error {
   void Print(llvm::raw_ostream& out) const { out << message(); }
 
   // Returns the error message.
-  // REQUIRES: `ok()` is false.
   auto message() const -> const std::string& { return message_; }
 
  private:
