@@ -73,20 +73,20 @@ struct DiagnosticLocation {
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
   // The diagnostic's kind.
-  const DiagnosticKind kind;
+  DiagnosticKind kind;
 
   // The diagnostic's level.
-  const DiagnosticLevel level;
+  DiagnosticLevel level;
 
   // The calculated location of the diagnostic.
-  const DiagnosticLocation location;
+  DiagnosticLocation location;
 
   // A std::tuple containing the diagnostic's format plus any format arguments.
   // These will be passed to llvm::formatv.
-  const std::any format_args;
+  std::any format_args;
 
   // Returns the formatted string.
-  const std::function<std::string(const Diagnostic&)> format_fn;
+  std::function<std::string(const Diagnostic&)> format_fn;
 };
 
 // Receives diagnostics as they are emitted.
