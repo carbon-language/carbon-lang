@@ -13,8 +13,9 @@
 
 namespace Carbon {
 
-// Success values should be represented as either the presence of a value in
-// ErrorOr, using ErrorOr<Success> if no value is being returned.
+// Success values should be represented as the presence of a value in ErrorOr,
+// using `ErrorOr<Success>` and `return Success();` if no value needs to be
+// returned.
 struct Success {};
 
 // Tracks an error message.
