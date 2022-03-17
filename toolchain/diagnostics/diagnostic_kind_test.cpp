@@ -7,11 +7,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "llvm/Support/raw_ostream.h"
+
 namespace Carbon::Testing {
 namespace {
 
 TEST(DiagnosticKindTest, Name) {
-  EXPECT_EQ(DiagnosticKind::TestDiagnostic().name(), "TestDiagnostic");
+  std::string buffer;
+  llvm::raw_string_ostream(buffer) << DiagnosticKind::TestDiagnostic;
+  EXPECT_EQ(buffer, "TestDiagnostic");
 }
 
 }  // namespace

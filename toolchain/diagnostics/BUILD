@@ -45,6 +45,7 @@ cc_test(
     deps = [
         ":diagnostic_kind",
         "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
     ],
 )
 

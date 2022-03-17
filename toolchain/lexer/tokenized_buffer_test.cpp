@@ -941,7 +941,7 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
               HandleDiagnostic(IsDiagnostic(
-                  DiagnosticKind::TooManyDigits(), DiagnosticLevel::Error, 1, 2,
+                  DiagnosticKind::TooManyDigits, DiagnosticLevel::Error, 1, 2,
                   HasSubstr(llvm::formatv(" {0} ", Count)))));
   auto buffer = Lex(code, consumer);
   EXPECT_TRUE(buffer.has_errors());
@@ -965,24 +965,23 @@ TEST_F(LexerTest, DiagnosticTrailingComment) {
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TrailingComment(),
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TrailingComment,
                                             DiagnosticLevel::Error, 3, 19, _)));
   Lex(testcase, consumer);
 }
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(IsDiagnostic(
-                  DiagnosticKind::NoWhitespaceAfterCommentIntroducer(),
-                  DiagnosticLevel::Error, 1, 3, _)));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::NoWhitespaceAfterCommentIntroducer,
+                            DiagnosticLevel::Error, 1, 3, _)));
   Lex("//no space after comment", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
-                            DiagnosticKind::UnknownEscapeSequence(),
+                            DiagnosticKind::UnknownEscapeSequence,
                             DiagnosticLevel::Error, 1, 8, HasSubstr("`b`"))));
   Lex(R"("hello\bworld")", consumer);
 }
@@ -990,7 +989,7 @@ TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
-                            DiagnosticKind::HexadecimalEscapeMissingDigits(),
+                            DiagnosticKind::HexadecimalEscapeMissingDigits,
                             DiagnosticLevel::Error, 1, 9, _)));
   Lex(R"("hello\xabworld")", consumer);
 }
@@ -998,24 +997,24 @@ TEST_F(LexerTest, DiagnosticBadHex) {
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
-                            DiagnosticKind::InvalidDigit(),
+                            DiagnosticKind::InvalidDigit,
                             DiagnosticLevel::Error, 1, 6, HasSubstr("'a'"))));
   Lex("0x123abc", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::UnterminatedString(),
-                                         DiagnosticLevel::Error, 1, 1, _)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::UnterminatedString,
+                                            DiagnosticLevel::Error, 1, 1, _)));
   Lex(R"(#" ")", consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
-                            DiagnosticKind::UnrecognizedCharacters(),
-                            DiagnosticLevel::Error, 1, 1, _)));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            IsDiagnostic(DiagnosticKind::UnrecognizedCharacters,
+                                         DiagnosticLevel::Error, 1, 1, _)));
   Lex("\b", consumer);
 }
 

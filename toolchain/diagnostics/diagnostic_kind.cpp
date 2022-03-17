@@ -6,12 +6,14 @@
 
 namespace Carbon {
 
-auto DiagnosticKind::name() const -> llvm::StringRef {
+auto operator<<(llvm::raw_ostream& out, DiagnosticKind kind)
+    -> llvm::raw_ostream& {
   static constexpr llvm::StringLiteral Names[] = {
 #define DIAGNOSTIC_KIND(DiagnosticName) #DiagnosticName,
 #include "toolchain/diagnostics/diagnostic_registry.def"
   };
-  return Names[static_cast<int>(kind_value_)];
+  out << Names[static_cast<int>(kind)];
+  return out;
 }
 
 }  // namespace Carbon

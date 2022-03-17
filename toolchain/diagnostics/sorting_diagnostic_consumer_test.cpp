@@ -40,19 +40,19 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
 
   InSequence s;
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic(),
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 1, 1, "M2")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic(),
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 1, 3, "M3")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic(),
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 2, 1, "M1")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic(),
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 3, 2, "M5")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic(),
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                          DiagnosticLevel::Error, 3, 4, "M4")));
   sorting_consumer.Flush();
 }

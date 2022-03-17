@@ -34,9 +34,9 @@ enum class DiagnosticLevel : int8_t {
 //              llvm::StringRef, llvm::StringRef);
 //
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                        \
-  static constexpr auto DiagnosticName =                                      \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName(), \
+#define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                      \
+  static constexpr auto DiagnosticName =                                    \
+      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
                                             DiagnosticLevel::Level, Format);
 
 // Provides a definition of a diagnostic with a custom formatter. The custom
@@ -50,11 +50,11 @@ enum class DiagnosticLevel : int8_t {
 //                              radix == 16 ? "hexadecimal" : "decimal");
 //       },
 //       int);
-#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,    \
-                                  ...)                                        \
-  static constexpr auto DiagnosticName =                                      \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName(), \
-                                            DiagnosticLevel::Level, Format,   \
+#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,  \
+                                  ...)                                      \
+  static constexpr auto DiagnosticName =                                    \
+      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
+                                            DiagnosticLevel::Level, Format, \
                                             FormatFn);
 
 struct DiagnosticLocation {
