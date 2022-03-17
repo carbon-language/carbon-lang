@@ -189,7 +189,7 @@ the `impl` definition but have defaults. Whether the implementation is defined
 as [internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
 for a `Song` value `s` by a writing function call
-[using the compound member access syntax with the qualified name](terminology.md#compound-member-access-using-qualified-names),
+[using a qualified member access expression](terminology.md#qualified-member-access-expression),
 like `s.(ConvertibleToString.ToString)()`.
 
 If `Song` doesn't implement an interface or we would like to use a different
@@ -501,11 +501,12 @@ unlike Swift and Rust.
 ### Qualified member names and compound member access
 
 Given a value of type `Point3` and an interface `Vector` implemented for that
-type, you can access the methods from that interface using the member's
-_qualified name_ using
-[the compound member access syntax](terminology.md#simple-member-access),
+type, you can access the methods from that interface using a
+[qualified member access expression](terminology.md#qualified-member-access-expression)
 whether or not the implementation is done externally with an `external impl`
-declaration:
+declaration. The qualified member access expression writes the member's
+_qualified name_ in the parentheses of the
+[compound member access syntax](/docs/design/expressions/member_access.md):
 
 ```
 var p1: Point3 = {.x = 1.0, .y = 2.0};
@@ -1043,8 +1044,8 @@ constraint {
 }
 ```
 
-Conflicts can be resolved at the call site using
-[the compound member access syntax using qualified names](#qualified-member-names-and-compound-member-access),
+Conflicts can be resolved at the call site using a
+[qualified member access expression](#qualified-member-names-and-compound-member-access),
 or by defining a named constraint explicitly and renaming the methods:
 
 ```
@@ -1569,7 +1570,7 @@ adapter SongByTitle for Song {
 }
 ```
 
-or using qualified names with the compound member access syntax:
+or using a qualified member access expression:
 
 ```
 adapter SongByTitle for Song {
@@ -1859,9 +1860,8 @@ external impl Window as DrawingContext { ... }
 
 An adapter can make that much more convenient by making a compatible type where
 the interface is [implemented internally](terminology.md#internal-impl). This
-avoids having to
-[qualify](terminology.md#compound-member-access-using-qualified-names) each call
-to methods in the interface.
+avoids having to [qualify](terminology.md#qualified-member-access-expression)
+each call to methods in the interface.
 
 ```
 adapter DrawInWindow for Window {
