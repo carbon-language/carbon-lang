@@ -61,7 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
     -   [Implied constraints](#implied-constraints)
         -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
-    -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
+    -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
         -   [`observe` declarations](#observe-declarations)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
@@ -2943,10 +2943,10 @@ fn NumDistinct[T:! Type where HashSet(.Self) is Type]
 This has the same advantages over repeating the constraints on `HashSet`
 arguments in the type of `T` as the general implied constraints above.
 
-### Open question: referencing names in the interface being defined
+### Referencing names in the interface being defined
 
-Should the constraint in a `where` clause be required to only reference earlier
-names from this scope, as in this example?
+The constraint in a `where` clause is required to only reference earlier names
+from this scope, as in this example:
 
 ```
 interface Graph {
@@ -2954,22 +2954,6 @@ interface Graph {
   let V: Vert where .E == E and .Self == E.V;
 }
 ```
-
-The downside is that if you could reference later names, there is a more
-pleasingly symmetric formulation of those same constraints:
-
-```
-interface Graph {
-  let E: Edge where .V == V;
-  let V: Vert where .E == E;
-}
-```
-
-**TODO:** Revisit this question once issue
-[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
-and proposal
-[#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
-are resolved.
 
 ### Manual type equality
 
@@ -4370,11 +4354,8 @@ these rules:
     of the class definition. It may also be declared before the class definition
     or defined afterwards. Note that the class itself is incomplete in the scope
     of the class definition, but member function bodies defined inline are
-    processed as if they appeared immediately after the end of the outermost
-    enclosing class, see
-    [question-for-leads issue #472](https://github.com/carbon-language/carbon-lang/issues/472)
-    and
-    [proposal #875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875).
+    processed
+    <!-- [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions). -->
 -   For [coherence](goals.md#coherence), we require that any impl that matches
     an [impl lookup](#impl-lookup) query in the same file, must be declared
     before the query. This can be done with a definition or a forward
