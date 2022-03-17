@@ -185,7 +185,7 @@ class DiagnosticEmitter {
   void Emit(
       LocationT location,
       const Internal::DiagnosticBase<Args...>& diagnostic_base,
-      // Disable type deduction based on `args`; `diagnostic` still applies.
+      // Disable type deduction based on `args`; `diagnostic_base` is used.
       typename std::common_type_t<Args>... args) {
     consumer_->HandleDiagnostic({
         .kind = diagnostic_base.Kind,
