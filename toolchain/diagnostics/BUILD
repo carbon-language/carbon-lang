@@ -24,6 +24,7 @@ cc_library(
     hdrs = ["sorting_diagnostic_consumer.h"],
     deps = [
         ":diagnostic_emitter",
+        "//common:check",
         "@llvm-project//llvm:Support",
     ],
 )

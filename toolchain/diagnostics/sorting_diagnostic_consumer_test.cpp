@@ -41,11 +41,12 @@ struct FakeDiagnosticLocationTranslator
   }
 };
 
+// Produces a location for the given line and column.
 static auto MakeLoc(int line, int col) -> Diagnostic::Location {
   return {.file_name = "test", .line_number = line, .column_number = col};
 }
 
-TEST(SortedDiagnosticEmitterTest, EmitErrors) {
+TEST(SortedDiagnosticEmitterTest, SortErrors) {
   FakeDiagnosticLocationTranslator translator;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
@@ -78,8 +79,7 @@ TEST(SortedDiagnosticEmitterTest, EmitErrors) {
                             AllOf(DiagnosticLevel(Diagnostic::Error),
                                   DiagnosticAt(3, 4), DiagnosticMessage("M4"),
                                   DiagnosticShortName("fake-diagnostic"))));
-
-  sorting_consumer.SortAndFlush();
+  sorting_consumer.Flush();
 }
 
 }  // namespace

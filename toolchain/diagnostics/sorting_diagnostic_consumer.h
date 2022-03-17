@@ -5,6 +5,7 @@
 #ifndef TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
 #define TOOLCHAIN_DIAGNOSTICS_SORTING_DIAGNOSTIC_CONSUMER_H_
 
+#include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -16,12 +17,15 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   explicit SortingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
+  ~SortingDiagnosticConsumer() override { Flush(); }
+
+  // Buffers the diagnostic.
   auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
     diagnostics_.push_back(diagnostic);
   }
 
   // Sorts and flushes buffered diagnostics.
-  auto SortAndFlush() {
+  void Flush() override {
     llvm::sort(diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
       if (lhs.location.line_number < rhs.location.line_number) {
         return true;
