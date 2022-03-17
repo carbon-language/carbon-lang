@@ -36,47 +36,47 @@ void ActionStack::Start(std::unique_ptr<Action> action) {
   todo_.Push(std::move(action));
 }
 
-void ActionStack::Initialize(NamedEntityView named_entity,
+void ActionStack::Initialize(ValueNodeView value_node,
                              Nonnull<const Value*> value) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
-      action->scope()->Initialize(named_entity, value);
+      action->scope()->Initialize(value_node, value);
       return;
     }
   }
-  globals_->Initialize(named_entity, value);
+  globals_->Initialize(value_node, value);
 }
 
-auto ActionStack::ValueOfName(NamedEntityView named_entity,
+auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
   if (std::optional<Nonnull<const Value*>> constant_value =
-          named_entity.constant_value();
+          value_node.constant_value();
       constant_value.has_value()) {
     return *constant_value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {
-    // TODO: have static name resolution identify the scope of named_entity
+    // TODO: have static name resolution identify the scope of value_node
     // as an AstNode, and then perform lookup _only_ on the Action associated
     // with that node. This will help keep unwanted dynamic-scoping behavior
     // from sneaking in.
     if (action->scope().has_value()) {
       std::optional<Nonnull<const Value*>> result =
-          action->scope()->Get(named_entity);
+          action->scope()->Get(value_node);
       if (result.has_value()) {
         return *result;
       }
     }
   }
   if (globals_.has_value()) {
-    std::optional<Nonnull<const Value*>> result = globals_->Get(named_entity);
+    std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
     if (result.has_value()) {
       return *result;
     }
   }
-  // TODO: Move these errors to compile time and explain them more clearly.
+  // TODO: Move these errors to name resolution and explain them more clearly.
   FATAL_RUNTIME_ERROR(source_loc)
-      << "could not find `" << named_entity.name() << "`";
+      << "could not find `" << value_node.base() << "`";
 }
 
 void ActionStack::MergeScope(RuntimeScope scope) {

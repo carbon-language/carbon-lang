@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_ANALYSIS_PRESBURGERSET_H
-#define MLIR_ANALYSIS_PRESBURGERSET_H
+#ifndef MLIR_ANALYSIS_PRESBURGER_PRESBURGERSET_H
+#define MLIR_ANALYSIS_PRESBURGER_PRESBURGERSET_H
 
 #include "mlir/Analysis/Presburger/IntegerPolyhedron.h"
 
@@ -28,18 +28,12 @@ namespace mlir {
 /// Note that there are no invariants guaranteed on the list of Poly other than
 /// that they are all in the same space, i.e., they all have the same number of
 /// dimensions and symbols. For example, the Polys may overlap each other.
-class PresburgerSet {
+class PresburgerSet : public PresburgerSpace {
 public:
   explicit PresburgerSet(const IntegerPolyhedron &poly);
 
   /// Return the number of Polys in the union.
   unsigned getNumPolys() const;
-
-  /// Return the number of real dimensions.
-  unsigned getNumDims() const;
-
-  /// Return the number of symbolic dimensions.
-  unsigned getNumSyms() const;
 
   /// Return a reference to the list of IntegerPolyhedrons.
   ArrayRef<IntegerPolyhedron> getAllIntegerPolyhedron() const;
@@ -77,14 +71,19 @@ public:
   /// divisions.
   PresburgerSet subtract(const PresburgerSet &set) const;
 
+  /// Return true if this set is a subset of the given set, and false otherwise.
+  bool isSubsetOf(const PresburgerSet &set) const;
+
   /// Return true if this set is equal to the given set, and false otherwise.
   /// All local variables in both sets must correspond to floor divisions.
   bool isEqual(const PresburgerSet &set) const;
 
   /// Return a universe set of the specified type that contains all points.
-  static PresburgerSet getUniverse(unsigned nDim = 0, unsigned nSym = 0);
+  static PresburgerSet getUniverse(unsigned numDims = 0,
+                                   unsigned numSymbols = 0);
   /// Return an empty set of the specified type that contains no points.
-  static PresburgerSet getEmptySet(unsigned nDim = 0, unsigned nSym = 0);
+  static PresburgerSet getEmptySet(unsigned numDims = 0,
+                                   unsigned numSymbols = 0);
 
   /// Return true if all the sets in the union are known to be integer empty
   /// false otherwise.
@@ -94,6 +93,15 @@ public:
   /// any of the Polys in the union are unbounded.
   bool findIntegerSample(SmallVectorImpl<int64_t> &sample);
 
+  /// Compute an overapproximation of the number of integer points in the
+  /// polyhedron. Symbol ids are currently not supported. If the computed
+  /// overapproximation is infinite, an empty optional is returned.
+  ///
+  /// This currently just sums up the overapproximations of the volumes of the
+  /// disjuncts, so the approximation might be far from the true volume in the
+  /// case when there is a lot of overlap between disjuncts.
+  Optional<uint64_t> computeVolume() const;
+
   /// Simplifies the representation of a PresburgerSet.
   ///
   /// In particular, removes all Polys which are subsets of other Polys in the
@@ -102,19 +110,12 @@ public:
 
 private:
   /// Construct an empty PresburgerSet.
-  PresburgerSet(unsigned nDim = 0, unsigned nSym = 0)
-      : nDim(nDim), nSym(nSym) {}
+  PresburgerSet(unsigned numDims = 0, unsigned numSymbols = 0)
+      : PresburgerSpace(numDims, numSymbols) {}
 
   /// Return the set difference poly \ set.
   static PresburgerSet getSetDifference(IntegerPolyhedron poly,
                                         const PresburgerSet &set);
-
-  /// Number of identifiers corresponding to real dimensions.
-  unsigned nDim;
-
-  /// Number of symbolic dimensions, unknown but constant for analysis, as in
-  /// IntegerPolyhedron.
-  unsigned nSym;
 
   /// The list of integerPolyhedrons that this set is the union of.
   SmallVector<IntegerPolyhedron, 2> integerPolyhedrons;
@@ -122,4 +123,4 @@ private:
 
 } // namespace mlir
 
-#endif // MLIR_ANALYSIS_PRESBURGERSET_H
+#endif // MLIR_ANALYSIS_PRESBURGER_PRESBURGERSET_H

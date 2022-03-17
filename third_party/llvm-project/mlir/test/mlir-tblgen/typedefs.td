@@ -34,7 +34,6 @@ include "mlir/IR/OpBase.td"
 
 def Test_Dialect: Dialect {
 // DECL-NOT: TestDialect
-// DEF-NOT: TestDialect
     let name = "TestDialect";
     let cppNamespace = "::test";
 }
@@ -71,8 +70,8 @@ def B_CompoundTypeA : TestType<"CompoundA"> {
 // DECL: static constexpr ::llvm::StringLiteral getMnemonic() {
 // DECL:   return {"cmpnd_a"};
 // DECL: }
-// DECL: static ::mlir::Type parse(::mlir::AsmParser &parser);
-// DECL: void print(::mlir::AsmPrinter &printer) const;
+// DECL: static ::mlir::Type parse(::mlir::AsmParser &odsParser);
+// DECL: void print(::mlir::AsmPrinter &odsPrinter) const;
 // DECL: int getWidthOfSomething() const;
 // DECL: ::test::SimpleTypeA getExampleTdType() const;
 // DECL: SomeCppStruct getExampleCppType() const;
@@ -90,8 +89,8 @@ def C_IndexType : TestType<"Index"> {
 // DECL: static constexpr ::llvm::StringLiteral getMnemonic() {
 // DECL:   return {"index"};
 // DECL: }
-// DECL: static ::mlir::Type parse(::mlir::AsmParser &parser);
-// DECL: void print(::mlir::AsmPrinter &printer) const;
+// DECL: static ::mlir::Type parse(::mlir::AsmParser &odsParser);
+// DECL: void print(::mlir::AsmPrinter &odsPrinter) const;
 }
 
 def D_SingleParameterType : TestType<"SingleParameter"> {

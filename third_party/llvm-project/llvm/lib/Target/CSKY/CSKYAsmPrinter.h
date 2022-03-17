@@ -26,6 +26,7 @@ class LLVM_LIBRARY_VISIBILITY CSKYAsmPrinter : public AsmPrinter {
   /// MachineFunction.
   MachineConstantPool *MCP;
 
+  void expandTLSLA(const MachineInstr *MI);
   void emitCustomConstantPool(const MachineInstr *MI);
 
 public:
@@ -51,6 +52,12 @@ public:
 
   // we emit constant pools customly!
   void emitConstantPool() override{};
+
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       const char *ExtraCode, raw_ostream &OS) override;
+
+  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                             const char *ExtraCode, raw_ostream &OS) override;
 };
 } // end namespace llvm
 

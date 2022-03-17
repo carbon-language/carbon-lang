@@ -577,15 +577,15 @@ bool llvm::attributesPermitTailCall(const Function *F, const Instruction *I,
   bool &ADS = AllowDifferingSizes ? *AllowDifferingSizes : DummyADS;
   ADS = true;
 
-  AttrBuilder CallerAttrs(F->getContext(), F->getAttributes(), AttributeList::ReturnIndex);
-  AttrBuilder CalleeAttrs(F->getContext(), cast<CallInst>(I)->getAttributes(),
-                          AttributeList::ReturnIndex);
+  AttrBuilder CallerAttrs(F->getContext(), F->getAttributes().getRetAttrs());
+  AttrBuilder CalleeAttrs(F->getContext(),
+                          cast<CallInst>(I)->getAttributes().getRetAttrs());
 
   // Following attributes are completely benign as far as calling convention
   // goes, they shouldn't affect whether the call is a tail call.
   for (const auto &Attr : {Attribute::Alignment, Attribute::Dereferenceable,
                            Attribute::DereferenceableOrNull, Attribute::NoAlias,
-                           Attribute::NonNull}) {
+                           Attribute::NonNull, Attribute::NoUndef}) {
     CallerAttrs.removeAttribute(Attr);
     CalleeAttrs.removeAttribute(Attr);
   }

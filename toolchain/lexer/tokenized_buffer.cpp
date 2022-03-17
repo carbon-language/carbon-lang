@@ -11,6 +11,7 @@
 #include <string>
 
 #include "common/check.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -20,6 +21,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lexer/character_set.h"
+#include "toolchain/lexer/lex_helpers.h"
 #include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/lexer/string_literal.h"
 
@@ -55,6 +57,12 @@ struct UnrecognizedCharacters : DiagnosticBase<UnrecognizedCharacters> {
       "syntax-unrecognized-characters";
   static constexpr llvm::StringLiteral Message =
       "Encountered unrecognized characters while parsing.";
+};
+
+struct UnterminatedString : DiagnosticBase<UnterminatedString> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-string-terminator";
+  static constexpr llvm::StringLiteral Message =
+      "String is missing a terminator.";
 };
 
 // TODO: Move Overload and VariantMatch somewhere more central.
@@ -215,7 +223,7 @@ class TokenizedBuffer::Lexer {
     }
 
     int int_column = current_column_;
-    int token_size = literal->Text().size();
+    int token_size = literal->text().size();
     current_column_ += token_size;
     source_text = source_text.drop_front(token_size);
 
@@ -244,7 +252,7 @@ class TokenizedBuffer::Lexer {
           buffer_.literal_int_storage_.push_back(std::move(value.mantissa));
           buffer_.literal_int_storage_.push_back(std::move(value.exponent));
           CHECK(buffer_.GetRealLiteral(token).IsDecimal() ==
-                (value.radix == 10));
+                (value.radix == LexedNumericLiteral::Radix::Decimal));
           return token;
         },
         [&](LexedNumericLiteral::UnrecoverableError) {
@@ -267,7 +275,7 @@ class TokenizedBuffer::Lexer {
 
     Line string_line = current_line_;
     int string_column = current_column_;
-    int literal_size = literal->Text().size();
+    int literal_size = literal->text().size();
     source_text = source_text.drop_front(literal_size);
 
     if (!set_indent_) {
@@ -276,10 +284,10 @@ class TokenizedBuffer::Lexer {
     }
 
     // Update line and column information.
-    if (!literal->IsMultiLine()) {
+    if (!literal->is_multi_line()) {
       current_column_ += literal_size;
     } else {
-      for (char c : literal->Text()) {
+      for (char c : literal->text()) {
         if (c == '\n') {
           HandleNewline();
           // The indentation of all lines in a multi-line string literal is
@@ -292,13 +300,23 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral(),
-                                   .token_line = string_line,
-                                   .column = string_column});
-    buffer_.GetTokenInfo(token).literal_index =
-        buffer_.literal_string_storage_.size();
-    buffer_.literal_string_storage_.push_back(literal->ComputeValue(emitter_));
-    return token;
+    if (literal->is_terminated()) {
+      auto token =
+          buffer_.AddToken({.kind = TokenKind::StringLiteral(),
+                            .token_line = string_line,
+                            .column = string_column,
+                            .literal_index = static_cast<int32_t>(
+                                buffer_.literal_string_storage_.size())});
+      buffer_.literal_string_storage_.push_back(
+          literal->ComputeValue(emitter_));
+      return token;
+    } else {
+      emitter_.EmitError<UnterminatedString>(literal->text().begin());
+      return buffer_.AddToken({.kind = TokenKind::Error(),
+                               .token_line = string_line,
+                               .column = string_column,
+                               .error_length = literal_size});
+    }
   }
 
   auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
@@ -385,6 +403,13 @@ class TokenizedBuffer::Lexer {
     };
 
     llvm::StringRef suffix = word.substr(1);
+    if (!CanLexInteger(emitter_, suffix)) {
+      return buffer_.AddToken(
+          {.kind = TokenKind::Error(),
+           .token_line = current_line_,
+           .column = column,
+           .error_length = static_cast<int32_t>(word.size())});
+    }
     llvm::APInt suffix_value;
     if (suffix.getAsInteger(10, suffix_value)) {
       return LexResult::NoMatch();
@@ -415,8 +440,8 @@ class TokenizedBuffer::Lexer {
       open_groups_.pop_back();
       token_emitter_.EmitError<MismatchedClosing>(opening_token);
 
-      CHECK(!buffer_.Tokens().empty()) << "Must have a prior opening token!";
-      Token prev_token = buffer_.Tokens().end()[-1];
+      CHECK(!buffer_.tokens().empty()) << "Must have a prior opening token!";
+      Token prev_token = buffer_.tokens().end()[-1];
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
@@ -506,8 +531,6 @@ class TokenizedBuffer::Lexer {
       error_text = source_text.take_front(1);
     }
 
-    // Longer errors get to be two tokens.
-    error_text = error_text.substr(0, std::numeric_limits<int32_t>::max());
     auto token = buffer_.AddToken(
         {.kind = TokenKind::Error(),
          .token_line = current_line_,
@@ -550,7 +573,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
   Lexer lexer(buffer, error_tracking_consumer);
 
-  llvm::StringRef source_text = source.Text();
+  llvm::StringRef source_text = source.text();
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
@@ -576,7 +599,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
   lexer.AddEndOfFileToken();
 
-  if (error_tracking_consumer.SeenError()) {
+  if (error_tracking_consumer.seen_error()) {
     buffer.has_errors_ = true;
   }
 
@@ -609,7 +632,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::Error()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    return source_->Text().substr(token_start, token_info.error_length);
+    return source_->text().substr(token_start, token_info.error_length);
   }
 
   // Refer back to the source text to preserve oddities like radix or digit
@@ -619,9 +642,9 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedNumericLiteral> relexed_token =
-        LexedNumericLiteral::Lex(source_->Text().substr(token_start));
+        LexedNumericLiteral::Lex(source_->text().substr(token_start));
     CHECK(relexed_token) << "Could not reform numeric literal token.";
-    return relexed_token->Text();
+    return relexed_token->text();
   }
 
   // Refer back to the source text to find the original spelling, including
@@ -630,9 +653,9 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::Optional<LexedStringLiteral> relexed_token =
-        LexedStringLiteral::Lex(source_->Text().substr(token_start));
+        LexedStringLiteral::Lex(source_->text().substr(token_start));
     CHECK(relexed_token) << "Could not reform string literal token.";
-    return relexed_token->Text();
+    return relexed_token->text();
   }
 
   // Refer back to the source text to avoid needing to reconstruct the
@@ -641,7 +664,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     llvm::StringRef suffix =
-        source_->Text().substr(token_start + 1).take_while(IsDecimalDigit);
+        source_->text().substr(token_start + 1).take_while(IsDecimalDigit);
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
@@ -675,11 +698,11 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
       << "The token must be a real literal!";
 
   // Note that every real literal is at least three characters long, so we can
-  // safely look at the second character to determine whether we have a decimal
-  // or hexadecimal literal.
+  // safely look at the second character to determine whether we have a
+  // decimal or hexadecimal literal.
   auto& line_info = GetLineInfo(token_info.token_line);
   int64_t token_start = line_info.start + token_info.column;
-  char second_char = source_->Text()[token_start + 1];
+  char second_char = source_->text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
   return RealLiteralValue(this, token_info.literal_index, is_decimal);
@@ -718,7 +741,7 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
 
 auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
   auto it = TokenIterator(token);
-  return it == Tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
+  return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
 }
 
 auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
@@ -751,8 +774,8 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 }
 
 // Compute the printed width of a number. When numbers are printed in decimal,
-// the number of digits needed is is one more than the log-base-10 of the value.
-// We handle a value of `zero` explicitly.
+// the number of digits needed is is one more than the log-base-10 of the
+// value. We handle a value of `zero` explicitly.
 //
 // This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
@@ -776,17 +799,17 @@ auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
 }
 
 auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
-  if (Tokens().begin() == Tokens().end()) {
+  if (tokens().begin() == tokens().end()) {
     return;
   }
 
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
-  for (Token token : Tokens()) {
+  for (Token token : tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
-  for (Token token : Tokens()) {
+  for (Token token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
@@ -820,18 +843,29 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
                            widths.indent),
       token_text);
 
-  if (token_info.kind == TokenKind::Identifier()) {
-    output_stream << ", identifier: " << GetIdentifier(token).index_;
-  } else if (token_info.kind.IsOpeningSymbol()) {
-    output_stream << ", closing_token: "
-                  << GetMatchedClosingToken(token).index_;
-  } else if (token_info.kind.IsClosingSymbol()) {
-    output_stream << ", opening_token: "
-                  << GetMatchedOpeningToken(token).index_;
-  } else if (token_info.kind == TokenKind::StringLiteral()) {
-    output_stream << ", value: `" << GetStringLiteral(token) << "`";
+  switch (token_info.kind) {
+    case TokenKind::Identifier():
+      output_stream << ", identifier: " << GetIdentifier(token).index_;
+      break;
+    case TokenKind::IntegerLiteral():
+      output_stream << ", value: `" << GetIntegerLiteral(token) << "`";
+      break;
+    case TokenKind::RealLiteral():
+      output_stream << ", value: `" << GetRealLiteral(token) << "`";
+      break;
+    case TokenKind::StringLiteral():
+      output_stream << ", value: `" << GetStringLiteral(token) << "`";
+      break;
+    default:
+      if (token_info.kind.IsOpeningSymbol()) {
+        output_stream << ", closing_token: "
+                      << GetMatchedClosingToken(token).index_;
+      } else if (token_info.kind.IsClosingSymbol()) {
+        output_stream << ", opening_token: "
+                      << GetMatchedOpeningToken(token).index_;
+      }
+      break;
   }
-  // TODO: Include value for numeric literals.
 
   if (token_info.has_trailing_space) {
     output_stream << ", has_trailing_space: true";
@@ -876,10 +910,9 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     const char* loc) -> Diagnostic::Location {
-  CHECK(llvm::is_sorted(std::array{buffer_->source_->Text().begin(), loc,
-                                   buffer_->source_->Text().end()}))
+  CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
       << "location not within buffer";
-  int64_t offset = loc - buffer_->source_->Text().begin();
+  int64_t offset = loc - buffer_->source_->text().begin();
 
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
@@ -904,7 +937,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     column_number = *last_line_lexed_to_column_;
     for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
          ++i) {
-      if (buffer_->source_->Text()[i] == '\n') {
+      if (buffer_->source_->text()[i] == '\n') {
         ++line_number;
         column_number = 0;
       } else {
@@ -913,7 +946,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     }
   }
 
-  return {.file_name = buffer_->source_->Filename().str(),
+  return {.file_name = buffer_->source_->filename().str(),
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }
@@ -924,7 +957,7 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   auto& token_info = buffer_->GetTokenInfo(token);
   auto& line_info = buffer_->GetLineInfo(token_info.token_line);
   const char* token_start =
-      buffer_->source_->Text().begin() + line_info.start + token_info.column;
+      buffer_->source_->text().begin() + line_info.start + token_info.column;
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token

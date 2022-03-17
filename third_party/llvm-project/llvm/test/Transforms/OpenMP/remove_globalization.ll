@@ -79,7 +79,7 @@ define internal void @bar() {
 ; CHECK-SAME: () #[[ATTR0]] {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[TMP0:%.*]] = call i8* @__kmpc_alloc_shared(i64 noundef 4) #[[ATTR4]], !dbg [[DBG8:![0-9]+]]
-; CHECK-NEXT:    call void @share(i8* nofree writeonly [[TMP0]]) #[[ATTR5:[0-9]+]]
+; CHECK-NEXT:    call void @share(i8* nofree writeonly [[TMP0]]) #[[ATTR5:[0-9]+]], !dbg [[DBG8]]
 ; CHECK-NEXT:    call void @__kmpc_free_shared(i8* [[TMP0]], i64 noundef 4) #[[ATTR4]]
 ; CHECK-NEXT:    ret void
 ;
@@ -87,13 +87,13 @@ define internal void @bar() {
 ; CHECK-DISABLED-SAME: () #[[ATTR0]] {
 ; CHECK-DISABLED-NEXT:  entry:
 ; CHECK-DISABLED-NEXT:    [[TMP0:%.*]] = call i8* @__kmpc_alloc_shared(i64 noundef 4) #[[ATTR4]], !dbg [[DBG8:![0-9]+]]
-; CHECK-DISABLED-NEXT:    call void @share(i8* nofree writeonly [[TMP0]]) #[[ATTR5:[0-9]+]]
+; CHECK-DISABLED-NEXT:    call void @share(i8* nofree writeonly [[TMP0]]) #[[ATTR5:[0-9]+]], !dbg [[DBG8]]
 ; CHECK-DISABLED-NEXT:    call void @__kmpc_free_shared(i8* [[TMP0]], i64 noundef 4) #[[ATTR4]]
 ; CHECK-DISABLED-NEXT:    ret void
 ;
 entry:
   %0 = call i8* @__kmpc_alloc_shared(i64 4), !dbg !13
-  call void @share(i8* %0)
+  call void @share(i8* %0), !dbg !13
   call void @__kmpc_free_shared(i8* %0, i64 4)
   ret void
 }
@@ -181,15 +181,15 @@ declare void @unknown_no_openmp() "llvm.assume"="omp_no_openmp"
 !14 = !DILocation(line: 6, column: 2, scope: !9)
 ;.
 ; CHECK: attributes #[[ATTR0]] = { nosync nounwind }
-; CHECK: attributes #[[ATTR1]] = { nofree nosync nounwind readnone willreturn }
-; CHECK: attributes #[[ATTR2]] = { nofree nosync nounwind willreturn writeonly }
+; CHECK: attributes #[[ATTR1]] = { nofree norecurse nosync nounwind readnone willreturn }
+; CHECK: attributes #[[ATTR2]] = { nofree norecurse nosync nounwind willreturn writeonly }
 ; CHECK: attributes #[[ATTR3]] = { "llvm.assume"="omp_no_openmp" }
 ; CHECK: attributes #[[ATTR4]] = { nounwind }
 ; CHECK: attributes #[[ATTR5]] = { nosync nounwind writeonly }
 ;.
 ; CHECK-DISABLED: attributes #[[ATTR0]] = { nosync nounwind }
-; CHECK-DISABLED: attributes #[[ATTR1]] = { nofree nosync nounwind readnone willreturn }
-; CHECK-DISABLED: attributes #[[ATTR2]] = { nofree nosync nounwind willreturn writeonly }
+; CHECK-DISABLED: attributes #[[ATTR1]] = { nofree norecurse nosync nounwind readnone willreturn }
+; CHECK-DISABLED: attributes #[[ATTR2]] = { nofree norecurse nosync nounwind willreturn writeonly }
 ; CHECK-DISABLED: attributes #[[ATTR3]] = { "llvm.assume"="omp_no_openmp" }
 ; CHECK-DISABLED: attributes #[[ATTR4]] = { nounwind }
 ; CHECK-DISABLED: attributes #[[ATTR5]] = { nosync nounwind writeonly }

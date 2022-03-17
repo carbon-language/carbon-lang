@@ -11,7 +11,7 @@
 
 #include "lld/Common/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
-#include <map>
+#include "llvm/ADT/STLExtras.h"
 #include <vector>
 
 namespace lld {
@@ -126,9 +126,8 @@ struct JumpInstrMod {
 // Call reportUndefinedSymbols() after calling scanRelocations() to emit
 // the diagnostics.
 template <class ELFT> void scanRelocations(InputSectionBase &);
+void reportUndefinedSymbols();
 void postScanRelocations();
-
-template <class ELFT> void reportUndefinedSymbols();
 
 void hexagonTLSSymbolUpdate(ArrayRef<OutputSection *> outputSections);
 bool hexagonNeedsTLSSymbol(ArrayRef<OutputSection *> outputSections);

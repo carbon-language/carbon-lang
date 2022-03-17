@@ -286,7 +286,7 @@ void ProfileGeneratorBase::findDisjointRanges(RangeSample &DisjointRanges,
   */
   std::map<uint64_t, BoundaryPoint> Boundaries;
 
-  for (auto Item : Ranges) {
+  for (const auto &Item : Ranges) {
     assert(Item.first.first <= Item.first.second &&
            "Invalid instruction range");
     auto &BeginPoint = Boundaries[Item.first.first];
@@ -306,9 +306,9 @@ void ProfileGeneratorBase::findDisjointRanges(RangeSample &DisjointRanges,
   uint64_t BeginAddress = UINT64_MAX;
   int ZeroRangeDepth = 0;
   uint64_t Count = 0;
-  for (auto Item : Boundaries) {
+  for (const auto &Item : Boundaries) {
     uint64_t Address = Item.first;
-    BoundaryPoint &Point = Item.second;
+    const BoundaryPoint &Point = Item.second;
     if (Point.BeginCount != UINT64_MAX) {
       if (BeginAddress != UINT64_MAX)
         DisjointRanges[{BeginAddress, Address - 1}] = Count;
@@ -466,7 +466,7 @@ ProfileGenerator::preprocessRangeCounter(const RangeSample &RangeCounter) {
     // and initialize it with zero count, so it remains zero if doesn't hit any
     // samples. This is to be consistent with compiler that interpret zero count
     // as unexecuted(cold).
-    for (auto I : RangeCounter) {
+    for (const auto &I : RangeCounter) {
       uint64_t StartOffset = I.first.first;
       for (const auto &Range : Binary->getRangesForOffset(StartOffset))
         Ranges[{Range.first, Range.second - 1}] += 0;
@@ -479,7 +479,7 @@ ProfileGenerator::preprocessRangeCounter(const RangeSample &RangeCounter) {
 
 void ProfileGenerator::populateBodySamplesForAllFunctions(
     const RangeSample &RangeCounter) {
-  for (auto Range : preprocessRangeCounter(RangeCounter)) {
+  for (const auto &Range : preprocessRangeCounter(RangeCounter)) {
     uint64_t RangeBegin = Binary->offsetToVirtualAddr(Range.first.first);
     uint64_t RangeEnd = Binary->offsetToVirtualAddr(Range.first.second);
     uint64_t Count = Range.second;
@@ -523,7 +523,7 @@ StringRef ProfileGeneratorBase::getCalleeNameForOffset(uint64_t TargetOffset) {
 
 void ProfileGenerator::populateBoundarySamplesForAllFunctions(
     const BranchSample &BranchCounters) {
-  for (auto Entry : BranchCounters) {
+  for (const auto &Entry : BranchCounters) {
     uint64_t SourceOffset = Entry.first.first;
     uint64_t TargetOffset = Entry.first.second;
     uint64_t Count = Entry.second;
@@ -589,33 +589,30 @@ void CSProfileGenerator::generateProfile() {
 }
 
 void CSProfileGenerator::computeSizeForProfiledFunctions() {
-  // Hash map to deduplicate the function range and the item is a pair of
-  // function start and end offset.
-  std::unordered_map<uint64_t, uint64_t> AggregatedRanges;
+  std::unordered_set<const BinaryFunction *> ProfiledFunctions;
+
   // Go through all the ranges in the CS counters, use the start of the range to
-  // look up the function it belongs and record the function range.
+  // look up the function it belongs and record the function.
   for (const auto &CI : SampleCounters) {
-    for (auto Item : CI.second.RangeCounter) {
+    for (const auto &Item : CI.second.RangeCounter) {
       // FIXME: Filter the bogus crossing function range.
       uint64_t StartOffset = Item.first.first;
-      // Note that a function can be spilt into multiple ranges, so get all
-      // ranges of the function.
-      for (const auto &Range : Binary->getRangesForOffset(StartOffset))
-        AggregatedRanges[Range.first] = Range.second;
+      if (FuncRange *FRange = Binary->findFuncRangeForOffset(StartOffset))
+        ProfiledFunctions.insert(FRange->Func);
     }
   }
 
-  for (auto I : AggregatedRanges) {
-    uint64_t StartOffset = I.first;
-    uint64_t EndOffset = I.second;
-    Binary->computeInlinedContextSizeForRange(StartOffset, EndOffset);
-  }
+  for (auto *Func : ProfiledFunctions)
+    Binary->computeInlinedContextSizeForFunc(Func);
+
+  // Flush the symbolizer to save memory.
+  Binary->flushSymbolizer();
 }
 
 void CSProfileGenerator::generateLineNumBasedProfile() {
   for (const auto &CI : SampleCounters) {
-    const StringBasedCtxKey *CtxKey =
-        dyn_cast<StringBasedCtxKey>(CI.first.getPtr());
+    const auto *CtxKey = cast<StringBasedCtxKey>(CI.first.getPtr());
+
     // Get or create function profile for the range
     FunctionSamples &FunctionProfile =
         getFunctionProfileForContext(CtxKey->Context, CtxKey->WasLeafInlined);
@@ -641,7 +638,7 @@ void CSProfileGenerator::populateBodySamplesForFunction(
   // for calculating count for each location.
   RangeSample Ranges;
   findDisjointRanges(Ranges, RangeCounter);
-  for (auto Range : Ranges) {
+  for (const auto &Range : Ranges) {
     uint64_t RangeBegin = Binary->offsetToVirtualAddr(Range.first.first);
     uint64_t RangeEnd = Binary->offsetToVirtualAddr(Range.first.second);
     uint64_t Count = Range.second;
@@ -673,7 +670,7 @@ void CSProfileGenerator::populateBoundarySamplesForFunction(
     SampleContextFrames ContextId, FunctionSamples &FunctionProfile,
     const BranchSample &BranchCounters) {
 
-  for (auto Entry : BranchCounters) {
+  for (const auto &Entry : BranchCounters) {
     uint64_t SourceOffset = Entry.first.first;
     uint64_t TargetOffset = Entry.first.second;
     uint64_t Count = Entry.second;
@@ -820,8 +817,7 @@ static void extractPrefixContextStack(
 
 void CSProfileGenerator::generateProbeBasedProfile() {
   for (const auto &CI : SampleCounters) {
-    const ProbeBasedCtxKey *CtxKey =
-        dyn_cast<ProbeBasedCtxKey>(CI.first.getPtr());
+    const auto *CtxKey = cast<ProbeBasedCtxKey>(CI.first.getPtr());
     SampleContextFrameVector ContextStack;
     extractPrefixContextStack(ContextStack, CtxKey->Probes, Binary);
     // Fill in function body samples from probes, also infer caller's samples
@@ -876,7 +872,7 @@ void CSProfileGenerator::populateBodySamplesWithProbes(
   std::unordered_map<MCDecodedPseudoProbeInlineTree *,
                      std::unordered_set<FunctionSamples *>>
       FrameSamples;
-  for (auto PI : ProbeCounter) {
+  for (const auto &PI : ProbeCounter) {
     const MCDecodedPseudoProbe *Probe = PI.first;
     uint64_t Count = PI.second;
     FunctionSamples &FunctionProfile =
@@ -928,7 +924,7 @@ void CSProfileGenerator::populateBodySamplesWithProbes(
 
 void CSProfileGenerator::populateBoundarySamplesWithProbes(
     const BranchSample &BranchCounter, SampleContextFrames ContextStack) {
-  for (auto BI : BranchCounter) {
+  for (const auto &BI : BranchCounter) {
     uint64_t SourceOffset = BI.first.first;
     uint64_t TargetOffset = BI.first.second;
     uint64_t Count = BI.second;

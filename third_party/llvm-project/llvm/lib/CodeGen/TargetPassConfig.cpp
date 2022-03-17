@@ -175,12 +175,12 @@ static cl::opt<bool>
 // Disable MIRProfileLoader before RegAlloc. This is for for debugging and
 // tuning purpose.
 static cl::opt<bool> DisableRAFSProfileLoader(
-    "disable-ra-fsprofile-loader", cl::init(true), cl::Hidden,
+    "disable-ra-fsprofile-loader", cl::init(false), cl::Hidden,
     cl::desc("Disable MIRProfileLoader before RegAlloc"));
 // Disable MIRProfileLoader before BloackPlacement. This is for for debugging
 // and tuning purpose.
 static cl::opt<bool> DisableLayoutFSProfileLoader(
-    "disable-layout-fsprofile-loader", cl::init(true), cl::Hidden,
+    "disable-layout-fsprofile-loader", cl::init(false), cl::Hidden,
     cl::desc("Disable MIRProfileLoader before BlockPlacement"));
 // Specify FSProfile file name.
 static cl::opt<std::string>
@@ -1399,6 +1399,9 @@ bool TargetPassConfig::addRegAssignAndRewriteOptimized() {
   // Finally rewrite virtual registers.
   addPass(&VirtRegRewriterID);
 
+  // Regalloc scoring for ML-driven eviction - noop except when learning a new
+  // eviction policy.
+  addPass(createRegAllocScoringPass());
   return true;
 }
 

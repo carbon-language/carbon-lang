@@ -60,6 +60,7 @@ module LLVM_BinaryFormat {
     textual header "BinaryFormat/DynamicTags.def"
     textual header "BinaryFormat/MachO.def"
     textual header "BinaryFormat/MinidumpConstants.def"
+    textual header "BinaryFormat/Swift.def"
     textual header "BinaryFormat/ELFRelocs/AArch64.def"
     textual header "BinaryFormat/ELFRelocs/AMDGPU.def"
     textual header "BinaryFormat/ELFRelocs/ARM.def"
@@ -70,6 +71,7 @@ module LLVM_BinaryFormat {
     textual header "BinaryFormat/ELFRelocs/Hexagon.def"
     textual header "BinaryFormat/ELFRelocs/i386.def"
     textual header "BinaryFormat/ELFRelocs/Lanai.def"
+    textual header "BinaryFormat/ELFRelocs/LoongArch.def"
     textual header "BinaryFormat/ELFRelocs/M68k.def"
     textual header "BinaryFormat/ELFRelocs/Mips.def"
     textual header "BinaryFormat/ELFRelocs/MSP430.def"
@@ -356,6 +358,7 @@ module LLVM_ProfileData {
 
   textual header "ProfileData/InstrProfData.inc"
   textual header "ProfileData/MemProfData.inc"
+  textual header "ProfileData/MIBEntryDef.inc"
 }
 
 // FIXME: Mislayered?

@@ -27,6 +27,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "TargetInfo/AMDGPUTargetInfo.h"
 #include "Utils/AMDGPUBaseInfo.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -34,6 +35,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/AMDHSAKernelDescriptor.h"
+#include "llvm/Support/TargetParser.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -88,6 +90,8 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM,
       HSAMetadataStream.reset(new HSAMD::MetadataStreamerV2());
     } else if (isHsaAbiVersion3(getGlobalSTI())) {
       HSAMetadataStream.reset(new HSAMD::MetadataStreamerV3());
+    } else if (isHsaAbiVersion5(getGlobalSTI())) {
+      HSAMetadataStream.reset(new HSAMD::MetadataStreamerV5());
     } else {
       HSAMetadataStream.reset(new HSAMD::MetadataStreamerV4());
     }
@@ -109,6 +113,12 @@ AMDGPUTargetStreamer* AMDGPUAsmPrinter::getTargetStreamer() const {
 }
 
 void AMDGPUAsmPrinter::emitStartOfAsmFile(Module &M) {
+  IsTargetStreamerInitialized = false;
+}
+
+void AMDGPUAsmPrinter::initTargetStreamer(Module &M) {
+  IsTargetStreamerInitialized = true;
+
   // TODO: Which one is called first, emitStartOfAsmFile or
   // emitFunctionBodyStart?
   if (getTargetStreamer() && !getTargetStreamer()->getTargetID())
@@ -118,7 +128,7 @@ void AMDGPUAsmPrinter::emitStartOfAsmFile(Module &M) {
       TM.getTargetTriple().getOS() != Triple::AMDPAL)
     return;
 
-  if (isHsaAbiVersion3Or4(getGlobalSTI()))
+  if (isHsaAbiVersion3AndAbove(getGlobalSTI()))
     getTargetStreamer()->EmitDirectiveAMDGCNTarget();
 
   if (TM.getTargetTriple().getOS() == Triple::AMDHSA)
@@ -127,7 +137,7 @@ void AMDGPUAsmPrinter::emitStartOfAsmFile(Module &M) {
   if (TM.getTargetTriple().getOS() == Triple::AMDPAL)
     getTargetStreamer()->getPALMetadata()->readFromIR(M);
 
-  if (isHsaAbiVersion3Or4(getGlobalSTI()))
+  if (isHsaAbiVersion3AndAbove(getGlobalSTI()))
     return;
 
   // HSA emits NT_AMD_HSA_CODE_OBJECT_VERSION for code objects v2.
@@ -141,6 +151,10 @@ void AMDGPUAsmPrinter::emitStartOfAsmFile(Module &M) {
 }
 
 void AMDGPUAsmPrinter::emitEndOfAsmFile(Module &M) {
+  // Init target streamer if it has not yet happened
+  if (!IsTargetStreamerInitialized)
+    initTargetStreamer(M);
+
   // Following code requires TargetStreamer to be present.
   if (!getTargetStreamer())
     return;
@@ -259,7 +273,7 @@ void AMDGPUAsmPrinter::emitFunctionBodyEnd() {
 
 void AMDGPUAsmPrinter::emitFunctionEntryLabel() {
   if (TM.getTargetTriple().getOS() == Triple::AMDHSA &&
-      isHsaAbiVersion3Or4(getGlobalSTI())) {
+      isHsaAbiVersion3AndAbove(getGlobalSTI())) {
     AsmPrinter::emitFunctionEntryLabel();
     return;
   }
@@ -435,6 +449,11 @@ amdhsa::kernel_descriptor_t AMDGPUAsmPrinter::getAmdhsaKernelDescriptor(
 }
 
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // Init target streamer lazily on the first function so that previous passes
+  // can set metadata.
+  if (!IsTargetStreamerInitialized)
+    initTargetStreamer(*MF.getFunction().getParent());
+
   ResourceUsage = &getAnalysis<AMDGPUResourceUsageAnalysis>();
   CurrentProgramInfo = SIProgramInfo();
 
@@ -982,6 +1001,13 @@ void AMDGPUAsmPrinter::EmitPALMetadata(const MachineFunction &MF,
 
   MD->setEntryPoint(CC, MF.getFunction().getName());
   MD->setNumUsedVgprs(CC, CurrentProgramInfo.NumVGPRsForWavesPerEU);
+
+  // Only set AGPRs for supported devices
+  const GCNSubtarget &STM = MF.getSubtarget<GCNSubtarget>();
+  if (STM.hasMAIInsts()) {
+    MD->setNumUsedAgprs(CC, CurrentProgramInfo.NumAccVGPR);
+  }
+
   MD->setNumUsedSgprs(CC, CurrentProgramInfo.NumSGPRsForWavesPerEU);
   MD->setRsrc1(CC, CurrentProgramInfo.getPGMRSrc1(CC));
   if (AMDGPU::isCompute(CC)) {
@@ -998,7 +1024,6 @@ void AMDGPUAsmPrinter::EmitPALMetadata(const MachineFunction &MF,
     MD->setSpiPsInputAddr(MFI->getPSInputAddr());
   }
 
-  const GCNSubtarget &STM = MF.getSubtarget<GCNSubtarget>();
   if (STM.isWave32())
     MD->setWave32(MF.getFunction().getCallingConv());
 }

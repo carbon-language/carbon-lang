@@ -242,8 +242,8 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
     : tree_(tree_arg),
       tokens_(tokens_arg),
       emitter_(emitter),
-      position_(tokens_.Tokens().begin()),
-      end_(tokens_.Tokens().end()) {
+      position_(tokens_.tokens().begin()),
+      end_(tokens_.tokens().end()) {
   CHECK(std::find_if(position_, end_,
                      [&](TokenizedBuffer::Token t) {
                        return tokens_.GetKind(t) == TokenKind::EndOfFile();
@@ -258,7 +258,7 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   // We expect to have a 1:1 correspondence between tokens and tree nodes, so
   // reserve the space we expect to need here to avoid allocation and copying
   // overhead.
-  tree.node_impls_.reserve(tokens.Size());
+  tree.node_impls_.reserve(tokens.size());
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
@@ -982,7 +982,7 @@ auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
   // Otherwise, for an infix operator, the preceding token must be any close
   // bracket, identifier, or literal and the next token must be an open paren,
   // identifier, or literal.
-  if (position_ == tokens_.Tokens().begin() ||
+  if (position_ == tokens_.tokens().begin() ||
       !IsAssumedEndOfOperand(tokens_.GetKind(*(position_ - 1))) ||
       !IsAssumedStartOfOperand(tokens_.GetKind(*(position_ + 1)))) {
     return false;

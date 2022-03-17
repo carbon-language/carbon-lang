@@ -28,6 +28,13 @@ namespace Carbon {
                     << ": " #condition                                    \
                     << Carbon::Internal::ExitingStream::AddSeparator()
 
+// DCHECK calls CHECK in debug mode, and does nothing otherwise.
+#ifndef NDEBUG
+#define DCHECK(condition) CHECK(condition)
+#else
+#define DCHECK(condition) CHECK(true || (condition))
+#endif
+
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
 //

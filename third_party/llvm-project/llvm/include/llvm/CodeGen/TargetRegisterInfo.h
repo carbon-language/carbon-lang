@@ -415,19 +415,11 @@ public:
 
   /// Returns true if the two registers are equal or alias each other.
   /// The registers may be virtual registers.
-  bool regsOverlap(Register regA, Register regB) const {
-    if (regA == regB) return true;
-    if (!regA.isPhysical() || !regB.isPhysical())
-      return false;
-
-    // Regunits are numerically ordered. Find a common unit.
-    MCRegUnitIterator RUA(regA.asMCReg(), this);
-    MCRegUnitIterator RUB(regB.asMCReg(), this);
-    do {
-      if (*RUA == *RUB) return true;
-      if (*RUA < *RUB) ++RUA;
-      else             ++RUB;
-    } while (RUA.isValid() && RUB.isValid());
+  bool regsOverlap(Register RegA, Register RegB) const {
+    if (RegA == RegB)
+      return true;
+    if (RegA.isPhysical() && RegB.isPhysical())
+      return MCRegisterInfo::regsOverlap(RegA.asMCReg(), RegB.asMCReg());
     return false;
   }
 
@@ -566,6 +558,24 @@ public:
   /// Return true if the register is preserved after the call.
   virtual bool isCalleeSavedPhysReg(MCRegister PhysReg,
                                     const MachineFunction &MF) const;
+
+  /// Returns true if PhysReg can be used as an argument to a function.
+  virtual bool isArgumentRegister(const MachineFunction &MF,
+                                  MCRegister PhysReg) const {
+    return false;
+  }
+
+  /// Returns true if PhysReg is a fixed register.
+  virtual bool isFixedRegister(const MachineFunction &MF,
+                               MCRegister PhysReg) const {
+    return false;
+  }
+
+  /// Returns true if PhysReg is a general purpose register.
+  virtual bool isGeneralPurposeRegister(const MachineFunction &MF,
+                                        MCRegister PhysReg) const {
+    return false;
+  }
 
   /// Prior to adding the live-out mask to a stackmap or patchpoint
   /// instruction, provide the target the opportunity to adjust it (mainly to

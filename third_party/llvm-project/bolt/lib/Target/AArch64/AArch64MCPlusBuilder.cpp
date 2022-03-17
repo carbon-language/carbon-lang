@@ -798,6 +798,13 @@ public:
     createShortJmp(Seq, Target, Ctx, /*IsTailCall*/ true);
   }
 
+  bool createTrap(MCInst &Inst) const override {
+    Inst.clear();
+    Inst.setOpcode(AArch64::BRK);
+    Inst.addOperand(MCOperand::createImm(1));
+    return true;
+  }
+
   bool convertJmpToTailCall(MCInst &Inst) override {
     setTailCall(Inst);
     return true;
@@ -805,7 +812,7 @@ public:
 
   bool convertTailCallToJmp(MCInst &Inst) override {
     removeAnnotation(Inst, MCPlus::MCAnnotation::kTailCall);
-    removeAnnotation(Inst, "Offset");
+    clearOffset(Inst);
     if (getConditionalTailCall(Inst))
       unsetConditionalTailCall(Inst);
     return true;

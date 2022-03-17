@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86FrameLowering.h"
+#include "MCTargetDesc/X86MCTargetDesc.h"
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
@@ -99,7 +100,7 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
           MF.getInfo<X86MachineFunctionInfo>()->hasPreallocatedCall() ||
           MF.callsUnwindInit() || MF.hasEHFunclets() || MF.callsEHReturn() ||
           MFI.hasStackMap() || MFI.hasPatchPoint() ||
-          MFI.hasCopyImplyingStackAdjustment());
+          (isWin64Prologue(MF) && MFI.hasCopyImplyingStackAdjustment()));
 }
 
 static unsigned getSUBriOpcode(bool IsLP64, int64_t Imm) {
@@ -479,7 +480,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(
   // Calculate offsets.
   for (const CalleeSavedInfo &I : CSI) {
     int64_t Offset = MFI.getObjectOffset(I.getFrameIdx());
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
 
     if (IsPrologue) {
@@ -489,6 +490,103 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(
       BuildCFI(MBB, MBBI, DL,
                MCCFIInstruction::createRestore(nullptr, DwarfReg));
     }
+  }
+}
+
+void X86FrameLowering::emitZeroCallUsedRegs(BitVector RegsToZero,
+                                            MachineBasicBlock &MBB) const {
+  const MachineFunction &MF = *MBB.getParent();
+
+  // Don't clear registers that will just be reset before exiting.
+  for (const CalleeSavedInfo &CSI : MF.getFrameInfo().getCalleeSavedInfo())
+    for (MCRegister Reg : TRI->sub_and_superregs_inclusive(CSI.getReg()))
+      RegsToZero.reset(Reg);
+
+  // Insertion point.
+  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
+
+  // We don't need to zero out registers that are clobbered by "pop"
+  // instructions.
+  for (MachineBasicBlock::iterator I = MBBI, E = MBB.end(); I != E; ++I)
+    for (const MachineOperand &MO : I->operands()) {
+      if (!MO.isReg())
+        continue;
+
+      for (const MCPhysReg &Reg : TRI->sub_and_superregs_inclusive(MO.getReg()))
+        RegsToZero.reset(Reg);
+    }
+
+  // Fake a debug loc.
+  DebugLoc DL;
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
+
+  // Zero out FP stack if referenced. Do this outside of the loop below so that
+  // it's done only once.
+  const X86Subtarget &ST = MF.getSubtarget<X86Subtarget>();
+  for (MCRegister Reg : RegsToZero.set_bits()) {
+    if (!X86::RFP80RegClass.contains(Reg))
+      continue;
+
+    unsigned NumFPRegs = ST.is64Bit() ? 8 : 7;
+    for (unsigned i = 0; i != NumFPRegs; ++i)
+      BuildMI(MBB, MBBI, DL, TII.get(X86::LD_F0));
+
+    for (unsigned i = 0; i != NumFPRegs; ++i)
+      BuildMI(MBB, MBBI, DL, TII.get(X86::ST_FPrr)).addReg(X86::ST0);
+    break;
+  }
+
+  // For GPRs, we only care to clear out the 32-bit register.
+  BitVector GPRsToZero(TRI->getNumRegs());
+  for (MCRegister Reg : RegsToZero.set_bits())
+    if (TRI->isGeneralPurposeRegister(MF, Reg)) {
+      GPRsToZero.set(getX86SubSuperRegisterOrZero(Reg, 32));
+      RegsToZero.reset(Reg);
+    }
+
+  for (MCRegister Reg : GPRsToZero.set_bits())
+    BuildMI(MBB, MBBI, DL, TII.get(X86::XOR32rr), Reg)
+        .addReg(Reg, RegState::Undef)
+        .addReg(Reg, RegState::Undef);
+
+  // Zero out registers.
+  for (MCRegister Reg : RegsToZero.set_bits()) {
+    if (ST.hasMMX() && X86::VR64RegClass.contains(Reg))
+      // FIXME: Ignore MMX registers?
+      continue;
+
+    unsigned XorOp;
+    if (X86::VR128RegClass.contains(Reg)) {
+      // XMM#
+      if (!ST.hasSSE1())
+        continue;
+      XorOp = X86::PXORrr;
+    } else if (X86::VR256RegClass.contains(Reg)) {
+      // YMM#
+      if (!ST.hasAVX())
+        continue;
+      XorOp = X86::VPXORrr;
+    } else if (X86::VR512RegClass.contains(Reg)) {
+      // ZMM#
+      if (!ST.hasAVX512())
+        continue;
+      XorOp = X86::VPXORYrr;
+    } else if (X86::VK1RegClass.contains(Reg) ||
+               X86::VK2RegClass.contains(Reg) ||
+               X86::VK4RegClass.contains(Reg) ||
+               X86::VK8RegClass.contains(Reg) ||
+               X86::VK16RegClass.contains(Reg)) {
+      if (!ST.hasVLX())
+        continue;
+      XorOp = ST.hasBWI() ? X86::KXORQrr : X86::KXORWrr;
+    } else {
+      continue;
+    }
+
+    BuildMI(MBB, MBBI, DL, TII.get(XorOp), Reg)
+      .addReg(Reg, RegState::Undef)
+      .addReg(Reg, RegState::Undef);
   }
 }
 
@@ -1289,6 +1387,9 @@ bool X86FrameLowering::has128ByteRedZone(const MachineFunction& MF) const {
   return Is64Bit && !IsWin64CC && !Fn.hasFnAttribute(Attribute::NoRedZone);
 }
 
+/// Return true if we need to use the restricted Windows x64 prologue and
+/// epilogue code patterns that can be described with WinCFI (.seh_*
+/// directives).
 bool X86FrameLowering::isWin64Prologue(const MachineFunction &MF) const {
   return MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
 }
@@ -2533,7 +2634,7 @@ bool X86FrameLowering::assignCalleeSavedSpillSlots(
 
   // Assign slots for GPRs. It increases frame size.
   for (CalleeSavedInfo &I : llvm::reverse(CSI)) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
 
     if (!X86::GR64RegClass.contains(Reg) && !X86::GR32RegClass.contains(Reg))
       continue;
@@ -2550,7 +2651,7 @@ bool X86FrameLowering::assignCalleeSavedSpillSlots(
 
   // Assign slots for XMMs.
   for (CalleeSavedInfo &I : llvm::reverse(CSI)) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
     if (X86::GR64RegClass.contains(Reg) || X86::GR32RegClass.contains(Reg))
       continue;
 
@@ -2596,7 +2697,7 @@ bool X86FrameLowering::spillCalleeSavedRegisters(
   const MachineFunction &MF = *MBB.getParent();
   unsigned Opc = STI.is64Bit() ? X86::PUSH64r : X86::PUSH32r;
   for (const CalleeSavedInfo &I : llvm::reverse(CSI)) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
 
     if (!X86::GR64RegClass.contains(Reg) && !X86::GR32RegClass.contains(Reg))
       continue;
@@ -2630,7 +2731,7 @@ bool X86FrameLowering::spillCalleeSavedRegisters(
   // Make XMM regs spilled. X86 does not have ability of push/pop XMM.
   // It can be done by spilling XMMs to stack frame.
   for (const CalleeSavedInfo &I : llvm::reverse(CSI)) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
     if (X86::GR64RegClass.contains(Reg) || X86::GR32RegClass.contains(Reg))
       continue;
 
@@ -2708,7 +2809,7 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(
 
   // Reload XMMs from stack frame.
   for (const CalleeSavedInfo &I : CSI) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
     if (X86::GR64RegClass.contains(Reg) ||
         X86::GR32RegClass.contains(Reg))
       continue;
@@ -2725,7 +2826,7 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(
   // POP GPRs.
   unsigned Opc = STI.is64Bit() ? X86::POP64r : X86::POP32r;
   for (const CalleeSavedInfo &I : CSI) {
-    unsigned Reg = I.getReg();
+    Register Reg = I.getReg();
     if (!X86::GR64RegClass.contains(Reg) &&
         !X86::GR32RegClass.contains(Reg))
       continue;

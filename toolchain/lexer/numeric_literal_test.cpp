@@ -24,6 +24,7 @@ using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Property;
 using ::testing::Truly;
+using ::testing::VariantWith;
 
 class NumericLiteralTest : public ::testing::Test {
  protected:
@@ -32,7 +33,7 @@ class NumericLiteralTest : public ::testing::Test {
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     CHECK(result);
-    EXPECT_EQ(result->Text(), text);
+    EXPECT_EQ(result->text(), text);
     return *result;
   }
 
@@ -44,15 +45,6 @@ class NumericLiteralTest : public ::testing::Test {
 
   ErrorTrackingDiagnosticConsumer error_tracker;
 };
-
-// TODO: Use gmock's VariantWith once it exists.
-template <typename T, typename M>
-auto VariantWith(M value_matcher) -> decltype(auto) {
-  return Truly([=](auto&& variant) {
-    const T* value = std::get_if<T>(&variant);
-    return value && ::testing::Matches(value_matcher)(*value);
-  });
-}
 
 // Matcher for signed llvm::APInt.
 auto IsSignedInteger(int64_t value) -> Matcher<llvm::APInt> {
@@ -109,7 +101,7 @@ TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
     EXPECT_THAT(Parse(testcase.token),
                 HasIntValue(IsUnsignedInteger(testcase.value)))
         << testcase.token;
-    EXPECT_FALSE(error_tracker.SeenError()) << testcase.token;
+    EXPECT_FALSE(error_tracker.seen_error()) << testcase.token;
   }
 }
 
@@ -131,7 +123,7 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
   for (llvm::StringLiteral literal : valid) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
-    EXPECT_FALSE(error_tracker.SeenError()) << literal;
+    EXPECT_FALSE(error_tracker.seen_error()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -143,7 +135,7 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
   for (llvm::StringLiteral literal : invalid) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasUnrecoverableError()) << literal;
-    EXPECT_TRUE(error_tracker.SeenError()) << literal;
+    EXPECT_TRUE(error_tracker.seen_error()) << literal;
   }
 }
 
@@ -166,7 +158,7 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
   for (llvm::StringLiteral literal : valid) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
-    EXPECT_FALSE(error_tracker.SeenError()) << literal;
+    EXPECT_FALSE(error_tracker.seen_error()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -193,7 +185,7 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
   for (llvm::StringLiteral literal : invalid) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
-    EXPECT_TRUE(error_tracker.SeenError()) << literal;
+    EXPECT_TRUE(error_tracker.seen_error()) << literal;
   }
 }
 
@@ -250,7 +242,8 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
                               .mantissa = IsUnsignedInteger(testcase.mantissa),
                               .exponent = IsSignedInteger(testcase.exponent)}))
         << testcase.token;
-    EXPECT_EQ(error_tracker.SeenError(), testcase.radix == 2) << testcase.token;
+    EXPECT_EQ(error_tracker.seen_error(), testcase.radix == 2)
+        << testcase.token;
   }
 }
 
@@ -265,7 +258,7 @@ TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
                       return (exponent + 9223372036854775800).getSExtValue() ==
                              -24;
                     })}));
-  EXPECT_FALSE(error_tracker.SeenError());
+  EXPECT_FALSE(error_tracker.seen_error());
 }
 
 TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
@@ -277,7 +270,7 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
   for (llvm::StringLiteral literal : invalid_digit_separators) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasRealValue({})) << literal;
-    EXPECT_TRUE(error_tracker.SeenError()) << literal;
+    EXPECT_TRUE(error_tracker.seen_error()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -328,14 +321,14 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
   for (llvm::StringLiteral literal : invalid) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(literal), HasUnrecoverableError()) << literal;
-    EXPECT_TRUE(error_tracker.SeenError()) << literal;
+    EXPECT_TRUE(error_tracker.seen_error()) << literal;
   }
 }
 
 TEST_F(NumericLiteralTest, TooManyDigits) {
   std::string long_number(2000, '1');
   EXPECT_THAT(Parse(long_number), HasUnrecoverableError());
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
 }
 
 }  // namespace

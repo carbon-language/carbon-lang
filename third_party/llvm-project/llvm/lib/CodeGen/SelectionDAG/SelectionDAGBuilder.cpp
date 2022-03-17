@@ -566,7 +566,7 @@ static void getCopyToParts(SelectionDAG &DAG, const SDLoc &DL, SDValue Val,
     unsigned RoundBits = RoundParts * PartBits;
     unsigned OddParts = NumParts - RoundParts;
     SDValue OddVal = DAG.getNode(ISD::SRL, DL, ValueVT, Val,
-      DAG.getShiftAmountConstant(RoundBits, ValueVT, DL, /*LegalTypes*/false));
+      DAG.getShiftAmountConstant(RoundBits, ValueVT, DL));
 
     getCopyToParts(DAG, DL, OddVal, Parts + RoundParts, OddParts, PartVT, V,
                    CallConv);
@@ -3150,26 +3150,12 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
   EVT ShiftTy = DAG.getTargetLoweringInfo().getShiftAmountTy(
       Op1.getValueType(), DAG.getDataLayout());
 
-  // Coerce the shift amount to the right type if we can.
+  // Coerce the shift amount to the right type if we can. This exposes the
+  // truncate or zext to optimization early.
   if (!I.getType()->isVectorTy() && Op2.getValueType() != ShiftTy) {
-    unsigned ShiftSize = ShiftTy.getSizeInBits();
-    unsigned Op2Size = Op2.getValueSizeInBits();
-    SDLoc DL = getCurSDLoc();
-
-    // If the operand is smaller than the shift count type, promote it.
-    if (ShiftSize > Op2Size)
-      Op2 = DAG.getNode(ISD::ZERO_EXTEND, DL, ShiftTy, Op2);
-
-    // If the operand is larger than the shift count type but the shift
-    // count type has enough bits to represent any shift value, truncate
-    // it now. This is a common case and it exposes the truncate to
-    // optimization early.
-    else if (ShiftSize >= Log2_32_Ceil(Op1.getValueSizeInBits()))
-      Op2 = DAG.getNode(ISD::TRUNCATE, DL, ShiftTy, Op2);
-    // Otherwise we'll need to temporarily settle for some other convenient
-    // type.  Type legalization will make adjustments once the shiftee is split.
-    else
-      Op2 = DAG.getZExtOrTrunc(Op2, DL, MVT::i32);
+    assert(ShiftTy.getSizeInBits() >= Log2_32_Ceil(Op1.getValueSizeInBits()) &&
+           "Unexpected shift type");
+    Op2 = DAG.getZExtOrTrunc(Op2, getCurSDLoc(), ShiftTy);
   }
 
   bool nuw = false;
@@ -4014,7 +4000,7 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
   Type *Ty = I.getAllocatedType();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   auto &DL = DAG.getDataLayout();
-  uint64_t TySize = DL.getTypeAllocSize(Ty);
+  TypeSize TySize = DL.getTypeAllocSize(Ty);
   MaybeAlign Alignment = std::max(DL.getPrefTypeAlign(Ty), I.getAlign());
 
   SDValue AllocSize = getValue(I.getArraySize());
@@ -4023,9 +4009,15 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
   if (AllocSize.getValueType() != IntPtr)
     AllocSize = DAG.getZExtOrTrunc(AllocSize, dl, IntPtr);
 
-  AllocSize = DAG.getNode(ISD::MUL, dl, IntPtr,
-                          AllocSize,
-                          DAG.getConstant(TySize, dl, IntPtr));
+  if (TySize.isScalable())
+    AllocSize = DAG.getNode(ISD::MUL, dl, IntPtr, AllocSize,
+                            DAG.getVScale(dl, IntPtr,
+                                          APInt(IntPtr.getScalarSizeInBits(),
+                                                TySize.getKnownMinValue())));
+  else
+    AllocSize =
+        DAG.getNode(ISD::MUL, dl, IntPtr, AllocSize,
+                    DAG.getConstant(TySize.getFixedValue(), dl, IntPtr));
 
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
@@ -4848,10 +4840,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
   }
 
   if (!I.getType()->isVoidTy()) {
-    if (VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
-      EVT VT = TLI.getValueType(DAG.getDataLayout(), PTy);
-      Result = DAG.getNode(ISD::BITCAST, getCurSDLoc(), VT, Result);
-    } else
+    if (!isa<VectorType>(I.getType()))
       Result = lowerRangeToAssertZExt(DAG, I, Result);
 
     MaybeAlign Alignment = I.getRetAlign();
@@ -6340,6 +6329,29 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
 #include "llvm/IR/VPIntrinsics.def"
     visitVectorPredicationIntrinsic(cast<VPIntrinsic>(I));
     return;
+  case Intrinsic::fptrunc_round: {
+    // Get the last argument, the metadata and convert it to an integer in the
+    // call
+    Metadata *MD = cast<MetadataAsValue>(I.getArgOperand(1))->getMetadata();
+    Optional<RoundingMode> RoundMode =
+        convertStrToRoundingMode(cast<MDString>(MD)->getString());
+
+    EVT VT = TLI.getValueType(DAG.getDataLayout(), I.getType());
+
+    // Propagate fast-math-flags from IR to node(s).
+    SDNodeFlags Flags;
+    Flags.copyFMF(*cast<FPMathOperator>(&I));
+    SelectionDAG::FlagInserter FlagsInserter(DAG, Flags);
+
+    SDValue Result;
+    Result = DAG.getNode(
+        ISD::FPTRUNC_ROUND, sdl, VT, getValue(I.getArgOperand(0)),
+        DAG.getTargetConstant((int)RoundMode.getValue(), sdl,
+                              TLI.getPointerTy(DAG.getDataLayout())));
+    setValue(&I, Result);
+
+    return;
+  }
   case Intrinsic::fmuladd: {
     EVT VT = TLI.getValueType(DAG.getDataLayout(), I.getType());
     if (TM.Options.AllowFPOpFusion != FPOpFusion::Strict &&
@@ -6873,6 +6885,8 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
   case Intrinsic::experimental_gc_relocate:
     visitGCRelocate(cast<GCRelocateInst>(I));
     return;
+  case Intrinsic::instrprof_cover:
+    llvm_unreachable("instrprof failed to lower a cover");
   case Intrinsic::instrprof_increment:
     llvm_unreachable("instrprof failed to lower an increment");
   case Intrinsic::instrprof_value_profile:
@@ -7329,8 +7343,6 @@ void SelectionDAGBuilder::visitVPLoadGather(const VPIntrinsic &VPIntrin, EVT VT,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   Value *PtrOperand = VPIntrin.getArgOperand(0);
   MaybeAlign Alignment = VPIntrin.getPointerAlignment();
-  if (!Alignment)
-    Alignment = DAG.getEVTAlign(VT);
   AAMDNodes AAInfo = VPIntrin.getAAMetadata();
   const MDNode *Ranges = VPIntrin.getMetadata(LLVMContext::MD_range);
   SDValue LD;
@@ -7338,6 +7350,8 @@ void SelectionDAGBuilder::visitVPLoadGather(const VPIntrinsic &VPIntrin, EVT VT,
   if (!IsGather) {
     // Do not serialize variable-length loads of constant memory with
     // anything.
+    if (!Alignment)
+      Alignment = DAG.getEVTAlign(VT);
     MemoryLocation ML = MemoryLocation::getAfter(PtrOperand, AAInfo);
     AddToChain = !AA || !AA->pointsToConstantMemory(ML);
     SDValue InChain = AddToChain ? DAG.getRoot() : DAG.getEntryNode();
@@ -7347,6 +7361,8 @@ void SelectionDAGBuilder::visitVPLoadGather(const VPIntrinsic &VPIntrin, EVT VT,
     LD = DAG.getLoadVP(VT, DL, InChain, OpValues[0], OpValues[1], OpValues[2],
                        MMO, false /*IsExpanding */);
   } else {
+    if (!Alignment)
+      Alignment = DAG.getEVTAlign(VT.getScalarType());
     unsigned AS =
         PtrOperand->getType()->getScalarType()->getPointerAddressSpace();
     MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
@@ -7387,18 +7403,22 @@ void SelectionDAGBuilder::visitVPStoreScatter(const VPIntrinsic &VPIntrin,
   Value *PtrOperand = VPIntrin.getArgOperand(1);
   EVT VT = OpValues[0].getValueType();
   MaybeAlign Alignment = VPIntrin.getPointerAlignment();
-  if (!Alignment)
-    Alignment = DAG.getEVTAlign(VT);
   AAMDNodes AAInfo = VPIntrin.getAAMetadata();
   SDValue ST;
   if (!IsScatter) {
+    if (!Alignment)
+      Alignment = DAG.getEVTAlign(VT);
+    SDValue Ptr = OpValues[1];
+    SDValue Offset = DAG.getUNDEF(Ptr.getValueType());
     MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
         MachinePointerInfo(PtrOperand), MachineMemOperand::MOStore,
         MemoryLocation::UnknownSize, *Alignment, AAInfo);
-    ST =
-        DAG.getStoreVP(getMemoryRoot(), DL, OpValues[0], OpValues[1],
-                       OpValues[2], OpValues[3], MMO, false /* IsTruncating */);
+    ST = DAG.getStoreVP(getMemoryRoot(), DL, OpValues[0], Ptr, Offset,
+                        OpValues[2], OpValues[3], VT, MMO, ISD::UNINDEXED,
+                        /* IsTruncating */ false, /*IsCompressing*/ false);
   } else {
+    if (!Alignment)
+      Alignment = DAG.getEVTAlign(VT.getScalarType());
     unsigned AS =
         PtrOperand->getType()->getScalarType()->getPointerAddressSpace();
     MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(

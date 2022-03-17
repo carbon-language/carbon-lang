@@ -11,8 +11,7 @@
 #include "SyntheticSections.h"
 #include "Target.h"
 #include "Thunks.h"
-#include "lld/Common/ErrorHandler.h"
-#include "lld/Common/Memory.h"
+#include "lld/Common/CommonLinkerContext.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
@@ -197,8 +196,8 @@ static bool addOptional(StringRef name, uint64_t value,
   Symbol *sym = symtab->find(name);
   if (!sym || sym->isDefined())
     return false;
-  sym->resolve(Defined{/*file=*/nullptr, saver.save(name), STB_GLOBAL,
-                       STV_HIDDEN, STT_FUNC, value,
+  sym->resolve(Defined{/*file=*/nullptr, StringRef(), STB_GLOBAL, STV_HIDDEN,
+                       STT_FUNC, value,
                        /*size=*/0, /*section=*/nullptr});
   defined.push_back(cast<Defined>(sym));
   return true;
@@ -364,6 +363,7 @@ public:
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
+  int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
   void writePltHeader(uint8_t *buf) const override;
   void writePlt(uint8_t *buf, const Symbol &sym,
                 uint64_t pltEntryAddr) const override;
@@ -1060,6 +1060,17 @@ RelType PPC64::getDynRel(RelType type) const {
   return R_PPC64_NONE;
 }
 
+int64_t PPC64::getImplicitAddend(const uint8_t *buf, RelType type) const {
+  switch (type) {
+  case R_PPC64_NONE:
+    return 0;
+  default:
+    internalLinkerError(getErrorLocation(buf),
+                        "cannot read addend for relocation " + toString(type));
+    return 0;
+  }
+}
+
 void PPC64::writeGotHeader(uint8_t *buf) const {
   write64(buf, getPPC64TocBase());
 }
@@ -1369,9 +1380,10 @@ bool PPC64::needsThunk(RelExpr expr, RelType type, const InputFile *file,
   if (type == R_PPC64_REL24_NOTOC && (s.stOther >> 5) > 1)
     return true;
 
-  // If a symbol is a weak undefined and we are compiling an executable
-  // it doesn't need a range-extending thunk since it can't be called.
-  if (s.isUndefWeak() && !config->shared)
+  // An undefined weak symbol not in a PLT does not need a thunk. If it is
+  // hidden, its binding has been converted to local, so we just check
+  // isUndefined() here. A undefined non-weak symbol has been errored.
+  if (s.isUndefined())
     return false;
 
   // If the offset exceeds the range of the branch type then it will need

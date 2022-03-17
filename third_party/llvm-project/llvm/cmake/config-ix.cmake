@@ -602,7 +602,7 @@ find_program(GOLD_EXECUTABLE NAMES ${LLVM_DEFAULT_TARGET_TRIPLE}-ld.gold ld.gold
 set(LLVM_BINUTILS_INCDIR "" CACHE PATH
     "PATH to binutils/include containing plugin-api.h for gold plugin.")
 
-if(CMAKE_GENERATOR STREQUAL "Ninja")
+if(CMAKE_GENERATOR MATCHES "Ninja")
   execute_process(COMMAND ${CMAKE_MAKE_PROGRAM} --version
     OUTPUT_VARIABLE NINJA_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -610,7 +610,7 @@ if(CMAKE_GENERATOR STREQUAL "Ninja")
   message(STATUS "Ninja version: ${NINJA_VERSION}")
 endif()
 
-if(CMAKE_GENERATOR STREQUAL "Ninja" AND
+if(CMAKE_GENERATOR MATCHES "Ninja" AND
     NOT "${NINJA_VERSION}" VERSION_LESS "1.9.0" AND
     CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER "15.6.0")
   set(LLVM_TOUCH_STATIC_LIBRARIES ON)
@@ -650,7 +650,6 @@ else()
       find_ocamlfind_package(ctypes VERSION 0.4 OPTIONAL)
       if( HAVE_OCAML_CTYPES )
         message(STATUS "OCaml bindings enabled.")
-        find_ocamlfind_package(oUnit VERSION 2 OPTIONAL)
         set(LLVM_BINDINGS "${LLVM_BINDINGS} ocaml")
 
         set(LLVM_OCAML_INSTALL_PATH "${OCAML_STDLIB_PATH}" CACHE STRING

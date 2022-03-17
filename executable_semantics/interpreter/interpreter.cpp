@@ -17,6 +17,7 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/interpreter/action.h"
+#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -177,14 +178,10 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
-      if (!bindings.has_value()) {
-        // TODO: move this to typechecker.
-        FATAL_COMPILATION_ERROR(source_loc)
-            << "Name bindings are not supported in this context";
-      }
+      CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      if (placeholder.named_entity().has_value()) {
-        (*bindings)->Initialize(*placeholder.named_entity(), v);
+      if (placeholder.value_node().has_value()) {
+        (*bindings)->Initialize(*placeholder.value_node(), v);
       }
       return true;
     }
@@ -193,11 +190,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::TupleValue: {
           const auto& p_tup = cast<TupleValue>(*p);
           const auto& v_tup = cast<TupleValue>(*v);
-          if (p_tup.elements().size() != v_tup.elements().size()) {
-            FATAL_PROGRAM_ERROR(source_loc)
-                << "arity mismatch in tuple pattern match:\n  pattern: "
-                << p_tup << "\n  value: " << v_tup;
-          }
+          CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
                               source_loc, bindings)) {
@@ -275,8 +268,8 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Nonnull<const Value*> value = todo_.ValueOfName(
-          cast<IdentifierExpression>(exp).named_entity(), exp.source_loc());
+      Nonnull<const Value*> value = todo_.ValueOfNode(
+          cast<IdentifierExpression>(exp).value_node(), exp.source_loc());
       CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
@@ -345,6 +338,7 @@ void Interpreter::StepLvalue() {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
+    case ExpressionKind::IfExpression:
       FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
@@ -371,6 +365,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AutoType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -380,6 +376,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
@@ -497,8 +494,18 @@ void Interpreter::StepExp() {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        return todo_.FinishAction(act.results()[0]->GetField(
-            arena_, FieldPath(access.field()), exp.source_loc()));
+        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+        if (access.impl().has_value()) {
+          auto witness_addr =
+              todo_.ValueOfNode(*access.impl(), access.source_loc());
+          witness = cast<Witness>(
+              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                         access.source_loc()));
+        }
+        FieldPath::Component field(access.field(), witness);
+        Nonnull<const Value*> member = act.results()[0]->GetField(
+            arena_, FieldPath(field), exp.source_loc());
+        return todo_.FinishAction(member);
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -506,7 +513,7 @@ void Interpreter::StepExp() {
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       Nonnull<const Value*> value =
-          todo_.ValueOfName(ident.named_entity(), ident.source_loc());
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         value = heap_.Read(lvalue->address(), exp.source_loc());
       }
@@ -567,6 +574,17 @@ void Interpreter::StepExp() {
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type());
             RuntimeScope function_scope(&heap_);
+            // Bring the impl witness tables into scope.
+            for (const auto& [impl_bind, impl_node] :
+                 cast<CallExpression>(exp).impls()) {
+              Nonnull<const Value*> witness =
+                  todo_.ValueOfNode(impl_node, exp.source_loc());
+              if (witness->kind() == Value::Kind::LValue) {
+                const LValue& lval = cast<LValue>(*witness);
+                witness = heap_.Read(lval.address(), exp.source_loc());
+              }
+              function_scope.Initialize(impl_bind, witness);
+            }
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),
                                &function_scope));
@@ -649,7 +667,7 @@ void Interpreter::StepExp() {
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
             std::vector<Nonnull<const GenericBinding*>>(), act.results()[0],
-            act.results()[1]));
+            act.results()[1], std::vector<Nonnull<const ImplBinding*>>()));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {
@@ -664,6 +682,21 @@ void Interpreter::StepExp() {
     case ExpressionKind::StringTypeLiteral: {
       CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
+    }
+    case ExpressionKind::IfExpression: {
+      const auto& if_expr = cast<IfExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(if_expr.condition()));
+      } else if (act.pos() == 1) {
+        const BoolValue& condition = cast<BoolValue>(*act.results()[0]);
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            condition.value() ? if_expr.then_expression()
+                              : if_expr.else_expression()));
+      } else {
+        return todo_.FinishAction(act.results()[1]);
+      }
+      break;
     }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
@@ -724,6 +757,13 @@ void Interpreter::StepPattern() {
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<ExpressionPattern>(pattern).expression()));
+      } else {
+        return todo_.FinishAction(act.results()[0]);
+      }
+    case PatternKind::VarPattern:
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<PatternAction>(
+            &cast<VarPattern>(pattern).pattern()));
       } else {
         return todo_.FinishAction(act.results()[0]);
       }
@@ -963,6 +1003,8 @@ void Interpreter::StepDeclaration() {
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::ChoiceDeclaration:
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ImplDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

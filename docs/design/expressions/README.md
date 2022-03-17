@@ -12,6 +12,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Precedence](#precedence)
+-   [Names](#names)
+    -   [Unqualified names](#unqualified-names)
+    -   [Qualified names and member access](#qualified-names-and-member-access)
 -   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
@@ -54,6 +57,13 @@ graph BT
     braces["{...}"]
     click braces "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals"
 
+    unqualifiedName["x"]
+    click unqualifiedName "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
+
+    memberAccess>"x.y<br>
+                    x.(...)"]
+    click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
+
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
@@ -79,7 +89,8 @@ graph BT
 
     expressionEnd["x;"]
 
-    as & not --> parens & braces
+    memberAccess --> parens & braces & unqualifiedName
+    as & not --> memberAccess
     comparison --> as
     and & or --> comparison & not
     if & expressionEnd --> and & or
@@ -112,6 +123,79 @@ The diagram's attributes are:
 
     -   For example, `+` and `-` are left-associative and in the same precedence
         group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
+
+## Names
+
+### Unqualified names
+
+An _unqualified name_ is a [word](../lexical_conventions/words.md) that is not a
+keyword and is not preceded by a period (`.`).
+
+**TODO:** Name lookup rules for unqualified names.
+
+### Qualified names and member access
+
+A _qualified name_ is a word that appears immediately after a period. Qualified
+names appear in the following contexts:
+
+-   [Designators](/docs/design/classes.md#literals): `.` _word_
+-   [Simple member access expressions](member_access.md): _expression_ `.`
+    _word_
+
+```
+var x: auto = {.hello = 1, .world = 2};
+                ^^^^^       ^^^^^ qualified name
+               ^^^^^^      ^^^^^^ designator
+
+x.hello = x.world;
+  ^^^^^     ^^^^^ qualified name
+^^^^^^^   ^^^^^^^ member access expression
+```
+
+Qualified names refer to members of an entity determined by the context in which
+the expression appears. For a member access, the entity is named by the
+expression preceding the period. In a struct literal, the entity is the struct
+type. For example:
+
+```
+package Foo api;
+namespace N;
+fn N.F() {}
+
+fn G() {
+  // Same as `(Foo.N).F()`.
+  // `Foo.N` names namespace `N` in package `Foo`.
+  // `(Foo.N).F` names function `F` in namespace `N`.
+  Foo.N.F();
+}
+
+// `.n` refers to the member `n` of `{.n: i32}`.
+fn H(a: {.n: i32}) -> i32 {
+  // `a.n` is resolved to the member `{.n: i32}.n`,
+  // and names the corresponding subobject of `a`.
+  return a.n;
+}
+
+fn J() {
+  // `.n` refers to the member `n of `{.n: i32}`.
+  H({.n = 5 as i32});
+}
+```
+
+Member access expressions associate left-to-right. If the member name is more
+complex than a single _word_, a compound member access expression can be used,
+with parentheses around the member name:
+
+-   _expression_ `.` `(` _expression_ `)`
+
+```
+interface I { fn F[me: Self](); }
+class X {}
+external impl X as I { fn F[me: Self]() {} }
+
+// `x.I.F()` would mean `(x.I).F()`.
+fn Q(x: X) { x.(I.F)(); }
+```
 
 ## Operators
 
@@ -161,8 +245,8 @@ fn Run(args: Span(StringView)) {
 
 ## Alternatives considered
 
-Other expression documents will list more references; this lists references not
-noted elsewhere.
+Other expression documents will list more alternatives; this lists alternatives
+not noted elsewhere.
 
 -   [Total order](/proposals/p0555.md#total-order)
 -   [Different precedence for different operands](/proposals/p0555.md#different-precedence-for-different-operands)

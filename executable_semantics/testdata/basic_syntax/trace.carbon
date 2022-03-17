@@ -13,7 +13,6 @@
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** type checking **********
 // CHECK: checking pattern (format_str: String)
-// CHECK: constants: {{.*Main: fun<Main>.*}}
 // CHECK: ********** type checking complete **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** starting execution **********

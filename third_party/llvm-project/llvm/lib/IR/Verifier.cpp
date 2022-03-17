@@ -58,7 +58,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Attributes.h"
@@ -70,7 +69,6 @@
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -523,6 +521,7 @@ private:
   void visitUserOp2(Instruction &I) { visitUserOp1(I); }
   void visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call);
   void visitConstrainedFPIntrinsic(ConstrainedFPIntrinsic &FPI);
+  void visitVPIntrinsic(VPIntrinsic &VPI);
   void visitDbgIntrinsic(StringRef Kind, DbgVariableIntrinsic &DII);
   void visitDbgLabelIntrinsic(StringRef Kind, DbgLabelInst &DLI);
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI);
@@ -1826,33 +1825,34 @@ void Verifier::verifyParameterAttrs(AttributeSet Attrs, Type *Ty,
              "Attribute 'preallocated' does not support unsized types!", V);
     }
     if (!PTy->isOpaque()) {
-      if (!isa<PointerType>(PTy->getElementType()))
+      if (!isa<PointerType>(PTy->getNonOpaquePointerElementType()))
         Assert(!Attrs.hasAttribute(Attribute::SwiftError),
                "Attribute 'swifterror' only applies to parameters "
                "with pointer to pointer type!",
                V);
       if (Attrs.hasAttribute(Attribute::ByRef)) {
-        Assert(Attrs.getByRefType() == PTy->getElementType(),
+        Assert(Attrs.getByRefType() == PTy->getNonOpaquePointerElementType(),
                "Attribute 'byref' type does not match parameter!", V);
       }
 
       if (Attrs.hasAttribute(Attribute::ByVal) && Attrs.getByValType()) {
-        Assert(Attrs.getByValType() == PTy->getElementType(),
+        Assert(Attrs.getByValType() == PTy->getNonOpaquePointerElementType(),
                "Attribute 'byval' type does not match parameter!", V);
       }
 
       if (Attrs.hasAttribute(Attribute::Preallocated)) {
-        Assert(Attrs.getPreallocatedType() == PTy->getElementType(),
+        Assert(Attrs.getPreallocatedType() ==
+                   PTy->getNonOpaquePointerElementType(),
                "Attribute 'preallocated' type does not match parameter!", V);
       }
 
       if (Attrs.hasAttribute(Attribute::InAlloca)) {
-        Assert(Attrs.getInAllocaType() == PTy->getElementType(),
+        Assert(Attrs.getInAllocaType() == PTy->getNonOpaquePointerElementType(),
                "Attribute 'inalloca' type does not match parameter!", V);
       }
 
       if (Attrs.hasAttribute(Attribute::ElementType)) {
-        Assert(Attrs.getElementType() == PTy->getElementType(),
+        Assert(Attrs.getElementType() == PTy->getNonOpaquePointerElementType(),
                "Attribute 'elementtype' type does not match parameter!", V);
       }
     }
@@ -2193,11 +2193,12 @@ void Verifier::verifyStatepoint(const CallBase &Call) {
          "positive",
          Call);
 
-  const Value *Target = Call.getArgOperand(2);
-  auto *PT = dyn_cast<PointerType>(Target->getType());
-  Assert(PT && PT->getElementType()->isFunctionTy(),
-         "gc.statepoint callee must be of function pointer type", Call, Target);
-  FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
+  Type *TargetElemType = Call.getAttributes().getParamElementType(2);
+  Assert(TargetElemType,
+         "gc.statepoint callee argument must have elementtype attribute", Call);
+  FunctionType *TargetFuncType = dyn_cast<FunctionType>(TargetElemType);
+  Assert(TargetFuncType,
+         "gc.statepoint callee elementtype must be function type", Call);
 
   const int NumCallArgs = cast<ConstantInt>(Call.getArgOperand(3))->getZExtValue();
   Assert(NumCallArgs >= 0,
@@ -3285,11 +3286,12 @@ void Verifier::visitCallBase(CallBase &Call) {
       visitIntrinsicCall(ID, Call);
 
   // Verify that a callsite has at most one "deopt", at most one "funclet", at
-  // most one "gc-transition", at most one "cfguardtarget",
-  // and at most one "preallocated" operand bundle.
+  // most one "gc-transition", at most one "cfguardtarget", at most one
+  // "preallocated" operand bundle, and at most one "ptrauth" operand bundle.
   bool FoundDeoptBundle = false, FoundFuncletBundle = false,
        FoundGCTransitionBundle = false, FoundCFGuardTargetBundle = false,
        FoundPreallocatedBundle = false, FoundGCLiveBundle = false,
+       FoundPtrauthBundle = false,
        FoundAttachedCallBundle = false;
   for (unsigned i = 0, e = Call.getNumOperandBundles(); i < e; ++i) {
     OperandBundleUse BU = Call.getOperandBundleAt(i);
@@ -3315,6 +3317,16 @@ void Verifier::visitCallBase(CallBase &Call) {
       FoundCFGuardTargetBundle = true;
       Assert(BU.Inputs.size() == 1,
              "Expected exactly one cfguardtarget bundle operand", Call);
+    } else if (Tag == LLVMContext::OB_ptrauth) {
+      Assert(!FoundPtrauthBundle, "Multiple ptrauth operand bundles", Call);
+      FoundPtrauthBundle = true;
+      Assert(BU.Inputs.size() == 2,
+             "Expected exactly two ptrauth bundle operands", Call);
+      Assert(isa<ConstantInt>(BU.Inputs[0]) &&
+             BU.Inputs[0]->getType()->isIntegerTy(32),
+             "Ptrauth bundle key operand must be an i32 constant", Call);
+      Assert(BU.Inputs[1]->getType()->isIntegerTy(64),
+             "Ptrauth bundle discriminator operand must be an i64", Call);
     } else if (Tag == LLVMContext::OB_preallocated) {
       Assert(!FoundPreallocatedBundle, "Multiple preallocated operand bundles",
              Call);
@@ -3338,6 +3350,10 @@ void Verifier::visitCallBase(CallBase &Call) {
       verifyAttachedCallBundle(Call, BU);
     }
   }
+
+  // Verify that callee and callsite agree on whether to use pointer auth.
+  Assert(!(Call.getCalledFunction() && FoundPtrauthBundle),
+         "Direct call cannot have a ptrauth bundle", Call);
 
   // Verify that each inlinable callsite of a debug-info-bearing function in a
   // debug-info-bearing function has a debug location attached to it. Failure to
@@ -3999,6 +4015,11 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
              "A single unwind edge may only enter one EH pad", TI);
       Assert(Seen.insert(FromPad).second,
              "EH pad jumps through a cycle of pads", FromPad);
+
+      // This will be diagnosed on the corresponding instruction already. We
+      // need the extra check here to make sure getParentPad() works.
+      Assert(isa<FuncletPadInst>(FromPad) || isa<CatchSwitchInst>(FromPad),
+             "Parent pad must be catchpad/cleanuppad/catchswitch", TI);
     }
   }
 }
@@ -4767,6 +4788,31 @@ void Verifier::visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call) {
            "an array");
     break;
   }
+  case Intrinsic::fptrunc_round: {
+    // Check the rounding mode
+    Metadata *MD = nullptr;
+    auto *MAV = dyn_cast<MetadataAsValue>(Call.getOperand(1));
+    if (MAV)
+      MD = MAV->getMetadata();
+
+    Assert(MD != nullptr, "missing rounding mode argument", Call);
+
+    Assert(isa<MDString>(MD),
+           ("invalid value for llvm.fptrunc.round metadata operand"
+            " (the operand should be a string)"),
+           MD);
+
+    Optional<RoundingMode> RoundMode =
+        convertStrToRoundingMode(cast<MDString>(MD)->getString());
+    Assert(RoundMode.hasValue() &&
+               RoundMode.getValue() != RoundingMode::Dynamic,
+           "unsupported rounding mode argument", Call);
+    break;
+  }
+#define BEGIN_REGISTER_VP_INTRINSIC(VPID, ...) case Intrinsic::VPID:
+#include "llvm/IR/VPIntrinsics.def"
+    visitVPIntrinsic(cast<VPIntrinsic>(Call));
+    break;
 #define INSTRUCTION(NAME, NARGS, ROUND_MODE, INTRINSIC)                        \
   case Intrinsic::INTRINSIC:
 #include "llvm/IR/ConstrainedOps.def"
@@ -4998,9 +5044,8 @@ void Verifier::visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call) {
            Call.getArgOperand(0));
 
     // Assert that result type matches wrapped callee.
-    const Value *Target = StatepointCall->getArgOperand(2);
-    auto *PT = cast<PointerType>(Target->getType());
-    auto *TargetFuncType = cast<FunctionType>(PT->getElementType());
+    auto *TargetFuncType = cast<FunctionType>(
+        StatepointCall->getAttributes().getParamElementType(2));
     Assert(Call.getType() == TargetFuncType->getReturnType(),
            "gc.result result type does not match wrapped callee", Call);
     break;
@@ -5307,7 +5352,7 @@ void Verifier::visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call) {
       PointerType *Op0PtrTy =
           cast<PointerType>(Call.getArgOperand(0)->getType());
       if (!Op0PtrTy->isOpaque())
-        Op0ElemTy = Op0PtrTy->getElementType();
+        Op0ElemTy = Op0PtrTy->getNonOpaquePointerElementType();
       break;
     }
     case Intrinsic::matrix_column_major_store: {
@@ -5321,7 +5366,7 @@ void Verifier::visitIntrinsicCall(Intrinsic::ID ID, CallBase &Call) {
       PointerType *Op1PtrTy =
           cast<PointerType>(Call.getArgOperand(1)->getType());
       if (!Op1PtrTy->isOpaque())
-        Op1ElemTy = Op1PtrTy->getElementType();
+        Op1ElemTy = Op1PtrTy->getNonOpaquePointerElementType();
       break;
     }
     default:
@@ -5471,6 +5516,17 @@ static DISubprogram *getSubprogram(Metadata *LocalScope) {
   // Just return null; broken scope chains are checked elsewhere.
   assert(!isa<DILocalScope>(LocalScope) && "Unknown type of local scope");
   return nullptr;
+}
+
+void Verifier::visitVPIntrinsic(VPIntrinsic &VPI) {
+  if (auto *VPCast = dyn_cast<VPCastIntrinsic>(&VPI)) {
+    auto *RetTy = cast<VectorType>(VPCast->getType());
+    auto *ValTy = cast<VectorType>(VPCast->getOperand(0)->getType());
+    Assert(RetTy->getElementCount() == ValTy->getElementCount(),
+           "VP cast intrinsic first argument and result vector lengths must be "
+           "equal",
+           *VPCast);
+  }
 }
 
 void Verifier::visitConstrainedFPIntrinsic(ConstrainedFPIntrinsic &FPI) {
@@ -5804,14 +5860,10 @@ void Verifier::verifyAttachedCallBundle(const CallBase &Call,
          "void return type",
          Call);
 
-  Assert((BU.Inputs.empty() ||
-          (BU.Inputs.size() == 1 && isa<Function>(BU.Inputs.front()))),
-         "operand bundle \"clang.arc.attachedcall\" can take either no "
-         "arguments or one function as an argument",
+  Assert(BU.Inputs.size() == 1 && isa<Function>(BU.Inputs.front()),
+         "operand bundle \"clang.arc.attachedcall\" requires one function as "
+         "an argument",
          Call);
-
-  if (BU.Inputs.empty())
-    return;
 
   auto *Fn = cast<Function>(BU.Inputs.front());
   Intrinsic::ID IID = Fn->getIntrinsicID();

@@ -485,7 +485,7 @@ static bool createThunks(OutputSection *os, int margin) {
     MutableArrayRef<coff_relocation> newRelocs;
     if (originalRelocs.data() == curRelocs.data()) {
       newRelocs = makeMutableArrayRef(
-          bAlloc.Allocate<coff_relocation>(originalRelocs.size()),
+          bAlloc().Allocate<coff_relocation>(originalRelocs.size()),
           originalRelocs.size());
     } else {
       newRelocs = makeMutableArrayRef(
@@ -712,7 +712,7 @@ bool Writer::fixGnuImportChunks() {
 
   bool hasIdata = false;
   // Sort all .idata$* chunks, grouping chunks from the same library,
-  // with alphabetical ordering of the object fils within a library.
+  // with alphabetical ordering of the object files within a library.
   for (auto it : partialSections) {
     PartialSection *pSec = it.second;
     if (!pSec->name.startswith(".idata"))

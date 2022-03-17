@@ -187,6 +187,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       out << ")";
       break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_expr = cast<IfExpression>(*this);
+      out << "if " << *if_expr.condition() << " then "
+          << *if_expr.then_expression() << " else "
+          << *if_expr.else_expression();
+      break;
+    }
     case ExpressionKind::UnimplementedExpression: {
       const auto& unimplemented = cast<UnimplementedExpression>(*this);
       out << "UnimplementedExpression<" << unimplemented.label() << ">(";

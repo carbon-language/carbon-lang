@@ -92,7 +92,7 @@ public:
 
   bool tryFoldCndMask(MachineInstr &MI) const;
   bool tryFoldZeroHighBits(MachineInstr &MI) const;
-  void foldInstOperand(MachineInstr &MI, MachineOperand &OpToFold) const;
+  bool foldInstOperand(MachineInstr &MI, MachineOperand &OpToFold) const;
 
   const MachineOperand *isClamp(const MachineInstr &MI) const;
   bool tryFoldClamp(MachineInstr &MI);
@@ -300,6 +300,13 @@ static bool updateOperand(FoldCandidate &Fold,
   assert(!Fold.needsShrink() && "not handled");
 
   if (Fold.isImm()) {
+    if (Old.isTied()) {
+      int NewMFMAOpc = AMDGPU::getMFMAEarlyClobberOp(MI->getOpcode());
+      if (NewMFMAOpc == -1)
+        return false;
+      MI->setDesc(TII.get(NewMFMAOpc));
+      MI->untieRegOperand(0);
+    }
     Old.ChangeToImmediate(Fold.ImmToFold);
     return true;
   }
@@ -1210,7 +1217,7 @@ bool SIFoldOperands::tryFoldZeroHighBits(MachineInstr &MI) const {
   return false;
 }
 
-void SIFoldOperands::foldInstOperand(MachineInstr &MI,
+bool SIFoldOperands::foldInstOperand(MachineInstr &MI,
                                      MachineOperand &OpToFold) const {
   // We need mutate the operands of new mov instructions to add implicit
   // uses of EXEC, but adding them invalidates the use_iterator, so defer
@@ -1218,6 +1225,7 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
   SmallVector<MachineInstr *, 4> CopiesToReplace;
   SmallVector<FoldCandidate, 4> FoldList;
   MachineOperand &Dst = MI.getOperand(0);
+  bool Changed = false;
 
   if (OpToFold.isImm()) {
     for (auto &UseMI :
@@ -1230,8 +1238,10 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
       // We may also encounter cases where one or both operands are
       // immediates materialized into a register, which would ordinarily not
       // be folded due to multiple uses or operand constraints.
-      if (tryConstantFoldOp(*MRI, TII, &UseMI))
+      if (tryConstantFoldOp(*MRI, TII, &UseMI)) {
         LLVM_DEBUG(dbgs() << "Constant folded " << UseMI);
+        Changed = true;
+      }
     }
   }
 
@@ -1290,6 +1300,9 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
     }
   }
 
+  if (CopiesToReplace.empty() && FoldList.empty())
+    return Changed;
+
   MachineFunction *MF = MI.getParent()->getParent();
   // Make sure we add EXEC uses to any new v_mov instructions created.
   for (MachineInstr *Copy : CopiesToReplace)
@@ -1321,6 +1334,7 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
       TII->commuteInstruction(*Fold.UseMI, false);
     }
   }
+  return true;
 }
 
 // Clamp patterns are canonically selected to v_max_* instructions, so only
@@ -1744,22 +1758,31 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
   bool IsIEEEMode = MFI->getMode().IEEE;
   bool HasNSZ = MFI->hasNoSignedZerosFPMath();
 
+  bool Changed = false;
   for (MachineBasicBlock *MBB : depth_first(&MF)) {
     MachineOperand *CurrentKnownM0Val = nullptr;
     for (auto &MI : make_early_inc_range(*MBB)) {
-      tryFoldCndMask(MI);
+      Changed |= tryFoldCndMask(MI);
 
-      if (tryFoldZeroHighBits(MI))
+      if (tryFoldZeroHighBits(MI)) {
+        Changed = true;
         continue;
+      }
 
-      if (MI.isRegSequence() && tryFoldRegSequence(MI))
+      if (MI.isRegSequence() && tryFoldRegSequence(MI)) {
+        Changed = true;
         continue;
+      }
 
-      if (MI.isPHI() && tryFoldLCSSAPhi(MI))
+      if (MI.isPHI() && tryFoldLCSSAPhi(MI)) {
+        Changed = true;
         continue;
+      }
 
-      if (MI.mayLoad() && tryFoldLoad(MI))
+      if (MI.mayLoad() && tryFoldLoad(MI)) {
+        Changed = true;
         continue;
+      }
 
       if (!TII->isFoldableCopy(MI)) {
         // Saw an unknown clobber of m0, so we no longer know what it is.
@@ -1770,7 +1793,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         // instruction, and not the omod multiply.
         if (IsIEEEMode || (!HasNSZ && !MI.getFlag(MachineInstr::FmNsz)) ||
             !tryFoldOMod(MI))
-          tryFoldClamp(MI);
+          Changed |= tryFoldClamp(MI);
 
         continue;
       }
@@ -1781,6 +1804,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         MachineOperand &NewM0Val = MI.getOperand(1);
         if (CurrentKnownM0Val && CurrentKnownM0Val->isIdenticalTo(NewM0Val)) {
           MI.eraseFromParent();
+          Changed = true;
           continue;
         }
 
@@ -1810,7 +1834,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       if (!MI.getOperand(0).getReg().isVirtual())
         continue;
 
-      foldInstOperand(MI, OpToFold);
+      Changed |= foldInstOperand(MI, OpToFold);
 
       // If we managed to fold all uses of this copy then we might as well
       // delete it now.
@@ -1822,6 +1846,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         auto &SrcOp = InstToErase->getOperand(1);
         auto SrcReg = SrcOp.isReg() ? SrcOp.getReg() : Register();
         InstToErase->eraseFromParent();
+        Changed = true;
         InstToErase = nullptr;
         if (!SrcReg || SrcReg.isPhysical())
           break;
@@ -1830,9 +1855,11 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
           break;
       }
       if (InstToErase && InstToErase->isRegSequence() &&
-          MRI->use_nodbg_empty(InstToErase->getOperand(0).getReg()))
+          MRI->use_nodbg_empty(InstToErase->getOperand(0).getReg())) {
         InstToErase->eraseFromParent();
+        Changed = true;
+      }
     }
   }
-  return true;
+  return Changed;
 }

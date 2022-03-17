@@ -270,9 +270,10 @@ Optional<APFloat> ConstantFoldFPBinOp(unsigned Opcode, const Register Op1,
 /// If successful, returns the G_BUILD_VECTOR representing the folded vector
 /// constant. \p MIB should have an insertion point already set to create new
 /// G_CONSTANT instructions as needed.
-Optional<MachineInstr *>
-ConstantFoldVectorBinop(unsigned Opcode, const Register Op1, const Register Op2,
-                        const MachineRegisterInfo &MRI, MachineIRBuilder &MIB);
+Register ConstantFoldVectorBinop(unsigned Opcode, const Register Op1,
+                                 const Register Op2,
+                                 const MachineRegisterInfo &MRI,
+                                 MachineIRBuilder &MIB);
 
 Optional<APInt> ConstantFoldExtOp(unsigned Opcode, const Register Op1,
                                   uint64_t Imm, const MachineRegisterInfo &MRI);
@@ -406,6 +407,30 @@ bool isBuildVectorAllZeros(const MachineInstr &MI,
 bool isBuildVectorAllOnes(const MachineInstr &MI,
                           const MachineRegisterInfo &MRI,
                           bool AllowUndef = false);
+
+/// Return true if the specified instruction is known to be a constant, or a
+/// vector of constants.
+///
+/// If \p AllowFP is true, this will consider G_FCONSTANT in addition to
+/// G_CONSTANT. If \p AllowOpaqueConstants is true, constant-like instructions
+/// such as G_GLOBAL_VALUE will also be considered.
+bool isConstantOrConstantVector(const MachineInstr &MI,
+                                const MachineRegisterInfo &MRI,
+                                bool AllowFP = true,
+                                bool AllowOpaqueConstants = true);
+
+/// Return true if the value is a constant 0 integer or a splatted vector of a
+/// constant 0 integer (with no undefs if \p AllowUndefs is false). This will
+/// handle G_BUILD_VECTOR and G_BUILD_VECTOR_TRUNC as truncation is not an issue
+/// for null values.
+bool isNullOrNullSplat(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                       bool AllowUndefs = false);
+
+/// Return true if the value is a constant -1 integer or a splatted vector of a
+/// constant -1 integer (with no undefs if \p AllowUndefs is false).
+bool isAllOnesOrAllOnesSplat(const MachineInstr &MI,
+                             const MachineRegisterInfo &MRI,
+                             bool AllowUndefs = false);
 
 /// \returns a value when \p MI is a vector splat. The splat can be either a
 /// Register or a constant.

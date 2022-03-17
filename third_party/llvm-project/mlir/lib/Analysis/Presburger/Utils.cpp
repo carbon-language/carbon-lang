@@ -16,6 +16,7 @@
 #include "mlir/Support/MathExtras.h"
 
 using namespace mlir;
+using namespace presburger_utils;
 
 /// Normalize a division's `dividend` and the `divisor` by their GCD. For
 /// example: if the dividend and divisor are [2,0,4] and 4 respectively,
@@ -24,7 +25,10 @@ static void normalizeDivisionByGCD(SmallVectorImpl<int64_t> &dividend,
                                    unsigned &divisor) {
   if (divisor == 0 || dividend.empty())
     return;
-  int64_t gcd = llvm::greatestCommonDivisor(dividend.front(), int64_t(divisor));
+  // We take the absolute value of dividend's coefficients to make sure that
+  // `gcd` is positive.
+  int64_t gcd =
+      llvm::greatestCommonDivisor(std::abs(dividend.front()), int64_t(divisor));
 
   // The reason for ignoring the constant term is as follows.
   // For a division:
@@ -34,14 +38,14 @@ static void normalizeDivisionByGCD(SmallVectorImpl<int64_t> &dividend,
   // Since `{a/m}/d` in the dividend satisfies 0 <= {a/m}/d < 1/d, it will not
   // influence the result of the floor division and thus, can be ignored.
   for (size_t i = 1, m = dividend.size() - 1; i < m; i++) {
-    gcd = llvm::greatestCommonDivisor(dividend[i], gcd);
+    gcd = llvm::greatestCommonDivisor(std::abs(dividend[i]), gcd);
     if (gcd == 1)
       return;
   }
 
   // Normalize the dividend and the denominator.
   std::transform(dividend.begin(), dividend.end(), dividend.begin(),
-                 [gcd](int64_t &n) { return floor(n / gcd); });
+                 [gcd](int64_t &n) { return floorDiv(n, gcd); });
   divisor /= gcd;
 }
 
@@ -136,23 +140,89 @@ static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
   return success();
 }
 
+/// Check if the pos^th identifier can be represented as a division using
+/// equality at position `eqInd`.
+///
+/// For example:
+///     32*k == 16*i + j - 31                 <-- `eqInd` for 'k'
+///     expr = 16*i + j - 31, divisor = 32
+///     k = (16*i + j - 31) floordiv 32
+///
+/// If successful, `expr` is set to dividend of the division and `divisor` is
+/// set to the denominator of the division. The final division expression is
+/// normalized by GCD.
+static LogicalResult getDivRepr(const IntegerPolyhedron &cst, unsigned pos,
+                                unsigned eqInd, SmallVector<int64_t, 8> &expr,
+                                unsigned &divisor) {
+
+  assert(pos <= cst.getNumIds() && "Invalid identifier position");
+  assert(eqInd <= cst.getNumEqualities() && "Invalid equality position");
+
+  // Extract divisor, the divisor can be negative and hence its sign information
+  // is stored in `signDiv` to reverse the sign of dividend's coefficients.
+  // Equality must involve the pos-th variable and hence `tempDiv` != 0.
+  int64_t tempDiv = cst.atEq(eqInd, pos);
+  if (tempDiv == 0)
+    return failure();
+  int64_t signDiv = tempDiv < 0 ? -1 : 1;
+
+  // The divisor is always a positive integer.
+  divisor = tempDiv * signDiv;
+
+  expr.resize(cst.getNumCols(), 0);
+  for (unsigned i = 0, e = cst.getNumIds(); i < e; ++i)
+    if (i != pos)
+      expr[i] = signDiv * cst.atEq(eqInd, i);
+
+  expr.back() = signDiv * cst.atEq(eqInd, cst.getNumCols() - 1);
+  normalizeDivisionByGCD(expr, divisor);
+
+  return success();
+}
+
+// Returns `false` if the constraints depends on a variable for which an
+// explicit representation has not been found yet, otherwise returns `true`.
+static bool checkExplicitRepresentation(const IntegerPolyhedron &cst,
+                                        ArrayRef<bool> foundRepr,
+                                        ArrayRef<int64_t> dividend,
+                                        unsigned pos) {
+  // Exit to avoid circular dependencies between divisions.
+  for (unsigned c = 0, e = cst.getNumIds(); c < e; ++c) {
+    if (c == pos)
+      continue;
+
+    if (!foundRepr[c] && dividend[c] != 0) {
+      // Expression can't be constructed as it depends on a yet unknown
+      // identifier.
+      //
+      // TODO: Visit/compute the identifiers in an order so that this doesn't
+      // happen. More complex but much more efficient.
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// Check if the pos^th identifier can be expressed as a floordiv of an affine
 /// function of other identifiers (where the divisor is a positive constant).
 /// `foundRepr` contains a boolean for each identifier indicating if the
 /// explicit representation for that identifier has already been computed.
-/// Returns the upper and lower bound inequalities using which the floordiv can
-/// be computed. If the representation could be computed, `dividend` and
-/// `denominator` are set. If the representation could not be computed,
-/// `llvm::None` is returned.
-Optional<std::pair<unsigned, unsigned>> presburger_utils::computeSingleVarRepr(
+/// Returns the `MaybeLocalRepr` struct which contains the indices of the
+/// constraints that can be expressed as a floordiv of an affine function. If
+/// the representation could be computed, `dividend` and `denominator` are set.
+/// If the representation could not be computed, the kind attribute in
+/// `MaybeLocalRepr` is set to None.
+MaybeLocalRepr presburger_utils::computeSingleVarRepr(
     const IntegerPolyhedron &cst, ArrayRef<bool> foundRepr, unsigned pos,
     SmallVector<int64_t, 8> &dividend, unsigned &divisor) {
   assert(pos < cst.getNumIds() && "invalid position");
   assert(foundRepr.size() == cst.getNumIds() &&
          "Size of foundRepr does not match total number of variables");
 
-  SmallVector<unsigned, 4> lbIndices, ubIndices;
-  cst.getLowerAndUpperBoundIndices(pos, &lbIndices, &ubIndices);
+  SmallVector<unsigned, 4> lbIndices, ubIndices, eqIndices;
+  cst.getLowerAndUpperBoundIndices(pos, &lbIndices, &ubIndices, &eqIndices);
+  MaybeLocalRepr repr{};
 
   for (unsigned ubPos : ubIndices) {
     for (unsigned lbPos : lbIndices) {
@@ -160,27 +230,76 @@ Optional<std::pair<unsigned, unsigned>> presburger_utils::computeSingleVarRepr(
       if (failed(getDivRepr(cst, pos, ubPos, lbPos, dividend, divisor)))
         continue;
 
-      // Check if the inequalities depend on a variable for which
-      // an explicit representation has not been found yet.
-      // Exit to avoid circular dependencies between divisions.
-      unsigned c, f;
-      for (c = 0, f = cst.getNumIds(); c < f; ++c) {
-        if (c == pos)
-          continue;
-        if (!foundRepr[c] && dividend[c] != 0)
-          break;
-      }
-
-      // Expression can't be constructed as it depends on a yet unknown
-      // identifier.
-      // TODO: Visit/compute the identifiers in an order so that this doesn't
-      // happen. More complex but much more efficient.
-      if (c < f)
+      if (!checkExplicitRepresentation(cst, foundRepr, dividend, pos))
         continue;
 
-      return std::make_pair(ubPos, lbPos);
+      repr.kind = ReprKind::Inequality;
+      repr.repr.inequalityPair = {ubPos, lbPos};
+      return repr;
     }
   }
+  for (unsigned eqPos : eqIndices) {
+    // Attempt to get divison representation from eqPos.
+    if (failed(getDivRepr(cst, pos, eqPos, dividend, divisor)))
+      continue;
 
-  return llvm::None;
+    if (!checkExplicitRepresentation(cst, foundRepr, dividend, pos))
+      continue;
+
+    repr.kind = ReprKind::Equality;
+    repr.repr.equalityIdx = eqPos;
+    return repr;
+  }
+  return repr;
+}
+
+void presburger_utils::removeDuplicateDivs(
+    std::vector<SmallVector<int64_t, 8>> &divs,
+    SmallVectorImpl<unsigned> &denoms, unsigned localOffset,
+    llvm::function_ref<bool(unsigned i, unsigned j)> merge) {
+
+  // Find and merge duplicate divisions.
+  // TODO: Add division normalization to support divisions that differ by
+  // a constant.
+  // TODO: Add division ordering such that a division representation for local
+  // identifier at position `i` only depends on local identifiers at position <
+  // `i`. This would make sure that all divisions depending on other local
+  // variables that can be merged, are merged.
+  for (unsigned i = 0; i < divs.size(); ++i) {
+    // Check if a division representation exists for the `i^th` local id.
+    if (denoms[i] == 0)
+      continue;
+    // Check if a division exists which is a duplicate of the division at `i`.
+    for (unsigned j = i + 1; j < divs.size(); ++j) {
+      // Check if a division representation exists for the `j^th` local id.
+      if (denoms[j] == 0)
+        continue;
+      // Check if the denominators match.
+      if (denoms[i] != denoms[j])
+        continue;
+      // Check if the representations are equal.
+      if (divs[i] != divs[j])
+        continue;
+
+      // Merge divisions at position `j` into division at position `i`. If
+      // merge fails, do not merge these divs.
+      bool mergeResult = merge(i, j);
+      if (!mergeResult)
+        continue;
+
+      // Update division information to reflect merging.
+      for (unsigned k = 0, g = divs.size(); k < g; ++k) {
+        SmallVector<int64_t, 8> &div = divs[k];
+        if (denoms[k] != 0) {
+          div[localOffset + i] += div[localOffset + j];
+          div.erase(div.begin() + localOffset + j);
+        }
+      }
+
+      divs.erase(divs.begin() + j);
+      denoms.erase(denoms.begin() + j);
+      // Since `j` can never be zero, we do not need to worry about overflows.
+      --j;
+    }
+  }
 }

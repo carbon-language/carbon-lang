@@ -103,6 +103,14 @@ cl::opt<bool>
     StripUndefined("strip-undefined",
                    cl::desc("Strip undefined symbols from IFS output"),
                    cl::cat(IfsCategory));
+cl::opt<bool> StripNeededLibs("strip-needed",
+                              cl::desc("Strip needed libs from output"),
+                              cl::cat(IfsCategory));
+cl::list<std::string>
+    ExcludeSyms("exclude",
+                cl::desc("Remove symbols which match the pattern. Can be "
+                         "specified multiple times"),
+                cl::cat(IfsCategory));
 
 cl::opt<std::string>
     SoName("soname",
@@ -198,26 +206,26 @@ static Expected<std::unique_ptr<IFSStub>> readInputFile(StringRef FilePath) {
 static int writeTbdStub(const Triple &T, const std::vector<IFSSymbol> &Symbols,
                         const StringRef Format, raw_ostream &Out) {
 
-  auto PlatformKindOrError =
-      [](const llvm::Triple &T) -> llvm::Expected<llvm::MachO::PlatformKind> {
+  auto PlatformTypeOrError =
+      [](const llvm::Triple &T) -> llvm::Expected<llvm::MachO::PlatformType> {
     if (T.isMacOSX())
-      return llvm::MachO::PlatformKind::macOS;
+      return llvm::MachO::PLATFORM_MACOS;
     if (T.isTvOS())
-      return llvm::MachO::PlatformKind::tvOS;
+      return llvm::MachO::PLATFORM_TVOS;
     if (T.isWatchOS())
-      return llvm::MachO::PlatformKind::watchOS;
+      return llvm::MachO::PLATFORM_WATCHOS;
     // Note: put isiOS last because tvOS and watchOS are also iOS according
     // to the Triple.
     if (T.isiOS())
-      return llvm::MachO::PlatformKind::iOS;
+      return llvm::MachO::PLATFORM_IOS;
 
     return createStringError(errc::not_supported, "Invalid Platform.\n");
   }(T);
 
-  if (!PlatformKindOrError)
+  if (!PlatformTypeOrError)
     return -1;
 
-  PlatformKind Plat = PlatformKindOrError.get();
+  PlatformType Plat = PlatformTypeOrError.get();
   TargetList Targets({Target(llvm::MachO::mapToArchitecture(T), Plat)});
 
   InterfaceFile File;
@@ -417,6 +425,9 @@ int main(int argc, char *argv[]) {
   if (OverrideError)
     fatalError(std::move(OverrideError));
 
+  if (StripNeededLibs)
+    Stub.NeededLibs.clear();
+
   if (OutputELFFilePath.getNumOccurrences() == 0 &&
       OutputIFSFilePath.getNumOccurrences() == 0 &&
       OutputTBDFilePath.getNumOccurrences() == 0) {
@@ -473,8 +484,8 @@ int main(int argc, char *argv[]) {
         stripIFSTarget(Stub, StripIFSTarget, StripIFSArch,
                        StripIFSEndiannessWidth, StripIFSBitWidth);
       }
-      if (StripUndefined)
-        stripIFSUndefinedSymbols(Stub);
+      if (Error E = filterIFSSyms(Stub, StripUndefined, ExcludeSyms))
+        fatalError(std::move(E));
       Error IFSWriteError = writeIFS(OutputFilePath.getValue(), Stub);
       if (IFSWriteError)
         fatalError(std::move(IFSWriteError));
@@ -525,8 +536,8 @@ int main(int argc, char *argv[]) {
         stripIFSTarget(Stub, StripIFSTarget, StripIFSArch,
                        StripIFSEndiannessWidth, StripIFSBitWidth);
       }
-      if (StripUndefined)
-        stripIFSUndefinedSymbols(Stub);
+      if (Error E = filterIFSSyms(Stub, StripUndefined, ExcludeSyms))
+        fatalError(std::move(E));
       Error IFSWriteError = writeIFS(OutputIFSFilePath.getValue(), Stub);
       if (IFSWriteError)
         fatalError(std::move(IFSWriteError));

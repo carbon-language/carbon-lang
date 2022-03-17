@@ -389,6 +389,14 @@ class RegisterTuples<list<SubRegIndex> Indices, list<dag> Regs,
   list<string> RegAsmNames = RegNames;
 }
 
+// RegisterCategory - This class is a list of RegisterClasses that belong to a
+// general cateogry --- e.g. "general purpose" or "fixed" registers. This is
+// useful for identifying registers in a generic way instead of having
+// information about a specific target's registers.
+class RegisterCategory<list<RegisterClass> classes> {
+  // Classes - A list of register classes that fall within the category.
+  list<RegisterClass> Classes = classes;
+}
 
 //===----------------------------------------------------------------------===//
 // DwarfRegNum - This class provides a mapping of the llvm register enumeration
@@ -748,6 +756,33 @@ def ins;
 /// of operands.
 def variable_ops;
 
+/// variable-length instruction encoding utilities.
+/// The `ascend` operator should be used like this:
+///     (ascend 0b0010, 0b1101)
+/// Which represent a seqence of encoding fragments placing from LSB to MSB.
+/// Thus, in this case the final encoding will be 0b1101_0010.
+/// The arguments for `ascend` can either be `bits` or another DAG.
+def ascend;
+/// In addition, we can use `descend` to describe an encoding that places
+/// its arguments (i.e. encoding fragments) from MSB to LSB. For instance:
+///     (descend 0b0010, 0b1101)
+/// This results in an encoding of 0b0010_1101.
+def descend;
+/// The `operand` operator should be used like this:
+///     (operand "$src", 4)
+/// Which represents a 4-bit encoding for an instruction operand named `$src`.
+def operand;
+/// Similar to `operand`, we can reference only part of the operand's encoding:
+///     (slice "$src", 6, 8)
+///     (slice "$src", 8, 6)
+/// Both DAG represent bit 6 to 8 (total of 3 bits) in the encoding of operand
+/// `$src`.
+def slice;
+/// You can use `encoder` to specify a custom encoder function for a specific
+/// `operand` or `encoder` directive. For example:
+///     (operand "$src", 4, (encoder "encodeMyImm"))
+///     (slice "$src", 8, 6, (encoder "encodeMyReg"))
+def encoder;
 
 /// PointerLikeRegClass - Values that are designed to have pointer width are
 /// derived from this.  TableGen treats the register class as having a symbolic
@@ -993,7 +1028,7 @@ class InstrInfo {
   // by default, and TableGen will infer their value from the instruction
   // pattern when possible.
   //
-  // Normally, TableGen will issue an error it it can't infer the value of a
+  // Normally, TableGen will issue an error if it can't infer the value of a
   // property that hasn't been set explicitly. When guessInstructionProperties
   // is set, it will guess a safe value instead.
   //

@@ -13,20 +13,19 @@
 #include <__config>
 #include <__functional/hash.h>
 #include <__functional/operations.h>
-#include <__functional_base>
 #include <__memory/allocator_traits.h> // __pointer
 #include <__memory/compressed_pair.h>
 #include <__utility/forward.h>
+#include <__utility/move.h>
 #include <cstddef>
 #include <type_traits>
-#include <utility>
 
 #if _LIBCPP_STD_VER <= 14 || defined(_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR)
 #   include <__memory/auto_ptr.h>
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -264,7 +263,6 @@ public:
   unique_ptr& operator=(unique_ptr const&) = delete;
 #endif
 
-
   _LIBCPP_INLINE_VISIBILITY
   ~unique_ptr() { reset(); }
 
@@ -486,7 +484,6 @@ public:
   unique_ptr(unique_ptr const&) = delete;
   unique_ptr& operator=(unique_ptr const&) = delete;
 #endif
-
 public:
   _LIBCPP_INLINE_VISIBILITY
   ~unique_ptr() { reset(); }

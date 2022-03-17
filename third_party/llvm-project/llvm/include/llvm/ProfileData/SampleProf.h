@@ -195,19 +195,21 @@ enum class SecProfSummaryFlags : uint32_t {
   /// The common profile is usually merged from profiles collected
   /// from running other targets.
   SecFlagPartial = (1 << 0),
-  /// SecFlagContext means this is context-sensitive profile for
+  /// SecFlagContext means this is context-sensitive flat profile for
   /// CSSPGO
   SecFlagFullContext = (1 << 1),
   /// SecFlagFSDiscriminator means this profile uses flow-sensitive
   /// discriminators.
-  SecFlagFSDiscriminator = (1 << 2)
+  SecFlagFSDiscriminator = (1 << 2),
+  /// SecFlagIsCSNested means this is context-sensitive nested profile for
+  /// CSSPGO
+  SecFlagIsCSNested = (1 << 4),
 };
 
 enum class SecFuncMetadataFlags : uint32_t {
   SecFlagInvalid = 0,
   SecFlagIsProbeBased = (1 << 0),
   SecFlagHasAttribute = (1 << 1),
-  SecFlagIsCSNested = (1 << 2),
 };
 
 enum class SecFuncOffsetFlags : uint32_t {
@@ -411,6 +413,8 @@ enum ContextAttributeMask {
   ContextNone = 0x0,
   ContextWasInlined = 0x1,      // Leaf of context was inlined in previous build
   ContextShouldBeInlined = 0x2, // Leaf of context should be inlined
+  ContextDuplicatedIntoBase =
+      0x4, // Leaf of context is duplicated into the base profile
 };
 
 // Represents a context frame with function name and line location
@@ -448,7 +452,7 @@ static inline hash_code hash_value(const SampleContextFrame &arg) {
                       arg.Location.Discriminator);
 }
 
-using SampleContextFrameVector = SmallVector<SampleContextFrame, 10>;
+using SampleContextFrameVector = SmallVector<SampleContextFrame, 1>;
 using SampleContextFrames = ArrayRef<SampleContextFrame>;
 
 struct SampleContextFrameHash {
@@ -1051,8 +1055,6 @@ public:
   SampleContext &getContext() const { return Context; }
 
   void setContext(const SampleContext &FContext) { Context = FContext; }
-
-  static SampleProfileFormat Format;
 
   /// Whether the profile uses MD5 to represent string.
   static bool UseMD5;

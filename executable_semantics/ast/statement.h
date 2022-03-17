@@ -108,10 +108,11 @@ class Assign : public Statement {
 class VariableDefinition : public Statement {
  public:
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init)
+                     Nonnull<Expression*> init, ValueCategory value_category)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
-        init_(init) {}
+        init_(init),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDefinition(node->kind());
@@ -121,10 +122,12 @@ class VariableDefinition : public Statement {
   auto pattern() -> Pattern& { return *pattern_; }
   auto init() const -> const Expression& { return *init_; }
   auto init() -> Expression& { return *init_; }
+  auto value_category() const -> ValueCategory { return value_category_; }
 
  private:
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;
+  ValueCategory value_category_;
 };
 
 class If : public Statement {
@@ -314,7 +317,7 @@ class Match : public Statement {
 //     }
 class Continuation : public Statement {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   Continuation(SourceLocation source_loc, std::string name,
                Nonnull<Block*> body)
@@ -338,12 +341,10 @@ class Continuation : public Statement {
 
   // Sets the static type of the continuation. Can only be called once,
   // during typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {

@@ -1,6 +1,9 @@
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B32
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B64
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -ffake-address-space-map -O1 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=CHECK-LIFETIMES
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL2.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B32
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL2.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B64
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL2.0 -ffake-address-space-map -O1 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=CHECK-LIFETIMES
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL3.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B32
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL3.0 -ffake-address-space-map -O0 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=COMMON --check-prefix=B64
+// RUN: %clang_cc1 -no-enable-noundef-analysis %s -cl-std=CL3.0 -ffake-address-space-map -O1 -emit-llvm -o - -triple "spir64-unknown-unknown" | FileCheck %s --check-prefix=CHECK-LIFETIMES
 
 #pragma OPENCL EXTENSION cl_khr_subgroups : enable
 
@@ -34,7 +37,7 @@ void callee(int id, __global int *out) {
   out[id] = id;
 }
 
-// COMMON-LABEL: define{{.*}} spir_kernel void @device_side_enqueue(i32 addrspace(1)* %{{.*}}, i32 addrspace(1)* %b, i32 %i)
+// COMMON-LABEL: define{{.*}} spir_kernel void @device_side_enqueue(i32 addrspace(1)* align 4 %{{.*}}, i32 addrspace(1)* align 4 %b, i32 %i)
 kernel void device_side_enqueue(global int *a, global int *b, int i) {
   // COMMON: %default_queue = alloca %opencl.queue_t*
   queue_t default_queue;

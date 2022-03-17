@@ -47,15 +47,15 @@
 # }
 
 # CHECK:      (lldb) image dump line-table a.cpp -v
-# CHECK-NEXT: Line table for /tmp/a.cpp in
-# CHECK-NEXT: 0x0000000140001000: /tmp/a.cpp:3
-# CHECK-NEXT: 0x0000000140001004: /tmp/a.h:5, is_start_of_statement = TRUE, is_prologue_end = TRUE
-# CHECK-NEXT: 0x000000014000100a: /tmp/a.h:6
-# CHECK-NEXT: 0x0000000140001014: /tmp/b.h:6, is_start_of_statement = TRUE, is_prologue_end = TRUE
-# CHECK-NEXT: 0x000000014000101a: /tmp/c.h:6, is_start_of_statement = TRUE, is_prologue_end = TRUE
-# CHECK-NEXT: 0x0000000140001021: /tmp/a.cpp:5
-# CHECK-NEXT: 0x0000000140001028: /tmp/a.h:7, is_start_of_statement = TRUE
-# CHECK-NEXT: 0x000000014000102a: /tmp/a.cpp:5, is_terminal_entry = TRUE
+# CHECK-NEXT: Line table for {{.*}}a.cpp in
+# CHECK-NEXT: 0x0000000140001000: {{.*}}a.cpp:3
+# CHECK-NEXT: 0x0000000140001004: {{.*}}a.h:5, is_start_of_statement = TRUE, is_prologue_end = TRUE
+# CHECK-NEXT: 0x000000014000100a: {{.*}}a.h:6
+# CHECK-NEXT: 0x0000000140001014: {{.*}}b.h:6, is_start_of_statement = TRUE, is_prologue_end = TRUE
+# CHECK-NEXT: 0x000000014000101a: {{.*}}c.h:6, is_start_of_statement = TRUE, is_prologue_end = TRUE
+# CHECK-NEXT: 0x0000000140001021: {{.*}}a.cpp:5
+# CHECK-NEXT: 0x0000000140001028: {{.*}}a.h:7, is_start_of_statement = TRUE
+# CHECK-NEXT: 0x000000014000102a: {{.*}}a.cpp:5, is_terminal_entry = TRUE
 
 # CEHCK: (lldb) b a.cpp:5
 # CHECK: Breakpoint 1: where = {{.*}}`main + 33 at a.cpp:5, address = 0x0000000140001021
@@ -74,7 +74,7 @@
 # CHECK:      Summary: {{.*}}`main + 3 at a.cpp:3
 # CHECK:     Function: id = {{.*}}, name = "main", range = [0x0000000140001000-0x000000014000102a)
 # CHECK:       Blocks: id = {{.*}}, range = [0x140001000-0x14000102a)
-# CHECK:    LineEntry: [0x0000000140001000-0x0000000140001004): /tmp/a.cpp:3
+# CHECK:    LineEntry: [0x0000000140001000-0x0000000140001004): {{.*}}a.cpp:3
 
 # CEHCK-LABEL: (lldb) image lookup -a 0x140001004 -v
 # CHECK:      Summary: {{.*}}`main + 4 [inlined] Namespace1::foo at a.h:5
@@ -82,7 +82,7 @@
 # CHECK:     Function: id = {{.*}}, name = "main", range = [0x0000000140001000-0x000000014000102a)
 # CHECK:       Blocks: id = {{.*}}, range = [0x140001000-0x14000102a)
 # CHECK-NEXT:          id = {{.*}}, ranges = [0x140001004-0x140001021)[0x140001028-0x14000102a), name = "Namespace1::foo", decl = a.h:3
-# CHECK:    LineEntry: [0x0000000140001004-0x000000014000100a): /tmp/a.h:5
+# CHECK:    LineEntry: [0x0000000140001004-0x000000014000100a): {{.*}}a.h:5
 
 # CEHCK-LABEL: (lldb) image lookup -a 0x140001014 -v
 # CHECK:      Summary: {{.*}}`main + 20 [inlined] Class1::bar at b.h:6
@@ -92,7 +92,7 @@
 # CHECK:       Blocks: id = {{.*}}, range = [0x140001000-0x14000102a)
 # CHECK-NEXT:          id = {{.*}}, ranges = [0x140001004-0x140001021)[0x140001028-0x14000102a), name = "Namespace1::foo", decl = a.h:3
 # CHECK-NEXT:          id = {{.*}}, range = [0x140001014-0x140001021), name = "Class1::bar", decl = b.h:4
-# CHECK:    LineEntry: [0x0000000140001014-0x000000014000101a): /tmp/b.h:6
+# CHECK:    LineEntry: [0x0000000140001014-0x000000014000101a): {{.*}}b.h:6
 
 # CEHCK-LABEL: (lldb) image lookup -a 0x14000101a -v
 # CHECK:      Summary: {{.*}}`main + 26 [inlined] Namespace2::Class2::func at c.h:6
@@ -104,13 +104,13 @@
 # CHECK-NEXT:          id = {{.*}}, ranges = [0x140001004-0x140001021)[0x140001028-0x14000102a), name = "Namespace1::foo", decl = a.h:3
 # CHECK-NEXT:          id = {{.*}}, range = [0x140001014-0x140001021), name = "Class1::bar", decl = b.h:4
 # CHECK-NEXT:          id = {{.*}}, range = [0x14000101a-0x140001021), name = "Namespace2::Class2::func", decl = c.h:4
-# CHECK:    LineEntry: [0x000000014000101a-0x0000000140001021): /tmp/c.h:6
+# CHECK:    LineEntry: [0x000000014000101a-0x0000000140001021): {{.*}}c.h:6
 
 # CEHCK-LABEL: (lldb) image lookup -a 0x140001021 -v
 # CHECK:      Summary: {{.*}}`main + 33 at a.cpp:5
 # CHECK:     Function: id = {{.*}}, name = "main", range = [0x0000000140001000-0x000000014000102a)
 # CHECK:       Blocks: id = {{.*}}, range = [0x140001000-0x14000102a)
-# CHECK:    LineEntry: [0x0000000140001021-0x0000000140001028): /tmp/a.cpp:5
+# CHECK:    LineEntry: [0x0000000140001021-0x0000000140001028): {{.*}}a.cpp:5
 
 # CEHCK-LABEL: (lldb) image lookup -a 0x140001028 -v
 # CHECK:      Summary: {{.*}}`main + 40 [inlined] Namespace1::foo at a.h:7
@@ -118,7 +118,7 @@
 # CHECK:     Function: id = {{.*}}, name = "main", range = [0x0000000140001000-0x000000014000102a)
 # CHECK:       Blocks: id = {{.*}}, range = [0x140001000-0x14000102a)
 # CHECK-NEXT:          id = {{.*}}, ranges = [0x140001004-0x140001021)[0x140001028-0x14000102a), name = "Namespace1::foo", decl = a.h:3
-# CHECK:    LineEntry: [0x0000000140001028-0x000000014000102a): /tmp/a.h:7
+# CHECK:    LineEntry: [0x0000000140001028-0x000000014000102a): {{.*}}a.h:7
 
 	.text
 	.def	 @feat.00;

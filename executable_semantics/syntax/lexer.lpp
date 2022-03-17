@@ -42,6 +42,7 @@ AMPERSAND            "&"
 AND                  "and"
 API                  "api"
 ARROW                "->"
+AS                   "as"
 AUTO                 "auto"
 AWAIT                "__await"
 BOOL                 "Bool"
@@ -60,15 +61,18 @@ DOUBLE_ARROW         "=>"
 ELSE                 "else"
 EQUAL                "="
 EQUAL_EQUAL          "=="
+EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
+INTERFACE            "interface"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
@@ -85,6 +89,7 @@ RUN                  "__run"
 SEMICOLON            ";"
 SLASH                "/"
 STRING               "String"
+THEN                 "then"
 TRUE                 "true"
 TYPE                 "Type"
 UNDERSCORE           "_"
@@ -139,6 +144,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
 {ARROW}               { return SIMPLE_TOKEN(ARROW);               }
+{AS}                  { return SIMPLE_TOKEN(AS);                  }
 {AUTO}                { return SIMPLE_TOKEN(AUTO);                }
 {AWAIT}               { return SIMPLE_TOKEN(AWAIT);               }
 {BOOL}                { return SIMPLE_TOKEN(BOOL);                }
@@ -157,15 +163,18 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {ELSE}                { return SIMPLE_TOKEN(ELSE);                }
 {EQUAL_EQUAL}         { return SIMPLE_TOKEN(EQUAL_EQUAL);         }
 {EQUAL}               { return SIMPLE_TOKEN(EQUAL);               }
+{EXTERNAL}            { return SIMPLE_TOKEN(EXTERNAL);            }
 {FALSE}               { return SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
+{INTERFACE}           { return SIMPLE_TOKEN(INTERFACE);           }
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LET}                 { return SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return SIMPLE_TOKEN(MINUS);               }
@@ -179,6 +188,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return SIMPLE_TOKEN(SLASH);               }
 {STRING}              { return SIMPLE_TOKEN(STRING);              }
+{THEN}                { return SIMPLE_TOKEN(THEN);                }
 {TRUE}                { return SIMPLE_TOKEN(TRUE);                }
 {TYPE}                { return SIMPLE_TOKEN(TYPE);                }
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
@@ -258,8 +268,10 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {integer_literal} {
   BEGIN(AFTER_OPERAND);
-  int val;
-  CHECK(llvm::to_integer(yytext, val));
+  int val = 0;
+  if (!llvm::to_integer(yytext, val)) {
+    FATAL_SYNTAX_ERROR(context) << "Invalid integer literal: " << yytext;
+  }
   return ARG_TOKEN(integer_literal, val);
 }
 

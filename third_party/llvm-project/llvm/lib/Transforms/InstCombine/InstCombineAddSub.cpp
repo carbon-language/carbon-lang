@@ -519,13 +519,6 @@ Value *FAddCombine::simplifyFAdd(AddendVect& Addends, unsigned InstrQuota) {
   unsigned NextTmpIdx = 0;
   FAddend TmpResult[3];
 
-  // Points to the constant addend of the resulting simplified expression.
-  // If the resulting expr has constant-addend, this constant-addend is
-  // desirable to reside at the top of the resulting expression tree. Placing
-  // constant close to supper-expr(s) will potentially reveal some optimization
-  // opportunities in super-expr(s).
-  const FAddend *ConstAdd = nullptr;
-
   // Simplified addends are placed <SimpVect>.
   AddendVect SimpVect;
 
@@ -541,6 +534,14 @@ Value *FAddCombine::simplifyFAdd(AddendVect& Addends, unsigned InstrQuota) {
     }
 
     Value *Val = ThisAddend->getSymVal();
+
+    // If the resulting expr has constant-addend, this constant-addend is
+    // desirable to reside at the top of the resulting expression tree. Placing
+    // constant close to super-expr(s) will potentially reveal some
+    // optimization opportunities in super-expr(s). Here we do not implement
+    // this logic intentionally and rely on SimplifyAssociativeOrCommutative
+    // call later.
+
     unsigned StartIdx = SimpVect.size();
     SimpVect.push_back(ThisAddend);
 
@@ -569,23 +570,14 @@ Value *FAddCombine::simplifyFAdd(AddendVect& Addends, unsigned InstrQuota) {
 
       // Pop all addends being folded and push the resulting folded addend.
       SimpVect.resize(StartIdx);
-      if (Val) {
-        if (!R.isZero()) {
-          SimpVect.push_back(&R);
-        }
-      } else {
-        // Don't push constant addend at this time. It will be the last element
-        // of <SimpVect>.
-        ConstAdd = &R;
+      if (!R.isZero()) {
+        SimpVect.push_back(&R);
       }
     }
   }
 
   assert((NextTmpIdx <= array_lengthof(TmpResult) + 1) &&
          "out-of-bound access");
-
-  if (ConstAdd)
-    SimpVect.push_back(ConstAdd);
 
   Value *Result;
   if (!SimpVect.empty())
@@ -1296,6 +1288,9 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
   if (Instruction *X = foldVectorBinop(I))
     return X;
 
+  if (Instruction *Phi = foldBinopWithPhiOperands(I))
+    return Phi;
+
   // (A*B)+(A*C) -> A*(B+C) etc
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return replaceInstUsesWith(I, V);
@@ -1498,15 +1493,18 @@ static Instruction *factorizeFAddFSub(BinaryOperator &I,
     return Lerp;
 
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  if (!Op0->hasOneUse() || !Op1->hasOneUse())
+    return nullptr;
+
   Value *X, *Y, *Z;
   bool IsFMul;
-  if ((match(Op0, m_OneUse(m_FMul(m_Value(X), m_Value(Z)))) &&
-       match(Op1, m_OneUse(m_c_FMul(m_Value(Y), m_Specific(Z))))) ||
-      (match(Op0, m_OneUse(m_FMul(m_Value(Z), m_Value(X)))) &&
-       match(Op1, m_OneUse(m_c_FMul(m_Value(Y), m_Specific(Z))))))
+  if ((match(Op0, m_FMul(m_Value(X), m_Value(Z))) &&
+       match(Op1, m_c_FMul(m_Value(Y), m_Specific(Z)))) ||
+      (match(Op0, m_FMul(m_Value(Z), m_Value(X))) &&
+       match(Op1, m_c_FMul(m_Value(Y), m_Specific(Z)))))
     IsFMul = true;
-  else if (match(Op0, m_OneUse(m_FDiv(m_Value(X), m_Value(Z)))) &&
-           match(Op1, m_OneUse(m_FDiv(m_Value(Y), m_Specific(Z)))))
+  else if (match(Op0, m_FDiv(m_Value(X), m_Value(Z))) &&
+           match(Op1, m_FDiv(m_Value(Y), m_Specific(Z))))
     IsFMul = false;
   else
     return nullptr;
@@ -1540,6 +1538,9 @@ Instruction *InstCombinerImpl::visitFAdd(BinaryOperator &I) {
 
   if (Instruction *X = foldVectorBinop(I))
     return X;
+
+  if (Instruction *Phi = foldBinopWithPhiOperands(I))
+    return Phi;
 
   if (Instruction *FoldedFAdd = foldBinOpIntoSelectOrPhi(I))
     return FoldedFAdd;
@@ -1654,6 +1655,14 @@ Instruction *InstCombinerImpl::visitFAdd(BinaryOperator &I) {
                                      {X->getType()}, {NewStartC, X}, &I));
     }
 
+    // (X * MulC) + X --> X * (MulC + 1.0)
+    Constant *MulC;
+    if (match(&I, m_c_FAdd(m_FMul(m_Value(X), m_ImmConstant(MulC)),
+                           m_Deferred(X)))) {
+      MulC = ConstantExpr::getFAdd(MulC, ConstantFP::get(I.getType(), 1.0));
+      return BinaryOperator::CreateFMulFMF(X, MulC, &I);
+    }
+
     if (Value *V = FAddCombine(Builder).simplify(&I))
       return replaceInstUsesWith(I, V);
   }
@@ -1747,6 +1756,9 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
 
   if (Instruction *X = foldVectorBinop(I))
     return X;
+
+  if (Instruction *Phi = foldBinopWithPhiOperands(I))
+    return Phi;
 
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -2175,9 +2187,20 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
     return replaceInstUsesWith(
         I, Builder.CreateIntrinsic(Intrinsic::usub_sat, {Ty}, {X, Op1}));
 
+  // Op0 - umin(X, Op0) --> usub.sat(Op0, X)
+  if (match(Op1, m_OneUse(m_c_UMin(m_Value(X), m_Specific(Op0)))))
+    return replaceInstUsesWith(
+        I, Builder.CreateIntrinsic(Intrinsic::usub_sat, {Ty}, {Op0, X}));
+
   // Op0 - umax(X, Op0) --> 0 - usub.sat(X, Op0)
   if (match(Op1, m_OneUse(m_c_UMax(m_Value(X), m_Specific(Op0))))) {
     Value *USub = Builder.CreateIntrinsic(Intrinsic::usub_sat, {Ty}, {X, Op0});
+    return BinaryOperator::CreateNeg(USub);
+  }
+
+  // umin(X, Op1) - Op1 --> 0 - usub.sat(Op1, X)
+  if (match(Op0, m_OneUse(m_c_UMin(m_Value(X), m_Specific(Op1))))) {
+    Value *USub = Builder.CreateIntrinsic(Intrinsic::usub_sat, {Ty}, {Op1, X});
     return BinaryOperator::CreateNeg(USub);
   }
 
@@ -2309,6 +2332,9 @@ Instruction *InstCombinerImpl::visitFSub(BinaryOperator &I) {
 
   if (Instruction *X = foldVectorBinop(I))
     return X;
+
+  if (Instruction *Phi = foldBinopWithPhiOperands(I))
+    return Phi;
 
   // Subtraction from -0.0 is the canonical form of fneg.
   // fsub -0.0, X ==> fneg X

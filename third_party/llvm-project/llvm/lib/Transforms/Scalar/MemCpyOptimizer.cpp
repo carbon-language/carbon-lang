@@ -313,15 +313,21 @@ INITIALIZE_PASS_END(MemCpyOptLegacyPass, "memcpyopt", "MemCpy Optimization",
 static bool mayBeVisibleThroughUnwinding(Value *V, Instruction *Start,
                                          Instruction *End) {
   assert(Start->getParent() == End->getParent() && "Must be in same block");
-  if (!Start->getFunction()->doesNotThrow() &&
-      !isa<AllocaInst>(getUnderlyingObject(V))) {
-    for (const Instruction &I :
-         make_range(Start->getIterator(), End->getIterator())) {
-      if (I.mayThrow())
-        return true;
-    }
-  }
-  return false;
+  // Function can't unwind, so it also can't be visible through unwinding.
+  if (Start->getFunction()->doesNotThrow())
+    return false;
+
+  // Object is not visible on unwind.
+  // TODO: Support RequiresNoCaptureBeforeUnwind case.
+  bool RequiresNoCaptureBeforeUnwind;
+  if (isNotVisibleOnUnwind(getUnderlyingObject(V),
+                           RequiresNoCaptureBeforeUnwind) &&
+      !RequiresNoCaptureBeforeUnwind)
+    return false;
+
+  // Check whether there are any unwinding instructions in the range.
+  return any_of(make_range(Start->getIterator(), End->getIterator()),
+                [](const Instruction &I) { return I.mayThrow(); });
 }
 
 void MemCpyOptPass::eraseInstruction(Instruction *I) {
@@ -346,9 +352,25 @@ static bool accessedBetween(AliasAnalysis &AA, MemoryLocation Loc,
 
 // Check for mod of Loc between Start and End, excluding both boundaries.
 // Start and End can be in different blocks.
-static bool writtenBetween(MemorySSA *MSSA, MemoryLocation Loc,
-                           const MemoryUseOrDef *Start,
+static bool writtenBetween(MemorySSA *MSSA, AliasAnalysis &AA,
+                           MemoryLocation Loc, const MemoryUseOrDef *Start,
                            const MemoryUseOrDef *End) {
+  if (isa<MemoryUse>(End)) {
+    // For MemoryUses, getClobberingMemoryAccess may skip non-clobbering writes.
+    // Manually check read accesses between Start and End, if they are in the
+    // same block, for clobbers. Otherwise assume Loc is clobbered.
+    return Start->getBlock() != End->getBlock() ||
+           any_of(
+               make_range(std::next(Start->getIterator()), End->getIterator()),
+               [&AA, Loc](const MemoryAccess &Acc) {
+                 if (isa<MemoryUse>(&Acc))
+                   return false;
+                 Instruction *AccInst =
+                     cast<MemoryUseOrDef>(&Acc)->getMemoryInst();
+                 return isModSet(AA.getModRefInfo(AccInst, Loc));
+               });
+  }
+
   // TODO: Only walk until we hit Start.
   MemoryAccess *Clobber = MSSA->getWalker()->getClobberingMemoryAccess(
       End->getDefiningAccess(), Loc);
@@ -891,8 +913,10 @@ bool MemCpyOptPass::performCallSlotOptzn(Instruction *cpyLoad,
   // trap.  Otherwise the transform is invalid since it might cause a trap
   // to occur earlier than it otherwise would.
   if (!isDereferenceableAndAlignedPointer(cpyDest, Align(1), APInt(64, cpySize),
-                                          DL, C, DT))
+                                          DL, C, DT)) {
+    LLVM_DEBUG(dbgs() << "Call Slot: Dest pointer not dereferenceable\n");
     return false;
+  }
 
   // Make sure that nothing can observe cpyDest being written early. There are
   // a number of cases to consider:
@@ -908,8 +932,10 @@ bool MemCpyOptPass::performCallSlotOptzn(Instruction *cpyLoad,
   //     guaranteed to be executed if C is. As it is a non-atomic access, it
   //     renders accesses from other threads undefined.
   //     TODO: This is currently not checked.
-  if (mayBeVisibleThroughUnwinding(cpyDest, C, cpyStore))
+  if (mayBeVisibleThroughUnwinding(cpyDest, C, cpyStore)) {
+    LLVM_DEBUG(dbgs() << "Call Slot: Dest may be visible through unwinding");
     return false;
+  }
 
   // Check that dest points to memory that is at least as aligned as src.
   Align srcAlign = srcAlloca->getAlign();
@@ -1064,6 +1090,8 @@ bool MemCpyOptPass::performCallSlotOptzn(Instruction *cpyLoad,
                          LLVMContext::MD_invariant_group,
                          LLVMContext::MD_access_group};
   combineMetadata(C, cpyLoad, KnownIDs, true);
+  if (cpyLoad != cpyStore)
+    combineMetadata(C, cpyStore, KnownIDs, true);
 
   ++NumCallSlot;
   return true;
@@ -1106,7 +1134,7 @@ bool MemCpyOptPass::processMemCpyMemCpyDependence(MemCpyInst *M,
   // then we could still perform the xform by moving M up to the first memcpy.
   // TODO: It would be sufficient to check the MDep source up to the memcpy
   // size of M, rather than MDep.
-  if (writtenBetween(MSSA, MemoryLocation::getForSource(MDep),
+  if (writtenBetween(MSSA, *AA, MemoryLocation::getForSource(MDep),
                      MSSA->getMemoryAccess(MDep), MSSA->getMemoryAccess(M)))
     return false;
 
@@ -1545,7 +1573,7 @@ bool MemCpyOptPass::processByValArgument(CallBase &CB, unsigned ArgNo) {
   //    *b = 42;
   //    foo(*a)
   // It would be invalid to transform the second memcpy into foo(*b).
-  if (writtenBetween(MSSA, MemoryLocation::getForSource(MDep),
+  if (writtenBetween(MSSA, *AA, MemoryLocation::getForSource(MDep),
                      MSSA->getMemoryAccess(MDep), MSSA->getMemoryAccess(&CB)))
     return false;
 

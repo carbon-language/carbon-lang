@@ -929,7 +929,7 @@ struct std::coroutine_traits<int, mismatch_gro_type_tag2> {
 
 extern "C" int f(mismatch_gro_type_tag2) {
   // cxx2b-error@-1 {{cannot initialize return object of type 'int' with an rvalue of type 'void *'}}
-  // cxx14_20-error@-2 {{cannot initialize return object of type 'int' with an lvalue of type 'void *'}}
+  // cxx14_20-error@-2 {{cannot initialize return object of type 'int' with an rvalue of type 'void *'}}
   co_return; //expected-note {{function is a coroutine due to use of 'co_return' here}}
 }
 
@@ -1459,4 +1459,14 @@ void test_missing_awaitable_members() {
   co_await missing_await_ready{}; // expected-error {{no member named 'await_ready' in 'missing_await_ready'}}
   co_await missing_await_suspend{}; // expected-error {{no member named 'await_suspend' in 'missing_await_suspend'}}
   co_await missing_await_resume{}; // expected-error {{no member named 'await_resume' in 'missing_await_resume'}}
+}
+
+__attribute__((__always_inline__))
+void warn_always_inline() { // expected-warning {{this coroutine may be split into pieces; not every piece is guaranteed to be inlined}}
+  co_await suspend_always{};
+}
+
+[[gnu::always_inline]]
+void warn_gnu_always_inline() { // expected-warning {{this coroutine may be split into pieces; not every piece is guaranteed to be inlined}}
+  co_await suspend_always{};
 }

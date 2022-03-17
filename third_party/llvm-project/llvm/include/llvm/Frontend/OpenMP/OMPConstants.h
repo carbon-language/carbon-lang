@@ -113,6 +113,12 @@ enum class AddressSpace : unsigned {
   Local = 5,
 };
 
+/// \note This needs to be kept in sync with interop.h enum kmp_interop_type_t.:
+enum class OMPInteropType { Unknown, Target, TargetSync };
+
+/// Atomic compare operations. Currently OpenMP only supports ==, >, and <.
+enum class OMPAtomicCompareOp : unsigned { EQ, MIN, MAX };
+
 } // end namespace omp
 
 } // end namespace llvm

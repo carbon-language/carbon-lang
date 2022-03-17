@@ -45,6 +45,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Reproducer.h"
 #include "lldb/Utility/State.h"
@@ -1825,7 +1826,7 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
   std::string command_string(command_line);
   std::string original_command_string(command_line);
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_COMMANDS));
+  Log *log = GetLog(LLDBLog::Commands);
   llvm::PrettyStackTraceFormat stack_trace("HandleCommand(command = \"%s\")",
                                    command_line);
 
@@ -1943,16 +1944,21 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
   // arguments.
 
   if (cmd_obj != nullptr) {
-    if (add_to_history) {
+    // If we got here when empty_command was true, then this command is a
+    // stored "repeat command" which we should give a chance to produce it's
+    // repeat command, even though we don't add repeat commands to the history.
+    if (add_to_history || empty_command) {
       Args command_args(command_string);
-      const char *repeat_command = cmd_obj->GetRepeatCommand(command_args, 0);
-      if (repeat_command != nullptr)
-        m_repeat_command.assign(repeat_command);
+      llvm::Optional<std::string> repeat_command =
+          cmd_obj->GetRepeatCommand(command_args, 0);
+      if (repeat_command)
+        m_repeat_command.assign(*repeat_command);
       else
         m_repeat_command.assign(original_command_string);
-
-      m_command_history.AppendString(original_command_string);
     }
+
+    if (add_to_history)
+      m_command_history.AppendString(original_command_string);
 
     std::string remainder;
     const std::size_t actual_cmd_name_len = cmd_obj->GetCommandName().size();
@@ -2372,6 +2378,21 @@ void CommandInterpreter::SourceInitFileHome(CommandReturnObject &result,
   }
 
   SourceInitFile(FileSpec(init_file.str()), result);
+}
+
+void CommandInterpreter::SourceInitFileGlobal(CommandReturnObject &result) {
+#ifdef LLDB_GLOBAL_INIT_DIRECTORY
+  if (!m_skip_lldbinit_files) {
+    FileSpec init_file(LLDB_GLOBAL_INIT_DIRECTORY);
+    if (init_file)
+      init_file.MakeAbsolute(HostInfo::GetShlibDir());
+
+    init_file.AppendPathComponent("lldbinit");
+    SourceInitFile(init_file, result);
+    return;
+  }
+#endif
+  result.SetStatus(eReturnStatusSuccessFinishNoResult);
 }
 
 const char *CommandInterpreter::GetCommandPrefix() {
@@ -3122,8 +3143,8 @@ bool CommandInterpreter::SaveTranscript(
   }
 
   auto error_out = [&](llvm::StringRef error_message, std::string description) {
-    LLDB_LOG(GetLogIfAllCategoriesSet(LIBLLDB_LOG_COMMANDS), "{0} ({1}:{2})",
-             error_message, output_file, description);
+    LLDB_LOG(GetLog(LLDBLog::Commands), "{0} ({1}:{2})", error_message,
+             output_file, description);
     result.AppendErrorWithFormatv(
         "Failed to save session's transcripts to {0}!", *output_file);
     return false;
@@ -3154,6 +3175,10 @@ bool CommandInterpreter::SaveTranscript(
                                  output_file->c_str());
 
   return true;
+}
+
+bool CommandInterpreter::IsInteractive() {
+  return (GetIOHandler() ? GetIOHandler()->GetIsInteractive() : false);
 }
 
 FileSpec CommandInterpreter::GetCurrentSourceDir() {

@@ -71,8 +71,8 @@ llvm::Optional<int64_t> decodeVersion(llvm::StringRef Encoded) {
   return llvm::None;
 }
 
-const llvm::StringLiteral APPLY_FIX_COMMAND = "clangd.applyFix";
-const llvm::StringLiteral APPLY_TWEAK_COMMAND = "clangd.applyTweak";
+const llvm::StringLiteral ApplyFixCommand = "clangd.applyFix";
+const llvm::StringLiteral ApplyTweakCommand = "clangd.applyTweak";
 
 /// Transforms a tweak into a code action that would apply it if executed.
 /// EXPECTS: T.prepare() was called and returned true.
@@ -88,7 +88,7 @@ CodeAction toCodeAction(const ClangdServer::TweakRef &T, const URIForFile &File,
   //        directly.
   CA.command.emplace();
   CA.command->title = T.Title;
-  CA.command->command = std::string(APPLY_TWEAK_COMMAND);
+  CA.command->command = std::string(ApplyTweakCommand);
   TweakArgs Args;
   Args.file = File;
   Args.tweakID = T.ID;
@@ -560,6 +560,7 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
       {"declarationProvider", true},
       {"definitionProvider", true},
       {"implementationProvider", true},
+      {"typeDefinitionProvider", true},
       {"documentHighlightProvider", true},
       {"documentLinkProvider",
        llvm::json::Object{
@@ -576,6 +577,7 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
       {"compilationDatabase",        // clangd extension
        llvm::json::Object{{"automaticReload", true}}},
       {"callHierarchyProvider", true},
+      {"clangdInlayHintsProvider", true},
   };
 
   {
@@ -607,10 +609,6 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
 
   if (Opts.FoldingRanges)
     ServerCaps["foldingRangeProvider"] = true;
-
-  // FIXME: once inlayHints can be disabled in config, always advertise.
-  if (Opts.InlayHints)
-    ServerCaps["clangdInlayHintsProvider"] = true;
 
   std::vector<llvm::StringRef> Commands;
   for (llvm::StringRef Command : Handlers.CommandHandlers.keys())
@@ -952,7 +950,7 @@ static llvm::Optional<Command> asCommand(const CodeAction &Action) {
   if (Action.command) {
     Cmd = *Action.command;
   } else if (Action.edit) {
-    Cmd.command = std::string(APPLY_FIX_COMMAND);
+    Cmd.command = std::string(ApplyFixCommand);
     Cmd.argument = *Action.edit;
   } else {
     return None;
@@ -988,8 +986,8 @@ void ClangdLSPServer::onCodeAction(const CodeActionParams &Params,
 
   // Now enumerate the semantic code actions.
   auto ConsumeActions =
-      [Reply = std::move(Reply), File, Selection = Params.range,
-       FixIts = std::move(FixIts), this](
+      [Diags = Params.context.diagnostics, Reply = std::move(Reply), File,
+       Selection = Params.range, FixIts = std::move(FixIts), this](
           llvm::Expected<std::vector<ClangdServer::TweakRef>> Tweaks) mutable {
         if (!Tweaks)
           return Reply(Tweaks.takeError());
@@ -1005,12 +1003,16 @@ void ClangdLSPServer::onCodeAction(const CodeActionParams &Params,
         for (auto &Action : Actions) {
           if (Action.kind && *Action.kind == CodeAction::QUICKFIX_KIND) {
             if (OnlyFix) {
-              OnlyFix->isPreferred = false;
+              OnlyFix = nullptr;
               break;
             }
-            Action.isPreferred = true;
             OnlyFix = &Action;
           }
+        }
+        if (OnlyFix) {
+          OnlyFix->isPreferred = true;
+          if (Diags.size() == 1 && Diags.front().range == Selection)
+            OnlyFix->diagnostics = {Diags.front()};
         }
 
         if (SupportsCodeAction)
@@ -1281,6 +1283,21 @@ void ClangdLSPServer::onReference(const ReferenceParams &Params,
       });
 }
 
+void ClangdLSPServer::onGoToType(const TextDocumentPositionParams &Params,
+                                 Callback<std::vector<Location>> Reply) {
+  Server->findType(
+      Params.textDocument.uri.file(), Params.position,
+      [Reply = std::move(Reply)](
+          llvm::Expected<std::vector<LocatedSymbol>> Types) mutable {
+        if (!Types)
+          return Reply(Types.takeError());
+        std::vector<Location> Response;
+        for (const LocatedSymbol &Sym : *Types)
+          Response.push_back(Sym.PreferredDeclaration);
+        return Reply(std::move(Response));
+      });
+}
+
 void ClangdLSPServer::onGoToImplementation(
     const TextDocumentPositionParams &Params,
     Callback<std::vector<Location>> Reply) {
@@ -1451,6 +1468,7 @@ void ClangdLSPServer::bindMethods(LSPBinder &Bind,
   Bind.method("textDocument/signatureHelp", this, &ClangdLSPServer::onSignatureHelp);
   Bind.method("textDocument/definition", this, &ClangdLSPServer::onGoToDefinition);
   Bind.method("textDocument/declaration", this, &ClangdLSPServer::onGoToDeclaration);
+  Bind.method("textDocument/typeDefinition", this, &ClangdLSPServer::onGoToType);
   Bind.method("textDocument/implementation", this, &ClangdLSPServer::onGoToImplementation);
   Bind.method("textDocument/references", this, &ClangdLSPServer::onReference);
   Bind.method("textDocument/switchSourceHeader", this, &ClangdLSPServer::onSwitchSourceHeader);
@@ -1481,8 +1499,8 @@ void ClangdLSPServer::bindMethods(LSPBinder &Bind,
   Bind.method("$/memoryUsage", this, &ClangdLSPServer::onMemoryUsage);
   if (Opts.FoldingRanges)
     Bind.method("textDocument/foldingRange", this, &ClangdLSPServer::onFoldingRange);
-  Bind.command(APPLY_FIX_COMMAND, this, &ClangdLSPServer::onCommandApplyEdit);
-  Bind.command(APPLY_TWEAK_COMMAND, this, &ClangdLSPServer::onCommandApplyTweak);
+  Bind.command(ApplyFixCommand, this, &ClangdLSPServer::onCommandApplyEdit);
+  Bind.command(ApplyTweakCommand, this, &ClangdLSPServer::onCommandApplyTweak);
 
   ApplyWorkspaceEdit = Bind.outgoingMethod("workspace/applyEdit");
   PublishDiagnostics = Bind.outgoingNotification("textDocument/publishDiagnostics");

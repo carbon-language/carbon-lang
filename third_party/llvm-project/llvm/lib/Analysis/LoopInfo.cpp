@@ -695,11 +695,10 @@ class UnloopUpdater {
 
   // Flag the presence of an irreducible backedge whose destination is a block
   // directly contained by the original unloop.
-  bool FoundIB;
+  bool FoundIB = false;
 
 public:
-  UnloopUpdater(Loop *UL, LoopInfo *LInfo)
-      : Unloop(*UL), LI(LInfo), DFS(UL), FoundIB(false) {}
+  UnloopUpdater(Loop *UL, LoopInfo *LInfo) : Unloop(*UL), LI(LInfo), DFS(UL) {}
 
   void updateBlockParents();
 
@@ -1106,6 +1105,10 @@ llvm::Optional<int> llvm::getOptionalIntLoopAttribute(const Loop *TheLoop,
 int llvm::getIntLoopAttribute(const Loop *TheLoop, StringRef Name,
                               int Default) {
   return getOptionalIntLoopAttribute(TheLoop, Name).getValueOr(Default);
+}
+
+bool llvm::isFinite(const Loop *L) {
+  return L->getHeader()->getParent()->willReturn();
 }
 
 static const char *LLVMLoopMustProgress = "llvm.loop.mustprogress";

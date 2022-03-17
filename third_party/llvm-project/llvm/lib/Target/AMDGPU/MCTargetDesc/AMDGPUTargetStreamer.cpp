@@ -17,12 +17,16 @@
 #include "Utils/AMDKernelCodeTUtils.h"
 #include "llvm/BinaryFormat/AMDGPUMetadataVerifier.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/AMDGPUMetadata.h"
 #include "llvm/Support/AMDHSAKernelDescriptor.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/TargetParser.h"
 
 using namespace llvm;
 using namespace llvm::AMDGPU;
@@ -319,6 +323,10 @@ void AMDGPUTargetAsmStreamer::EmitAmdhsaKernelDescriptor(
      << KD.private_segment_fixed_size << '\n';
   OS << "\t\t.amdhsa_kernarg_size " << KD.kernarg_size << '\n';
 
+  PRINT_FIELD(OS, ".amdhsa_user_sgpr_count", KD,
+              compute_pgm_rsrc2,
+              amdhsa::COMPUTE_PGM_RSRC2_USER_SGPR_COUNT);
+
   if (!hasArchitectedFlatScratch(STI))
     PRINT_FIELD(
         OS, ".amdhsa_user_sgpr_private_segment_buffer", KD,
@@ -392,6 +400,7 @@ void AMDGPUTargetAsmStreamer::EmitAmdhsaKernelDescriptor(
       break;
     case ELF::ELFABIVERSION_AMDGPU_HSA_V3:
     case ELF::ELFABIVERSION_AMDGPU_HSA_V4:
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V5:
       if (getTargetID()->isXnackSupported())
         OS << "\t\t.amdhsa_reserve_xnack_mask " << getTargetID()->isXnackOnOrAny() << '\n';
       break;
@@ -574,6 +583,7 @@ unsigned AMDGPUTargetELFStreamer::getEFlagsAMDHSA() {
     case ELF::ELFABIVERSION_AMDGPU_HSA_V3:
       return getEFlagsV3();
     case ELF::ELFABIVERSION_AMDGPU_HSA_V4:
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V5:
       return getEFlagsV4();
     }
   }
@@ -685,7 +695,7 @@ AMDGPUTargetELFStreamer::EmitDirectiveHSACodeObjectISAV2(uint32_t Major,
              OS.emitBytes(VendorName);
              OS.emitInt8(0); // NULL terminate VendorName
              OS.emitBytes(ArchName);
-             OS.emitInt8(0); // NULL terminte ArchName
+             OS.emitInt8(0); // NULL terminate ArchName
            });
 }
 

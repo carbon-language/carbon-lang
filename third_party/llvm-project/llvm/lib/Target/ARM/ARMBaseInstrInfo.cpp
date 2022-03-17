@@ -752,23 +752,17 @@ unsigned ARMBaseInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   const MCAsmInfo *MAI = MF->getTarget().getMCAsmInfo();
 
   const MCInstrDesc &MCID = MI.getDesc();
-  if (MCID.getSize())
-    return MCID.getSize();
 
   switch (MI.getOpcode()) {
   default:
-    // pseudo-instruction sizes are zero.
-    return 0;
+    // Return the size specified in .td file. If there's none, return 0, as we
+    // can't define a default size (Thumb1 instructions are 2 bytes, Thumb2
+    // instructions are 2-4 bytes, and ARM instructions are 4 bytes), in
+    // contrast to AArch64 instructions which have a default size of 4 bytes for
+    // example.
+    return MCID.getSize();
   case TargetOpcode::BUNDLE:
     return getInstBundleLength(MI);
-  case ARM::MOVi16_ga_pcrel:
-  case ARM::MOVTi16_ga_pcrel:
-  case ARM::t2MOVi16_ga_pcrel:
-  case ARM::t2MOVTi16_ga_pcrel:
-    return 4;
-  case ARM::MOVi32imm:
-  case ARM::t2MOVi32imm:
-    return 8;
   case ARM::CONSTPOOL_ENTRY:
   case ARM::JUMPTABLE_INSTS:
   case ARM::JUMPTABLE_ADDRS:
@@ -777,19 +771,6 @@ unsigned ARMBaseInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     // If this machine instr is a constant pool entry, its size is recorded as
     // operand #2.
     return MI.getOperand(2).getImm();
-  case ARM::Int_eh_sjlj_longjmp:
-    return 16;
-  case ARM::tInt_eh_sjlj_longjmp:
-    return 10;
-  case ARM::tInt_WIN_eh_sjlj_longjmp:
-    return 12;
-  case ARM::Int_eh_sjlj_setjmp:
-  case ARM::Int_eh_sjlj_setjmp_nofp:
-    return 20;
-  case ARM::tInt_eh_sjlj_setjmp:
-  case ARM::t2Int_eh_sjlj_setjmp:
-  case ARM::t2Int_eh_sjlj_setjmp_nofp:
-    return 12;
   case ARM::SPACE:
     return MI.getOperand(1).getImm();
   case ARM::INLINEASM:
@@ -800,14 +781,6 @@ unsigned ARMBaseInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
       Size = alignTo(Size, 4);
     return Size;
   }
-  case ARM::SpeculationBarrierISBDSBEndBB:
-  case ARM::t2SpeculationBarrierISBDSBEndBB:
-    // This gets lowered to 2 4-byte instructions.
-    return 8;
-  case ARM::SpeculationBarrierSBEndBB:
-  case ARM::t2SpeculationBarrierSBEndBB:
-    // This gets lowered to 1 4-byte instructions.
-    return 4;
   }
 }
 
@@ -5793,26 +5766,25 @@ struct OutlinerCosts {
         SaveRestoreLROnStack(target.isThumb() ? 8 : 8) {}
 };
 
-unsigned
-ARMBaseInstrInfo::findRegisterToSaveLRTo(const outliner::Candidate &C) const {
-  assert(C.LRUWasSet && "LRU wasn't set?");
+Register
+ARMBaseInstrInfo::findRegisterToSaveLRTo(outliner::Candidate &C) const {
   MachineFunction *MF = C.getMF();
-  const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo *>(
-      MF->getSubtarget().getRegisterInfo());
+  const TargetRegisterInfo &TRI = *MF->getSubtarget().getRegisterInfo();
+  const ARMBaseRegisterInfo *ARI =
+      static_cast<const ARMBaseRegisterInfo *>(&TRI);
 
   BitVector regsReserved = ARI->getReservedRegs(*MF);
   // Check if there is an available register across the sequence that we can
   // use.
-  for (unsigned Reg : ARM::rGPRRegClass) {
+  for (Register Reg : ARM::rGPRRegClass) {
     if (!(Reg < regsReserved.size() && regsReserved.test(Reg)) &&
         Reg != ARM::LR &&  // LR is not reserved, but don't use it.
         Reg != ARM::R12 && // R12 is not guaranteed to be preserved.
-        C.LRU.available(Reg) && C.UsedInSequence.available(Reg))
+        C.isAvailableAcrossAndOutOfSeq(Reg, TRI) &&
+        C.isAvailableInsideSeq(Reg, TRI))
       return Reg;
   }
-
-  // No suitable register. Return 0.
-  return 0u;
+  return Register();
 }
 
 // Compute liveness of LR at the point after the interval [I, E), which
@@ -5881,9 +5853,7 @@ outliner::OutlinedFunction ARMBaseInstrInfo::getOutliningCandidateInfo(
     // to compute liveness here.
     if (C.Flags & UnsafeRegsDead)
       return false;
-    C.initLRU(TRI);
-    LiveRegUnits LRU = C.LRU;
-    return (!LRU.available(ARM::R12) || !LRU.available(ARM::CPSR));
+    return C.isAnyUnavailableAcrossOrOutOfSeq({ARM::R12, ARM::CPSR}, TRI);
   };
 
   // Are there any candidates where those registers are live?
@@ -5996,7 +5966,6 @@ outliner::OutlinedFunction ARMBaseInstrInfo::getOutliningCandidateInfo(
     std::vector<outliner::Candidate> CandidatesWithoutStackFixups;
 
     for (outliner::Candidate &C : RepeatedSequenceLocs) {
-      C.initLRU(TRI);
       // LR liveness is overestimated in return blocks, unless they end with a
       // tail call.
       const auto Last = C.getMBB()->rbegin();
@@ -6004,7 +5973,7 @@ outliner::OutlinedFunction ARMBaseInstrInfo::getOutliningCandidateInfo(
           C.getMBB()->isReturnBlock() && !Last->isCall()
               ? isLRAvailable(TRI, Last,
                               (MachineBasicBlock::reverse_iterator)C.front())
-              : C.LRU.available(ARM::LR);
+              : C.isAvailableAcrossAndOutOfSeq(ARM::LR, TRI);
       if (LRIsAvailable) {
         FrameID = MachineOutlinerNoLRSave;
         NumBytesNoStackCalls += Costs.CallNoLRSave;
@@ -6023,7 +5992,7 @@ outliner::OutlinedFunction ARMBaseInstrInfo::getOutliningCandidateInfo(
 
       // Is SP used in the sequence at all? If not, we don't have to modify
       // the stack, so we are guaranteed to get the same frame.
-      else if (C.UsedInSequence.available(ARM::SP)) {
+      else if (C.isAvailableInsideSeq(ARM::SP, TRI)) {
         NumBytesNoStackCalls += Costs.CallDefault;
         C.setCallInfo(MachineOutlinerDefault, Costs.CallDefault);
         CandidatesWithoutStackFixups.push_back(C);
@@ -6662,7 +6631,7 @@ void ARMBaseInstrInfo::buildOutlinedFrame(
 
 MachineBasicBlock::iterator ARMBaseInstrInfo::insertOutlinedCall(
     Module &M, MachineBasicBlock &MBB, MachineBasicBlock::iterator &It,
-    MachineFunction &MF, const outliner::Candidate &C) const {
+    MachineFunction &MF, outliner::Candidate &C) const {
   MachineInstrBuilder MIB;
   MachineBasicBlock::iterator CallPt;
   unsigned Opc;
@@ -6752,4 +6721,3 @@ unsigned llvm::getBLXpredOpcode(const MachineFunction &MF) {
   return (MF.getSubtarget<ARMSubtarget>().hardenSlsBlr()) ? ARM::BLX_pred_noip
                                                           : ARM::BLX_pred;
 }
-

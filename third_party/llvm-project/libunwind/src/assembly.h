@@ -15,7 +15,7 @@
 #ifndef UNWIND_ASSEMBLY_H
 #define UNWIND_ASSEMBLY_H
 
-#if (defined(__i386__) || defined(__x86_64__)) && defined(__linux__)
+#if defined(__linux__) && defined(__CET__)
 #include <cet.h>
 #define _LIBUNWIND_CET_ENDBR _CET_ENDBR
 #else
@@ -234,7 +234,7 @@
 #endif
 #endif /* __arm__ */
 
-#if defined(__ppc__) || defined(__powerpc64__)
+#if defined(__powerpc__)
 #define PPC_LEFT_SHIFT(index) << (index)
 #endif
 

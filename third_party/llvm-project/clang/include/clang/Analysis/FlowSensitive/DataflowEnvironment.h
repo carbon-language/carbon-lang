@@ -26,6 +26,9 @@
 #include "clang/Analysis/FlowSensitive/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 namespace clang {
 namespace dataflow {
@@ -48,6 +51,42 @@ enum class SkipPast {
 /// Holds the state of the program (store and heap) at a given program point.
 class Environment {
 public:
+  /// Supplements `Environment` with non-standard comparison and join
+  /// operations.
+  class ValueModel {
+  public:
+    virtual ~ValueModel() = default;
+
+    /// Returns true if and only if `Val1` is equivalent to `Val2`.
+    ///
+    /// Requirements:
+    ///
+    ///  `Val1` and `Val2` must be distinct.
+    ///
+    ///  `Val1` and `Val2` must model values of type `Type`.
+    virtual bool compareEquivalent(QualType Type, const Value &Val1,
+                                   const Value &Val2) {
+      // FIXME: Consider adding QualType to StructValue and removing the Type
+      // argument here.
+      return false;
+    }
+
+    /// Modifies `MergedVal` to approximate both `Val1` and `Val2`. This could
+    /// be a strict lattice join or a more general widening operation. If this
+    /// function returns true, `MergedVal` will be assigned to a storage
+    /// location of type `Type` in `Env`.
+    ///
+    /// Requirements:
+    ///
+    ///  `Val1` and `Val2` must be distinct.
+    ///
+    ///  `Val1`, `Val2`, and `MergedVal` must model values of type `Type`.
+    virtual bool merge(QualType Type, const Value &Val1, const Value &Val2,
+                       Value &MergedVal, Environment &Env) {
+      return false;
+    }
+  };
+
   /// Creates an environment that uses `DACtx` to store objects that encompass
   /// the state of a program.
   explicit Environment(DataflowAnalysisContext &DACtx) : DACtx(&DACtx) {}
@@ -62,9 +101,29 @@ public:
   /// with a symbolic representation of the `this` pointee.
   Environment(DataflowAnalysisContext &DACtx, const DeclContext &DeclCtx);
 
-  bool operator==(const Environment &) const;
+  /// Returns true if and only if the environment is equivalent to `Other`, i.e
+  /// the two environments:
+  ///  - have the same mappings from declarations to storage locations,
+  ///  - have the same mappings from expressions to storage locations,
+  ///  - have the same or equivalent (according to `Model`) values assigned to
+  ///    the same storage locations.
+  ///
+  /// Requirements:
+  ///
+  ///  `Other` and `this` must use the same `DataflowAnalysisContext`.
+  bool equivalentTo(const Environment &Other,
+                    Environment::ValueModel &Model) const;
 
-  LatticeJoinEffect join(const Environment &);
+  /// Joins the environment with `Other` by taking the intersection of storage
+  /// locations and values that are stored in them. Distinct values that are
+  /// assigned to the same storage locations in the environment and `Other` are
+  /// merged using `Model`.
+  ///
+  /// Requirements:
+  ///
+  ///  `Other` and `this` must use the same `DataflowAnalysisContext`.
+  LatticeJoinEffect join(const Environment &Other,
+                         Environment::ValueModel &Model);
 
   // FIXME: Rename `createOrGetStorageLocation` to `getOrCreateStorageLocation`,
   // `getStableStorageLocation`, or something more appropriate.
@@ -116,15 +175,15 @@ public:
   /// in the environment.
   StorageLocation *getThisPointeeStorageLocation() const;
 
-  /// Creates a value appropriate for `Type`, assigns it to `Loc`, and returns
-  /// it, if `Type` is supported, otherwise return null. If `Type` is a pointer
-  /// or reference type, creates all the necessary storage locations and values
-  /// for indirections until it finds a non-pointer/non-reference type.
+  /// Creates a value appropriate for `Type`, if `Type` is supported, otherwise
+  /// return null. If `Type` is a pointer or reference type, creates all the
+  /// necessary storage locations and values for indirections until it finds a
+  /// non-pointer/non-reference type.
   ///
   /// Requirements:
   ///
   ///  `Type` must not be null.
-  Value *initValueInStorageLocation(const StorageLocation &Loc, QualType Type);
+  Value *createValue(QualType Type);
 
   /// Assigns `Val` as the value of `Loc` in the environment.
   void setValue(const StorageLocation &Loc, Value &Val);
@@ -142,16 +201,38 @@ public:
   Value *getValue(const Expr &E, SkipPast SP) const;
 
   /// Transfers ownership of `Loc` to the analysis context and returns a
-  /// reference to `Loc`.
-  StorageLocation &takeOwnership(std::unique_ptr<StorageLocation> Loc);
+  /// reference to it.
+  ///
+  /// Requirements:
+  ///
+  ///  `Loc` must not be null.
+  template <typename T>
+  typename std::enable_if<std::is_base_of<StorageLocation, T>::value, T &>::type
+  takeOwnership(std::unique_ptr<T> Loc) {
+    return DACtx->takeOwnership(std::move(Loc));
+  }
 
   /// Transfers ownership of `Val` to the analysis context and returns a
-  /// reference to `Val`.
-  Value &takeOwnership(std::unique_ptr<Value> Val);
+  /// reference to it.
+  ///
+  /// Requirements:
+  ///
+  ///  `Val` must not be null.
+  template <typename T>
+  typename std::enable_if<std::is_base_of<Value, T>::value, T &>::type
+  takeOwnership(std::unique_ptr<T> Val) {
+    return DACtx->takeOwnership(std::move(Val));
+  }
+
+  /// Returns a symbolic boolean value that models a boolean literal equal to
+  /// `Value`
+  AtomicBoolValue &getBoolLiteralValue(bool Value) const {
+    return DACtx->getBoolLiteralValue(Value);
+  }
 
 private:
-  /// Returns the value assigned to `Loc` in the environment or null if `Type`
-  /// isn't supported.
+  /// Creates a value appropriate for `Type`, if `Type` is supported, otherwise
+  /// return null.
   ///
   /// Recursively initializes storage locations and values until it sees a
   /// self-referential pointer or reference type. `Visited` is used to track
@@ -161,9 +242,8 @@ private:
   /// Requirements:
   ///
   ///  `Type` must not be null.
-  Value *initValueInStorageLocationUnlessSelfReferential(
-      const StorageLocation &Loc, QualType Type,
-      llvm::DenseSet<QualType> &Visited);
+  Value *createValueUnlessSelfReferential(QualType Type,
+                                          llvm::DenseSet<QualType> &Visited);
 
   StorageLocation &skip(StorageLocation &Loc, SkipPast SP) const;
   const StorageLocation &skip(const StorageLocation &Loc, SkipPast SP) const;

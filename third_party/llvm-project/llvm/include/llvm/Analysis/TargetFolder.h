@@ -21,12 +21,13 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/IRBuilderFolder.h"
 
 namespace llvm {
 
+class Constant;
 class DataLayout;
+class Type;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder final : public IRBuilderFolder {
@@ -57,6 +58,14 @@ public:
     return nullptr;
   }
 
+  Value *FoldAnd(Value *LHS, Value *RHS) const override {
+    auto *LC = dyn_cast<Constant>(LHS);
+    auto *RC = dyn_cast<Constant>(RHS);
+    if (LC && RC)
+      return Fold(ConstantExpr::getAnd(LC, RC));
+    return nullptr;
+  }
+
   Value *FoldOr(Value *LHS, Value *RHS) const override {
     auto *LC = dyn_cast<Constant>(LHS);
     auto *RC = dyn_cast<Constant>(RHS);
@@ -70,6 +79,30 @@ public:
     auto *RC = dyn_cast<Constant>(RHS);
     if (LC && RC)
       return ConstantExpr::getCompare(P, LC, RC);
+    return nullptr;
+  }
+
+  Value *FoldGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
+                 bool IsInBounds = false) const override {
+    if (auto *PC = dyn_cast<Constant>(Ptr)) {
+      // Every index must be constant.
+      if (any_of(IdxList, [](Value *V) { return !isa<Constant>(V); }))
+        return nullptr;
+      if (IsInBounds)
+        return Fold(ConstantExpr::getInBoundsGetElementPtr(Ty, PC, IdxList));
+      else
+        return Fold(ConstantExpr::getGetElementPtr(Ty, PC, IdxList));
+    }
+    return nullptr;
+  }
+
+  Value *FoldSelect(Value *C, Value *True, Value *False) const override {
+    auto *CC = dyn_cast<Constant>(C);
+    auto *TC = dyn_cast<Constant>(True);
+    auto *FC = dyn_cast<Constant>(False);
+    if (CC && TC && FC)
+      return Fold(ConstantExpr::getSelect(CC, TC, FC));
+
     return nullptr;
   }
 
@@ -126,9 +159,6 @@ public:
                        bool isExact = false) const override {
     return Fold(ConstantExpr::getAShr(LHS, RHS, isExact));
   }
-  Constant *CreateAnd(Constant *LHS, Constant *RHS) const override {
-    return Fold(ConstantExpr::getAnd(LHS, RHS));
-  }
   Constant *CreateXor(Constant *LHS, Constant *RHS) const override {
     return Fold(ConstantExpr::getXor(LHS, RHS));
   }
@@ -155,42 +185,6 @@ public:
 
   Constant *CreateUnOp(Instruction::UnaryOps Opc, Constant *C) const override {
     return Fold(ConstantExpr::get(Opc, C));
-  }
-
-  //===--------------------------------------------------------------------===//
-  // Memory Instructions
-  //===--------------------------------------------------------------------===//
-
-  Constant *CreateGetElementPtr(Type *Ty, Constant *C,
-                                ArrayRef<Constant *> IdxList) const override {
-    return Fold(ConstantExpr::getGetElementPtr(Ty, C, IdxList));
-  }
-  Constant *CreateGetElementPtr(Type *Ty, Constant *C,
-                                Constant *Idx) const override {
-    // This form of the function only exists to avoid ambiguous overload
-    // warnings about whether to convert Idx to ArrayRef<Constant *> or
-    // ArrayRef<Value *>.
-    return Fold(ConstantExpr::getGetElementPtr(Ty, C, Idx));
-  }
-  Constant *CreateGetElementPtr(Type *Ty, Constant *C,
-                                ArrayRef<Value *> IdxList) const override {
-    return Fold(ConstantExpr::getGetElementPtr(Ty, C, IdxList));
-  }
-
-  Constant *CreateInBoundsGetElementPtr(
-      Type *Ty, Constant *C, ArrayRef<Constant *> IdxList) const override {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(Ty, C, IdxList));
-  }
-  Constant *CreateInBoundsGetElementPtr(Type *Ty, Constant *C,
-                                        Constant *Idx) const override {
-    // This form of the function only exists to avoid ambiguous overload
-    // warnings about whether to convert Idx to ArrayRef<Constant *> or
-    // ArrayRef<Value *>.
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(Ty, C, Idx));
-  }
-  Constant *CreateInBoundsGetElementPtr(
-      Type *Ty, Constant *C, ArrayRef<Value *> IdxList) const override {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(Ty, C, IdxList));
   }
 
   //===--------------------------------------------------------------------===//
@@ -263,11 +257,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Other Instructions
   //===--------------------------------------------------------------------===//
-
-  Constant *CreateSelect(Constant *C, Constant *True,
-                         Constant *False) const override {
-    return Fold(ConstantExpr::getSelect(C, True, False));
-  }
 
   Constant *CreateExtractElement(Constant *Vec, Constant *Idx) const override {
     return Fold(ConstantExpr::getExtractElement(Vec, Idx));

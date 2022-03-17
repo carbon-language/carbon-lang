@@ -249,9 +249,6 @@ namespace llvm {
     SCALEFS,
     SCALEFS_RND,
 
-    // Unsigned Integer average.
-    AVG,
-
     /// Integer horizontal add/sub.
     HADD,
     HSUB,
@@ -1287,6 +1284,9 @@ namespace llvm {
     /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
     /// from i32 to i8 but not from i32 to i16.
     bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
+
+    bool shouldFoldSelectWithIdentityConstant(unsigned BinOpcode,
+                                              EVT VT) const override;
 
     /// Given an intrinsic, checks if on the target the intrinsic will need to map
     /// to a MemIntrinsicNode (touches memory). If this is the case, it returns

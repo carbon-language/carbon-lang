@@ -28,8 +28,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
 
-  auto buffer = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
-  if (buffer.HasErrors()) {
+  auto buffer = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
+  if (buffer.has_errors()) {
     return 0;
   }
 
@@ -37,7 +37,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   //
   // TODO: We should enhance this to do more sanity checks on the resulting
   // token stream.
-  for (TokenizedBuffer::Token token : buffer.Tokens()) {
+  for (TokenizedBuffer::Token token : buffer.tokens()) {
     int line_number = buffer.GetLineNumber(token);
     CHECK(line_number > 0) << "Invalid line number!";
     CHECK(line_number < INT_MAX) << "Invalid line number!";

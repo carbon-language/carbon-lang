@@ -24,6 +24,15 @@ static void AddExposedNames(const Declaration& declaration,
 static void AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface_decl = cast<InterfaceDeclaration>(declaration);
+      enclosing_scope.Add(iface_decl.name(), &iface_decl);
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      // Nothing to do here
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
       enclosing_scope.Add(func.name(), &func);
@@ -115,7 +124,7 @@ static void ResolveNames(Expression& expression,
       break;
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
-      identifier.set_named_entity(
+      identifier.set_value_node(
           enclosing_scope.Resolve(identifier.name(), identifier.source_loc()));
       break;
     }
@@ -123,6 +132,13 @@ static void ResolveNames(Expression& expression,
       ResolveNames(cast<IntrinsicExpression>(expression).args(),
                    enclosing_scope);
       break;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(expression);
+      ResolveNames(*if_expr.condition(), enclosing_scope);
+      ResolveNames(*if_expr.then_expression(), enclosing_scope);
+      ResolveNames(*if_expr.else_expression(), enclosing_scope);
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
@@ -163,6 +179,9 @@ static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
                    enclosing_scope);
       break;
     case PatternKind::AutoPattern:
+      break;
+    case PatternKind::VarPattern:
+      ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope);
       break;
   }
 }
@@ -244,6 +263,31 @@ static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
 static void ResolveNames(Declaration& declaration,
                          StaticScope& enclosing_scope) {
   switch (declaration.kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      auto& iface = cast<InterfaceDeclaration>(declaration);
+      StaticScope iface_scope;
+      iface_scope.AddParent(&enclosing_scope);
+      iface_scope.Add("Self", iface.self());
+      for (Nonnull<Declaration*> member : iface.members()) {
+        AddExposedNames(*member, iface_scope);
+      }
+      for (Nonnull<Declaration*> member : iface.members()) {
+        ResolveNames(*member, iface_scope);
+      }
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      auto& impl = cast<ImplDeclaration>(declaration);
+      ResolveNames(impl.interface(), enclosing_scope);
+      ResolveNames(*impl.impl_type(), enclosing_scope);
+      for (Nonnull<Declaration*> member : impl.members()) {
+        AddExposedNames(*member, enclosing_scope);
+      }
+      for (Nonnull<Declaration*> member : impl.members()) {
+        ResolveNames(*member, enclosing_scope);
+      }
+      break;
+    }
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(declaration);
       StaticScope function_scope;

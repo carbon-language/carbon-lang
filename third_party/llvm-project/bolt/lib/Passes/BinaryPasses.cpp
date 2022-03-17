@@ -105,29 +105,19 @@ MinBranchClusters("min-branch-clusters",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
-enum PeepholeOpts : char {
-  PEEP_NONE             = 0x0,
-  PEEP_DOUBLE_JUMPS     = 0x2,
-  PEEP_TAILCALL_TRAPS   = 0x4,
-  PEEP_USELESS_BRANCHES = 0x8,
-  PEEP_ALL              = 0xf
-};
-
-static cl::list<PeepholeOpts>
-Peepholes("peepholes",
-  cl::CommaSeparated,
-  cl::desc("enable peephole optimizations"),
-  cl::value_desc("opt1,opt2,opt3,..."),
-  cl::values(
-    clEnumValN(PEEP_NONE, "none", "disable peepholes"),
-    clEnumValN(PEEP_DOUBLE_JUMPS, "double-jumps",
-               "remove double jumps when able"),
-    clEnumValN(PEEP_TAILCALL_TRAPS, "tailcall-traps", "insert tail call traps"),
-    clEnumValN(PEEP_USELESS_BRANCHES, "useless-branches",
-               "remove useless conditional branches"),
-    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations")),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+static cl::list<Peepholes::PeepholeOpts> Peepholes(
+    "peepholes", cl::CommaSeparated, cl::desc("enable peephole optimizations"),
+    cl::value_desc("opt1,opt2,opt3,..."),
+    cl::values(clEnumValN(Peepholes::PEEP_NONE, "none", "disable peepholes"),
+               clEnumValN(Peepholes::PEEP_DOUBLE_JUMPS, "double-jumps",
+                          "remove double jumps when able"),
+               clEnumValN(Peepholes::PEEP_TAILCALL_TRAPS, "tailcall-traps",
+                          "insert tail call traps"),
+               clEnumValN(Peepholes::PEEP_USELESS_BRANCHES, "useless-branches",
+                          "remove useless conditional branches"),
+               clEnumValN(Peepholes::PEEP_ALL, "all",
+                          "enable all peephole optimizations")),
+    cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 static cl::opt<unsigned>
 PrintFuncStat("print-function-statistics",
@@ -629,10 +619,9 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
 
       // Now record preserved annotations separately and then strip annotations.
       for (auto II = BB->begin(); II != BB->end(); ++II) {
-        if (BF.requiresAddressTranslation() &&
-            BC.MIB->hasAnnotation(*II, "Offset"))
-          PreservedOffsetAnnotations.emplace_back(
-              &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset"));
+        if (BF.requiresAddressTranslation() && BC.MIB->getOffset(*II))
+          PreservedOffsetAnnotations.emplace_back(&(*II),
+                                                  *BC.MIB->getOffset(*II));
         BC.MIB->stripAnnotations(*II);
       }
     }
@@ -647,7 +636,7 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
 
   // Reinsert preserved annotations we need during code emission.
   for (const std::pair<MCInst *, uint32_t> &Item : PreservedOffsetAnnotations)
-    BC.MIB->addAnnotation<uint32_t>(*Item.first, "Offset", Item.second);
+    BC.MIB->setOffset(*Item.first, Item.second);
 }
 
 namespace {
@@ -1093,20 +1082,20 @@ void Peepholes::removeUselessCondBranches(BinaryFunction &Function) {
 }
 
 void Peepholes::runOnFunctions(BinaryContext &BC) {
-  const char Opts = std::accumulate(
-      opts::Peepholes.begin(), opts::Peepholes.end(), 0,
-      [](const char A, const opts::PeepholeOpts B) { return A | B; });
-  if (Opts == opts::PEEP_NONE || !BC.isX86())
+  const char Opts =
+      std::accumulate(opts::Peepholes.begin(), opts::Peepholes.end(), 0,
+                      [](const char A, const PeepholeOpts B) { return A | B; });
+  if (Opts == PEEP_NONE)
     return;
 
   for (auto &It : BC.getBinaryFunctions()) {
     BinaryFunction &Function = It.second;
     if (shouldOptimize(Function)) {
-      if (Opts & opts::PEEP_DOUBLE_JUMPS)
+      if (Opts & PEEP_DOUBLE_JUMPS)
         NumDoubleJumps += fixDoubleJumps(Function, false);
-      if (Opts & opts::PEEP_TAILCALL_TRAPS)
+      if (Opts & PEEP_TAILCALL_TRAPS)
         addTailcallTraps(Function);
-      if (Opts & opts::PEEP_USELESS_BRANCHES)
+      if (Opts & PEEP_USELESS_BRANCHES)
         removeUselessCondBranches(Function);
       assert(Function.validateCFG());
     }

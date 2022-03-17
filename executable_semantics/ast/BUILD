@@ -70,6 +70,22 @@ cc_test(
 )
 
 cc_library(
+    name = "generic_binding",
+    hdrs = [
+        "generic_binding.h",
+    ],
+    deps = [
+        ":ast_node",
+        ":source_location",
+        ":value_category",
+        "//common:check",
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -77,6 +93,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
+        ":generic_binding",
         ":pattern",
         ":return_term",
         ":source_location",
@@ -108,6 +125,7 @@ cc_library(
     hdrs = ["expression.h"],
     deps = [
         ":ast_node",
+        ":generic_binding",
         ":paren_contents",
         ":source_location",
         ":static_scope",

@@ -18,14 +18,14 @@ TEST(UnimplementedExampleTest, VerifyPrecedence) {
   static constexpr std::string_view Program = R"(
     package ExecutableSemanticsTest api;
     fn Main() -> i32 {
-      return 1 __unimplemented_example_infix 2 + 3;
+      return 1 __unimplemented_example_infix 2 == 3;
     }
   )";
   Arena arena;
   EXPECT_THAT(ParseFromString(&arena, "dummy.carbon", Program, false),
               ParsedAs(ASTDeclarations(
                   ElementsAre(MatchesFunctionDeclaration().WithBody(
-                      BlockContentsAre(ElementsAre(MatchesReturn(MatchesAdd(
+                      BlockContentsAre(ElementsAre(MatchesReturn(MatchesEq(
                           MatchesUnimplementedExpression(
                               "ExampleInfix", ElementsAre(MatchesLiteral(1),
                                                           MatchesLiteral(2))),

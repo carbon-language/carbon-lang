@@ -136,6 +136,9 @@ void *SharedMemorySmartStackTy::push(uint64_t Bytes) {
     return Ptr;
   }
 
+  if (config::isDebugMode(config::DebugKind::CommonIssues))
+    PRINT("Shared memory stack full, fallback to dynamic allocation of global "
+          "memory will negatively impact performance.");
   void *GlobalMemory = memory::allocGlobal(
       AlignedBytes, "Slow path shared memory allocation, insufficient "
                     "shared memory stack memory!");
@@ -233,7 +236,7 @@ struct TeamStateTy {
 TeamStateTy SHARED(TeamState);
 
 void TeamStateTy::init(bool IsSPMD) {
-  ICVState.NThreadsVar = mapping::getBlockSize();
+  ICVState.NThreadsVar = mapping::getBlockSize(IsSPMD);
   ICVState.LevelVar = 0;
   ICVState.ActiveLevelVar = 0;
   ICVState.MaxActiveLevelsVar = 1;
@@ -281,8 +284,9 @@ __attribute__((loader_uninitialized))
 ThreadStateTy *ThreadStates[mapping::MaxThreadsPerTeam];
 #pragma omp allocate(ThreadStates) allocator(omp_pteam_mem_alloc)
 
-uint32_t &lookupForModify32Impl(uint32_t ICVStateTy::*Var) {
-  if (OMP_LIKELY(TeamState.ICVState.LevelVar == 0))
+uint32_t &lookupForModify32Impl(uint32_t ICVStateTy::*Var, IdentTy *Ident) {
+  if (OMP_LIKELY(!config::mayUseThreadStates() ||
+                 TeamState.ICVState.LevelVar == 0))
     return TeamState.ICVState.*Var;
   uint32_t TId = mapping::getThreadIdInBlock();
   if (!ThreadStates[TId]) {
@@ -296,13 +300,13 @@ uint32_t &lookupForModify32Impl(uint32_t ICVStateTy::*Var) {
 
 uint32_t &lookup32Impl(uint32_t ICVStateTy::*Var) {
   uint32_t TId = mapping::getThreadIdInBlock();
-  if (OMP_UNLIKELY(ThreadStates[TId]))
+  if (OMP_UNLIKELY(config::mayUseThreadStates() && ThreadStates[TId]))
     return ThreadStates[TId]->ICVState.*Var;
   return TeamState.ICVState.*Var;
 }
 uint64_t &lookup64Impl(uint64_t ICVStateTy::*Var) {
   uint64_t TId = mapping::getThreadIdInBlock();
-  if (OMP_UNLIKELY(ThreadStates[TId]))
+  if (OMP_UNLIKELY(config::mayUseThreadStates() && ThreadStates[TId]))
     return ThreadStates[TId]->ICVState.*Var;
   return TeamState.ICVState.*Var;
 }
@@ -322,32 +326,32 @@ int returnValIfLevelIsActive(int Level, int Val, int DefaultVal,
 
 } // namespace
 
-uint32_t &state::lookup32(ValueKind Kind, bool IsReadonly) {
+uint32_t &state::lookup32(ValueKind Kind, bool IsReadonly, IdentTy *Ident) {
   switch (Kind) {
   case state::VK_NThreads:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::NThreadsVar);
-    return lookupForModify32Impl(&ICVStateTy::NThreadsVar);
+    return lookupForModify32Impl(&ICVStateTy::NThreadsVar, Ident);
   case state::VK_Level:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::LevelVar);
-    return lookupForModify32Impl(&ICVStateTy::LevelVar);
+    return lookupForModify32Impl(&ICVStateTy::LevelVar, Ident);
   case state::VK_ActiveLevel:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::ActiveLevelVar);
-    return lookupForModify32Impl(&ICVStateTy::ActiveLevelVar);
+    return lookupForModify32Impl(&ICVStateTy::ActiveLevelVar, Ident);
   case state::VK_MaxActiveLevels:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::MaxActiveLevelsVar);
-    return lookupForModify32Impl(&ICVStateTy::MaxActiveLevelsVar);
+    return lookupForModify32Impl(&ICVStateTy::MaxActiveLevelsVar, Ident);
   case state::VK_RunSched:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::RunSchedVar);
-    return lookupForModify32Impl(&ICVStateTy::RunSchedVar);
+    return lookupForModify32Impl(&ICVStateTy::RunSchedVar, Ident);
   case state::VK_RunSchedChunk:
     if (IsReadonly)
       return lookup32Impl(&ICVStateTy::RunSchedChunkVar);
-    return lookupForModify32Impl(&ICVStateTy::RunSchedChunkVar);
+    return lookupForModify32Impl(&ICVStateTy::RunSchedChunkVar, Ident);
   case state::VK_ParallelTeamSize:
     return TeamState.ParallelTeamSize;
   default:
@@ -376,7 +380,10 @@ void state::init(bool IsSPMD) {
   ThreadStates[mapping::getThreadIdInBlock()] = nullptr;
 }
 
-void state::enterDataEnvironment() {
+void state::enterDataEnvironment(IdentTy *Ident) {
+  ASSERT(config::mayUseThreadStates() &&
+         "Thread state modified while explicitly disabled!");
+
   unsigned TId = mapping::getThreadIdInBlock();
   ThreadStateTy *NewThreadState =
       static_cast<ThreadStateTy *>(__kmpc_alloc_shared(sizeof(ThreadStateTy)));
@@ -385,6 +392,9 @@ void state::enterDataEnvironment() {
 }
 
 void state::exitDataEnvironment() {
+  ASSERT(config::mayUseThreadStates() &&
+         "Thread state modified while explicitly disabled!");
+
   unsigned TId = mapping::getThreadIdInBlock();
   resetStateForThread(TId);
 }

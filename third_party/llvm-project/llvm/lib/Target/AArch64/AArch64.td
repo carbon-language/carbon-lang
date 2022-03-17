@@ -528,16 +528,13 @@ def HasV8_0rOps : SubtargetFeature<
   [//v8.1
   FeatureCRC, FeaturePAN, FeatureRDM, FeatureLSE, FeatureCONTEXTIDREL2,
   //v8.2
-  FeaturePerfMon, FeatureRAS, FeaturePsUAO, FeatureSM4,
-  FeatureSHA3, FeatureCCPP, FeatureFullFP16, FeaturePAN_RWV,
+  FeatureRAS, FeaturePsUAO, FeatureCCPP, FeaturePAN_RWV,
   //v8.3
   FeatureComplxNum, FeatureCCIDX, FeatureJS,
   FeaturePAuth, FeatureRCPC,
   //v8.4
-  FeatureDotProd, FeatureFP16FML, FeatureTRACEV8_4,
-  FeatureTLB_RMI, FeatureFlagM, FeatureDIT, FeatureSEL2, FeatureRCPC_IMMO,
-  //v8.5
-  FeatureSSBS, FeaturePredRes, FeatureSB, FeatureSpecRestrict]>;
+  FeatureDotProd, FeatureTRACEV8_4, FeatureTLB_RMI,
+  FeatureFlagM, FeatureDIT, FeatureSEL2, FeatureRCPC_IMMO]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -950,13 +947,14 @@ def ProcessorFeatures {
                                  FeatureFP16FML];
   list<SubtargetFeature> A65  = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
                                  FeatureNEON, FeatureFullFP16, FeatureDotProd,
-                                 FeatureRCPC, FeatureSSBS, FeatureRAS];
+                                 FeatureRCPC, FeatureSSBS, FeatureRAS,
+                                 FeaturePerfMon];
   list<SubtargetFeature> A76  = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
                                  FeatureNEON, FeatureFullFP16, FeatureDotProd,
-                                 FeatureRCPC, FeatureSSBS];
+                                 FeatureRCPC, FeatureSSBS, FeaturePerfMon];
   list<SubtargetFeature> A77  = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
                                  FeatureNEON, FeatureFullFP16, FeatureDotProd,
-                                 FeatureRCPC];
+                                 FeatureRCPC, FeaturePerfMon];
   list<SubtargetFeature> A78  = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
                                  FeatureNEON, FeatureFullFP16, FeatureDotProd,
                                  FeatureRCPC, FeaturePerfMon, FeatureSPE,
@@ -969,10 +967,16 @@ def ProcessorFeatures {
   list<SubtargetFeature> A710 = [HasV9_0aOps, FeatureNEON, FeaturePerfMon,
                                  FeatureETE, FeatureMTE, FeatureFP16FML,
                                  FeatureSVE2BitPerm, FeatureBF16, FeatureMatMulInt8];
-  list<SubtargetFeature> R82  = [HasV8_0rOps];
+  list<SubtargetFeature> R82  = [HasV8_0rOps, FeaturePerfMon, FeatureFullFP16,
+                                 FeatureFP16FML, FeatureSSBS, FeaturePredRes,
+                                 FeatureSB, FeatureSpecRestrict];
   list<SubtargetFeature> X1   = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
                                  FeatureNEON, FeatureRCPC, FeaturePerfMon,
                                  FeatureSPE, FeatureFullFP16, FeatureDotProd];
+  list<SubtargetFeature> X1C  = [HasV8_2aOps, FeatureCrypto, FeatureFPARMv8,
+                                 FeatureNEON, FeatureRCPC, FeaturePerfMon,
+                                 FeatureSPE, FeatureFullFP16, FeatureDotProd,
+                                 FeaturePAuth];
   list<SubtargetFeature> X2   = [HasV9_0aOps, FeatureNEON, FeaturePerfMon,
                                  FeatureMatMulInt8, FeatureBF16, FeatureAM,
                                  FeatureMTE, FeatureETE, FeatureSVE2BitPerm,
@@ -1009,13 +1013,15 @@ def ProcessorFeatures {
                                      FeatureRDM];
   list<SubtargetFeature> NeoverseE1 = [HasV8_2aOps, FeatureCrypto, FeatureDotProd,
                                        FeatureFPARMv8, FeatureFullFP16, FeatureNEON,
-                                       FeatureRCPC, FeatureSSBS];
+                                       FeatureRCPC, FeatureSSBS, FeaturePerfMon];
   list<SubtargetFeature> NeoverseN1 = [HasV8_2aOps, FeatureCrypto, FeatureDotProd,
                                        FeatureFPARMv8, FeatureFullFP16, FeatureNEON,
-                                       FeatureRCPC, FeatureSPE, FeatureSSBS];
+                                       FeatureRCPC, FeatureSPE, FeatureSSBS,
+                                       FeaturePerfMon];
   list<SubtargetFeature> NeoverseN2 = [HasV8_5aOps, FeatureBF16, FeatureETE,
                                        FeatureMatMulInt8, FeatureMTE, FeatureSVE2,
-                                       FeatureSVE2BitPerm, FeatureTRBE, FeatureCrypto];
+                                       FeatureSVE2BitPerm, FeatureTRBE, FeatureCrypto,
+                                       FeaturePerfMon];
   list<SubtargetFeature> Neoverse512TVB = [HasV8_4aOps, FeatureBF16, FeatureCacheDeepPersist,
                                            FeatureCrypto, FeatureFPARMv8, FeatureFP16FML,
                                            FeatureFullFP16, FeatureMatMulInt8, FeatureNEON,
@@ -1043,7 +1049,7 @@ def ProcessorFeatures {
   // by default for users targeting generic AArch64. The extensions do not
   // affect code generated by the compiler and can be used only by explicitly
   // mentioning the new system register names in assembly.
-  list<SubtargetFeature> Generic = [FeatureFPARMv8, FeatureNEON, FeaturePerfMon, FeatureETE];
+  list<SubtargetFeature> Generic = [FeatureFPARMv8, FeatureNEON, FeatureETE];
 }
 
 
@@ -1086,6 +1092,8 @@ def : ProcessorModel<"cortex-a710", CortexA57Model, ProcessorFeatures.A710,
 def : ProcessorModel<"cortex-r82", CortexA55Model, ProcessorFeatures.R82,
                      [TuneR82]>;
 def : ProcessorModel<"cortex-x1", CortexA57Model, ProcessorFeatures.X1,
+                     [TuneX1]>;
+def : ProcessorModel<"cortex-x1c", CortexA57Model, ProcessorFeatures.X1C,
                      [TuneX1]>;
 def : ProcessorModel<"cortex-x2", CortexA57Model, ProcessorFeatures.X2,
                      [TuneX2]>;

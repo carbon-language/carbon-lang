@@ -198,7 +198,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   friend class InstVisitor<CallAnalyzer, bool>;
 
 protected:
-  virtual ~CallAnalyzer() {}
+  virtual ~CallAnalyzer() = default;
   /// The TargetTransformInfo available for this compilation.
   const TargetTransformInfo &TTI;
 
@@ -361,10 +361,10 @@ protected:
   /// Model the elimination of repeated loads that is expected to happen
   /// whenever we simplify away the stores that would otherwise cause them to be
   /// loads.
-  bool EnableLoadElimination;
+  bool EnableLoadElimination = true;
 
   /// Whether we allow inlining for recursive call.
-  bool AllowRecursiveCall;
+  bool AllowRecursiveCall = false;
 
   SmallPtrSet<Value *, 16> LoadAddrSet;
 
@@ -455,8 +455,7 @@ public:
                OptimizationRemarkEmitter *ORE = nullptr)
       : TTI(TTI), GetAssumptionCache(GetAssumptionCache), GetBFI(GetBFI),
         PSI(PSI), F(Callee), DL(F.getParent()->getDataLayout()), ORE(ORE),
-        CandidateCall(Call), EnableLoadElimination(true),
-        AllowRecursiveCall(false) {}
+        CandidateCall(Call) {}
 
   InlineResult analyze();
 
@@ -1021,7 +1020,7 @@ public:
     return None;
   }
 
-  virtual ~InlineCostCallAnalyzer() {}
+  virtual ~InlineCostCallAnalyzer() = default;
   int getThreshold() const { return Threshold; }
   int getCost() const { return Cost; }
   Optional<CostBenefitPair> getCostBenefitPair() { return CostBenefit; }
@@ -2865,6 +2864,9 @@ Optional<InlineResult> llvm::getAttributeBasedInliningDecision(
   // Calls to functions with always-inline attributes should be inlined
   // whenever possible.
   if (Call.hasFnAttr(Attribute::AlwaysInline)) {
+    if (Call.getAttributes().hasFnAttr(Attribute::NoInline))
+      return InlineResult::failure("noinline call site attribute");
+
     auto IsViable = isInlineViable(*Callee);
     if (IsViable.isSuccess())
       return InlineResult::success();
@@ -2897,15 +2899,6 @@ Optional<InlineResult> llvm::getAttributeBasedInliningDecision(
   // Don't inline call sites marked noinline.
   if (Call.isNoInline())
     return InlineResult::failure("noinline call site attribute");
-
-  // Don't inline functions if one does not have any stack protector attribute
-  // but the other does.
-  if (Caller->hasStackProtectorFnAttr() && !Callee->hasStackProtectorFnAttr())
-    return InlineResult::failure(
-        "stack protected caller but callee requested no stack protector");
-  if (Callee->hasStackProtectorFnAttr() && !Caller->hasStackProtectorFnAttr())
-    return InlineResult::failure(
-        "stack protected callee but caller requested no stack protector");
 
   return None;
 }

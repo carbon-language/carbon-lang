@@ -99,6 +99,8 @@ Optional<uint8_t> getHsaAbiVersion(const MCSubtargetInfo *STI) {
     return ELF::ELFABIVERSION_AMDGPU_HSA_V3;
   case 4:
     return ELF::ELFABIVERSION_AMDGPU_HSA_V4;
+  case 5:
+    return ELF::ELFABIVERSION_AMDGPU_HSA_V5;
   default:
     report_fatal_error(Twine("Unsupported AMDHSA Code Object Version ") +
                        Twine(AmdhsaCodeObjectVersion));
@@ -123,8 +125,31 @@ bool isHsaAbiVersion4(const MCSubtargetInfo *STI) {
   return false;
 }
 
-bool isHsaAbiVersion3Or4(const MCSubtargetInfo *STI) {
-  return isHsaAbiVersion3(STI) || isHsaAbiVersion4(STI);
+bool isHsaAbiVersion5(const MCSubtargetInfo *STI) {
+  if (Optional<uint8_t> HsaAbiVer = getHsaAbiVersion(STI))
+    return *HsaAbiVer == ELF::ELFABIVERSION_AMDGPU_HSA_V5;
+  return false;
+}
+
+bool isHsaAbiVersion3AndAbove(const MCSubtargetInfo *STI) {
+  return isHsaAbiVersion3(STI) || isHsaAbiVersion4(STI) ||
+         isHsaAbiVersion5(STI);
+}
+
+// FIXME: All such magic numbers about the ABI should be in a
+// central TD file.
+unsigned getHostcallImplicitArgPosition() {
+  switch (AmdhsaCodeObjectVersion) {
+  case 2:
+  case 3:
+  case 4:
+    return 24;
+  case 5:
+    return 80;
+  default:
+    llvm_unreachable("Unexpected code object version");
+    return 0;
+  }
 }
 
 #define GET_MIMGBaseOpcodesTable_IMPL
@@ -132,6 +157,8 @@ bool isHsaAbiVersion3Or4(const MCSubtargetInfo *STI) {
 #define GET_MIMGInfoTable_IMPL
 #define GET_MIMGLZMappingTable_IMPL
 #define GET_MIMGMIPMappingTable_IMPL
+#define GET_MIMGBiasMappingTable_IMPL
+#define GET_MIMGOffsetMappingTable_IMPL
 #define GET_MIMGG16MappingTable_IMPL
 #include "AMDGPUGenSearchableTables.inc"
 
@@ -493,6 +520,7 @@ std::string AMDGPUTargetID::toString() const {
         Features += "+sram-ecc";
       break;
     case ELF::ELFABIVERSION_AMDGPU_HSA_V4:
+    case ELF::ELFABIVERSION_AMDGPU_HSA_V5:
       // sramecc.
       if (getSramEccSetting() == TargetIDSetting::Off)
         Features += ":sramecc-";
@@ -998,7 +1026,9 @@ unsigned encodeWaitcnt(const IsaVersion &Version, const Waitcnt &Decoded) {
 
 namespace Hwreg {
 
-int64_t getHwregId(const StringRef Name) {
+int64_t getHwregId(const StringRef Name, const MCSubtargetInfo &STI) {
+  if (isGFX10(STI) && Name == "HW_REG_HW_ID") // An alias
+    return ID_HW_ID1;
   for (int Id = ID_SYMBOLIC_FIRST_; Id < ID_SYMBOLIC_LAST_; ++Id) {
     if (IdSymbolic[Id] && Name == IdSymbolic[Id])
       return Id;
@@ -1018,9 +1048,18 @@ static unsigned getLastSymbolicHwreg(const MCSubtargetInfo &STI) {
 }
 
 bool isValidHwreg(int64_t Id, const MCSubtargetInfo &STI) {
-  return
-    ID_SYMBOLIC_FIRST_ <= Id && Id < getLastSymbolicHwreg(STI) &&
-    IdSymbolic[Id] && (Id != ID_XNACK_MASK || !AMDGPU::isGFX10_BEncoding(STI));
+  switch (Id) {
+  case ID_HW_ID:
+    return isSI(STI) || isCI(STI) || isVI(STI) || isGFX9(STI);
+  case ID_HW_ID1:
+  case ID_HW_ID2:
+    return isGFX10Plus(STI);
+  case ID_XNACK_MASK:
+    return isGFX10(STI) && !AMDGPU::isGFX10_BEncoding(STI);
+  default:
+    return ID_SYMBOLIC_FIRST_ <= Id && Id < getLastSymbolicHwreg(STI) &&
+           IdSymbolic[Id];
+  }
 }
 
 bool isValidHwreg(int64_t Id) {
@@ -1406,6 +1445,10 @@ bool isModuleEntryFunctionCC(CallingConv::ID CC) {
   }
 }
 
+bool isKernelCC(const Function *Func) {
+  return AMDGPU::isModuleEntryFunctionCC(Func->getCallingConv());
+}
+
 bool hasXNACK(const MCSubtargetInfo &STI) {
   return STI.getFeatureBits()[AMDGPU::FeatureXNACK];
 }
@@ -1480,18 +1523,22 @@ bool hasArchitectedFlatScratch(const MCSubtargetInfo &STI) {
   return STI.getFeatureBits()[AMDGPU::FeatureArchitectedFlatScratch];
 }
 
+bool hasMAIInsts(const MCSubtargetInfo &STI) {
+  return STI.getFeatureBits()[AMDGPU::FeatureMAIInsts];
+}
+
+int32_t getTotalNumVGPRs(bool has90AInsts, int32_t ArgNumAGPR,
+                         int32_t ArgNumVGPR) {
+  if (has90AInsts && ArgNumAGPR)
+    return alignTo(ArgNumVGPR, 4) + ArgNumAGPR;
+  return std::max(ArgNumVGPR, ArgNumAGPR);
+}
+
 bool isSGPR(unsigned Reg, const MCRegisterInfo* TRI) {
   const MCRegisterClass SGPRClass = TRI->getRegClass(AMDGPU::SReg_32RegClassID);
   const unsigned FirstSubReg = TRI->getSubReg(Reg, AMDGPU::sub0);
   return SGPRClass.contains(FirstSubReg != 0 ? FirstSubReg : Reg) ||
     Reg == AMDGPU::SCC;
-}
-
-bool isRegIntersect(unsigned Reg0, unsigned Reg1, const MCRegisterInfo* TRI) {
-  for (MCRegAliasIterator R(Reg0, TRI, true); R.isValid(); ++R) {
-    if (*R == Reg1) return true;
-  }
-  return false;
 }
 
 #define MAP_REG2REG \

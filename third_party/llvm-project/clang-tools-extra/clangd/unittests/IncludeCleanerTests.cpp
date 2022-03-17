@@ -250,16 +250,16 @@ TEST(IncludeCleaner, Stdlib) {
   for (const auto &Test : Tests) {
     TU.Code = Test.Code.str();
     ParsedAST AST = TU.build();
-    std::vector<stdlib::Symbol> WantSyms;
+    std::vector<tooling::stdlib::Symbol> WantSyms;
     for (const auto &SymName : Test.Symbols) {
       auto QName = splitQualifiedName(SymName);
-      auto Sym = stdlib::Symbol::named(QName.first, QName.second);
+      auto Sym = tooling::stdlib::Symbol::named(QName.first, QName.second);
       EXPECT_TRUE(Sym) << SymName;
       WantSyms.push_back(*Sym);
     }
-    std::vector<stdlib::Header> WantHeaders;
+    std::vector<tooling::stdlib::Header> WantHeaders;
     for (const auto &HeaderName : Test.Headers) {
-      auto Header = stdlib::Header::named(HeaderName);
+      auto Header = tooling::stdlib::Header::named(HeaderName);
       EXPECT_TRUE(Header) << HeaderName;
       WantHeaders.push_back(*Header);
     }
@@ -272,7 +272,7 @@ TEST(IncludeCleaner, Stdlib) {
   }
 }
 
-MATCHER_P(WrittenInclusion, Written, "") {
+MATCHER_P(writtenInclusion, Written, "") {
   if (arg.Written != Written)
     *result_listener << arg.Written;
   return arg.Written == Written;
@@ -302,7 +302,7 @@ TEST(IncludeCleaner, StdlibUnused) {
   auto AST = TU.build();
 
   auto Unused = computeUnusedIncludes(AST);
-  EXPECT_THAT(Unused, ElementsAre(Pointee(WrittenInclusion("<queue>"))));
+  EXPECT_THAT(Unused, ElementsAre(Pointee(writtenInclusion("<queue>"))));
 }
 
 TEST(IncludeCleaner, GetUnusedHeaders) {

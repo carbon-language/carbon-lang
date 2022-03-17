@@ -948,7 +948,7 @@ bool kmp_topology_t::filter_hw_subset() {
   bool using_core_effs = false;
   int hw_subset_depth = __kmp_hw_subset->get_depth();
   kmp_hw_t specified[KMP_HW_LAST];
-  int topology_levels[hw_subset_depth];
+  int *topology_levels = (int *)KMP_ALLOCA(sizeof(int) * hw_subset_depth);
   KMP_ASSERT(hw_subset_depth > 0);
   KMP_FOREACH_HW_TYPE(i) { specified[i] = KMP_HW_UNKNOWN; }
   int core_level = get_level(KMP_HW_CORE);
@@ -1765,7 +1765,7 @@ static bool __kmp_affinity_create_hwloc_map(kmp_i18n_id_t *const msg_id) {
 
   hw_thread_index = 0;
   pu = NULL;
-  while (pu = hwloc_get_next_obj_by_type(tp, HWLOC_OBJ_PU, pu)) {
+  while ((pu = hwloc_get_next_obj_by_type(tp, HWLOC_OBJ_PU, pu))) {
     int index = depth - 1;
     bool included = KMP_CPU_ISSET(pu->os_index, __kmp_affin_fullMask);
     kmp_hw_thread_t &hw_thread = __kmp_topology->at(hw_thread_index);

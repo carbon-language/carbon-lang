@@ -354,12 +354,6 @@ static bool shrinkScalarLogicOp(const GCNSubtarget &ST,
     llvm_unreachable("unexpected opcode");
   }
 
-  if ((Opc == AMDGPU::S_ANDN2_B32 || Opc == AMDGPU::S_ORN2_B32) &&
-      SrcImm == Src0) {
-    if (!TII->commuteInstruction(MI, false, 1, 2))
-      NewImm = 0;
-  }
-
   if (NewImm != 0) {
     if (Dest->getReg().isVirtual() && SrcReg->isReg()) {
       MRI.setRegAllocationHint(Dest->getReg(), 0, SrcReg->getReg());
@@ -464,11 +458,11 @@ static void dropInstructionKeepingImpDefs(MachineInstr &MI,
 // Returns next valid instruction pointer if was able to create v_swap_b32.
 //
 // This shall not be done too early not to prevent possible folding which may
-// remove matched moves, and this should prefereably be done before RA to
+// remove matched moves, and this should preferably be done before RA to
 // release saved registers and also possibly after RA which can insert copies
 // too.
 //
-// This is really just a generic peephole that is not a canocical shrinking,
+// This is really just a generic peephole that is not a canonical shrinking,
 // although requirements match the pass placement and it reduces code size too.
 static MachineInstr* matchSwap(MachineInstr &MovT, MachineRegisterInfo &MRI,
                                const SIInstrInfo *TII) {

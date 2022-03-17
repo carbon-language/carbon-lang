@@ -7,8 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <optional>
-
+#include "llvm/ADT/Optional.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
@@ -20,22 +19,22 @@ namespace {
 class ParseTreeTest : public ::testing::Test {
  protected:
   auto Analyze(llvm::Twine t) -> Semantics {
-    source_buffer.emplace(SourceBuffer::CreateFromText(t.str()));
+    source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     return Semantics::Analyze(*parse_tree, consumer);
   }
 
-  std::optional<SourceBuffer> source_buffer;
-  std::optional<TokenizedBuffer> tokenized_buffer;
-  std::optional<ParseTree> parse_tree;
+  llvm::Optional<SourceBuffer> source_buffer;
+  llvm::Optional<TokenizedBuffer> tokenized_buffer;
+  llvm::Optional<ParseTree> parse_tree;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(ParseTreeTest, Empty) {
   // TODO: Validate the returned Semantics object.
   Analyze("");
-  ASSERT_FALSE(parse_tree->HasErrors());
+  ASSERT_FALSE(parse_tree->has_errors());
 }
 
 }  // namespace

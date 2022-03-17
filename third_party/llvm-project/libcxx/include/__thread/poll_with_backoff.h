@@ -9,11 +9,12 @@
 #ifndef _LIBCPP___THREAD_POLL_WITH_BACKOFF_H
 #define _LIBCPP___THREAD_POLL_WITH_BACKOFF_H
 
+#include <__availability>
 #include <__config>
 #include <chrono>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD

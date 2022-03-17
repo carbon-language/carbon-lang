@@ -15,6 +15,32 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+      out << "interface " << iface_decl.name() << " {\n";
+      for (Nonnull<Declaration*> m : iface_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      const auto& impl_decl = cast<ImplDeclaration>(*this);
+      switch (impl_decl.kind()) {
+        case ImplKind::InternalImpl:
+          break;
+        case ImplKind::ExternalImpl:
+          out << "external ";
+          break;
+      }
+      out << "impl " << *impl_decl.impl_type() << " as "
+          << impl_decl.interface() << " {\n";
+      for (Nonnull<Declaration*> m : impl_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
@@ -51,6 +77,23 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto GetName(const Declaration& declaration) -> std::optional<std::string> {
+  switch (declaration.kind()) {
+    case DeclarationKind::FunctionDeclaration:
+      return cast<FunctionDeclaration>(declaration).name();
+    case DeclarationKind::ClassDeclaration:
+      return cast<ClassDeclaration>(declaration).name();
+    case DeclarationKind::ChoiceDeclaration:
+      return cast<ChoiceDeclaration>(declaration).name();
+    case DeclarationKind::InterfaceDeclaration:
+      return cast<InterfaceDeclaration>(declaration).name();
+    case DeclarationKind::VariableDeclaration:
+      return cast<VariableDeclaration>(declaration).binding().name();
+    case DeclarationKind::ImplDeclaration:
+      return std::nullopt;
+  }
+}
+
 void GenericBinding::Print(llvm::raw_ostream& out) const {
   out << name() << ":! " << type();
 }
@@ -63,6 +106,7 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
       out << "-> auto";
       return;
     case ReturnKind::Expression:
+      CHECK(type_expression_.has_value());
       out << "-> " << **type_expression_;
       return;
   }

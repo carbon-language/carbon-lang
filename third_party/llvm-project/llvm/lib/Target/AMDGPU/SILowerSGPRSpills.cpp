@@ -127,7 +127,7 @@ static void insertCSRRestores(MachineBasicBlock &RestoreBlock,
   // FIXME: Just emit the readlane/writelane directly
   if (!TFI->restoreCalleeSavedRegisters(RestoreBlock, I, CSI, TRI)) {
     for (const CalleeSavedInfo &CI : reverse(CSI)) {
-      unsigned Reg = CI.getReg();
+      Register Reg = CI.getReg();
       const TargetRegisterClass *RC =
         TRI->getMinimalPhysRegClass(Reg, MVT::i32);
 
@@ -321,7 +321,7 @@ bool SILowerSGPRSpills::runOnMachineFunction(MachineFunction &MF) {
     // free frame index ids by the later pass(es) like "stack slot coloring"
     // which in turn could mess-up with the book keeping of "frame index to VGPR
     // lane".
-    FuncInfo->removeDeadFrameIndices(MFI);
+    FuncInfo->removeDeadFrameIndices(MFI, /*ResetSGPRSpillStackIDs*/ false);
 
     MadeChange = true;
   }

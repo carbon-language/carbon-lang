@@ -13,6 +13,7 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/dictionary.h"
+#include "executable_semantics/interpreter/impl_scope.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
@@ -31,17 +32,16 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static void ArgumentDeduction(
-      SourceLocation source_loc,
-      std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& deduced,
-      Nonnull<const Value*> param, Nonnull<const Value*> arg);
+  static void ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
+                                Nonnull<const Value*> param,
+                                Nonnull<const Value*> arg);
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  void TypeCheckExp(Nonnull<Expression*> e);
+  void TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
@@ -49,31 +49,65 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
   void TypeCheckPattern(Nonnull<Pattern*> p,
-                        std::optional<Nonnull<const Value*>> expected);
-
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d);
+                        std::optional<Nonnull<const Value*>> expected,
+                        const ImplScope& impl_scope,
+                        ValueCategory enclosing_value_category);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  void TypeCheckStmt(Nonnull<Statement*> s);
+  void TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at `f`,
-  // and may not traverse f->body() if `check_body` is false.
+  // Establish the `static_type` and `constant_value` of the
+  // declaration and all of its nested declarations. This involves the
+  // compile-time interpretation of any type expressions in the
+  // declaration. It does not involve type checking statements and
+  // (runtime) expressions, as in the body of a function or a method.
+  // Dispatches to one of the following functions.
+  void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
+
+  void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
+                                  const ImplScope& enclosing_scope);
+
+  void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                               ImplScope& enclosing_scope);
+
+  void DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                   ImplScope& enclosing_scope);
+
+  void DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                              ImplScope& enclosing_scope);
+
+  void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                const ImplScope& enclosing_scope);
+
+  // Checks the statements and (runtime) expressions within the
+  // declaration, such as the body of a function.
+  // Dispatches to one of the following functions.
+  // Assumes that DeclareDeclaration has already been invoked on `d`.
+  void TypeCheckDeclaration(Nonnull<Declaration*> d,
+                            const ImplScope& impl_scope);
+
+  // Type check the body of the function.
   void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                    bool check_body);
+                                    const ImplScope& impl_scope);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at class_decl.
-  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl);
+  // Type check all the members of the class.
+  void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
+                                 const ImplScope& impl_scope);
 
-  // Equivalent to TypeCheckExp, but operates on the AST rooted at choice_decl.
-  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice);
+  // Type check all the members of the interface.
+  void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
+                                     const ImplScope& impl_scope);
 
-  // Establish the type of the declaration without deeply checking
-  // the declaration, such as checking the body of a function.
-  void DeclareDeclaration(Nonnull<Declaration*> d);
+  // Type check all the members of the implementation.
+  void TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
+                                const ImplScope& impl_scope);
+
+  // This currently does nothing, but perhaps that will change in the future.
+  void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
+                                  const ImplScope& impl_scope);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
@@ -98,7 +132,7 @@ class TypeChecker {
   void PrintConstants(llvm::raw_ostream& out);
 
   Nonnull<Arena*> arena_;
-  std::set<NamedEntityView> constants_;
+  std::set<ValueNodeView> constants_;
 
   bool trace_;
 };

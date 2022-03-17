@@ -216,14 +216,13 @@ void InitTlsSize() { }
 // On glibc x86_64, ThreadDescriptorSize() needs to be precise due to the usage
 // of g_tls_size. On other targets, ThreadDescriptorSize() is only used by lsan
 // to get the pointer to thread-specific data keys in the thread control block.
-#if (SANITIZER_FREEBSD || SANITIZER_LINUX) && !SANITIZER_ANDROID
+#if (SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_SOLARIS) && \
+    !SANITIZER_ANDROID && !SANITIZER_GO
 // sizeof(struct pthread) from glibc.
 static atomic_uintptr_t thread_descriptor_size;
 
-uptr ThreadDescriptorSize() {
-  uptr val = atomic_load_relaxed(&thread_descriptor_size);
-  if (val)
-    return val;
+static uptr ThreadDescriptorSizeFallback() {
+  uptr val = 0;
 #if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
   int major;
   int minor;
@@ -285,8 +284,21 @@ uptr ThreadDescriptorSize() {
 #elif defined(__powerpc64__)
   val = 1776; // from glibc.ppc64le 2.20-8.fc21
 #endif
+  return val;
+}
+
+uptr ThreadDescriptorSize() {
+  uptr val = atomic_load_relaxed(&thread_descriptor_size);
   if (val)
-    atomic_store_relaxed(&thread_descriptor_size, val);
+    return val;
+  // _thread_db_sizeof_pthread is a GLIBC_PRIVATE symbol that is exported in
+  // glibc 2.34 and later.
+  if (unsigned *psizeof = static_cast<unsigned *>(
+          dlsym(RTLD_DEFAULT, "_thread_db_sizeof_pthread")))
+    val = *psizeof;
+  if (!val)
+    val = ThreadDescriptorSizeFallback();
+  atomic_store_relaxed(&thread_descriptor_size, val);
   return val;
 }
 
@@ -308,7 +320,6 @@ static uptr TlsPreTcbSize() {
 }
 #endif
 
-#if !SANITIZER_GO
 namespace {
 struct TlsBlock {
   uptr begin, end, align;
@@ -396,9 +407,8 @@ __attribute__((unused)) static void GetStaticTlsBoundary(uptr *addr, uptr *size,
   *addr = ranges[l].begin;
   *size = ranges[r - 1].end - ranges[l].begin;
 }
-#endif  // !SANITIZER_GO
 #endif  // (x86_64 || i386 || mips || ...) && (SANITIZER_FREEBSD ||
-        // SANITIZER_LINUX) && !SANITIZER_ANDROID
+        // SANITIZER_LINUX) && !SANITIZER_ANDROID && !SANITIZER_GO
 
 #if SANITIZER_NETBSD
 static struct tls_tcb * ThreadSelfTlsTcb() {
@@ -467,7 +477,7 @@ static void GetTls(uptr *addr, uptr *size) {
   const uptr pre_tcb_size = TlsPreTcbSize();
   *addr = tp - pre_tcb_size;
   *size = g_tls_size + pre_tcb_size;
-#elif SANITIZER_FREEBSD || SANITIZER_LINUX
+#elif SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_SOLARIS
   uptr align;
   GetStaticTlsBoundary(addr, size, &align);
 #if defined(__x86_64__) || defined(__i386__) || defined(__s390__) || \
@@ -528,11 +538,6 @@ static void GetTls(uptr *addr, uptr *size) {
       *addr = (uptr)tcb->tcb_dtv[1];
     }
   }
-#elif SANITIZER_SOLARIS
-  // FIXME
-  *addr = 0;
-  *size = 0;
-#else
 #error "Unknown OS"
 #endif
 }
