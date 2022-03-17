@@ -90,9 +90,9 @@ Summary of how Carbon generics work:
     ["named constraints"](terminology.md#named-constraints). Named constraints
     can express requirements that multiple interfaces be implemented, and give
     you control over how name conflicts are handled.
--   Alternatively, you may resolve name conflicts by using the compound member
-    access syntax to directly call a function from a specific interface using a
-    qualified name.
+-   Alternatively, you may resolve name conflicts by using a qualified member
+    access expression to directly call a function from a specific interface
+    using a qualified name.
 
 ## What are generics?
 
@@ -226,19 +226,20 @@ library defining either the class or the interface.
 The methods of an interface implemented internally within the class definition
 may be called with the
 [simple member access syntax](terminology.md#simple-member-access). Methods of
-all implemented interfaces may be called with the
-[compound member access syntax using qualified names](terminology.md#compound-member-access-using-qualified-names),
+all implemented interfaces may be called with a
+[qualified member access expression](terminology.md#qualified-member-access-expression),
 whether they are defined internally or externally.
 
 ```
 var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// `Less` is defined in `Comparable`, which is implemented
-// externally for `Song`
+// `Less` is defined in `Comparable`, which is
+// implemented externally for `Song`
 song.(Comparable.Less)(song);
-// Can also call `Print` using the compound access syntax,
-// using the qualified name `Printable.Print`:
+// Can also call `Print` using a qualified member
+// access expression, using the compound member access
+// syntax with the qualified name `Printable.Print`:
 song.(Printable.Print)();
 ```
 
@@ -327,9 +328,9 @@ differently because they are defined as generic, as long as you only refer to
 the names defined by [type-of-type](#type-of-types) for the type parameter.
 
 You may also refer to any of the methods of interfaces required by the
-type-of-type using the
-[compound member access syntax with the qualified member name](#accessing-members-of-interfaces),
-as shown in the following sections.
+type-of-type using a
+[qualified member access expression](#accessing-members-of-interfaces), as shown
+in the following sections.
 
 A function can have a mix of generic, template, and regular parameters.
 Likewise, it's allowed to pass a template or generic value to a generic or
@@ -411,8 +412,8 @@ fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
 }
 ```
 
-Names with conflicts can be accessed using the
-[compound member access syntax](#accessing-members-of-interfaces).
+Names with conflicts can be accessed using a
+[qualified member access expression](#accessing-members-of-interfaces).
 
 ```
 fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
@@ -445,8 +446,8 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
     game_state->Draw_EndOfGame();
   }
   game_state->Draw_Renderable();
-  // Can still use compound member access syntax for
-  // names not defined in the named constraint
+  // Can still use a qualified member access expression
+  // for names not defined in the named constraint.
   return game_state->(Renderable.Center)();
 }
 ```
