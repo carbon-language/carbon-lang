@@ -13,8 +13,11 @@
 
 namespace Carbon {
 
-// Tracks an error message. Success values should be represented as either the
-// presence of a value in ErrorOr, or llvm::None in llvm::Optional<Error>.
+// Success values should be represented as either the presence of a value in
+// ErrorOr, using ErrorOr<Success> if no value is being returned.
+struct Success {};
+
+// Tracks an error message.
 class [[nodiscard]] Error {
  public:
   // Represents an error state.
@@ -39,7 +42,7 @@ class [[nodiscard]] Error {
 // Holds a value of type `T`, or an Error explaining why the value is
 // unavailable.
 template <typename T>
-class ErrorOr {
+class [[nodiscard]] ErrorOr {
  public:
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
