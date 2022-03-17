@@ -4401,10 +4401,10 @@ after name and alias resolution. To agree:
 Interface implementation declarations match if the type and interface
 expressions match:
 
--   `Self` is considered to match its meaning in the scope it is used. So in
-    `class MyClass { ... }`, `Self` is considered an alias for `MyClass`.
--   If the type part is omitted, it is considered to match `Self` in the current
-    context.
+-   If the type part is omitted, it is rewritten to `Self` in the context of the
+    declaration.
+-   `Self` is rewritted to its meaning in the scope it is used. So in
+    `class MyClass { ... }`, `Self` is rewritten to `MyClass`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
