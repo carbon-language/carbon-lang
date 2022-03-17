@@ -1,0 +1,59 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FormatVariadic.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/mocks.h"
+
+namespace Carbon::Testing {
+namespace {
+
+struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
+  static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
+  // TODO: consider ways to put the Message into `format` to allow dynamic
+  // selection of the message.
+  static constexpr llvm::StringLiteral Message = "{0}";
+
+  auto Format() -> std::string {
+    // Work around a bug in Clang's unused const variable warning by marking it
+    // used here with a no-op.
+    static_cast<void>(ShortName);
+
+    return llvm::formatv(Message.data(), message).str();
+  }
+
+  std::string message;
+};
+
+struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
+  auto GetLocation(int n) -> Diagnostic::Location override {
+    return {.file_name = "test", .line_number = 1, .column_number = n};
+  }
+};
+
+TEST(SortedDiagnosticEmitterTest, EmitErrors) {
+  FakeDiagnosticLocationTranslator translator;
+  Testing::MockDiagnosticConsumer consumer;
+  DiagnosticEmitter<int> emitter(translator, consumer);
+
+  // TODO: Switch to sorted and test order.
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Error),
+                                  DiagnosticAt(1, 1), DiagnosticMessage("M1"),
+                                  DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Error),
+                                  DiagnosticAt(1, 2), DiagnosticMessage("M2"),
+                                  DiagnosticShortName("fake-diagnostic"))));
+
+  emitter.EmitError<FakeDiagnostic>(1, {.message = "M1"});
+  emitter.EmitError<FakeDiagnostic>(2, {.message = "M2"});
+}
+
+}  // namespace
+}  // namespace Carbon::Testing
