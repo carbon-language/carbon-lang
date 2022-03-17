@@ -27,13 +27,8 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   // Sorts and flushes buffered diagnostics.
   void Flush() override {
     llvm::sort(diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
-      if (lhs.location.line_number < rhs.location.line_number) {
-        return true;
-      } else if (lhs.location.line_number == rhs.location.line_number) {
-        return lhs.location.column_number < rhs.location.column_number;
-      } else {
-        return false;
-      }
+      return std::tie(lhs.location.line_number, lhs.location.column_number) <
+             std::tie(rhs.location.line_number, rhs.location.column_number);
     });
     for (const auto& diagnostic : diagnostics_) {
       next_consumer_->HandleDiagnostic(diagnostic);
