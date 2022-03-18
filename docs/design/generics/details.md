@@ -95,6 +95,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Operator overloading](#operator-overloading)
+    -   [Binary operators](#binary-operators)
+    -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -102,7 +105,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Abstract return types](#abstract-return-types)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
-    -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types and higher-ranked types](#generic-associated-types-and-higher-ranked-types)
         -   [Generic associated types](#generic-associated-types)
@@ -4440,6 +4442,141 @@ There are a few reasons for this feature:
 
 Note that this applies to associated entities, not interface parameters.
 
+## Operator overloading
+
+Operations are overloaded for a type by implementing an interface specific to
+that interface for that type. For example, types implement the `Negatable`
+interface to overload the unary `-` operator:
+
+```
+// Unary `-`.
+interface Negatable {
+  let Result:! Type = Self;
+  fn Negate[me: Self]() -> Result;
+}
+```
+
+Expressions using operators are rewritten into these interface methods. For
+example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
+
+The interfaces and rewrites used for a given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+[Question-for-leads issue #1058](https://github.com/carbon-language/carbon-lang/issues/1058)
+defines the naming scheme for these interfaces.
+
+### Binary operators
+
+Binary operators will have an interface that is
+[parameterized](#parameterized-interfaces) based on the second operand. For
+example, to say a type may be converted to another type using an `as`
+expression, implement the
+[`As` interface](/docs/design/expressions/as_expressions.md#extensibility):
+
+```
+interface As(Dest:! Type) {
+  fn Convert[me: Self]() -> Dest;
+}
+```
+
+The expression `x as U` is rewritten to `x.(As(U).Convert)()`. Note that the
+parameterization of the interface means it can be implemented multiple times to
+support multiple operand types.
+
+Unlike `as`, for most binary operators the interface's argument will be the
+_type_ of the right-hand operand instead of being given explicitly in the
+source. Consider an interface for a binary operator like `*`:
+
+```
+// Binary `*`.
+interface MultipliableWith(U:! Type) {
+  let Result:! Type = Self;
+  fn Multiply[me: Self](other: U) -> Result;
+}
+```
+
+A use of binary `*` in source code will be rewritten to use this interface:
+
+```
+var left: Meters = ...;
+var right: f64 = ...;
+var result: auto = left * right;
+// Equivalent to:
+var equivalent: left.MultipliableWith(f64).Result
+    = left.MultipliableWith(f64).Multiply(right);
+```
+
+Note that if the types of the two operands are different, then swapping the
+order of the operands will result in a different implementation being selected.
+It is up to the developer to make those consistent when that is appropriate, and
+in some cases the reverse operation may not be defined. For example, a library
+might support subtracting a vector from a point, but not the other way around.
+
+Even if the reverse implementation exists and is consistent,
+[the impl prioritization rule](#prioritization-rule) might not pick it.
+
+FIXME: example
+
+### `like` operator for implicit conversions
+
+Because the type of the operands is directly used to select the implementation
+to use, there are no automatic implicit conversions unlike with function or
+method calls. Given both a method and an interface implementation for
+multiplying by a value of type `f64`:
+
+```
+class Meters {
+  fn Scale[me: Self](s: f64) -> Self;
+}
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+the method will work with any argument that can be implicitly converted to `f64`
+but the operator overload will only work with values that have the specific type
+of `f64`:
+
+```
+var height: Meters = ...;
+var scale: f32 = 1.25;
+// ✅ Allowed: `scale` implicitly converted
+//             from `f32` to `f64`.
+var allowed: Meters = height.Scale(scale);
+// ❌ Illegal: `Meters` doesn't implement
+//             `MultipliableWith(f32)`.
+var illegal: Meters = height * scale;
+```
+
+The workaround is to define a parameterized implementation that performs the
+conversion. The implementation is for types that implement the
+[`ImplicitAs` interface](/docs/design/expressions/implicit_conversions.md#extensibility).
+
+```
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters {
+  fn Multiply[me: Self](other: T) -> Result {
+    return me.(MultipliableWith(f64).Multiply)(other as f64);
+  }
+}
+```
+
+Observe that the [prioritization rule](#prioritization-rule) will still prefer
+the unparameterized impl when there is an exact match.
+
+FIXME: `like`
+
+FIXME: multiple `like`
+
+FIXME: nested `like`
+
+FIXME: restriction: must be able to fully resolve parameter using other parts of
+the query
+
+FIXME: restriction
+
 ## Future work
 
 ### Dynamic types
@@ -4488,11 +4625,6 @@ supported and made safe.
 
 The idea is that you would write tests alongside an interface that validate the
 expected behavior of any type implementing that interface.
-
-### Operator overloading
-
-We will need a story for defining how an operation is overloaded for a type by
-implementing an interface for that type.
 
 ### Impls with state
 
@@ -4570,3 +4702,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
