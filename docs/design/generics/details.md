@@ -4501,8 +4501,8 @@ var left: Meters = ...;
 var right: f64 = ...;
 var result: auto = left * right;
 // Equivalent to:
-var equivalent: left.MultipliableWith(f64).Result
-    = left.MultipliableWith(f64).Multiply(right);
+var equivalent: left.(MultipliableWith(f64).Result)
+    = left.(MultipliableWith(f64).Multiply)(right);
 ```
 
 Note that if the types of the two operands are different, then swapping the
@@ -4511,15 +4511,49 @@ It is up to the developer to make those consistent when that is appropriate, and
 in some cases the reverse operation may not be defined. For example, a library
 might support subtracting a vector from a point, but not the other way around.
 
-Even if the reverse implementation exists and is consistent,
-[the impl prioritization rule](#prioritization-rule) might not pick it.
+Further note that even if the reverse implementation exists,
+[the impl prioritization rule](#prioritization-rule) might not pick it. For
+example, if we have two types that support comparison with anything implementing
+an interface that the other implements:
 
-FIXME: example
+```
+interface IntLike {
+  fn AsInt[me: Self]() -> i64;
+}
+
+class EvenInt { ... }
+external impl EvenInt as IntLike;
+external impl EvenInt as ComparableWith(EvenInt);
+// Allow `EvenInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] EvenInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(EvenInt);
+
+class PositiveInt { ... }
+external impl PositiveInt as IntLike;
+external impl PositiveInt as ComparableWith(PositiveInt);
+// Allow `PositiveInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] PositiveInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(PositiveInt);
+```
+
+Then it will favor selecting the implementation based on the type of the
+left-hand operand:
+
+```
+var even: EvenInt = ...;
+var positive: PositiveInt = ...;
+// Uses `EvenInt as ComparableWith(T)` impl
+if (even < positive) { ... }
+// Uses `PositiveInt as ComparableWith(T)` impl
+if (positive > even) { ... }
+```
 
 ### `like` operator for implicit conversions
 
 Because the type of the operands is directly used to select the implementation
-to use, there are no automatic implicit conversions unlike with function or
+to use, there are no automatic implicit conversions, unlike with function or
 method calls. Given both a method and an interface implementation for
 multiplying by a value of type `f64`:
 
@@ -4527,6 +4561,7 @@ multiplying by a value of type `f64`:
 class Meters {
   fn Scale[me: Self](s: f64) -> Self;
 }
+// "Implementation One"
 external impl Meters as MultipliableWith(f64)
     where .Result = Meters {
   fn Multiply[me: Self](other: f64) -> Result {
@@ -4555,27 +4590,132 @@ conversion. The implementation is for types that implement the
 [`ImplicitAs` interface](/docs/design/expressions/implicit_conversions.md#extensibility).
 
 ```
+// "Implementation Two"
 external impl [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters {
   fn Multiply[me: Self](other: T) -> Result {
-    return me.(MultipliableWith(f64).Multiply)(other as f64);
+    // Carbon will implicitly convert `other` from type
+    // `T` to `f64` to perform this call.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
   }
 }
+// ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
+//             with `T == f32` since `f32 is ImplicitAs(f64)`.
+var now_allowed: Meters = height.Scale(scale);
 ```
 
 Observe that the [prioritization rule](#prioritization-rule) will still prefer
 the unparameterized impl when there is an exact match.
 
-FIXME: `like`
+To reduce the boilerplate needed to support these implicit conversions when
+defining operator overloads, Carbon has the `like` operator. This operator can
+only be used in the type or type-of-type part of an `impl` declaration, in a
+place of a type:
 
-FIXME: multiple `like`
+```
+// Notice `f64` has been replaced by `like f64`
+// compared to "implementation one" above.
+external impl Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
 
-FIXME: nested `like`
+This `impl` definition actually defines two implementations. The first is the
+same as this definition with `like f64` replaced by `f64`, giving something
+equivalent to "implementation one". The second implementation replaces the
+`like f64` with a parameter that ranges over types that can be implicitly
+converted to `f64`, equivalent to "implementation two".
 
-FIXME: restriction: must be able to fully resolve parameter using other parts of
-the query
+In general, each `like` adds one additional impl. There is always the impl with
+all of the `like` expressions replaced by their arguments with the definition
+supplied in the source code. In addition, for each `like` expression, there is
+an impl with it replaced by a new parameter. These additional impls will
+delegate to the main impl, which will trigger implicit conversions according to
+[Carbon's ordinary implicit conversion rules](/docs/design/expressions/implicit_conversions.md).
+In this example, there are two uses of `like`, producing three implementations
 
-FIXME: restriction
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+is equivalent to "implementation one", "implementation two", and:
+
+```
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    // Will implicitly convert `me` to `Meters` in order to
+    // match the signature of this `Multiply` method.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
+  }
+}
+```
+
+The `like` operator may be nested, as in:
+
+```
+external impl like Vector(like String) as Printable;
+```
+
+Which will generate implementations with declarations:
+
+```
+external impl Vector(String) as Printable;
+external impl [T:! ImplicitAs(Vector(String))] T as Printable;
+external impl [T:! ImplicitAs(String)] Vector(T) as Printable;
+```
+
+The generated implementations must be legal or the `like` is illegal. For
+example, it must be legal to define those impls in this library by the
+[orphan rule](#orphan-rule). In addition, the generated `impl` definitions must
+only require implicit conversions that are guaranteed to exist. For example,
+there existing an implicit conversion from `T` to `String` does not imply that
+there is one from `Vector(T)` to `Vector(String)`, so the following use of
+`like` is illegal:
+
+```
+// ❌ Illegal: Can't convert a value with type
+//             `Vector(T:! ImplicitAs(String))`
+//             to `Vector(String)`.
+external impl Vector(like String) as Printable;
+```
+
+The argument to `like` must either not mention any type parameters, or those
+parameters must be able to be determined due to being repeated outside of the
+`like` expression.
+
+```
+// ✅ Allowed: no parameters
+external impl like Meters as Printable;
+
+// ❌ Illegal: No other way to determine `T`
+external impl [T:! IntLike] like T as Printable;
+
+// ❌ Illegal: `T` being used in a `where` clause
+//             is insufficient.
+external impl [T:! IntLike] like T
+    as MultipliableWith(i64) where .Result = T;
+
+// ✅ Allowed: `T` can be determined by another
+//             part of the query.
+external impl [T:! IntLike] like T
+    as MultipliableWith(T) where .Result = T;
+external impl [T:! IntLike] T
+    as MultipliableWith(like T) where .Result = T;
+
+// ✅ Allowed: Only one `like` used at a time, so this
+//             is equivalent to the above two examples.
+external impl [T:! IntLike] like T
+    as MultipliableWith(like T) where .Result = T;
+```
 
 ## Future work
 
