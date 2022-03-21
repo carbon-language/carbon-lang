@@ -95,6 +95,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Generic types](#generic-types)
+    -   [Type identity](#type-identity)
+    -   [Specialization](#specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -108,7 +111,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic associated types](#generic-associated-types)
         -   [Higher-ranked types](#higher-ranked-types)
     -   [Field requirements](#field-requirements)
-    -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
@@ -4440,6 +4442,98 @@ There are a few reasons for this feature:
 
 Note that this applies to associated entities, not interface parameters.
 
+## Generic types
+
+FIXME: A _generic_ type is a class with generic parameters.
+
+FIXME: All type parameters must be either generic or template, never dynamic.
+
+### Type identity
+
+FIXME: Two types are the same if they have the same name and same parameters.
+
+### Specialization
+
+[Specialization](terminology.md#generic-specialization) is used to improve
+performance in specific cases when a general strategy would be inefficient. For
+example, you might use
+[binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) for
+containers that support random access and keep their contents in sorted order
+but [linear search](https://en.wikipedia.org/wiki/Linear_search) in other cases.
+Types, like functions, may not be specialized directly in Carbon. This effect
+can be achieved, however, through delegation.
+
+For example, imagine we have a parameterized class `Optional(T)` that has a
+default storage strategy that works for all `T`, but for some types we have a
+more efficient approach. For pointers we can use a
+[null value](https://en.wikipedia.org/wiki/Null_pointer) to represent "no
+pointer", and for booleans we can support `True`, `False`, and `None` in a
+single byte. Clients of the optional library may want to add additional
+specializations for their own types. We make an interface that represents "the
+storage of `Optional(T)` for type `T`," written here as `OptionalStorage`:
+
+```
+interface OptionalStorage {
+  let Storage:! Type;
+  fn MakeNone() -> Storage;
+  fn Make(x: Self) -> Storage;
+  fn IsNone(x: Storage) -> bool;
+  fn Unwrap(x: Storage) -> Self;
+}
+```
+
+The default implementation of this interface is provided by a
+[blanket implementation](#blanket-impls):
+
+```
+// Default blanket implementation
+impl [T:! Movable] T as OptionalStorage {
+  let Storage:! Type = (bool, T);
+  ...
+}
+```
+
+This implementation can then be
+[specialized](#lookup-resolution-and-specialization) for more specific type
+patterns:
+
+```
+// Specialization for pointers, using nullptr == None
+final external impl [T:! Type] T* as OptionalStorage {
+  let Storage:! Type = Array(Byte, sizeof(T*));
+  ...
+}
+// Specialization for type `bool`.
+final external impl bool as OptionalStorage {
+  let Storage:! Type = Byte;
+  ...
+}
+```
+
+Further, libraries can implement `OptionalStorage` for their own types, assuming
+the interface is not marked `private`. Then the implementation of `Optional(T)`
+can delegate to `OptionalStorage` for anything that can vary with `T`:
+
+```
+class Optional(T:! Movable) {
+  fn None() -> Self {
+    return {.storage = T.(OptionalStorage.MakeNone())};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = T.(OptionalStorage.Make(x))};
+  }
+  ...
+  private var storage: T.(OptionalStorage.Storage);
+}
+```
+
+Note that the constraint on `T` is just `Movable`, not
+`Movable & OptionalStorage`, since the `Movable` requirement is
+[sufficient to guarantee](#lookup-resolution-and-specialization) that some
+implementation of `OptionalStorage` exists for `T`. Adding `OptionalStorage` to
+the constraints on `T` would make `Optional` harder for clients and obscure what
+types can be used with `Optional`.
+
 ## Future work
 
 ### Dynamic types
@@ -4521,11 +4615,6 @@ implementing type has a particular field. This would be to match the
 expressivity of inheritance, which can express "all subtypes start with this
 list of fields."
 
-### Generic type specialization
-
-See [generic specialization](terminology.md#generic-specialization) for a
-description of what this might involve.
-
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
@@ -4570,3 +4659,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1146: Generics 12: Parameterized type](https://github.com/carbon-language/carbon-lang/pull/1146)
