@@ -4469,9 +4469,15 @@ class HashMap(
 Note that, unlike functions, every parameters to a type must either be generic
 or template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
 
-Two types are the same if they have the same name and same parameters. Unlike an
-[interface's parameters](#parameterized-interfaces), a type's parameters may be
-[deduced](terminology.md#deduced-parameter), as in:
+Two types are the same if they have the same name and same parameters. Carbon's
+[manual type equality](#manual-type-equality) approach means that the compiler
+may not always be able to tell when two type expressions are equal without help
+from the user, in the form of [`observe` declarations](#observe-declarations).
+This means Carbon will not in general be able to determining when types are
+inequal.
+
+Unlike an [interface's parameters](#parameterized-interfaces), a type's
+parameters may be [deduced](terminology.md#deduced-parameter), as in:
 
 ```
 fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
