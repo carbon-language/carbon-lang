@@ -863,6 +863,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
+          } else {
+            FATAL_COMPILATION_ERROR(call.source_loc())
+                << "attempt to instantiate a non-generic class: " << *e;
           }
           // Find impls for all the impl bindings of the class
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
