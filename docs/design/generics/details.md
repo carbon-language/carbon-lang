@@ -95,8 +95,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
--   [Generic types](#generic-types)
-    -   [Type identity](#type-identity)
+-   [Parameterized types](#parameterized-types)
     -   [Specialization](#specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -4442,15 +4441,46 @@ There are a few reasons for this feature:
 
 Note that this applies to associated entities, not interface parameters.
 
-## Generic types
+## Parameterized types
 
-FIXME: A _generic_ type is a class with generic parameters.
+Types may have generic parameters. Those parameters may be used to specify types
+in the declarations of its members, such as data fields, member functions, and
+even interfaces being implemented. For example, a container type might be
+parameterized by the type of its elements:
 
-FIXME: All type parameters must be either generic or template, never dynamic.
+```
+class HashMap(
+    KeyType:! Hashable & EqualityComparable & Movable,
+    ValueType:! Movable) {
+  // `Self` is `HashMap(KeyType, ValueType)`.
 
-### Type identity
+  // Parameters may be used in function signatures.
+  fn Insert[addr me: Self*](k: KeyType, v: ValueType);
 
-FIXME: Two types are the same if they have the same name and same parameters.
+  // Parameters may be used in field types.
+  private var buckets: Vector((KeyType, ValueType));
+
+  // Parameters may be used in interfaces implemented.
+  impl as Container where .ElementType = (KeyType, ValueType);
+  impl as ComparableWith(HashMap(KeyType, ValueType));
+}
+```
+
+Note that, unlike functions, every parameters to a type must either be generic
+or template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+
+Two types are the same if they have the same name and same parameters. Unlike an
+[interface's parameters](#parameterized-interfaces), a type's parameters may be
+[deduced](terminology.md#deduced-parameter), as in:
+
+```
+fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
+    (haystack: HashMap(KeyType, ValueType), needle: KeyType)
+    -> bool { ... }
+```
+
+Note that restrictions on the type's parameters from the type's declaration can
+be [implied constraints](#implied-constraints) on the function's parameters.
 
 ### Specialization
 
