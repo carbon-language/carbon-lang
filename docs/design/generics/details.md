@@ -4726,6 +4726,11 @@ external impl [T:! IntLike] like T as Printable;
 external impl [T:! IntLike] like T
     as MultipliableWith(i64) where .Result = T;
 
+// ❌ Illegal: `like` can't be used in a `where`
+//             clause.
+external impl Meters as MultipliableWith(f64)
+    where .Result = like Meters;
+
 // ✅ Allowed: `T` can be determined by another
 //             part of the query.
 external impl [T:! IntLike] like T
