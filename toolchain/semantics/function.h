@@ -18,12 +18,17 @@ class Function {
   auto decl_node() const -> ParseTree::Node { return decl_node_; }
   auto name_node() const -> ParseTree::Node { return name_node_; }
 
+  auto return_type_node() const -> ParseTree::Node { return return_type_node_; }
+
  private:
   // The FunctionDeclaration node.
   ParseTree::Node decl_node_;
 
   // The function's DeclaredName node.
   ParseTree::Node name_node_;
+
+  // The function's ReturnType node.
+  ParseTree::Node return_type_node_;
 };
 
 }  // namespace Carbon::Semantics

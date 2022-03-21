@@ -42,12 +42,19 @@ void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
         fn = semantics_.AddFunction(block, decl_node, node);
         break;
       case ParseNodeKind::ParameterList():
+        CHECK(fn);
         // TODO: Maybe something like Semantics::AddVariable passed to
         // Function::AddParameter.
         break;
       case ParseNodeKind::CodeBlock():
+        CHECK(fn);
         // TODO: Should accumulate the definition into the code block.
         break;
+      case ParseNodeKind::ReturnType():
+        CHECK(fn);
+        fn->
+            // TODO
+            break;
       default:
         FATAL() << "Unhandled node kind: "
                 << semantics_.parse_tree_->node_kind(node).name();

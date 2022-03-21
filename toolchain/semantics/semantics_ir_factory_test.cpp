@@ -21,8 +21,8 @@ using ::testing::_;
 
 class SemanticsIRFactoryTest : public ::testing::Test {
  protected:
-  auto Analyze(llvm::Twine t) -> SemanticsIR {
-    source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t.str())));
+  auto Build(llvm::Twine t) -> SemanticsIR {
+    source_buffer.emplace(std::move(*SourceBuffer::CreateFromText(t)));
     tokenized_buffer = TokenizedBuffer::Lex(*source_buffer, consumer);
     EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
@@ -36,20 +36,23 @@ class SemanticsIRFactoryTest : public ::testing::Test {
   MockDiagnosticConsumer consumer;
 };
 
-TEST_F(SemanticsIRFactoryTest, Empty) {
-  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
-  Analyze("");
+TEST_F(SemanticsIRFactoryTest, Empty) { Build(""); }
+
+TEST_F(SemanticsIRFactoryTest, Basics) {
+  Build(R"(// package FactoryTest api;
+
+           fn Main() -> i32 {
+             return 0;
+           }
+          )");
 }
 
-TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
-  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
-  Analyze("fn Foo() {}");
-}
+TEST_F(SemanticsIRFactoryTest, FunctionBasic) { Build("fn Foo() {}"); }
 
 TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
-  Analyze(R"(fn Foo() {}
-             fn Foo() {}
-            )");
+  Build(R"(fn Foo() {}
+           fn Foo() {}
+          )");
 }
 
 }  // namespace
