@@ -4507,8 +4507,30 @@ var equivalent: left.(MultipliableWith(f64).Result)
 
 Note that if the types of the two operands are different, then swapping the
 order of the operands will result in a different implementation being selected.
-It is up to the developer to make those consistent when that is appropriate, and
-in some cases the reverse operation may not be defined. For example, a library
+It is up to the developer to make those consistent when that is appropriate. The
+standard library will provide [adapters](#adapting-types) for defining the
+second implementation from the first, as in:
+
+```
+interface ComparableWith(RHS:! Type) {
+  fn Compare[me: Self](right: RHS) -> CompareResult;
+}
+
+adapter ReverseComparison
+    (T:! Type, U:! ComparableWith(RHS)) for T {
+  impl as ComparableWith(U) {
+    fn Compare[me: Self](right: RHS) -> CompareResult {
+      return ReverseCompareResult(right.Compare(me));
+    }
+  }
+}
+
+external impl SongByTitle as ComparableWith(SongTitle);
+external impl SongTitle as ComparableWith(SongByTitle)
+    = ReverseComparison(SongTitle, SongByTitle);
+```
+
+In some cases the reverse operation may not be defined. For example, a library
 might support subtracting a vector from a point, but not the other way around.
 
 Further note that even if the reverse implementation exists,
