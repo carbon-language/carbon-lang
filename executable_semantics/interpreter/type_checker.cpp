@@ -1311,7 +1311,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                        *impl_binding->type_var()->symbolic_identity(),
                        impl_binding);
   }
-  // Type check the receiver pattern
+  // Type check the receiver pattern.
   if (f->is_method()) {
     TypeCheckPattern(&f->me_pattern(), std::nullopt, function_scope);
   }
