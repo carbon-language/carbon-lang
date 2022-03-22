@@ -103,7 +103,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     case Value::Kind::NominalClassType: {
-      // Access a class function
+      // Access a class function.
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
