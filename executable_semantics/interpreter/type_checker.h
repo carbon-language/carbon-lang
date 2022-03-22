@@ -120,6 +120,7 @@ class TypeChecker {
   void ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value);
 
+  // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type)
       -> std::vector<NamedValue>;
 
@@ -136,6 +137,8 @@ class TypeChecker {
   auto IsImplicitlyConvertible(Nonnull<const Value*> source,
                                Nonnull<const Value*> destination) -> bool;
 
+  // Check whether `actual` is implicitly convertible to `expected`
+  // and halt with a fatal compilation error if it is not.
   void ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual);
 

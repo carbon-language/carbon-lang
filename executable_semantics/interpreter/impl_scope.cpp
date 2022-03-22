@@ -76,6 +76,7 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
   }
 }
 
+// TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
   out << "impls: ";
   llvm::ListSeparator sep;
