@@ -60,14 +60,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return *field;
     }
     case Value::Kind::NominalClassValue: {
-      const NominalClassValue& object = cast<NominalClassValue>(*v);
+      const auto& object = cast<NominalClassValue>(*v);
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
       if (field == std::nullopt) {
         // Look for a method in the object's class
-        const NominalClassType& class_type =
-            cast<NominalClassType>(object.type());
+        const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
@@ -75,7 +74,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
               << "member " << f << " not in " << *v << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
-          const FunctionValue& m = cast<FunctionValue>(**func);
+          const auto& m = cast<FunctionValue>(**func);
           return arena->New<BoundMethodValue>(&m.declaration(), &object);
         } else {
           // Found a class function
@@ -93,7 +92,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*v);
+      const auto& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
@@ -283,12 +282,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*this);
+      const auto& class_type = cast<NominalClassType>(*this);
       out << "class " << class_type.declaration().name();
       break;
     }
     case Value::Kind::InterfaceType: {
-      const InterfaceType& iface_type = cast<InterfaceType>(*this);
+      const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface " << iface_type.declaration().name();
       break;
     }
@@ -486,8 +485,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
              (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::BoundMethodValue: {
-      const BoundMethodValue& m1 = cast<BoundMethodValue>(*v1);
-      const BoundMethodValue& m2 = cast<BoundMethodValue>(*v2);
+      const auto& m1 = cast<BoundMethodValue>(*v1);
+      const auto& m2 = cast<BoundMethodValue>(*v2);
       std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
       std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
       return ValueEqual(m1.receiver(), m2.receiver()) &&
@@ -606,8 +605,9 @@ auto FindMember(const std::string& name,
   for (Nonnull<const Declaration*> member : members) {
     if (std::optional<std::string> mem_name = GetName(*member);
         mem_name.has_value()) {
-      if (*mem_name == name)
+      if (*mem_name == name) {
         return member;
+      }
     }
   }
   return std::nullopt;

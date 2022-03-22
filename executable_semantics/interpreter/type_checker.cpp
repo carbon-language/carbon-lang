@@ -551,11 +551,11 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
         }
         case Value::Kind::VariableType: {
-          const VariableType& var_type = cast<VariableType>(aggregate_type);
+          const auto& var_type = cast<VariableType>(aggregate_type);
           const Value& typeof_var = var_type.binding().static_type();
           switch (typeof_var.kind()) {
             case Value::Kind::InterfaceType: {
-              const InterfaceType& iface_type = cast<InterfaceType>(typeof_var);
+              const auto& iface_type = cast<InterfaceType>(typeof_var);
               const InterfaceDeclaration& iface_decl = iface_type.declaration();
               if (std::optional<Nonnull<const Declaration*>> member =
                       FindMember(access.field(), iface_decl.members());
