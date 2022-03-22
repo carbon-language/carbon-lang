@@ -379,8 +379,8 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
       BindingMap inst_type_args;
-      for (const auto& [tyvar, tyarg] : class_type.type_args()) {
-        inst_type_args[tyvar] = InstantiateType(tyarg, source_loc);
+      for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
+        inst_type_args[ty_var] = InstantiateType(ty_arg, source_loc);
       }
       std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
       for (const auto& [bind, impl] : class_type.impls()) {
