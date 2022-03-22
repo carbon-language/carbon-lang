@@ -858,8 +858,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                   .declaration();
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
-            if (trace_)
+            if (trace_) {
               llvm::outs() << "pattern matching type params and args ";
+            }
             CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
