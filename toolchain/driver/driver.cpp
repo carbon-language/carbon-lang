@@ -69,7 +69,7 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   llvm_unreachable("All subcommands handled!");
 }
 
-auto Driver::RunHelpSubcommand(DiagnosticConsumer& consumer,
+auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
                                llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // FIXME: We should support getting detailed help on a subcommand by looking
   // for it as a positional parameter here.

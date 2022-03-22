@@ -14,6 +14,7 @@ cc_binary(
     srcs = ["main.cpp"],
     data = ["data/prelude.carbon"],
     deps = [
+        "//common:error",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
         "//executable_semantics/interpreter:exec_program",
