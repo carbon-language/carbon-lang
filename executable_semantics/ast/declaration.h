@@ -91,7 +91,7 @@ class FunctionDeclaration : public Declaration {
                      std::optional<Nonnull<Block*>> body)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
-  // Use `Create` instead. This is public only so Arena::New() can call it.
+  // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<BindingPattern*>> me_pattern,
