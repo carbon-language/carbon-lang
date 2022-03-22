@@ -168,6 +168,10 @@ message ExpressionPattern {
 
 message AutoPattern {}
 
+message VarPattern {
+  optional Pattern pattern = 1;
+}
+
 message Pattern {
   oneof kind {
     BindingPattern binding_pattern = 1;
@@ -175,6 +179,7 @@ message Pattern {
     AlternativePattern alternative_pattern = 3;
     ExpressionPattern expression_pattern = 4;
     AutoPattern auto_pattern = 5;
+    VarPattern var_pattern = 6;
   }
 }
 

@@ -7,8 +7,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <numeric>
 #include <set>
+#include <variant>
 
 #include "executable_semantics/syntax/parse.h"
 #include "google/protobuf/descriptor.h"
@@ -22,76 +24,12 @@ using ::google::protobuf::FieldDescriptor;
 using ::google::protobuf::Message;
 using ::google::protobuf::Reflection;
 
-constexpr std::string_view UseAllSyntax = R"(
-  package p library "lib" api;
+constexpr std::string_view AdditionalSyntax = R"(
+  package p api;
 
-  import other_package library "lib";
-
-  choice Ints { None, One(i32) }
-
-  class Point {
-    var x: i32;
-    var x: i32 = 0;
-    fn GetX[me: Point]() -> i32 { return me.x; }
-  }
-
-  interface Vector {
-    fn Add[me: Self](b: Self) -> Self;
-  }
-
-  external impl Point as Vector {
-    fn Add[me: Point](b: Point) -> Point {
-        return {.x = me.x + b.x, .y = me.y + b.y};
-    }
-  }
-
-  fn Id(t: Type) -> auto { return t; }
-
-  fn Func(b: i32) {
-    var x: auto = Ints.None();
-    match (x) {
-      case Ints.One(x: auto) =>
-        return 1;
-    }
-    var c: auto = b + 1;
-    b = b + (-1);
-    var d : Bool = true;
-    var s : String = "abc";
-    var p: {.x: i32, .y: i32} = {.x = 1, .y = 2};
-    while (d) {
-      if (d) { continue; } else { break; }
-    }
-    { Id(0); }
-    var f: __Fn(i32)->i32 = add1;
-
-    var t: auto = ((1,2),(3,4));
-    match (t) {
-      case ((a: auto, b: auto), c: auto) =>
-        return 0;
-    }
-
+  fn f() {
     __intrinsic_print("xyz");
     a __unimplemented_example_infix b;
-
-    return b;
-  }
-
-  fn swap[T:! Type, U:! Type](tuple: (T, U)) -> (U, T) {
-    return (tuple[1], tuple[0]);
-  }
-
-  fn Continuation() -> i32 {
-    var x: i32 = 0;
-    __continuation k {
-      x = x + 1;
-      __await;
-      x = x + 2;
-    }
-    var k2 : __Continuation = k1;
-    __run k;
-
-    var if_expr = if cond then true else false;
-    return x;
   }
 )";
 
@@ -165,17 +103,48 @@ auto GetUnusedFields(const Message& message) -> std::set<std::string> {
   return unused_fields;
 }
 
+// Finds all `.carbon` files under `root_dir`.
+auto GetFiles(std::string_view root_dir, std::string_view extension)
+    -> std::vector<std::string> {
+  std::vector<std::string> carbon_files;
+  for (const std::filesystem::directory_entry& entry :
+       std::filesystem::recursive_directory_iterator(root_dir)) {
+    if (!std::filesystem::is_directory(entry)) {
+      const std::string file = entry.path();
+      // ends_with(extension).
+      if (file.find("fail") == std::string::npos &&  // TODO xx
+          file.find("not") == std::string::npos &&   // TODO xx
+          std::equal(extension.rbegin(), extension.rend(), file.rbegin())) {
+        carbon_files.push_back(file);
+      }
+    }
+  }
+  return carbon_files;
+}
+
 TEST(CarbonToProtoTest, SetsAllProtoFields) {
+  Carbon::Fuzzing::CompilationUnit merged_proto;
+  const std::vector<std::string> carbon_files =
+      GetFiles(std::string(getenv("TEST_SRCDIR")) +
+                   "/carbon/executable_semantics/testdata",
+               ".carbon");
+  for (const std::string& f : carbon_files) {
+    Carbon::Arena arena;
+    std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+        Carbon::Parse(&arena, f, /*trace=*/false);
+    if (auto* ast = std::get_if<Carbon::AST>(&ast_or_error); ast != nullptr) {
+      merged_proto.MergeFrom(CarbonToProto(*ast));
+    }
+  }
+
   Carbon::Arena arena;
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-      Carbon::ParseFromString(&arena, "Test.carbon", UseAllSyntax,
+      Carbon::ParseFromString(&arena, "File.carbon", AdditionalSyntax,
                               /*trace=*/false);
-  auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error);
-  ASSERT_TRUE(error == nullptr) << "Failed to parse: " << *error;
+  ASSERT_TRUE(std::holds_alternative<Carbon::AST>(ast_or_error));
+  merged_proto.MergeFrom(CarbonToProto(std::get<Carbon::AST>(ast_or_error)));
 
-  auto& ast = std::get<Carbon::AST>(ast_or_error);
-  const Carbon::Fuzzing::CompilationUnit proto = CarbonToProto(ast);
-  std::set<std::string> unused_fields = GetUnusedFields(proto);
+  std::set<std::string> unused_fields = GetUnusedFields(merged_proto);
   EXPECT_EQ(unused_fields.size(), 0)
       << "Unused fields"
       << std::accumulate(unused_fields.begin(), unused_fields.end(),

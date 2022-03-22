@@ -25,6 +25,7 @@ cc_test(
         "-Wno-thread-safety-reference",
         "-Wno-implicit-fallthrough",
     ],
+    data = ["//executable_semantics/testdata:carbon_files"],
     deps = [
         ":ast_to_proto_lib",
         "//executable_semantics/syntax",

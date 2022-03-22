@@ -320,6 +320,11 @@ auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
     case PatternKind::AutoPattern:
       pattern_proto.mutable_auto_pattern();
       break;
+
+    case PatternKind::VarPattern:
+      *pattern_proto.mutable_var_pattern()->mutable_pattern() =
+          PatternToProto(cast<VarPattern>(pattern).pattern());
+      break;
   }
   return pattern_proto;
 }

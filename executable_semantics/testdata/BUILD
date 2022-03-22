@@ -13,3 +13,9 @@ glob_lit_tests(
     driver = "lit.cfg.py",
     test_file_exts = ["carbon"],
 )
+
+filegroup(
+    name = "carbon_files",
+    srcs = glob(["**/*.carbon"]),
+    visibility = ["//visibility:public"],
+)
