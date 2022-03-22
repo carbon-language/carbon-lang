@@ -50,12 +50,12 @@ class ImplScope {
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
   auto Resolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-               SourceLocation source_loc) const -> ValueNodeView;
+               SourceLocation source_loc) const -> ErrorOr<ValueNodeView>;
 
  private:
   auto TryResolve(Nonnull<const Value*> iface_type, Nonnull<const Value*> type,
                   SourceLocation source_loc) const
-      -> std::optional<ValueNodeView>;
+      -> ErrorOr<std::optional<ValueNodeView>>;
   auto ResolveHere(Nonnull<const Value*> iface_type,
                    Nonnull<const Value*> impl_type,
                    SourceLocation source_loc) const
