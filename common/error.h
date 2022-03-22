@@ -62,9 +62,13 @@ class [[nodiscard]] ErrorOr {
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
-  auto error() const -> const Error& {
+  auto error() const& -> const Error& {
     CHECK(!ok());
     return std::get<Error>(val_);
+  }
+  auto error() && -> Error {
+    CHECK(!ok());
+    return std::get<Error>(std::move(val_));
   }
 
   // Returns the contained value.
