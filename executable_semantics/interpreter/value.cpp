@@ -42,7 +42,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
             return arena->New<BoundMethodValue>(&fun_decl, v);
-          } else {  // class function
+          } else {
+            // Class function.
             return *fun_decl.constant_value();
           }
         } else {
