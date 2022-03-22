@@ -338,3 +338,8 @@ message CompilationUnit {
   repeated Declaration declaration = 3;
   // TODO Add support for imports if they are useful in fuzzing.
 }
+
+// Top-level fuzzer input.
+message Carbon {
+  optional CompilationUnit compilation_unit = 1;
+}
