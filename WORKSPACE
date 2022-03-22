@@ -221,11 +221,11 @@ bison_register_toolchains(extra_copts = ["-w"])
 http_archive(
     name = "com_google_protobuf",
     repo_mapping = {"@zlib": "@llvm_zlib"},
-    sha256 = "4dd35e788944b7686aac898f77df4e9a54da0ca694b8801bd6b2a9ffc1b3085e",
-    strip_prefix = "protobuf-3.19.2",
+    sha256 = "3bd7828aa5af4b13b99c191e8b1e884ebfa9ad371b0ce264605d347f135d2568",
+    strip_prefix = "protobuf-3.19.4",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.19.2.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.19.2.tar.gz",
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz",
     ],
 )
 
