@@ -964,8 +964,7 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      for (size_t i = 0; i < tuple.fields().size(); ++i) {
-        Nonnull<Pattern*> field = tuple.fields()[i];
+      for (Nonnull<Pattern*> field : tuple.fields()) {
         PatternImpls(field, impl_scope);
       }
       return;
