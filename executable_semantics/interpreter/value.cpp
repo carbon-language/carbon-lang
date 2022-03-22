@@ -441,10 +441,11 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
           cast<NominalClassType>(*t2).declaration().name()) {
         return false;
       }
-      for (const auto& [tyvar1, ty1] :
+      for (const auto& [ty_var1, ty1] :
            cast<NominalClassType>(*t1).type_args()) {
-        if (!TypeEqual(ty1, cast<NominalClassType>(*t2).type_args().at(tyvar1)))
+        if (!TypeEqual(ty1, cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
           return false;
+        }
       }
       return true;
     case Value::Kind::InterfaceType:
