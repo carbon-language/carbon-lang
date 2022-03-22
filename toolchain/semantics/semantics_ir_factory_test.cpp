@@ -42,7 +42,9 @@ TEST_F(SemanticsIRFactoryTest, Basics) {
   Build(R"(// package FactoryTest api;
 
            fn Main() -> i32 {
-             return 0;
+             var x: i32 = 3 * 10;
+             x += 5;
+             return x;
            }
           )");
 }
