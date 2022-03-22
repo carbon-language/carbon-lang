@@ -1449,8 +1449,9 @@ void TypeChecker::TypeCheckClassDeclaration(
   if (class_decl->type_params().has_value()) {
     PatternImpls(*class_decl->type_params(), class_scope);
   }
-  if (trace_)
+  if (trace_) {
     llvm::outs() << class_scope;
+  }
   for (Nonnull<Declaration*> m : class_decl->members()) {
     TypeCheckDeclaration(m, class_scope);
   }
