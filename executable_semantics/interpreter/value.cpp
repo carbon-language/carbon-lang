@@ -438,8 +438,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     }
     case Value::Kind::NominalClassType:
       if (cast<NominalClassType>(*t1).declaration().name() !=
-          cast<NominalClassType>(*t2).declaration().name())
+          cast<NominalClassType>(*t2).declaration().name()) {
         return false;
+      }
       for (const auto& [tyvar1, ty1] :
            cast<NominalClassType>(*t1).type_args()) {
         if (!TypeEqual(ty1, cast<NominalClassType>(*t2).type_args().at(tyvar1)))
