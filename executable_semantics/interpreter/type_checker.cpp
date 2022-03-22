@@ -1202,7 +1202,6 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (trace_) {
     llvm::outs() << "** finished declaring function " << f->name() << "\n";
   }
-  return;
 }
 
 void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
@@ -1230,7 +1229,6 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (trace_) {
     llvm::outs() << "** finished checking function " << f->name() << "\n";
   }
-  return;
 }
 
 void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,

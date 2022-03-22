@@ -60,10 +60,12 @@
 namespace Carbon::Testing::Yaml {
 
 struct EmptyComparable {
-  friend auto operator==(EmptyComparable, EmptyComparable) -> bool {
+  friend auto operator==(EmptyComparable /*unused*/, EmptyComparable /*unused*/)
+      -> bool {
     return true;
   }
-  friend auto operator!=(EmptyComparable, EmptyComparable) -> bool {
+  friend auto operator!=(EmptyComparable /*unused*/, EmptyComparable /*unused*/)
+      -> bool {
     return false;
   }
 };

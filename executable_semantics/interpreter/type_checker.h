@@ -65,10 +65,10 @@ class TypeChecker {
   // declaration. It does not involve type checking statements and
   // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
-  void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
+  void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& impl_scope);
 
   void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                  const ImplScope& enclosing_scope);
+                                  const ImplScope& impl_scope);
 
   void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                ImplScope& enclosing_scope);
@@ -80,7 +80,7 @@ class TypeChecker {
                               ImplScope& enclosing_scope);
 
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                const ImplScope& enclosing_scope);
+                                const ImplScope& impl_scope);
 
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
@@ -127,7 +127,7 @@ class TypeChecker {
   // times on the same named_entity, so long as it is always called with
   // the same value.
   template <typename T>
-  void SetConstantValue(Nonnull<T*> named_entity, Nonnull<const Value*> value);
+  void SetConstantValue(Nonnull<T*> value_node, Nonnull<const Value*> value);
 
   void PrintConstants(llvm::raw_ostream& out);
 

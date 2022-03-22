@@ -72,9 +72,15 @@ auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
   // Variant visitor that prints the value in the form of code to recreate the
   // value.
   struct Printer {
-    auto operator()(NullValue) -> void { out << "Yaml::NullValue()"; }
-    auto operator()(AliasValue) -> void { out << "Yaml::AliasValue()"; }
-    auto operator()(ErrorValue) -> void { out << "Yaml::ErrorValue()"; }
+    auto operator()(NullValue /*unused*/) -> void {
+      out << "Yaml::NullValue()";
+    }
+    auto operator()(AliasValue /*unused*/) -> void {
+      out << "Yaml::AliasValue()";
+    }
+    auto operator()(ErrorValue /*unused*/) -> void {
+      out << "Yaml::ErrorValue()";
+    }
     auto operator()(const ScalarValue& v) -> void { out << std::quoted(v); }
     auto operator()(const MappingValue& v) -> void {
       out << "Yaml::MappingValue{";
