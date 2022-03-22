@@ -70,9 +70,9 @@ cc_test(
 )
 
 cc_library(
-    name = "generic_binding",
+    name = "impl_binding",
     hdrs = [
-        "generic_binding.h",
+        "impl_binding.h",
     ],
     deps = [
         ":ast_node",
@@ -94,7 +94,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":generic_binding",
+        ":impl_binding",
         ":pattern",
         ":return_term",
         ":source_location",

@@ -175,33 +175,26 @@ auto TypeChecker::IsImplicitlyConvertible(Nonnull<const Value*> source,
           return false;
       }
     case Value::Kind::TupleValue:
-      switch (destination->kind()) {
-        case Value::Kind::TupleValue: {
-          const std::vector<Nonnull<const Value*>>& source_elements =
-              cast<TupleValue>(*source).elements();
-          const std::vector<Nonnull<const Value*>>& destination_elements =
-              cast<TupleValue>(*destination).elements();
-          if (source_elements.size() != destination_elements.size()) {
+      if (destination->kind() == Value::Kind::TupleValue) {
+        const std::vector<Nonnull<const Value*>>& source_elements =
+            cast<TupleValue>(*source).elements();
+        const std::vector<Nonnull<const Value*>>& destination_elements =
+            cast<TupleValue>(*destination).elements();
+        if (source_elements.size() != destination_elements.size()) {
+          return false;
+        }
+        for (size_t i = 0; i < source_elements.size(); ++i) {
+          if (!IsImplicitlyConvertible(source_elements[i],
+                                       destination_elements[i])) {
             return false;
           }
-          for (size_t i = 0; i < source_elements.size(); ++i) {
-            if (!IsImplicitlyConvertible(source_elements[i],
-                                         destination_elements[i])) {
-              return false;
-            }
-          }
-          return true;
         }
-        default:
-          return false;
+        return true;
+      } else {
+        return false;
       }
     case Value::Kind::TypeType:
-      switch (destination->kind()) {
-        case Value::Kind::InterfaceType:
-          return true;
-        default:
-          return false;
-      }
+      return destination->kind() == Value::Kind::InterfaceType;
     default:
       return false;
   }
@@ -839,9 +832,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
               }
             }
             call.set_impls(impls);
-          } else {  // No deduced parameters.
-                    // Check that the argument types are convertible to the
-                    // parameter types
+          } else {
+            // No deduced parameters. Check that the argument types
+            // are convertible to the parameter types.
             ExpectType(e->source_loc(), "call", parameters,
                        &call.argument().static_type());
           }
@@ -889,7 +882,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                       << *impl_binding->interface();
               }
             }
-          }  // for generic_args
+          }
           Nonnull<NominalClassType*> class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);

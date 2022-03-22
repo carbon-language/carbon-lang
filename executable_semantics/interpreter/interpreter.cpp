@@ -713,28 +713,32 @@ void Interpreter::StepExp() {
               CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                  act.results()[1], exp.source_loc(),
                                  &type_params_scope, generic_args));
-              if (phase() == Phase::RunTime) {
-                std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
-                for (const auto& [impl_bind, impl_node] :
-                     cast<CallExpression>(exp).impls()) {
-                  Nonnull<const Value*> witness =
-                      todo_.ValueOfNode(impl_node, exp.source_loc());
-                  if (witness->kind() == Value::Kind::LValue) {
-                    const LValue& lval = cast<LValue>(*witness);
-                    witness = heap_.Read(lval.address(), exp.source_loc());
+              switch (phase()) {
+                case Phase::RunTime: {
+                  std::map<Nonnull<const ImplBinding*>, const Witness*>
+                      witnesses;
+                  for (const auto& [impl_bind, impl_node] :
+                       cast<CallExpression>(exp).impls()) {
+                    Nonnull<const Value*> witness =
+                        todo_.ValueOfNode(impl_node, exp.source_loc());
+                    if (witness->kind() == Value::Kind::LValue) {
+                      const LValue& lval = cast<LValue>(*witness);
+                      witness = heap_.Read(lval.address(), exp.source_loc());
+                    }
+                    witnesses[impl_bind] = &cast<Witness>(*witness);
                   }
-                  witnesses[impl_bind] = &cast<Witness>(*witness);
+                  Nonnull<NominalClassType*> inst_class =
+                      arena_->New<NominalClassType>(&class_type.declaration(),
+                                                    generic_args, witnesses);
+                  return todo_.FinishAction(inst_class);
                 }
-                Nonnull<NominalClassType*> inst_class =
-                    arena_->New<NominalClassType>(&class_type.declaration(),
-                                                  generic_args, witnesses);
-                return todo_.FinishAction(inst_class);
-              } else {  // CompileTime
-                Nonnull<NominalClassType*> inst_class =
-                    arena_->New<NominalClassType>(
-                        &class_type.declaration(), generic_args,
-                        cast<CallExpression>(exp).impls());
-                return todo_.FinishAction(inst_class);
+                case Phase::CompileTime: {
+                  Nonnull<NominalClassType*> inst_class =
+                      arena_->New<NominalClassType>(
+                          &class_type.declaration(), generic_args,
+                          cast<CallExpression>(exp).impls());
+                  return todo_.FinishAction(inst_class);
+                }
               }
             } else {
               FATAL() << "instantiation of non-generic class " << class_type;

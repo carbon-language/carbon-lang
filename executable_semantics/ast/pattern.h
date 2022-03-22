@@ -210,9 +210,6 @@ class GenericBinding : public Pattern {
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };
 
-using BindingMap =
-    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
-
 // Converts paren_contents to a Pattern, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
