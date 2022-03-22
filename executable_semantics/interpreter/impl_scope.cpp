@@ -24,7 +24,7 @@ void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
 auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
                         Nonnull<const Value*> type,
                         SourceLocation source_loc) const
-    -> llvm::Expected<ValueNodeView> {
+    -> ErrorOr<ValueNodeView> {
   ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
                    TryResolve(iface_type, type, source_loc));
   if (!result.has_value()) {
@@ -38,7 +38,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
 auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc) const
-    -> llvm::Expected<std::optional<ValueNodeView>> {
+    -> ErrorOr<std::optional<ValueNodeView>> {
   std::optional<ValueNodeView> result =
       ResolveHere(iface_type, type, source_loc);
   if (result.has_value()) {

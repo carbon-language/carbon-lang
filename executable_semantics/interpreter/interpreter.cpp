@@ -60,7 +60,7 @@ class Interpreter {
 
   // Runs all the steps of `action`.
   // It's not safe to call `RunAllSteps()` or `action` after an error.
-  auto RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error;
+  auto RunAllSteps(std::unique_ptr<Action> action) -> ErrorOr<Success>;
 
   // The result produced by the `action` argument of the most recent
   // RunAllSteps call. Cannot be called if `action` was an action that doesn't
@@ -68,26 +68,25 @@ class Interpreter {
   auto result() const -> Nonnull<const Value*> { return todo_.result(); }
 
  private:
-  auto Step() -> llvm::Error;
+  auto Step() -> ErrorOr<Success>;
 
   // State transitions for expressions.
-  auto StepExp() -> llvm::Error;
+  auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
-  auto StepLvalue() -> llvm::Error;
+  auto StepLvalue() -> ErrorOr<Success>;
   // State transitions for patterns.
-  auto StepPattern() -> llvm::Error;
+  auto StepPattern() -> ErrorOr<Success>;
   // State transition for statements.
-  auto StepStmt() -> llvm::Error;
+  auto StepStmt() -> ErrorOr<Success>;
   // State transition for declarations.
-  auto StepDeclaration() -> llvm::Error;
+  auto StepDeclaration() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
 
   auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
-                SourceLocation source_loc)
-      -> llvm::Expected<Nonnull<const Value*>>;
+                SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
@@ -133,7 +132,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
 auto Interpreter::EvalPrim(Operator op,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   switch (op) {
     case Operator::Neg:
       return arena_->New<IntValue>(-cast<IntValue>(*args[0]).value());
@@ -261,7 +260,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   }
 }
 
-auto Interpreter::StepLvalue() -> llvm::Error {
+auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
   if (trace_) {
@@ -425,7 +424,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
-auto Interpreter::StepExp() -> llvm::Error {
+auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
   if (trace_) {
@@ -717,7 +716,7 @@ auto Interpreter::StepExp() -> llvm::Error {
   }  // switch (exp->kind)
 }
 
-auto Interpreter::StepPattern() -> llvm::Error {
+auto Interpreter::StepPattern() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Pattern& pattern = cast<PatternAction>(act).pattern();
   if (trace_) {
@@ -784,7 +783,7 @@ auto Interpreter::StepPattern() -> llvm::Error {
   }
 }
 
-auto Interpreter::StepStmt() -> llvm::Error {
+auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
   if (trace_) {
@@ -817,7 +816,7 @@ auto Interpreter::StepStmt() -> llvm::Error {
           return todo_.Spawn(std::make_unique<StatementAction>(&c.statement()));
         } else {
           todo_.RunAgain();
-          return llvm::Error::success();
+          return Success();
         }
       }
     }
@@ -847,14 +846,14 @@ auto Interpreter::StepStmt() -> llvm::Error {
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       todo_.UnwindPast(&cast<Break>(stmt).loop());
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Continue: {
       CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       todo_.UnwindTo(&cast<Continue>(stmt).loop());
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -964,7 +963,7 @@ auto Interpreter::StepStmt() -> llvm::Error {
         todo_.UnwindPast(
             *function.body(),
             Convert(act.results()[0], &function.return_term().static_type()));
-        return llvm::Error::success();
+        return Success();
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);
@@ -987,7 +986,7 @@ auto Interpreter::StepStmt() -> llvm::Error {
       } else if (act.pos() == 1) {
         // Push the continuation onto the current stack.
         todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
-        return llvm::Error::success();
+        return Success();
       } else {
         return todo_.FinishAction();
       }
@@ -995,11 +994,11 @@ auto Interpreter::StepStmt() -> llvm::Error {
     case StatementKind::Await:
       CHECK(act.pos() == 0);
       todo_.Suspend();
-      return llvm::Error::success();
+      return Success();
   }
 }
 
-auto Interpreter::StepDeclaration() -> llvm::Error {
+auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
   if (trace_) {
@@ -1031,7 +1030,7 @@ auto Interpreter::StepDeclaration() -> llvm::Error {
 }
 
 // State transition.
-auto Interpreter::Step() -> llvm::Error {
+auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LValAction:
@@ -1052,10 +1051,11 @@ auto Interpreter::Step() -> llvm::Error {
     case Action::Kind::ScopeAction:
       FATAL() << "ScopeAction escaped ActionStack";
   }  // switch
-  return llvm::Error::success();
+  return Success();
 }
 
-auto Interpreter::RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error {
+auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
+    -> ErrorOr<Success> {
   if (trace_) {
     PrintState(llvm::outs());
   }
@@ -1066,11 +1066,11 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action) -> llvm::Error {
       PrintState(llvm::outs());
     }
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace)
-    -> llvm::Expected<int> {
+    -> ErrorOr<int> {
   Interpreter interpreter(Phase::RunTime, arena, trace);
   if (trace) {
     llvm::outs() << "********** initializing globals **********\n";
@@ -1092,7 +1092,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace)
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace);
   RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
@@ -1100,7 +1100,7 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
 }
 
 auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace);
   RETURN_IF_ERROR(interpreter.RunAllSteps(std::make_unique<PatternAction>(p)));
   return interpreter.result();

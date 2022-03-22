@@ -14,8 +14,7 @@
 namespace Carbon {
 
 // Runs the top-level declaration list.
-auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace)
-    -> llvm::Expected<int>;
+auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int>;
 
 }  // namespace Carbon
 

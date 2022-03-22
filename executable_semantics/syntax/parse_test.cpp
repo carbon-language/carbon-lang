@@ -23,9 +23,9 @@ fn Foo() {}
 
 TEST(ParseTest, ParseFromString) {
   Arena arena;
-  llvm::Expected<AST> parse_result =
+  ErrorOr<AST> parse_result =
       ParseFromString(&arena, "file.carbon", FileContents, /*trace=*/false);
-  ASSERT_TRUE(!!parse_result);
+  ASSERT_TRUE(parse_result.ok());
   EXPECT_EQ(parse_result->declarations.size(), 1);
 }
 

@@ -14,7 +14,7 @@ namespace Carbon {
 // given AST.
 // On failure, `ast` is left in a partial state and should not be further
 // processed.
-auto ResolveControlFlow(AST& ast) -> llvm::Error;
+auto ResolveControlFlow(AST& ast) -> ErrorOr<Success>;
 
 }  // namespace Carbon
 

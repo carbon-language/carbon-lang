@@ -17,8 +17,7 @@
 
 namespace Carbon {
 
-auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace)
-    -> llvm::Expected<int> {
+auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int> {
   if (trace) {
     llvm::outs() << "********** source program **********\n";
     for (const auto decl : ast.declarations) {

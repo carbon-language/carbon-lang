@@ -223,7 +223,7 @@ class AlternativePattern : public Pattern {
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
-      -> llvm::Expected<Nonnull<AlternativePattern*>> {
+      -> ErrorOr<Nonnull<AlternativePattern*>> {
     ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
                      RequireFieldAccess(alternative));
     return arena->New<AlternativePattern>(source_loc,
@@ -257,7 +257,7 @@ class AlternativePattern : public Pattern {
 
  private:
   static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-      -> llvm::Expected<Nonnull<FieldAccessExpression*>>;
+      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
 
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;

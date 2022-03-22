@@ -20,7 +20,7 @@ using llvm::isa;
 
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
-    -> llvm::Expected<Intrinsic> {
+    -> ErrorOr<Intrinsic> {
   static const auto& intrinsic_map =
       *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
   name.remove_prefix(std::strlen("__intrinsic_"));

@@ -109,7 +109,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
 auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
-    -> llvm::Expected<Nonnull<FieldAccessExpression*>> {
+    -> ErrorOr<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
     return FATAL_PROGRAM_ERROR(alternative->source_loc())
            << "Alternative pattern must have the form of a field access.";

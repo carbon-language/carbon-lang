@@ -40,26 +40,27 @@ static void SetValue(Nonnull<Pattern*> pattern, Nonnull<const Value*> value) {
 static auto ExpectExactType(SourceLocation source_loc,
                             const std::string& context,
                             Nonnull<const Value*> expected,
-                            Nonnull<const Value*> actual) -> llvm::Error {
+                            Nonnull<const Value*> actual) -> ErrorOr<Success> {
   if (!TypeEqual(expected, actual)) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "type error in " << context << "\n"
            << "expected: " << *expected << "\n"
            << "actual: " << *actual;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 static auto ExpectPointerType(SourceLocation source_loc,
                               const std::string& context,
-                              Nonnull<const Value*> actual) -> llvm::Error {
+                              Nonnull<const Value*> actual)
+    -> ErrorOr<Success> {
   if (actual->kind() != Value::Kind::PointerType) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "type error in " << context << "\n"
            << "expected a pointer type\n"
            << "actual: " << *actual;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 // Returns whether *value represents a concrete type, as opposed to a
@@ -112,12 +113,12 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 
 auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
                                        Nonnull<const Value*> value)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (!IsConcreteType(value)) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "Expected a type, but got " << *value;
   } else {
-    return llvm::Error::success();
+    return Success();
   }
 }
 
@@ -198,21 +199,22 @@ static auto IsImplicitlyConvertible(Nonnull<const Value*> source,
 
 static auto ExpectType(SourceLocation source_loc, const std::string& context,
                        Nonnull<const Value*> expected,
-                       Nonnull<const Value*> actual) -> llvm::Error {
+                       Nonnull<const Value*> actual) -> ErrorOr<Success> {
   if (!IsImplicitlyConvertible(actual, expected)) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
            << *expected << "'";
   } else {
-    return llvm::Error::success();
+    return Success();
   }
 }
 
 auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
                                     BindingMap& deduced,
                                     Nonnull<const Value*> param,
-                                    Nonnull<const Value*> arg) -> llvm::Error {
+                                    Nonnull<const Value*> arg)
+    -> ErrorOr<Success> {
   switch (param->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param);
@@ -222,7 +224,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
         RETURN_IF_ERROR(
             ExpectExactType(source_loc, "argument deduction", it->second, arg));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case Value::Kind::TupleValue: {
       if (arg->kind() != Value::Kind::TupleValue) {
@@ -244,7 +246,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
                                           param_tup.elements()[i],
                                           arg_tup.elements()[i]));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case Value::Kind::StructType: {
       if (arg->kind() != Value::Kind::StructType) {
@@ -271,7 +273,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
                                           param_struct.fields()[i].value,
                                           arg_struct.fields()[i].value));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case Value::Kind::FunctionType: {
       if (arg->kind() != Value::Kind::FunctionType) {
@@ -287,7 +289,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
           source_loc, deduced, &param_fn.parameters(), &arg_fn.parameters()));
       RETURN_IF_ERROR(ArgumentDeduction(
           source_loc, deduced, &param_fn.return_type(), &arg_fn.return_type()));
-      return llvm::Error::success();
+      return Success();
     }
     case Value::Kind::PointerType: {
       if (arg->kind() != Value::Kind::PointerType) {
@@ -302,7 +304,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
-      return llvm::Error::success();
+      return Success();
     }
     // For the following cases, we check for type convertability.
     case Value::Kind::ContinuationType:
@@ -408,7 +410,8 @@ auto TypeChecker::Substitute(
 }
 
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
-                               const ImplScope& impl_scope) -> llvm::Error {
+                               const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "checking expression " << *e;
     llvm::outs() << "\nconstants: ";
@@ -433,7 +436,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           index.set_static_type(tuple_type.elements()[i]);
           index.set_value_category(index.aggregate().value_category());
-          return llvm::Error::success();
+          return Success();
         }
         default:
           return FATAL_COMPILATION_ERROR(e->source_loc()) << "expected a tuple";
@@ -447,7 +450,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
       e->set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::StructLiteral: {
       std::vector<NamedValue> arg_types;
@@ -457,7 +460,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
       e->set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::StructTypeLiteral: {
       auto& struct_type = cast<StructTypeLiteral>(*e);
@@ -478,7 +481,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         struct_type.set_static_type(arena_->New<TypeType>());
       }
       e->set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::FieldAccessExpression: {
       auto& access = cast<FieldAccessExpression>(*e);
@@ -491,7 +494,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             if (access.field() == field_name) {
               access.set_static_type(field_type);
               access.set_value_category(access.aggregate().value_category());
-              return llvm::Error::success();
+              return Success();
             }
           }
           return FATAL_COMPILATION_ERROR(access.source_loc())
@@ -516,7 +519,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                         << " is not a field or method";
                 break;
             }
-            return llvm::Error::success();
+            return Success();
           } else {
             return FATAL_COMPILATION_ERROR(e->source_loc())
                    << "class " << t_class.declaration().name()
@@ -537,7 +540,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               std::vector<Nonnull<const GenericBinding*>>(), *parameter_types,
               &aggregate_type, std::vector<Nonnull<const ImplBinding*>>()));
           access.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         }
         case Value::Kind::TypeOfClassType: {
           const NominalClassType& class_type =
@@ -553,7 +556,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 }
                 access.set_static_type(&(*member)->static_type());
                 access.set_value_category(ValueCategory::Let);
-                return llvm::Error::success();
+                return Success();
               }
               default:
                 break;
@@ -584,7 +587,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     Substitute(self_map, &member_type);
                 access.set_static_type(inst_member_type);
                 access.set_impl(*var_type.binding().impl_binding());
-                return llvm::Error::success();
+                return Success();
               } else {
                 return FATAL_COMPILATION_ERROR(e->source_loc())
                        << "field access, " << access.field() << " not in "
@@ -620,16 +623,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
       ident.set_static_type(&ident.value_node().static_type());
       ident.set_value_category(ident.value_node().value_category());
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::IntLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<IntType>());
-      return llvm::Error::success();
+      return Success();
     case ExpressionKind::BoolLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<BoolType>());
-      return llvm::Error::success();
+      return Success();
     case ExpressionKind::PrimitiveOperatorExpression: {
       auto& op = cast<PrimitiveOperatorExpression>(*e);
       std::vector<Nonnull<const Value*>> ts;
@@ -643,7 +646,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<IntType>(), ts[0]));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Add:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "addition(1)",
                                           arena_->New<IntType>(), ts[0]));
@@ -651,7 +654,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<IntType>(), ts[1]));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Sub:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "subtraction(1)",
                                           arena_->New<IntType>(), ts[0]));
@@ -659,7 +662,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<IntType>(), ts[1]));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Mul:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "multiplication(1)",
                                           arena_->New<IntType>(), ts[0]));
@@ -667,7 +670,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<IntType>(), ts[1]));
           op.set_static_type(arena_->New<IntType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::And:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                           arena_->New<BoolType>(), ts[0]));
@@ -675,7 +678,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<BoolType>(), ts[1]));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Or:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
                                           arena_->New<BoolType>(), ts[0]));
@@ -683,29 +686,29 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           arena_->New<BoolType>(), ts[1]));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Not:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
                                           arena_->New<BoolType>(), ts[0]));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Eq:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "==", ts[0], ts[1]));
           op.set_static_type(arena_->New<BoolType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::Deref:
           RETURN_IF_ERROR(ExpectPointerType(e->source_loc(), "*", ts[0]));
           op.set_static_type(&cast<PointerType>(*ts[0]).type());
           op.set_value_category(ValueCategory::Var);
-          return llvm::Error::success();
+          return Success();
         case Operator::Ptr:
           RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "*",
                                           arena_->New<TypeType>(), ts[0]));
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         case Operator::AddressOf:
           if (op.arguments()[0]->value_category() != ValueCategory::Var) {
             return FATAL_COMPILATION_ERROR(op.arguments()[0]->source_loc())
@@ -714,7 +717,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           op.set_static_type(arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
       }
       break;
     }
@@ -774,7 +777,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
         }
         default: {
           return FATAL_COMPILATION_ERROR(e->source_loc())
@@ -796,12 +799,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           ExpectIsConcreteType(fn.return_type().source_loc(), ret_type));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::StringLiteral:
       e->set_static_type(arena_->New<StringType>());
       e->set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
       RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
@@ -817,7 +820,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                          &intrinsic_exp.args().fields()[0]->static_type()));
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
-          return llvm::Error::success();
+          return Success();
       }
     }
     case ExpressionKind::IntTypeLiteral:
@@ -827,7 +830,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::ContinuationTypeLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<TypeType>());
-      return llvm::Error::success();
+      return Success();
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
       RETURN_IF_ERROR(TypeCheckExp(if_expr.condition(), impl_scope));
@@ -844,7 +847,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           &if_expr.else_expression()->static_type()));
       e->set_static_type(&if_expr.then_expression()->static_type());
       e->set_value_category(ValueCategory::Let);
-      return llvm::Error::success();
+      return Success();
     }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << *e;
@@ -854,7 +857,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     const ImplScope& impl_scope, ValueCategory enclosing_value_category)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -867,7 +870,7 @@ auto TypeChecker::TypeCheckPattern(
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
       p->set_static_type(arena_->New<TypeType>());
-      return llvm::Error::success();
+      return Success();
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
@@ -902,7 +905,7 @@ auto TypeChecker::TypeCheckPattern(
       if (!binding.has_value_category()) {
         binding.set_value_category(enclosing_value_category);
       }
-      return llvm::Error::success();
+      return Success();
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
@@ -930,7 +933,7 @@ auto TypeChecker::TypeCheckPattern(
       ASSIGN_OR_RETURN(Nonnull<const Value*> tuple_value,
                        InterpPattern(&tuple, arena_, trace_));
       SetValue(&tuple, tuple_value);
-      return llvm::Error::success();
+      return Success();
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
@@ -963,7 +966,7 @@ auto TypeChecker::TypeCheckPattern(
       ASSIGN_OR_RETURN(Nonnull<const Value*> alternative_value,
                        InterpPattern(&alternative, arena_, trace_));
       SetValue(&alternative, alternative_value);
-      return llvm::Error::success();
+      return Success();
     }
     case PatternKind::ExpressionPattern: {
       auto& expression = cast<ExpressionPattern>(*p).expression();
@@ -972,7 +975,7 @@ auto TypeChecker::TypeCheckPattern(
       ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                        InterpPattern(p, arena_, trace_));
       SetValue(p, expr_value);
-      return llvm::Error::success();
+      return Success();
     }
     case PatternKind::VarPattern:
       auto& let_var_pattern = cast<VarPattern>(*p);
@@ -984,12 +987,13 @@ auto TypeChecker::TypeCheckPattern(
       ASSIGN_OR_RETURN(Nonnull<const Value*> pattern_value,
                        InterpPattern(&let_var_pattern, arena_, trace_));
       SetValue(&let_var_pattern, pattern_value);
-      return llvm::Error::success();
+      return Success();
   }
 }
 
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
-                                const ImplScope& impl_scope) -> llvm::Error {
+                                const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "checking statement " << *s << "\n";
   }
@@ -1004,7 +1008,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                          impl_scope, ValueCategory::Let));
         RETURN_IF_ERROR(TypeCheckStmt(&clause.statement(), impl_scope));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::While: {
       auto& while_stmt = cast<While>(*s);
@@ -1013,17 +1017,17 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                  arena_->New<BoolType>(),
                                  &while_stmt.condition().static_type()));
       RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Break:
     case StatementKind::Continue:
-      return llvm::Error::success();
+      return Success();
     case StatementKind::Block: {
       auto& block = cast<Block>(*s);
       for (auto* block_statement : block.statements()) {
         RETURN_IF_ERROR(TypeCheckStmt(block_statement, impl_scope));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
@@ -1031,7 +1035,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       const Value& rhs_ty = var.init().static_type();
       RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), &rhs_ty, impl_scope,
                                        var.value_category()));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Assign: {
       auto& assign = cast<Assign>(*s);
@@ -1044,12 +1048,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         return FATAL_COMPILATION_ERROR(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::ExpressionStatement: {
       RETURN_IF_ERROR(TypeCheckExp(&cast<ExpressionStatement>(*s).expression(),
                                    impl_scope));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*s);
@@ -1061,7 +1065,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       if (if_stmt.else_block()) {
         RETURN_IF_ERROR(TypeCheckStmt(*if_stmt.else_block(), impl_scope));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Return: {
       auto& ret = cast<Return>(*s);
@@ -1074,13 +1078,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                    &return_term.static_type(),
                                    &ret.expression().static_type()));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Continuation: {
       auto& cont = cast<Continuation>(*s);
       RETURN_IF_ERROR(TypeCheckStmt(&cont.body(), impl_scope));
       cont.set_static_type(arena_->New<ContinuationType>());
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Run: {
       auto& run = cast<Run>(*s);
@@ -1088,11 +1092,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       RETURN_IF_ERROR(ExpectType(s->source_loc(), "argument of `run`",
                                  arena_->New<ContinuationType>(),
                                  &run.argument().static_type()));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Await: {
       // nothing to do here
-      return llvm::Error::success();
+      return Success();
     }
   }  // switch
 }
@@ -1114,7 +1118,7 @@ static auto IsExhaustive(const Match& match) -> bool {
 
 auto TypeChecker::ExpectReturnOnAllPaths(
     std::optional<Nonnull<Statement*>> opt_stmt, SourceLocation source_loc)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (!opt_stmt) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "control-flow reaches end of function that provides a `->` "
@@ -1136,7 +1140,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
         RETURN_IF_ERROR(
             ExpectReturnOnAllPaths(&clause.statement(), stmt->source_loc()));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Block: {
       auto& block = cast<Block>(*stmt);
@@ -1148,7 +1152,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
       RETURN_IF_ERROR(ExpectReturnOnAllPaths(
           block.statements()[block.statements().size() - 1],
           block.source_loc()));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*stmt);
@@ -1156,14 +1160,14 @@ auto TypeChecker::ExpectReturnOnAllPaths(
           ExpectReturnOnAllPaths(&if_stmt.then_block(), stmt->source_loc()));
       RETURN_IF_ERROR(
           ExpectReturnOnAllPaths(if_stmt.else_block(), stmt->source_loc()));
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Return:
-      return llvm::Error::success();
+      return Success();
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
-      return llvm::Error::success();
+      return Success();
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
@@ -1180,7 +1184,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 //   all deduced type parameters will be deduced.
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                              const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
@@ -1266,12 +1270,12 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (trace_) {
     llvm::outs() << "** finished declaring function " << f->name() << "\n";
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                                const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "** checking function " << f->name() << "\n";
   }
@@ -1295,12 +1299,12 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (trace_) {
     llvm::outs() << "** finished checking function " << f->name() << "\n";
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   // The declarations of the members may refer to the class, so we
   // must set the constant value of the class and its static type
   // before we start processing the members.
@@ -1312,21 +1316,21 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   for (Nonnull<Declaration*> m : class_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   for (Nonnull<Declaration*> m : class_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::DeclareInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
   SetConstantValue(iface_decl, iface_type);
   iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
@@ -1340,21 +1344,21 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                          ImplScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "declaring " << *impl_decl << "\n";
   }
@@ -1394,12 +1398,12 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     }
   }
   impl_decl->set_constant_value(arena_->New<Witness>(impl_decl));
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                            const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "checking " << *impl_decl << "\n";
   }
@@ -1409,12 +1413,12 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_) {
     llvm::outs() << "finished checking impl\n";
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     RETURN_IF_ERROR(TypeCheckExp(&alternative->signature(), impl_scope));
@@ -1425,17 +1429,17 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
   SetConstantValue(choice, ct);
   choice->set_static_type(arena_->New<TypeOfChoiceType>(ct));
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                              const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   // Nothing to do here, but perhaps that will change in the future?
-  return llvm::Error::success();
+  return Success();
 }
 
-auto TypeChecker::TypeCheck(AST& ast) -> llvm::Error {
+auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   for (Nonnull<Declaration*> declaration : ast.declarations) {
     RETURN_IF_ERROR(DeclareDeclaration(declaration, impl_scope));
@@ -1444,12 +1448,12 @@ auto TypeChecker::TypeCheck(AST& ast) -> llvm::Error {
     RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
   }
   RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                                        const ImplScope& impl_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       RETURN_IF_ERROR(TypeCheckInterfaceDeclaration(
@@ -1464,15 +1468,15 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
     case DeclarationKind::FunctionDeclaration:
       RETURN_IF_ERROR(TypeCheckFunctionDeclaration(
           &cast<FunctionDeclaration>(*d), impl_scope));
-      return llvm::Error::success();
+      return Success();
     case DeclarationKind::ClassDeclaration:
       RETURN_IF_ERROR(
           TypeCheckClassDeclaration(&cast<ClassDeclaration>(*d), impl_scope));
-      return llvm::Error::success();
+      return Success();
     case DeclarationKind::ChoiceDeclaration:
       RETURN_IF_ERROR(
           TypeCheckChoiceDeclaration(&cast<ChoiceDeclaration>(*d), impl_scope));
-      return llvm::Error::success();
+      return Success();
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
       // Signals a type error if the initializing expression does not have
@@ -1493,14 +1497,15 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                                    &var.static_type(),
                                    &var.initializer().static_type()));
       }
-      return llvm::Error::success();
+      return Success();
     }
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
-                                     ImplScope& impl_scope) -> llvm::Error {
+                                     ImplScope& impl_scope)
+    -> ErrorOr<Success> {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*d);
@@ -1548,7 +1553,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 template <typename T>

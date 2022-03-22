@@ -8,16 +8,14 @@
 #include <optional>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "executable_semantics/ast/source_location.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
-// A helper class for accumulating error message and converting to either
-// llvm::Error or llvm::Expected.
+// A helper class for accumulating error message and converting to
 class ErrorBuilder {
  public:
   explicit ErrorBuilder(std::optional<SourceLocation> loc = std::nullopt)
@@ -34,24 +32,18 @@ class ErrorBuilder {
     return *this;
   }
 
-  operator llvm::Error() { return ConvertToError(); }
+  operator Error() { return Error(message_); }
 
-  template <typename T>
-  operator llvm::Expected<T>() {
-    return ConvertToError();
-  }
-
- private:
-  llvm::Error ConvertToError() {
-    return llvm::make_error<llvm::StringError>(message_,
-                                               llvm::inconvertibleErrorCode());
+  template <typename V>
+  operator ErrorOr<V>() {
+    return Error(message_);
   }
 
   std::string message_;
   llvm::raw_string_ostream out_;
 };
 
-// Builds an llvm::Error instance with the specified message. This should be
+// Builds a Carbon::Error instance with the specified message. This should be
 // used for non-recoverable errors with user input.
 //
 // For example:
@@ -88,10 +80,9 @@ class ErrorBuilder {
 #define MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
 #define MAKE_UNIQUE_NAME(a, b, c) MAKE_UNIQUE_NAME_IMPL(a, b, c)
 
-// llvm::Error's operator bool() returns true if the Error is in failure state.
-#define RETURN_IF_ERROR_IMPL(unique_name, expr)          \
-  if (llvm::Error unique_name = (expr); !!unique_name) { \
-    return unique_name;                                  \
+#define RETURN_IF_ERROR_IMPL(unique_name, expr)       \
+  if (auto unique_name = (expr); !unique_name.ok()) { \
+    return std::move(unique_name).error();            \
   }
 
 #define RETURN_IF_ERROR(expr) \
@@ -100,8 +91,8 @@ class ErrorBuilder {
 
 #define ASSIGN_OR_RETURN_IMPL(unique_name, var, expr) \
   auto unique_name = (expr);                          \
-  if (!unique_name) {                                 \
-    return unique_name.takeError();                   \
+  if (!unique_name.ok()) {                            \
+    return std::move(unique_name).error();            \
   }                                                   \
   var = std::move(*unique_name);
 

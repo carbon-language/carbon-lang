@@ -118,7 +118,7 @@ auto FunctionDeclaration::Create(
     std::optional<Nonnull<BindingPattern*>> me_pattern,
     Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
     std::optional<Nonnull<Block*>> body)
-    -> llvm::Expected<Nonnull<FunctionDeclaration*>> {
+    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
   // Look for the `me` parameter in the `deduced_parameters`
   // and put it in the `me_pattern`.

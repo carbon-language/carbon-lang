@@ -468,7 +468,7 @@ class IntrinsicExpression : public Expression {
   // Returns the enumerator corresponding to the intrinsic named `name`,
   // or raises a fatal compile error if there is no such enumerator.
   static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
-      -> llvm::Expected<Intrinsic>;
+      -> ErrorOr<Intrinsic>;
 
   explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)

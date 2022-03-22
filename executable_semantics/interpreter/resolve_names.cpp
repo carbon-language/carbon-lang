@@ -20,10 +20,10 @@ namespace Carbon {
 
 // Adds the names exposed by the given AST node to enclosing_scope.
 static auto AddExposedNames(const Declaration& declaration,
-                            StaticScope& enclosing_scope) -> llvm::Error;
+                            StaticScope& enclosing_scope) -> ErrorOr<Success>;
 
 static auto AddExposedNames(const Declaration& declaration,
-                            StaticScope& enclosing_scope) -> llvm::Error {
+                            StaticScope& enclosing_scope) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(declaration);
@@ -57,7 +57,7 @@ static auto AddExposedNames(const Declaration& declaration,
       }
       break;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 // Traverses the sub-AST rooted at the given node, resolving all names within
@@ -71,16 +71,18 @@ static auto AddExposedNames(const Declaration& declaration,
 // StaticScope, and then calling ResolveNames on each element, passing it the
 // already-populated StaticScope.
 static auto ResolveNames(Expression& expression,
-                         const StaticScope& enclosing_scope) -> llvm::Error;
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
 static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
-    -> llvm::Error;
+    -> ErrorOr<Success>;
 static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
-    -> llvm::Error;
+    -> ErrorOr<Success>;
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
-    -> llvm::Error;
+    -> ErrorOr<Success>;
 
 static auto ResolveNames(Expression& expression,
-                         const StaticScope& enclosing_scope) -> llvm::Error {
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
@@ -161,11 +163,11 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented";
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
@@ -197,11 +199,11 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
           ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
       break;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
       RETURN_IF_ERROR(ResolveNames(
@@ -276,11 +278,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     case StatementKind::Continue:
       break;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface = cast<InterfaceDeclaration>(declaration);
@@ -367,10 +369,10 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       break;
     }
   }
-  return llvm::Error::success();
+  return Success();
 }
 
-auto ResolveNames(AST& ast) -> llvm::Error {
+auto ResolveNames(AST& ast) -> ErrorOr<Success> {
   StaticScope file_scope;
   for (auto declaration : ast.declarations) {
     RETURN_IF_ERROR(AddExposedNames(*declaration, file_scope));

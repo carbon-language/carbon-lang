@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "common/error.h"
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/exec_program.h"
@@ -21,12 +22,14 @@
 static void AddPrelude(
     std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
     std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
-  llvm::Expected<Carbon::AST> parse_result =
+  Carbon::ErrorOr<Carbon::AST> parse_result =
       Carbon::Parse(arena, prelude_file_name, false);
-  if (!parse_result) {
+  if (!parse_result.ok()) {
     // Try again with tracing, to help diagnose the problem.
-    parse_result = Carbon::Parse(arena, prelude_file_name, true);
-    FATAL() << "Failed to parse prelude: " << parse_result.takeError();
+    Carbon::ErrorOr<Carbon::AST> trace_parse_result =
+        Carbon::Parse(arena, prelude_file_name, true);
+    FATAL() << "Failed to parse prelude: "
+            << trace_parse_result.error().message();
   }
   const auto& prelude = *parse_result;
   declarations->insert(declarations->begin(), prelude.declarations.begin(),
@@ -34,14 +37,9 @@ static void AddPrelude(
 }
 
 // Prints an error message and returns error code value.
-auto PrintError(llvm::Error error) -> int {
-  int error_value = 1;
-  llvm::handleAllErrors(std::move(error),
-                        [&error_value](const llvm::ErrorInfoBase& e) {
-                          llvm::errs() << e.message() << "\n";
-                          error_value = e.convertToErrorCode().value();
-                        });
-  return error_value;
+auto PrintError(const Carbon::Error& error) -> int {
+  llvm::errs() << error.message() << "\n";
+  return EXIT_FAILURE;
 }
 
 auto main(int argc, char* argv[]) -> int {
@@ -67,16 +65,16 @@ auto main(int argc, char* argv[]) -> int {
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
   Carbon::Arena arena;
-  llvm::Expected<Carbon::AST> ast =
+  Carbon::ErrorOr<Carbon::AST> ast =
       Carbon::Parse(&arena, input_file_name, trace_option);
-  if (!ast) {
-    return PrintError(ast.takeError());
+  if (!ast.ok()) {
+    return PrintError(ast.error());
   }
   AddPrelude(prelude_file_name, &arena, &ast->declarations);
 
   // Typecheck and run the parsed program.
-  llvm::Expected<int> result = Carbon::ExecProgram(&arena, *ast, trace_option);
-  if (!result) {
-    return PrintError(result.takeError());
+  Carbon::ErrorOr<int> result = Carbon::ExecProgram(&arena, *ast, trace_option);
+  if (!result.ok()) {
+    return PrintError(result.error());
   }
 }

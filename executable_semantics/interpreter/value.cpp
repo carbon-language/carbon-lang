@@ -31,7 +31,7 @@ auto StructValue::FindField(const std::string& name) const
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
                       SourceLocation source_loc)
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   const std::string& f = field.name();
 
   if (field.witness().has_value()) {
@@ -113,7 +113,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
                      SourceLocation source_loc) const
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
     ASSIGN_OR_RETURN(value, GetMember(arena, value, field, source_loc));
@@ -126,7 +126,7 @@ static auto SetFieldImpl(
     std::vector<FieldPath::Component>::const_iterator path_begin,
     std::vector<FieldPath::Component>::const_iterator path_end,
     Nonnull<const Value*> field_value, SourceLocation source_loc)
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   if (path_begin == path_end) {
     return field_value;
   }
@@ -173,7 +173,7 @@ static auto SetFieldImpl(
 auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
                      SourceLocation source_loc) const
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
                       path.components_.begin(), path.components_.end(),
                       field_value, source_loc);

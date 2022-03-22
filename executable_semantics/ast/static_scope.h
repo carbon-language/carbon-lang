@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/value_category.h"
@@ -134,7 +135,7 @@ class StaticScope {
  public:
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
-  auto Add(std::string name, ValueNodeView entity) -> llvm::Error;
+  auto Add(std::string name, ValueNodeView entity) -> ErrorOr<Success>;
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -146,14 +147,14 @@ class StaticScope {
   // scope, or reports a compilation error at `source_loc` there isn't exactly
   // one such definition.
   auto Resolve(const std::string& name, SourceLocation source_loc) const
-      -> llvm::Expected<ValueNodeView>;
+      -> ErrorOr<ValueNodeView>;
 
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
   // than one definition is found.
   auto TryResolve(const std::string& name, SourceLocation source_loc) const
-      -> llvm::Expected<std::optional<ValueNodeView>>;
+      -> ErrorOr<std::optional<ValueNodeView>>;
 
   // Maps locally declared names to their entities.
   std::unordered_map<std::string, ValueNodeView> declared_names_;

@@ -35,7 +35,7 @@ struct FunctionData {
 static auto ResolveControlFlow(Nonnull<Statement*> statement,
                                std::optional<Nonnull<const Statement*>> loop,
                                std::optional<Nonnull<FunctionData*>> function)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   switch (statement->kind()) {
     case StatementKind::Return: {
       if (!function.has_value()) {
@@ -60,7 +60,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                << (function_return.is_omitted() ? " not" : "")
                << " provide a return value, to match the function's signature.";
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Break:
       if (!loop.has_value()) {
@@ -68,14 +68,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
                << "break is not within a loop body";
       }
       cast<Break>(*statement).set_loop(*loop);
-      return llvm::Error::success();
+      return Success();
     case StatementKind::Continue:
       if (!loop.has_value()) {
         return FATAL_COMPILATION_ERROR(statement->source_loc())
                << "continue is not within a loop body";
       }
       cast<Continue>(*statement).set_loop(*loop);
-      return llvm::Error::success();
+      return Success();
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*statement);
       RETURN_IF_ERROR(
@@ -84,41 +84,41 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
         RETURN_IF_ERROR(
             ResolveControlFlow(*if_stmt.else_block(), loop, function));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Block: {
       auto& block = cast<Block>(*statement);
       for (auto* block_statement : block.statements()) {
         RETURN_IF_ERROR(ResolveControlFlow(block_statement, loop, function));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::While:
       RETURN_IF_ERROR(ResolveControlFlow(&cast<While>(*statement).body(),
                                          statement, function));
-      return llvm::Error::success();
+      return Success();
     case StatementKind::Match: {
       auto& match = cast<Match>(*statement);
       for (Match::Clause& clause : match.clauses()) {
         RETURN_IF_ERROR(
             ResolveControlFlow(&clause.statement(), loop, function));
       }
-      return llvm::Error::success();
+      return Success();
     }
     case StatementKind::Continuation:
       RETURN_IF_ERROR(ResolveControlFlow(&cast<Continuation>(*statement).body(),
                                          std::nullopt, std::nullopt));
-      return llvm::Error::success();
+      return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
     case StatementKind::VariableDefinition:
     case StatementKind::Run:
     case StatementKind::Await:
-      return llvm::Error::success();
+      return Success();
   }
 }
 
-auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> llvm::Error {
+auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
   switch (declaration->kind()) {
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<FunctionDeclaration>(*declaration);
@@ -155,14 +155,14 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> llvm::Error {
       // do nothing
       break;
   }
-  return llvm::Error::success();
+  return Success();
 }
 
-auto ResolveControlFlow(AST& ast) -> llvm::Error {
+auto ResolveControlFlow(AST& ast) -> ErrorOr<Success> {
   for (auto declaration : ast.declarations) {
     RETURN_IF_ERROR(ResolveControlFlow(declaration));
   }
-  return llvm::Error::success();
+  return Success();
 }
 
 }  // namespace Carbon

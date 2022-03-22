@@ -89,7 +89,7 @@ class FunctionDeclaration : public Declaration {
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body)
-      -> llvm::Expected<Nonnull<FunctionDeclaration*>>;
+      -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,

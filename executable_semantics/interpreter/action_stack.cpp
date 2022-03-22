@@ -50,7 +50,7 @@ void ActionStack::Initialize(ValueNodeView value_node,
 
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
-    -> llvm::Expected<Nonnull<const Value*>> {
+    -> ErrorOr<Nonnull<const Value*>> {
   if (std::optional<Nonnull<const Value*>> constant_value =
           value_node.constant_value();
       constant_value.has_value()) {
@@ -111,7 +111,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
   fragment.StoreReversed(std::move(reversed_todo));
 }
 
-auto ActionStack::FinishAction() -> llvm::Error {
+auto ActionStack::FinishAction() -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::ExpressionAction:
@@ -124,10 +124,11 @@ auto ActionStack::FinishAction() -> llvm::Error {
     case Action::Kind::DeclarationAction:
       PopScopes();
   }
-  return llvm::Error::success();
+  return Success();
 }
 
-auto ActionStack::FinishAction(Nonnull<const Value*> result) -> llvm::Error {
+auto ActionStack::FinishAction(Nonnull<const Value*> result)
+    -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::StatementAction:
@@ -141,23 +142,23 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result) -> llvm::Error {
       PopScopes();
       SetResult(result);
   }
-  return llvm::Error::success();
+  return Success();
 }
 
-auto ActionStack::Spawn(std::unique_ptr<Action> child) -> llvm::Error {
+auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
-  return llvm::Error::success();
+  return Success();
 }
 
 auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
-    -> llvm::Error {
+    -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
-  return llvm::Error::success();
+  return Success();
 }
 
 void ActionStack::RunAgain() {

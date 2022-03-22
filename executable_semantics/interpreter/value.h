@@ -77,14 +77,14 @@ class Value {
   // path for *this.
   auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
                 SourceLocation source_loc) const
-      -> llvm::Expected<Nonnull<const Value*>>;
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
   auto SetField(Nonnull<Arena*> arena, const FieldPath& path,
                 Nonnull<const Value*> field_value,
                 SourceLocation source_loc) const
-      -> llvm::Expected<Nonnull<const Value*>>;
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
