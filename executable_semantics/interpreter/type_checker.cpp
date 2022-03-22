@@ -1302,7 +1302,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     impl_binding->set_static_type(&deduced->static_type());
     impl_bindings.push_back(impl_binding);
   }
-  // Bring the impl bindings into scope
+  // Bring the impl bindings into scope.
   ImplScope function_scope;
   function_scope.AddParent(&impl_scope);
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
