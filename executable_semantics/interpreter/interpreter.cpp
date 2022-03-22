@@ -59,7 +59,7 @@ class Interpreter {
   ~Interpreter();
 
   // Runs all the steps of `action`.
-  // It's not safe to call `RunAllSteps()` or `action` after an error.
+  // It's not safe to call `RunAllSteps()` or `result()` after an error.
   auto RunAllSteps(std::unique_ptr<Action> action) -> ErrorOr<Success>;
 
   // The result produced by the `action` argument of the most recent
@@ -815,8 +815,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           todo_.MergeScope(std::move(matches));
           return todo_.Spawn(std::make_unique<StatementAction>(&c.statement()));
         } else {
-          todo_.RunAgain();
-          return Success();
+          return todo_.RunAgain();
         }
       }
     }
@@ -845,15 +844,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       CHECK(act.pos() == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
-      todo_.UnwindPast(&cast<Break>(stmt).loop());
-      return Success();
+      return todo_.UnwindPast(&cast<Break>(stmt).loop());
     }
     case StatementKind::Continue: {
       CHECK(act.pos() == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
-      todo_.UnwindTo(&cast<Continue>(stmt).loop());
-      return Success();
+      return todo_.UnwindTo(&cast<Continue>(stmt).loop());
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(stmt);
@@ -960,10 +957,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        todo_.UnwindPast(
+        return todo_.UnwindPast(
             *function.body(),
             Convert(act.results()[0], &function.return_term().static_type()));
-        return Success();
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);
@@ -985,16 +981,14 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
       } else if (act.pos() == 1) {
         // Push the continuation onto the current stack.
-        todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
-        return Success();
+        return todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
       } else {
         return todo_.FinishAction();
       }
     }
     case StatementKind::Await:
       CHECK(act.pos() == 0);
-      todo_.Suspend();
-      return Success();
+      return todo_.Suspend();
   }
 }
 

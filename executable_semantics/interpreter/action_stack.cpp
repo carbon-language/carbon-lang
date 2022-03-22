@@ -161,12 +161,14 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
   return Success();
 }
 
-void ActionStack::RunAgain() {
+auto ActionStack::RunAgain() -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
+  return Success();
 }
 
-void ActionStack::UnwindTo(Nonnull<const Statement*> ast_node) {
+auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
+    -> ErrorOr<Success> {
   while (true) {
     if (const auto* statement_action =
             llvm::dyn_cast<StatementAction>(todo_.Top().get());
@@ -176,24 +178,30 @@ void ActionStack::UnwindTo(Nonnull<const Statement*> ast_node) {
     }
     todo_.Pop();
   }
+  return Success();
 }
 
-void ActionStack::UnwindPast(Nonnull<const Statement*> ast_node) {
-  UnwindTo(ast_node);
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
+    -> ErrorOr<Success> {
+  RETURN_IF_ERROR(UnwindTo(ast_node));
   todo_.Pop();
   PopScopes();
+  return Success();
 }
 
-void ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
-                             Nonnull<const Value*> result) {
-  UnwindPast(ast_node);
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
+                             Nonnull<const Value*> result) -> ErrorOr<Success> {
+  RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
+  return Success();
 }
 
-void ActionStack::Resume(Nonnull<const ContinuationValue*> continuation) {
+auto ActionStack::Resume(Nonnull<const ContinuationValue*> continuation)
+    -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   continuation->stack().RestoreTo(todo_);
+  return Success();
 }
 
 static auto IsRunAction(const Action& action) -> bool {
@@ -201,7 +209,7 @@ static auto IsRunAction(const Action& action) -> bool {
   return statement != nullptr && llvm::isa<Run>(statement->statement());
 }
 
-void ActionStack::Suspend() {
+auto ActionStack::Suspend() -> ErrorOr<Success> {
   // Pause the current continuation
   todo_.Pop();
   std::vector<std::unique_ptr<Action>> paused;
@@ -212,6 +220,7 @@ void ActionStack::Suspend() {
       llvm::cast<const ContinuationValue>(*todo_.Top()->results()[0]);
   // Update the continuation with the paused stack.
   continuation.stack().StoreReversed(std::move(paused));
+  return Success();
 }
 
 void ActionStack::PopScopes() {

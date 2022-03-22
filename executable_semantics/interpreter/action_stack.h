@@ -70,9 +70,9 @@ class ActionStack {
   // invoke exactly one transition method, as the very last operation. This is a
   // matter of safety as well as convention: most transition methods modify the
   // state of the current action, and some of them destroy it. To help enforce
-  // this requirement, we have a convention of calling these methods as part of
-  // return statements, e.g. `return todo_.FinishAction()`, even though they
-  // return void.
+  // this requirement, we have a convention of making these methods return an
+  // ErrorOr<Success> even when a method can't actually fail, and calling the
+  // methods as part of return statements, e.g. `return todo_.FinishAction()`.
 
   // Finishes execution of the current Action. If `result` is specified, it
   // represents the result of that Action.
@@ -86,25 +86,26 @@ class ActionStack {
       -> ErrorOr<Success>;
 
   // Advances the current action one step.
-  void RunAgain();
+  auto RunAgain() -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` is at the top of the stack.
-  void UnwindTo(Nonnull<const Statement*> ast_node);
+  auto UnwindTo(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
 
   // Unwinds Actions from the stack until the StatementAction associated with
   // `ast_node` has been removed from the stack. If `result` is specified,
   // it represents the result of that Action (StatementActions normally cannot
   // produce results, but the body of a function can).
-  void UnwindPast(Nonnull<const Statement*> ast_node);
-  void UnwindPast(Nonnull<const Statement*> ast_node,
-                  Nonnull<const Value*> result);
+  auto UnwindPast(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
+  auto UnwindPast(Nonnull<const Statement*> ast_node,
+                  Nonnull<const Value*> result) -> ErrorOr<Success>;
 
   // Resumes execution of a suspended continuation.
-  void Resume(Nonnull<const ContinuationValue*> continuation);
+  auto Resume(Nonnull<const ContinuationValue*> continuation)
+      -> ErrorOr<Success>;
 
   // Suspends execution of the currently-executing continuation.
-  void Suspend();
+  auto Suspend() -> ErrorOr<Success>;
 
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
