@@ -313,7 +313,7 @@ void Value::Print(llvm::raw_ostream& out) const {
           out << sep << impl;
         }
       }
-      if (class_type.witnesses().size() > 0) {
+      if (!class_type.witnesses().empty()) {
         out << " witnesses ";
         llvm::ListSeparator sep;
         for (const auto& [impl_bind, witness] : class_type.witnesses()) {
