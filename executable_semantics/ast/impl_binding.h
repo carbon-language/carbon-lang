@@ -53,7 +53,7 @@ class ImplBinding : public AstNode {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
 

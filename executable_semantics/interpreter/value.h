@@ -127,10 +127,10 @@ class FunctionValue : public Value {
   explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
-  explicit FunctionValue(
-      Nonnull<const FunctionDeclaration*> declaration,
-      const BindingMap& type_args,
-      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
+                         const BindingMap& type_args,
+                         const std::map<Nonnull<const ImplBinding*>,
+                                        Nonnull<const Witness*>>& wits)
       : Value(Kind::FunctionValue),
         declaration_(declaration),
         type_args_(type_args),
@@ -154,7 +154,7 @@ class FunctionValue : public Value {
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   BindingMap type_args_;
-  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -166,10 +166,11 @@ class BoundMethodValue : public Value {
         declaration_(declaration),
         receiver_(receiver) {}
 
-  explicit BoundMethodValue(
-      Nonnull<const FunctionDeclaration*> declaration,
-      Nonnull<const Value*> receiver, const BindingMap& type_args,
-      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+                            Nonnull<const Value*> receiver,
+                            const BindingMap& type_args,
+                            const std::map<Nonnull<const ImplBinding*>,
+                                           Nonnull<const Witness*>>& wits)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver),
@@ -189,7 +190,7 @@ class BoundMethodValue : public Value {
   auto type_args() const -> const BindingMap& { return type_args_; }
 
   auto witnesses() const
-      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
     return witnesses_;
   }
 
@@ -197,7 +198,7 @@ class BoundMethodValue : public Value {
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
   BindingMap type_args_;
-  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
 // The value of a location in memory.
@@ -500,14 +501,25 @@ class StructType : public Value {
 };
 
 // A class type.
+// TODO: Consider splitting this class into several classes.
 class NominalClassType : public Value {
  public:
+  // Construct a non-generic class type or a generic class type that has
+  // not yet been applied to type arguments.
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
+      : Value(Kind::NominalClassType), declaration_(declaration) {}
+
+  // Construct a class type that represents the result of applying the
+  // given generic class to the `type_args`.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
                             const BindingMap& type_args)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         type_args_(type_args) {}
 
+  // Construct a class type that represents the result of applying the
+  // given generic class to the `type_args` and that records the result of the
+  // compile-time search for any required impls.
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
       const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
@@ -516,9 +528,12 @@ class NominalClassType : public Value {
         type_args_(type_args),
         impls_(impls) {}
 
-  explicit NominalClassType(
-      Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
-      const std::map<Nonnull<const ImplBinding*>, const Witness*>& wits)
+  // Construct a fully instantiated generic class type to represent the
+  // run-time type of an object.
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                            const BindingMap& type_args,
+                            const std::map<Nonnull<const ImplBinding*>,
+                                           Nonnull<const Witness*>>& wits)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         type_args_(type_args),
@@ -533,15 +548,19 @@ class NominalClassType : public Value {
 
   // Maps each of the class's generic parameters to the AST node that
   // identifies the witness table for the corresponding argument.
-  // Should not be called before typechecking, or if the class is not
-  // generic.
+  // Should not be called on 1) a non-generic class, 2) a generic-class
+  // that is not instantiated, or 3) a fully instantiated runtime type
+  // of a generic class.
   auto impls() const
       -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
     return impls_;
   }
 
+  // Maps each of the class's generic parameters to the witness table
+  // for the corresponding argument. Should only be called on a fully
+  // instantiated runtime type of a generic class.
   auto witnesses() const
-      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
     return witnesses_;
   }
 
@@ -554,7 +573,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   BindingMap type_args_;
   std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
-  std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
 // Return the declaration of the member with the given name.

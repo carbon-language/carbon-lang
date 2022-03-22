@@ -367,8 +367,14 @@ void Interpreter::StepLvalue() {
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc) const
     -> Nonnull<const Value*> {
+  if (trace_) {
+    llvm::outs() << "instantiating: " << *type << "\n";
+  }
   switch (type->kind()) {
     case Value::Kind::VariableType: {
+      if (trace_) {
+        llvm::outs() << "case VariableType\n";
+      }
       Nonnull<const Value*> value =
           todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc);
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
@@ -377,18 +383,37 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return value;
     }
     case Value::Kind::NominalClassType: {
+      if (trace_) {
+        llvm::outs() << "case NominalClassType\n";
+      }
       const auto& class_type = cast<NominalClassType>(*type);
       BindingMap inst_type_args;
       for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
         inst_type_args[ty_var] = InstantiateType(ty_arg, source_loc);
       }
+      if (trace_) {
+        llvm::outs() << "finished instantiating ty_arg\n";
+      }
       std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
       for (const auto& [bind, impl] : class_type.impls()) {
         Nonnull<const Value*> witness_addr =
             todo_.ValueOfNode(impl, source_loc);
-        Nonnull<const Witness*> witness = cast<Witness>(heap_.Read(
-            llvm::cast<LValue>(witness_addr)->address(), source_loc));
+        if (trace_) {
+          llvm::outs() << "witness_addr: " << *witness_addr << "\n";
+        }
+        Nonnull<const Witness*> witness;
+        if (llvm::isa<Witness>(witness_addr)) {
+          witness = cast<Witness>(witness_addr);
+        } else if (llvm::isa<LValue>(witness_addr)) {
+          witness = cast<Witness>(heap_.Read(
+              llvm::cast<LValue>(witness_addr)->address(), source_loc));
+        } else {
+          FATAL() << "expected a witness or LValue of a witness";
+        }
         witnesses[bind] = witness;
+      }
+      if (trace_) {
+        llvm::outs() << "finished finding witnesses\n";
       }
       return arena_->New<NominalClassType>(&class_type.declaration(),
                                            inst_type_args, witnesses);

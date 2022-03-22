@@ -50,7 +50,9 @@ void ActionStack::Initialize(ValueNodeView value_node,
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
-  std::optional<const Value*> value = (phase_ == Phase::CompileTime) ? value_node.compile_time_value() : value_node.constant_value();
+  std::optional<const Value*> value = (phase_ == Phase::CompileTime)
+                                          ? value_node.symbolic_identity()
+                                          : value_node.constant_value();
   if (value) {
     return *value;
   }

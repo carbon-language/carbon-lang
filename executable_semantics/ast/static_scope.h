@@ -36,13 +36,13 @@ static constexpr bool ImplementsValueNode = false;
   with a value, such as declarations and bindings. The interface consists of
   the following methods:
 
-  // Returns the value associated with the node at runtime.
+  // Returns the constant associated with the node.
   // This is called by the interpreter, not the type checker.
   auto constant_value() const -> std::optional<Nonnull<const Value*>>;
 
-  // Returns the value associated with the node at compile time.
+  // Returns the symbolic compile-time identity of the node.
   // This is called by the type checker, not the interpreter.
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>>;
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>>;
 
   // Returns the static type of an IdentifierExpression that names *this.
   auto static_type() const -> const Value&;
@@ -75,9 +75,9 @@ class ValueNodeView {
             [](const AstNode& base) -> std::optional<Nonnull<const Value*>> {
               return llvm::cast<NodeType>(base).constant_value();
             }),
-        compile_time_value_(
+        symbolic_identity_(
             [](const AstNode& base) -> std::optional<Nonnull<const Value*>> {
-              return llvm::cast<NodeType>(base).compile_time_value();
+              return llvm::cast<NodeType>(base).symbolic_identity();
             }),
         print_([](const AstNode& base, llvm::raw_ostream& out) -> void {
           // TODO: change this to print a summary of the node
@@ -103,9 +103,9 @@ class ValueNodeView {
     return constant_value_(*base_);
   }
 
-  // Returns node->compile_time_value()
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
-    return compile_time_value_(*base_);
+  // Returns node->symbolic_identity()
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return symbolic_identity_(*base_);
   }
 
   void Print(llvm::raw_ostream& out) const { print_(*base_, out); }
@@ -138,7 +138,7 @@ class ValueNodeView {
   std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
       constant_value_;
   std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
-      compile_time_value_;
+      symbolic_identity_;
   std::function<void(const AstNode&, llvm::raw_ostream&)> print_;
   std::function<const Value&(const AstNode&)> static_type_;
   std::function<ValueCategory(const AstNode&)> value_category_;

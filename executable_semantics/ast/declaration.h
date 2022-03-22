@@ -81,7 +81,7 @@ class Declaration : public AstNode {
   }
 
   // See static_scope.h for API.
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 

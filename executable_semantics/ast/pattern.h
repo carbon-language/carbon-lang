@@ -129,7 +129,7 @@ class BindingPattern : public Pattern {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
 
@@ -185,12 +185,12 @@ class GenericBinding : public Pattern {
     return std::nullopt;
   }
 
-  auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
-    return compile_time_value_;
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return symbolic_identity_;
   }
-  void set_compile_time_value(Nonnull<const Value*> value) {
-    CHECK(!compile_time_value_.has_value());
-    compile_time_value_ = value;
+  void set_symbolic_identity(Nonnull<const Value*> value) {
+    CHECK(!symbolic_identity_.has_value());
+    symbolic_identity_ = value;
   }
 
   // The impl binding associated with this type variable.
@@ -206,7 +206,7 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
-  std::optional<Nonnull<const Value*>> compile_time_value_;
+  std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };
 

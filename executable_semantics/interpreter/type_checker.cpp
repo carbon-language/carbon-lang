@@ -406,8 +406,13 @@ auto TypeChecker::Substitute(
       for (const auto& [name, value] : class_type.type_args()) {
         type_args[name] = Substitute(dict, value);
       }
-      return arena_->New<NominalClassType>(&class_type.declaration(),
-                                           type_args);
+      const auto& new_class_type =
+          arena_->New<NominalClassType>(&class_type.declaration(), type_args);
+      if (trace_) {
+        llvm::outs() << "substitution: " << class_type << " => "
+                     << *new_class_type << "\n";
+      }
+      return new_class_type;
     }
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
@@ -951,7 +956,7 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
       CHECK(binding.impl_binding().has_value());
       Nonnull<const ImplBinding*> impl_binding = *binding.impl_binding();
       impl_scope.Add(impl_binding->interface(),
-                     *impl_binding->type_var()->compile_time_value(),
+                     *impl_binding->type_var()->symbolic_identity(),
                      impl_binding);
       return;
     }
@@ -1026,13 +1031,13 @@ void TypeChecker::TypeCheckPattern(
       }
       binding.set_static_type(type);
       Nonnull<const Value*> val = InterpPattern(&binding, arena_, trace_);
-      binding.set_compile_time_value(val);
+      binding.set_symbolic_identity(val);
       Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
           binding.source_loc(), &binding, &binding.static_type());
       binding.set_impl_binding(impl_binding);
       SetValue(&binding, val);
       impl_scope.Add(impl_binding->interface(),
-                     *impl_binding->type_var()->compile_time_value(),
+                     *impl_binding->type_var()->symbolic_identity(),
                      impl_binding);
       return;
     }
@@ -1286,7 +1291,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type(), impl_scope);
     // SetConstantValue(deduced, arena_->New<VariableType>(deduced));
-    deduced->set_compile_time_value(arena_->New<VariableType>(deduced));
+    deduced->set_symbolic_identity(arena_->New<VariableType>(deduced));
     deduced->set_static_type(InterpExp(&deduced->type(), arena_, trace_));
   }
   // Create the impl_bindings
@@ -1302,9 +1307,9 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   ImplScope function_scope;
   function_scope.AddParent(&impl_scope);
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    CHECK(impl_binding->type_var()->compile_time_value().has_value());
+    CHECK(impl_binding->type_var()->symbolic_identity().has_value());
     function_scope.Add(impl_binding->interface(),
-                       *impl_binding->type_var()->compile_time_value(),
+                       *impl_binding->type_var()->symbolic_identity(),
                        impl_binding);
   }
   // Type check the receiver pattern
@@ -1375,9 +1380,9 @@ void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     function_scope.AddParent(&impl_scope);
     for (Nonnull<const ImplBinding*> impl_binding :
          cast<FunctionType>(f->static_type()).impl_bindings()) {
-      CHECK(impl_binding->type_var()->compile_time_value().has_value());
+      CHECK(impl_binding->type_var()->symbolic_identity().has_value());
       function_scope.Add(impl_binding->interface(),
-                         *impl_binding->type_var()->compile_time_value(),
+                         *impl_binding->type_var()->symbolic_identity(),
                          impl_binding);
     }
     if (trace_)
@@ -1405,9 +1410,8 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     if (trace_)
       llvm::outs() << class_scope;
 
-    BindingMap type_args;
     Nonnull<NominalClassType*> class_type =
-        arena_->New<NominalClassType>(class_decl, type_args);
+        arena_->New<NominalClassType>(class_decl);
     SetConstantValue(class_decl, class_type);
     class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
@@ -1420,9 +1424,8 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // The declarations of the members may refer to the class, so we
     // must set the constant value of the class and its static type
     // before we start processing the members.
-    BindingMap type_args;
     Nonnull<NominalClassType*> class_type =
-        arena_->New<NominalClassType>(class_decl, type_args);
+        arena_->New<NominalClassType>(class_decl);
     SetConstantValue(class_decl, class_type);
     class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
@@ -1467,8 +1470,7 @@ void TypeChecker::DeclareInterfaceDeclaration(
   iface_decl->self()->set_static_type(
       arena_->New<VariableType>(iface_decl->self()));
   // SetConstantValue(iface_decl->self(), &iface_decl->self()->static_type());
-  iface_decl->self()->set_compile_time_value(
-      &iface_decl->self()->static_type());
+  iface_decl->self()->set_symbolic_identity(&iface_decl->self()->static_type());
 
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     DeclareDeclaration(m, enclosing_scope);
