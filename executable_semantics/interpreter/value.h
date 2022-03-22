@@ -467,7 +467,7 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  NominalClassType(Nonnull<const ClassDeclaration*> declaration)
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
       : Value(Kind::NominalClassType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -494,7 +494,7 @@ auto FindMember(const std::string& name,
 // An interface type.
 class InterfaceType : public Value {
  public:
-  InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -512,7 +512,7 @@ class InterfaceType : public Value {
 // The witness table for an impl.
 class Witness : public Value {
  public:
-  Witness(Nonnull<const ImplDeclaration*> declaration)
+  explicit Witness(Nonnull<const ImplDeclaration*> declaration)
       : Value(Kind::Witness), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {

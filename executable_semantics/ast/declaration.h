@@ -276,7 +276,7 @@ class VariableDeclaration : public Declaration {
   auto initializer() -> Expression& { return **initializer_; }
   auto value_category() const -> ValueCategory { return value_category_; }
 
-  bool has_initializer() const { return initializer_.has_value(); }
+  auto has_initializer() const -> bool { return initializer_.has_value(); }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
@@ -343,7 +343,7 @@ class ImplDeclaration : public Declaration {
         kind_(kind),
         impl_type_(impl_type),
         interface_(interface),
-        members_(members) {}
+        members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromImplDeclaration(node->kind());

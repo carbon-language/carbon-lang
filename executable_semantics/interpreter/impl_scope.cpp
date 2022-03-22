@@ -60,7 +60,7 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
 
 auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
                             Nonnull<const Value*> impl_type,
-                            SourceLocation source_loc) const
+                            SourceLocation /*source_loc*/) const
     -> std::optional<ValueNodeView> {
   switch (iface_type->kind()) {
     case Value::Kind::InterfaceType: {

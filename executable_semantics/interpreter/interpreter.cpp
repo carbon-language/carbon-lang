@@ -314,8 +314,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       }
     }
     case ExpressionKind::PrimitiveOperatorExpression: {
-      const PrimitiveOperatorExpression& op =
-          cast<PrimitiveOperatorExpression>(exp);
+      const auto& op = cast<PrimitiveOperatorExpression>(exp);
       if (op.op() != Operator::Deref) {
         FATAL() << "Can't treat primitive operator expression as lvalue: "
                 << exp;
@@ -324,7 +323,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(op.arguments()[0]));
       } else {
-        const PointerValue& res = cast<PointerValue>(*act.results()[0]);
+        const auto& res = cast<PointerValue>(*act.results()[0]);
         return todo_.FinishAction(arena_->New<LValue>(res.address()));
       }
       break;
@@ -592,7 +591,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               ASSIGN_OR_RETURN(Nonnull<const Value*> witness,
                                todo_.ValueOfNode(impl_node, exp.source_loc()));
               if (witness->kind() == Value::Kind::LValue) {
-                const LValue& lval = cast<LValue>(*witness);
+                const auto& lval = cast<LValue>(*witness);
                 ASSIGN_OR_RETURN(witness,
                                  heap_.Read(lval.address(), exp.source_loc()));
               }
@@ -608,8 +607,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 std::move(function_scope));
           }
           case Value::Kind::BoundMethodValue: {
-            const BoundMethodValue& m =
-                cast<BoundMethodValue>(*act.results()[0]);
+            const auto& m = cast<BoundMethodValue>(*act.results()[0]);
             const FunctionDeclaration& method = m.declaration();
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &method.param_pattern().static_type());
@@ -702,7 +700,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(if_expr.condition()));
       } else if (act.pos() == 1) {
-        const BoolValue& condition = cast<BoolValue>(*act.results()[0]);
+        const auto& condition = cast<BoolValue>(*act.results()[0]);
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             condition.value() ? if_expr.then_expression()
                               : if_expr.else_expression()));
