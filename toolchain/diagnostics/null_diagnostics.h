@@ -13,7 +13,7 @@ template <typename LocationT>
 inline auto NullDiagnosticLocationTranslator()
     -> DiagnosticLocationTranslator<LocationT>& {
   struct Translator : DiagnosticLocationTranslator<LocationT> {
-    auto GetLocation(LocationT /*unused*/) -> Diagnostic::Location override {
+    auto GetLocation(LocationT /*loc*/) -> Diagnostic::Location override {
       return {};
     }
   };
