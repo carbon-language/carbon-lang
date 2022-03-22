@@ -1470,7 +1470,6 @@ void TypeChecker::DeclareInterfaceDeclaration(
   TypeCheckExp(&iface_decl->self()->type(), enclosing_scope);
   iface_decl->self()->set_static_type(
       arena_->New<VariableType>(iface_decl->self()));
-  // SetConstantValue(iface_decl->self(), &iface_decl->self()->static_type());
   iface_decl->self()->set_symbolic_identity(&iface_decl->self()->static_type());
 
   for (Nonnull<Declaration*> m : iface_decl->members()) {
