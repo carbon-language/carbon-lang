@@ -12,21 +12,22 @@
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 using llvm::cast;
 
 namespace Carbon {
 
 // Adds the names exposed by the given AST node to enclosing_scope.
-static void AddExposedNames(const Declaration& declaration,
-                            StaticScope& enclosing_scope);
+static auto AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope) -> ErrorOr<Success>;
 
-static void AddExposedNames(const Declaration& declaration,
-                            StaticScope& enclosing_scope) {
+static auto AddExposedNames(const Declaration& declaration,
+                            StaticScope& enclosing_scope) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(declaration);
-      enclosing_scope.Add(iface_decl.name(), &iface_decl);
+      RETURN_IF_ERROR(enclosing_scope.Add(iface_decl.name(), &iface_decl));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -35,26 +36,28 @@ static void AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func = cast<FunctionDeclaration>(declaration);
-      enclosing_scope.Add(func.name(), &func);
+      RETURN_IF_ERROR(enclosing_scope.Add(func.name(), &func));
       break;
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      enclosing_scope.Add(class_decl.name(), &class_decl);
+      RETURN_IF_ERROR(enclosing_scope.Add(class_decl.name(), &class_decl));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
-      enclosing_scope.Add(choice.name(), &choice);
+      RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
     case DeclarationKind::VariableDeclaration:
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name() != AnonymousName) {
-        enclosing_scope.Add(var.binding().name(), &var.binding());
+        RETURN_IF_ERROR(
+            enclosing_scope.Add(var.binding().name(), &var.binding()));
       }
-      return;
+      break;
   }
+  return Success();
 }
 
 // Traverses the sub-AST rooted at the given node, resolving all names within
@@ -67,76 +70,85 @@ static void AddExposedNames(const Declaration& declaration,
 // calling AddExposedNames on each element of the scope to populate a
 // StaticScope, and then calling ResolveNames on each element, passing it the
 // already-populated StaticScope.
-static void ResolveNames(Expression& expression,
-                         const StaticScope& enclosing_scope);
-static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope);
-static void ResolveNames(Statement& statement, StaticScope& enclosing_scope);
-static void ResolveNames(Declaration& declaration,
-                         StaticScope& enclosing_scope);
+static auto ResolveNames(Expression& expression,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
+static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
+static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
+static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
 
-static void ResolveNames(Expression& expression,
-                         const StaticScope& enclosing_scope) {
+static auto ResolveNames(Expression& expression,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
-      ResolveNames(call.function(), enclosing_scope);
-      ResolveNames(call.argument(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(call.function(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(call.argument(), enclosing_scope));
       break;
     }
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fun_type = cast<FunctionTypeLiteral>(expression);
-      ResolveNames(fun_type.parameter(), enclosing_scope);
-      ResolveNames(fun_type.return_type(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(fun_type.parameter(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(fun_type.return_type(), enclosing_scope));
       break;
     }
     case ExpressionKind::FieldAccessExpression:
-      ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
-                   enclosing_scope);
+      RETURN_IF_ERROR(
+          ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
+                       enclosing_scope));
       break;
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
-      ResolveNames(index.aggregate(), enclosing_scope);
-      ResolveNames(index.offset(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(index.offset(), enclosing_scope));
       break;
     }
     case ExpressionKind::PrimitiveOperatorExpression:
       for (Nonnull<Expression*> operand :
            cast<PrimitiveOperatorExpression>(expression).arguments()) {
-        ResolveNames(*operand, enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(*operand, enclosing_scope));
       }
       break;
     case ExpressionKind::TupleLiteral:
       for (Nonnull<Expression*> field :
            cast<TupleLiteral>(expression).fields()) {
-        ResolveNames(*field, enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(*field, enclosing_scope));
       }
       break;
     case ExpressionKind::StructLiteral:
       for (FieldInitializer& init : cast<StructLiteral>(expression).fields()) {
-        ResolveNames(init.expression(), enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(init.expression(), enclosing_scope));
       }
       break;
     case ExpressionKind::StructTypeLiteral:
       for (FieldInitializer& init :
            cast<StructTypeLiteral>(expression).fields()) {
-        ResolveNames(init.expression(), enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(init.expression(), enclosing_scope));
       }
       break;
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
-      identifier.set_value_node(
+      ASSIGN_OR_RETURN(
+          const auto value_node,
           enclosing_scope.Resolve(identifier.name(), identifier.source_loc()));
+      identifier.set_value_node(value_node);
       break;
     }
     case ExpressionKind::IntrinsicExpression:
-      ResolveNames(cast<IntrinsicExpression>(expression).args(),
-                   enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(cast<IntrinsicExpression>(expression).args(),
+                                   enclosing_scope));
       break;
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(expression);
-      ResolveNames(*if_expr.condition(), enclosing_scope);
-      ResolveNames(*if_expr.then_expression(), enclosing_scope);
-      ResolveNames(*if_expr.else_expression(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(*if_expr.condition(), enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(*if_expr.then_expression(), enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(*if_expr.else_expression(), enclosing_scope));
       break;
     }
     case ExpressionKind::BoolTypeLiteral:
@@ -151,140 +163,149 @@ static void ResolveNames(Expression& expression,
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented";
   }
+  return Success();
 }
 
-static void ResolveNames(Pattern& pattern, StaticScope& enclosing_scope) {
+static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
-      ResolveNames(binding.type(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(binding.type(), enclosing_scope));
       if (binding.name() != AnonymousName) {
-        enclosing_scope.Add(binding.name(), &binding);
+        RETURN_IF_ERROR(enclosing_scope.Add(binding.name(), &binding));
       }
       break;
     }
     case PatternKind::TuplePattern:
       for (Nonnull<Pattern*> field : cast<TuplePattern>(pattern).fields()) {
-        ResolveNames(*field, enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(*field, enclosing_scope));
       }
       break;
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(pattern);
-      ResolveNames(alternative.choice_type(), enclosing_scope);
-      ResolveNames(alternative.arguments(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(alternative.choice_type(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(alternative.arguments(), enclosing_scope));
       break;
     }
     case PatternKind::ExpressionPattern:
-      ResolveNames(cast<ExpressionPattern>(pattern).expression(),
-                   enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(
+          cast<ExpressionPattern>(pattern).expression(), enclosing_scope));
       break;
     case PatternKind::AutoPattern:
       break;
     case PatternKind::VarPattern:
-      ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope);
+      RETURN_IF_ERROR(
+          ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
       break;
   }
+  return Success();
 }
 
-static void ResolveNames(Statement& statement, StaticScope& enclosing_scope) {
+static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
-      ResolveNames(cast<ExpressionStatement>(statement).expression(),
-                   enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(
+          cast<ExpressionStatement>(statement).expression(), enclosing_scope));
       break;
     case StatementKind::Assign: {
       auto& assign = cast<Assign>(statement);
-      ResolveNames(assign.lhs(), enclosing_scope);
-      ResolveNames(assign.rhs(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(assign.lhs(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(assign.rhs(), enclosing_scope));
       break;
     }
     case StatementKind::VariableDefinition: {
       auto& def = cast<VariableDefinition>(statement);
-      ResolveNames(def.init(), enclosing_scope);
-      ResolveNames(def.pattern(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
       break;
     }
     case StatementKind::If: {
       auto& if_stmt = cast<If>(statement);
-      ResolveNames(if_stmt.condition(), enclosing_scope);
-      ResolveNames(if_stmt.then_block(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(if_stmt.condition(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(if_stmt.then_block(), enclosing_scope));
       if (if_stmt.else_block().has_value()) {
-        ResolveNames(**if_stmt.else_block(), enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(**if_stmt.else_block(), enclosing_scope));
       }
       break;
     }
     case StatementKind::Return:
-      ResolveNames(cast<Return>(statement).expression(), enclosing_scope);
+      RETURN_IF_ERROR(
+          ResolveNames(cast<Return>(statement).expression(), enclosing_scope));
       break;
     case StatementKind::Block: {
       auto& block = cast<Block>(statement);
       StaticScope block_scope;
       block_scope.AddParent(&enclosing_scope);
       for (Nonnull<Statement*> sub_statement : block.statements()) {
-        ResolveNames(*sub_statement, block_scope);
+        RETURN_IF_ERROR(ResolveNames(*sub_statement, block_scope));
       }
       break;
     }
     case StatementKind::While: {
       auto& while_stmt = cast<While>(statement);
-      ResolveNames(while_stmt.condition(), enclosing_scope);
-      ResolveNames(while_stmt.body(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(while_stmt.condition(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(while_stmt.body(), enclosing_scope));
       break;
     }
     case StatementKind::Match: {
       auto& match = cast<Match>(statement);
-      ResolveNames(match.expression(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(match.expression(), enclosing_scope));
       for (Match::Clause& clause : match.clauses()) {
         StaticScope clause_scope;
         clause_scope.AddParent(&enclosing_scope);
-        ResolveNames(clause.pattern(), clause_scope);
-        ResolveNames(clause.statement(), clause_scope);
+        RETURN_IF_ERROR(ResolveNames(clause.pattern(), clause_scope));
+        RETURN_IF_ERROR(ResolveNames(clause.statement(), clause_scope));
       }
       break;
     }
     case StatementKind::Continuation: {
       auto& continuation = cast<Continuation>(statement);
-      enclosing_scope.Add(continuation.name(), &continuation);
+      RETURN_IF_ERROR(enclosing_scope.Add(continuation.name(), &continuation));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
-      ResolveNames(cast<Continuation>(statement).body(), continuation_scope);
+      RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
+                                   continuation_scope));
       break;
     }
     case StatementKind::Run:
-      ResolveNames(cast<Run>(statement).argument(), enclosing_scope);
+      RETURN_IF_ERROR(
+          ResolveNames(cast<Run>(statement).argument(), enclosing_scope));
       break;
     case StatementKind::Await:
     case StatementKind::Break:
     case StatementKind::Continue:
       break;
   }
+  return Success();
 }
 
-static void ResolveNames(Declaration& declaration,
-                         StaticScope& enclosing_scope) {
+static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface = cast<InterfaceDeclaration>(declaration);
       StaticScope iface_scope;
       iface_scope.AddParent(&enclosing_scope);
-      iface_scope.Add("Self", iface.self());
+      RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       for (Nonnull<Declaration*> member : iface.members()) {
-        AddExposedNames(*member, iface_scope);
+        RETURN_IF_ERROR(AddExposedNames(*member, iface_scope));
       }
       for (Nonnull<Declaration*> member : iface.members()) {
-        ResolveNames(*member, iface_scope);
+        RETURN_IF_ERROR(ResolveNames(*member, iface_scope));
       }
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl = cast<ImplDeclaration>(declaration);
-      ResolveNames(impl.interface(), enclosing_scope);
-      ResolveNames(*impl.impl_type(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), enclosing_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
-        AddExposedNames(*member, enclosing_scope);
+        RETURN_IF_ERROR(AddExposedNames(*member, enclosing_scope));
       }
       for (Nonnull<Declaration*> member : impl.members()) {
-        ResolveNames(*member, enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(*member, enclosing_scope));
       }
       break;
     }
@@ -293,19 +314,19 @@ static void ResolveNames(Declaration& declaration,
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
-        function_scope.Add(binding->name(), binding);
-        ResolveNames(binding->type(), function_scope);
+        RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
+        RETURN_IF_ERROR(ResolveNames(binding->type(), function_scope));
       }
       if (function.is_method()) {
-        ResolveNames(function.me_pattern(), function_scope);
+        RETURN_IF_ERROR(ResolveNames(function.me_pattern(), function_scope));
       }
-      ResolveNames(function.param_pattern(), function_scope);
+      RETURN_IF_ERROR(ResolveNames(function.param_pattern(), function_scope));
       if (function.return_term().type_expression().has_value()) {
-        ResolveNames(**function.return_term().type_expression(),
-                     function_scope);
+        RETURN_IF_ERROR(ResolveNames(**function.return_term().type_expression(),
+                                     function_scope));
       }
       if (function.body().has_value()) {
-        ResolveNames(**function.body(), function_scope);
+        RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
       }
       break;
     }
@@ -313,12 +334,12 @@ static void ResolveNames(Declaration& declaration,
       auto& class_decl = cast<ClassDeclaration>(declaration);
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
-      class_scope.Add(class_decl.name(), &class_decl);
+      RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
       for (Nonnull<Declaration*> member : class_decl.members()) {
-        AddExposedNames(*member, class_scope);
+        RETURN_IF_ERROR(AddExposedNames(*member, class_scope));
       }
       for (Nonnull<Declaration*> member : class_decl.members()) {
-        ResolveNames(*member, class_scope);
+        RETURN_IF_ERROR(ResolveNames(*member, class_scope));
       }
       break;
     }
@@ -329,35 +350,37 @@ static void ResolveNames(Declaration& declaration,
       // need to check for duplicates.
       std::set<std::string_view> alternative_names;
       for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
-        ResolveNames(alternative->signature(), enclosing_scope);
+        RETURN_IF_ERROR(
+            ResolveNames(alternative->signature(), enclosing_scope));
         if (!alternative_names.insert(alternative->name()).second) {
-          FATAL_COMPILATION_ERROR(alternative->source_loc())
-              << "Duplicate name `" << alternative->name()
-              << "` in choice type";
+          return FATAL_COMPILATION_ERROR(alternative->source_loc())
+                 << "Duplicate name `" << alternative->name()
+                 << "` in choice type";
         }
       }
       break;
     }
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
-      ResolveNames(var.binding(), enclosing_scope);
+      RETURN_IF_ERROR(ResolveNames(var.binding(), enclosing_scope));
       if (var.has_initializer()) {
-        ResolveNames(var.initializer(), enclosing_scope);
+        RETURN_IF_ERROR(ResolveNames(var.initializer(), enclosing_scope));
       }
       break;
     }
   }
+  return Success();
 }
 
-void ResolveNames(AST& ast) {
+auto ResolveNames(AST& ast) -> ErrorOr<Success> {
   StaticScope file_scope;
   for (auto declaration : ast.declarations) {
-    AddExposedNames(*declaration, file_scope);
+    RETURN_IF_ERROR(AddExposedNames(*declaration, file_scope));
   }
   for (auto declaration : ast.declarations) {
-    ResolveNames(*declaration, file_scope);
+    RETURN_IF_ERROR(ResolveNames(*declaration, file_scope));
   }
-  ResolveNames(**ast.main_call, file_scope);
+  return ResolveNames(**ast.main_call, file_scope);
 }
 
 }  // namespace Carbon

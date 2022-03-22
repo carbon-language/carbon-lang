@@ -218,6 +218,19 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
 // A pattern that matches an alternative of a choice type.
 class AlternativePattern : public Pattern {
  public:
+  // Constructs an AlternativePattern that matches the alternative specified
+  // by `alternative`, if its arguments match `arguments`.
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     Nonnull<Expression*> alternative,
+                     Nonnull<TuplePattern*> arguments)
+      -> ErrorOr<Nonnull<AlternativePattern*>> {
+    ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
+                     RequireFieldAccess(alternative));
+    return arena->New<AlternativePattern>(source_loc,
+                                          &field_access->aggregate(),
+                                          field_access->field(), arguments);
+  }
+
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
@@ -229,12 +242,6 @@ class AlternativePattern : public Pattern {
         choice_type_(choice_type),
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
-
-  // Constructs an AlternativePattern that matches the alternative specified
-  // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(SourceLocation source_loc,
-                     Nonnull<Expression*> alternative,
-                     Nonnull<TuplePattern*> arguments);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativePattern(node->kind());
@@ -249,6 +256,9 @@ class AlternativePattern : public Pattern {
   auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
+  static auto RequireFieldAccess(Nonnull<Expression*> alternative)
+      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
+
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;
   Nonnull<TuplePattern*> arguments_;

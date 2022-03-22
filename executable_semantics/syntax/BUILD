@@ -30,6 +30,7 @@ cc_library(
     deps = [
         ":syntax",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -57,6 +58,7 @@ cc_library(
     deps = [
         ":bison_wrap",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//common:string_helpers",
         "//executable_semantics/ast",

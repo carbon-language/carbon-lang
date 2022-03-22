@@ -6,11 +6,21 @@
 
 namespace Carbon {
 
-auto ParseAndLexContext::PrintDiagnostic(const std::string& message) -> void {
-  // TODO: Do we really want this to be fatal?  It makes the comment and the
-  // name a lie, and renders some of the other yyparse() result propagation code
-  // moot.
-  FATAL_COMPILATION_ERROR(source_loc()) << message;
+auto ParseAndLexContext::RecordSyntaxError(const std::string& message,
+                                           bool prefix_with_newline)
+    -> Parser::symbol_type {
+  // Optionally adds a newline in trace mode because trace prints an incomplete
+  // line "Reading a token: " which can prevent LIT from finding expected
+  // patterns.
+  // TODO: support formatting of `SourceLocation` instances with formatv().
+  std::string full_message;
+  llvm::raw_string_ostream(full_message)
+      << (prefix_with_newline && trace() ? "\n" : "")
+      << "COMPILATION ERROR: " << source_loc() << ": " << message;
+  error_messages_.push_back(full_message);
+
+  // TODO: use `YYerror` token once bison is upgraded to at least 3.5.
+  return Parser::make_END_OF_FILE(current_token_position);
 }
 
 }  // namespace Carbon
