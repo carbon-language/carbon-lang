@@ -299,7 +299,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::NominalClassType: {
       const NominalClassType& class_type = cast<NominalClassType>(*this);
       out << "class " << class_type.declaration().name();
-      if (class_type.type_args().size() > 0) {
+      if (!class_type.type_args().empty()) {
         out << "(";
         llvm::ListSeparator sep;
         for (const auto& [bind, val] : class_type.type_args()) {
