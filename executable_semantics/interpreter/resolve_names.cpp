@@ -316,7 +316,7 @@ static void ResolveNames(Declaration& declaration,
         ResolveNames(**class_decl.type_params(), class_scope);
       }
 
-      // Disable unqualified access of members by other members for now.
+      // TODO: Disable unqualified access of members by other members for now.
       // Put it back later, but in a way that turns unqualified accesses
       // into qualified ones, so that generic classes and impls
       // behave the in the right way. -Jeremy
