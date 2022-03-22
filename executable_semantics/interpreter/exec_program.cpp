@@ -13,10 +13,11 @@
 #include "executable_semantics/interpreter/resolve_control_flow.h"
 #include "executable_semantics/interpreter/resolve_names.h"
 #include "executable_semantics/interpreter/type_checker.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
-void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
+auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int> {
   if (trace) {
     llvm::outs() << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
@@ -32,15 +33,15 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
   if (trace) {
     llvm::outs() << "********** resolving names **********\n";
   }
-  ResolveNames(ast);
+  RETURN_IF_ERROR(ResolveNames(ast));
   if (trace) {
     llvm::outs() << "********** resolving control flow **********\n";
   }
-  ResolveControlFlow(ast);
+  RETURN_IF_ERROR(ResolveControlFlow(ast));
   if (trace) {
     llvm::outs() << "********** type checking **********\n";
   }
-  TypeChecker(arena, trace).TypeCheck(ast);
+  RETURN_IF_ERROR(TypeChecker(arena, trace).TypeCheck(ast));
   if (trace) {
     llvm::outs() << "\n";
     llvm::outs() << "********** type checking complete **********\n";
@@ -49,8 +50,9 @@ void ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) {
     }
     llvm::outs() << "********** starting execution **********\n";
   }
-  int result = InterpProgram(ast, arena, trace);
+  ASSIGN_OR_RETURN(const int result, InterpProgram(ast, arena, trace));
   llvm::outs() << "result: " << result << "\n";
+  return result;
 }
 
 }  // namespace Carbon
