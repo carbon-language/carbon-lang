@@ -633,8 +633,9 @@ void Interpreter::StepExp() {
             const FunctionValue& fun_val =
                 cast<FunctionValue>(*act.results()[0]);
             const FunctionDeclaration& function = fun_val.declaration();
-            if (trace_)
+            if (trace_) {
               llvm::outs() << "*** call function " << function.name() << "\n";
+            }
             Nonnull<const Value*> converted_args = Convert(
                 act.results()[1], &function.param_pattern().static_type(),
                 exp.source_loc());
