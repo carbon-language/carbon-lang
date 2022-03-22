@@ -33,8 +33,9 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
 }
 
-# Allows to ignore some types of headers which are not currently detactable
-# via parsing bazel rules.
+# TODO: proto rules are aspect-based and their generated files don't show up in
+# `bazel query` output.
+# Try using `bazel cquery --output=starlark` to print `target.files`.
 IGNORE_HEADER_REGEX = re.compile("^.*\\.pb\\.h$")
 
 
