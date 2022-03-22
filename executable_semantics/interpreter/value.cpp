@@ -306,7 +306,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         }
         out << ")";
       }
-      if (class_type.impls().size() > 0) {
+      if (!class_type.impls().empty()) {
         out << " impls ";
         llvm::ListSeparator sep;
         for (const auto& [impl_bind, impl] : class_type.impls()) {
