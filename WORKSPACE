@@ -218,6 +218,52 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 bison_register_toolchains(extra_copts = ["-w"])
 
 # Protocol buffer rules.
+# TODO xx if not native.existing_rule("bazel_skylib"):
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "c6966ec828da198c5d9adbaa94c05e3a1c7f21bd012a0b29ba8ddbccb2c93b0d",
+    urls = [
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.1.1/bazel-skylib-1.1.1.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.1.1/bazel-skylib-1.1.1.tar.gz",
+    ],
+)
+
+# TODO xx if not native.existing_rule("zlib"):
+# http_archive(
+#             name = "zlib",
+#             build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+#             sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
+#             strip_prefix = "zlib-1.2.11",
+#             urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
+# )
+
+# TODO xx if not native.existing_rule("com_google_protobuf"):
+http_archive(
+    name = "com_google_protobuf",  # TODO xx com_github_protocolbuffers_protobuf
+    repo_mapping = {"@zlib": "@llvm_zlib"},
+    sha256 = "4dd35e788944b7686aac898f77df4e9a54da0ca694b8801bd6b2a9ffc1b3085e",
+    strip_prefix = "protobuf-3.19.2",
+    urls = [
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.19.2.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.19.2.tar.gz",
+    ],
+)
+
+# TODO xx if not native.existing_rule("rules_cc"):
+http_archive(
+    name = "rules_cc",
+    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
+    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.1/rules_cc-0.0.1.tar.gz"],
+)
+
+# TODO xx if not native.existing_rule("rules_python"):
+http_archive(
+    name = "rules_python",
+    sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
+    urls = ["https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz"],
+)
+
+# TODO xx if not native.existing_rule("rules_proto"):
 http_archive(
     name = "rules_proto",
     sha256 = "c22cfcb3f22a0ae2e684801ea8dfed070ba5bed25e73f73580564f250475e72d",
@@ -226,20 +272,6 @@ http_archive(
         "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.19.2.tar.gz",
     ],
 )
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-# rules_proto_dependencies() call below loads a different version of rules_cc which has a
-# frozenset bug.
-http_archive(
-    name = "rules_cc",
-    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
-    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.1/rules_cc-0.0.1.tar.gz"],
-)
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 ###############################################################################
 # Example conversion repositories

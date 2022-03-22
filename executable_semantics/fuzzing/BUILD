@@ -29,8 +29,8 @@ cc_test(
         ":ast_to_proto_lib",
         "//executable_semantics/syntax",
         "//fuzzing:carbon_cc_proto",
-        "@com_github_protocolbuffers_protobuf//:protobuf_headers",
         "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )

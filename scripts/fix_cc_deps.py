@@ -28,11 +28,9 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     # @llvm-project//llvm:include/llvm/Support/Error.h ->
     #   llvm/Support/Error.h
     "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x),
-    # @com_github_protocolbuffers_protobuf//:src/google/protobuf/descriptor.h ->
+    # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
     #   google/protobuf/descriptor.h
-    "@com_github_protocolbuffers_protobuf": lambda x: re.sub(
-        "^(.*:src)/", "", x
-    ),
+    "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
 }
 
 # Allows to ignore some types of headers which are not currently detactable
