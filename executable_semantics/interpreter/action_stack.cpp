@@ -50,21 +50,9 @@ void ActionStack::Initialize(ValueNodeView value_node,
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> Nonnull<const Value*> {
-  switch (phase_) {
-    case Phase::CompileTime:
-      if (std::optional<Nonnull<const Value*>> compile_time_value =
-              value_node.compile_time_value();
-          compile_time_value.has_value()) {
-        return *compile_time_value;
-      }
-      break;
-    case Phase::RunTime:
-      if (std::optional<Nonnull<const Value*>> constant_value =
-              value_node.constant_value();
-          constant_value.has_value()) {
-        return *constant_value;
-      }
-      break;
+  std::optional<const Value*> value = (phase_ == Phase::CompileTime) ? value_node.compile_time_value() : value_node.constant_value();
+  if (value) {
+    return *value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {
     // TODO: have static name resolution identify the scope of value_node
