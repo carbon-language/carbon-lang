@@ -867,7 +867,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             FATAL_COMPILATION_ERROR(call.source_loc())
                 << "attempt to instantiate a non-generic class: " << *e;
           }
-          // Find impls for all the impl bindings of the class
+          // Find impls for all the impl bindings of the class.
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
           for (const auto& [binding, val] : generic_args) {
             if (binding->impl_binding().has_value()) {
