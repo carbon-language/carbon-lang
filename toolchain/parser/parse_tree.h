@@ -58,41 +58,41 @@ class ParseTree {
       -> ParseTree;
 
   // Tests whether there are any errors in the parse tree.
-  [[nodiscard]] auto HasErrors() const -> bool { return has_errors_; }
+  [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
 
   // Returns the number of nodes in this parse tree.
-  [[nodiscard]] auto Size() const -> int { return node_impls_.size(); }
+  [[nodiscard]] auto size() const -> int { return node_impls_.size(); }
 
   // Returns an iterable range over the parse tree nodes in depth-first
   // postorder.
-  [[nodiscard]] auto Postorder() const
+  [[nodiscard]] auto postorder() const
       -> llvm::iterator_range<PostorderIterator>;
 
   // Returns an iterable range over the parse tree node and all of its
   // descendants in depth-first postorder.
-  [[nodiscard]] auto Postorder(Node n) const
+  [[nodiscard]] auto postorder(Node n) const
       -> llvm::iterator_range<PostorderIterator>;
 
   // Returns an iterable range over the direct children of a node in the parse
   // tree. This is a forward range, but is constant time to increment. The order
   // of children is the same as would be found in a reverse postorder traversal.
-  [[nodiscard]] auto Children(Node n) const
+  [[nodiscard]] auto children(Node n) const
       -> llvm::iterator_range<SiblingIterator>;
 
   // Returns an iterable range over the roots of the parse tree. This is a
   // forward range, but is constant time to increment. The order of roots is the
   // same as would be found in a reverse postorder traversal.
-  [[nodiscard]] auto Roots() const -> llvm::iterator_range<SiblingIterator>;
+  [[nodiscard]] auto roots() const -> llvm::iterator_range<SiblingIterator>;
 
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
-  [[nodiscard]] auto HasErrorInNode(Node n) const -> bool;
+  [[nodiscard]] auto node_has_error(Node n) const -> bool;
 
   // Returns the kind of the given parse tree node.
-  [[nodiscard]] auto GetNodeKind(Node n) const -> ParseNodeKind;
+  [[nodiscard]] auto node_kind(Node n) const -> ParseNodeKind;
 
   // Returns the token the given parse tree node models.
-  [[nodiscard]] auto GetNodeToken(Node n) const -> TokenizedBuffer::Token;
+  [[nodiscard]] auto node_token(Node n) const -> TokenizedBuffer::Token;
 
   // Returns the text backing the token for the given node.
   //
@@ -254,10 +254,14 @@ class ParseTree::Node {
   // should not expect any particular semantics from this value.
   //
   // FIXME: Maybe we can switch to stream operator overloads?
-  [[nodiscard]] auto GetIndex() const -> int { return index_; }
+  [[nodiscard]] auto index() const -> int { return index_; }
 
   // Prints the node index.
   auto Print(llvm::raw_ostream& output) const -> void;
+
+  // Returns true if the node is valid; in other words, it was not default
+  // initialized.
+  auto is_valid() -> bool { return index_ != InvalidValue; }
 
  private:
   friend ParseTree;
@@ -265,12 +269,15 @@ class ParseTree::Node {
   friend PostorderIterator;
   friend SiblingIterator;
 
+  // Value for uninitialized nodes.
+  static constexpr int InvalidValue = -1;
+
   // Constructs a node with a specific index into the parse tree's postorder
   // sequence of node implementations.
   explicit Node(int index) : index_(index) {}
 
   // The index of this node's implementation in the postorder sequence.
-  int32_t index_;
+  int32_t index_ = InvalidValue;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

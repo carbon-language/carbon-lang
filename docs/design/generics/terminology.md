@@ -30,7 +30,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
     -   [Internal impl](#internal-impl)
     -   [External impl](#external-impl)
--   [Qualified and unqualified member names](#qualified-and-unqualified-member-names)
+-   [Member access](#member-access)
+    -   [Simple member access](#simple-member-access)
+    -   [Qualified member access expression](#qualified-member-access-expression)
 -   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Coherence](#coherence)
@@ -357,28 +359,54 @@ constraint as a way to implement all of the interfaces it requires.
 
 A type that implements an interface _internally_ has all the named members of
 the interface as named members of the type. This means that the members of the
-interface may be accessed as either
-[unqualified or qualified members](#qualified-and-unqualified-member-names).
+interface are available by way of both
+[simple member access and qualified member access expressions](#member-access).
 
 ### External impl
 
 In contrast, a type that implements an interface _externally_ does not include
 the named members of the interface in the type. The members of the interface are
-still implemented by the type, though, and so may be accessed using the
-[qualified names](#qualified-and-unqualified-member-names) of those members.
+still implemented by the type, though, and so may be accessed using
+[qualified member access expressions](#qualified-member-access-expression) for
+those members.
 
-## Qualified and unqualified member names
+## Member access
 
-A qualified member includes both the name of the interface defining the member
-and the name of the member. So if `String` implements `Comparable` which has a
-`Less` method, and `s1` and `s2` are variables of type `String`, then the `Less`
-method may be called using the qualified member name by writing
-`s1.(Comparable.Less)(s2)`.
+There are two different kinds of member access: _simple_ and _compound_. See the
+[member access design document](/docs/design/expressions/member_access.md) for
+the details. The application to generics combines compound member access with
+qualified names, which we call a _qualified member access expression_.
 
-If the interface is implemented internally, then the method can be called using
-the unqualified syntax as well. If `String` implements `Printable` internally,
-then `s1.Print()` calls the `Print` method of `Printable` as an unqualified
-member.
+### Simple member access
+
+Simple member access has the from `object.member`, where `member` is a word
+naming a member of `object`. This form may be used to access members of
+interfaces [implemented internally](#internal-impl) by the type of `object`.
+
+If `String` implements `Printable` internally, then `s1.Print()` calls the
+`Print` method of `Printable` using simple member access. In this case, the name
+`Print` is used without qualifying it with the name of the interface it is a
+member of since it is recognized as a member of the type itself as well.
+
+### Qualified member access expression
+
+Compound member access has the form `object.(expression)`, where `expression` is
+resolved in the containing scope. A compound member access where the member
+expression is a simple member access expression, as in `a.(context.b)`, is
+called a _qualified member access expression_. The member expression `context.b`
+may be the _qualified member name_ of an interface member, that consists of the
+name of the interface, possibly qualified with a package or namespace name, a
+dot `.` and the name of the member.
+
+For example, if the `Comparable` interface has a `Less` member method, then the
+qualified name of that member is `Comparable.Less`. So if `String` implements
+`Comparable`, and `s1` and `s2` are variables of type `String`, then the `Less`
+method may be called using the qualified member name by writing the qualified
+member access expression `s1.(Comparable.Less)(s2)`.
+
+This form may be used to access any member of an interface implemented for a
+type, whether it is implemented [internally](#internal-impl) or
+[externally](#external-impl).
 
 ## Compatible types
 

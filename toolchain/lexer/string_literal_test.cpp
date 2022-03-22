@@ -202,7 +202,7 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
   for (auto [test, contents] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test.trim());
-    EXPECT_FALSE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -226,7 +226,7 @@ TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   for (auto [test, contents] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -275,26 +275,26 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   for (llvm::StringLiteral test : testcases) {
     error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
 }
 
 TEST_F(StringLiteralTest, TabInString) {
   auto value = Parse("\"x\ty\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "x\ty");
 }
 
 TEST_F(StringLiteralTest, TabAtEndOfString) {
   auto value = Parse("\"\t\t\t\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "\t\t\t");
 }
 
 TEST_F(StringLiteralTest, TabInBlockString) {
   auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "x\ty\n");
 }
 
@@ -303,7 +303,7 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   text.append(10000, '9');
   text.append("}");
   auto value = Parse("\"\\" + text + "\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, text);
 }
 

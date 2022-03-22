@@ -72,6 +72,7 @@ INTERFACE            "interface"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
+LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
@@ -173,6 +174,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
+{LET}                 { return SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return SIMPLE_TOKEN(MINUS);               }
@@ -312,10 +314,11 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       break;
     }
   }
-  llvm::Expected<std::string> block_string = Carbon::ParseBlockStringLiteral(s);
-  if (!block_string) {
+  Carbon::ErrorOr<std::string> block_string =
+      Carbon::ParseBlockStringLiteral(s);
+  if (!block_string.ok()) {
     FATAL_SYNTAX_ERROR(context)
-        << "Invalid block string: " << toString(block_string.takeError());
+        << "Invalid block string: " << block_string.error();
   }
   return ARG_TOKEN(string_literal, *block_string);
 }
