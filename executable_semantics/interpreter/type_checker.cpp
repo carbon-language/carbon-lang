@@ -1406,8 +1406,9 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     ImplScope class_scope;
     class_scope.AddParent(&enclosing_scope);
     TypeCheckPattern(*class_decl->type_params(), std::nullopt, class_scope);
-    if (trace_)
+    if (trace_) {
       llvm::outs() << class_scope;
+    }
 
     Nonnull<NominalClassType*> class_type =
         arena_->New<NominalClassType>(class_decl);
