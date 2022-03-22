@@ -217,7 +217,7 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
 
-# Protocol buffer rules.
+# Protocol buffers - for structured fuzzer testing.
 http_archive(
     name = "com_google_protobuf",
     repo_mapping = {"@zlib": "@llvm_zlib"},
