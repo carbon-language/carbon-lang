@@ -1292,7 +1292,6 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     TypeCheckExp(&deduced->type(), impl_scope);
-    // SetConstantValue(deduced, arena_->New<VariableType>(deduced));
     deduced->set_compile_time_value(arena_->New<VariableType>(deduced));
     deduced->set_static_type(InterpExp(&deduced->type(), arena_, trace_));
   }
