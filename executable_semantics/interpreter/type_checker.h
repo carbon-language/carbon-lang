@@ -55,7 +55,8 @@ class TypeChecker {
   // nullopt.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
-                        const ImplScope& impl_scope) -> llvm::Error;
+                        const ImplScope& impl_scope,
+                        ValueCategory enclosing_value_category) -> llvm::Error;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //

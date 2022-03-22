@@ -192,6 +192,10 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
       break;
     case PatternKind::AutoPattern:
       break;
+    case PatternKind::VarPattern:
+      RETURN_IF_ERROR(
+          ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
+      break;
   }
   return llvm::Error::success();
 }

@@ -11,6 +11,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
 #include "toolchain/common/yaml_test_helpers.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -70,7 +71,7 @@ TEST(DriverTest, Help) {
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
-  EXPECT_TRUE(driver.RunHelpSubcommand({}));
+  EXPECT_TRUE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto help_text = test_output_stream.TakeStr();
 
@@ -90,15 +91,16 @@ TEST(DriverTest, HelpErrors) {
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
-  EXPECT_FALSE(driver.RunHelpSubcommand({"foo"}));
+  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunHelpSubcommand({"help"}));
+  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"help"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunHelpSubcommand({"--xyz"}));
+  EXPECT_FALSE(
+      driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
@@ -125,7 +127,8 @@ TEST(DriverTest, DumpTokens) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver.RunDumpTokensSubcommand({test_file_path}));
+  EXPECT_TRUE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
+                                             {test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
@@ -165,15 +168,17 @@ TEST(DriverTest, DumpTokenErrors) {
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand({}));
+  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand({"--xyz"}));
+  EXPECT_FALSE(
+      driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunDumpTokensSubcommand({"/not/a/real/file/name"}));
+  EXPECT_FALSE(driver.RunDumpTokensSubcommand(ConsoleDiagnosticConsumer(),
+                                              {"/not/a/real/file/name"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
@@ -184,7 +189,8 @@ TEST(DriverTest, DumpParseTree) {
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand({test_file_path}));
+  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand(ConsoleDiagnosticConsumer(),
+                                                {test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 

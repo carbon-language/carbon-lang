@@ -774,6 +774,13 @@ auto Interpreter::StepPattern() -> llvm::Error {
       } else {
         return todo_.FinishAction(act.results()[0]);
       }
+    case PatternKind::VarPattern:
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<PatternAction>(
+            &cast<VarPattern>(pattern).pattern()));
+      } else {
+        return todo_.FinishAction(act.results()[0]);
+      }
   }
 }
 

@@ -29,20 +29,20 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // Lex the input.
   auto tokens = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
-  if (tokens.HasErrors()) {
+  if (tokens.has_errors()) {
     return 0;
   }
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
   ParseTree tree = ParseTree::Parse(tokens, NullDiagnosticConsumer());
-  if (tree.HasErrors()) {
+  if (tree.has_errors()) {
     return 0;
   }
 
   // In the absence of parse errors, we should have exactly as many nodes as
   // tokens.
-  CHECK(tree.Size() == tokens.Size()) << "Unexpected number of tree nodes!";
+  CHECK(tree.size() == tokens.size()) << "Unexpected number of tree nodes!";
 
   return 0;
 }

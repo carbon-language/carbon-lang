@@ -52,6 +52,9 @@ class DiagnosticConsumer {
 
   // Handle a diagnostic.
   virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
+
+  // Flushes any buffered input.
+  virtual auto Flush() -> void {}
 };
 
 // An interface that can translate some representation of a location into a
@@ -184,11 +187,11 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
     next_consumer_->HandleDiagnostic(diagnostic);
   }
 
-  // Returns whether we've seen an error since the last reset.
-  auto SeenError() const -> bool { return seen_error_; }
-
   // Reset whether we've seen an error.
   auto Reset() -> void { seen_error_ = false; }
+
+  // Returns whether we've seen an error since the last reset.
+  auto seen_error() const -> bool { return seen_error_; }
 
  private:
   DiagnosticConsumer* next_consumer_;

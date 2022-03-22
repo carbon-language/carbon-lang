@@ -12,3 +12,8 @@ detailed to allow independent implementations of the language. While we plan to
 have a reference implementation, we think having a specification as well is an
 important tool to ensure that the behavior of the language is well understood
 and holds together.
+
+The work-in-progress specification is available here:
+
+-   [Language specification](lang)
+-   [Library specification](lib)

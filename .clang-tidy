@@ -8,7 +8,7 @@
 # - performance-unnecessary-value-param is disabled because it duplicate
 #   modernize-pass-by-value.
 Checks:
-  -*, bugprone-*, -bugprone-easily-swappable-parameters,
+  -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
   -bugprone-narrowing-conversions, google-*, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,

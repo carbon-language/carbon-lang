@@ -50,9 +50,9 @@ class SourceBuffer {
 
   ~SourceBuffer();
 
-  [[nodiscard]] auto Filename() const -> llvm::StringRef { return filename_; }
+  [[nodiscard]] auto filename() const -> llvm::StringRef { return filename_; }
 
-  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
+  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
 
  private:
   enum class ContentMode {

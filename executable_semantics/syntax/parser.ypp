@@ -73,6 +73,7 @@
   #include "executable_semantics/ast/expression.h"
   #include "executable_semantics/ast/paren_contents.h"
   #include "executable_semantics/ast/pattern.h"
+  #include "executable_semantics/ast/value_category.h"
   #include "executable_semantics/common/arena.h"
   #include "executable_semantics/common/nonnull.h"
   #include "executable_semantics/syntax/bison_wrap.h"
@@ -203,6 +204,7 @@
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
+  LET
   LIBRARY
   MATCH
   MINUS
@@ -574,7 +576,10 @@ non_expression_pattern:
   AUTO
     { $$ = arena->New<AutoPattern>(context.source_loc()); }
 | binding_lhs COLON pattern
-    { $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3); }
+    {
+      $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3,
+                                      std::nullopt);
+    }
 | paren_pattern
     { $$ = $1; }
 | postfix_expression tuple_pattern
@@ -589,6 +594,8 @@ non_expression_pattern:
         YYERROR;
       }
     }
+| VAR non_expression_pattern
+    { $$ = arena->New<VarPattern>(context.source_loc(), $2); }
 ;
 binding_lhs:
   identifier { $$ = $1; }
@@ -653,7 +660,8 @@ clause:
     {
       $$ = Match::Clause(arena->New<BindingPattern>(
                              context.source_loc(), std::string(AnonymousName),
-                             arena->New<AutoPattern>(context.source_loc())),
+                             arena->New<AutoPattern>(context.source_loc()),
+                             ValueCategory::Let),
                          $3);
     }
 ;
@@ -670,7 +678,15 @@ statement:
   statement_expression EQUAL expression SEMICOLON
     { $$ = arena->New<Assign>(context.source_loc(), $1, $3); }
 | VAR pattern EQUAL expression SEMICOLON
-    { $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4); }
+    {
+      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
+                                          ValueCategory::Var);
+    }
+| LET pattern EQUAL expression SEMICOLON
+    {
+      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
+                                          ValueCategory::Let);
+    }
 | statement_expression SEMICOLON
     { $$ = arena->New<ExpressionStatement>(context.source_loc(), $1); }
 | if_statement
@@ -821,7 +837,10 @@ function_declaration:
     }
 ;
 variable_declaration: identifier COLON pattern
-    { $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3); }
+    {
+      $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3,
+                                      std::nullopt);
+    }
 ;
 alternative:
   identifier tuple
@@ -860,10 +879,18 @@ declaration:
 | VAR variable_declaration SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
-                                           std::nullopt);
+                                           std::nullopt, ValueCategory::Var);
     }
 | VAR variable_declaration EQUAL expression SEMICOLON
-    { $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4); }
+    {
+      $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
+                                           ValueCategory::Var);
+    }
+| LET variable_declaration EQUAL expression SEMICOLON
+    {
+      $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
+                                           ValueCategory::Let);
+    }
 | INTERFACE identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());

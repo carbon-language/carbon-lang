@@ -18,6 +18,8 @@ namespace Carbon {
 // A numeric literal token that has been extracted from a source buffer.
 class LexedNumericLiteral {
  public:
+  enum class Radix : int8_t { Binary = 2, Decimal = 10, Hexadecimal = 16 };
+
   // Value of an integer literal.
   struct IntegerValue {
     // An unsigned literal value.
@@ -26,8 +28,8 @@ class LexedNumericLiteral {
 
   // Value of a real literal.
   struct RealValue {
-    // The radix of the exponent, either 2 or 10.
-    int radix;
+    // The radix of the exponent, either Binary or Decimal.
+    Radix radix;
     // The mantissa, represented as a variable-width unsigned integer.
     llvm::APInt mantissa;
     // The exponent, represented as a variable-width signed integer..
@@ -44,12 +46,12 @@ class LexedNumericLiteral {
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedNumericLiteral>;
 
-  // Get the text corresponding to this literal.
-  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
-
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const -> Value;
+
+  // Get the text corresponding to this literal.
+  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
 
  private:
   class Parser;
