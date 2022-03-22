@@ -111,10 +111,8 @@ auto GetFiles(std::string_view root_dir, std::string_view extension)
        std::filesystem::recursive_directory_iterator(root_dir)) {
     if (!std::filesystem::is_directory(entry)) {
       const std::string file = entry.path();
-      // ends_with(extension).
-      if (file.find("fail") == std::string::npos &&  // TODO xx
-          file.find("not") == std::string::npos &&   // TODO xx
-          std::equal(extension.rbegin(), extension.rend(), file.rbegin())) {
+      // Checks that `file` ends with `extension`.
+      if (std::equal(extension.rbegin(), extension.rend(), file.rbegin())) {
         carbon_files.push_back(file);
       }
     }
@@ -130,19 +128,18 @@ TEST(CarbonToProtoTest, SetsAllProtoFields) {
                ".carbon");
   for (const std::string& f : carbon_files) {
     Carbon::Arena arena;
-    std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
-        Carbon::Parse(&arena, f, /*trace=*/false);
-    if (auto* ast = std::get_if<Carbon::AST>(&ast_or_error); ast != nullptr) {
+    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
+    if (ast.ok()) {
       merged_proto.MergeFrom(CarbonToProto(*ast));
     }
   }
 
   Carbon::Arena arena;
-  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+  const ErrorOr<AST> ast =
       Carbon::ParseFromString(&arena, "File.carbon", AdditionalSyntax,
                               /*trace=*/false);
-  ASSERT_TRUE(std::holds_alternative<Carbon::AST>(ast_or_error));
-  merged_proto.MergeFrom(CarbonToProto(std::get<Carbon::AST>(ast_or_error)));
+  ASSERT_TRUE(ast.ok());
+  merged_proto.MergeFrom(CarbonToProto(*ast));
 
   std::set<std::string> unused_fields = GetUnusedFields(merged_proto);
   EXPECT_EQ(unused_fields.size(), 0)
