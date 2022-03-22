@@ -75,10 +75,12 @@ class Declaration : public AstNode {
     constant_value_ = value;
   }
 
+  // See static_scope.h for API.
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 
+  // See static_scope.h for API.
   auto compile_time_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
