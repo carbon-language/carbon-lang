@@ -16,6 +16,7 @@
 namespace Carbon {
 
 // A helper class for accumulating error message and converting to
+// `Carbon::Error`/`Carbon::ErrorOr<T>`.
 class ErrorBuilder {
  public:
   explicit ErrorBuilder(std::optional<SourceLocation> loc = std::nullopt)
