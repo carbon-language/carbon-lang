@@ -1315,7 +1315,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (f->is_method()) {
     TypeCheckPattern(&f->me_pattern(), std::nullopt, function_scope);
   }
-  // Type check the parameter pattern
+  // Type check the parameter pattern.
   TypeCheckPattern(&f->param_pattern(), std::nullopt, function_scope);
 
   // Evaluate the return type, if we can do so without examining the body.
