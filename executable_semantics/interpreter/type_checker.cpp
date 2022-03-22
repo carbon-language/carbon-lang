@@ -851,8 +851,9 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                   .declaration();
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
-            if (trace_)
+            if (trace_) {
               llvm::outs() << "pattern matching type params and args ";
+            }
             CHECK(PatternMatch(&(*class_decl.type_params())->value(),
                                InterpExp(&call.argument(), arena_, trace_),
                                call.source_loc(), std::nullopt, generic_args));
@@ -860,7 +861,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
             FATAL_COMPILATION_ERROR(call.source_loc())
                 << "attempt to instantiate a non-generic class: " << *e;
           }
-          // Find impls for all the impl bindings of the class
+          // Find impls for all the impl bindings of the class.
           std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls;
           for (const auto& [binding, val] : generic_args) {
             if (binding->impl_binding().has_value()) {
@@ -956,8 +957,7 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
     }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
-      for (size_t i = 0; i < tuple.fields().size(); ++i) {
-        Nonnull<Pattern*> field = tuple.fields()[i];
+      for (Nonnull<Pattern*> field : tuple.fields()) {
         PatternImpls(field, impl_scope);
       }
       return;
