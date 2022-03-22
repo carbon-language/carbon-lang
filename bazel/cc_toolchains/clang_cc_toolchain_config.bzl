@@ -124,7 +124,7 @@ def _impl(ctx):
                             "-Wextra",
                             "-Wthread-safety",
                             "-Wself-assign",
-                            "-Wno-implicit-fallthrough",  # TODO need to compile protobufs, revert
+                            "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
