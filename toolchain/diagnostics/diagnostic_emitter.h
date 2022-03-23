@@ -128,6 +128,21 @@ class DiagnosticLocationTranslator {
 
 namespace Internal {
 
+template <typename... T, std::size_t... N>
+inline auto vector_any_cast_impl(const std::vector<std::any>& v,
+                                 std::index_sequence<N...>)
+    -> std::tuple<T...> {
+  assert(v.size() == sizeof...(T));
+  return {std::any_cast<T>(v[N])...};
+}
+
+template <typename... T>
+inline auto vector_any_cast(const std::vector<std::any>& v)
+    -> std::tuple<T...> {
+  return vector_any_cast_impl<T...>(v,
+                                    std::make_index_sequence<sizeof...(T)>());
+}
+
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
 template <typename... Args>
@@ -144,8 +159,8 @@ struct DiagnosticBase {
 
   // Calls raw_format_fn with the diagnostic's arguments.
   auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
-    return std::invoke(RawFormatFn, diagnostic.format);
-    // format_args
+    return FormatFnImpl(diagnostic,
+                        std::make_index_sequence<sizeof...(Args)>());
   };
 
   // The diagnostic's kind.
@@ -156,6 +171,15 @@ struct DiagnosticBase {
   llvm::StringLiteral Format;
 
  private:
+  // Handles the cast of llvm::Any to Args types, calling the format function.
+  template <std::size_t... N>
+  inline auto FormatFnImpl(const Diagnostic& diagnostic,
+                           std::index_sequence<N...>) const -> std::string {
+    assert(diagnostic.format_args.size() == sizeof...(Args));
+    return RawFormatFn(diagnostic.format,
+                       llvm::any_cast<Args>(diagnostic.format_args[N])...);
+  }
+
   // A generic format function, used when format_fn isn't provided.
   static auto DefaultRawFormatFn(llvm::StringLiteral format,
                                  const Args&... args) -> std::string {
