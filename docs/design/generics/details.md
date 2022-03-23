@@ -4458,31 +4458,36 @@ dispatch, but this design does not prioritize that use case at this time.
 
 ### Restrictions
 
-The argument to these dynamic reference types must be a type-of-type that
+The first argument to these dynamic reference types must be a type-of-type that
 satisfies two restrictions:
 
 -   all interfaces used in the type-of-type must be marked _object safe_, and
 -   it must not have any free associated types or associated constants used in a
     type.
 
+In addition, these types may be restricted to types implementing `Copyable`
+(even though that isn't an object-safe interface) in exchange for additional
+capabilities.
+
 #### Object-safe interfaces
 
 FIXME
 
-The interfaces used in an argument to `DynPtr` must all be _object safe_. Only
-interfaces that are declared using the `object_safe` keyword before the
-`interface` introducer satisfy this requirement. Interfaces declared with that
-keyword have the additional restriction that member functions must not use
-`Self` outside of the type of a `me` parameter.
+The interfaces used in FIXME must all be _object safe_. Only interfaces that are
+declared using the `object_safe` keyword before the `interface` introducer
+satisfy this requirement. Interfaces declared with that keyword have the
+additional restriction that member functions must not use `Self` outside of the
+type of a `me` parameter.
 
 ```
 object_safe interface Printable {
+  // ✅ Allowed: `Self` only used in the type of `me`.
+  fn Print[me: Self]();
 }
-FIXME: Example
 ```
 
-**Open question:** The `object_safe` keyword is the provisional syntax, but
-subject to revision.
+**Open question:** The `object_safe` keyword is provisional syntax, subject to
+revision.
 
 <!-- FIXME: update the description of interface declarations in the "Declaring
 interfaces and named constraints" section once #1084 is merged. -->
@@ -4512,6 +4517,8 @@ external impl AString as EqualCompare {
   }
 }
 ```
+
+FIXME: Haven't introduced `DynPtr` yet.
 
 Now given two values of type `DynPtr(EqualCompare)`, what happens if we try and
 call `IsEqual`?
@@ -4547,7 +4554,7 @@ FIXME: Unassigned associated types with defaults will use the defaults.
 
 FIXME
 
-Given a type-of-type `TT` (with some restrictions described below), define
+Given a type-of-type `TT`, satisfying [the restrictions](#restrictions), define
 `DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
 satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
 
@@ -4561,9 +4568,6 @@ satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
 Example:
 
 ```
-interface Printable {
-  fn Print[me: Self]();
-}
 class AnInt {
   var x: Int;
   impl as Printable { fn Print[me: Self]() { PrintInt(me.x); } }
@@ -4591,15 +4595,24 @@ for (var element: DynPtr(Printable) in dynamic) {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
+FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
+with `Copyable` types", in which case the `DynPtr` would have a `Clone` method.
+
 ### Dynamic box type
 
 FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
-movable, deref to an unspecified type that implements constraints
+movable, deref to an unspecified type that implements constraints.
+
+FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
+`DynBox` type is `Copyable` as well.
 
 ### Dynamic value type
 
-FIXME: Requires: destructor, copy, and allocator. Provides: sized, unformed,
-movable, copy, and constraints.
+FIXME: Requires: destructor, and allocator. Provides: sized, unformed, movable,
+and constraints.
+
+FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
+`DynBox` type is `Copyable` as well.
 
 ## Future work
 
