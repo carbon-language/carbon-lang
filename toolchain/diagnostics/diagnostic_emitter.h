@@ -164,7 +164,7 @@ struct DiagnosticBase {
   }
 
   // A generic format function, replaced by DIAGNOSTIC_WITH_FORMAT_FN (which
-  // passes raw_format_fn).
+  // passes raw_format_fn to the constructor).
   static auto DefaultRawFormatFn(llvm::StringLiteral format,
                                  const Args&... args) -> std::string {
     return llvm::formatv(format.data(), args...);
