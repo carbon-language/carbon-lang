@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: Unimplemented
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_unimplemented_example.carbon:15: Unimplemented
 
 package ExecutableSemanticsTest api;
 

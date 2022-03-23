@@ -102,7 +102,7 @@ TEST(CarbonToProtoTest, SetsAllProtoFields) {
     Carbon::Arena arena;
     const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
     if (ast.ok()) {
-      merged_proto.MergeFrom(CarbonToProto(*ast));
+      merged_proto.MergeFrom(AstToProto(*ast));
     }
   }
 
