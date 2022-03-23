@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//visibility:private"])
-
 cc_library(
     name = "ast_to_proto_lib",
     srcs = ["ast_to_proto.cpp"],

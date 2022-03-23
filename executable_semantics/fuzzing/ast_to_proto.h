@@ -11,7 +11,7 @@
 namespace Carbon {
 
 // Builds a protobuf representation of `ast`.
-auto CarbonToProto(const AST& ast) -> Fuzzing::CompilationUnit;
+auto ASTToProto(const AST& ast) -> Fuzzing::CompilationUnit;
 
 }  // namespace Carbon
 
