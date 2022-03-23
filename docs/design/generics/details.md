@@ -95,10 +95,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Dynamic reference types](#dynamic-reference-types)
+    -   [Restrictions](#restrictions)
+        -   [Object-safe interfaces](#object-safe-interfaces)
+        -   [No free associated types](#no-free-associated-types)
+    -   [Dynamic pointer type](#dynamic-pointer-type)
+    -   [Dynamic box type](#dynamic-box-type)
+    -   [Dynamic value type](#dynamic-value-type)
 -   [Future work](#future-work)
-    -   [Dynamic types](#dynamic-types)
-        -   [Runtime type parameters](#runtime-type-parameters)
-        -   [Runtime type fields](#runtime-type-fields)
+    -   [Runtime type parameters](#runtime-type-parameters)
     -   [Abstract return types](#abstract-return-types)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
@@ -3387,8 +3392,9 @@ What is the size of a type?
     [classes](/docs/design/classes.md), and most other concrete types.
 -   It could be known generically. This means that it will be known at codegen
     time, but not at type-checking time.
--   It could be dynamic. For example, it could be a
-    [dynamic type](#runtime-type-fields), a slice, variable-sized type (such as
+-   It could be dynamic. For example, it could be the result of derferencing a
+    [dynamic pointer type](#dynamic-pointer-type), a slice, variable-sized type
+    (such as
     [found in Rust](https://doc.rust-lang.org/nomicon/exotic-sizes.html#dynamically-sized-types-dsts)),
     or you could dereference a pointer to a base class that could actually point
     to a [derived class](/docs/design/classes.md#inheritance).
@@ -4436,30 +4442,176 @@ There are a few reasons for this feature:
 -   Matching the functionality of non-virtual methods in base classes, so
     interfaces can be a replacement for inheritance.
 -   Potentially reduce dynamic dispatch when using the interface in a
-    [`DynPtr`](#dynamic-types).
+    [`DynPtr`](#dynamic-reference-types).
 
 Note that this applies to associated entities, not interface parameters.
 
-## Future work
-
-### Dynamic types
+## Dynamic reference types
 
 Generics provide enough structure to support runtime dispatch for values with
 types that vary at runtime, without giving up type safety. Both Rust and Swift
-have demonstrated the value of this feature.
+have demonstrated the value of this feature. The main goal is increasing
+expressivity by allowing types to vary at runtime, with
+[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch). There is the
+potential to allow developers to reduce code size at the expense of more runtime
+dispatch, but this design does not prioritize that use case at this time.
 
-#### Runtime type parameters
+### Restrictions
+
+The argument to these dynamic reference types must be a type-of-type that
+satisfies two restrictions:
+
+-   all interfaces used in the type-of-type must be marked _object safe_, and
+-   it must not have any free associated types or associated constants used in a
+    type.
+
+#### Object-safe interfaces
+
+FIXME
+
+The interfaces used in an argument to `DynPtr` must all be _object safe_. Only
+interfaces that are declared using the `object_safe` keyword before the
+`interface` introducer satisfy this requirement. Interfaces declared with that
+keyword have the additional restriction that member functions must not use
+`Self` outside of the type of a `me` parameter.
+
+```
+object_safe interface Printable {
+}
+FIXME: Example
+```
+
+**Open question:** The `object_safe` keyword is the provisional syntax, but
+subject to revision.
+
+<!-- FIXME: update the description of interface declarations in the "Declaring
+interfaces and named constraints" section once #1084 is merged. -->
+
+This is similar to
+[the "object safe" restriction in Rust](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md)
+and for the same reasons. Consider an interface that takes `Self` as an
+argument:
+
+```
+interface EqualCompare {
+  fn IsEqual[me: Self](rhs: Self) -> Bool;
+}
+```
+
+and implementations of this interface for two different types:
+
+```
+external impl AnInt as EqualCompare {
+  fn IsEqual[me: AnInt](rhs: AnInt) -> bool {
+    return me.x == rhs.x;
+  }
+}
+external impl AString as EqualCompare {
+  fn IsEqual[me: AString](rhs: AString) -> bool {
+    return me.x == rhs.x;
+  }
+}
+```
+
+Now given two values of type `DynPtr(EqualCompare)`, what happens if we try and
+call `IsEqual`?
+
+```
+var i_dyn_eq: DynPtr(EqualCompare) = &i;
+var s_dyn_eq: DynPtr(EqualCompare) = &s;
+// These are unsound: runtime type confusion
+i_dyn_eq->IsEqual(*s_dyn_eq);
+s_dyn_eq->IsEqual(*i_dyn_eq);
+```
+
+For `*i_dyn_eq` to implement `EqualCompare.IsEqual`, it needs to accept any
+value for `rhs` that is the result of dereferencing a ``DynPtr(EqualCompare)`
+value, including `*s_dyn_eq`. But `i_dyn_eq->IsEquals(...)` is going to call
+`AnInt.(EqualCompare.IsEqual)` which can only deal with values of type `AnInt`.
+So this construction is unsound.
+
+Similarly, we can't generally convert a return value using a specific type (like
+`AnInt`) into a value using the dynamic type, that has a different
+representation.
+
+#### No free associated types
+
+FIXME: any [associated type](#associated-types) or other
+[associated constant](#associated-constants) used in a type must either be
+assigned using a [`where` clause](#where-constraints) or have a
+[default](#interface-defaults).
+
+FIXME: Unassigned associated types with defaults will use the defaults.
+
+### Dynamic pointer type
+
+FIXME
+
+Given a type-of-type `TT` (with some restrictions described below), define
+`DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
+satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
+
+-   They do not own what they point to.
+-   They have an assignment operator which allows them to point to new values
+    (with potentially different types as long as they all satisfy `TT`).
+-   They may be copied or moved.
+-   They have a fixed size (unlike the values they point to), though that size
+    is larger than a regular pointer.
+
+Example:
+
+```
+interface Printable {
+  fn Print[me: Self]();
+}
+class AnInt {
+  var x: Int;
+  impl as Printable { fn Print[me: Self]() { PrintInt(me.x); } }
+}
+class AString {
+  var x: String;
+  impl as Printable { fn Print[me: Self]() { PrintString(me.x); } }
+}
+
+var i: AnInt = {.x = 3};
+var s: AString = {.x = "Hello"};
+
+var i_dynamic: DynPtr(Printable) = &i;
+i_dynamic->Print();  // Prints "3".
+var s_dynamic: DynPtr(Printable) = &s;
+s_dynamic->Print();  // Prints "Hello".
+
+var dynamic: Array(DynPtr(Printable), 2) = (&i, &s);
+for (var element: DynPtr(Printable) in dynamic) {
+  // Prints "3" and then "Hello".
+  element->Print();
+}
+```
+
+This corresponds to
+[a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
+
+### Dynamic box type
+
+FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
+movable, deref to an unspecified type that implements constraints
+
+### Dynamic value type
+
+FIXME: Requires: destructor, copy, and allocator. Provides: sized, unformed,
+movable, copy, and constraints.
+
+## Future work
+
+### Runtime type parameters
 
 This feature is about allowing a function's type parameter to be passed in as a
 dynamic (non-generic) parameter. All values of that type would still be required
-to have the same type.
-
-#### Runtime type fields
-
-Instead of passing in a single type parameter to a function, we could store a
-type per value. This changes the data layout of the value, and so is a somewhat
-more invasive change. It also means that when a function operates on multiple
-values they could have different real types.
+to have the same type. This would be an alternative application of dynamic
+dispatch and dynamic types. Where
+[dynamic reference types](#dynamic-reference-types) are primarily about the
+expressive power of allowing types to vary at runtime, this feature is primarily
+about reducing code size at the cost of more dynamic dispatch work at runtime.
 
 ### Abstract return types
 
@@ -4570,3 +4722,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1149: Generic details 13: Dynamic reference types](https://github.com/carbon-language/carbon-lang/pull/1149)
