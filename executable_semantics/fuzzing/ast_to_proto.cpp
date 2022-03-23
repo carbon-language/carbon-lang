@@ -431,6 +431,7 @@ auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       break;
 
     case StatementKind::Break:
+      // Initializes with the default value; there's nothing to set.
       statement_proto.mutable_break_statement();
       break;
 
