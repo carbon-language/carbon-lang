@@ -5,10 +5,8 @@
 #ifndef TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
-#include <any>
 #include <functional>
 #include <string>
-#include <tuple>
 #include <type_traits>
 
 #include "llvm/ADT/Any.h"
@@ -127,21 +125,6 @@ class DiagnosticLocationTranslator {
 };
 
 namespace Internal {
-
-template <typename... T, std::size_t... N>
-inline auto vector_any_cast_impl(const std::vector<std::any>& v,
-                                 std::index_sequence<N...>)
-    -> std::tuple<T...> {
-  assert(v.size() == sizeof...(T));
-  return {std::any_cast<T>(v[N])...};
-}
-
-template <typename... T>
-inline auto vector_any_cast(const std::vector<std::any>& v)
-    -> std::tuple<T...> {
-  return vector_any_cast_impl<T...>(v,
-                                    std::make_index_sequence<sizeof...(T)>());
-}
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
