@@ -7,7 +7,6 @@
 namespace Carbon {
 
 void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
-  // TODO: Get diagnostic.kind as a string.
   *os << "Diagnostic{" << diagnostic.kind << ", ";
   PrintTo(diagnostic.level, os);
   *os << ", " << diagnostic.location.file_name << ":"

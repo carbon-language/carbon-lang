@@ -33,6 +33,9 @@ enum class DiagnosticLevel : int8_t {
 //   DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
 //              llvm::StringRef, llvm::StringRef);
 //
+// Arguments are passed to llvm::formatv; see:
+// https://llvm.org/doxygen/FormatVariadic_8h_source.html
+//
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
 #define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                      \
   static constexpr auto DiagnosticName =                                    \
@@ -83,6 +86,11 @@ struct Diagnostic {
 
   // A std::tuple containing the diagnostic's format plus any format arguments.
   // These will be passed to llvm::formatv.
+  //
+  // These may be used by non-standard consumers to inspect diagnostic details
+  // without needing to parse the formatted string; however, it should be
+  // understood that diagnostic formats are subject to change and the std::any
+  // offers limited compile-time type safety. Integration tests are required.
   std::any format_args;
 
   // Returns the formatted string.
@@ -139,11 +147,11 @@ struct DiagnosticBase {
   };
 
   // The diagnostic's kind.
-  const DiagnosticKind Kind;
+  DiagnosticKind Kind;
   // The diagnostic's level.
-  const DiagnosticLevel Level;
+  DiagnosticLevel Level;
   // The diagnostic's format for llvm::formatv.
-  const llvm::StringLiteral Format;
+  llvm::StringLiteral Format;
 
  private:
   // A generic format function, used when format_fn isn't provided.
@@ -153,7 +161,7 @@ struct DiagnosticBase {
   }
 
   // The function to use for formatting.
-  const RawFormatFnType RawFormatFn;
+  RawFormatFnType RawFormatFn;
 };
 
 }  // namespace Internal
