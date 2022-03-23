@@ -96,12 +96,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
 -   [Dynamic reference types](#dynamic-reference-types)
-    -   [Restrictions](#restrictions)
-        -   [Object-safe interfaces](#object-safe-interfaces)
-        -   [No free associated types](#no-free-associated-types)
     -   [Dynamic pointer type](#dynamic-pointer-type)
     -   [Dynamic box type](#dynamic-box-type)
     -   [Dynamic value type](#dynamic-value-type)
+    -   [Restrictions](#restrictions)
+        -   [Object-safe interfaces](#object-safe-interfaces)
+        -   [No free associated types](#no-free-associated-types)
+        -   [`AsBaseType`](#asbasetype)
 -   [Future work](#future-work)
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Abstract return types](#abstract-return-types)
@@ -4456,6 +4457,70 @@ expressivity by allowing types to vary at runtime, with
 potential to allow developers to reduce code size at the expense of more runtime
 dispatch, but this design does not prioritize that use case at this time.
 
+### Dynamic pointer type
+
+FIXME
+
+Given a type-of-type `TT`, satisfying [the restrictions](#restrictions), define
+`DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
+satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
+
+-   They do not own what they point to.
+-   They have an assignment operator which allows them to point to new values
+    (with potentially different types as long as they all satisfy `TT`).
+-   They may be copied or moved.
+-   They have a fixed size (unlike the values they point to), though that size
+    is larger than a regular pointer.
+
+Example:
+
+```
+class AnInt {
+  var x: Int;
+  impl as Printable { fn Print[me: Self]() { PrintInt(me.x); } }
+}
+class AString {
+  var x: String;
+  impl as Printable { fn Print[me: Self]() { PrintString(me.x); } }
+}
+
+var i: AnInt = {.x = 3};
+var s: AString = {.x = "Hello"};
+
+var i_dynamic: DynPtr(Printable) = &i;
+i_dynamic->Print();  // Prints "3".
+var s_dynamic: DynPtr(Printable) = &s;
+s_dynamic->Print();  // Prints "Hello".
+
+var dynamic: Array(DynPtr(Printable), 2) = (&i, &s);
+for (var element: DynPtr(Printable) in dynamic) {
+  // Prints "3" and then "Hello".
+  element->Print();
+}
+```
+
+This corresponds to
+[a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
+
+FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
+with `Copyable` types", in which case the `DynPtr` would have a `Clone` method.
+
+### Dynamic box type
+
+FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
+movable, deref to an unspecified type that implements constraints.
+
+FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
+`DynBox` type is `Copyable` as well.
+
+### Dynamic value type
+
+FIXME: Requires: destructor, and allocator. Provides: sized, unformed, movable,
+and constraints.
+
+FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
+`DynBox` type is `Copyable` as well.
+
 ### Restrictions
 
 The first argument to these dynamic reference types must be a type-of-type that
@@ -4550,69 +4615,17 @@ assigned using a [`where` clause](#where-constraints) or have a
 
 FIXME: Unassigned associated types with defaults will use the defaults.
 
-### Dynamic pointer type
+#### `AsBaseType`
 
-FIXME
+FIXME: Object-safe + no free associated types also means the type-of-type is
+equivalent to an abstract base class, `AsBaseClass(C)`.
+https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#inheritance
 
-Given a type-of-type `TT`, satisfying [the restrictions](#restrictions), define
-`DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
-satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
+FIXME: MAYBE: A generic type `FIXME(C, T)` where `T is C` and `C` is object-safe
+that descends from `AsBaseType(C)` and implements it by delegating to a `T*`.
 
--   They do not own what they point to.
--   They have an assignment operator which allows them to point to new values
-    (with potentially different types as long as they all satisfy `TT`).
--   They may be copied or moved.
--   They have a fixed size (unlike the values they point to), though that size
-    is larger than a regular pointer.
-
-Example:
-
-```
-class AnInt {
-  var x: Int;
-  impl as Printable { fn Print[me: Self]() { PrintInt(me.x); } }
-}
-class AString {
-  var x: String;
-  impl as Printable { fn Print[me: Self]() { PrintString(me.x); } }
-}
-
-var i: AnInt = {.x = 3};
-var s: AString = {.x = "Hello"};
-
-var i_dynamic: DynPtr(Printable) = &i;
-i_dynamic->Print();  // Prints "3".
-var s_dynamic: DynPtr(Printable) = &s;
-s_dynamic->Print();  // Prints "Hello".
-
-var dynamic: Array(DynPtr(Printable), 2) = (&i, &s);
-for (var element: DynPtr(Printable) in dynamic) {
-  // Prints "3" and then "Hello".
-  element->Print();
-}
-```
-
-This corresponds to
-[a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
-
-FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
-with `Copyable` types", in which case the `DynPtr` would have a `Clone` method.
-
-### Dynamic box type
-
-FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
-movable, deref to an unspecified type that implements constraints.
-
-FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
-`DynBox` type is `Copyable` as well.
-
-### Dynamic value type
-
-FIXME: Requires: destructor, and allocator. Provides: sized, unformed, movable,
-and constraints.
-
-FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
-`DynBox` type is `Copyable` as well.
+FIXME: A type `Dyn-FIXME(C)` where `C` is object-safe that descends from
+`AsBaseType(C)` and implements it by delegating to a `DynPtr(C)`.
 
 ## Future work
 
