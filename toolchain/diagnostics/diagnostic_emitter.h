@@ -82,7 +82,7 @@ struct Diagnostic {
   DiagnosticLocation location;
 
   // A std::tuple containing the diagnostic's format plus any format arguments.
-  // These will be passed to llvm::formatv.
+  // These will be passed to format_fn (by default, llvm::formatv).
   std::any format_args;
 
   // Returns the formatted string.
