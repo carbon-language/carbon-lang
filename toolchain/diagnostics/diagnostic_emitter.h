@@ -84,16 +84,19 @@ struct Diagnostic {
   // The calculated location of the diagnostic.
   DiagnosticLocation location;
 
-  // A std::tuple containing the diagnostic's format plus any format arguments.
-  // These will be passed to format_fn (by default, llvm::formatv).
+  // The diagnostic's format string. This, along with format_args, will be
+  // passed to format_fn.
+  llvm::StringLiteral format;
+
+  // A list of format arguments.
   //
   // These may be used by non-standard consumers to inspect diagnostic details
   // without needing to parse the formatted string; however, it should be
-  // understood that diagnostic formats are subject to change and the std::any
+  // understood that diagnostic formats are subject to change and the llvm::Any
   // offers limited compile-time type safety. Integration tests are required.
-  std::any format_args;
+  llvm::SmallVector<llvm::Any> format_args;
 
-  // Returns the formatted string.
+  // Returns the formatted string. By default, this uses llvm::formatv.
   std::function<std::string(const Diagnostic&)> format_fn;
 };
 
@@ -141,9 +144,8 @@ struct DiagnosticBase {
 
   // Calls raw_format_fn with the diagnostic's arguments.
   auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
-    return std::apply(RawFormatFn,
-                      std::any_cast<std::tuple<llvm::StringLiteral, Args...>>(
-                          diagnostic.format_args));
+    return std::invoke(RawFormatFn, diagnostic.format);
+    // format_args
   };
 
   // The diagnostic's kind.
@@ -199,7 +201,8 @@ class DiagnosticEmitter {
         .kind = diagnostic_base.Kind,
         .level = diagnostic_base.Level,
         .location = translator_->GetLocation(location),
-        .format_args = std::make_tuple(diagnostic_base.Format, args...),
+        .format = diagnostic_base.Format,
+        .format_args = {args...},
         .format_fn = [&diagnostic_base](const Diagnostic& diagnostic)
             -> std::string { return diagnostic_base.FormatFn(diagnostic); },
     });
