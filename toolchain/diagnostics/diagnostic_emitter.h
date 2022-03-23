@@ -140,7 +140,7 @@ struct DiagnosticBase {
                            RawFormatFnType raw_format_fn = &DefaultRawFormatFn)
       : Kind(kind), Level(level), Format(format), RawFormatFn(raw_format_fn) {}
 
-  // Calls raw_format_fn with the diagnostic's arguments.
+  // Calls RawFormatFn with the diagnostic's arguments.
   auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
     return FormatFnImpl(diagnostic,
                         std::make_index_sequence<sizeof...(Args)>());
