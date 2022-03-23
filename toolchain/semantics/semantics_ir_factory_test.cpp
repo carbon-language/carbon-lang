@@ -41,9 +41,13 @@ TEST_F(SemanticsIRFactoryTest, Empty) { Build(""); }
 TEST_F(SemanticsIRFactoryTest, Basics) {
   Build(R"(// package FactoryTest api;
 
+           fn Add(var x: i32, var y: i32) {
+             return x + y;
+           }
+
            fn Main() -> i32 {
-             var x: i32 = 3 * 10;
-             x += 5;
+             var x: i32 = Add(3, 10);
+             x *= 5;
              return x;
            }
           )");
