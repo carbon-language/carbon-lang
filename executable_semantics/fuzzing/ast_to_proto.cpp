@@ -13,16 +13,16 @@
 
 namespace Carbon {
 
-namespace {
-
 using ::llvm::cast;
 
-auto ExpressionToProto(const Expression& expression) -> Fuzzing::Expression;
-auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern;
-auto StatementToProto(const Statement& statement) -> Fuzzing::Statement;
-auto DeclarationToProto(const Declaration& declaration) -> Fuzzing::Declaration;
+static auto ExpressionToProto(const Expression& expression)
+    -> Fuzzing::Expression;
+static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern;
+static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement;
+static auto DeclarationToProto(const Declaration& declaration)
+    -> Fuzzing::Declaration;
 
-auto LibraryNameToProto(const LibraryName& library_name)
+static auto LibraryNameToProto(const LibraryName& library_name)
     -> Fuzzing::LibraryName {
   Fuzzing::LibraryName library_name_proto;
   library_name_proto.set_package_name(library_name.package);
@@ -32,19 +32,19 @@ auto LibraryNameToProto(const LibraryName& library_name)
   return library_name_proto;
 }
 
-auto OperatorToUnaryProtoEnum(const Operator op)
+static auto OperatorToUnaryProtoEnum(const Operator op)
     -> std::optional<Fuzzing::UnaryOperatorExpression::UnaryOperator> {
   switch (op) {
     case Operator::AddressOf:
-      return Fuzzing::UnaryOperatorExpression::OP_ADDRESS_OF;
+      return Fuzzing::UnaryOperatorExpression::AddressOf;
     case Operator::Deref:
-      return Fuzzing::UnaryOperatorExpression::OP_DEREF;
+      return Fuzzing::UnaryOperatorExpression::Deref;
     case Operator::Neg:
-      return Fuzzing::UnaryOperatorExpression::OP_NEG;
+      return Fuzzing::UnaryOperatorExpression::Neg;
     case Operator::Not:
-      return Fuzzing::UnaryOperatorExpression::OP_NOT;
+      return Fuzzing::UnaryOperatorExpression::Not;
     case Operator::Ptr:
-      return Fuzzing::UnaryOperatorExpression::OP_PTR;
+      return Fuzzing::UnaryOperatorExpression::Ptr;
 
     case Operator::Add:
     case Operator::And:
@@ -56,21 +56,21 @@ auto OperatorToUnaryProtoEnum(const Operator op)
   }
 }
 
-auto OperatorToBinaryProtoEnum(const Operator op)
+static auto OperatorToBinaryProtoEnum(const Operator op)
     -> std::optional<Fuzzing::BinaryOperatorExpression::BinaryOperator> {
   switch (op) {
     case Operator::Add:
-      return Fuzzing::BinaryOperatorExpression::OP_ADD;
+      return Fuzzing::BinaryOperatorExpression::Add;
     case Operator::And:
-      return Fuzzing::BinaryOperatorExpression::OP_AND;
+      return Fuzzing::BinaryOperatorExpression::And;
     case Operator::Eq:
-      return Fuzzing::BinaryOperatorExpression::OP_EQ;
+      return Fuzzing::BinaryOperatorExpression::Eq;
     case Operator::Mul:
-      return Fuzzing::BinaryOperatorExpression::OP_MUL;
+      return Fuzzing::BinaryOperatorExpression::Mul;
     case Operator::Or:
-      return Fuzzing::BinaryOperatorExpression::OP_OR;
+      return Fuzzing::BinaryOperatorExpression::Or;
     case Operator::Sub:
-      return Fuzzing::BinaryOperatorExpression::OP_SUB;
+      return Fuzzing::BinaryOperatorExpression::Sub;
 
     case Operator::AddressOf:
     case Operator::Deref:
@@ -81,7 +81,7 @@ auto OperatorToBinaryProtoEnum(const Operator op)
   }
 }
 
-auto FieldInitializerToProto(const FieldInitializer& field)
+static auto FieldInitializerToProto(const FieldInitializer& field)
     -> Fuzzing::FieldInitializer {
   Fuzzing::FieldInitializer field_proto;
   field_proto.set_name(field.name());
@@ -89,7 +89,7 @@ auto FieldInitializerToProto(const FieldInitializer& field)
   return field_proto;
 }
 
-auto TupleLiteralExpressionToProto(const TupleLiteral& tuple_literal)
+static auto TupleLiteralExpressionToProto(const TupleLiteral& tuple_literal)
     -> Fuzzing::TupleLiteralExpression {
   Fuzzing::TupleLiteralExpression tuple_literal_proto;
   for (Nonnull<const Expression*> field : tuple_literal.fields()) {
@@ -98,7 +98,8 @@ auto TupleLiteralExpressionToProto(const TupleLiteral& tuple_literal)
   return tuple_literal_proto;
 }
 
-auto ExpressionToProto(const Expression& expression) -> Fuzzing::Expression {
+static auto ExpressionToProto(const Expression& expression)
+    -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
@@ -271,7 +272,7 @@ auto ExpressionToProto(const Expression& expression) -> Fuzzing::Expression {
   return expression_proto;
 }
 
-auto BindingPatternToProto(const BindingPattern& pattern)
+static auto BindingPatternToProto(const BindingPattern& pattern)
     -> Fuzzing::BindingPattern {
   Fuzzing::BindingPattern pattern_proto;
   pattern_proto.set_name(pattern.name());
@@ -279,7 +280,7 @@ auto BindingPatternToProto(const BindingPattern& pattern)
   return pattern_proto;
 }
 
-auto TuplePatternToProto(const TuplePattern& tuple_pattern)
+static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
     -> Fuzzing::TuplePattern {
   Fuzzing::TuplePattern tuple_pattern_proto;
   for (Nonnull<const Pattern*> field : tuple_pattern.fields()) {
@@ -288,7 +289,7 @@ auto TuplePatternToProto(const TuplePattern& tuple_pattern)
   return tuple_pattern_proto;
 }
 
-auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
+static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
   Fuzzing::Pattern pattern_proto;
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
@@ -329,7 +330,8 @@ auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
   return pattern_proto;
 }
 
-auto BlockStatementToProto(const Block& block) -> Fuzzing::BlockStatement {
+static auto BlockStatementToProto(const Block& block)
+    -> Fuzzing::BlockStatement {
   Fuzzing::BlockStatement block_proto;
   for (Nonnull<const Statement*> statement : block.statements()) {
     *block_proto.add_statement() = StatementToProto(*statement);
@@ -337,7 +339,7 @@ auto BlockStatementToProto(const Block& block) -> Fuzzing::BlockStatement {
   return block_proto;
 }
 
-auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
+static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
   Fuzzing::Statement statement_proto;
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
@@ -440,7 +442,8 @@ auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
   return statement_proto;
 }
 
-auto ReturnTermToProto(const ReturnTerm& return_term) -> Fuzzing::ReturnTerm {
+static auto ReturnTermToProto(const ReturnTerm& return_term)
+    -> Fuzzing::ReturnTerm {
   Fuzzing::ReturnTerm return_term_proto;
   if (return_term.is_omitted()) {
     return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_OMITTED);
@@ -454,7 +457,7 @@ auto ReturnTermToProto(const ReturnTerm& return_term) -> Fuzzing::ReturnTerm {
   return return_term_proto;
 }
 
-auto GenericBindingToProto(const GenericBinding& binding)
+static auto GenericBindingToProto(const GenericBinding& binding)
     -> Fuzzing::GenericBinding {
   Fuzzing::GenericBinding binding_proto;
   binding_proto.set_name(binding.name());
@@ -462,7 +465,7 @@ auto GenericBindingToProto(const GenericBinding& binding)
   return binding_proto;
 }
 
-auto DeclarationToProto(const Declaration& declaration)
+static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
@@ -560,8 +563,6 @@ auto DeclarationToProto(const Declaration& declaration)
   }
   return declaration_proto;
 }
-
-}  // namespace
 
 Fuzzing::CompilationUnit CarbonToProto(const AST& ast) {
   Fuzzing::CompilationUnit compilation_unit;

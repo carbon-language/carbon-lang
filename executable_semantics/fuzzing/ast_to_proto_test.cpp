@@ -24,14 +24,7 @@ using ::google::protobuf::FieldDescriptor;
 using ::google::protobuf::Message;
 using ::google::protobuf::Reflection;
 
-constexpr std::string_view AdditionalSyntax = R"(
-  package p api;
-
-  fn f() {
-    __intrinsic_print("xyz");
-    a __unimplemented_example_infix b;
-  }
-)";
+static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
 // Concatenates message and field names.
 auto FieldName(const Descriptor& descriptor, const FieldDescriptor& field)
@@ -103,43 +96,15 @@ auto GetUnusedFields(const Message& message) -> std::set<std::string> {
   return unused_fields;
 }
 
-// Finds all `.carbon` files under `root_dir`.
-auto GetFiles(std::string_view root_dir, std::string_view extension)
-    -> std::vector<std::string> {
-  std::vector<std::string> carbon_files;
-  for (const std::filesystem::directory_entry& entry :
-       std::filesystem::recursive_directory_iterator(root_dir)) {
-    if (!std::filesystem::is_directory(entry)) {
-      const std::string file = entry.path();
-      // Checks that `file` ends with `extension`.
-      if (std::equal(extension.rbegin(), extension.rend(), file.rbegin())) {
-        carbon_files.push_back(file);
-      }
-    }
-  }
-  return carbon_files;
-}
-
 TEST(CarbonToProtoTest, SetsAllProtoFields) {
   Carbon::Fuzzing::CompilationUnit merged_proto;
-  const std::vector<std::string> carbon_files =
-      GetFiles(std::string(getenv("TEST_SRCDIR")) +
-                   "/carbon/executable_semantics/testdata",
-               ".carbon");
-  for (const std::string& f : carbon_files) {
+  for (const llvm::StringRef f : *carbon_files) {
     Carbon::Arena arena;
     const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
     if (ast.ok()) {
       merged_proto.MergeFrom(CarbonToProto(*ast));
     }
   }
-
-  Carbon::Arena arena;
-  const ErrorOr<AST> ast =
-      Carbon::ParseFromString(&arena, "File.carbon", AdditionalSyntax,
-                              /*trace=*/false);
-  ASSERT_TRUE(ast.ok());
-  merged_proto.MergeFrom(CarbonToProto(*ast));
 
   std::set<std::string> unused_fields = GetUnusedFields(merged_proto);
   EXPECT_EQ(unused_fields.size(), 0)
@@ -153,3 +118,11 @@ TEST(CarbonToProtoTest, SetsAllProtoFields) {
 
 }  // namespace
 }  // namespace Carbon::Testing
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  // gtest should remove flags, leaving just input files.
+  Carbon::Testing::carbon_files =
+      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
+  return RUN_ALL_TESTS();
+}

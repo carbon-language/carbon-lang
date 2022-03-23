@@ -9,11 +9,11 @@ cc_library(
     srcs = ["ast_to_proto.cpp"],
     hdrs = ["ast_to_proto.h"],
     deps = [
+        "//common/fuzzing:carbon_cc_proto",
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:generic_binding",
-        "//fuzzing:carbon_cc_proto",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -21,16 +21,19 @@ cc_library(
 cc_test(
     name = "ast_to_proto_test",
     srcs = ["ast_to_proto_test.cpp"],
-    copts = [
-        "-Wno-thread-safety-reference",
-        "-Wno-implicit-fallthrough",
+    args = [
+        "$(location //executable_semantics:data/prelude.carbon)",
+        "$(locations //executable_semantics/testdata:carbon_files)",
     ],
-    data = ["//executable_semantics/testdata:carbon_files"],
+    data = [
+        "//executable_semantics:data/prelude.carbon",
+        "//executable_semantics/testdata:carbon_files",
+    ],
     deps = [
         ":ast_to_proto_lib",
+        "//common/fuzzing:carbon_cc_proto",
         "//executable_semantics/syntax",
-        "//fuzzing:carbon_cc_proto",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],

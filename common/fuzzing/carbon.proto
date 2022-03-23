@@ -35,12 +35,12 @@ message IndexExpression {
 
 message UnaryOperatorExpression {
   enum UnaryOperator {
-    OP_UNKNOWN = 0;
-    OP_ADDRESS_OF = 1;
-    OP_DEREF = 2;
-    OP_NEG = 3;
-    OP_NOT = 4;
-    OP_PTR = 5;
+    UnknownUnaryOperator = 0;
+    AddressOf = 1;
+    Deref = 2;
+    Neg = 3;
+    Not = 4;
+    Ptr = 5;
   }
   optional UnaryOperator op = 1;
   optional Expression arg = 2;
@@ -48,13 +48,13 @@ message UnaryOperatorExpression {
 
 message BinaryOperatorExpression {
   enum BinaryOperator {
-    OP_UNKNOWN = 0;
-    OP_ADD = 1;
-    OP_AND = 2;
-    OP_EQ = 3;
-    OP_MUL = 4;
-    OP_OR = 5;
-    OP_SUB = 6;
+    UnknownBinaryOperator = 0;
+    Add = 1;
+    And = 2;
+    Eq = 3;
+    Mul = 4;
+    Or = 5;
+    Sub = 6;
   }
   optional BinaryOperator op = 1;
   optional Expression lhs = 2;

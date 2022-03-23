@@ -5,8 +5,8 @@
 #ifndef THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_FUZZING_AST_TO_PROTO_H_
 #define THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_FUZZING_AST_TO_PROTO_H_
 
+#include "common/fuzzing/carbon.pb.h"
 #include "executable_semantics/ast/ast.h"
-#include "fuzzing/carbon.pb.h"
 
 namespace Carbon {
 
