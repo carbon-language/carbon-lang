@@ -4695,4 +4695,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
--   [#1146: Generic details 12: Parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
+-   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
