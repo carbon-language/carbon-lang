@@ -85,7 +85,7 @@ struct Diagnostic {
   DiagnosticLocation location;
 
   // A std::tuple containing the diagnostic's format plus any format arguments.
-  // These will be passed to llvm::formatv.
+  // These will be passed to format_fn (by default, llvm::formatv).
   //
   // These may be used by non-standard consumers to inspect diagnostic details
   // without needing to parse the formatted string; however, it should be
@@ -190,11 +190,11 @@ class DiagnosticEmitter {
   // When passing arguments, they may be buffered. As a consequence, lifetimes
   // may outlive the `Emit` call.
   template <typename... Args>
-  void Emit(
-      LocationT location,
-      const Internal::DiagnosticBase<Args...>& diagnostic_base,
-      // Disable type deduction based on `args`; `diagnostic_base` is used.
-      typename std::common_type_t<Args>... args) {
+  void Emit(LocationT location,
+            const Internal::DiagnosticBase<Args...>& diagnostic_base,
+            // Disable type deduction based on `args`; the type of
+            // `diagnostic_base` determines the diagnostic's parameter types.
+            typename std::common_type_t<Args>... args) {
     consumer_->HandleDiagnostic({
         .kind = diagnostic_base.Kind,
         .level = diagnostic_base.Level,
