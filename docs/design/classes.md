@@ -1064,7 +1064,7 @@ Carbon supports
 using a
 [class hierarchy](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Hierarchical>),
 on an opt-in basis. Classes by default are
-_[final](https://en.wikipedia.org/wiki/Inheritance_(object-oriented*programming)#Non-subclassable_classes)*,
+[_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
 which means they may not be extended. To declare a class as allowing extension,
 use either the `base class` or `abstract class` introducer:
 
