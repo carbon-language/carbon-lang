@@ -92,7 +92,7 @@ struct Diagnostic {
   // without needing to parse the formatted string; however, it should be
   // understood that diagnostic formats are subject to change and the llvm::Any
   // offers limited compile-time type safety. Integration tests are required.
-  llvm::SmallVector<llvm::Any> format_args;
+  llvm::SmallVector<llvm::Any, 0> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
   std::function<std::string(const Diagnostic&)> format_fn;
