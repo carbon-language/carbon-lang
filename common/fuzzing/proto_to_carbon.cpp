@@ -10,8 +10,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
-// TODO: use llvm::ListSeparator sep;
-
 namespace Carbon {
 
 static constexpr std::string_view AnonymousName = "_";
@@ -25,14 +23,6 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
 static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
                                 llvm::raw_ostream& out) -> void;
 
-static auto FirstIdentifierCharToCarbon(char c) -> char {
-  return llvm::isAlpha(c) || c == '_' ? c : 'F';
-}
-
-static auto NextIdentifierCharToCarbon(char c) -> char {
-  return llvm::isAlnum(c) || c == '_' ? c : 'N';
-}
-
 // [A-Za-z_][A-Za-z0-9_]*
 static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
     -> void {
@@ -40,10 +30,19 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
     out << "EMPTY";
   } else {
     for (size_t i = 0; i < s.size(); ++i) {
+      const char c = s[i];
       if (i == 0) {
-        out << FirstIdentifierCharToCarbon(s[i]);
+        if (llvm::isAlpha(c) || c == '_') {
+          out << c;
+        } else {
+          out << 'x' << llvm::toHex(c);
+        }
       } else {
-        out << NextIdentifierCharToCarbon(s[i]);
+        if (llvm::isAlnum(c) || c == '_') {
+          out << c;
+        } else {
+          out << 'x' << llvm::toHex(c);
+        }
       }
     }
   }
@@ -51,7 +50,6 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 
 static auto LibraryNameToCarbon(const Fuzzing::LibraryName& library,
                                 llvm::raw_ostream& out) -> void {
-  // TODO if (library.has_package_name())
   IdentifierToCarbon(library.package_name(), out);
   if (library.has_path()) {
     out << " library \"";
@@ -93,12 +91,9 @@ static auto FieldInitializerToCarbon(const Fuzzing::FieldInitializer& field,
                                      std::string_view separator,
                                      llvm::raw_ostream& out) -> void {
   out << ".";
-  // TODO if (field.has_name())
   IdentifierToCarbon(field.name(), out);
   out << " " << separator << " ";
-  if (field.has_expression()) {
-    ExpressionToCarbon(field.expression(), out);
-  }
+  ExpressionToCarbon(field.expression(), out);
 }
 
 // ("a", 1)
@@ -106,14 +101,15 @@ static auto TupleLiteralExpressionToCarbon(
     const Fuzzing::TupleLiteralExpression& tuple_literal,
     llvm::raw_ostream& out) -> void {
   out << "(";
-  for (int i = 0; i < tuple_literal.field_size(); ++i) {
-    if (i > 0) {
-      out << ", ";
-    }
-    ExpressionToCarbon(tuple_literal.field(i), out);
-    if (tuple_literal.field_size() == 1) {
-      out << ", ";  // Ensures interpretation as a tuple expression.
-    }
+  llvm::ListSeparator sep;
+  for (const auto& field : tuple_literal.fields()) {
+    out << sep;
+    ExpressionToCarbon(field, out);
+  }
+  if (tuple_literal.fields_size() == 1) {
+    // Ensures that generated sourced is parsed as a tuple expression. See
+    // `ExpressionFromParenContents().`
+    out << ", ";
   }
   out << ")";
 }
@@ -129,9 +125,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // func(1, 2)
     case Fuzzing::Expression::kCall: {
       const auto& call = expression.call();
-      if (call.has_function()) {
-        ExpressionToCarbon(call.function(), out);
-      }
+      ExpressionToCarbon(call.function(), out);
       if (call.argument().kind_case() == Fuzzing::Expression::kTupleLiteral) {
         TupleLiteralExpressionToCarbon(call.argument().tuple_literal(), out);
       } else {
@@ -146,9 +140,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     case Fuzzing::Expression::kFunctionType: {
       const auto& fun_type = expression.function_type();
       out << "__Fn";
-      if (fun_type.has_parameter()) {
-        ExpressionToCarbon(fun_type.parameter(), out);
-      }
+      ExpressionToCarbon(fun_type.parameter(), out);
       if (fun_type.has_return_type()) {
         out << " -> ";
         ExpressionToCarbon(fun_type.return_type(), out);
@@ -159,11 +151,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // s.f
     case Fuzzing::Expression::kFieldAccess: {
       const auto& field_access = expression.field_access();
-      if (field_access.has_aggregate()) {
-        ExpressionToCarbon(field_access.aggregate(), out);
-      }
+      ExpressionToCarbon(field_access.aggregate(), out);
       out << ".";
-      // TODO if (field_access.has_field())
       IdentifierToCarbon(field_access.field(), out);
       break;
     }
@@ -171,13 +160,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // a[0]
     case Fuzzing::Expression::kIndex: {
       const auto& index = expression.index();
-      if (index.has_aggregate()) {
-        ExpressionToCarbon(index.aggregate(), out);
-      }
+      ExpressionToCarbon(index.aggregate(), out);
       out << "[";
-      if (index.has_offset()) {
-        ExpressionToCarbon(index.offset(), out);
-      }
+      ExpressionToCarbon(index.offset(), out);
       out << "]";
       break;
     }
@@ -188,7 +173,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       const std::string_view op =
           PrimitiveOperatorToString(primitive_operator.op());
       out << "(";
-      switch (primitive_operator.argument().size()) {
+      switch (primitive_operator.arguments().size()) {
         case 0:
           out << op;
           break;
@@ -199,7 +184,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
           if (!postix) {
             out << op;
           }
-          ExpressionToCarbon(primitive_operator.argument(0), out);
+          ExpressionToCarbon(primitive_operator.arguments(0), out);
           if (postix) {
             out << op;
           }
@@ -207,9 +192,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
         }
 
         default:
-          ExpressionToCarbon(primitive_operator.argument(0), out);
+          ExpressionToCarbon(primitive_operator.arguments(0), out);
           out << " " << op << " ";
-          ExpressionToCarbon(primitive_operator.argument(1), out);
+          ExpressionToCarbon(primitive_operator.arguments(1), out);
           break;
       }
       out << ")";
@@ -226,11 +211,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     case Fuzzing::Expression::kStructLiteral: {
       const auto& struct_literal = expression.struct_literal();
       out << "{";
-      for (int i = 0; i < struct_literal.field_size(); ++i) {
-        if (i > 0) {
-          out << ", ";
-        }
-        FieldInitializerToCarbon(struct_literal.field(i), "=", out);
+      llvm::ListSeparator sep;
+      for (const auto& field : struct_literal.fields()) {
+        out << sep;
+        FieldInitializerToCarbon(field, "=", out);
       }
       out << "}";
       break;
@@ -240,11 +224,10 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     case Fuzzing::Expression::kStructTypeLiteral: {
       const auto& struct_type_literal = expression.struct_type_literal();
       out << "{";
-      for (int i = 0; i < struct_type_literal.field_size(); ++i) {
-        if (i > 0) {
-          out << ", ";
-        }
-        FieldInitializerToCarbon(struct_type_literal.field(i), ":", out);
+      llvm::ListSeparator sep;
+      for (const auto& field : struct_type_literal.fields()) {
+        out << sep;
+        FieldInitializerToCarbon(field, ":", out);
       }
       out << "}";
       break;
@@ -253,7 +236,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // x
     case Fuzzing::Expression::kIdentifier: {
       const auto& identifier = expression.identifier();
-      // TODO if (identifier.has_name())
       IdentifierToCarbon(identifier.name(), out);
       break;
     }
@@ -308,7 +290,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // 42
     case Fuzzing::Expression::kIntLiteral: {
       const auto& int_literal = expression.int_literal();
-      // TODO if (int_literal.has_value())
       out << int_literal.value();
       break;
     }
@@ -336,7 +317,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
 
     case Fuzzing::Expression::kUnimplementedExpression:
-      // TODO
+      // Not currently supported.
       break;
   }
 }
@@ -344,7 +325,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
 // a: i32
 static auto BindingPatternToCarbon(const Fuzzing::BindingPattern& pattern,
                                    llvm::raw_ostream& out) -> void {
-  // TODO if (pattern.has_name()) {
   IdentifierToCarbon(pattern.name(), out);
 
   out << ": ";
@@ -357,15 +337,10 @@ static auto BindingPatternToCarbon(const Fuzzing::BindingPattern& pattern,
 static auto TuplePatternToCarbon(const Fuzzing::TuplePattern& tuple_pattern,
                                  llvm::raw_ostream& out) -> void {
   out << "(";
-  for (int i = 0; i < tuple_pattern.field_size(); ++i) {
-    if (i > 0) {
-      out << ", ";
-    }
-    PatternToCarbon(tuple_pattern.field(i), out);
-    // TODO xx
-    //  if (tuple_pattern.field_size() == 1) {
-    //    out << ", ";  // Ensures interpretation as a tuple expression.
-    //  }
+  llvm::ListSeparator sep;
+  for (const auto& field : tuple_pattern.fields()) {
+    out << sep;
+    PatternToCarbon(field, out);
   }
   out << ")";
 }
@@ -374,7 +349,7 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
                             llvm::raw_ostream& out) -> void {
   switch (pattern.kind_case()) {
     case Fuzzing::Pattern::KIND_NOT_SET:
-      // TODO
+      out << "auto";  // Arbitrary default to avoid getting invalid syntax.
       break;
 
     // a: i32
@@ -390,10 +365,8 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
     // Ints.Two(a: auto, b: auto)
     case Fuzzing::Pattern::kAlternativePattern: {
       const auto& alternative_pattern = pattern.alternative_pattern();
-      // TODO if (alternative_pattern.has_choice_type()) {
       ExpressionToCarbon(alternative_pattern.choice_type(), out);
       out << ".";
-      // TODO if (alternative_pattern.has_alternative_name()) {
       IdentifierToCarbon(alternative_pattern.alternative_name(), out);
 
       TuplePatternToCarbon(alternative_pattern.arguments(), out);
@@ -427,7 +400,7 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
 static auto BlockStatementToCarbon(const Fuzzing::BlockStatement& block,
                                    llvm::raw_ostream& out) -> void {
   out << "{\n";
-  for (const auto& statement : block.statement()) {
+  for (const auto& statement : block.statements()) {
     StatementToCarbon(statement, out);
     out << "\n";
   }
@@ -544,7 +517,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
         ExpressionToCarbon(match.expression(), out);
       }
       out << ") {";
-      for (const auto& clause : match.clause()) {
+      for (const auto& clause : match.clauses()) {
         const bool is_default_clause =
             clause.pattern().kind_case() == Fuzzing::Pattern::kBindingPattern &&
             clause.pattern().binding_pattern().name() == AnonymousName;
@@ -569,7 +542,6 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kContinuation: {
       const auto& continuation = statement.continuation();
       out << "__continuation ";
-      // TODO if (continuation.has_name())
       IdentifierToCarbon(continuation.name(), out);
 
       if (continuation.has_body()) {
@@ -637,23 +609,20 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       // return_term block
       const auto& function = declaration.function();
       out << "fn ";
-      // TODO if (function.has_name()) {
       IdentifierToCarbon(function.name(), out);
 
-      if (!function.deduced_parameter().empty()) {
+      if (!function.deduced_parameters().empty()) {
         out << "[";
-        for (int i = 0; i < function.deduced_parameter().size(); ++i) {
-          const Fuzzing::GenericBinding& p = function.deduced_parameter(i);
-          if (i > 0) {
-            out << ", ";
-          }
+        llvm::ListSeparator sep;
+        for (const Fuzzing::GenericBinding& p : function.deduced_parameters()) {
+          out << sep;
           IdentifierToCarbon(p.name(), out);
           out << ":! ";
           ExpressionToCarbon(p.type(), out);
         }
         out << "]";
       }
-      if (function.has_me_pattern()) {  // TODO
+      if (function.has_me_pattern()) {
         // This is a class method.
         out << "[";
         BindingPatternToCarbon(function.me_pattern(), out);
@@ -676,11 +645,10 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kClassDeclaration: {
       const auto& class_declaration = declaration.class_declaration();
       out << "class ";
-      // TODO if (class_declaration.has_name()) {
       IdentifierToCarbon(class_declaration.name(), out);
 
       out << "{\n";
-      for (const auto& member : class_declaration.member()) {
+      for (const auto& member : class_declaration.members()) {
         DeclarationToCarbon(member, out);
         out << "\n";
       }
@@ -692,18 +660,13 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kChoice: {
       const auto& choice = declaration.choice();
       out << "choice ";
-      // TODO if (choice.has_name()) {
       IdentifierToCarbon(choice.name(), out);
 
       out << "{";
-      for (int i = 0; i < choice.alternative().size(); ++i) {
-        const auto& alternative = choice.alternative(i);
-        if (i > 0) {
-          out << ",\n";
-        }
-        // TODO if (alternative.has_name()) {
+      llvm::ListSeparator sep;
+      for (const auto& alternative : choice.alternatives()) {
+        out << sep;
         IdentifierToCarbon(alternative.name(), out);
-
         if (alternative.has_signature()) {
           ExpressionToCarbon(alternative.signature(), out);
         }
@@ -736,7 +699,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "interface ";
       IdentifierToCarbon(interface.name(), out);
       out << " {\n";
-      for (const auto& member : interface.member()) {
+      for (const auto& member : interface.members()) {
         DeclarationToCarbon(member, out);
         out << "\n";
       }
@@ -758,7 +721,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << " as ";
       ExpressionToCarbon(impl.interface(), out);
       out << " {\n";
-      for (const auto& member : impl.member()) {
+      for (const auto& member : impl.members()) {
         DeclarationToCarbon(member, out);
         out << "\n";
       }
@@ -771,14 +734,13 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 static auto ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit,
                           llvm::raw_ostream& out) -> void {
   out << "// Generated by proto_to_carbon.\n\n";
-  // TODO if (compilation_unit.has_package_statement())
   out << "package ";
   LibraryNameToCarbon(compilation_unit.package_statement(), out);
   out << (compilation_unit.is_api() ? " api" : " impl") << ";\n";
 
-  if (!compilation_unit.declaration().empty()) {
+  if (!compilation_unit.declarations().empty()) {
     out << "\n";
-    for (const auto& declaration : compilation_unit.declaration()) {
+    for (const auto& declaration : compilation_unit.declarations()) {
       DeclarationToCarbon(declaration, out);
       out << "\n";
     }

@@ -72,7 +72,7 @@ static auto TupleLiteralExpressionToProto(const TupleLiteral& tuple_literal)
     -> Fuzzing::TupleLiteralExpression {
   Fuzzing::TupleLiteralExpression tuple_literal_proto;
   for (Nonnull<const Expression*> field : tuple_literal.fields()) {
-    *tuple_literal_proto.add_field() = ExpressionToProto(*field);
+    *tuple_literal_proto.add_fields() = ExpressionToProto(*field);
   }
   return tuple_literal_proto;
 }
@@ -122,7 +122,7 @@ static auto ExpressionToProto(const Expression& expression)
       auto* operator_proto = expression_proto.mutable_primitive_operator();
       operator_proto->set_op(OperatorToProtoEnum(primitive_operator.op()));
       for (Nonnull<const Expression*> arg : primitive_operator.arguments()) {
-        *operator_proto->add_argument() = ExpressionToProto(*arg);
+        *operator_proto->add_arguments() = ExpressionToProto(*arg);
       }
       break;
     }
@@ -136,7 +136,7 @@ static auto ExpressionToProto(const Expression& expression)
       const auto& struct_literal = cast<StructLiteral>(expression);
       auto* struct_literal_proto = expression_proto.mutable_struct_literal();
       for (const FieldInitializer& field : struct_literal.fields()) {
-        *struct_literal_proto->add_field() = FieldInitializerToProto(field);
+        *struct_literal_proto->add_fields() = FieldInitializerToProto(field);
       }
       break;
     }
@@ -146,7 +146,7 @@ static auto ExpressionToProto(const Expression& expression)
       auto* struct_type_literal_proto =
           expression_proto.mutable_struct_type_literal();
       for (const FieldInitializer& field : struct_type_literal.fields()) {
-        *struct_type_literal_proto->add_field() =
+        *struct_type_literal_proto->add_fields() =
             FieldInitializerToProto(field);
       }
       break;
@@ -244,7 +244,7 @@ static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
     -> Fuzzing::TuplePattern {
   Fuzzing::TuplePattern tuple_pattern_proto;
   for (Nonnull<const Pattern*> field : tuple_pattern.fields()) {
-    *tuple_pattern_proto.add_field() = PatternToProto(*field);
+    *tuple_pattern_proto.add_fields() = PatternToProto(*field);
   }
   return tuple_pattern_proto;
 }
@@ -294,7 +294,7 @@ static auto BlockStatementToProto(const Block& block)
     -> Fuzzing::BlockStatement {
   Fuzzing::BlockStatement block_proto;
   for (Nonnull<const Statement*> statement : block.statements()) {
-    *block_proto.add_statement() = StatementToProto(*statement);
+    *block_proto.add_statements() = StatementToProto(*statement);
   }
   return block_proto;
 }
@@ -365,7 +365,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       *match_proto->mutable_expression() =
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
-        auto* clause_proto = match_proto->add_clause();
+        auto* clause_proto = match_proto->add_clauses();
         *clause_proto->mutable_pattern() = PatternToProto(clause.pattern());
         *clause_proto->mutable_statement() =
             StatementToProto(clause.statement());
@@ -438,7 +438,7 @@ static auto DeclarationToProto(const Declaration& declaration)
       function_proto->set_name(function.name());
       for (Nonnull<const GenericBinding*> binding :
            function.deduced_parameters()) {
-        *function_proto->add_deduced_parameter() =
+        *function_proto->add_deduced_parameters() =
             GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
@@ -461,7 +461,7 @@ static auto DeclarationToProto(const Declaration& declaration)
       auto* class_proto = declaration_proto.mutable_class_declaration();
       class_proto->set_name(class_decl.name());
       for (Nonnull<const Declaration*> member : class_decl.members()) {
-        *class_proto->add_member() = DeclarationToProto(*member);
+        *class_proto->add_members() = DeclarationToProto(*member);
       }
       break;
     }
@@ -472,7 +472,7 @@ static auto DeclarationToProto(const Declaration& declaration)
       choice_proto->set_name(choice.name());
       for (Nonnull<const AlternativeSignature*> alternative :
            choice.alternatives()) {
-        auto* alternative_proto = choice_proto->add_alternative();
+        auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
         *alternative_proto->mutable_signature() =
             ExpressionToProto(alternative->signature());
@@ -496,7 +496,7 @@ static auto DeclarationToProto(const Declaration& declaration)
       auto* interface_proto = declaration_proto.mutable_interface();
       interface_proto->set_name(interface.name());
       for (const auto& member : interface.members()) {
-        *interface_proto->add_member() = DeclarationToProto(*member);
+        *interface_proto->add_members() = DeclarationToProto(*member);
       }
       *interface_proto->mutable_self() =
           GenericBindingToProto(*interface.self());
@@ -517,7 +517,7 @@ static auto DeclarationToProto(const Declaration& declaration)
       *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
       *impl_proto->mutable_interface() = ExpressionToProto(impl.interface());
       for (const auto& member : impl.members()) {
-        *impl_proto->add_member() = DeclarationToProto(*member);
+        *impl_proto->add_members() = DeclarationToProto(*member);
       }
       break;
     }
@@ -531,7 +531,7 @@ Fuzzing::CompilationUnit AstToProto(const AST& ast) {
       LibraryNameToProto(ast.package);
   compilation_unit.set_is_api(ast.is_api);
   for (const Declaration* declaration : ast.declarations) {
-    *compilation_unit.add_declaration() = DeclarationToProto(*declaration);
+    *compilation_unit.add_declarations() = DeclarationToProto(*declaration);
   }
   return compilation_unit;
 }

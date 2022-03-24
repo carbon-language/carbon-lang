@@ -49,11 +49,11 @@ message PrimitiveOperatorExpression {
     Ptr = 11;
   }
   optional Operator op = 1;
-  repeated Expression argument = 2;
+  repeated Expression arguments = 2;
 }
 
 message TupleLiteralExpression {
-  repeated Expression field = 1;
+  repeated Expression fields = 1;
 }
 
 message FieldInitializer {
@@ -62,11 +62,11 @@ message FieldInitializer {
 }
 
 message StructLiteralExpression {
-  repeated FieldInitializer field = 1;
+  repeated FieldInitializer fields = 1;
 }
 
 message StructTypeLiteralExpression {
-  repeated FieldInitializer field = 1;
+  repeated FieldInitializer fields = 1;
 }
 
 message IdentifierExpression {
@@ -143,7 +143,7 @@ message BindingPattern {
 }
 
 message TuplePattern {
-  repeated Pattern field = 1;
+  repeated Pattern fields = 1;
 }
 
 message AlternativePattern {
@@ -200,7 +200,7 @@ message ReturnStatement {
 }
 
 message BlockStatement {
-  repeated Statement statement = 1;
+  repeated Statement statements = 1;
 }
 
 message WhileStatement {
@@ -215,7 +215,7 @@ message MatchClause {
 
 message MatchStatement {
   optional Expression expression = 1;
-  repeated MatchClause clause = 2;
+  repeated MatchClause clauses = 2;
 }
 
 message ContinuationStatement {
@@ -270,7 +270,7 @@ message GenericBinding {
 
 message FunctionDeclaration {
   optional string name = 1;
-  repeated GenericBinding deduced_parameter = 2;
+  repeated GenericBinding deduced_parameters = 2;
   optional BindingPattern me_pattern = 3;
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
@@ -279,7 +279,7 @@ message FunctionDeclaration {
 
 message ClassDeclaration {
   optional string name = 1;
-  repeated Declaration member = 2;
+  repeated Declaration members = 2;
 }
 
 message AlternativeSignature {
@@ -289,7 +289,7 @@ message AlternativeSignature {
 
 message ChoiceDeclaration {
   optional string name = 1;
-  repeated AlternativeSignature alternative = 2;
+  repeated AlternativeSignature alternatives = 2;
 }
 
 message VariableDeclaration {
@@ -299,7 +299,7 @@ message VariableDeclaration {
 
 message InterfaceDeclaration {
   optional string name = 1;
-  repeated Declaration member = 2;
+  repeated Declaration members = 2;
   optional GenericBinding self = 3;
 }
 
@@ -313,7 +313,7 @@ message ImplDeclaration {
   optional ImplKind kind = 1;
   optional Expression impl_type = 2;
   optional Expression interface = 3;
-  repeated Declaration member = 4;
+  repeated Declaration members = 4;
 }
 
 message Declaration {
@@ -330,7 +330,7 @@ message Declaration {
 message CompilationUnit {
   optional LibraryName package_statement = 1;
   optional bool is_api = 2;
-  repeated Declaration declaration = 3;
+  repeated Declaration declarations = 3;
   // TODO Add support for imports if they are useful in fuzzing.
 }
 
