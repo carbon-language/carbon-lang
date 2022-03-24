@@ -4528,10 +4528,11 @@ This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
 FIXME: `DynPtr(C)` has a member type equal to `DynPtr(C).(Deref.ResultType)`,
-possibly `DynPtr(C).ErasedType`?
+possibly `DynPtr(C).ErasedType` or `DynRef(C)`, that `is C`.
 
 FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
-with `Copyable` types", in which case the `DynPtr` would have a `Clone` method.
+with `Copyable` types", in which case the `DynPtr` would have a `Clone` method
+that takes an allocator (defaulting to `Carbon.heap`?) and returns a new
 
 ### Dynamic box type
 
@@ -4546,7 +4547,7 @@ FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
 ### Dynamic value type
 
 FIXME: Requires: destructor, and allocator. Provides: sized, unformed, movable,
-and constraints.
+and constraints (`C`).
 
 FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
 `DynBox` type is `Copyable` as well.
@@ -4645,6 +4646,34 @@ assigned using a [`where` clause](#where-constraints) or have a
 [default](#interface-defaults).
 
 FIXME: Unassigned associated types with defaults will use the defaults.
+
+FIXME: Example:
+
+```
+interface Container {
+  let ElementType:! Type;
+  let IteratorType:! Iterator where .ElementType == ElementType;
+  fn Find[me: Self](needle: ElementType) -> Optional(IteratorType);
+}
+
+class Vector(T:! Type) {
+  impl as Container where .ElementType = T
+                      and .IteratorType = VectorIter(T);
+}
+
+
+class HashSet(T:! Hashable) {
+  impl as Container where .ElementType = T
+                      and .IteratorType = HashSetIter(T);
+}
+```
+
+Given a `DynPtr(Container)` that could point to a `Vector(i32)` or a
+`HashSet(String)`, how would you call `Find`? Since `ElementType` can vary,
+there is no single argument type. Further, the only possible return type is
+`Optional(DynValue(Iterator))`, but Carbon has no way of constructing such a
+value from an `Optional(Container.IteratorType)`, and the
+`where .ElementType == ElementType` constraint would be lost regardless.
 
 #### `AsBaseType`
 
