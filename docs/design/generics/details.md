@@ -4450,38 +4450,63 @@ Note that this applies to associated entities, not interface parameters.
 ## Dynamic reference types
 
 Generics provide enough structure to support runtime dispatch for values with
-types that vary at runtime, without giving up type safety. Both Rust and Swift
+types that vary at runtime, without giving up type safety. Both Rust (trait
+objects: [1](https://doc.rust-lang.org/book/ch17-02-trait-objects.html),
+[2](https://doc.rust-lang.org/std/keyword.dyn.html),
+[3](https://doc.rust-lang.org/reference/types/trait-object.html)) and Swift
+([existentials or protocols-as-types](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID275))
 have demonstrated the value of this feature. The main goal is increasing
 expressivity by allowing types to vary at runtime, with
 [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch). There is the
 potential to allow developers to reduce code size at the expense of more runtime
 dispatch, but this design does not prioritize that use case at this time.
 
+These dynamic reference types work by
+
+[_type erasure_](terminology.md#type-erasure). That means a single reference
+type, like `DynPtr(C)`, can be used to access values with a variety of runtime
+types. The reference type stores both a pointer to the value and a
+[dynamic-dispatch witness table](terminology.md#dynamic-dispatch-witness-table).
+The pointer to the value allows the reference type to have a fixed size, even
+though the values it points to may have different sizes. The process of erasing
+a type, when converting from a value of an original type to the reference type,
+saves both the address of the value and the witness table specific to the
+original type. The witness table stores the type-specific implementation of the
+operations. The set of operations stored in the witness table is given by a
+type-of-type, `C`, that the original type must satisfy.
+
+Note that there are [some restrictions](#restrictions) needed on the
+type-of-type parameter for type soundness.
+
 ### Dynamic pointer type
 
-FIXME
-
-Given a type-of-type `TT`, satisfying [the restrictions](#restrictions), define
-`DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
-satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
+A `DynPtr(C)` represents a "pointer to some unknown type `T` that satisfies
+type-of-type `C`," as long as `C` satisfies [the restrictions](#restrictions).
+This means that a variable of type `DynPtr(C)` may be assigned any `T*` pointer
+value where `T is C`. `DynPtr(C)` values act like pointers:
 
 -   They do not own what they point to.
--   They have an assignment operator which allows them to point to new values
-    (with potentially different types as long as they all satisfy `TT`).
--   They may be copied or moved.
--   They have a fixed size (unlike the values they point to), though that size
-    is larger than a regular pointer.
+-   They have an assignment operator which allows them to point to new values,
+    with potentially different runtime types as long as they all satisfy `C`.
+-   They may be copied or moved, and have an unformed state.
+-   They have a fixed size, unlike the values they point to. Note that the size
+    of a `DynPtr` is larger than a regular pointer in order to also store a
+    witness table pointer.
 
 Example:
 
 ```
 class AnInt {
   var x: Int;
-  impl as Printable { fn Print[me: Self]() { PrintInt(me.x); } }
+  impl as Printable {
+    fn Print[me: Self]() { PrintInt(me.x); }
+  }
 }
 class AString {
   var x: String;
-  impl as Printable { fn Print[me: Self]() { PrintString(me.x); } }
+  impl as Printable {
+    fn Print[me: Self]() { PrintString(me.x); }
+  }
 }
 
 var i: AnInt = {.x = 3};
@@ -4502,10 +4527,15 @@ for (var element: DynPtr(Printable) in dynamic) {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
+FIXME: `DynPtr(C)` has a member type equal to `DynPtr(C).(Deref.ResultType)`,
+possibly `DynPtr(C).ErasedType`?
+
 FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
 with `Copyable` types", in which case the `DynPtr` would have a `Clone` method.
 
 ### Dynamic box type
+
+`DynBox(C)` is like `DynPtr(C)`, except with ownership.
 
 FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
 movable, deref to an unspecified type that implements constraints.
@@ -4527,8 +4557,8 @@ The first argument to these dynamic reference types must be a type-of-type that
 satisfies two restrictions:
 
 -   all interfaces used in the type-of-type must be marked _object safe_, and
--   it must not have any free associated types or associated constants used in a
-    type.
+-   it must not have any free associated types or free associated constants used
+    in a type.
 
 In addition, these types may be restricted to types implementing `Copyable`
 (even though that isn't an object-safe interface) in exchange for additional
@@ -4542,7 +4572,8 @@ The interfaces used in FIXME must all be _object safe_. Only interfaces that are
 declared using the `object_safe` keyword before the `interface` introducer
 satisfy this requirement. Interfaces declared with that keyword have the
 additional restriction that member functions must not use `Self` outside of the
-type of a `me` parameter.
+type of a `me` parameter. The `me` parameter must either be `me: Self` or
+`addr me: Self*`, and can not use `Self` in any other way.
 
 ```
 object_safe interface Printable {
@@ -4557,10 +4588,10 @@ revision.
 <!-- FIXME: update the description of interface declarations in the "Declaring
 interfaces and named constraints" section once #1084 is merged. -->
 
-This is similar to
-[the "object safe" restriction in Rust](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md)
-and for the same reasons. Consider an interface that takes `Self` as an
-argument:
+This is similar to the "object safe" restriction in Rust
+([1](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md),
+[2](https://doc.rust-lang.org/reference/items/traits.html#object-safety)) and
+for the same reasons. Consider an interface that takes `Self` as an argument:
 
 ```
 interface EqualCompare {
