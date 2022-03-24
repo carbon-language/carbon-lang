@@ -106,7 +106,7 @@ class TokenizedBuffer::Lexer {
     // Consumes (and discard) a valid token to construct a result
     // indicating a token has been produced. Relies on implicit conversions.
     // NOLINTNEXTLINE(google-explicit-constructor)
-    LexResult(Token) : LexResult(true) {}
+    LexResult(Token /*discarded_token*/) : LexResult(true) {}
 
     // Returns a result indicating no token was produced.
     static auto NoMatch() -> LexResult { return LexResult(false); }

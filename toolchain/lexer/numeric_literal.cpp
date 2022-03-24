@@ -118,7 +118,8 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
   //
   // TODO(zygoloid): Update lexical rules to specify that a numeric literal
   // cannot be immediately followed by an alphanumeric character.
-  int i = 1, n = source_text.size();
+  int i = 1;
+  int n = source_text.size();
   for (; i != n; ++i) {
     char c = source_text[i];
     if (IsAlnum(c) || c == '_') {
@@ -305,7 +306,7 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
     // include a sign bit. Also make sure the exponent isn't too narrow so
     // the calculation below can't lose information through overflow.
     if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
-      exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
+      exponent = exponent.zext(std::max(64U, exponent.getBitWidth() + 1));
     }
     if (exponent_is_negative_) {
       exponent.negate();

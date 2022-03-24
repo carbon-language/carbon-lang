@@ -382,7 +382,7 @@ class TokenizedBuffer {
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto GetLocation(const char* pos) -> Diagnostic::Location override;
+    auto GetLocation(const char* loc) -> Diagnostic::Location override;
 
    private:
     TokenizedBuffer* buffer_;
@@ -396,7 +396,7 @@ class TokenizedBuffer {
   struct PrintWidths {
     // Widens `this` to the maximum of `this` and `new_width` for each
     // dimension.
-    auto Widen(const PrintWidths& new_width) -> void;
+    auto Widen(const PrintWidths& widths) -> void;
 
     int index;
     int kind;
