@@ -203,8 +203,7 @@ static auto ExpressionToProto(const Expression& expression)
       auto* intrinsic_proto = expression_proto.mutable_intrinsic();
       switch (intrinsic.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
-          intrinsic_proto->set_intrinsic(
-              Fuzzing::IntrinsicExpression::INTRINSIC_PRINT);
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
           break;
       }
       *intrinsic_proto->mutable_argument() =
@@ -449,11 +448,11 @@ static auto ReturnTermToProto(const ReturnTerm& return_term)
     -> Fuzzing::ReturnTerm {
   Fuzzing::ReturnTerm return_term_proto;
   if (return_term.is_omitted()) {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_OMITTED);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Omitted);
   } else if (return_term.is_auto()) {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_AUTO);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Auto);
   } else {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_EXPRESSION);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Expression);
     *return_term_proto.mutable_type() =
         ExpressionToProto(**return_term.type_expression());
   }
@@ -487,10 +486,8 @@ static auto DeclarationToProto(const Declaration& declaration)
       }
       *function_proto->mutable_param_pattern() =
           TuplePatternToProto(function.param_pattern());
-      if (function.return_term().type_expression().has_value()) {
-        *function_proto->mutable_return_term() =
-            ReturnTermToProto(function.return_term());
-      }
+      *function_proto->mutable_return_term() =
+          ReturnTermToProto(function.return_term());
       if (function.body().has_value()) {
         *function_proto->mutable_body() =
             BlockStatementToProto(**function.body());
@@ -550,10 +547,10 @@ static auto DeclarationToProto(const Declaration& declaration)
       auto* impl_proto = declaration_proto.mutable_impl();
       switch (impl.kind()) {
         case ImplKind::InternalImpl:
-          impl_proto->set_kind(Fuzzing::ImplDeclaration::INTERNAL_IMPL);
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::InternalImpl);
           break;
         case ImplKind::ExternalImpl:
-          impl_proto->set_kind(Fuzzing::ImplDeclaration::EXTERNAL_IMPL);
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::ExternalImpl);
           break;
       }
       *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());

@@ -84,8 +84,8 @@ message IdentifierExpression {
 
 message IntrinsicExpression {
   enum Intrinsic {
-    INTRINSIC_UNKNOWN = 0;
-    INTRINSIC_PRINT = 1;
+    UnknownIntrinsic = 0;
+    Print = 1;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
@@ -264,10 +264,10 @@ message Statement {
 
 message ReturnTerm {
   enum ReturnKind {
-    RK_UNKNOWN = 0;
-    RK_OMITTED = 1;
-    RK_AUTO = 2;
-    RK_EXPRESSION = 3;
+    UnknownReturnKind = 0;
+    Omitted = 1;
+    Auto = 2;
+    Expression = 3;
   }
   optional ReturnKind kind = 1;
   optional Expression type = 2;
@@ -315,9 +315,9 @@ message InterfaceDeclaration {
 
 message ImplDeclaration {
   enum ImplKind {
-    IMPL_UNKNONW = 0;
-    INTERNAL_IMPL = 1;
-    EXTERNAL_IMPL = 2;
+    UnknownImplKind = 0;
+    InternalImpl = 1;
+    ExternalImpl = 2;
   }
 
   optional ImplKind kind = 1;
