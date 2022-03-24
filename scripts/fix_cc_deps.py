@@ -36,7 +36,8 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
 # TODO: proto rules are aspect-based and their generated files don't show up in
 # `bazel query` output.
 # Try using `bazel cquery --output=starlark` to print `target.files`.
-IGNORE_HEADER_REGEX = re.compile("^.*\\.pb\\.h$")
+# For protobuf, need to add support for `alias` rule kind.
+IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)|(.*google/protobuf/.*)$")
 
 
 class Rule(NamedTuple):
