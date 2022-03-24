@@ -406,7 +406,7 @@ auto TypeChecker::Substitute(
       for (const auto& [name, value] : class_type.type_args()) {
         type_args[name] = Substitute(dict, value);
       }
-      const auto& new_class_type =
+      Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(&class_type.declaration(), type_args);
       if (trace_) {
         llvm::outs() << "substitution: " << class_type << " => "

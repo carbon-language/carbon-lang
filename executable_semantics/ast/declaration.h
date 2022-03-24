@@ -170,10 +170,12 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto type_params() const -> std::optional<const TuplePattern*> {
+  auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
   }
-  auto type_params() -> std::optional<TuplePattern*> { return type_params_; }
+  auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
+    return type_params_;
+  }
 
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
