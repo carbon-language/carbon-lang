@@ -35,10 +35,11 @@ enum class DiagnosticLevel : int8_t {
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
 //
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define DIAGNOSTIC(DiagnosticName, Level, Format, ...)                      \
-  static constexpr auto DiagnosticName =                                    \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
-                                            DiagnosticLevel::Level, Format);
+#define DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
+  static constexpr auto DiagnosticName =               \
+      Internal::DiagnosticBase<__VA_ARGS__>(           \
+          ::Carbon::DiagnosticKind::DiagnosticName,    \
+          ::Carbon::DiagnosticLevel::Level, Format);
 
 // Provides a definition of a diagnostic with a custom formatter. The custom
 // format function is called with the format string and all type arguments.
@@ -51,12 +52,12 @@ enum class DiagnosticLevel : int8_t {
 //                              radix == 16 ? "hexadecimal" : "decimal");
 //       },
 //       int);
-#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,  \
-                                  ...)                                      \
-  static constexpr auto DiagnosticName =                                    \
-      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(::Carbon::DiagnosticKind::DiagnosticName, \
-                                            ::Carbon::DiagnosticLevel::Level, Format, \
-                                            FormatFn)
+#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn, \
+                                  ...)                                     \
+  static constexpr auto DiagnosticName =                                   \
+      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(                     \
+          ::Carbon::DiagnosticKind::DiagnosticName,                        \
+          ::Carbon::DiagnosticLevel::Level, Format, FormatFn)
 
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.

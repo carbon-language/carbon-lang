@@ -266,7 +266,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (fn_type.deduced().size() > 0) {
+      if (!fn_type.deduced().empty()) {
         out << "[";
         unsigned int i = 0;
         for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {

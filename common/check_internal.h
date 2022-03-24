@@ -52,7 +52,7 @@ class ExitingStream {
     return *this;
   }
 
-  auto operator<<(AddSeparator /*unused*/) -> ExitingStream& {
+  auto operator<<(AddSeparator /*discarded*/) -> ExitingStream& {
     separator_ = true;
     return *this;
   }
@@ -60,7 +60,7 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*unused*/, ExitingStream& rhs) {
+  [[noreturn]] friend auto operator|(Helper /*discarded*/, ExitingStream& rhs) {
     // Finish with a newline.
     llvm::errs() << "\n";
     if (rhs.treat_as_bug_) {

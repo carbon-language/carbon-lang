@@ -81,15 +81,8 @@ DIAGNOSTIC(ExpectedFunctionBodyOrSemi, Error,
 DIAGNOSTIC(ExpectedVariableName, Error,
            "Expected pattern in `var` declaration.");
 DIAGNOSTIC(ExpectedParameterName, Error, "Expected parameter declaration.");
-DIAGNOSTIC_WITH_FORMAT_FN(
-    ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
-    [](llvm::StringLiteral format, const bool& can_be_type,
-       const bool& can_be_value) -> std::string {
-      return llvm::formatv(format.data(), can_be_type ? "`.field: type`" : "",
-                           (can_be_type && can_be_value) ? " or " : "",
-                           can_be_value ? "`.field = value`" : "");
-    },
-    bool, bool);
+DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
+           llvm::StringRef, llvm::StringRef, llvm::StringRef);
 DIAGNOSTIC(UnrecognizedDeclaration, Error,
            "Unrecognized declaration introducer.");
 DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
@@ -657,8 +650,10 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         auto diagnose_invalid_syntax = [&] {
           bool can_be_type = kind != Value;
           bool can_be_value = kind != Type;
-          emitter_.Emit(*position_, ExpectedStructLiteralField, can_be_type,
-                        can_be_value);
+          emitter_.Emit(*position_, ExpectedStructLiteralField,
+                        can_be_type ? "`.field: type`" : "",
+                        (can_be_type && can_be_value) ? " or " : "",
+                        can_be_value ? "`.field = value`" : "");
           return llvm::None;
         };
 
