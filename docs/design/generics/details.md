@@ -4456,8 +4456,8 @@ interface Negatable {
 }
 ```
 
-Expressions using operators are rewritten into calls to these interface methods. For
-example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
+Expressions using operators are rewritten into calls to these interface methods.
+For example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
 
 The interfaces and rewrites used for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
@@ -4483,8 +4483,8 @@ parameterization of the interface means it can be implemented multiple times to
 support multiple operand types.
 
 Unlike `as`, for most binary operators the interface's argument will be the
-_type_ of the right-hand operand instead of its _value_.
-Consider an interface for a binary operator like `*`:
+_type_ of the right-hand operand instead of its _value_. Consider an interface
+for a binary operator like `*`:
 
 ```
 // Binary `*`.
