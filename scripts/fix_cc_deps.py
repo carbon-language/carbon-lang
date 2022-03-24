@@ -25,8 +25,18 @@ import scripts_utils  # type: ignore
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
-    "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x)
+    # @llvm-project//llvm:include/llvm/Support/Error.h ->
+    #   llvm/Support/Error.h
+    "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x),
+    # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
+    #   google/protobuf/descriptor.h
+    "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
 }
+
+# TODO: proto rules are aspect-based and their generated files don't show up in
+# `bazel query` output.
+# Try using `bazel cquery --output=starlark` to print `target.files`.
+IGNORE_HEADER_REGEX = re.compile("^.*\\.pb\\.h$")
 
 
 class Rule(NamedTuple):
@@ -155,6 +165,12 @@ def get_missing_deps(
                 r'^#include "([^"]+)"', f.read(), re.MULTILINE
             ):
                 if header in rule_files:
+                    continue
+                if IGNORE_HEADER_REGEX.match(header):
+                    print(
+                        f"Ignored missing #include '{header}' in "
+                        f"'{source_file}'"
+                    )
                     continue
                 if header not in header_to_rule_map:
                     exit(

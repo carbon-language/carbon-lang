@@ -1,0 +1,62 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "common/fuzzing/proto_to_carbon.h"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "executable_semantics/fuzzing/ast_to_proto.h"
+#include "executable_semantics/syntax/parse.h"
+
+namespace Carbon::Testing {
+namespace {
+
+static std::vector<llvm::StringRef>* carbon_files = nullptr;
+
+// Returns a string representation of `ast`.
+std::string AstToString(const AST& ast) {
+  std::string s;
+  llvm::raw_string_ostream out(s);
+  out << "package " << ast.package.package << (ast.is_api ? "api" : "impl")
+      << ";\n";
+  for (auto* declaration : ast.declarations) {
+    out << *declaration << "\n";
+  }
+  return s;
+}
+
+TEST(ProtoToCarbonTest, Roundtrip) {
+  int parsed_ok_count = 0;
+  for (const llvm::StringRef f : *carbon_files) {
+    Carbon::Arena arena;
+    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
+    if (ast.ok()) {
+      ++parsed_ok_count;
+      const std::string source_from_proto = ProtoToCarbon(AstToProto(*ast));
+      SCOPED_TRACE(testing::Message()
+                   << "Carbon file: " << f << ", source from proto:\n"
+                   << source_from_proto);
+      const ErrorOr<AST> ast_from_proto = Carbon::ParseFromString(
+          &arena, f, source_from_proto, /*trace=*/false);
+
+      EXPECT_TRUE(ast_from_proto.ok())
+          << "Parse error " << ast_from_proto.error().message();
+      if (ast_from_proto.ok()) {
+        EXPECT_EQ(AstToString(*ast_from_proto), AstToString(*ast));
+      }
+    }
+  }
+  EXPECT_GT(parsed_ok_count, 0);  // Makes sure files were actually procced.
+}
+
+}  // namespace
+}  // namespace Carbon::Testing
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  Carbon::Testing::carbon_files =
+      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
+  return RUN_ALL_TESTS();
+}

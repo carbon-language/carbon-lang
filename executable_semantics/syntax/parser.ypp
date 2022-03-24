@@ -785,8 +785,9 @@ deduced_param_list:
     }
 | generic_binding COMMA deduced_param_list
     {
-      $$ = $3;
+      $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
+      $$.insert($$.end(), $3.begin(), $3.end());
     }
 | variable_declaration
     {
