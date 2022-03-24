@@ -17,32 +17,36 @@ namespace Carbon {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
-DIAGNOSTIC(ContentBeforeStringTerminator, Error,
-           "Only whitespace is permitted before the closing `\"\"\"` of a "
-           "multi-line string.");
-DIAGNOSTIC(
+CARBON_DIAGNOSTIC(
+    ContentBeforeStringTerminator, Error,
+    "Only whitespace is permitted before the closing `\"\"\"` of a "
+    "multi-line string.");
+CARBON_DIAGNOSTIC(
     UnicodeEscapeTooLarge, Error,
     "Code point specified by `\\u{{...}}` escape is greater than 0x10FFFF.");
-DIAGNOSTIC(
+CARBON_DIAGNOSTIC(
     UnicodeEscapeSurrogate, Error,
     "Code point specified by `\\u{{...}}` escape is a surrogate character.");
-DIAGNOSTIC(UnicodeEscapeMissingBracedDigits, Error,
-           "Escape sequence `\\u` must be followed by a braced sequence of "
-           "uppercase hexadecimal digits, for example `\\u{{70AD}}`.");
-DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
-           "Escape sequence `\\x` must be followed by two "
-           "uppercase hexadecimal digits, for example `\\x0F`.");
-DIAGNOSTIC(DecimalEscapeSequence, Error,
-           "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
-           "of `\\0` if the next character is a digit.");
-DIAGNOSTIC(UnknownEscapeSequence, Error, "Unrecognized escape sequence `{0}`.",
-           char);
-DIAGNOSTIC(MismatchedIndentInString, Error,
-           "Indentation does not match that of the closing \"\"\" in "
-           "multi-line string literal.");
-DIAGNOSTIC(InvalidHorizontalWhitespaceInString, Error,
-           "Whitespace other than plain space must be expressed with an escape "
-           "sequence in a string literal.");
+CARBON_DIAGNOSTIC(
+    UnicodeEscapeMissingBracedDigits, Error,
+    "Escape sequence `\\u` must be followed by a braced sequence of "
+    "uppercase hexadecimal digits, for example `\\u{{70AD}}`.");
+CARBON_DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
+                  "Escape sequence `\\x` must be followed by two "
+                  "uppercase hexadecimal digits, for example `\\x0F`.");
+CARBON_DIAGNOSTIC(
+    DecimalEscapeSequence, Error,
+    "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
+    "of `\\0` if the next character is a digit.");
+CARBON_DIAGNOSTIC(UnknownEscapeSequence, Error,
+                  "Unrecognized escape sequence `{0}`.", char);
+CARBON_DIAGNOSTIC(MismatchedIndentInString, Error,
+                  "Indentation does not match that of the closing \"\"\" in "
+                  "multi-line string literal.");
+CARBON_DIAGNOSTIC(
+    InvalidHorizontalWhitespaceInString, Error,
+    "Whitespace other than plain space must be expressed with an escape "
+    "sequence in a string literal.");
 
 static constexpr char MultiLineIndicator[] = R"(""")";
 

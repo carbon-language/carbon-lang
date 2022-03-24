@@ -17,7 +17,8 @@
 
 namespace Carbon {
 
-DIAGNOSTIC(StackLimitExceeded, Error, "Exceeded recursion limit ({0})", int);
+CARBON_DIAGNOSTIC(StackLimitExceeded, Error, "Exceeded recursion limit ({0})",
+                  int);
 
 // Manages the parser's stack depth, particularly decrementing on destruction.
 // This should only be instantiated through RETURN_IF_STACK_LIMITED.
@@ -73,37 +74,45 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   return out;
 }
 
-DIAGNOSTIC(ExpectedFunctionName, Error,
-           "Expected function name after `fn` keyword.");
-DIAGNOSTIC(ExpectedFunctionParams, Error, "Expected `(` after function name.");
-DIAGNOSTIC(ExpectedFunctionBodyOrSemi, Error,
-           "Expected function definition or `;` after function declaration.");
-DIAGNOSTIC(ExpectedVariableName, Error,
-           "Expected pattern in `var` declaration.");
-DIAGNOSTIC(ExpectedParameterName, Error, "Expected parameter declaration.");
-DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
-           llvm::StringRef, llvm::StringRef, llvm::StringRef);
-DIAGNOSTIC(UnrecognizedDeclaration, Error,
-           "Unrecognized declaration introducer.");
-DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
-DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
-DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.", TokenKind);
-DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
-DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
-           "Expected `;` after expression.");
-DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.", TokenKind);
-DIAGNOSTIC(ExpectedIdentifierAfterDot, Error, "Expected identifier after `.`.");
-DIAGNOSTIC(UnexpectedTokenAfterListElement, Error, "Expected `,` or `{0}`.",
-           TokenKind);
-DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-           "Whitespace missing {0} binary operator.", RelativeLocation);
-DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-           "Whitespace is not allowed {0} this unary operator.",
-           RelativeLocation);
-DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-           "Whitespace is required {0} this unary operator.", RelativeLocation);
-DIAGNOSTIC(OperatorRequiresParentheses, Error,
-           "Parentheses are required to disambiguate operator precedence.");
+CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
+                  "Expected function name after `fn` keyword.");
+CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
+                  "Expected `(` after function name.");
+CARBON_DIAGNOSTIC(
+    ExpectedFunctionBodyOrSemi, Error,
+    "Expected function definition or `;` after function declaration.");
+CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
+                  "Expected pattern in `var` declaration.");
+CARBON_DIAGNOSTIC(ExpectedParameterName, Error,
+                  "Expected parameter declaration.");
+CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
+                  llvm::StringRef, llvm::StringRef, llvm::StringRef);
+CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                  "Unrecognized declaration introducer.");
+CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
+CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
+CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+                  TokenKind);
+CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
+CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
+                  "Expected `;` after expression.");
+CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
+                  TokenKind);
+CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
+                  "Expected identifier after `.`.");
+CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
+                  "Expected `,` or `{0}`.", TokenKind);
+CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
+                  "Whitespace missing {0} binary operator.", RelativeLocation);
+CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
+                  "Whitespace is not allowed {0} this unary operator.",
+                  RelativeLocation);
+CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
+                  "Whitespace is required {0} this unary operator.",
+                  RelativeLocation);
+CARBON_DIAGNOSTIC(
+    OperatorRequiresParentheses, Error,
+    "Parentheses are required to disambiguate operator precedence.");
 
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)

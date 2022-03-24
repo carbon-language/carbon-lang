@@ -27,18 +27,18 @@ enum class DiagnosticLevel : int8_t {
 };
 
 // Provides a definition of a diagnostic. For example:
-//   DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
-//   DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
+//   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
+//   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
 //              llvm::StringRef, llvm::StringRef);
 //
 // Arguments are passed to llvm::formatv; see:
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
 //
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
-  static constexpr auto DiagnosticName =               \
-      Internal::DiagnosticBase<__VA_ARGS__>(           \
-          ::Carbon::DiagnosticKind::DiagnosticName,    \
+#define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
+  static constexpr auto DiagnosticName =                      \
+      Internal::DiagnosticBase<__VA_ARGS__>(                  \
+          ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 
 struct DiagnosticLocation {

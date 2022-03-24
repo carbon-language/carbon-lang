@@ -31,22 +31,24 @@ static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
   return out;
 }
 
-DIAGNOSTIC(InvalidDigitSeparator, Error,
-           "Misplaced digit separator in numeric literal.");
-DIAGNOSTIC(InvalidDigit, Error, "Invalid digit '{0}' in {1} numeric literal.",
-           char, LexedNumericLiteral::Radix);
-DIAGNOSTIC(EmptyDigitSequence, Error,
-           "Empty digit sequence in numeric literal.");
-DIAGNOSTIC(IrregularDigitSeparators, Error,
-           "Digit separators in {0} number should appear every {1} characters "
-           "from the right.",
-           LexedNumericLiteral::Radix, int);
-DIAGNOSTIC(UnknownBaseSpecifier, Error,
-           "Unknown base specifier in numeric literal.");
-DIAGNOSTIC(BinaryRealLiteral, Error,
-           "Binary real number literals are not supported.");
-DIAGNOSTIC(WrongRealLiteralExponent, Error,
-           "Expected '{0}' to introduce exponent.", char);
+CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
+                  "Misplaced digit separator in numeric literal.");
+CARBON_DIAGNOSTIC(InvalidDigit, Error,
+                  "Invalid digit '{0}' in {1} numeric literal.", char,
+                  LexedNumericLiteral::Radix);
+CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
+                  "Empty digit sequence in numeric literal.");
+CARBON_DIAGNOSTIC(
+    IrregularDigitSeparators, Error,
+    "Digit separators in {0} number should appear every {1} characters "
+    "from the right.",
+    LexedNumericLiteral::Radix, int);
+CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
+                  "Unknown base specifier in numeric literal.");
+CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
+                  "Binary real number literals are not supported.");
+CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
+                  "Expected '{0}' to introduce exponent.", char);
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedNumericLiteral> {

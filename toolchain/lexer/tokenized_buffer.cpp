@@ -27,16 +27,17 @@
 
 namespace Carbon {
 
-DIAGNOSTIC(TrailingComment, Error, "Trailing comments are not permitted.");
-DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-           "Whitespace is required after '//'.");
-DIAGNOSTIC(UnmatchedClosing, Error,
-           "Closing symbol without a corresponding opening symbol.");
-DIAGNOSTIC(MismatchedClosing, Error,
-           "Closing symbol does not match most recent opening symbol.");
-DIAGNOSTIC(UnrecognizedCharacters, Error,
-           "Encountered unrecognized characters while parsing.");
-DIAGNOSTIC(UnterminatedString, Error, "String is missing a terminator.");
+CARBON_DIAGNOSTIC(TrailingComment, Error,
+                  "Trailing comments are not permitted.");
+CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
+                  "Whitespace is required after '//'.");
+CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                  "Closing symbol without a corresponding opening symbol.");
+CARBON_DIAGNOSTIC(MismatchedClosing, Error,
+                  "Closing symbol does not match most recent opening symbol.");
+CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
+                  "Encountered unrecognized characters while parsing.");
+CARBON_DIAGNOSTIC(UnterminatedString, Error, "String is missing a terminator.");
 
 // TODO: Move Overload and VariantMatch somewhere more central.
 

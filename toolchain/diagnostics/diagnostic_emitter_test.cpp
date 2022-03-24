@@ -30,7 +30,7 @@ class DiagnosticEmitterTest : public ::testing::Test {
 };
 
 TEST_F(DiagnosticEmitterTest, EmitSimpleError) {
-  DIAGNOSTIC(TestDiagnostic, Error, "simple error");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
   EXPECT_CALL(consumer_, HandleDiagnostic(IsDiagnostic(
                              DiagnosticKind::TestDiagnostic,
                              DiagnosticLevel::Error, 1, 1, "simple error")));
@@ -42,7 +42,7 @@ TEST_F(DiagnosticEmitterTest, EmitSimpleError) {
 }
 
 TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
-  DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");
   EXPECT_CALL(consumer_,
               HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                             DiagnosticLevel::Warning, 1, 1,
@@ -51,7 +51,7 @@ TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
 }
 
 TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
-  DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", llvm::StringRef);
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "arg: `{0}`", llvm::StringRef);
   EXPECT_CALL(consumer_, HandleDiagnostic(IsDiagnostic(
                              DiagnosticKind::TestDiagnostic,
                              DiagnosticLevel::Error, 1, 1, "arg: `str`")));

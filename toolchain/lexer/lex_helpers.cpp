@@ -20,10 +20,11 @@ auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
   // is far above the threshold for normal integers.
   constexpr size_t DigitLimit = 1000;
   if (text.size() > DigitLimit) {
-    DIAGNOSTIC(TooManyDigits, Error,
-               "Found a sequence of {0} digits, which is greater than the "
-               "limit of {1}.",
-               size_t, size_t);
+    CARBON_DIAGNOSTIC(
+        TooManyDigits, Error,
+        "Found a sequence of {0} digits, which is greater than the "
+        "limit of {1}.",
+        size_t, size_t);
     emitter.Emit(text.begin(), TooManyDigits, text.size(), DigitLimit);
     return false;
   }
