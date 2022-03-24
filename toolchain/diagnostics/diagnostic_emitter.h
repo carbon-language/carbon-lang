@@ -54,9 +54,9 @@ enum class DiagnosticLevel : int8_t {
 #define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn,  \
                                   ...)                                      \
   static constexpr auto DiagnosticName =                                    \
-      Internal::DiagnosticBase<__VA_ARGS__>(DiagnosticKind::DiagnosticName, \
-                                            DiagnosticLevel::Level, Format, \
-                                            FormatFn);
+      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(::Carbon::DiagnosticKind::DiagnosticName, \
+                                            ::Carbon::DiagnosticLevel::Level, Format, \
+                                            FormatFn)
 
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.
