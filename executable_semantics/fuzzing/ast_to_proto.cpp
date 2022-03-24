@@ -32,52 +32,31 @@ static auto LibraryNameToProto(const LibraryName& library_name)
   return library_name_proto;
 }
 
-static auto OperatorToUnaryProtoEnum(const Operator op)
-    -> std::optional<Fuzzing::UnaryOperatorExpression::UnaryOperator> {
+static auto OperatorToProtoEnum(const Operator op)
+    -> Fuzzing::PrimitiveOperatorExpression::Operator {
   switch (op) {
     case Operator::AddressOf:
-      return Fuzzing::UnaryOperatorExpression::AddressOf;
+      return Fuzzing::PrimitiveOperatorExpression::AddressOf;
     case Operator::Deref:
-      return Fuzzing::UnaryOperatorExpression::Deref;
+      return Fuzzing::PrimitiveOperatorExpression::Deref;
     case Operator::Neg:
-      return Fuzzing::UnaryOperatorExpression::Neg;
+      return Fuzzing::PrimitiveOperatorExpression::Neg;
     case Operator::Not:
-      return Fuzzing::UnaryOperatorExpression::Not;
+      return Fuzzing::PrimitiveOperatorExpression::Not;
     case Operator::Ptr:
-      return Fuzzing::UnaryOperatorExpression::Ptr;
-
+      return Fuzzing::PrimitiveOperatorExpression::Ptr;
     case Operator::Add:
+      return Fuzzing::PrimitiveOperatorExpression::Add;
     case Operator::And:
+      return Fuzzing::PrimitiveOperatorExpression::And;
     case Operator::Eq:
+      return Fuzzing::PrimitiveOperatorExpression::Eq;
     case Operator::Mul:
+      return Fuzzing::PrimitiveOperatorExpression::Mul;
     case Operator::Or:
+      return Fuzzing::PrimitiveOperatorExpression::Or;
     case Operator::Sub:
-      return std::nullopt;
-  }
-}
-
-static auto OperatorToBinaryProtoEnum(const Operator op)
-    -> std::optional<Fuzzing::BinaryOperatorExpression::BinaryOperator> {
-  switch (op) {
-    case Operator::Add:
-      return Fuzzing::BinaryOperatorExpression::Add;
-    case Operator::And:
-      return Fuzzing::BinaryOperatorExpression::And;
-    case Operator::Eq:
-      return Fuzzing::BinaryOperatorExpression::Eq;
-    case Operator::Mul:
-      return Fuzzing::BinaryOperatorExpression::Mul;
-    case Operator::Or:
-      return Fuzzing::BinaryOperatorExpression::Or;
-    case Operator::Sub:
-      return Fuzzing::BinaryOperatorExpression::Sub;
-
-    case Operator::AddressOf:
-    case Operator::Deref:
-    case Operator::Neg:
-    case Operator::Not:
-    case Operator::Ptr:
-      return std::nullopt;
+      return Fuzzing::PrimitiveOperatorExpression::Sub;
   }
 }
 
@@ -140,28 +119,10 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::PrimitiveOperatorExpression: {
       const auto& primitive_operator =
           cast<PrimitiveOperatorExpression>(expression);
-      if (const auto unary_op_enum =
-              OperatorToUnaryProtoEnum(primitive_operator.op());
-          unary_op_enum.has_value()) {
-        CHECK(primitive_operator.arguments().size() == 1);
-        auto* unary_operator_proto = expression_proto.mutable_unary_operator();
-        unary_operator_proto->set_op(*unary_op_enum);
-        *unary_operator_proto->mutable_arg() =
-            ExpressionToProto(*primitive_operator.arguments()[0]);
-      } else if (const auto binary_op_enum =
-                     OperatorToBinaryProtoEnum(primitive_operator.op());
-                 binary_op_enum.has_value()) {
-        CHECK(primitive_operator.arguments().size() == 2);
-        auto* binary_operator_proto =
-            expression_proto.mutable_binary_operator();
-        binary_operator_proto->set_op(*binary_op_enum);
-        *binary_operator_proto->mutable_lhs() =
-            ExpressionToProto(*primitive_operator.arguments()[0]);
-        *binary_operator_proto->mutable_rhs() =
-            ExpressionToProto(*primitive_operator.arguments()[1]);
-      } else {
-        FATAL() << "Unknown operator "
-                << static_cast<int>(primitive_operator.op());
+      auto* operator_proto = expression_proto.mutable_primitive_operator();
+      operator_proto->set_op(OperatorToProtoEnum(primitive_operator.op()));
+      for (Nonnull<const Expression*> arg : primitive_operator.arguments()) {
+        *operator_proto->add_argument() = ExpressionToProto(*arg);
       }
       break;
     }
