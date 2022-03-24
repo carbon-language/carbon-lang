@@ -113,16 +113,11 @@ namespace Internal {
 // This stores static information about a diagnostic category.
 template <typename... Args>
 struct DiagnosticBase {
-  // This is the underlying format function type. It's wrapped for Diagnostic in
-  // order to hide Args type information.
-  using RawFormatFnType = std::string (*)(llvm::StringLiteral format,
-                                          const Args&... args);
-
   constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                            llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {}
 
-  // Calls RawFormatFn with the diagnostic's arguments.
+  // Calls formatv with the diagnostic's arguments.
   auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
     return FormatFnImpl(diagnostic,
                         std::make_index_sequence<sizeof...(Args)>());
