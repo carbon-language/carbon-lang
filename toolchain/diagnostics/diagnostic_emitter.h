@@ -41,24 +41,6 @@ enum class DiagnosticLevel : int8_t {
           ::Carbon::DiagnosticKind::DiagnosticName,    \
           ::Carbon::DiagnosticLevel::Level, Format);
 
-// Provides a definition of a diagnostic with a custom formatter. The custom
-// format function is called with the format string and all type arguments.
-//
-// For example:
-//   DIAGNOSTIC_WITH_FORMAT_FN(
-//       MyDiagnostic, Error, "Number is {0}.",
-//       [](llvm::StringLiteral format, int radix) {
-//         return llvm::formatv(format,
-//                              radix == 16 ? "hexadecimal" : "decimal");
-//       },
-//       int);
-#define DIAGNOSTIC_WITH_FORMAT_FN(DiagnosticName, Level, Format, FormatFn, \
-                                  ...)                                     \
-  static constexpr auto DiagnosticName =                                   \
-      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(                     \
-          ::Carbon::DiagnosticKind::DiagnosticName,                        \
-          ::Carbon::DiagnosticLevel::Level, Format, FormatFn)
-
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.
   // TODO: Move this out of DiagnosticLocation, as part of an expectation that
@@ -137,9 +119,8 @@ struct DiagnosticBase {
                                           const Args&... args);
 
   constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
-                           llvm::StringLiteral format,
-                           RawFormatFnType raw_format_fn = &DefaultRawFormatFn)
-      : Kind(kind), Level(level), Format(format), RawFormatFn(raw_format_fn) {}
+                           llvm::StringLiteral format)
+      : Kind(kind), Level(level), Format(format) {}
 
   // Calls RawFormatFn with the diagnostic's arguments.
   auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
@@ -155,24 +136,14 @@ struct DiagnosticBase {
   llvm::StringLiteral Format;
 
  private:
-  // Handles the cast of llvm::Any to Args types, calling the format function.
+  // Handles the cast of llvm::Any to Args types for formatv.
   template <std::size_t... N>
   inline auto FormatFnImpl(const Diagnostic& diagnostic,
                            std::index_sequence<N...>) const -> std::string {
     assert(diagnostic.format_args.size() == sizeof...(Args));
-    return RawFormatFn(diagnostic.format,
-                       llvm::any_cast<Args>(diagnostic.format_args[N])...);
+    return llvm::formatv(diagnostic.format.data(),
+                         llvm::any_cast<Args>(diagnostic.format_args[N])...);
   }
-
-  // A generic format function, replaced by DIAGNOSTIC_WITH_FORMAT_FN (which
-  // passes raw_format_fn to the constructor).
-  static auto DefaultRawFormatFn(llvm::StringLiteral format,
-                                 const Args&... args) -> std::string {
-    return llvm::formatv(format.data(), args...);
-  }
-
-  // The function to use for formatting.
-  RawFormatFnType RawFormatFn;
 };
 
 }  // namespace Internal

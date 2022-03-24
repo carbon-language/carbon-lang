@@ -58,15 +58,5 @@ TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
   emitter_.Emit(1, TestDiagnostic, "str");
 }
 
-TEST_F(DiagnosticEmitterTest, EmitCustomFormat) {
-  DIAGNOSTIC_WITH_FORMAT_FN(
-      TestDiagnostic, Error, "unused",
-      [](llvm::StringLiteral) -> std::string { return "custom format"; });
-  EXPECT_CALL(consumer_, HandleDiagnostic(IsDiagnostic(
-                             DiagnosticKind::TestDiagnostic,
-                             DiagnosticLevel::Error, 1, 1, "custom format")));
-  emitter_.Emit(1, TestDiagnostic);
-}
-
 }  // namespace
 }  // namespace Carbon::Testing
