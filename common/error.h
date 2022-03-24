@@ -26,7 +26,10 @@ class [[nodiscard]] Error {
     CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
-  Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
+  Error(const Error&) = default;
+  Error(Error&&) = default;
+  auto operator=(const Error&) -> Error& = default;
+  auto operator=(Error&&) -> Error& = default;
 
   // Prints the error string. Note this marks as used.
   void Print(llvm::raw_ostream& out) const { out << message(); }
@@ -54,21 +57,23 @@ class [[nodiscard]] ErrorOr {
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(T val) : val_(std::move(val)) {}
 
-  // Moves held state.
-  ErrorOr(ErrorOr&& other) noexcept : val_(std::move(other.val_)) {}
+  // ErrorOr<T> is movable and copyable if T is.
+  //
+  // TODO: Consider SFINAE-disabling these operations when they would be
+  // invalid, so that is_constructible and similar traits give correct results.
+  ErrorOr(const ErrorOr&) = default;
+  ErrorOr(ErrorOr&&) noexcept = default;
+  auto operator=(const ErrorOr<T>&) -> ErrorOr<T>& = default;
+  auto operator=(ErrorOr<T>&&) noexcept -> ErrorOr<T>& = default;
 
   // Returns true for success.
   auto ok() const -> bool { return std::holds_alternative<T>(val_); }
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
-  auto error() const& -> const Error& {
+  auto error() const -> const Error& {
     CHECK(!ok());
     return std::get<Error>(val_);
-  }
-  auto error() && -> Error {
-    CHECK(!ok());
-    return std::get<Error>(std::move(val_));
   }
 
   // Returns the contained value.
