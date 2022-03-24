@@ -60,43 +60,31 @@ static auto LibraryNameToCarbon(const Fuzzing::LibraryName& library,
   }
 }
 
-static auto UnaryOperatorToString(
-    const Fuzzing::UnaryOperatorExpression::UnaryOperator op)
+static auto PrimitiveOperatorToString(
+    const Fuzzing::PrimitiveOperatorExpression::Operator op)
     -> std::string_view {
   switch (op) {
-    case Fuzzing::UnaryOperatorExpression::UnknownUnaryOperator:
+    case Fuzzing::PrimitiveOperatorExpression::UnknownOperator:
       return "-";  // Arbitrary default to avoid getting invalid syntax.
-    case Fuzzing::UnaryOperatorExpression::AddressOf:
+    case Fuzzing::PrimitiveOperatorExpression::AddressOf:
       return "&";
-    case Fuzzing::UnaryOperatorExpression::Deref:
+    case Fuzzing::PrimitiveOperatorExpression::Deref:
+    case Fuzzing::PrimitiveOperatorExpression::Mul:
+    case Fuzzing::PrimitiveOperatorExpression::Ptr:
       return "*";
-    case Fuzzing::UnaryOperatorExpression::Neg:
+    case Fuzzing::PrimitiveOperatorExpression::Neg:
+    case Fuzzing::PrimitiveOperatorExpression::Sub:
       return "-";
-    case Fuzzing::UnaryOperatorExpression::Not:
+    case Fuzzing::PrimitiveOperatorExpression::Not:
       return "not ";  // Needs a space to 'unglue' from the operand.
-    case Fuzzing::UnaryOperatorExpression::Ptr:
-      return "*";
-  }
-}
-
-static auto BinaryOperatorToString(
-    const Fuzzing::BinaryOperatorExpression::BinaryOperator op)
-    -> std::string_view {
-  switch (op) {
-    case Fuzzing::BinaryOperatorExpression::UnknownBinaryOperator:
-      return "+";  // Arbitrary default to avoid getting invalid syntax.
-    case Fuzzing::BinaryOperatorExpression::Add:
+    case Fuzzing::PrimitiveOperatorExpression::Add:
       return "+";
-    case Fuzzing::BinaryOperatorExpression::And:
+    case Fuzzing::PrimitiveOperatorExpression::And:
       return "and";
-    case Fuzzing::BinaryOperatorExpression::Eq:
+    case Fuzzing::PrimitiveOperatorExpression::Eq:
       return "==";
-    case Fuzzing::BinaryOperatorExpression::Mul:
-      return "*";
-    case Fuzzing::BinaryOperatorExpression::Or:
+    case Fuzzing::PrimitiveOperatorExpression::Or:
       return "or";
-    case Fuzzing::BinaryOperatorExpression::Sub:
-      return "-";
   }
 }
 
@@ -194,30 +182,36 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
-    // -a
-    case Fuzzing::Expression::kUnaryOperator: {
-      const auto& unary_operator = expression.unary_operator();
+    // -a, a + b
+    case Fuzzing::Expression::kPrimitiveOperator: {
+      const auto& primitive_operator = expression.primitive_operator();
+      const std::string_view op =
+          PrimitiveOperatorToString(primitive_operator.op());
       out << "(";
-      const bool postix =
-          unary_operator.op() == Fuzzing::UnaryOperatorExpression::Ptr;
-      if (!postix) {
-        out << UnaryOperatorToString(unary_operator.op());
-      }
-      ExpressionToCarbon(unary_operator.arg(), out);
-      if (postix) {
-        out << UnaryOperatorToString(unary_operator.op());
-      }
-      out << ")";
-      break;
-    }
+      switch (primitive_operator.argument().size()) {
+        case 0:
+          out << op;
+          break;
 
-    // a + b
-    case Fuzzing::Expression::kBinaryOperator: {
-      out << "(";
-      const auto& binary_operator = expression.binary_operator();
-      ExpressionToCarbon(binary_operator.lhs(), out);
-      out << " " << BinaryOperatorToString(binary_operator.op()) << " ";
-      ExpressionToCarbon(binary_operator.rhs(), out);
+        case 1: {
+          const bool postix = primitive_operator.op() ==
+                              Fuzzing::PrimitiveOperatorExpression::Ptr;
+          if (!postix) {
+            out << op;
+          }
+          ExpressionToCarbon(primitive_operator.argument(0), out);
+          if (postix) {
+            out << op;
+          }
+          break;
+        }
+
+        default:
+          ExpressionToCarbon(primitive_operator.argument(0), out);
+          out << " " << op << " ";
+          ExpressionToCarbon(primitive_operator.argument(1), out);
+          break;
+      }
       out << ")";
       break;
     }
@@ -269,8 +263,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       const auto& intrinsic = expression.intrinsic();
       if (intrinsic.has_intrinsic()) {
         switch (intrinsic.intrinsic()) {
-          case Fuzzing::IntrinsicExpression::INTRINSIC_UNKNOWN:
-          case Fuzzing::IntrinsicExpression::INTRINSIC_PRINT:
+          case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
+          case Fuzzing::IntrinsicExpression::Print:
             out << "__intrinsic_print";
             break;
         }
@@ -617,13 +611,13 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
 static auto ReturnTermToCarbon(const Fuzzing::ReturnTerm& return_term,
                                llvm::raw_ostream& out) -> void {
   switch (return_term.kind()) {
-    case Fuzzing::ReturnTerm::RK_UNKNOWN:
-    case Fuzzing::ReturnTerm::RK_OMITTED:
+    case Fuzzing::ReturnTerm::UnknownReturnKind:
+    case Fuzzing::ReturnTerm::Omitted:
       break;
-    case Fuzzing::ReturnTerm::RK_AUTO:
+    case Fuzzing::ReturnTerm::Auto:
       out << " -> auto";
       break;
-    case Fuzzing::ReturnTerm::RK_EXPRESSION:
+    case Fuzzing::ReturnTerm::Expression:
       out << " -> ";
       ExpressionToCarbon(return_term.type(), out);
       break;
@@ -756,7 +750,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     // }
     case Fuzzing::Declaration::kImpl: {
       const auto& impl = declaration.impl();
-      if (impl.kind() == Fuzzing::ImplDeclaration::EXTERNAL_IMPL) {
+      if (impl.kind() == Fuzzing::ImplDeclaration::ExternalImpl) {
         out << "external ";
       }
       out << "impl ";

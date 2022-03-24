@@ -33,32 +33,23 @@ message IndexExpression {
   optional Expression offset = 2;
 }
 
-message UnaryOperatorExpression {
-  enum UnaryOperator {
-    UnknownUnaryOperator = 0;
-    AddressOf = 1;
-    Deref = 2;
-    Neg = 3;
-    Not = 4;
-    Ptr = 5;
-  }
-  optional UnaryOperator op = 1;
-  optional Expression arg = 2;
-}
-
-message BinaryOperatorExpression {
-  enum BinaryOperator {
-    UnknownBinaryOperator = 0;
+message PrimitiveOperatorExpression {
+  enum Operator {
+    UnknownOperator = 0;
     Add = 1;
-    And = 2;
-    Eq = 3;
-    Mul = 4;
-    Or = 5;
-    Sub = 6;
+    AddressOf = 2;
+    And = 3;
+    Deref = 4;
+    Eq = 5;
+    Mul = 6;
+    Neg = 7;
+    Not = 8;
+    Or = 9;
+    Sub = 10;
+    Ptr = 11;
   }
-  optional BinaryOperator op = 1;
-  optional Expression lhs = 2;
-  optional Expression rhs = 3;
+  optional Operator op = 1;
+  repeated Expression argument = 2;
 }
 
 message TupleLiteralExpression {
@@ -84,8 +75,8 @@ message IdentifierExpression {
 
 message IntrinsicExpression {
   enum Intrinsic {
-    INTRINSIC_UNKNOWN = 0;
-    INTRINSIC_PRINT = 1;
+    UnknownIntrinsic = 0;
+    Print = 1;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
@@ -125,23 +116,22 @@ message Expression {
     FunctionTypeLiteral function_type = 2;
     FieldAccessExpression field_access = 3;
     IndexExpression index = 4;
-    UnaryOperatorExpression unary_operator = 5;
-    BinaryOperatorExpression binary_operator = 6;
-    TupleLiteralExpression tuple_literal = 7;
-    StructLiteralExpression struct_literal = 8;
-    StructTypeLiteralExpression struct_type_literal = 9;
-    IdentifierExpression identifier = 10;
-    IntrinsicExpression intrinsic = 11;
-    IfExpression if_expression = 12;
-    BoolTypeLiteral bool_type_literal = 13;
-    BoolLiteral bool_literal = 14;
-    IntTypeLiteral int_type_literal = 15;
-    ContinuationTypeLiteral continuation_type_literal = 16;
-    IntLiteral int_literal = 17;
-    StringLiteral string_literal = 18;
-    StringTypeLiteral string_type_literal = 19;
-    TypeTypeLiteral type_type_literal = 20;
-    UnimplementedExpression unimplemented_expression = 21;
+    PrimitiveOperatorExpression primitive_operator = 5;
+    TupleLiteralExpression tuple_literal = 6;
+    StructLiteralExpression struct_literal = 7;
+    StructTypeLiteralExpression struct_type_literal = 8;
+    IdentifierExpression identifier = 9;
+    IntrinsicExpression intrinsic = 10;
+    IfExpression if_expression = 11;
+    BoolTypeLiteral bool_type_literal = 12;
+    BoolLiteral bool_literal = 13;
+    IntTypeLiteral int_type_literal = 14;
+    ContinuationTypeLiteral continuation_type_literal = 15;
+    IntLiteral int_literal = 16;
+    StringLiteral string_literal = 17;
+    StringTypeLiteral string_type_literal = 18;
+    TypeTypeLiteral type_type_literal = 19;
+    UnimplementedExpression unimplemented_expression = 20;
   }
 }
 
@@ -264,10 +254,10 @@ message Statement {
 
 message ReturnTerm {
   enum ReturnKind {
-    RK_UNKNOWN = 0;
-    RK_OMITTED = 1;
-    RK_AUTO = 2;
-    RK_EXPRESSION = 3;
+    UnknownReturnKind = 0;
+    Omitted = 1;
+    Auto = 2;
+    Expression = 3;
   }
   optional ReturnKind kind = 1;
   optional Expression type = 2;
@@ -315,9 +305,9 @@ message InterfaceDeclaration {
 
 message ImplDeclaration {
   enum ImplKind {
-    IMPL_UNKNONW = 0;
-    INTERNAL_IMPL = 1;
-    EXTERNAL_IMPL = 2;
+    UnknownImplKind = 0;
+    InternalImpl = 1;
+    ExternalImpl = 2;
   }
 
   optional ImplKind kind = 1;

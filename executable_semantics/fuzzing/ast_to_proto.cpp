@@ -32,52 +32,31 @@ static auto LibraryNameToProto(const LibraryName& library_name)
   return library_name_proto;
 }
 
-static auto OperatorToUnaryProtoEnum(const Operator op)
-    -> std::optional<Fuzzing::UnaryOperatorExpression::UnaryOperator> {
+static auto OperatorToProtoEnum(const Operator op)
+    -> Fuzzing::PrimitiveOperatorExpression::Operator {
   switch (op) {
     case Operator::AddressOf:
-      return Fuzzing::UnaryOperatorExpression::AddressOf;
+      return Fuzzing::PrimitiveOperatorExpression::AddressOf;
     case Operator::Deref:
-      return Fuzzing::UnaryOperatorExpression::Deref;
+      return Fuzzing::PrimitiveOperatorExpression::Deref;
     case Operator::Neg:
-      return Fuzzing::UnaryOperatorExpression::Neg;
+      return Fuzzing::PrimitiveOperatorExpression::Neg;
     case Operator::Not:
-      return Fuzzing::UnaryOperatorExpression::Not;
+      return Fuzzing::PrimitiveOperatorExpression::Not;
     case Operator::Ptr:
-      return Fuzzing::UnaryOperatorExpression::Ptr;
-
+      return Fuzzing::PrimitiveOperatorExpression::Ptr;
     case Operator::Add:
+      return Fuzzing::PrimitiveOperatorExpression::Add;
     case Operator::And:
+      return Fuzzing::PrimitiveOperatorExpression::And;
     case Operator::Eq:
+      return Fuzzing::PrimitiveOperatorExpression::Eq;
     case Operator::Mul:
+      return Fuzzing::PrimitiveOperatorExpression::Mul;
     case Operator::Or:
+      return Fuzzing::PrimitiveOperatorExpression::Or;
     case Operator::Sub:
-      return std::nullopt;
-  }
-}
-
-static auto OperatorToBinaryProtoEnum(const Operator op)
-    -> std::optional<Fuzzing::BinaryOperatorExpression::BinaryOperator> {
-  switch (op) {
-    case Operator::Add:
-      return Fuzzing::BinaryOperatorExpression::Add;
-    case Operator::And:
-      return Fuzzing::BinaryOperatorExpression::And;
-    case Operator::Eq:
-      return Fuzzing::BinaryOperatorExpression::Eq;
-    case Operator::Mul:
-      return Fuzzing::BinaryOperatorExpression::Mul;
-    case Operator::Or:
-      return Fuzzing::BinaryOperatorExpression::Or;
-    case Operator::Sub:
-      return Fuzzing::BinaryOperatorExpression::Sub;
-
-    case Operator::AddressOf:
-    case Operator::Deref:
-    case Operator::Neg:
-    case Operator::Not:
-    case Operator::Ptr:
-      return std::nullopt;
+      return Fuzzing::PrimitiveOperatorExpression::Sub;
   }
 }
 
@@ -140,28 +119,10 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::PrimitiveOperatorExpression: {
       const auto& primitive_operator =
           cast<PrimitiveOperatorExpression>(expression);
-      if (const auto unary_op_enum =
-              OperatorToUnaryProtoEnum(primitive_operator.op());
-          unary_op_enum.has_value()) {
-        CHECK(primitive_operator.arguments().size() == 1);
-        auto* unary_operator_proto = expression_proto.mutable_unary_operator();
-        unary_operator_proto->set_op(*unary_op_enum);
-        *unary_operator_proto->mutable_arg() =
-            ExpressionToProto(*primitive_operator.arguments()[0]);
-      } else if (const auto binary_op_enum =
-                     OperatorToBinaryProtoEnum(primitive_operator.op());
-                 binary_op_enum.has_value()) {
-        CHECK(primitive_operator.arguments().size() == 2);
-        auto* binary_operator_proto =
-            expression_proto.mutable_binary_operator();
-        binary_operator_proto->set_op(*binary_op_enum);
-        *binary_operator_proto->mutable_lhs() =
-            ExpressionToProto(*primitive_operator.arguments()[0]);
-        *binary_operator_proto->mutable_rhs() =
-            ExpressionToProto(*primitive_operator.arguments()[1]);
-      } else {
-        FATAL() << "Unknown operator "
-                << static_cast<int>(primitive_operator.op());
+      auto* operator_proto = expression_proto.mutable_primitive_operator();
+      operator_proto->set_op(OperatorToProtoEnum(primitive_operator.op()));
+      for (Nonnull<const Expression*> arg : primitive_operator.arguments()) {
+        *operator_proto->add_argument() = ExpressionToProto(*arg);
       }
       break;
     }
@@ -203,8 +164,7 @@ static auto ExpressionToProto(const Expression& expression)
       auto* intrinsic_proto = expression_proto.mutable_intrinsic();
       switch (intrinsic.intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
-          intrinsic_proto->set_intrinsic(
-              Fuzzing::IntrinsicExpression::INTRINSIC_PRINT);
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
           break;
       }
       *intrinsic_proto->mutable_argument() =
@@ -449,11 +409,11 @@ static auto ReturnTermToProto(const ReturnTerm& return_term)
     -> Fuzzing::ReturnTerm {
   Fuzzing::ReturnTerm return_term_proto;
   if (return_term.is_omitted()) {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_OMITTED);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Omitted);
   } else if (return_term.is_auto()) {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_AUTO);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Auto);
   } else {
-    return_term_proto.set_kind(Fuzzing::ReturnTerm::RK_EXPRESSION);
+    return_term_proto.set_kind(Fuzzing::ReturnTerm::Expression);
     *return_term_proto.mutable_type() =
         ExpressionToProto(**return_term.type_expression());
   }
@@ -480,7 +440,6 @@ static auto DeclarationToProto(const Declaration& declaration)
            function.deduced_parameters()) {
         *function_proto->add_deduced_parameter() =
             GenericBindingToProto(*binding);
-        llvm::errs() << "Added param " << binding->name() << "\n";
       }
       if (function.is_method()) {
         *function_proto->mutable_me_pattern() =
@@ -549,10 +508,10 @@ static auto DeclarationToProto(const Declaration& declaration)
       auto* impl_proto = declaration_proto.mutable_impl();
       switch (impl.kind()) {
         case ImplKind::InternalImpl:
-          impl_proto->set_kind(Fuzzing::ImplDeclaration::INTERNAL_IMPL);
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::InternalImpl);
           break;
         case ImplKind::ExternalImpl:
-          impl_proto->set_kind(Fuzzing::ImplDeclaration::EXTERNAL_IMPL);
+          impl_proto->set_kind(Fuzzing::ImplDeclaration::ExternalImpl);
           break;
       }
       *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
