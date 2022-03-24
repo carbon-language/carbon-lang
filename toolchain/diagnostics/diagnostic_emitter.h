@@ -139,7 +139,8 @@ struct DiagnosticBase {
   // Handles the cast of llvm::Any to Args types for formatv.
   template <std::size_t... N>
   inline auto FormatFnImpl(const Diagnostic& diagnostic,
-                           std::index_sequence<N...>) const -> std::string {
+                           std::index_sequence<N...> /*indices*/) const
+      -> std::string {
     assert(diagnostic.format_args.size() == sizeof...(Args));
     return llvm::formatv(diagnostic.format.data(),
                          llvm::any_cast<Args>(diagnostic.format_args[N])...);
@@ -182,7 +183,7 @@ class DiagnosticEmitter {
         .level = diagnostic_base.Level,
         .location = translator_->GetLocation(location),
         .format = diagnostic_base.Format,
-        .format_args = {args...},
+        .format_args = {std::move(args)...},
         .format_fn = [&diagnostic_base](const Diagnostic& diagnostic)
             -> std::string { return diagnostic_base.FormatFn(diagnostic); },
     });
