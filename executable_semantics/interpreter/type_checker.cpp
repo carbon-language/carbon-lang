@@ -1183,14 +1183,14 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             const ImplScope& impl_scope)
+                                             const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), impl_scope));
+    RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), enclosing_scope));
     SetConstantValue(deduced, arena_->New<VariableType>(deduced));
     ASSIGN_OR_RETURN(Nonnull<const Value*> deduced_type,
                      InterpExp(&deduced->type(), arena_, trace_));
@@ -1198,12 +1198,12 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   // Type check the receiver pattern
   if (f->is_method()) {
-    RETURN_IF_ERROR(TypeCheckPattern(&f->me_pattern(), std::nullopt, impl_scope,
-                                     ValueCategory::Let));
+    RETURN_IF_ERROR(TypeCheckPattern(&f->me_pattern(), std::nullopt,
+                                     enclosing_scope, ValueCategory::Let));
   }
   // Type check the parameter pattern
   RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
-                                   impl_scope, ValueCategory::Let));
+                                   enclosing_scope, ValueCategory::Let));
 
   // Create the impl_bindings
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -1221,7 +1221,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
       return_expression.has_value()) {
     // We ignore the return value because return type expressions can't bring
     // new types into scope.
-    RETURN_IF_ERROR(TypeCheckExp(*return_expression, impl_scope));
+    RETURN_IF_ERROR(TypeCheckExp(*return_expression, enclosing_scope));
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
     ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
@@ -1237,13 +1237,13 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     }
     // Bring the impl bindings into scope
     ImplScope function_scope;
-    function_scope.AddParent(&impl_scope);
+    function_scope.AddParent(&enclosing_scope);
     for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
       function_scope.Add(impl_binding->interface(),
                          *impl_binding->type_var()->constant_value(),
                          impl_binding);
     }
-    RETURN_IF_ERROR(TypeCheckStmt(*f->body(), impl_scope));
+    RETURN_IF_ERROR(TypeCheckStmt(*f->body(), enclosing_scope));
     if (!f->return_term().is_omitted()) {
       RETURN_IF_ERROR(ExpectReturnOnAllPaths(f->body(), f->source_loc()));
     }
@@ -1417,11 +1417,11 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                           const ImplScope& impl_scope)
+                                           const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
-    RETURN_IF_ERROR(TypeCheckExp(&alternative->signature(), impl_scope));
+    RETURN_IF_ERROR(TypeCheckExp(&alternative->signature(), enclosing_scope));
     ASSIGN_OR_RETURN(auto signature,
                      InterpExp(&alternative->signature(), arena_, trace_));
     alternatives.push_back({.name = alternative->name(), .value = signature});
@@ -1432,8 +1432,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   return Success();
 }
 
-auto TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                             const ImplScope& impl_scope)
+auto TypeChecker::TypeCheckChoiceDeclaration(
+    Nonnull<ChoiceDeclaration*> /*choice*/, const ImplScope& /*impl_scope*/)
     -> ErrorOr<Success> {
   // Nothing to do here, but perhaps that will change in the future?
   return Success();
@@ -1504,34 +1504,35 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
 }
 
 auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
-                                     ImplScope& impl_scope)
+                                     ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*d);
-      RETURN_IF_ERROR(DeclareInterfaceDeclaration(&iface_decl, impl_scope));
+      RETURN_IF_ERROR(
+          DeclareInterfaceDeclaration(&iface_decl, enclosing_scope));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
-      RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, impl_scope));
+      RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, enclosing_scope));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);
-      RETURN_IF_ERROR(DeclareFunctionDeclaration(&func_def, impl_scope));
+      RETURN_IF_ERROR(DeclareFunctionDeclaration(&func_def, enclosing_scope));
       break;
     }
 
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
-      RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, impl_scope));
+      RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, enclosing_scope));
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
-      RETURN_IF_ERROR(DeclareChoiceDeclaration(&choice, impl_scope));
+      RETURN_IF_ERROR(DeclareChoiceDeclaration(&choice, enclosing_scope));
       break;
     }
 
@@ -1545,8 +1546,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
-      RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt, impl_scope,
-                                       var.value_category()));
+      RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
+                                       enclosing_scope, var.value_category()));
       ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                        InterpExp(&type, arena_, trace_));
       var.set_static_type(declared_type);

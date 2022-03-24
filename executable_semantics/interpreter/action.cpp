@@ -116,7 +116,7 @@ void Action::Print(llvm::raw_ostream& out) const {
       out << "ScopeAction";
   }
   out << "<" << pos_ << ">";
-  if (results_.size() > 0) {
+  if (!results_.empty()) {
     out << "(";
     llvm::ListSeparator sep;
     for (auto& result : results_) {

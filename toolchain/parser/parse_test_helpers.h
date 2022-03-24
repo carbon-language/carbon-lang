@@ -289,8 +289,10 @@ auto MatchNode(Args... args) -> ExpectedNode {
     void UpdateExpectationsForArg(std::string text) {
       expected.text = std::move(text);
     }
-    void UpdateExpectationsForArg(HasErrorTag) { expected.has_error = true; }
-    void UpdateExpectationsForArg(AnyChildrenTag) {
+    void UpdateExpectationsForArg(HasErrorTag /*tag*/) {
+      expected.has_error = true;
+    }
+    void UpdateExpectationsForArg(AnyChildrenTag /*tag*/) {
       expected.skip_subtree = true;
     }
     void UpdateExpectationsForArg(ExpectedNode node) {
