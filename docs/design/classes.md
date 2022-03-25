@@ -56,13 +56,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Friends](#friends)
         -   [Test friendship](#test-friendship)
         -   [Access control for construction](#access-control-for-construction)
+    -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
     -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
         -   [Field defaults for struct types](#field-defaults-for-struct-types)
         -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
         -   [Discussion](#discussion)
-    -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance-1)
         -   [Destructors](#destructors)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
@@ -1548,6 +1548,17 @@ if it has access to (write) all of its fields.
 even when it only has public fields. This will be resolved in question-for-leads
 issue [#803](https://github.com/carbon-language/carbon-lang/issues/803).
 
+### Operator overloading
+
+Developers may define how standard Carbon operators, such as `+` and `/`, apply
+to custom types by implementing the
+[interface](generics/terminology.md#interface) that corresponds to that operator
+for the types of the operands. See the
+["operator overloading" section](generics/details.md#operator-overloading) of
+the [generics design](generics/overview.md). The specific interface used for a
+given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+
 ## Future work
 
 This includes features that need to be designed, questions to answer, and a
@@ -1635,13 +1646,6 @@ Some discussion on this topic has occurred in:
     [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
     [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
 -   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
-
-### Operator overloading
-
-This includes destructors, copy and move operations, as well as other Carbon
-operators such as `+` and `/`. We expect types to implement these operations by
-implementing corresponding interfaces, see
-[the generics overview](generics/overview.md).
 
 ### Inheritance
 
