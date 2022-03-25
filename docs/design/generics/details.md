@@ -73,6 +73,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
+    -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
 -   [Parameterized impls](#parameterized-impls)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
@@ -3487,12 +3488,36 @@ In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
 **Note:** To achieve this goal, the user will not even be allowed to destroy a
-value of type `T` in this case.
+value of type `T` in this case, see
+[the destructor constraints section](#destructor-constraints).
 
 **Open question:** Should `TypeId` be
 [implemented externally](terminology.md#external-impl) for types to avoid name
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
+
+### Destructor constraints
+
+Every type is destructible, meaning has a defined destructor function called
+when the lifetime of a value of that type ends, such as when a variable goes out
+of scope. However, to end the lifetime of a generic value, the destructor must
+be known, which means including the `Destructible` type-of-type in the type
+parameter's constraints. As described in [the `TypeId` section](#typeid), making
+this an explicit requirement allows the compiler to avoid monomorphizing when it
+is not needed.
+
+Additionally, the `Deletable` requirement, which extends `Destructible`, is
+needed to deallocate a value through a pointer. This is to avoid deleting a
+pointer to a base class that does not have a virtual destructor.
+
+The `TriviallyDestructible` type-of-type also extends `Destructible`. Only types
+whose destructor is empty implement this type-of-type. To get both `Deletable`
+and `TriviallyDestructible`, write `Deletable & TriviallyDestructible`. **Future
+work:** If there is demand we could make an alias `TriviallyDeletable` for that.
+
+Types are forbidden from explicitly implementing these type-of-types directly.
+Instead they use `destructor` declarations in their class definition and the
+compiler uses them to determine which of these type-of-types are implemented.
 
 ## Generic `let`
 
