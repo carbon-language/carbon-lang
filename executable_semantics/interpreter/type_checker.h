@@ -139,11 +139,11 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) -> Nonnull<const Value*>;
 
-  // Sets named_entity.constant_value() to `value`. Can be called multiple
-  // times on the same named_entity, so long as it is always called with
+  // Sets value_node.constant_value() to `value`. Can be called multiple
+  // times on the same value_node, so long as it is always called with
   // the same value.
   template <typename T>
-  void SetConstantValue(Nonnull<T*> named_entity, Nonnull<const Value*> value);
+  void SetConstantValue(Nonnull<T*> value_node, Nonnull<const Value*> value);
 
   void PrintConstants(llvm::raw_ostream& out);
 
