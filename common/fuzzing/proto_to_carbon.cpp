@@ -27,7 +27,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
     -> void {
   if (s.empty()) {
-    out << "EMPTY";
+    out << "EmptyIdentifier";
   } else {
     for (size_t i = 0; i < s.size(); ++i) {
       const char c = s[i];
