@@ -919,7 +919,7 @@ TEST_F(LexerTest, TypeLiterals) {
   auto token_i20 = buffer.tokens().begin() + 2;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i20), 20);
   auto token_i999999999999 = buffer.tokens().begin() + 3;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ull);
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ULL);
   auto token_u1 = buffer.tokens().begin() + 6;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u1), 1);
   auto token_u64 = buffer.tokens().begin() + 7;

@@ -525,8 +525,6 @@ class Witness : public Value {
   Nonnull<const ImplDeclaration*> declaration_;
 };
 
-auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
-
 // A choice type.
 class ChoiceType : public Value {
  public:

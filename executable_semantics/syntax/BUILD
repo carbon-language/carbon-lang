@@ -69,6 +69,7 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:value_category",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
