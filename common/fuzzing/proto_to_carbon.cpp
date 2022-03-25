@@ -67,8 +67,8 @@ static auto PrefixUnaryOperatorToCarbon(std::string_view op,
   ExpressionToCarbon(arg, out);
 }
 
-static auto PostfixUnaryOperatorToCarbon(std::string_view op,
-                                         const Fuzzing::Expression& arg,
+static auto PostfixUnaryOperatorToCarbon(const Fuzzing::Expression& arg,
+                                         std::string_view op,
                                          llvm::raw_ostream& out) -> void {
   ExpressionToCarbon(arg, out);
   out << op;
@@ -114,7 +114,7 @@ static auto PrimitiveOperatorToCarbon(
       break;
 
     case Fuzzing::PrimitiveOperatorExpression::Ptr:
-      PostfixUnaryOperatorToCarbon("*", arg0, out);
+      PostfixUnaryOperatorToCarbon(arg0, "*", out);
       break;
 
     case Fuzzing::PrimitiveOperatorExpression::Neg:
