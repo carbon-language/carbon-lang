@@ -50,6 +50,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
+    -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
         -   [Protected access](#protected-access)
@@ -64,7 +65,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Discussion](#discussion)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance-1)
-        -   [Destructors](#destructors)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
         -   [Overloaded methods](#overloaded-methods)
         -   [Interop with C++ inheritance](#interop-with-c-inheritance)
@@ -1408,6 +1408,118 @@ implement it for final types. However, following the
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
+### Destructors
+
+Every non-abstract type is destructible, meaning has a defined destructor
+function called when the lifetime of a value of that type ends, such as when a
+variable goes out of scope. The destructor for a class may be customized using
+the `destructor` keyword:
+
+```carbon
+class MyClass {
+  destructor [me: Self] { ... }
+}
+```
+
+or:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*] { ... }
+}
+```
+
+If a class has no `destructor` declaration, it gets the default destructor,
+which is equivalent to `destructor [me: Self] { }`.
+
+The destructor for a class is run before the destructors of its data members.
+The data members are destroyed in reverse order of declaration. Derived classes
+are destroyed before their base classes, so the order of operations is:
+
+-   derived class' destructor runs,
+-   the data members of the derived class are destroyed, in reverse order of
+    declaration,
+-   the immediate base class' destructor runs,
+-   the data members of the immediate base class are destroyed, in reverse order
+    of declaration,
+-   and so on.
+
+Destructors may be declared in class scope and then defined out-of-line:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*];
+}
+destructor MyClass [addr me: Self*] { ... }
+```
+
+It is illegal to delete an instance of a derived class through a pointer to one
+of its base classes unless it has a
+[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
+An abstract or base class' destructor may be declared virtual using the
+`virtual` introducer, in which case any derived class destructor declaration
+must be `impl`:
+
+```carbon
+base class MyBaseClass {
+  virtual destructor [addr me: Self*] { ... }
+}
+
+class MyDerivedClass {
+  impl destructor [addr me: Self*] { ... }
+}
+```
+
+Final classes and base classes with virtual destructors automatically implement
+the [`Deletable`](/docs/design/generics/details.md#destructor-constraints)
+[type-of-type](/docs/design/generics/terminology.md#type-of-type). This allows
+pointers to those types to be passed to the `Delete` method of the `Allocator`
+[interface](/docs/design/generics/terminology.md#interface). To deallocate a
+pointer to a base class without a virtual destructor, which may only be done
+when it is not actually pointing to a value with a derived type, call the
+`UnsafeDelete` method instead. Note that you may not call `UnsafeDelete` on
+abstract types without virtual destructors. To pass a pointer to a base class
+without a virtual destructor to a generic function expecting a `Deletable` type,
+use the `UnsafeAllowDelete`
+[type adapter](/docs/design/generics/details.md#adapting-types).
+
+```
+adapter UnsafeAllowDelete(T:! Type) extends T {
+  impl as Deletable {}
+}
+
+interface Allocator {
+  // ...
+  fn Delete[T:! Deletable, addr me: Self*](p: T*);
+  fn UnsafeDelete[T:! Destructible, addr me: Self*](p: T*) {
+    me->Delete(p as (UnsafeAllowDelete(T)*));
+  }
+}
+```
+
+If a virtual method is transitively called from inside a destructor, the
+implementation from the current class is used, not any overrides from derived
+classes. It is illegal if that method is abstract and not implemented in the
+current class.
+
+**Future work:** Allow or require destructors to be declared as taking
+`partial Self` in order to prove no use of virtual methods.
+
+Types satisfy the
+[`TriviallyDestructible`](/docs/design/generics/details.md#destructor-constraints)
+type-of-type if:
+
+-   the class declaration does not define a destructor or the class defines the
+    destructor with an empty body `{ }`,
+-   all data members are `TriviallyDestructible`, and
+-   all base classes are `TriviallyDestructible`.
+
+This implies that their destructor does nothing, which may be used to generate
+optimized specializations.
+
+**Future work:** Allow or require destructors to be declared as taking
+`[var me: Self]`.
+
 ### Access control
 
 By default, all members of a class are fully publicly accessible. Access can be
@@ -1644,56 +1756,6 @@ implementing corresponding interfaces, see
 [the generics overview](generics/overview.md).
 
 ### Inheritance
-
-#### Destructors
-
-We need a syntax for declaring destructors. Provisionally we are considering
-allowing a couple of variations:
-
-```carbon
-class MyClass {
-  destructor [me: Self] { ... }
-}
-```
-
-or:
-
-```carbon
-class MyClass {
-  destructor [addr me: Self*] { ... }
-}
-```
-
-Destructors may be declared `virtual`, or `impl` in the case that a base class
-declares it `virtual`.
-
-```carbon
-base class MyBaseClass {
-  virtual destructor [addr me: Self*] { ... }
-}
-
-class MyDerivedClass {
-  impl destructor [addr me: Self*] { ... }
-}
-```
-
-Destructors may be declared out-of-line:
-
-```carbon
-class MyClass {
-  destructor [addr me: Self*];
-}
-destructor MyClass [addr me: Self*] { ... }
-```
-
-It isn't safe to delete an instance of a base class through a pointer unless it
-has a
-[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
-
-An alternative is the Rust approach is there is some interface that is only
-implemented for types with non-trivial destructors. It allows metaprogramming to
-distinguish whether the type needs clean up. Rust allows you to declare `Self`
-as being moved into the destructor, which nicely captures the semantics.
 
 #### C++ abstract base classes interoperating with object-safe interfaces
 

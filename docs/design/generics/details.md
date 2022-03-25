@@ -3498,13 +3498,14 @@ requests those capabilities?
 
 ### Destructor constraints
 
-Every type is destructible, meaning has a defined destructor function called
-when the lifetime of a value of that type ends, such as when a variable goes out
-of scope. However, to end the lifetime of a generic value, the destructor must
-be known, which means including the `Destructible` type-of-type in the type
-parameter's constraints. As described in [the `TypeId` section](#typeid), making
-this an explicit requirement allows the compiler to avoid monomorphizing when it
-is not needed.
+Every type that may be instantiated is destructible, meaning has a defined
+destructor function called when the lifetime of a value of that type ends, such
+as when a variable goes out of scope. However, to end the lifetime of a generic
+value, the destructor must be known, which means including the `Destructible`
+type-of-type in the type parameter's constraints. As described in
+[the `TypeId` section](#typeid), making this an explicit requirement allows the
+compiler to avoid monomorphizing when it is not needed. Note that abstract types
+that do not have `virtual` destructors are not `Destructible`.
 
 Additionally, the `Deletable` requirement, which extends `Destructible`, is
 needed to deallocate a value through a pointer. This is to avoid deleting a
