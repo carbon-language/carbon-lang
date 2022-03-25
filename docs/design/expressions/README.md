@@ -64,11 +64,21 @@ graph BT
                     x.(...)"]
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
+    negation["-x"]
+
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
-    not["not x"]
-    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+    multiplication>"x * y<br>
+                    x / y"]
+    click multiplication "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    addition>"x + y<br>
+              x - y"]
+    click addition "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    modulo["x % y"]
+    click modulo "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
     comparison["x == y<br>
                 x != y<br>
@@ -77,6 +87,9 @@ graph BT
                 x > y<br>
                 x >= y"]
     click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
+
+    not["not x"]
+    click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
     and>"x and y"]
     click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
@@ -90,8 +103,12 @@ graph BT
     expressionEnd["x;"]
 
     memberAccess --> parens & braces & unqualifiedName
-    as & not --> memberAccess
-    comparison --> as
+    negation --> memberAccess
+    %% Use a longer arrow here to put `not` next to `and` and `or`.
+    not -----> memberAccess
+    multiplication & modulo & as --> negation
+    addition --> multiplication
+    comparison --> modulo & addition & as
     and & or --> comparison & not
     if & expressionEnd --> and & or
 ```
@@ -203,16 +220,22 @@ Most expressions are modeled as operators:
 
 | Category   | Operator                        | Syntax    | Function                                                              |
 | ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
+| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
+| Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
+| Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
+| Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |
+| Arithmetic | [`/`](arithmetic.md)            | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
+| Arithmetic | [`%`](arithmetic.md)            | `x % y`   | `x` modulo `y`.                                                       |
 | Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
-| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
-| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
-| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 | Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
 | Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
 | Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
 | Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
 | Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
 | Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
+| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
+| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
+| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
 ## Conversions and casts
 
