@@ -197,6 +197,7 @@ message IfStatement {
 
 message ReturnStatement {
   optional Expression expression = 1;  // Can be omitted.
+  optional bool is_omitted_expression = 2;
 }
 
 message BlockStatement {

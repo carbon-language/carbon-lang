@@ -341,6 +341,8 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       auto* ret_proto = statement_proto.mutable_return_statement();
       if (!ret.is_omitted_expression()) {
         *ret_proto->mutable_expression() = ExpressionToProto(ret.expression());
+      } else {
+        ret_proto->set_is_omitted_expression(true);
       }
       break;
     }
