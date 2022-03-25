@@ -194,7 +194,9 @@ interface AddableWith(U:! Type) {
   let Result:! Type = Self;
   fn Add[me: Self](other: U) -> Result;
 }
-constraint Addable extends AddableWith(Self) where .Result = Self {}
+constraint Addable {
+  extends AddableWith(Self) where .Result = Self;
+}
 ```
 
 ```
@@ -203,7 +205,9 @@ interface SubtractableWith(U:! Type) {
   let Result:! Type = Self;
   fn Subtract[me: Self](other: U) -> Result;
 }
-constraint Subtractable extends SubtractableWith(Self) where .Result = Self {}
+constraint Subtractable {
+  extends SubtractableWith(Self) where .Result = Self;
+}
 ```
 
 ```
@@ -212,7 +216,9 @@ interface MultipliableWith(U:! Type) {
   let Result:! Type = Self;
   fn Multiply[me: Self](other: U) -> Result;
 }
-constraint Multipliable extends MultipliableWith(Self) where .Result = Self {}
+constraint Multipliable {
+  extends MultipliableWith(Self) where .Result = Self;
+}
 ```
 
 ```
@@ -221,7 +227,9 @@ interface DividableWith(U:! Type) {
   let Result:! Type = Self;
   fn Divide[me: Self](other: U) -> Result;
 }
-constraint Dividable extends DividableWith(Self) where .Result = Self {}
+constraint Dividable {
+  extends DividableWith(Self) where .Result = Self;
+}
 ```
 
 ```
@@ -230,7 +238,9 @@ interface ModuloWith(U:! Type) {
   let Result:! Type = Self;
   fn Mod[me: Self](other: U) -> Result;
 }
-constraint Modulo extends ModuloWith(Self) where .Result = Self {}
+constraint Modulo {
+  extends ModuloWith(Self) where .Result = Self;
+}
 ```
 
 Given `x: T` and `y: U`:
