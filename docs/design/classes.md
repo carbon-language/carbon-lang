@@ -74,6 +74,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -1430,7 +1431,11 @@ class MyClass {
 ```
 
 If a class has no `destructor` declaration, it gets the default destructor,
-which is equivalent to `destructor [me: Self] { }`.
+which is equivalent to `destructor [me: Self] { }`. Whether the destructor is
+defined implicitly or explicitly, the compiler implements the
+[`Destructible`](/docs/design/generics/details.md#destructor-constraints)
+[type-of-type](/docs/design/generics/terminology.md#type-of-type). It is illegal
+to directly implement `Destructible` for a type.
 
 The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
@@ -1985,3 +1990,12 @@ comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
+
+## References
+
+-   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+-   [#561: Basic classes: use cases, struct literals, struct types, and future wor](https://github.com/carbon-language/carbon-lang/pull/561)
+-   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+-   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+-   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+-   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
