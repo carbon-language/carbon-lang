@@ -161,7 +161,8 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::TypeTypeLiteral:
       break;
     case ExpressionKind::UnimplementedExpression:
-      FATAL() << "Unimplemented";
+      return FATAL_COMPILATION_ERROR(expression.source_loc())
+             << "Unimplemented";
   }
   return Success();
 }
