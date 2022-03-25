@@ -53,7 +53,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
   std::optional<const Value*> value = (phase_ == Phase::CompileTime)
                                           ? value_node.symbolic_identity()
                                           : value_node.constant_value();
-  if (value) {
+  if (value.has_value()) {
     return *value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {

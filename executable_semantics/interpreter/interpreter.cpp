@@ -405,7 +405,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       if (trace_) {
         llvm::outs() << "finished instantiating ty_arg\n";
       }
-      std::map<Nonnull<const ImplBinding*>, const Witness*> witnesses;
+      std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
       for (const auto& [bind, impl] : class_type.impls()) {
         Nonnull<const Value*> witness_addr =
             todo_.ValueOfNode(impl, source_loc);
