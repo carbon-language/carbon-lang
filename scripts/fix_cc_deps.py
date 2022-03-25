@@ -36,7 +36,8 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
 # TODO: proto rules are aspect-based and their generated files don't show up in
 # `bazel query` output.
 # Try using `bazel cquery --output=starlark` to print `target.files`.
-IGNORE_HEADER_REGEX = re.compile("^.*\\.pb\\.h$")
+# For protobuf, need to add support for `alias` rule kind.
+IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)|(.*google/protobuf/.*)$")
 
 
 class Rule(NamedTuple):
@@ -166,17 +167,18 @@ def get_missing_deps(
             ):
                 if header in rule_files:
                     continue
-                if IGNORE_HEADER_REGEX.match(header):
-                    print(
-                        f"Ignored missing #include '{header}' in "
-                        f"'{source_file}'"
-                    )
-                    continue
                 if header not in header_to_rule_map:
-                    exit(
-                        f"Missing rule for #include '{header}' in "
-                        f"'{source_file}'"
-                    )
+                    if IGNORE_HEADER_REGEX.match(header):
+                        print(
+                            f"Ignored missing #include '{header}' in "
+                            f"'{source_file}'"
+                        )
+                        continue
+                    else:
+                        exit(
+                            f"Missing rule for #include '{header}' in "
+                            f"'{source_file}'"
+                        )
                 dep_choices = header_to_rule_map[header]
                 if not dep_choices.intersection(rule.deps):
                     if len(dep_choices) > 1:

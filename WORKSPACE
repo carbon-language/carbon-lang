@@ -143,6 +143,7 @@ load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "llvm-project",
+    repo_mapping = {"@llvm_zlib": "@zlib"},
     targets = [
         "AArch64",
         "X86",
@@ -157,7 +158,7 @@ llvm_terminfo_system(name = "llvm_terminfo")
 load("@llvm-raw//utils/bazel:zlib.bzl", "llvm_zlib_system")
 
 # We require successful detection and use of a system zlib library.
-llvm_zlib_system(name = "llvm_zlib")
+llvm_zlib_system(name = "zlib")
 
 ###############################################################################
 # Flex/Bison rules
@@ -221,18 +222,31 @@ bison_register_toolchains(extra_copts = ["-w"])
 # Protocol buffers - for structured fuzzer testing.
 ###############################################################################
 
-protobuf_version = "3.19.4"
+# TODO: `rules_proto` pulls in a version of `rules_cc` with a frozenset bug.
+rules_cc_version = "0.0.1"
 
 http_archive(
-    name = "com_google_protobuf",
-    repo_mapping = {"@zlib": "@llvm_zlib"},
-    sha256 = "3bd7828aa5af4b13b99c191e8b1e884ebfa9ad371b0ce264605d347f135d2568",
-    strip_prefix = "protobuf-{}".format(protobuf_version),
+    name = "rules_cc",
+    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
+    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/%s/rules_cc-%s.tar.gz" % (rules_cc_version, rules_cc_version)],
+)
+
+rules_proto_version = "4.0.0-3.19.2"
+
+http_archive(
+    name = "rules_proto",
+    sha256 = "c22cfcb3f22a0ae2e684801ea8dfed070ba5bed25e73f73580564f250475e72d",
+    strip_prefix = "rules_proto-%s" % rules_proto_version,
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v{}.tar.gz".format(protobuf_version),
-        "https://github.com/protocolbuffers/protobuf/archive/v{}.tar.gz".format(protobuf_version),
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/%s.tar.gz" % rules_proto_version,
     ],
 )
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+
+rules_proto_toolchains()
 
 ###############################################################################
 # Example conversion repositories
