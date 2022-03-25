@@ -51,6 +51,8 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 static auto LibraryNameToCarbon(const Fuzzing::LibraryName& library,
                                 llvm::raw_ostream& out) -> void {
   IdentifierToCarbon(library.package_name(), out);
+
+  // Path is optional.
   if (library.has_path()) {
     out << " library \"";
     IdentifierToCarbon(library.path(), out);
@@ -58,32 +60,93 @@ static auto LibraryNameToCarbon(const Fuzzing::LibraryName& library,
   }
 }
 
-static auto PrimitiveOperatorToString(
-    const Fuzzing::PrimitiveOperatorExpression::Operator op)
-    -> std::string_view {
-  switch (op) {
+static auto PrefixUnaryOperatorToCarbon(std::string_view op,
+                                        const Fuzzing::Expression& arg,
+                                        llvm::raw_ostream& out) -> void {
+  out << op;
+  ExpressionToCarbon(arg, out);
+}
+
+static auto PostfixUnaryOperatorToCarbon(std::string_view op,
+                                         const Fuzzing::Expression& arg,
+                                         llvm::raw_ostream& out) -> void {
+  ExpressionToCarbon(arg, out);
+  out << op;
+}
+
+static auto BinaryOperatorToCarbon(const Fuzzing::Expression& lhs,
+                                   std::string_view op,
+                                   const Fuzzing::Expression& rhs,
+                                   llvm::raw_ostream& out) -> void {
+  ExpressionToCarbon(lhs, out);
+  out << op;
+  ExpressionToCarbon(rhs, out);
+}
+
+static auto PrimitiveOperatorToCarbon(
+    const Fuzzing::PrimitiveOperatorExpression& primitive_operator,
+    llvm::raw_ostream& out) -> void {
+  const Fuzzing::Expression& arg0 =
+      primitive_operator.arguments().size() > 0
+          ? primitive_operator.arguments(0)
+          : Fuzzing::Expression::default_instance();
+  const Fuzzing::Expression& arg1 =
+      primitive_operator.arguments().size() > 1
+          ? primitive_operator.arguments(1)
+          : Fuzzing::Expression::default_instance();
+  out << "(";
+  switch (primitive_operator.op()) {
     case Fuzzing::PrimitiveOperatorExpression::UnknownOperator:
-      return "-";  // Arbitrary default to avoid getting invalid syntax.
+      // `-` is an arbitrary default to avoid getting invalid syntax.
+      PrefixUnaryOperatorToCarbon("-", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::AddressOf:
-      return "&";
+      PrefixUnaryOperatorToCarbon("&", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Deref:
+      PrefixUnaryOperatorToCarbon("*", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Mul:
+      BinaryOperatorToCarbon(arg0, " * ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Ptr:
-      return "*";
+      PostfixUnaryOperatorToCarbon("*", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Neg:
+      PrefixUnaryOperatorToCarbon("-", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Sub:
-      return "-";
+      BinaryOperatorToCarbon(arg0, " - ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Not:
-      return "not ";  // Needs a space to 'unglue' from the operand.
+      // Needs a space to 'unglue' from the operand.
+      PrefixUnaryOperatorToCarbon("not ", arg0, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Add:
-      return "+";
+      BinaryOperatorToCarbon(arg0, " + ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::And:
-      return "and";
+      BinaryOperatorToCarbon(arg0, " and ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Eq:
-      return "==";
+      BinaryOperatorToCarbon(arg0, " == ", arg1, out);
+      break;
+
     case Fuzzing::PrimitiveOperatorExpression::Or:
-      return "or";
+      BinaryOperatorToCarbon(arg0, " or ", arg1, out);
+      break;
   }
+  out << ")";
 }
 
 // .x = 1
@@ -118,8 +181,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
                                llvm::raw_ostream& out) -> void {
   switch (expression.kind_case()) {
     case Fuzzing::Expression::KIND_NOT_SET:
-      out << "true";  // Default for missing expressions to avoid invalid
-                      // syntax.
+      // Arbitrary default for missing expressions to avoid invalid syntax.
+      out << "true";
       break;
 
     // func(1, 2)
@@ -141,10 +204,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       const auto& fun_type = expression.function_type();
       out << "__Fn";
       ExpressionToCarbon(fun_type.parameter(), out);
-      if (fun_type.has_return_type()) {
-        out << " -> ";
-        ExpressionToCarbon(fun_type.return_type(), out);
-      }
+      out << " -> ";
+      ExpressionToCarbon(fun_type.return_type(), out);
       break;
     }
 
@@ -168,38 +229,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     }
 
     // -a, a + b
-    case Fuzzing::Expression::kPrimitiveOperator: {
-      const auto& primitive_operator = expression.primitive_operator();
-      const std::string_view op =
-          PrimitiveOperatorToString(primitive_operator.op());
-      out << "(";
-      switch (primitive_operator.arguments().size()) {
-        case 0:
-          out << op;
-          break;
-
-        case 1: {
-          const bool postix = primitive_operator.op() ==
-                              Fuzzing::PrimitiveOperatorExpression::Ptr;
-          if (!postix) {
-            out << op;
-          }
-          ExpressionToCarbon(primitive_operator.arguments(0), out);
-          if (postix) {
-            out << op;
-          }
-          break;
-        }
-
-        default:
-          ExpressionToCarbon(primitive_operator.arguments(0), out);
-          out << " " << op << " ";
-          ExpressionToCarbon(primitive_operator.arguments(1), out);
-          break;
-      }
-      out << ")";
+    case Fuzzing::Expression::kPrimitiveOperator:
+      PrimitiveOperatorToCarbon(expression.primitive_operator(), out);
       break;
-    }
 
     // ("a", 1)
     case Fuzzing::Expression::kTupleLiteral: {
@@ -243,17 +275,17 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // Print('a')
     case Fuzzing::Expression::kIntrinsic: {
       const auto& intrinsic = expression.intrinsic();
-      if (intrinsic.has_intrinsic()) {
-        switch (intrinsic.intrinsic()) {
-          case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
-          case Fuzzing::IntrinsicExpression::Print:
-            out << "__intrinsic_print";
-            break;
-        }
+      switch (intrinsic.intrinsic()) {
+        case Fuzzing::IntrinsicExpression::UnknownIntrinsic:
+          // Arbitrary default to avoid getting invalid syntax.
+          out << "__intrinsic_print";
+          break;
+
+        case Fuzzing::IntrinsicExpression::Print:
+          out << "__intrinsic_print";
+          break;
       }
-      if (intrinsic.has_argument()) {
-        TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
-      }
+      TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
     } break;
 
     // if cond then true else false
@@ -276,9 +308,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     // false
     case Fuzzing::Expression::kBoolLiteral: {
       const auto& bool_literal = expression.bool_literal();
-      if (bool_literal.has_value()) {
-        out << (bool_literal.value() ? "true" : "false");
-      }
+      out << (bool_literal.value() ? "true" : "false");
       break;
     }
 
@@ -317,7 +347,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
 
     case Fuzzing::Expression::kUnimplementedExpression:
-      // Not currently supported.
+      // Not really supported.
+      // This is an arbitrary default to avoid getting invalid syntax.
+      out << "1 __unimplemented_example_infix 2";
       break;
   }
 }
@@ -326,11 +358,8 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
 static auto BindingPatternToCarbon(const Fuzzing::BindingPattern& pattern,
                                    llvm::raw_ostream& out) -> void {
   IdentifierToCarbon(pattern.name(), out);
-
   out << ": ";
-  if (pattern.has_type()) {
-    PatternToCarbon(pattern.type(), out);
-  }
+  PatternToCarbon(pattern.type(), out);
 }
 
 // (a: i32, b: auto)
@@ -349,7 +378,8 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
                             llvm::raw_ostream& out) -> void {
   switch (pattern.kind_case()) {
     case Fuzzing::Pattern::KIND_NOT_SET:
-      out << "auto";  // Arbitrary default to avoid getting invalid syntax.
+      // Arbitrary default to avoid getting invalid syntax.
+      out << "auto";
       break;
 
     // a: i32
@@ -377,9 +407,7 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
     // expression."
     case Fuzzing::Pattern::kExpressionPattern: {
       const auto& expression_pattern = pattern.expression_pattern();
-      if (expression_pattern.has_expression()) {
-        ExpressionToCarbon(expression_pattern.expression(), out);
-      }
+      ExpressionToCarbon(expression_pattern.expression(), out);
       break;
     }
 
@@ -411,14 +439,14 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
                               llvm::raw_ostream& out) -> void {
   switch (statement.kind_case()) {
     case Fuzzing::Statement::KIND_NOT_SET:
+      // Arbitrary default to avoid getting invalid syntax.
+      out << "true;\n";
       break;
 
     // f(1);
     case Fuzzing::Statement::kExpressionStatement: {
       const auto& expression_statement = statement.expression_statement();
-      if (expression_statement.has_expression()) {
-        ExpressionToCarbon(expression_statement.expression(), out);
-      }
+      ExpressionToCarbon(expression_statement.expression(), out);
       out << ";";
       break;
     }
@@ -426,13 +454,9 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     // a = 1;
     case Fuzzing::Statement::kAssign: {
       const auto& assign_statement = statement.assign();
-      if (assign_statement.has_lhs()) {
-        ExpressionToCarbon(assign_statement.lhs(), out);
-      }
+      ExpressionToCarbon(assign_statement.lhs(), out);
       out << " = ";
-      if (assign_statement.has_rhs()) {
-        ExpressionToCarbon(assign_statement.rhs(), out);
-      }
+      ExpressionToCarbon(assign_statement.rhs(), out);
       out << ";";
       break;
     }
@@ -441,13 +465,9 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kVariableDefinition: {
       const auto& def = statement.variable_definition();
       out << "var ";
-      if (def.has_pattern()) {
-        PatternToCarbon(def.pattern(), out);
-      }
+      PatternToCarbon(def.pattern(), out);
       out << " = ";
-      if (def.has_init()) {
-        ExpressionToCarbon(def.init(), out);
-      }
+      ExpressionToCarbon(def.init(), out);
       out << ";";
       break;
     }
@@ -456,15 +476,10 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kIfStatement: {
       const auto& if_statement = statement.if_statement();
       out << "if (";
-      if (if_statement.has_condition()) {
-        ExpressionToCarbon(if_statement.condition(), out);
-      }
+      ExpressionToCarbon(if_statement.condition(), out);
       out << ") ";
-      if (if_statement.has_then_block()) {
-        BlockStatementToCarbon(if_statement.then_block(), out);
-      } else {
-        out << ";";
-      }
+      BlockStatementToCarbon(if_statement.then_block(), out);
+      // `else` is optional.
       if (if_statement.has_else_block()) {
         out << " else ";
         BlockStatementToCarbon(if_statement.else_block(), out);
@@ -476,7 +491,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kReturnStatement: {
       const auto& ret = statement.return_statement();
       out << "return";
-      if (ret.has_expression()) {
+      if (!ret.is_omitted_expression()) {
         out << " ";
         ExpressionToCarbon(ret.expression(), out);
       }
@@ -492,15 +507,9 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kWhileStatement: {
       const auto& while_statement = statement.while_statement();
       out << "while (";
-      if (while_statement.has_condition()) {
-        ExpressionToCarbon(while_statement.condition(), out);
-      }
+      ExpressionToCarbon(while_statement.condition(), out);
       out << ") ";
-      if (while_statement.has_body()) {
-        BlockStatementToCarbon(while_statement.body(), out);
-      } else {
-        out << ";";
-      }
+      BlockStatementToCarbon(while_statement.body(), out);
       break;
     }
 
@@ -513,9 +522,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kMatch: {
       const auto& match = statement.match();
       out << "match (";
-      if (match.has_expression()) {
-        ExpressionToCarbon(match.expression(), out);
-      }
+      ExpressionToCarbon(match.expression(), out);
       out << ") {";
       for (const auto& clause : match.clauses()) {
         const bool is_default_clause =
@@ -525,14 +532,10 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
           out << "default";
         } else {
           out << "case ";
-          if (clause.has_pattern()) {
-            PatternToCarbon(clause.pattern(), out);
-          }
+          PatternToCarbon(clause.pattern(), out);
         }
         out << " => ";
-        if (clause.has_statement()) {
-          StatementToCarbon(clause.statement(), out);
-        }
+        StatementToCarbon(clause.statement(), out);
       }
       out << "}";
       break;
@@ -544,11 +547,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       out << "__continuation ";
       IdentifierToCarbon(continuation.name(), out);
 
-      if (continuation.has_body()) {
-        BlockStatementToCarbon(continuation.body(), out);
-      } else {
-        out << "{}\n";
-      }
+      BlockStatementToCarbon(continuation.body(), out);
       break;
     }
 
@@ -556,9 +555,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
     case Fuzzing::Statement::kRun: {
       const auto& run = statement.run();
       out << "__run ";
-      if (run.has_argument()) {
-        ExpressionToCarbon(run.argument(), out);
-      }
+      ExpressionToCarbon(run.argument(), out);
       out << ";";
       break;
     }
@@ -600,6 +597,8 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
                                 llvm::raw_ostream& out) -> void {
   switch (declaration.kind_case()) {
     case Fuzzing::Declaration::KIND_NOT_SET:
+      // Arbitrary default to avoid getting invalid syntax.
+      out << "var x: i32;";
       break;
 
     // fn f(x: i32) -> auto {  return x; }
@@ -611,7 +610,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "fn ";
       IdentifierToCarbon(function.name(), out);
 
-      if (!function.deduced_parameters().empty()) {
+      if (!function.deduced_parameters().empty() || function.has_me_pattern()) {
         out << "[";
         llvm::ListSeparator sep;
         for (const Fuzzing::GenericBinding& p : function.deduced_parameters()) {
@@ -620,18 +619,17 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
           out << ":! ";
           ExpressionToCarbon(p.type(), out);
         }
+        if (function.has_me_pattern()) {
+          // This is a class method.
+          out << sep;
+          BindingPatternToCarbon(function.me_pattern(), out);
+        }
         out << "]";
       }
-      if (function.has_me_pattern()) {
-        // This is a class method.
-        out << "[";
-        BindingPatternToCarbon(function.me_pattern(), out);
-        out << "]";
-      }
-      if (function.has_param_pattern()) {
-        TuplePatternToCarbon(function.param_pattern(), out);
-      }
+      TuplePatternToCarbon(function.param_pattern(), out);
       ReturnTermToCarbon(function.return_term(), out);
+
+      // Body is optional.
       if (function.has_body()) {
         out << "\n";
         BlockStatementToCarbon(function.body(), out);
@@ -667,9 +665,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       for (const auto& alternative : choice.alternatives()) {
         out << sep;
         IdentifierToCarbon(alternative.name(), out);
-        if (alternative.has_signature()) {
-          ExpressionToCarbon(alternative.signature(), out);
-        }
+        ExpressionToCarbon(alternative.signature(), out);
       }
       out << "}";
       break;
@@ -680,9 +676,9 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kVariable: {
       const auto& var = declaration.variable();
       out << "var ";
-      if (var.has_binding()) {
-        BindingPatternToCarbon(var.binding(), out);
-      }
+      BindingPatternToCarbon(var.binding(), out);
+
+      // Initializer is optional.
       if (var.has_initializer()) {
         out << " = ";
         ExpressionToCarbon(var.initializer(), out);
