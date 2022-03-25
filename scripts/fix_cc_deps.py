@@ -167,17 +167,18 @@ def get_missing_deps(
             ):
                 if header in rule_files:
                     continue
-                if IGNORE_HEADER_REGEX.match(header):
-                    print(
-                        f"Ignored missing #include '{header}' in "
-                        f"'{source_file}'"
-                    )
-                    continue
                 if header not in header_to_rule_map:
-                    exit(
-                        f"Missing rule for #include '{header}' in "
-                        f"'{source_file}'"
-                    )
+                    if IGNORE_HEADER_REGEX.match(header):
+                        print(
+                            f"Ignored missing #include '{header}' in "
+                            f"'{source_file}'"
+                        )
+                        continue
+                    else:
+                        exit(
+                            f"Missing rule for #include '{header}' in "
+                            f"'{source_file}'"
+                        )
                 dep_choices = header_to_rule_map[header]
                 if not dep_choices.intersection(rule.deps):
                     if len(dep_choices) > 1:
