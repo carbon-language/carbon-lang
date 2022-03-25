@@ -89,6 +89,17 @@ class Interpreter {
                Nonnull<const Value*> destination_type,
                SourceLocation source_loc) const -> Nonnull<const Value*>;
 
+  // Instantiate a type by replacing all type variables that occur inside the
+  // type by the concrete types that are bound to the type variables.
+  //
+  // For example, suppose T=i32 and U=Bool. Then
+  //     __Fn (Point(T)) -> Point(U)
+  // becomes
+  //     __Fn (Point(i32)) -> Point(Bool)
+  //
+  // (The concrete type for a type variable is obtained by the usual
+  // mechanism for obtaining the value associated with a binding, ie.,
+  // via `todo_.ValueOfNode`.)
   auto InstantiateType(Nonnull<const Value*> type,
                        SourceLocation source_loc) const
       -> Nonnull<const Value*>;
@@ -401,6 +412,11 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         if (trace_) {
           llvm::outs() << "witness_addr: " << *witness_addr << "\n";
         }
+        // If the witness came directly from an `impl` declaration (via
+        // `constant_value`), then it is a `Witness`. If the witness
+        // came from the runtime scope, then the `Witness` got wrapped
+        // in an `LValue` because that's what
+        // `RuntimeScope::Initialize` does.
         Nonnull<const Witness*> witness;
         if (llvm::isa<Witness>(witness_addr)) {
           witness = cast<Witness>(witness_addr);

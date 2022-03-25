@@ -307,21 +307,16 @@ void TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     case Value::Kind::NominalClassType: {
       const auto& param_class_type = cast<NominalClassType>(*param_type);
-      switch (arg_type->kind()) {
-        case Value::Kind::NominalClassType: {
-          const auto& arg_class_type = cast<NominalClassType>(*arg_type);
-          if (param_class_type.declaration().name() ==
-              arg_class_type.declaration().name()) {
-            for (const auto& [ty, param_ty] : param_class_type.type_args()) {
-              ArgumentDeduction(source_loc, deduced, param_ty,
-                                arg_class_type.type_args().at(ty));
-            }
-            return;
+      if (arg_type->kind() == Value::Kind::NominalClassType) {
+        const auto& arg_class_type = cast<NominalClassType>(*arg_type);
+        if (param_class_type.declaration().name() ==
+            arg_class_type.declaration().name()) {
+          for (const auto& [ty, param_ty] : param_class_type.type_args()) {
+            ArgumentDeduction(source_loc, deduced, param_ty,
+                              arg_class_type.type_args().at(ty));
           }
-          break;
+          return;
         }
-        default:
-          break;
       }
       FATAL_COMPILATION_ERROR(source_loc)
           << "type error in argument deduction\n"
@@ -445,7 +440,8 @@ auto TypeChecker::Substitute(
   }
 }
 
-void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
+void TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
+                               const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking expression " << *e;
     llvm::outs() << "\nconstants: ";
@@ -655,11 +651,8 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
                   FindMember(access.field(), iface_decl.members());
               member.has_value()) {
             const Value& member_type = (*member)->static_type();
-            std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
-                self_map;
-            self_map[iface_decl.self()] = &var_type;
             Nonnull<const Value*> inst_member_type =
-                Substitute(self_map, &member_type);
+                Substitute({{iface_decl.self(), &var_type}}, &member_type);
             access.set_static_type(inst_member_type);
             CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
@@ -949,7 +942,7 @@ void TypeChecker::TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope) {
   }
 }
 
-void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
+void TypeChecker::AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
   switch (p->kind()) {
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(*p);
@@ -963,13 +956,13 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
       for (Nonnull<Pattern*> field : tuple.fields()) {
-        PatternImpls(field, impl_scope);
+        AddPatternImpls(field, impl_scope);
       }
       return;
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
-      PatternImpls(&alternative.arguments(), impl_scope);
+      AddPatternImpls(&alternative.arguments(), impl_scope);
       return;
     }
     case PatternKind::ExpressionPattern:
@@ -981,7 +974,7 @@ void TypeChecker::PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope) {
 
 void TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope) {
+    const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking pattern " << *p;
     if (expected) {
@@ -1036,9 +1029,6 @@ void TypeChecker::TypeCheckPattern(
           binding.source_loc(), &binding, &binding.static_type());
       binding.set_impl_binding(impl_binding);
       SetValue(&binding, val);
-      impl_scope.Add(impl_binding->interface(),
-                     *impl_binding->type_var()->symbolic_identity(),
-                     impl_binding);
       return;
     }
     case PatternKind::TuplePattern: {
@@ -1106,7 +1096,8 @@ void TypeChecker::TypeCheckPattern(
   }
 }
 
-void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s, ImplScope& impl_scope) {
+void TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
+                                const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking statement " << *s << "\n";
   }
@@ -1283,7 +1274,7 @@ void TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             ImplScope& impl_scope) {
+                                             const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
@@ -1367,7 +1358,7 @@ void TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 }
 
 void TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                               ImplScope& impl_scope) {
+                                               const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "** checking function " << f->name() << "\n";
   }
@@ -1406,6 +1397,7 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     ImplScope class_scope;
     class_scope.AddParent(&enclosing_scope);
     TypeCheckPattern(*class_decl->type_params(), std::nullopt, class_scope);
+    AddPatternImpls(*class_decl->type_params(), class_scope);
     if (trace_) {
       llvm::outs() << class_scope;
     }
@@ -1447,7 +1439,7 @@ void TypeChecker::TypeCheckClassDeclaration(
   ImplScope class_scope;
   class_scope.AddParent(&impl_scope);
   if (class_decl->type_params().has_value()) {
-    PatternImpls(*class_decl->type_params(), class_scope);
+    AddPatternImpls(*class_decl->type_params(), class_scope);
   }
   if (trace_) {
     llvm::outs() << class_scope;

@@ -41,7 +41,7 @@ class TypeChecker {
   //
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterExp.
-  void TypeCheckExp(Nonnull<Expression*> e, ImplScope& impl_scope);
+  void TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
@@ -50,13 +50,13 @@ class TypeChecker {
   // nullopt.
   void TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
-                        ImplScope& impl_scope);
+                        const ImplScope& impl_scope);
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),
   // where `f` is nearest enclosing FunctionDeclaration of `s`.
-  void TypeCheckStmt(Nonnull<Statement*> s, ImplScope& impl_scope);
+  void TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope);
 
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the
@@ -67,7 +67,7 @@ class TypeChecker {
   void DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope);
 
   void DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                  ImplScope& enclosing_scope);
+                                  const ImplScope& enclosing_scope);
 
   void DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                ImplScope& enclosing_scope);
@@ -82,7 +82,7 @@ class TypeChecker {
                                 ImplScope& enclosing_scope);
 
   // Add the impls from the pattern into the given `impl_scope`.
-  void PatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
+  void AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
 
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
@@ -92,7 +92,7 @@ class TypeChecker {
 
   // Type check the body of the function.
   void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                    ImplScope& impl_scope);
+                                    const ImplScope& impl_scope);
 
   // Type check all the members of the class.
   void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
