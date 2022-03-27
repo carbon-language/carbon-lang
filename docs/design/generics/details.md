@@ -4631,8 +4631,8 @@ the unparameterized impl when there is an exact match.
 
 To reduce the boilerplate needed to support these implicit conversions when
 defining operator overloads, Carbon has the `like` operator. This operator can
-only be used in the type or type-of-type part of an `impl` declaration, in a
-place of a type:
+only be used in the type or type-of-type part of an `impl` declaration, as part
+of a forward declaration or definition, in a place of a type.
 
 ```
 // Notice `f64` has been replaced by `like f64`
@@ -4680,6 +4680,37 @@ external impl [T:! ImplicitAs(Meters)]
   }
 }
 ```
+
+`like` may be used in forward declarations in a way analogous to impl
+definitions.
+
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters;
+}
+```
+
+is equivalent to:
+
+```
+// All `like`s removed. Same as the declaration part of
+// "implementation one", without the body of the definition.
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters;
+
+// First `like` replaced with a wildcard.
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters;
+
+// Second `like` replaced with a wildcard. Same as the
+// declaration part of "implementation two", without the
+// body of the definition.
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters;
+```
+
+If one `impl` declaration uses `like`, other declarations must use `like` in the
+same way to match.
 
 The `like` operator may be nested, as in:
 
