@@ -4391,8 +4391,11 @@ expressions match:
 
 -   If the type part is omitted, it is rewritten to `Self` in the context of the
     declaration.
--   `Self` is rewritted to its meaning in the scope it is used. So in
-    `class MyClass { ... }`, `Self` is rewritten to `MyClass`.
+-   `Self` is rewritted to its meaning in the scope it is used. In a class
+    scope, this should match the type name and optional parameter expression
+    after `class`. So in `class MyClass extends MyBase { ... }`, `Self` is
+    rewritten to `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is
+    rewritten to `Vector(T:! Movable)`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
