@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
 -   [Proposal](#proposal)
 -   [Details](#details)
--   [Rationale based on Carbon's goals](#rationale-based-on-carbons-goals)
+-   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
@@ -57,12 +57,14 @@ will that in fact solve it?
 
 TODO: Fully explain the details of the proposed solution.
 
-## Rationale based on Carbon's goals
+## Rationale
 
 TODO: How does this proposal effectively advance Carbon's goals? Rather than
 re-stating the full motivation, this should connect that motivation back to
-Carbon's stated goals for the project or language. This may evolve during
-review. Use links to appropriate goals, for example:
+Carbon's stated goals and principles. This may evolve during review. Use links
+to appropriate sections of [`/docs/project/goals.md`](/docs/project/goals.md),
+and/or to documents in [`/docs/project/principles`](/docs/project/principles).
+For example:
 
 -   [Community and culture](/docs/project/goals.md#community-and-culture)
 -   [Language tools and ecosystem](/docs/project/goals.md#language-tools-and-ecosystem)
