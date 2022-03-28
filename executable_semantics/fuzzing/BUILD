@@ -80,7 +80,6 @@ cc_test(
         "//executable_semantics/testdata:carbon_files",
     ],
     deps = [
-        ":ast_to_proto_ib",
         ":ast_to_proto_lib",
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
