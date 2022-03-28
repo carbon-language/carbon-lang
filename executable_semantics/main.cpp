@@ -14,27 +14,10 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/exec_program.h"
+#include "executable_semantics/prelude.h"
 #include "executable_semantics/syntax/parse.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
-
-// Adds the Carbon prelude to `declarations`.
-static void AddPrelude(
-    std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
-    std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
-  Carbon::ErrorOr<Carbon::AST> parse_result =
-      Carbon::Parse(arena, prelude_file_name, false);
-  if (!parse_result.ok()) {
-    // Try again with tracing, to help diagnose the problem.
-    Carbon::ErrorOr<Carbon::AST> trace_parse_result =
-        Carbon::Parse(arena, prelude_file_name, true);
-    FATAL() << "Failed to parse prelude: "
-            << trace_parse_result.error().message();
-  }
-  const auto& prelude = *parse_result;
-  declarations->insert(declarations->begin(), prelude.declarations.begin(),
-                       prelude.declarations.end());
-}
 
 // Prints an error message and returns error code value.
 auto PrintError(const Carbon::Error& error) -> int {
@@ -60,7 +43,7 @@ auto main(int argc, char* argv[]) -> int {
                                    llvm::cl::Required);
   opt<std::string> prelude_file_name(
       "prelude", desc("<prelude file>"),
-      llvm::cl::init("executable_semantics/data/prelude.carbon"));
+      llvm::cl::init(Carbon::DefaultPreludeFilename));
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
 

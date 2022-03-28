@@ -9,11 +9,25 @@ package(default_visibility = [
     "//executable_semantics:__subpackages__",
 ])
 
+cc_library(
+    name = "prelude",
+    srcs = ["prelude.cpp"],
+    hdrs = ["prelude.h"],
+    data = ["data/prelude.carbon"],
+    deps = [
+        "//common:error",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:nonnull",
+        "//executable_semantics/syntax",
+    ],
+)
+
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    data = ["data/prelude.carbon"],
     deps = [
+        ":prelude",
         "//common:error",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
