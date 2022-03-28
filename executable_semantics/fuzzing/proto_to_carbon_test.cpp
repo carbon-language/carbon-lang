@@ -48,7 +48,7 @@ TEST(ProtoToCarbonTest, Roundtrip) {
       }
     }
   }
-  EXPECT_GT(parsed_ok_count, 0);  // Makes sure files were actually procced.
+  EXPECT_GT(parsed_ok_count, 0);  // Makes sure files were actually processed.
 }
 
 }  // namespace
