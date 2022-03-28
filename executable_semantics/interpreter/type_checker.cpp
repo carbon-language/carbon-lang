@@ -1545,7 +1545,7 @@ void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
 }
 
 void TypeChecker::TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                             ImplScope& impl_scope) {
+                                             const ImplScope& impl_scope) {
   // Nothing to do here, but perhaps that will change in the future?
 }
 

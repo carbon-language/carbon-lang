@@ -108,7 +108,7 @@ class TypeChecker {
 
   // This currently does nothing, but perhaps that will change in the future.
   void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                  ImplScope& impl_scope);
+                                  const ImplScope& impl_scope);
 
   // Verifies that opt_stmt holds a statement, and it is structurally impossible
   // for control flow to leave that statement except via a `return`.
