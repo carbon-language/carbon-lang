@@ -90,16 +90,12 @@ class Interpreter {
                SourceLocation source_loc) const -> Nonnull<const Value*>;
 
   // Instantiate a type by replacing all type variables that occur inside the
-  // type by the concrete types that are bound to the type variables.
+  // type by the current values of those variables.
   //
   // For example, suppose T=i32 and U=Bool. Then
   //     __Fn (Point(T)) -> Point(U)
   // becomes
   //     __Fn (Point(i32)) -> Point(Bool)
-  //
-  // (The concrete type for a type variable is obtained by the usual
-  // mechanism for obtaining the value associated with a binding, ie.,
-  // via `todo_.ValueOfNode`.)
   auto InstantiateType(Nonnull<const Value*> type,
                        SourceLocation source_loc) const
       -> Nonnull<const Value*>;
