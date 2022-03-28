@@ -3487,10 +3487,6 @@ fn SortByAddress[T:! Type](v: Vector(T*)*) { ... }
 In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
-**Note:** To achieve this goal, the user will not even be allowed to destroy a
-value of type `T` in this case, see
-[the destructor constraints section](#destructor-constraints).
-
 **Open question:** Should `TypeId` be
 [implemented externally](terminology.md#external-impl) for types to avoid name
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
@@ -3498,27 +3494,31 @@ requests those capabilities?
 
 ### Destructor constraints
 
-Every type that may be instantiated is destructible, meaning has a defined
-destructor function called when the lifetime of a value of that type ends, such
-as when a variable goes out of scope. However, to end the lifetime of a generic
-value, the destructor must be known, which means including the `Destructible`
-type-of-type in the type parameter's constraints. As described in
-[the `TypeId` section](#typeid), making this an explicit requirement allows the
-compiler to avoid monomorphizing when it is not needed. Note that abstract types
-that do not have `virtual` destructors are not `Destructible`.
+There are four type-of-types related to
+[the destructors of types](/docs/design/classes.md#destructors):
 
-Additionally, the `Deletable` requirement, which extends `Destructible`, is
-needed to deallocate a value through a pointer. This is to avoid deleting a
-pointer to a base class that does not have a virtual destructor.
+-   `Instantiable` types may be local or member variables.
+-   `Deletable` types may be safely deallocated by pointer using the `Delete`
+    method on the `Allocator` used to allocate it.
+-   `Destructible` types have a destructor and may be deallocated by pointer
+    using the `UnsafeDelete` method on the correct `Allocator`, but it may be
+    unsafe. The concerning case is deleting a pointer to a derived class through
+    a pointer to its base class without a virtual destructor.
+-   `TriviallyDestructible` types have empty destructors. This type-of-type may
+    be used with [specialization](#lookup-resolution-and-specialization) to
+    unlock specific optimizations.
 
-The `TriviallyDestructible` type-of-type also extends `Destructible`. Only types
-whose destructor is empty implement this type-of-type. To get both `Deletable`
-and `TriviallyDestructible`, write `Deletable & TriviallyDestructible`. **Future
-work:** If there is demand we could make an alias `TriviallyDeletable` for that.
+The type-of-types `Instantiable`, `Deletable`, and `TriviallyDestructible` all
+extend `Destructible`. Combinations of them may be formed using
+[the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
+a generic function that both instantiates and deletes values of a type `T` would
+require `T` implement `Instantiable & Deletable`.
 
 Types are forbidden from explicitly implementing these type-of-types directly.
-Instead they use `destructor` declarations in their class definition and the
-compiler uses them to determine which of these type-of-types are implemented.
+Instead they use
+[`destructor` declarations in their class definition](/docs/design/classes.md#destructors)
+and the compiler uses them to determine which of these type-of-types are
+implemented.
 
 ## Generic `let`
 

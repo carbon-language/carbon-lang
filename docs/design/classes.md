@@ -1496,7 +1496,7 @@ the destructor is virtual or non-virtual, determines which
 | final    | non-virtual | yes            | yes         | yes            |
 | final    | virtual     | yes            | yes         | yes            |
 
-FIXME: For more about these constraints, see
+For more about these, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
 
 Whether the destructor is defined implicitly or explicitly, the compiler
@@ -1507,13 +1507,15 @@ to directly implement `Destructible` for a type.
 
 Final classes and base classes with virtual destructors automatically implement
 the [`Deletable`](/docs/design/generics/details.md#destructor-constraints)
-[type-of-type](/docs/design/generics/terminology.md#type-of-type). This allows
-pointers to those types to be passed to the `Delete` method of the `Allocator`
-[interface](/docs/design/generics/terminology.md#interface). To deallocate a
-pointer to a base class without a virtual destructor, which may only be done
-when it is not actually pointing to a value with a derived type, call the
-`UnsafeDelete` method instead. Note that you may not call `UnsafeDelete` on
-abstract types without virtual destructors.
+[type-of-type](/docs/design/generics/terminology.md#type-of-type).
+
+Pointer to `Deletable` types may be passed to the `Delete` method of the
+`Allocator` [interface](/docs/design/generics/terminology.md#interface). To
+deallocate a pointer to a base class without a virtual destructor, which may
+only be done when it is not actually pointing to a value with a derived type,
+call the `UnsafeDelete` method instead. Note that you may not call
+`UnsafeDelete` on abstract types without virtual destructors, it requires
+`Destructible`.
 
 ```
 interface Allocator {
@@ -1532,6 +1534,8 @@ adapter UnsafeAllowDelete(T:! Instantiable) extends T {
   impl as Deletable {}
 }
 
+// Example usage:
+fn RequiresDeletable[T:! Deletable](p: T*);
 var x: MyExtensible;
 RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
 ```
