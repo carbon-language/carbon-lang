@@ -320,8 +320,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
 
     // 42
     case Fuzzing::Expression::kIntLiteral: {
-      const auto& int_literal = expression.int_literal();
-      out << int_literal.value();
+      out << expression.int_literal().value();
       break;
     }
 
