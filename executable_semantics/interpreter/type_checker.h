@@ -79,7 +79,7 @@ class TypeChecker {
                               ImplScope& enclosing_scope);
 
   void DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                ImplScope& enclosing_scope);
+                                const ImplScope& enclosing_scope);
 
   // Add the impls from the pattern into the given `impl_scope`.
   void AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
@@ -88,7 +88,8 @@ class TypeChecker {
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
   // Assumes that DeclareDeclaration has already been invoked on `d`.
-  void TypeCheckDeclaration(Nonnull<Declaration*> d, ImplScope& impl_scope);
+  void TypeCheckDeclaration(Nonnull<Declaration*> d,
+                            const ImplScope& impl_scope);
 
   // Type check the body of the function.
   void TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
@@ -96,15 +97,15 @@ class TypeChecker {
 
   // Type check all the members of the class.
   void TypeCheckClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                                 ImplScope& impl_scope);
+                                 const ImplScope& impl_scope);
 
   // Type check all the members of the interface.
   void TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                     ImplScope& impl_scope);
+                                     const ImplScope& impl_scope);
 
   // Type check all the members of the implementation.
   void TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                ImplScope& impl_scope);
+                                const ImplScope& impl_scope);
 
   // This currently does nothing, but perhaps that will change in the future.
   void TypeCheckChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,

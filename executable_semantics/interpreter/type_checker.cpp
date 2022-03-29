@@ -1432,7 +1432,7 @@ void TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 }
 
 void TypeChecker::TypeCheckClassDeclaration(
-    Nonnull<ClassDeclaration*> class_decl, ImplScope& impl_scope) {
+    Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "** checking class " << class_decl->name() << "\n";
   }
@@ -1470,7 +1470,7 @@ void TypeChecker::DeclareInterfaceDeclaration(
 }
 
 void TypeChecker::TypeCheckInterfaceDeclaration(
-    Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& impl_scope) {
+    Nonnull<InterfaceDeclaration*> iface_decl, const ImplScope& impl_scope) {
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     TypeCheckDeclaration(m, impl_scope);
   }
@@ -1519,7 +1519,7 @@ void TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                           ImplScope& impl_scope) {
+                                           const ImplScope& impl_scope) {
   if (trace_) {
     llvm::outs() << "checking " << *impl_decl << "\n";
   }
@@ -1532,7 +1532,7 @@ void TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 void TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                           ImplScope& impl_scope) {
+                                           const ImplScope& impl_scope) {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     TypeCheckExp(&alternative->signature(), impl_scope);
@@ -1561,7 +1561,7 @@ void TypeChecker::TypeCheck(AST& ast) {
 }
 
 void TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
-                                       ImplScope& impl_scope) {
+                                       const ImplScope& impl_scope) {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       TypeCheckInterfaceDeclaration(&cast<InterfaceDeclaration>(*d),
