@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // An utility for converting between fuzzer protos and Carbon sources.
+//
+// For example, to convert a crashing input in binary proto to carbon source:
+// `fuzzverter --from=binary_proto --input file.binaryproto --to=carbon_source`
+//
+// To generate a new binary proto from carbon source for seeding the corpus:
+// `fuzzverter --from=carbon_source --input file.carbon --to=binary_proto`
+//
+// To convert a binary proto to text proto:
+// `fuzzverter --from=binary_proto --input file.binaryproto --to=text_proto`
 
 #include <google/protobuf/text_format.h>
 
