@@ -28,8 +28,9 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 // fuzzing framework, it might contain invalid/non-printable characters.
 static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
     -> void {
-  baze if (s.empty()) { out << "EmptyIdentifier"; }
-  else {
+  if (s.empty()) {
+    out << "EmptyIdentifier";
+  } else {
     for (size_t i = 0; i < s.size(); ++i) {
       const char c = s[i];
       if (i == 0) {
@@ -370,6 +371,11 @@ static auto TuplePatternToCarbon(const Fuzzing::TuplePattern& tuple_pattern,
   for (const auto& field : tuple_pattern.fields()) {
     out << sep;
     PatternToCarbon(field, out);
+  }
+  if (tuple_pattern.fields_size() == 1) {
+    // Ensures that generated sourced is parsed as a tuple pattern. See
+    // `TupleExpressionFromParenContents().`
+    out << ", ";
   }
   out << ")";
 }
