@@ -651,7 +651,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         DeclarationToCarbon(member, out);
         out << "\n";
       }
-      out << "}\n";
+      out << "}";
       break;
     }
 
