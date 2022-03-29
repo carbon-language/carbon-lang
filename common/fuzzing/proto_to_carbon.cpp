@@ -28,9 +28,8 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 // fuzzing framework, it might contain invalid/non-printable characters.
 static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
     -> void {
-  if (s.empty()) {
-    out << "EmptyIdentifier";
-  } else {
+  baze if (s.empty()) { out << "EmptyIdentifier"; }
+  else {
     for (size_t i = 0; i < s.size(); ++i) {
       const char c = s[i];
       if (i == 0) {
@@ -605,8 +604,6 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     // fn f(x: i32) -> auto {  return x; }
     // fn g[T:! Type](x: i32, y: T) -> T {  return y; }
     case Fuzzing::Declaration::kFunction: {
-      // FN identifier deduced_params receiver maybe_empty_tuple_pattern
-      // return_term block
       const auto& function = declaration.function();
       out << "fn ";
       IdentifierToCarbon(function.name(), out);
