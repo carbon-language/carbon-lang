@@ -20,6 +20,29 @@ cc_library(
 )
 
 cc_library(
+    name = "sorting_diagnostic_consumer",
+    hdrs = ["sorting_diagnostic_consumer.h"],
+    deps = [
+        ":diagnostic_emitter",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "sorting_diagnostic_consumer_test",
+    size = "small",
+    srcs = ["sorting_diagnostic_consumer_test.cpp"],
+    deps = [
+        ":diagnostic_emitter",
+        ":mocks",
+        ":sorting_diagnostic_consumer",
+        "@com_google_googletest//:gtest_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "mocks",
     testonly = 1,
     srcs = ["mocks.cpp"],

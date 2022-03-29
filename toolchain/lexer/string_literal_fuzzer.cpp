@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
@@ -22,10 +23,17 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     return 0;
   }
 
-  // Check multiline flag was computed correctly.
-  if (token->IsMultiLine() != token->Text().contains('\n')) {
-    __builtin_trap();
+  if (!token->is_terminated()) {
+    // Found errors while parsing.
+    return 0;
   }
+
+  fprintf(stderr, "valid: %d\n", token->is_terminated());
+  fprintf(stderr, "size: %lu\n", token->text().size());
+  fprintf(stderr, "text: %s\n", token->text().str().c_str());
+
+  // Check multiline flag was computed correctly.
+  CHECK(token->is_multi_line() == token->text().contains('\n'));
 
   volatile auto value =
       token->ComputeValue(NullDiagnosticEmitter<const char*>());

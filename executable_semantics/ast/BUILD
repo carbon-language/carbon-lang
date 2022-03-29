@@ -203,8 +203,10 @@ cc_library(
         ":source_location",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

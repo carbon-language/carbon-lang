@@ -5,16 +5,17 @@
 #include "executable_semantics/syntax/parse.h"
 
 #include "common/check.h"
+#include "common/error.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/syntax/lexer.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
 auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
-               std::string_view input_file_name, bool trace)
-    -> std::variant<AST, SyntaxErrorCode> {
+               std::string_view input_file_name, bool trace) -> ErrorOr<AST> {
   // Prepare other parser arguments.
   std::optional<AST> ast = std::nullopt;
   ParseAndLexContext context(arena->New<std::string>(input_file_name), trace);
@@ -24,11 +25,12 @@ auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
   if (trace) {
     parser.set_debug_level(1);
   }
-  auto syntax_error_code = parser();
 
-  // Return an error if appropriate.
-  if (syntax_error_code != 0) {
-    return syntax_error_code;
+  if (auto syntax_error_code = parser(); syntax_error_code != 0) {
+    const std::string error_message = context.error_messages().empty()
+                                          ? "Unknown parser error"
+                                          : context.error_messages()[0];
+    return Error(error_message);
   }
 
   // Return parse results.
@@ -38,11 +40,11 @@ auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
 }
 
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
-    -> std::variant<AST, SyntaxErrorCode> {
+    -> ErrorOr<AST> {
   FILE* input_file = fopen(std::string(input_file_name).c_str(), "r");
   if (input_file == nullptr) {
-    FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
-                                  << "': " << std::strerror(errno);
+    return FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
+                                         << "': " << std::strerror(errno);
   }
 
   // Prepare the lexer.
@@ -51,8 +53,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
   auto buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
   yy_switch_to_buffer(buffer, scanner);
 
-  std::variant<AST, SyntaxErrorCode> result =
-      ParseImpl(scanner, arena, input_file_name, trace);
+  ErrorOr<AST> result = ParseImpl(scanner, arena, input_file_name, trace);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);
@@ -64,7 +65,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
 
 auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
                      std::string_view file_contents, bool trace)
-    -> std::variant<Carbon::AST, SyntaxErrorCode> {
+    -> ErrorOr<AST> {
   // Prepare the lexer.
   yyscan_t scanner;
   yylex_init(&scanner);
@@ -72,8 +73,7 @@ auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
       yy_scan_bytes(file_contents.data(), file_contents.size(), scanner);
   yy_switch_to_buffer(buffer, scanner);
 
-  std::variant<AST, SyntaxErrorCode> result =
-      ParseImpl(scanner, arena, input_file_name, trace);
+  ErrorOr<AST> result = ParseImpl(scanner, arena, input_file_name, trace);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);

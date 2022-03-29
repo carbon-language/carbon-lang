@@ -109,10 +109,11 @@ class Assign : public Statement {
 class VariableDefinition : public Statement {
  public:
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init)
+                     Nonnull<Expression*> init, ValueCategory value_category)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
-        init_(init) {}
+        init_(init),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDefinition(node->kind());
@@ -122,10 +123,12 @@ class VariableDefinition : public Statement {
   auto pattern() -> Pattern& { return *pattern_; }
   auto init() const -> const Expression& { return *init_; }
   auto init() -> Expression& { return *init_; }
+  auto value_category() const -> ValueCategory { return value_category_; }
 
  private:
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;
+  ValueCategory value_category_;
 };
 
 class If : public Statement {

@@ -24,12 +24,14 @@ void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
 
 auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
                         Nonnull<const Value*> type,
-                        SourceLocation source_loc) const -> ValueNodeView {
-  std::optional<ValueNodeView> result =
-      TryResolve(iface_type, type, source_loc);
+                        SourceLocation source_loc) const
+    -> ErrorOr<ValueNodeView> {
+  ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
+                   TryResolve(iface_type, type, source_loc));
   if (!result.has_value()) {
-    FATAL_COMPILATION_ERROR(source_loc) << "could not find implementation of "
-                                        << *iface_type << " for " << *type;
+    return FATAL_COMPILATION_ERROR(source_loc)
+           << "could not find implementation of " << *iface_type << " for "
+           << *type;
   }
   return *result;
 }
@@ -37,18 +39,20 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
 auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc) const
-    -> std::optional<ValueNodeView> {
+    -> ErrorOr<std::optional<ValueNodeView>> {
   std::optional<ValueNodeView> result =
       ResolveHere(iface_type, type, source_loc);
   if (result.has_value()) {
     return result;
   }
   for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    auto parent_result = parent->TryResolve(iface_type, type, source_loc);
+    ASSIGN_OR_RETURN(auto parent_result,
+                     parent->TryResolve(iface_type, type, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      FATAL_COMPILATION_ERROR(source_loc)
-          << "ambiguous implementations of " << *iface_type << " for " << *type;
+      return FATAL_COMPILATION_ERROR(source_loc)
+             << "ambiguous implementations of " << *iface_type << " for "
+             << *type;
     }
     result = parent_result;
   }
@@ -57,7 +61,7 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
 
 auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
                             Nonnull<const Value*> impl_type,
-                            SourceLocation source_loc) const
+                            SourceLocation /*source_loc*/) const
     -> std::optional<ValueNodeView> {
   switch (iface_type->kind()) {
     case Value::Kind::InterfaceType: {

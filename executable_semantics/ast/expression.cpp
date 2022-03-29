@@ -20,13 +20,14 @@ using llvm::isa;
 
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
-    -> Intrinsic {
+    -> ErrorOr<Intrinsic> {
   static const auto& intrinsic_map =
       *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    FATAL_COMPILATION_ERROR(source_loc) << "Unknown intrinsic '" << name << "'";
+    return FATAL_COMPILATION_ERROR(source_loc)
+           << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }
@@ -158,6 +159,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       out << ")";
       break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_expr = cast<IfExpression>(*this);
+      out << "if " << *if_expr.condition() << " then "
+          << *if_expr.then_expression() << " else "
+          << *if_expr.else_expression();
+      break;
+    }
     case ExpressionKind::UnimplementedExpression: {
       const auto& unimplemented = cast<UnimplementedExpression>(*this);
       out << "UnimplementedExpression<" << unimplemented.label() << ">(";
@@ -215,6 +223,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::IfExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:

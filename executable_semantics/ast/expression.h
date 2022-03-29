@@ -480,11 +480,15 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(std::string_view intrinsic_name,
-                               Nonnull<TupleLiteral*> args,
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> ErrorOr<Intrinsic>;
+
+  explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
       : Expression(AstNodeKind::IntrinsicExpression, source_loc),
-        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        intrinsic_(intrinsic),
         args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -496,13 +500,37 @@ class IntrinsicExpression : public Expression {
   auto args() -> TupleLiteral& { return *args_; }
 
  private:
-  // Returns the enumerator corresponding to the intrinsic named `name`,
-  // or raises a fatal compile error if there is no such enumerator.
-  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
-      -> Intrinsic;
-
   Intrinsic intrinsic_;
   Nonnull<TupleLiteral*> args_;
+};
+
+class IfExpression : public Expression {
+ public:
+  explicit IfExpression(SourceLocation source_loc,
+                        Nonnull<Expression*> condition,
+                        Nonnull<Expression*> then_expression,
+                        Nonnull<Expression*> else_expression)
+      : Expression(AstNodeKind::IfExpression, source_loc),
+        condition_(condition),
+        then_expression_(then_expression),
+        else_expression_(else_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIfExpression(node->kind());
+  }
+
+  auto condition() const -> Nonnull<Expression*> { return condition_; }
+  auto then_expression() const -> Nonnull<Expression*> {
+    return then_expression_;
+  }
+  auto else_expression() const -> Nonnull<Expression*> {
+    return else_expression_;
+  }
+
+ private:
+  Nonnull<Expression*> condition_;
+  Nonnull<Expression*> then_expression_;
+  Nonnull<Expression*> else_expression_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

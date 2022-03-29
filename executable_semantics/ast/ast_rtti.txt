@@ -5,6 +5,7 @@
 root class AstNode;
 abstract class Pattern : AstNode;
   class AutoPattern : Pattern;
+  class VarPattern : Pattern;
   class BindingPattern : Pattern;
   class GenericBinding : Pattern;
   class TuplePattern : Pattern;
@@ -52,4 +53,5 @@ abstract class Expression : AstNode;
   class TypeTypeLiteral : Expression;
   class IdentifierExpression : Expression;
   class IntrinsicExpression : Expression;
+  class IfExpression : Expression;
   class UnimplementedExpression : Expression;

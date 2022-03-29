@@ -76,13 +76,15 @@ class Value {
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
   auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc) const -> Nonnull<const Value*>;
+                SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
   auto SetField(Nonnull<Arena*> arena, const FieldPath& path,
                 Nonnull<const Value*> field_value,
-                SourceLocation source_loc) const -> Nonnull<const Value*>;
+                SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
@@ -584,7 +586,7 @@ auto FindMember(const std::string& name,
 // An interface type.
 class InterfaceType : public Value {
  public:
-  InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -602,7 +604,7 @@ class InterfaceType : public Value {
 // The witness table for an impl.
 class Witness : public Value {
  public:
-  Witness(Nonnull<const ImplDeclaration*> declaration)
+  explicit Witness(Nonnull<const ImplDeclaration*> declaration)
       : Value(Kind::Witness), declaration_(declaration) {}
 
   static auto classof(const Value* value) -> bool {
@@ -614,8 +616,6 @@ class Witness : public Value {
  private:
   Nonnull<const ImplDeclaration*> declaration_;
 };
-
-auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
 
 // A choice type.
 class ChoiceType : public Value {

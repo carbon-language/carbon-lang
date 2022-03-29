@@ -11,7 +11,9 @@
 namespace Carbon {
 
 // Resolves names (IdentifierExpressions) in the AST.
-void ResolveNames(AST& ast);
+// On failure, `ast` is left in a partial state and should not be further
+// processed.
+auto ResolveNames(AST& ast) -> ErrorOr<Success>;
 
 }  // namespace Carbon
 

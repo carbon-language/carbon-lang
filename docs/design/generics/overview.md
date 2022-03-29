@@ -20,7 +20,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Defining interfaces](#defining-interfaces)
         -   [Contrast with templates](#contrast-with-templates)
     -   [Implementing interfaces](#implementing-interfaces)
-        -   [Qualified and unqualified access](#qualified-and-unqualified-access)
+        -   [Accessing members of interfaces](#accessing-members-of-interfaces)
     -   [Type-of-types](#type-of-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
@@ -90,8 +90,9 @@ Summary of how Carbon generics work:
     ["named constraints"](terminology.md#named-constraints). Named constraints
     can express requirements that multiple interfaces be implemented, and give
     you control over how name conflicts are handled.
--   Alternatively, you may resolve name conflicts by using a qualified syntax to
-    directly call a function from a specific interface.
+-   Alternatively, you may resolve name conflicts by using a qualified member
+    access expression to directly call a function from a specific interface
+    using a qualified name.
 
 ## What are generics?
 
@@ -216,26 +217,29 @@ external impl Song as Comparable {
 
 Implementations may be defined within the class definition itself or
 out-of-line. Implementations may optionally be start with the `external` keyword
-to say the members of the interface are not unqualified members of the class.
-Out-of-line implementations must be external. External implementations may be
-defined in the library defining either the class or the interface.
+to say the members of the interface are not members of the class. Out-of-line
+implementations must be external. External implementations may be defined in the
+library defining either the class or the interface.
 
-#### Qualified and unqualified access
+#### Accessing members of interfaces
 
 The methods of an interface implemented internally within the class definition
-may be called with the ordinary unqualified member syntax. Methods of all
-implemented interfaces may be called with the
-[qualified member syntax](terminology.md#qualified-and-unqualified-member-names),
+may be called with the
+[simple member access syntax](terminology.md#simple-member-access). Methods of
+all implemented interfaces may be called with a
+[qualified member access expression](terminology.md#qualified-member-access-expression),
 whether they are defined internally or externally.
 
 ```
 var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// `Less` is defined in `Comparable`, which is implemented
-// externally for `Song`
+// `Less` is defined in `Comparable`, which is
+// implemented externally for `Song`
 song.(Comparable.Less)(song);
-// Can also call `Print` using the qualified syntax:
+// Can also call `Print` using a qualified member
+// access expression, using the compound member access
+// syntax with the qualified name `Printable.Print`:
 song.(Printable.Print)();
 ```
 
@@ -257,9 +261,8 @@ type is that it must implement the interface `Comparable`.
 
 A type-of-type also defines a set of names and a mapping to corresponding
 qualified names. Those names are used for
-[unqualfied member lookup](terminology.md#qualified-and-unqualified-member-names)
-in scopes where the value of the type is not known, such as when the type is a
-generic parameter.
+[simple member lookup](terminology.md#simple-member-access) in scopes where the
+value of the type is not known, such as when the type is a generic parameter.
 
 You may combine interfaces into new type-of-types using
 [the `&` operator](#combining-interfaces) or
@@ -325,8 +328,9 @@ differently because they are defined as generic, as long as you only refer to
 the names defined by [type-of-type](#type-of-types) for the type parameter.
 
 You may also refer to any of the methods of interfaces required by the
-type-of-type using the [qualified syntax](#qualified-and-unqualified-access), as
-shown in the following sections.
+type-of-type using a
+[qualified member access expression](#accessing-members-of-interfaces), as shown
+in the following sections.
 
 A function can have a mix of generic, template, and regular parameters.
 Likewise, it's allowed to pass a template or generic value to a generic or
@@ -408,8 +412,8 @@ fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
 }
 ```
 
-Names with conflicts can be accessed using the
-[qualified syntax](#qualified-and-unqualified-access).
+Names with conflicts can be accessed using a
+[qualified member access expression](#accessing-members-of-interfaces).
 
 ```
 fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
@@ -442,8 +446,8 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
     game_state->Draw_EndOfGame();
   }
   game_state->Draw_Renderable();
-  // Can still use qualified syntax for names
-  // not defined in the named constraint
+  // Can still use a qualified member access expression
+  // for names not defined in the named constraint.
   return game_state->(Renderable.Center)();
 }
 ```

@@ -1,0 +1,161 @@
+<svg fill="white" viewBox="0 0 650 254" width="650" height="254" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+<style>
+    .div-3 {
+        background-color: #EEEEEE;
+        padding: 5px;
+	padding-left: 30px;
+	margin: 0px;
+    }
+    pre {
+       display: block;
+       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+       white-space: pre;
+       width: 100%;
+       margin: 0px;
+    }
+    .pl-c /* comment, punctuation.definition.comment, string.comment */ {
+        color: #6a737d;
+    }
+
+    .pl-c1 /* constant, entity.name.constant, variable.other.constant, variable.language, support, meta.property-name, support.constant, support.variable, meta.module-reference, markup.raw, meta.diff.header, meta.output */,
+    .pl-s .pl-v /* string variable */ {
+        color: #005cc5;
+    }
+
+    .pl-e /* entity */,
+    .pl-en /* entity.name */ {
+      color: #6f42c1;
+    }
+
+    .pl-smi /* variable.parameter.function, storage.modifier.package, storage.modifier.import, storage.type.java, variable.other */,
+    .pl-s .pl-s1 /* string source */ {
+      color: #24292e;
+    }
+
+    .pl-ent /* entity.name.tag, markup.quote */ {
+      color: #22863a;
+    }
+
+    .pl-k /* keyword, storage, storage.type */ {
+      color: #d73a49;
+    }
+
+.pl-s /* string */,
+.pl-pds /* punctuation.definition.string, source.regexp, string.regexp.character-class */,
+.pl-s .pl-pse .pl-s1 /* string punctuation.section.embedded source */,
+.pl-sr /* string.regexp */,
+.pl-sr .pl-cce /* string.regexp constant.character.escape */,
+.pl-sr .pl-sre /* string.regexp source.ruby.embedded */,
+.pl-sr .pl-sra /* string.regexp string.regexp.arbitrary-repitition */ {
+  color: #032f62;
+}
+
+.pl-v /* variable */,
+.pl-smw /* sublimelinter.mark.warning */ {
+  color: #e36209;
+}
+
+.pl-bu /* invalid.broken, invalid.deprecated, invalid.unimplemented, message.error, brackethighlighter.unmatched, sublimelinter.mark.error */ {
+  color: #b31d28;
+}
+
+.pl-ii /* invalid.illegal */ {
+  color: #fafbfc;
+  background-color: #b31d28;
+}
+
+.pl-c2 /* carriage-return */ {
+  color: #fafbfc;
+  background-color: #d73a49;
+}
+
+.pl-c2::before /* carriage-return */ {
+  content: "^M";
+}
+
+.pl-sr .pl-cce /* string.regexp constant.character.escape */ {
+  font-weight: bold;
+  color: #22863a;
+}
+
+.pl-ml /* markup.list */ {
+  color: #735c0f;
+}
+
+.pl-mh /* markup.heading */,
+.pl-mh .pl-en /* markup.heading entity.name */,
+.pl-ms /* meta.separator */ {
+  font-weight: bold;
+  color: #005cc5;
+}
+
+.pl-mi /* markup.italic */ {
+  font-style: italic;
+  color: #24292e;
+}
+
+.pl-mb /* markup.bold */ {
+  font-weight: bold;
+  color: #24292e;
+}
+
+.pl-md /* markup.deleted, meta.diff.header.from-file, punctuation.definition.deleted */ {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+
+.pl-mi1 /* markup.inserted, meta.diff.header.to-file, punctuation.definition.inserted */ {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+
+.pl-mc /* markup.changed, punctuation.definition.changed */ {
+  color: #e36209;
+  background-color: #ffebda;
+}
+
+.pl-mi2 /* markup.ignored, markup.untracked */ {
+  color: #f6f8fa;
+  background-color: #005cc5;
+}
+
+.pl-mdr /* meta.diff.range */ {
+  font-weight: bold;
+  color: #6f42c1;
+}
+
+.pl-ba /* brackethighlighter.tag, brackethighlighter.curly, brackethighlighter.round, brackethighlighter.square, brackethighlighter.angle, brackethighlighter.quote */ {
+  color: #586069;
+}
+
+.pl-sg /* sublimelinter.gutter-mark */ {
+  color: #959da5;
+}
+
+.pl-corl /* constant.other.reference.link, string.other.link */ {
+  text-decoration: underline;
+  color: #032f62;
+}
+}
+</style>
+<div xmlns="http://www.w3.org/1999/xhtml" class="div-3">
+
+<pre>
+<span class="pl-k">import</span> Console;
+<span class="pl-k">import</span> Cpp &lt;vector&gt;;
+<span class="pl-c"><span class="pl-c">//</span> Carbon and C++ interop</span>
+<span class="pl-k">void</span> <span class="pl-en">PrintWithTotal</span>(v: Cpp.std.vector(Cpp.<span class="pl-c1">uint64_t</span>)) {
+  <span class="pl-k">var</span> sum: <span class="pl-c1">u64</span> = <span class="pl-c1">0</span>;
+  <span class="pl-k">for</span> (e: Cpp.<span class="pl-c1">uint64_t</span> in v) {
+    sum += e;
+    Console.<span class="pl-c1">Print</span>(e, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>)
+  }
+  Console.<span class="pl-c1">Print</span>(<span class="pl-s"><span class="pl-pds">"</span>Total: <span class="pl-pds">"</span></span>, sum, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>);
+}
+
+</pre>
+
+        </div>
+    </foreignObject>
+</svg>

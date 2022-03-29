@@ -8,8 +8,8 @@
 #include <optional>
 #include <string>
 
+#include "common/error.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -23,8 +23,12 @@ auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string = false)
     -> std::optional<std::string>;
 
 // Parses a block string literal in `source`.
-auto ParseBlockStringLiteral(llvm::StringRef source)
-    -> llvm::Expected<std::string>;
+auto ParseBlockStringLiteral(llvm::StringRef source) -> ErrorOr<std::string>;
+
+// Returns true if the pointer is in the string ref (including equality with
+// `ref.end()`). This should be used instead of `<=` comparisons for
+// correctness.
+auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 
 }  // namespace Carbon
 

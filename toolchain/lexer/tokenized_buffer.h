@@ -227,6 +227,11 @@ class TokenizedBuffer {
     // If true, the value is mantissa * 10^exponent.
     [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
 
+    void Print(llvm::raw_ostream& output_stream) const {
+      output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
+                    << Exponent();
+    }
+
    private:
     friend class TokenizedBuffer;
 
@@ -266,16 +271,6 @@ class TokenizedBuffer {
   // which will refer into the source.
   static auto Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
       -> TokenizedBuffer;
-
-  // Returns true if the buffer has errors that are detectable at lexing time.
-  [[nodiscard]] auto HasErrors() const -> bool { return has_errors_; }
-
-  [[nodiscard]] auto Tokens() const -> llvm::iterator_range<TokenIterator> {
-    return llvm::make_range(TokenIterator(Token(0)),
-                            TokenIterator(Token(token_infos_.size())));
-  }
-
-  [[nodiscard]] auto Size() const -> int { return token_infos_.size(); }
 
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
@@ -360,6 +355,16 @@ class TokenizedBuffer {
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
+  // Returns true if the buffer has errors that are detectable at lexing time.
+  [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
+
+  [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
+    return llvm::make_range(TokenIterator(Token(0)),
+                            TokenIterator(Token(token_infos_.size())));
+  }
+
+  [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
+
  private:
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
@@ -377,7 +382,7 @@ class TokenizedBuffer {
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto GetLocation(const char* pos) -> Diagnostic::Location override;
+    auto GetLocation(const char* loc) -> Diagnostic::Location override;
 
    private:
     TokenizedBuffer* buffer_;
@@ -391,7 +396,7 @@ class TokenizedBuffer {
   struct PrintWidths {
     // Widens `this` to the maximum of `this` and `new_width` for each
     // dimension.
-    auto Widen(const PrintWidths& new_width) -> void;
+    auto Widen(const PrintWidths& widths) -> void;
 
     int index;
     int kind;

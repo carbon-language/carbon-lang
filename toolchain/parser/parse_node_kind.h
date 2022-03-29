@@ -52,7 +52,7 @@ class ParseNodeKind {
   }
 
   // Gets a friendly name for the token for logging or debugging.
-  [[nodiscard]] auto GetName() const -> llvm::StringRef;
+  [[nodiscard]] auto name() const -> llvm::StringRef;
 
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and
