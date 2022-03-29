@@ -44,7 +44,7 @@ TEST(ProtoToCarbonTest, Roundtrip) {
       EXPECT_TRUE(ast_from_proto.ok())
           << "Parse error " << ast_from_proto.error().message();
       if (ast_from_proto.ok()) {
-        EXPECT_EQ(AstToString(*ast_from_proto), AstToString(*ast));
+        EXPECT_EQ(AstToString(*ast), AstToString(*ast_from_proto));
       }
     }
   }

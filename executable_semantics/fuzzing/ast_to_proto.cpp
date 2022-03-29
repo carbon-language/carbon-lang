@@ -466,6 +466,10 @@ static auto DeclarationToProto(const Declaration& declaration)
       const auto& class_decl = cast<ClassDeclaration>(declaration);
       auto* class_proto = declaration_proto.mutable_class_declaration();
       class_proto->set_name(class_decl.name());
+      if (class_decl.type_params().has_value()) {
+        *class_proto->mutable_type_params() =
+            TuplePatternToProto(**class_decl.type_params());
+      }
       for (Nonnull<const Declaration*> member : class_decl.members()) {
         *class_proto->add_members() = DeclarationToProto(*member);
       }

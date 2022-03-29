@@ -282,6 +282,7 @@ message FunctionDeclaration {
 message ClassDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
+  optional TuplePattern type_params = 3;
 }
 
 message AlternativeSignature {

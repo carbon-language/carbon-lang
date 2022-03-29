@@ -366,6 +366,14 @@ static auto BindingPatternToCarbon(const Fuzzing::BindingPattern& pattern,
   PatternToCarbon(pattern.type(), out);
 }
 
+// T:! Vector
+static auto GenericBindingToCarbon(
+    const Fuzzing::GenericBinding& generic_binding, llvm::raw_ostream& out) {
+  IdentifierToCarbon(generic_binding.name(), out);
+  out << ":! ";
+  ExpressionToCarbon(generic_binding.type(), out);
+}
+
 // (a: i32, b: auto)
 static auto TuplePatternToCarbon(const Fuzzing::TuplePattern& tuple_pattern,
                                  llvm::raw_ostream& out) -> void {
@@ -427,6 +435,10 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
     case Fuzzing::Pattern::kVarPattern:
       out << "var ";
       PatternToCarbon(pattern.var_pattern().pattern(), out);
+      break;
+
+    case Fuzzing::Pattern::kGenericBinding:
+      GenericBindingToCarbon(pattern.generic_binding(), out);
       break;
   }
 }
@@ -619,9 +631,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         llvm::ListSeparator sep;
         for (const Fuzzing::GenericBinding& p : function.deduced_parameters()) {
           out << sep;
-          IdentifierToCarbon(p.name(), out);
-          out << ":! ";
-          ExpressionToCarbon(p.type(), out);
+          GenericBindingToCarbon(p, out);
         }
         if (function.has_me_pattern()) {
           // This is a class method.
@@ -648,6 +658,11 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       const auto& class_declaration = declaration.class_declaration();
       out << "class ";
       IdentifierToCarbon(class_declaration.name(), out);
+
+      // type_params is optional.
+      if (class_declaration.has_type_params()) {
+        TuplePatternToCarbon(class_declaration.type_params(), out);
+      }
 
       out << "{\n";
       for (const auto& member : class_declaration.members()) {
