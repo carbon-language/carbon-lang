@@ -546,7 +546,6 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       const auto& continuation = statement.continuation();
       out << "__continuation ";
       IdentifierToCarbon(continuation.name(), out);
-
       BlockStatementToCarbon(continuation.body(), out);
       break;
     }
