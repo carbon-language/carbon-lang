@@ -52,6 +52,8 @@ class ImplScope {
   auto Resolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
                SourceLocation source_loc) const -> ErrorOr<ValueNodeView>;
 
+  void Print(llvm::raw_ostream& out) const;
+
  private:
   auto TryResolve(Nonnull<const Value*> iface_type, Nonnull<const Value*> type,
                   SourceLocation source_loc) const

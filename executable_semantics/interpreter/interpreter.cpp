@@ -29,9 +29,6 @@ using llvm::isa;
 
 namespace Carbon {
 
-// Selects between compile-time and run-time behavior.
-enum class Phase { CompileTime, RunTime };
-
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
   switch (phase) {
@@ -54,7 +51,8 @@ class Interpreter {
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
-        trace_(trace) {}
+        trace_(trace),
+        phase_(phase) {}
 
   ~Interpreter();
 
@@ -90,10 +88,24 @@ class Interpreter {
 
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
-               Nonnull<const Value*> destination_type) const
-      -> Nonnull<const Value*>;
+               Nonnull<const Value*> destination_type,
+               SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
+
+  // Instantiate a type by replacing all type variables that occur inside the
+  // type by the current values of those variables.
+  //
+  // For example, suppose T=i32 and U=Bool. Then
+  //     __Fn (Point(T)) -> Point(U)
+  // becomes
+  //     __Fn (Point(i32)) -> Point(Bool)
+  auto InstantiateType(Nonnull<const Value*> type,
+                       SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   void PrintState(llvm::raw_ostream& out);
+
+  Phase phase() const { return phase_; }
 
   Nonnull<Arena*> arena_;
 
@@ -106,6 +118,7 @@ class Interpreter {
   std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
   bool trace_;
+  Phase phase_;
 };
 
 Interpreter::~Interpreter() {
@@ -178,7 +191,8 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
-                  std::optional<Nonnull<RuntimeScope*>> bindings) -> bool {
+                  std::optional<Nonnull<RuntimeScope*>> bindings,
+                  BindingMap& generic_args) -> bool {
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       CHECK(bindings.has_value());
@@ -186,6 +200,11 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       if (placeholder.value_node().has_value()) {
         (*bindings)->Initialize(*placeholder.value_node(), v);
       }
+      return true;
+    }
+    case Value::Kind::VariableType: {
+      const auto& var_type = cast<VariableType>(*p);
+      generic_args[&var_type.binding()] = v;
       return true;
     }
     case Value::Kind::TupleValue:
@@ -196,7 +215,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                              source_loc, bindings)) {
+                              source_loc, bindings, generic_args)) {
               return false;
             }
           }  // for
@@ -212,7 +231,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       for (size_t i = 0; i < p_struct.elements().size(); ++i) {
         CHECK(p_struct.elements()[i].name == v_struct.elements()[i].name);
         if (!PatternMatch(p_struct.elements()[i].value,
-                          v_struct.elements()[i].value, source_loc, bindings)) {
+                          v_struct.elements()[i].value, source_loc, bindings,
+                          generic_args)) {
           return false;
         }
       }
@@ -228,7 +248,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             return false;
           }
           return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc,
-                              bindings);
+                              bindings, generic_args);
         }
         default:
           FATAL() << "expected a choice alternative in pattern, not " << *v;
@@ -239,11 +259,11 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
           if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
-                            bindings)) {
+                            bindings, generic_args)) {
             return false;
           }
           if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
-                            source_loc, bindings)) {
+                            source_loc, bindings, generic_args)) {
             return false;
           }
           return true;
@@ -349,9 +369,79 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   }
 }
 
+auto Interpreter::InstantiateType(Nonnull<const Value*> type,
+                                  SourceLocation source_loc) const
+    -> ErrorOr<Nonnull<const Value*>> {
+  if (trace_) {
+    llvm::outs() << "instantiating: " << *type << "\n";
+  }
+  switch (type->kind()) {
+    case Value::Kind::VariableType: {
+      if (trace_) {
+        llvm::outs() << "case VariableType\n";
+      }
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        ASSIGN_OR_RETURN(value, heap_.Read(lvalue->address(), source_loc));
+      }
+      return value;
+    }
+    case Value::Kind::NominalClassType: {
+      if (trace_) {
+        llvm::outs() << "case NominalClassType\n";
+      }
+      const auto& class_type = cast<NominalClassType>(*type);
+      BindingMap inst_type_args;
+      for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
+        ASSIGN_OR_RETURN(inst_type_args[ty_var],
+                         InstantiateType(ty_arg, source_loc));
+      }
+      if (trace_) {
+        llvm::outs() << "finished instantiating ty_arg\n";
+      }
+      std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
+      for (const auto& [bind, impl] : class_type.impls()) {
+        ASSIGN_OR_RETURN(Nonnull<const Value*> witness_addr,
+                         todo_.ValueOfNode(impl, source_loc));
+        if (trace_) {
+          llvm::outs() << "witness_addr: " << *witness_addr << "\n";
+        }
+        // If the witness came directly from an `impl` declaration (via
+        // `constant_value`), then it is a `Witness`. If the witness
+        // came from the runtime scope, then the `Witness` got wrapped
+        // in an `LValue` because that's what
+        // `RuntimeScope::Initialize` does.
+        Nonnull<const Witness*> witness;
+        if (llvm::isa<Witness>(witness_addr)) {
+          witness = cast<Witness>(witness_addr);
+        } else if (llvm::isa<LValue>(witness_addr)) {
+          ASSIGN_OR_RETURN(
+              Nonnull<const Value*> witness_value,
+              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                         source_loc));
+          witness = cast<Witness>(witness_value);
+        } else {
+          FATAL() << "expected a witness or LValue of a witness";
+        }
+        witnesses[bind] = witness;
+      }
+      if (trace_) {
+        llvm::outs() << "finished finding witnesses\n";
+      }
+      return arena_->New<NominalClassType>(&class_type.declaration(),
+                                           inst_type_args, witnesses);
+    }
+    default:
+      return type;
+  }
+}
+
 auto Interpreter::Convert(Nonnull<const Value*> value,
-                          Nonnull<const Value*> destination_type) const
-    -> Nonnull<const Value*> {
+                          Nonnull<const Value*> destination_type,
+                          SourceLocation source_loc) const
+    -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
@@ -396,13 +486,19 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
                destination_struct_type.fields()) {
             std::optional<Nonnull<const Value*>> old_value =
                 struct_val.FindField(field_name);
-            new_elements.push_back(
-                {.name = field_name, .value = Convert(*old_value, field_type)});
+            ASSIGN_OR_RETURN(Nonnull<const Value*> val,
+                             Convert(*old_value, field_type, source_loc));
+            new_elements.push_back({.name = field_name, .value = val});
           }
           return arena_->New<StructValue>(std::move(new_elements));
         }
-        case Value::Kind::NominalClassType:
-          return arena_->New<NominalClassValue>(destination_type, value);
+        case Value::Kind::NominalClassType: {
+          // Instantiate the `destintation_type` to obtain the runtime
+          // type of the object.
+          ASSIGN_OR_RETURN(Nonnull<const Value*> inst_dest,
+                           InstantiateType(destination_type, source_loc));
+          return arena_->New<NominalClassValue>(inst_dest, value);
+        }
         default:
           FATAL() << "Can't convert value " << *value << " to type "
                   << *destination_type;
@@ -415,8 +511,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
             destination_tuple_type->elements().size());
       std::vector<Nonnull<const Value*>> new_elements;
       for (size_t i = 0; i < tuple->elements().size(); ++i) {
-        new_elements.push_back(Convert(tuple->elements()[i],
-                                       destination_tuple_type->elements()[i]));
+        ASSIGN_OR_RETURN(
+            Nonnull<const Value*> val,
+            Convert(tuple->elements()[i], destination_tuple_type->elements()[i],
+                    source_loc));
+        new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
     }
@@ -580,11 +679,27 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 alt.alt_name(), alt.choice_name(), act.results()[1]));
           }
           case Value::Kind::FunctionValue: {
-            const FunctionDeclaration& function =
-                cast<FunctionValue>(*act.results()[0]).declaration();
-            Nonnull<const Value*> converted_args = Convert(
-                act.results()[1], &function.param_pattern().static_type());
+            const FunctionValue& fun_val =
+                cast<FunctionValue>(*act.results()[0]);
+            const FunctionDeclaration& function = fun_val.declaration();
+            if (trace_) {
+              llvm::outs() << "*** call function " << function.name() << "\n";
+            }
+            ASSIGN_OR_RETURN(Nonnull<const Value*> converted_args,
+                             Convert(act.results()[1],
+                                     &function.param_pattern().static_type(),
+                                     exp.source_loc()));
             RuntimeScope function_scope(&heap_);
+            // Bring the class type arguments into scope.
+            for (const auto& [bind, val] : fun_val.type_args()) {
+              function_scope.Initialize(bind, val);
+            }
+            // Bring the deduced type arguments into scope.
+            for (const auto& [bind, val] :
+                 cast<CallExpression>(exp).deduced_args()) {
+              function_scope.Initialize(bind, val);
+            }
+
             // Bring the impl witness tables into scope.
             for (const auto& [impl_bind, impl_node] :
                  cast<CallExpression>(exp).impls()) {
@@ -597,9 +712,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               }
               function_scope.Initialize(impl_bind, witness);
             }
+            for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
+              function_scope.Initialize(impl_bind, witness);
+            }
+            BindingMap generic_args;
             CHECK(PatternMatch(&function.param_pattern().value(),
                                converted_args, exp.source_loc(),
-                               &function_scope));
+                               &function_scope, generic_args));
             CHECK(function.body().has_value())
                 << "Calling a function that's missing a body";
             return todo_.Spawn(
@@ -609,18 +728,74 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           case Value::Kind::BoundMethodValue: {
             const auto& m = cast<BoundMethodValue>(*act.results()[0]);
             const FunctionDeclaration& method = m.declaration();
-            Nonnull<const Value*> converted_args = Convert(
-                act.results()[1], &method.param_pattern().static_type());
+            CHECK(method.is_method());
+            ASSIGN_OR_RETURN(
+                Nonnull<const Value*> converted_args,
+                Convert(act.results()[1], &method.param_pattern().static_type(),
+                        exp.source_loc()));
             RuntimeScope method_scope(&heap_);
+            BindingMap generic_args;
             CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                               exp.source_loc(), &method_scope));
+                               exp.source_loc(), &method_scope, generic_args));
             CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
-                               exp.source_loc(), &method_scope));
+                               exp.source_loc(), &method_scope, generic_args));
+            // Bring the class type arguments into scope.
+            for (const auto& [bind, val] : m.type_args()) {
+              method_scope.Initialize(bind, val);
+            }
+
+            // Bring the impl witness tables into scope.
+            for (const auto& [impl_bind, witness] : m.witnesses()) {
+              method_scope.Initialize(impl_bind, witness);
+            }
             CHECK(method.body().has_value())
                 << "Calling a method that's missing a body";
             return todo_.Spawn(
                 std::make_unique<StatementAction>(*method.body()),
                 std::move(method_scope));
+          }
+          case Value::Kind::NominalClassType: {
+            const NominalClassType& class_type =
+                cast<NominalClassType>(*act.results()[0]);
+            const ClassDeclaration& class_decl = class_type.declaration();
+            RuntimeScope type_params_scope(&heap_);
+            BindingMap generic_args;
+            if (class_decl.type_params().has_value()) {
+              CHECK(PatternMatch(&(*class_decl.type_params())->value(),
+                                 act.results()[1], exp.source_loc(),
+                                 &type_params_scope, generic_args));
+              switch (phase()) {
+                case Phase::RunTime: {
+                  std::map<Nonnull<const ImplBinding*>, const Witness*>
+                      witnesses;
+                  for (const auto& [impl_bind, impl_node] :
+                       cast<CallExpression>(exp).impls()) {
+                    ASSIGN_OR_RETURN(
+                        Nonnull<const Value*> witness,
+                        todo_.ValueOfNode(impl_node, exp.source_loc()));
+                    if (witness->kind() == Value::Kind::LValue) {
+                      const LValue& lval = cast<LValue>(*witness);
+                      ASSIGN_OR_RETURN(witness, heap_.Read(lval.address(),
+                                                           exp.source_loc()));
+                    }
+                    witnesses[impl_bind] = &cast<Witness>(*witness);
+                  }
+                  Nonnull<NominalClassType*> inst_class =
+                      arena_->New<NominalClassType>(&class_type.declaration(),
+                                                    generic_args, witnesses);
+                  return todo_.FinishAction(inst_class);
+                }
+                case Phase::CompileTime: {
+                  Nonnull<NominalClassType*> inst_class =
+                      arena_->New<NominalClassType>(
+                          &class_type.declaration(), generic_args,
+                          cast<CallExpression>(exp).impls());
+                  return todo_.FinishAction(inst_class);
+                }
+              }
+            } else {
+              FATAL() << "instantiation of non-generic class " << class_type;
+            }
           }
           default:
             return FATAL_RUNTIME_ERROR(exp.source_loc())
@@ -735,6 +910,10 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<BindingPlaceholderValue>());
       }
     }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(pattern);
+      return todo_.FinishAction(arena_->New<VariableType>(&binding));
+    }
     case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(pattern);
       if (act.pos() < static_cast<int>(tuple.fields().size())) {
@@ -805,9 +984,12 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
         auto c = match_stmt.clauses()[clause_num];
         RuntimeScope matches(&heap_);
-        if (PatternMatch(&c.pattern().value(),
-                         Convert(act.results()[0], &c.pattern().static_type()),
-                         stmt.source_loc(), &matches)) {
+        BindingMap generic_args;
+        ASSIGN_OR_RETURN(Nonnull<const Value*> val,
+                         Convert(act.results()[0], &c.pattern().static_type(),
+                                 stmt.source_loc()));
+        if (PatternMatch(&c.pattern().value(), val, stmt.source_loc(), &matches,
+                         generic_args)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
@@ -825,8 +1007,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<While>(stmt).condition()));
       } else {
-        Nonnull<const Value*> condition =
-            Convert(act.results().back(), arena_->New<BoolType>());
+        ASSIGN_OR_RETURN(Nonnull<const Value*> condition,
+                         Convert(act.results().back(), arena_->New<BoolType>(),
+                                 stmt.source_loc()));
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
           // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
@@ -876,13 +1059,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-        Nonnull<const Value*> v =
-            Convert(act.results()[0], &definition.pattern().static_type());
+        ASSIGN_OR_RETURN(
+            Nonnull<const Value*> v,
+            Convert(act.results()[0], &definition.pattern().static_type(),
+                    stmt.source_loc()));
         Nonnull<const Value*> p =
             &cast<VariableDefinition>(stmt).pattern().value();
 
         RuntimeScope matches(&heap_);
-        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches))
+        BindingMap generic_args;
+        CHECK(PatternMatch(p, v, stmt.source_loc(), &matches, generic_args))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         todo_.MergeScope(std::move(matches));
@@ -912,8 +1098,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
         const auto& lval = cast<LValue>(*act.results()[0]);
-        Nonnull<const Value*> rval =
-            Convert(act.results()[1], &assign.lhs().static_type());
+        ASSIGN_OR_RETURN(Nonnull<const Value*> rval,
+                         Convert(act.results()[1], &assign.lhs().static_type(),
+                                 stmt.source_loc()));
         RETURN_IF_ERROR(heap_.Write(lval.address(), rval, stmt.source_loc()));
         return todo_.FinishAction();
       }
@@ -925,8 +1112,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&cast<If>(stmt).condition()));
       } else if (act.pos() == 1) {
-        Nonnull<const Value*> condition =
-            Convert(act.results()[0], arena_->New<BoolType>());
+        ASSIGN_OR_RETURN(Nonnull<const Value*> condition,
+                         Convert(act.results()[0], arena_->New<BoolType>(),
+                                 stmt.source_loc()));
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
@@ -955,9 +1143,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         const FunctionDeclaration& function = cast<Return>(stmt).function();
-        return todo_.UnwindPast(
-            *function.body(),
-            Convert(act.results()[0], &function.return_term().static_type()));
+        ASSIGN_OR_RETURN(
+            Nonnull<const Value*> return_value,
+            Convert(act.results()[0], &function.return_term().static_type(),
+                    stmt.source_loc()));
+        return todo_.UnwindPast(*function.body(), return_value);
       }
     case StatementKind::Continuation: {
       CHECK(act.pos() == 0);

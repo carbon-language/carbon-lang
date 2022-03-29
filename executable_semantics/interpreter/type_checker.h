@@ -36,9 +36,9 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  static auto ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
-                                Nonnull<const Value*> param,
-                                Nonnull<const Value*> arg) -> ErrorOr<Success>;
+  auto ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
+                         Nonnull<const Value*> param_type,
+                         Nonnull<const Value*> arg_type) -> ErrorOr<Success>;
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -93,6 +93,9 @@ class TypeChecker {
                                 const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
+  // Add the impls from the pattern into the given `impl_scope`.
+  void AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
+
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
   // Dispatches to one of the following functions.
@@ -134,6 +137,29 @@ class TypeChecker {
   // type pattern or a non-type value.
   auto ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value) -> ErrorOr<Success>;
+
+  // Returns the field names of the class together with their types.
+  auto FieldTypes(const NominalClassType& class_type)
+      -> std::vector<NamedValue>;
+
+  // Returns true if source_fields and destination_fields contain the same set
+  // of names, and each value in source_fields is implicitly convertible to
+  // the corresponding value in destination_fields. All values in both arguments
+  // must be types.
+  auto FieldTypesImplicitlyConvertible(
+      llvm::ArrayRef<NamedValue> source_fields,
+      llvm::ArrayRef<NamedValue> destination_fields);
+
+  // Returns true if *source is implicitly convertible to *destination. *source
+  // and *destination must be concrete types.
+  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
+                               Nonnull<const Value*> destination) -> bool;
+
+  // Check whether `actual` is implicitly convertible to `expected`
+  // and halt with a fatal compilation error if it is not.
+  auto ExpectType(SourceLocation source_loc, const std::string& context,
+                  Nonnull<const Value*> expected, Nonnull<const Value*> actual)
+      -> ErrorOr<Success>;
 
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,

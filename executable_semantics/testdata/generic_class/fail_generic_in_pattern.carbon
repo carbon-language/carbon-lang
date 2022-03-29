@@ -7,16 +7,16 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_generic_in_pattern.carbon:17: Generic binding may not occur in pattern with expected type: T:! i32
 
 package ExecutableSemanticsTest api;
 
-fn id[T:! Type](x: T) -> T {
-  return x + 0;
-}
-
 fn Main() -> i32 {
-  return id(0);
+  var t: auto = 5;
+  match (t) {
+    case T:! i32 =>
+      return 0;
+    default =>
+      return 1;
+  }
 }

@@ -7,16 +7,14 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_field_access_on_generic.carbon:15: field access, unexpected T:! Type of non-interface type Type in a.x
 
 package ExecutableSemanticsTest api;
 
-fn id[T:! Type](x: T) -> T {
-  return x + 0;
+fn BadFieldAccess[T:! Type](a: T) -> T {
+  return a.x;
 }
 
 fn Main() -> i32 {
-  return id(0);
+  return BadFieldAccess(0);
 }
