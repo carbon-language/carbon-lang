@@ -205,16 +205,13 @@ auto main(int argc, char* argv[]) -> int {
                        clEnumVal(carbon_source, "Carbon source string"));
 
   llvm::cl::opt<FileFormat> input_format(
-      "input_format", llvm::cl::desc("Input file format"), file_format_values);
-  llvm::cl::opt<FileFormat> output_format("output_format",
-                                          llvm::cl::desc("Output file format"),
-                                          file_format_values);
-  llvm::cl::opt<std::string> input_file_name("input_file",
-                                             llvm::cl::desc("<input file>"),
-                                             llvm::cl::init("/dev/stdin"));
-  llvm::cl::opt<std::string> output_file_name("output_file",
-                                              llvm::cl::desc("<output file>"),
-                                              llvm::cl::init("/dev/stdout"));
+      "from", llvm::cl::desc("Input file format"), file_format_values);
+  llvm::cl::opt<FileFormat> output_format(
+      "to", llvm::cl::desc("Output file format"), file_format_values);
+  llvm::cl::opt<std::string> input_file_name(
+      "input", llvm::cl::desc("<input file>"), llvm::cl::init("/dev/stdin"));
+  llvm::cl::opt<std::string> output_file_name(
+      "output", llvm::cl::desc("<output file>"), llvm::cl::init("/dev/stdout"));
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
   using ConverterFunc = std::function<Carbon::ErrorOr<Carbon::Success>(
@@ -242,14 +239,8 @@ auto main(int argc, char* argv[]) -> int {
       },
   };
 
-  const ConverterFunc& converter = converters[input_format][output_format];
-  if (!converter) {
-    llvm::errs() << "Unsupported conversion from "
-                 << GetEnumString(input_format) << " to "
-                 << GetEnumString(output_format) << "\n";
-    return EXIT_FAILURE;
-  }
-  const auto result = converter(input_file_name, output_file_name);
+  const auto result = converters[input_format][output_format](input_file_name,
+                                                              output_file_name);
   if (!result.ok()) {
     llvm::errs() << "Conversion from " << GetEnumString(input_format) << " to "
                  << GetEnumString(output_format)
