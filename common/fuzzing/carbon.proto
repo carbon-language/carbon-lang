@@ -142,6 +142,11 @@ message BindingPattern {
   optional Pattern type = 2;
 }
 
+message GenericBinding {
+  optional string name = 1;
+  optional Expression type = 2;
+}
+
 message TuplePattern {
   repeated Pattern fields = 1;
 }
@@ -170,6 +175,7 @@ message Pattern {
     ExpressionPattern expression_pattern = 4;
     AutoPattern auto_pattern = 5;
     VarPattern var_pattern = 6;
+    GenericBinding generic_binding = 7;
   }
 }
 
@@ -261,11 +267,6 @@ message ReturnTerm {
     Expression = 3;
   }
   optional ReturnKind kind = 1;
-  optional Expression type = 2;
-}
-
-message GenericBinding {
-  optional string name = 1;
   optional Expression type = 2;
 }
 

@@ -11,7 +11,6 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:generic_binding",
         "@llvm-project//llvm:Support",
     ],
 )

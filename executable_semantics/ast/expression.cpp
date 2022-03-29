@@ -116,12 +116,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
-    case ExpressionKind::IntLiteral:
-      out << cast<IntLiteral>(*this).value();
-      break;
-    case ExpressionKind::BoolLiteral:
-      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
-      break;
     case ExpressionKind::PrimitiveOperatorExpression: {
       out << "(";
       const auto& op = cast<PrimitiveOperatorExpression>(*this);
@@ -142,9 +136,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case ExpressionKind::IdentifierExpression:
-      out << cast<IdentifierExpression>(*this).name();
-      break;
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
       out << call.function();
@@ -155,26 +146,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case ExpressionKind::BoolTypeLiteral:
-      out << "Bool";
-      break;
-    case ExpressionKind::IntTypeLiteral:
-      out << "i32";
-      break;
-    case ExpressionKind::StringLiteral:
-      out << "\"";
-      out.write_escaped(cast<StringLiteral>(*this).value());
-      out << "\"";
-      break;
-    case ExpressionKind::StringTypeLiteral:
-      out << "String";
-      break;
-    case ExpressionKind::TypeTypeLiteral:
-      out << "Type";
-      break;
-    case ExpressionKind::ContinuationTypeLiteral:
-      out << "Continuation";
-      break;
     case ExpressionKind::FunctionTypeLiteral: {
       const auto& fn = cast<FunctionTypeLiteral>(*this);
       out << "fn " << fn.parameter() << " -> " << fn.return_type();
@@ -205,6 +176,64 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
+    case ExpressionKind::IdentifierExpression:
+    case ExpressionKind::IntLiteral:
+    case ExpressionKind::BoolLiteral:
+    case ExpressionKind::BoolTypeLiteral:
+    case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::StringLiteral:
+    case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
+    case ExpressionKind::ContinuationTypeLiteral:
+      PrintID(out);
+      break;
+  }
+}
+
+void Expression::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case ExpressionKind::IdentifierExpression:
+      out << cast<IdentifierExpression>(*this).name();
+      break;
+    case ExpressionKind::IntLiteral:
+      out << cast<IntLiteral>(*this).value();
+      break;
+    case ExpressionKind::BoolLiteral:
+      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
+      break;
+    case ExpressionKind::BoolTypeLiteral:
+      out << "Bool";
+      break;
+    case ExpressionKind::IntTypeLiteral:
+      out << "i32";
+      break;
+    case ExpressionKind::StringLiteral:
+      out << "\"";
+      out.write_escaped(cast<StringLiteral>(*this).value());
+      out << "\"";
+      break;
+    case ExpressionKind::StringTypeLiteral:
+      out << "String";
+      break;
+    case ExpressionKind::TypeTypeLiteral:
+      out << "Type";
+      break;
+    case ExpressionKind::ContinuationTypeLiteral:
+      out << "Continuation";
+      break;
+    case ExpressionKind::IndexExpression:
+    case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::IfExpression:
+    case ExpressionKind::TupleLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::StructTypeLiteral:
+    case ExpressionKind::CallExpression:
+    case ExpressionKind::PrimitiveOperatorExpression:
+    case ExpressionKind::IntrinsicExpression:
+    case ExpressionKind::UnimplementedExpression:
+    case ExpressionKind::FunctionTypeLiteral:
+      out << "...";
+      break;
   }
 }
 

@@ -178,6 +178,14 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
       }
       break;
     }
+    case PatternKind::GenericBinding: {
+      auto& binding = cast<GenericBinding>(pattern);
+      RETURN_IF_ERROR(ResolveNames(binding.type(), enclosing_scope));
+      if (binding.name() != AnonymousName) {
+        RETURN_IF_ERROR(enclosing_scope.Add(binding.name(), &binding));
+      }
+      break;
+    }
     case PatternKind::TuplePattern:
       for (Nonnull<Pattern*> field : cast<TuplePattern>(pattern).fields()) {
         RETURN_IF_ERROR(ResolveNames(*field, enclosing_scope));
@@ -315,8 +323,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
-        RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
         RETURN_IF_ERROR(ResolveNames(binding->type(), function_scope));
+        RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
       }
       if (function.is_method()) {
         RETURN_IF_ERROR(ResolveNames(function.me_pattern(), function_scope));
@@ -336,9 +344,17 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
-      for (Nonnull<Declaration*> member : class_decl.members()) {
-        RETURN_IF_ERROR(AddExposedNames(*member, class_scope));
+      if (class_decl.type_params().has_value()) {
+        RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
       }
+
+      // TODO: Disable unqualified access of members by other members for now.
+      // Put it back later, but in a way that turns unqualified accesses
+      // into qualified ones, so that generic classes and impls
+      // behave the in the right way. -Jeremy
+      // for (Nonnull<Declaration*> member : class_decl.members()) {
+      //   AddExposedNames(*member, class_scope);
+      // }
       for (Nonnull<Declaration*> member : class_decl.members()) {
         RETURN_IF_ERROR(ResolveNames(*member, class_scope));
       }

@@ -29,6 +29,7 @@ class Statement : public AstNode {
   ~Statement() override = 0;
 
   void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, out); }
+  void PrintID(llvm::raw_ostream& out) const override { PrintDepth(1, out); }
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
   static auto classof(const AstNode* node) {
@@ -348,6 +349,9 @@ class Continuation : public Statement {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Var; }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
 

@@ -38,6 +38,7 @@ class Pattern : public AstNode {
   ~Pattern() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromPattern(node->kind());
@@ -50,7 +51,10 @@ class Pattern : public AstNode {
   }
 
   // The static type of this pattern. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
@@ -168,6 +172,9 @@ class BindingPattern : public Pattern {
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
 
  private:
   std::string name_;
@@ -193,6 +200,58 @@ class TuplePattern : public Pattern {
 
  private:
   std::vector<Nonnull<Pattern*>> fields_;
+};
+
+class GenericBinding : public Pattern {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : Pattern(AstNodeKind::GenericBinding, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
+
+  void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return symbolic_identity_;
+  }
+  void set_symbolic_identity(Nonnull<const Value*> value) {
+    CHECK(!symbolic_identity_.has_value());
+    symbolic_identity_ = value;
+  }
+
+  // The impl binding associated with this type variable.
+  auto impl_binding() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_binding_;
+  }
+  // Set the impl binding.
+  void set_impl_binding(Nonnull<const ImplBinding*> binding) {
+    CHECK(!impl_binding_.has_value());
+    impl_binding_ = binding;
+  }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> type_;
+  std::optional<Nonnull<const Value*>> symbolic_identity_;
+  std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as

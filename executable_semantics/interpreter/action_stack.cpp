@@ -51,10 +51,11 @@ void ActionStack::Initialize(ValueNodeView value_node,
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  if (std::optional<Nonnull<const Value*>> constant_value =
-          value_node.constant_value();
-      constant_value.has_value()) {
-    return *constant_value;
+  std::optional<const Value*> value = (phase_ == Phase::CompileTime)
+                                          ? value_node.symbolic_identity()
+                                          : value_node.constant_value();
+  if (value.has_value()) {
+    return *value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {
     // TODO: have static name resolution identify the scope of value_node
