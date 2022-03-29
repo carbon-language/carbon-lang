@@ -783,21 +783,20 @@ deduced_param_list:
       $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
-| generic_binding COMMA deduced_param_list
+| deduced_param_list COMMA generic_binding
     {
-      $$ = std::vector<Nonnull<AstNode*>>();
-      $$.push_back($1);
-      $$.insert($$.end(), $3.begin(), $3.end());
+      $$ = $1;
+      $$.push_back($3);
     }
 | variable_declaration
     {
       $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
-| variable_declaration COMMA deduced_param_list
+| deduced_param_list COMMA variable_declaration
     {
-      $$ = $3;
-      $$.push_back($1);
+      $$ = $1;
+      $$.push_back($3);
     }
 ;
 deduced_params:
