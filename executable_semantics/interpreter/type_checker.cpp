@@ -97,6 +97,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
       // `auto` isn't a concrete type, it's a pattern that matches types.
@@ -184,23 +185,40 @@ auto TypeChecker::IsImplicitlyConvertible(Nonnull<const Value*> source,
           return false;
       }
     case Value::Kind::TupleValue:
-      if (destination->kind() == Value::Kind::TupleValue) {
-        const std::vector<Nonnull<const Value*>>& source_elements =
-            cast<TupleValue>(*source).elements();
-        const std::vector<Nonnull<const Value*>>& destination_elements =
-            cast<TupleValue>(*destination).elements();
-        if (source_elements.size() != destination_elements.size()) {
-          return false;
-        }
-        for (size_t i = 0; i < source_elements.size(); ++i) {
-          if (!IsImplicitlyConvertible(source_elements[i],
-                                       destination_elements[i])) {
+      switch (destination->kind()) {
+        case Value::Kind::TupleValue: {
+          const std::vector<Nonnull<const Value*>>& source_elements =
+              cast<TupleValue>(*source).elements();
+          const std::vector<Nonnull<const Value*>>& destination_elements =
+              cast<TupleValue>(*destination).elements();
+          if (source_elements.size() != destination_elements.size()) {
             return false;
           }
+          for (size_t i = 0; i < source_elements.size(); ++i) {
+            if (!IsImplicitlyConvertible(source_elements[i],
+                                         destination_elements[i])) {
+              return false;
+            }
+          }
+          return true;
         }
-        return true;
-      } else {
-        return false;
+        case Value::Kind::StaticArrayType: {
+          const auto& source_tuple = cast<TupleValue>(*source);
+          const auto& destination_array = cast<StaticArrayType>(*destination);
+          if (destination_array.size() != source_tuple.elements().size()) {
+            return false;
+          }
+          for (Nonnull<const Value*> source_element :
+               cast<TupleValue>(*source).elements()) {
+            if (!IsImplicitlyConvertible(source_element,
+                                         &destination_array.element_type())) {
+              return false;
+            }
+          }
+          return true;
+        }
+        default:
+          return false;
       }
     case Value::Kind::TypeType:
       return destination->kind() == Value::Kind::InterfaceType;
@@ -339,6 +357,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
              << "actual: " << *arg_type;
     }
     // For the following cases, we check for type convertability.
+    case Value::Kind::StaticArrayType:
     case Value::Kind::ContinuationType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
@@ -423,6 +442,7 @@ auto TypeChecker::Substitute(
       }
       return new_class_type;
     }
+    case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -467,10 +487,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
       RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
+      RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
       const Value& aggregate_type = index.aggregate().static_type();
       switch (aggregate_type.kind()) {
         case Value::Kind::TupleValue: {
           const auto& tuple_type = cast<TupleValue>(aggregate_type);
+          RETURN_IF_ERROR(ExpectExactType(index.offset().source_loc(),
+                                          "tuple index", arena_->New<IntType>(),
+                                          &index.offset().static_type()));
           ASSIGN_OR_RETURN(auto offset_value,
                            InterpExp(&index.offset(), arena_, trace_));
           int i = cast<IntValue>(*offset_value).value();
@@ -480,6 +504,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << tuple_type;
           }
           index.set_static_type(tuple_type.elements()[i]);
+          index.set_value_category(index.aggregate().value_category());
+          return Success();
+        }
+        case Value::Kind::StaticArrayType: {
+          RETURN_IF_ERROR(ExpectExactType(index.offset().source_loc(),
+                                          "array index", arena_->New<IntType>(),
+                                          &index.offset().static_type()));
+          index.set_static_type(
+              &cast<StaticArrayType>(aggregate_type).element_type());
           index.set_value_category(index.aggregate().value_category());
           return Success();
         }
@@ -989,6 +1022,34 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << *e;
+    case ExpressionKind::ArrayTypeLiteral: {
+      auto& array_literal = cast<ArrayTypeLiteral>(*e);
+      RETURN_IF_ERROR(
+          TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> element_type,
+          InterpExp(&array_literal.element_type_expression(), arena_, trace_));
+      RETURN_IF_ERROR(ExpectIsConcreteType(
+          array_literal.element_type_expression().source_loc(), element_type));
+
+      RETURN_IF_ERROR(
+          TypeCheckExp(&array_literal.size_expression(), impl_scope));
+      RETURN_IF_ERROR(
+          ExpectExactType(array_literal.size_expression().source_loc(),
+                          "array size", arena_->New<IntType>(),
+                          &array_literal.size_expression().static_type()));
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> size_value,
+          InterpExp(&array_literal.size_expression(), arena_, trace_));
+      if (cast<IntValue>(size_value)->value() < 0) {
+        return FATAL_COMPILATION_ERROR(
+                   array_literal.size_expression().source_loc())
+               << "Array size cannot be negative";
+      }
+      array_literal.set_static_type(arena_->New<TypeType>());
+      array_literal.set_value_category(ValueCategory::Let);
+      return Success();
+    }
   }
 }
 

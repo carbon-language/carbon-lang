@@ -110,6 +110,11 @@ message TypeTypeLiteral {}
 
 message UnimplementedExpression {}
 
+message ArrayTypeLiteral {
+  optional Expression element_type = 1;
+  optional Expression size = 2;
+}
+
 message Expression {
   oneof kind {
     CallExpression call = 1;
@@ -132,6 +137,7 @@ message Expression {
     StringTypeLiteral string_type_literal = 18;
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
+    ArrayTypeLiteral array_type_literal = 21;
   }
 }
 

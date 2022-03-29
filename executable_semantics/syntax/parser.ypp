@@ -312,6 +312,8 @@ primary_expression:
 | paren_expression { $$ = $1; }
 | struct_literal { $$ = $1; }
 | struct_type_literal { $$ = $1; }
+| LEFT_SQUARE_BRACKET expression SEMICOLON expression RIGHT_SQUARE_BRACKET
+    { $$ = arena->New<ArrayTypeLiteral>(context.source_loc(), $2, $4); }
 ;
 postfix_expression:
   primary_expression
