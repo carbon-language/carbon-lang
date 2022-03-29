@@ -11,7 +11,7 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
-#include "executable_semantics/ast/generic_binding.h"
+#include "executable_semantics/ast/impl_binding.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/source_location.h"
@@ -40,6 +40,7 @@ class Declaration : public AstNode {
   auto operator=(const Declaration&) -> Declaration& = delete;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDeclaration(node->kind());
@@ -67,6 +68,23 @@ class Declaration : public AstNode {
   // and after typechecking it's guaranteed to be true.
   auto has_static_type() const -> bool { return static_type_.has_value(); }
 
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+  // See static_scope.h for API.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // See static_scope.h for API.
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
  protected:
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -76,6 +94,7 @@ class Declaration : public AstNode {
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class FunctionDeclaration : public Declaration {
@@ -130,16 +149,6 @@ class FunctionDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
 
   auto is_method() const -> bool { return me_pattern_.has_value(); }
 
@@ -150,7 +159,6 @@ class FunctionDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -158,9 +166,11 @@ class ClassDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
+                   std::optional<Nonnull<TuplePattern*>> type_params,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
+        type_params_(type_params),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -168,26 +178,23 @@ class ClassDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+  auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
+    return type_params_;
+  }
+  auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
+    return type_params_;
+  }
+
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
 
  private:
   std::string name_;
+  std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<Declaration*>> members_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 class AlternativeSignature : public AstNode {
@@ -199,6 +206,7 @@ class AlternativeSignature : public AstNode {
         signature_(signature) {}
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativeSignature(node->kind());
@@ -237,21 +245,10 @@ class ChoiceDeclaration : public Declaration {
   }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
 
  private:
   std::string name_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // Global variable definition implements the Declaration concept.
@@ -311,21 +308,10 @@ class InterfaceDeclaration : public Declaration {
   auto self() -> Nonnull<GenericBinding*> { return self_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-
-  // Sets the value returned by constant_value(). Can only be called once,
-  // during typechecking.
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
 
  private:
   std::string name_;
   std::vector<Nonnull<Declaration*>> members_;
-  std::optional<Nonnull<const Value*>> constant_value_;
   Nonnull<GenericBinding*> self_;
 };
 
@@ -364,14 +350,6 @@ class ImplDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  // Return the witness table for this impl.
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return constant_value_;
-  }
-  void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
-    constant_value_ = value;
-  }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
@@ -380,7 +358,6 @@ class ImplDeclaration : public Declaration {
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
   std::vector<Nonnull<Declaration*>> members_;
-  std::optional<Nonnull<const Value*>> constant_value_;
 };
 
 // Return the name of a declaration, if it has one.

@@ -6,6 +6,7 @@
 
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/interpreter/value.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
@@ -76,6 +77,19 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
     default:
       FATAL() << "expected an interface, not " << *iface_type;
       break;
+  }
+}
+
+// TODO: Add indentation when printing the parents.
+void ImplScope::Print(llvm::raw_ostream& out) const {
+  out << "impls: ";
+  llvm::ListSeparator sep;
+  for (Impl impl : impls_) {
+    out << sep << *(impl.type) << " as " << *(impl.interface);
+  }
+  out << "\n";
+  for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
+    out << *parent;
   }
 }
 

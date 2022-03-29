@@ -8,7 +8,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/generic_binding.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -240,6 +239,14 @@ static auto BindingPatternToProto(const BindingPattern& pattern)
   return pattern_proto;
 }
 
+static auto GenericBindingToProto(const GenericBinding& binding)
+    -> Fuzzing::GenericBinding {
+  Fuzzing::GenericBinding binding_proto;
+  binding_proto.set_name(binding.name());
+  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+  return binding_proto;
+}
+
 static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
     -> Fuzzing::TuplePattern {
   Fuzzing::TuplePattern tuple_pattern_proto;
@@ -252,6 +259,11 @@ static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
 static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
   Fuzzing::Pattern pattern_proto;
   switch (pattern.kind()) {
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(pattern);
+      *pattern_proto.mutable_generic_binding() = GenericBindingToProto(binding);
+      break;
+    }
     case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(pattern);
       *pattern_proto.mutable_binding_pattern() = BindingPatternToProto(binding);
@@ -420,14 +432,6 @@ static auto ReturnTermToProto(const ReturnTerm& return_term)
         ExpressionToProto(**return_term.type_expression());
   }
   return return_term_proto;
-}
-
-static auto GenericBindingToProto(const GenericBinding& binding)
-    -> Fuzzing::GenericBinding {
-  Fuzzing::GenericBinding binding_proto;
-  binding_proto.set_name(binding.name());
-  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
-  return binding_proto;
 }
 
 static auto DeclarationToProto(const Declaration& declaration)
