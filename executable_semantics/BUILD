@@ -9,6 +9,11 @@ package(default_visibility = [
     "//executable_semantics:__subpackages__",
 ])
 
+filegroup(
+    name = "prelude_files",
+    srcs = ["data/prelude.carbon"],
+)
+
 cc_library(
     name = "prelude",
     srcs = ["prelude.cpp"],

@@ -5,6 +5,7 @@
 #include "executable_semantics/fuzzing/ast_to_proto.h"
 
 #include <gmock/gmock.h>
+#include <google/protobuf/descriptor.h>
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -13,7 +14,6 @@
 #include <variant>
 
 #include "executable_semantics/syntax/parse.h"
-#include "google/protobuf/descriptor.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon::Testing {
