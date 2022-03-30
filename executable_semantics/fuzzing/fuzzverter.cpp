@@ -133,12 +133,6 @@ static auto WriteProtoAsCarbon(Fuzzing::Carbon& carbon_proto,
   return WriteFile(carbon_source, output_file_name);
 }
 
-// Unsupported conversion.
-static auto Unsupported(std::string_view input_file_name,
-                        std::string_view output_file_name) -> ErrorOr<Success> {
-  return Error("Unsupported");
-}
-
 // Conversion routines from text_proto.
 
 static auto TextProtoToBinaryProto(std::string_view input_file_name,
@@ -191,6 +185,12 @@ static auto CarbonToBinaryProto(std::string_view input_file_name,
   ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
                    ReadCarbonAsProto(input_file_name));
   return WriteBinaryProto(carbon_proto, output_file_name);
+}
+
+// Unsupported conversion.
+static auto Unsupported(std::string_view input_file_name,
+                        std::string_view output_file_name) -> ErrorOr<Success> {
+  return Error("Unsupported");
 }
 
 }  // namespace Carbon
@@ -248,8 +248,9 @@ auto main(int argc, char* argv[]) -> int {
       },
   };
 
-  const auto result = converters[input_format][output_format](input_file_name,
-                                                              output_file_name);
+  const Carbon::ErrorOr<Carbon::Success> result =
+      converters[input_format][output_format](input_file_name,
+                                              output_file_name);
   if (!result.ok()) {
     llvm::errs() << "Conversion from " << GetEnumString(input_format) << " to "
                  << GetEnumString(output_format)
