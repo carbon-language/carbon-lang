@@ -19,11 +19,11 @@ cc_test(
     name = "ast_to_proto_test",
     srcs = ["ast_to_proto_test.cpp"],
     args = [
-        "$(location //executable_semantics:data/prelude.carbon)",
+        "$(locations //executable_semantics:prelude_files)",
         "$(locations //executable_semantics/testdata:carbon_files)",
     ],
     data = [
-        "//executable_semantics:data/prelude.carbon",
+        "//executable_semantics:prelude_files",
         "//executable_semantics/testdata:carbon_files",
     ],
     deps = [

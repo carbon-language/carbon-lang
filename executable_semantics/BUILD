@@ -9,10 +9,15 @@ package(default_visibility = [
     "//executable_semantics:__subpackages__",
 ])
 
+filegroup(
+    name = "prelude_files",
+    srcs = ["data/prelude.carbon"],
+)
+
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    data = ["data/prelude.carbon"],
+    data = [":prelude_files"],
     deps = [
         "//common:error",
         "//executable_semantics/common:arena",
