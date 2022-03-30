@@ -16,3 +16,13 @@ cc_proto_library(
     name = "carbon_cc_proto",
     deps = [":carbon_proto"],
 )
+
+cc_library(
+    name = "proto_to_carbon_lib",
+    srcs = ["proto_to_carbon.cpp"],
+    hdrs = ["proto_to_carbon.h"],
+    deps = [
+        ":carbon_cc_proto",
+        "@llvm-project//llvm:Support",
+    ],
+)

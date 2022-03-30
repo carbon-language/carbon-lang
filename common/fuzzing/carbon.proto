@@ -218,6 +218,7 @@ message WhileStatement {
 message MatchClause {
   optional Pattern pattern = 1;
   optional Statement statement = 2;
+  optional bool is_default = 3;
 }
 
 message MatchStatement {
@@ -282,6 +283,7 @@ message FunctionDeclaration {
 message ClassDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
+  optional TuplePattern type_params = 3;
 }
 
 message AlternativeSignature {
