@@ -111,6 +111,7 @@ repos:
               .bazelversion|
               compile_flags.txt|
               third_party/examples/.*/compile_flags.carbon.txt|
+              examples/ports/.*|
               .*\.def|
               .*\.svg|
               .*/testdata/.*\.golden
