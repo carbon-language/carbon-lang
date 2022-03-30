@@ -1493,8 +1493,7 @@ the destructor is virtual or non-virtual, determines which
 | abstract | virtual     | no             | yes         | yes            |
 | base     | non-virtual | yes            | no          | yes            |
 | base     | virtual     | yes            | yes         | yes            |
-| final    | non-virtual | yes            | yes         | yes            |
-| final    | virtual     | yes            | yes         | yes            |
+| final    | any         | yes            | yes         | yes            |
 
 For more about these, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
@@ -1566,6 +1565,16 @@ Unhandled failure during a destructor call will abort the program.
 
 **Future work:** Allow or require destructors to be declared as taking
 `[var me: Self]`.
+
+**Alternatives considered:**
+
+-   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
+-   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
+-   [Allow destructors to specify a return type](/proposals/p1154.md#allow-destructors-to-specify-a-return-type)
+-   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+-   [Don't distinguish safe and unsafe delete operations](/proposals/p1154.md#dont-distinguish-safe-and-unsafe-delete-operations)
+-   [Don't allow unsafe delete](/proposals/p1154.md#dont-allow-unsafe-delete)
+-   [Allow final destructors](/proposals/p1154.md#allow-final-destructors)
 
 ### Access control
 
