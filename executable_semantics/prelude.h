@@ -18,9 +18,6 @@ void AddPrelude(
     std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
     std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations);
 
-static constexpr char DefaultPreludeFilename[] =
-    "executable_semantics/data/prelude.carbon";
-
 }  // namespace Carbon
 
 #endif  // THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <google/protobuf/text_format.h>
+#include <libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h>
 
 #include "common/fuzzing/carbon.pb.h"
 #include "common/fuzzing/proto_to_carbon.h"
@@ -10,7 +11,6 @@
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/prelude.h"
 #include "executable_semantics/syntax/parse.h"
-#include "libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
@@ -29,7 +29,8 @@ void ParseAndExecute(Fuzzing::CompilationUnit compilation_unit) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
-  AddPrelude(DefaultPreludeFilename, &arena, &ast->declarations);
+  AddPrelude("executable_semantics/data/prelude.carbon", &arena,
+             &ast->declarations);
   const ErrorOr<int> result =
       Carbon::ExecProgram(&arena, *ast, /*trace=*/false);
   if (!result.ok()) {

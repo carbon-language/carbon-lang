@@ -43,7 +43,7 @@ auto main(int argc, char* argv[]) -> int {
                                    llvm::cl::Required);
   opt<std::string> prelude_file_name(
       "prelude", desc("<prelude file>"),
-      llvm::cl::init(Carbon::DefaultPreludeFilename));
+      llvm::cl::init("executable_semantics/data/prelude.carbon"));
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
