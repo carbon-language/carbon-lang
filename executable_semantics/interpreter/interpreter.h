@@ -44,12 +44,14 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
 // is not permitted to bind variables. **bindings may be modified even if the
 // match is unsuccessful, so it should typically be created for the
 // PatternMatch call and then merged into an existing scope on success.
+// The matches for generic variables in the pattern are output in
+// `generic_args`.
 // TODO: consider moving this to a separate header.
 [[nodiscard]] auto PatternMatch(Nonnull<const Value*> p,
                                 Nonnull<const Value*> v,
                                 SourceLocation source_loc,
-                                std::optional<Nonnull<RuntimeScope*>> bindings)
-    -> bool;
+                                std::optional<Nonnull<RuntimeScope*>> bindings,
+                                BindingMap& generic_args) -> bool;
 
 }  // namespace Carbon
 

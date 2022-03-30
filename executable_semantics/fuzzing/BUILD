@@ -13,7 +13,6 @@ cc_library(
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:generic_binding",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -35,11 +34,11 @@ cc_test(
     name = "ast_to_proto_test",
     srcs = ["ast_to_proto_test.cpp"],
     args = [
-        "$(locations //executable_semantics:prelude_files)",
+        "$(locations //executable_semantics:standard_libraries)",
         "$(locations //executable_semantics/testdata:carbon_files)",
     ],
     data = [
-        "//executable_semantics:prelude_files",
+        "//executable_semantics:standard_libraries",
         "//executable_semantics/testdata:carbon_files",
     ],
     deps = [
@@ -73,11 +72,11 @@ cc_test(
     name = "proto_to_carbon_test",
     srcs = ["proto_to_carbon_test.cpp"],
     args = [
-        "$(locations //executable_semantics:prelude_files)",
+        "$(locations //executable_semantics:standard_libraries)",
         "$(locations //executable_semantics/testdata:carbon_files)",
     ],
     data = [
-        "//executable_semantics:prelude_files",
+        "//executable_semantics:standard_libraries",
         "//executable_semantics/testdata:carbon_files",
     ],
     deps = [

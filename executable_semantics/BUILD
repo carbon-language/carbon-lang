@@ -10,7 +10,7 @@ package(default_visibility = [
 ])
 
 filegroup(
-    name = "prelude_files",
+    name = "standard_libraries",
     srcs = ["data/prelude.carbon"],
 )
 
@@ -18,7 +18,7 @@ cc_library(
     name = "prelude",
     srcs = ["prelude.cpp"],
     hdrs = ["prelude.h"],
-    data = ["data/prelude.carbon"],
+    data = [":standard_libraries"],
     deps = [
         "//common:error",
         "//executable_semantics/ast:declaration",

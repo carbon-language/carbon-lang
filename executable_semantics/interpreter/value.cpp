@@ -42,7 +42,12 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                 FindMember(f, witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
-          return arena->New<BoundMethodValue>(&fun_decl, v);
+          if (fun_decl.is_method()) {
+            return arena->New<BoundMethodValue>(&fun_decl, v);
+          } else {
+            // Class function.
+            return *fun_decl.constant_value();
+          }
         } else {
           return FATAL_COMPILATION_ERROR(source_loc)
                  << "member " << f << " not in " << *witness;
@@ -67,7 +72,9 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
-      if (field == std::nullopt) {
+      if (field.has_value()) {
+        return *field;
+      } else {
         // Look for a method in the object's class
         const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
@@ -78,14 +85,18 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                  << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
-          const auto& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), &object);
+          const FunctionValue& m = cast<FunctionValue>(**func);
+          return arena->New<BoundMethodValue>(&m.declaration(), &object,
+                                              class_type.type_args(),
+                                              class_type.witnesses());
         } else {
           // Found a class function
-          return *func;
+          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
+              &(*func)->declaration(), class_type.type_args(),
+              class_type.witnesses());
+          return fun;
         }
       }
-      return *field;
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
@@ -96,14 +107,17 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     case Value::Kind::NominalClassType: {
-      const auto& class_type = cast<NominalClassType>(*v);
+      // Access a class function.
+      const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
         return FATAL_RUNTIME_ERROR(source_loc)
                << "class function " << f << " not in " << *v;
       }
-      return *fun;
+      return arena->New<FunctionValue>(&(*fun)->declaration(),
+                                       class_type.type_args(),
+                                       class_type.witnesses());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -293,6 +307,28 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*this);
       out << "class " << class_type.declaration().name();
+      if (!class_type.type_args().empty()) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : class_type.type_args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
+      if (!class_type.impls().empty()) {
+        out << " impls ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, impl] : class_type.impls()) {
+          out << sep << impl;
+        }
+      }
+      if (!class_type.witnesses().empty()) {
+        out << " witnesses ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : class_type.witnesses()) {
+          out << sep << *witness;
+        }
+      }
       break;
     }
     case Value::Kind::InterfaceType: {
@@ -302,7 +338,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::Witness: {
       const auto& witness = cast<Witness>(*this);
-      out << "impl " << *witness.declaration().impl_type() << " as "
+      out << "witness " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
       break;
     }
@@ -310,7 +346,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).binding().name();
+      out << cast<VariableType>(*this).binding();
       break;
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();
@@ -410,8 +446,18 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return true;
     }
     case Value::Kind::NominalClassType:
-      return cast<NominalClassType>(*t1).declaration().name() ==
-             cast<NominalClassType>(*t2).declaration().name();
+      if (cast<NominalClassType>(*t1).declaration().name() !=
+          cast<NominalClassType>(*t2).declaration().name()) {
+        return false;
+      }
+      for (const auto& [ty_var1, ty1] :
+           cast<NominalClassType>(*t1).type_args()) {
+        if (!TypeEqual(ty1,
+                       cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+          return false;
+        }
+      }
+      return true;
     case Value::Kind::InterfaceType:
       return cast<InterfaceType>(*t1).declaration().name() ==
              cast<InterfaceType>(*t2).declaration().name();
@@ -591,23 +637,6 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
-  std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        field_types.push_back({.name = var.binding().name(),
-                               .value = &var.binding().static_type()});
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return field_types;
-}
-
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
@@ -623,7 +652,11 @@ auto FindMember(const std::string& name,
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {
-  out << "impl " << *type_var_ << " as " << *iface_;
+  out << "impl binding " << *type_var_ << " as " << *iface_;
+}
+
+void ImplBinding::PrintID(llvm::raw_ostream& out) const {
+  out << *type_var_ << " as " << *iface_;
 }
 
 }  // namespace Carbon

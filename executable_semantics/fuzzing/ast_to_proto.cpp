@@ -8,7 +8,6 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/generic_binding.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
@@ -240,6 +239,14 @@ static auto BindingPatternToProto(const BindingPattern& pattern)
   return pattern_proto;
 }
 
+static auto GenericBindingToProto(const GenericBinding& binding)
+    -> Fuzzing::GenericBinding {
+  Fuzzing::GenericBinding binding_proto;
+  binding_proto.set_name(binding.name());
+  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+  return binding_proto;
+}
+
 static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
     -> Fuzzing::TuplePattern {
   Fuzzing::TuplePattern tuple_pattern_proto;
@@ -252,6 +259,11 @@ static auto TuplePatternToProto(const TuplePattern& tuple_pattern)
 static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
   Fuzzing::Pattern pattern_proto;
   switch (pattern.kind()) {
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(pattern);
+      *pattern_proto.mutable_generic_binding() = GenericBindingToProto(binding);
+      break;
+    }
     case PatternKind::BindingPattern: {
       const auto& binding = cast<BindingPattern>(pattern);
       *pattern_proto.mutable_binding_pattern() = BindingPatternToProto(binding);
@@ -368,7 +380,14 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
         auto* clause_proto = match_proto->add_clauses();
-        *clause_proto->mutable_pattern() = PatternToProto(clause.pattern());
+        const bool is_default_clause =
+            clause.pattern().kind() == PatternKind::BindingPattern &&
+            cast<BindingPattern>(clause.pattern()).name() == AnonymousName;
+        if (is_default_clause) {
+          clause_proto->set_is_default(true);
+        } else {
+          *clause_proto->mutable_pattern() = PatternToProto(clause.pattern());
+        }
         *clause_proto->mutable_statement() =
             StatementToProto(clause.statement());
       }
@@ -422,14 +441,6 @@ static auto ReturnTermToProto(const ReturnTerm& return_term)
   return return_term_proto;
 }
 
-static auto GenericBindingToProto(const GenericBinding& binding)
-    -> Fuzzing::GenericBinding {
-  Fuzzing::GenericBinding binding_proto;
-  binding_proto.set_name(binding.name());
-  *binding_proto.mutable_type() = ExpressionToProto(binding.type());
-  return binding_proto;
-}
-
 static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
@@ -462,6 +473,10 @@ static auto DeclarationToProto(const Declaration& declaration)
       const auto& class_decl = cast<ClassDeclaration>(declaration);
       auto* class_proto = declaration_proto.mutable_class_declaration();
       class_proto->set_name(class_decl.name());
+      if (class_decl.type_params().has_value()) {
+        *class_proto->mutable_type_params() =
+            TuplePatternToProto(**class_decl.type_params());
+      }
       for (Nonnull<const Declaration*> member : class_decl.members()) {
         *class_proto->add_members() = DeclarationToProto(*member);
       }

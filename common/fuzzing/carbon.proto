@@ -142,6 +142,11 @@ message BindingPattern {
   optional Pattern type = 2;
 }
 
+message GenericBinding {
+  optional string name = 1;
+  optional Expression type = 2;
+}
+
 message TuplePattern {
   repeated Pattern fields = 1;
 }
@@ -170,6 +175,7 @@ message Pattern {
     ExpressionPattern expression_pattern = 4;
     AutoPattern auto_pattern = 5;
     VarPattern var_pattern = 6;
+    GenericBinding generic_binding = 7;
   }
 }
 
@@ -212,6 +218,7 @@ message WhileStatement {
 message MatchClause {
   optional Pattern pattern = 1;
   optional Statement statement = 2;
+  optional bool is_default = 3;
 }
 
 message MatchStatement {
@@ -264,11 +271,6 @@ message ReturnTerm {
   optional Expression type = 2;
 }
 
-message GenericBinding {
-  optional string name = 1;
-  optional Expression type = 2;
-}
-
 message FunctionDeclaration {
   optional string name = 1;
   repeated GenericBinding deduced_parameters = 2;
@@ -281,6 +283,7 @@ message FunctionDeclaration {
 message ClassDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
+  optional TuplePattern type_params = 3;
 }
 
 message AlternativeSignature {

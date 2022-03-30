@@ -7,16 +7,19 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_instantiate_non_generic.carbon:23: attempt to instantiate a non-generic class: Point(i32)
 
 package ExecutableSemanticsTest api;
 
-fn id[T:! Type](x: T) -> T {
-  return x + 0;
+class Point {
+  fn Origin() -> Point {
+    return {.x = 0, .y = 0};
+  }
+  var x: i32;
+  var y: i32;
 }
 
 fn Main() -> i32 {
-  return id(0);
+  var p: Point(i32) = Point.Origin();
+  return 0;
 }
