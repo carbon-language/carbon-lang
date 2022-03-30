@@ -218,6 +218,7 @@ message WhileStatement {
 message MatchClause {
   optional Pattern pattern = 1;
   optional Statement statement = 2;
+  optional bool is_default = 3;
 }
 
 message MatchStatement {

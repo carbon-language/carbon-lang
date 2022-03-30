@@ -380,7 +380,14 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
           ExpressionToProto(match.expression());
       for (const Match::Clause& clause : match.clauses()) {
         auto* clause_proto = match_proto->add_clauses();
-        *clause_proto->mutable_pattern() = PatternToProto(clause.pattern());
+        const bool is_default_clause =
+            clause.pattern().kind() == PatternKind::BindingPattern &&
+            cast<BindingPattern>(clause.pattern()).name() == AnonymousName;
+        if (is_default_clause) {
+          clause_proto->set_is_default(true);
+        } else {
+          *clause_proto->mutable_pattern() = PatternToProto(clause.pattern());
+        }
         *clause_proto->mutable_statement() =
             StatementToProto(clause.statement());
       }

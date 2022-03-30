@@ -16,7 +16,7 @@ namespace {
 static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
 // Returns a string representation of `ast`.
-std::string AstToString(const AST& ast) {
+auto AstToString(const AST& ast) -> std::string {
   std::string s;
   llvm::raw_string_ostream out(s);
   out << "package " << ast.package.package << (ast.is_api ? "api" : "impl")
@@ -41,20 +41,21 @@ TEST(ProtoToCarbonTest, Roundtrip) {
       const ErrorOr<AST> ast_from_proto = Carbon::ParseFromString(
           &arena, f, source_from_proto, /*trace=*/false);
 
-      EXPECT_TRUE(ast_from_proto.ok())
-          << "Parse error " << ast_from_proto.error().message();
       if (ast_from_proto.ok()) {
         EXPECT_EQ(AstToString(*ast), AstToString(*ast_from_proto));
+      } else {
+        ADD_FAILURE() << "Parse error " << ast_from_proto.error().message();
       }
     }
   }
-  EXPECT_GT(parsed_ok_count, 0);  // Makes sure files were actually processed.
+  // Makes sure files were actually processed.
+  EXPECT_GT(parsed_ok_count, 0);
 }
 
 }  // namespace
 }  // namespace Carbon::Testing
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
   Carbon::Testing::carbon_files =
       new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
