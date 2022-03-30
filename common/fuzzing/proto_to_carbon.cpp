@@ -29,20 +29,15 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
   if (s.empty()) {
     out << "EmptyIdentifier";
   } else {
-    for (size_t i = 0; i < s.size(); ++i) {
-      const char c = s[i];
-      if (i == 0) {
-        if (llvm::isAlpha(c) || c == '_') {
-          out << c;
-        } else {
-          out << 'x' << llvm::toHex(c);
-        }
+    if (!llvm::isAlpha(s[0]) && s[0] != '_') {
+      // Ensures that identifier starts with a valid character.
+      out << 'x';
+    }
+    for (const char c : s) {
+      if (llvm::isAlnum(c) || c == '_') {
+        out << c;
       } else {
-        if (llvm::isAlnum(c) || c == '_') {
-          out << c;
-        } else {
-          out << 'x' << llvm::toHex(c);
-        }
+        out << llvm::toHex(c);
       }
     }
   }

@@ -40,11 +40,11 @@ cc_test(
     name = "proto_to_carbon_test",
     srcs = ["proto_to_carbon_test.cpp"],
     args = [
-        "$(location //executable_semantics:data/prelude.carbon)",
+        "$(locations //executable_semantics:standard_libraries)",
         "$(locations //executable_semantics/testdata:carbon_files)",
     ],
     data = [
-        "//executable_semantics:data/prelude.carbon",
+        "//executable_semantics:standard_libraries",
         "//executable_semantics/testdata:carbon_files",
     ],
     deps = [
