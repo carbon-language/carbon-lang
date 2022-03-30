@@ -20,19 +20,18 @@ namespace Carbon {
 // `Main()`.
 void ParseAndExecute(Fuzzing::CompilationUnit compilation_unit) {
   MaybeAddMain(compilation_unit);
-  const std::string source = Carbon::ProtoToCarbon(compilation_unit);
+  const std::string source = ProtoToCarbon(compilation_unit);
 
-  Carbon::Arena arena;
-  ErrorOr<AST> ast = Carbon::ParseFromString(&arena, "Fuzzer.carbon", source,
-                                             /*trace=*/false);
+  Arena arena;
+  ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,
+                                     /*trace=*/false);
   if (!ast.ok()) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
   AddPrelude("executable_semantics/data/prelude.carbon", &arena,
              &ast->declarations);
-  const ErrorOr<int> result =
-      Carbon::ExecProgram(&arena, *ast, /*trace=*/false);
+  const ErrorOr<int> result = ExecProgram(&arena, *ast, /*trace=*/false);
   if (!result.ok()) {
     llvm::errs() << "Execution failed: " << result.error().message() << "\n";
     return;
