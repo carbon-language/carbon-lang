@@ -896,7 +896,7 @@ class RE2.Arg {
   private var arg_: Nullable(type_*);
 }
 
-private adaptor ParseAsBase(T:! Parse4ary, base: i32) for T {
+private adapter ParseAsBase(T:! Parse4ary, base: i32) for T {
   impl as Self.Arg.Parseable {
     fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
       return T.Parse(str, n, me, base);
