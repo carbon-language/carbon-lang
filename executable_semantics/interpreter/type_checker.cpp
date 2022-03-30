@@ -184,32 +184,29 @@ auto TypeChecker::IsImplicitlyConvertible(Nonnull<const Value*> source,
         default:
           return false;
       }
-    case Value::Kind::TupleValue:
+    case Value::Kind::TupleValue: {
+      const auto& source_tuple = cast<TupleValue>(*source);
       switch (destination->kind()) {
         case Value::Kind::TupleValue: {
-          const std::vector<Nonnull<const Value*>>& source_elements =
-              cast<TupleValue>(*source).elements();
-          const std::vector<Nonnull<const Value*>>& destination_elements =
-              cast<TupleValue>(*destination).elements();
-          if (source_elements.size() != destination_elements.size()) {
+          const auto& destination_tuple = cast<TupleValue>(*destination);
+          if (source_tuple.elements().size() !=
+              destination_tuple.elements().size()) {
             return false;
           }
-          for (size_t i = 0; i < source_elements.size(); ++i) {
-            if (!IsImplicitlyConvertible(source_elements[i],
-                                         destination_elements[i])) {
+          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+            if (!IsImplicitlyConvertible(source_tuple.elements()[i],
+                                         destination_tuple.elements()[i])) {
               return false;
             }
           }
           return true;
         }
         case Value::Kind::StaticArrayType: {
-          const auto& source_tuple = cast<TupleValue>(*source);
           const auto& destination_array = cast<StaticArrayType>(*destination);
           if (destination_array.size() != source_tuple.elements().size()) {
             return false;
           }
-          for (Nonnull<const Value*> source_element :
-               cast<TupleValue>(*source).elements()) {
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             if (!IsImplicitlyConvertible(source_element,
                                          &destination_array.element_type())) {
               return false;
@@ -220,6 +217,7 @@ auto TypeChecker::IsImplicitlyConvertible(Nonnull<const Value*> source,
         default:
           return false;
       }
+    }
     case Value::Kind::TypeType:
       return destination->kind() == Value::Kind::InterfaceType;
     default:
