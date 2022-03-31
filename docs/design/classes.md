@@ -1466,7 +1466,7 @@ base class MyBaseClass {
   virtual destructor [addr me: Self*] { ... }
 }
 
-class MyDerivedClass {
+class MyDerivedClass extends MyBaseClass {
   impl destructor [addr me: Self*] { ... }
 }
 ```
