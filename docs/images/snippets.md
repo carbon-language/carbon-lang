@@ -84,7 +84,7 @@ fn Main() -> i64 {
 ### Mixed
 
 ```cpp
-// Carbon with C++ interop
+// Carbon using C++'s vector
 package Summing api;
 import Cpp library "<vector>";
 
@@ -97,7 +97,7 @@ fn PrintWithTotal(v: Cpp.std.vector(u64)) {
   PrintLine(f"Total: {sum}");
 }
 
-// C++
+// C++ calling Carbon
 #include "carbon/summing.carbon.h"
 
 auto main(int argc, char** argv) -> int {
