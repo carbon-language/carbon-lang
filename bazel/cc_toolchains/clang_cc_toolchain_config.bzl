@@ -531,9 +531,6 @@ def _impl(ctx):
                     "-D_LIBCPP_DEBUG=1",
                 ])],
                 with_features = [
-                    # _LIBCPP_DEBUG=1 causes protobuf code to crash under asan
-                    #  with the following error:
-                    # 'Attempted to dereference a non-dereferenceable iterator'.
                     with_feature_set(not_features = ["opt"]),
                 ],
             ),

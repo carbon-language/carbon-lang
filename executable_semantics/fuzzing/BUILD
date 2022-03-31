@@ -95,6 +95,7 @@ cc_fuzz_test(
     size = "small",
     srcs = ["executable_semantics_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/**"]),
+    tags = ["manual"],
     deps = [
         ":fuzzer_util",
         "//common/fuzzing:carbon_cc_proto",
