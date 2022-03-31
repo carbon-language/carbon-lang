@@ -328,6 +328,17 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       // This is an arbitrary default to avoid getting invalid syntax.
       out << "1 __unimplemented_example_infix 2";
       break;
+
+    case Fuzzing::Expression::kArrayTypeLiteral: {
+      const Fuzzing::ArrayTypeLiteral& array_literal =
+          expression.array_type_literal();
+      out << "[";
+      ExpressionToCarbon(array_literal.element_type(), out);
+      out << "; ";
+      ExpressionToCarbon(array_literal.size(), out);
+      out << "]";
+      break;
+    }
   }
 }
 
