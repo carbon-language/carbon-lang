@@ -11,6 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 A sample of quicksort in Carbon.
 
 ```cpp
+package Sorting api;
+
 fn Partition[T:! Comparable & Movable](s: Span(T))
      -> i64 {
   var i: i64 = -1;
@@ -57,6 +59,8 @@ void PrintWithTotal(const std::vector<uint64_t>& v) {
 
 ```cpp
 // Carbon
+package Summing api;
+
 fn PrintWithTotal(v: Vector(u64)) {
   var sum: u64 = 0;
   for (e: u64 in v) {
@@ -71,6 +75,7 @@ fn PrintWithTotal(v: Vector(u64)) {
 
 ```cpp
 // Carbon and C++ interop
+package Summing api;
 import Cpp library "<vector>";
 
 fn PrintWithTotal(v: Cpp.std.vector(u64)) {
