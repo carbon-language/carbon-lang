@@ -42,7 +42,7 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 // C++
 void PrintWithTotal(const std::vector<uint64_t>& v) {
   uint64_t sum = 0;
-  for (uint64_t e in v) {
+  for (uint64_t e : v) {
     sum += e;
     cout << e << "\n";
   }
