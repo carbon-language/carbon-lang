@@ -151,6 +151,14 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(*if_expr.else_expression(), enclosing_scope));
       break;
     }
+    case ExpressionKind::ArrayTypeLiteral: {
+      auto& array_literal = cast<ArrayTypeLiteral>(expression);
+      RETURN_IF_ERROR(ResolveNames(array_literal.element_type_expression(),
+                                   enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(array_literal.size_expression(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:

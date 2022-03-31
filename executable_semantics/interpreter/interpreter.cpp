@@ -363,6 +363,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
+    case ExpressionKind::ArrayTypeLiteral:
       FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
@@ -472,6 +473,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::StaticArrayType:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
       return value;
@@ -506,15 +508,28 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
-      const auto& destination_tuple_type = cast<TupleValue>(destination_type);
-      CHECK(tuple->elements().size() ==
-            destination_tuple_type->elements().size());
+      std::vector<Nonnull<const Value*>> destination_element_types;
+      switch (destination_type->kind()) {
+        case Value::Kind::TupleValue:
+          destination_element_types =
+              cast<TupleValue>(destination_type)->elements();
+          break;
+        case Value::Kind::StaticArrayType: {
+          const auto& array_type = cast<StaticArrayType>(*destination_type);
+          destination_element_types.resize(array_type.size(),
+                                           &array_type.element_type());
+          break;
+        }
+        default:
+          FATAL() << "Can't convert value " << *value << " to type "
+                  << *destination_type;
+      }
+      CHECK(tuple->elements().size() == destination_element_types.size());
       std::vector<Nonnull<const Value*>> new_elements;
       for (size_t i = 0; i < tuple->elements().size(); ++i) {
-        ASSIGN_OR_RETURN(
-            Nonnull<const Value*> val,
-            Convert(tuple->elements()[i], destination_tuple_type->elements()[i],
-                    source_loc));
+        ASSIGN_OR_RETURN(Nonnull<const Value*> val,
+                         Convert(tuple->elements()[i],
+                                 destination_element_types[i], source_loc));
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
@@ -886,6 +901,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
+    case ExpressionKind::ArrayTypeLiteral: {
+      const auto& array_literal = cast<ArrayTypeLiteral>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            &array_literal.element_type_expression()));
+      } else if (act.pos() == 1) {
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            &array_literal.size_expression()));
+      } else {
+        return todo_.FinishAction(arena_->New<StaticArrayType>(
+            act.results()[0], cast<IntValue>(act.results()[1])->value()));
+      }
+    }
   }  // switch (exp->kind)
 }
 

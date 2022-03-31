@@ -377,6 +377,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
       break;
+    case Value::Kind::StaticArrayType: {
+      const auto& array_type = cast<StaticArrayType>(*this);
+      out << "[" << array_type.element_type() << "; " << array_type.size()
+          << "]";
+      break;
+    }
   }
 }
 
@@ -494,6 +500,12 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
+    case Value::Kind::StaticArrayType: {
+      const auto& array1 = cast<StaticArrayType>(*t1);
+      const auto& array2 = cast<StaticArrayType>(*t2);
+      return TypeEqual(&array1.element_type(), &array2.element_type()) &&
+             array1.size() == array2.size();
+    }
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -595,6 +607,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
