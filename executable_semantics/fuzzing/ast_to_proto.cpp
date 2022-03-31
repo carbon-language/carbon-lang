@@ -227,6 +227,17 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::UnimplementedExpression:
       expression_proto.mutable_unimplemented_expression();
       break;
+
+    case ExpressionKind::ArrayTypeLiteral: {
+      const auto& array_literal = cast<ArrayTypeLiteral>(expression);
+      Fuzzing::ArrayTypeLiteral* array_literal_proto =
+          expression_proto.mutable_array_type_literal();
+      *array_literal_proto->mutable_element_type() =
+          ExpressionToProto(array_literal.element_type_expression());
+      *array_literal_proto->mutable_size() =
+          ExpressionToProto(array_literal.size_expression());
+      break;
+    }
   }
   return expression_proto;
 }

@@ -65,6 +65,7 @@ class Value {
     TypeOfClassType,
     TypeOfInterfaceType,
     TypeOfChoiceType,
+    StaticArrayType,
   };
 
   Value(const Value&) = delete;
@@ -798,6 +799,30 @@ class TypeOfChoiceType : public Value {
 
  private:
   Nonnull<const ChoiceType*> choice_type_;
+};
+
+// The type of a statically-sized array.
+//
+// Note that values of this type are represented as tuples.
+class StaticArrayType : public Value {
+ public:
+  // Constructs a statically-sized array type with the given element type and
+  // size.
+  StaticArrayType(Nonnull<const Value*> element_type, size_t size)
+      : Value(Kind::StaticArrayType),
+        element_type_(element_type),
+        size_(size) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::StaticArrayType;
+  }
+
+  auto element_type() const -> const Value& { return *element_type_; }
+  auto size() const -> size_t { return size_; }
+
+ private:
+  Nonnull<const Value*> element_type_;
+  size_t size_;
 };
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;
