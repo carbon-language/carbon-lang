@@ -1268,7 +1268,7 @@ The partial facet for a base class type like `MyBaseType` is written
     `MyDerivedClass` extends `MyBaseClass`. The type `partial MyBaseClass`
     specifically means "exactly this and no more." This means we don't need to
     look at the hidden vptr slot, and we can instantiate it even if it doesn't
-    have a virtual destructor.
+    have a virtual [destructor](#destructors).
 -   The keyword `partial` may only be applied to a base class. For final
     classes, there is no need for a second type.
 
@@ -1556,8 +1556,11 @@ type-of-type if:
 -   all data members are `TriviallyDestructible`, and
 -   all base classes are `TriviallyDestructible`.
 
-This implies that their destructor does nothing, which may be used to generate
-optimized specializations.
+For example, a [struct type](#struct-types) is `TriviallyDestructible` if all
+its members are.
+
+`TriviallyDestructible` implies that their destructor does nothing, which may be
+used to generate optimized specializations.
 
 There is no provision for handling failure in a destructor. All operations that
 could potentially fail must be performed before the destructor is called.
@@ -1570,8 +1573,9 @@ Unhandled failure during a destructor call will abort the program.
 
 -   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
 -   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
--   [Allow destructors to specify a return type](/proposals/p1154.md#allow-destructors-to-specify-a-return-type)
+-   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
 -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+-   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
 -   [Don't distinguish safe and unsafe delete operations](/proposals/p1154.md#dont-distinguish-safe-and-unsafe-delete-operations)
 -   [Don't allow unsafe delete](/proposals/p1154.md#dont-allow-unsafe-delete)
 -   [Allow final destructors](/proposals/p1154.md#allow-final-destructors)
