@@ -45,7 +45,7 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 #include <iostream>
 #include <vector>
 
-void PrintWithTotal(const std::vector<uint64_t>& v) {
+void WriteWithTotal(const std::vector<uint64_t>& v) {
   uint64_t sum = 0;
   for (uint64_t e : v) {
     sum += e;
@@ -55,7 +55,7 @@ void PrintWithTotal(const std::vector<uint64_t>& v) {
 }
 
 auto main(int argc, char** argv) -> int {
-  PrintWithTotal({1, 2, 3});
+  WriteWithTotal({1, 2, 3});
   return 0;
 }
 ```
@@ -66,17 +66,17 @@ auto main(int argc, char** argv) -> int {
 // Carbon
 package Summing api;
 
-fn PrintWithTotal(v: Vector(u64)) {
+fn WriteWithTotal(v: Vector(u64)) {
   var sum: u64 = 0;
   for (e: u64 in v) {
     sum += e;
-    PrintLine(e);
+    Console.WriteLine(e);
   }
-  PrintLine(f"Total: {sum}");
+  Console.WriteLine(f"Total: {0}", sum);
 }
 
 fn Main() -> i64 {
-  PrintWithTotal((1, 2, 3));
+  WriteWithTotal((1, 2, 3));
   return 0;
 }
 ```
@@ -88,20 +88,20 @@ fn Main() -> i64 {
 package Summing api;
 import Cpp library "<vector>";
 
-fn PrintWithTotal(v: Cpp.std.vector(u64)) {
+fn WriteWithTotal(v: Cpp.std.vector(u64)) {
   var sum: u64 = 0;
   for (e: u64 in v) {
     sum += e;
-    PrintLine(e);
+    Console.WriteLine(e);
   }
-  PrintLine(f"Total: {sum}");
+  Console.WriteLine("Total: {0}", sum);
 }
 
 // C++ calling Carbon
-#include "carbon/summing.carbon.h"
+#include "summing.carbon.h"
 
 auto main(int argc, char** argv) -> int {
-  Summing::PrintWithTotal({1, 2, 3});
+  Summing::WriteWithTotal({1, 2, 3});
   return 0;
 }
 ```
