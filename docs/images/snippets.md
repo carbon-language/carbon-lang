@@ -17,10 +17,10 @@ fn Partition[T:! Comparable & Movable](s: Span(T))
      -> i64 {
   var i: i64 = -1;
 
-  for (el: T in s) {
-    if (el <= s.Last()) {
+  for (element: T in s) {
+    if (element <= s.Last()) {
       ++i;
-      Swap(&s[i], &el);
+      Swap(&s[i], &element);
     }
   }
   return i;
