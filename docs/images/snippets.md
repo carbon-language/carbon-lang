@@ -31,7 +31,7 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
     return;
   }
   let p: i64 = Partition(s);
-  QuickSort(s[0:p - 1]));
+  QuickSort(s[:p - 1]));
   QuickSort(s[p + 1:]));
 }
 ```
@@ -49,9 +49,14 @@ void PrintWithTotal(const std::vector<uint64_t>& v) {
   uint64_t sum = 0;
   for (uint64_t e : v) {
     sum += e;
-    cout << e << "\n";
+    std::cout << e << "\n";
   }
-  cout << "Total: " <<  sum << "\n";
+  std::cout << "Total: " <<  sum << "\n";
+}
+
+auto main(int argc, char** argv) -> int {
+  PrintWithTotal({1, 2, 3});
+  return 0;
 }
 ```
 
@@ -69,12 +74,17 @@ fn PrintWithTotal(v: Vector(u64)) {
   }
   PrintLine(f"Total: {sum}");
 }
+
+fn Main() -> i64 {
+  PrintWithTotal((1, 2, 3));
+  return 0;
+}
 ```
 
 ### Mixed
 
 ```cpp
-// Carbon and C++ interop
+// Carbon with C++ interop
 package Summing api;
 import Cpp library "<vector>";
 
@@ -85,5 +95,13 @@ fn PrintWithTotal(v: Cpp.std.vector(u64)) {
     PrintLine(e);
   }
   PrintLine(f"Total: {sum}");
+}
+
+// C++
+#include "carbon/summing.carbon.h"
+
+auto main(int argc, char** argv) -> int {
+  Summing::PrintWithTotal({1, 2, 3});
+  return 0;
 }
 ```
