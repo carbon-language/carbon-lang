@@ -4538,7 +4538,7 @@ that takes an allocator (defaulting to `Carbon.heap`?) and returns a new
 
 `DynBox(C)` is like `DynPtr(C)`, except with ownership.
 
-FIXME: Requires: destructor and allocator. Provides: sized, unformed, and
+FIXME: Requires: `Deletable` and allocator. Provides: sized, unformed, and
 movable, deref to an unspecified type that implements constraints.
 
 FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
@@ -4546,7 +4546,7 @@ FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
 
 ### Dynamic value type
 
-FIXME: Requires: destructor, and allocator. Provides: sized, unformed, movable,
+FIXME: Requires: `Deletable`, and allocator. Provides: sized, unformed, movable,
 and constraints (`C`).
 
 FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
