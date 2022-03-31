@@ -252,32 +252,11 @@ rules_proto_toolchains()
 # libprotobuf_mutator - for structured fuzzer testing.
 ###############################################################################
 
-# libprotobuf_mutator uses cmake and doesn't provide a bazel BUILD file.
-MUTATOR_BUILD = """
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
-cc_library(
-    name = "libprotobuf_mutator",
-    srcs = glob(
-        [
-            "src/**/*.cc",
-            "src/**/*.h",
-            "port/protobuf.h",
-        ],
-        exclude = ["**/*_test.cc"],
-    ),
-    hdrs = ["src/libfuzzer/libfuzzer_macro.h"],
-    include_prefix = "libprotobuf_mutator",
-    visibility = ["//visibility:public"],
-    deps = ["@com_google_protobuf//:protobuf"],
-)
-"""
-
 libprotobuf_mutator_version = "1.0"
 
 http_archive(
     name = "com_google_libprotobuf_mutator",
-    build_file_content = MUTATOR_BUILD,
+    build_file = "@//:third_party/libraries/libprotobuf_mutator/mutator.BUILD",
     sha256 = "792f250fb546bde8590e72d64311ea00a70c175fd77df6bb5e02328fa15fe28e",
     strip_prefix = "libprotobuf-mutator-%s" % libprotobuf_mutator_version,
     urls = ["https://github.com/google/libprotobuf-mutator/archive/v%s.tar.gz" % libprotobuf_mutator_version],
