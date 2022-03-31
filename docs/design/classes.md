@@ -1426,6 +1426,7 @@ or:
 
 ```carbon
 class MyClass {
+  // Can modify `me` in the body.
   destructor [addr me: Self*] { ... }
 }
 ```
