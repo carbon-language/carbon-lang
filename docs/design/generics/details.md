@@ -3407,7 +3407,7 @@ Knowing a type is sized is a precondition to declaring variables of that type,
 taking values of that type as parameters, returning values of that type, and
 defining arrays of that type. Users will not typically need to express the
 `Sized` constraint explicitly, though, since it will usually be a dependency of
-some other constraint the type will need such as `Movable`.
+some other constraint the type will need such as `Movable` or `Instantiable`.
 
 **Note:** The compiler will determine which types are "sized", this is not
 something types will implement explicitly like ordinary interfaces.
