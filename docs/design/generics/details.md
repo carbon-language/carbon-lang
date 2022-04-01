@@ -99,7 +99,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Dynamic pointer type](#dynamic-pointer-type)
     -   [Dynamic box type](#dynamic-box-type)
     -   [Dynamic value type](#dynamic-value-type)
-    -   [Restrictions](#restrictions)
+    -   [Object-safe](#object-safe)
         -   [Object-safe interfaces](#object-safe-interfaces)
         -   [No free associated types](#no-free-associated-types)
         -   [`AsBaseType`](#asbasetype)
@@ -4462,7 +4462,6 @@ potential to allow developers to reduce code size at the expense of more runtime
 dispatch, but this design does not prioritize that use case at this time.
 
 These dynamic reference types work by
-
 [_type erasure_](terminology.md#type-erasure). That means a single reference
 type, like `DynPtr(C)`, can be used to access values with a variety of runtime
 types. The reference type stores both a pointer to the value and a
@@ -4475,13 +4474,13 @@ original type. The witness table stores the type-specific implementation of the
 operations. The set of operations stored in the witness table is given by a
 type-of-type, `C`, that the original type must satisfy.
 
-Note that there are [some restrictions](#restrictions) needed on the
-type-of-type parameter for type soundness.
+Note that there are [some restrictions](#object-safe) needed on the type-of-type
+parameter for type soundness.
 
 ### Dynamic pointer type
 
 A `DynPtr(C)` represents a "pointer to some unknown type `T` that satisfies
-type-of-type `C`," as long as `C` satisfies [the restrictions](#restrictions).
+type-of-type `C`," as long as `C` satisfies [the restrictions](#object-safe).
 This means that a variable of type `DynPtr(C)` may be assigned any `T*` pointer
 value where `T is C`. `DynPtr(C)` values act like pointers:
 
@@ -4527,24 +4526,124 @@ for (var element: DynPtr(Printable) in dynamic) {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
-FIXME: `DynPtr(C)` has a member type equal to `DynPtr(C).(Deref.ResultType)`,
-possibly `DynPtr(C).ErasedType` or `DynRef(C)`, that `is C`.
+If `C` is [object-safe](#object-safe-interfaces), then the result of
+dereferencing a `DynPtr(C)` value will have type `DynRef(C)` which implements
+`C`. `C` can also include `Copyable`, in which case dereferencing will give
+`DynRef(CMinusCopyable)` where `CMinusCopyable` has just the object-safe parts
+of `C`.
 
-FIXME: Need something like `DynPtr(Printable, Copyable)` to say "only compatible
-with `Copyable` types", in which case the `DynPtr` would have a `Clone` method
-that takes an allocator (defaulting to `Carbon.heap`?) and returns a new
+Note that the definition of `DynPtr` and `DynRef` requires the ability to define
+parameters that are constraints, as well as a number of compile-time functions
+that operate on constraint values:
+
+```
+// Returns true iff `C` only has object-safe interfaces.
+fn ConstraintObjectSafe(
+    template C:! Constraint) -> bool;
+
+// Returns true iff `C` only has object-safe interfaces
+// plus possibly the `Copyable` interface.
+fn ConstraintObjectSafeOrCopyable(
+    template C:! Constraint) -> bool;
+
+// Returns true iff `C` includes a requirement on the
+// `Copyable` interface, plus possibly others.
+fn ConstraintHasCopyable(
+    template C:! Constraint) -> bool;
+
+// Returns `C` without the `Copyable` interface. If `C`
+// does not include `Copyable`, it just returns `C`.
+fn ConstraintMinusCopyable(
+    template C:! Constraint) -> Constraint;
+
+// Return true iff `D` has a subset of the requirements
+// of `C`. This means that any type `T` that implements
+// `C` must necessarily also implement `D`. Note that
+// there are other ways `C` could imply `D`, such as
+// there existing a blanket implementation of `D` for
+// types implementing `C`, that are not considered by
+// this function.
+fn ConstraintRequirementSubset(
+    template C:! Constraint,
+    template D:! Constraint) -> bool;
+```
+
+With these, we can give definitions of `DynPtr` and `DynRef`:
+
+```
+class DynRef(template C:! Constraint)
+    if ConstraintObjectSafe(C) {
+  impl as C;
+}
+
+class DynPtr(template C:! Constraint)
+    if ConstraintObjectSafeOrCopyable(C) {
+  let ErasedType:! DynRef(ConstraintMinusCopyable(C));
+  external impl as Deref where .ResultType = ErasedType;
+  external impl as AssignFrom(like DynPtr(C));
+  external impl as Movable;
+  fn Clone[A:! Allocator, me: Self](alloc: A = heap) -> Self
+    if ConstraintHasCopyable(C);
+}
+
+external impl[template C:! Constraint, T:! C]
+    T* as ImplicitAs(DynPtr(C));
+
+external impl[template C:! Constraint,
+              template D:! Constraint]
+    DynPtr(C) as ImplicitAs(DynPtr(D))
+    if ConstraintRequirementSubset(C, D);
+```
 
 ### Dynamic box type
 
-`DynBox(C)` is like `DynPtr(C)`, except with ownership.
+`DynBox(C)` is like `DynPtr(C)`, except with ownership. A `DynBox(C)` has an
+allocator, which it uses to deallocate the value it points to when the
+`DynBox(C)` is destroyed, and so can only point to `Deletable` values.
 
-FIXME: Requires: `Deletable` and allocator. Provides: sized, unformed, and
-movable, deref to an unspecified type that implements constraints.
+<!-- Link to [Destructor constraints](#destructor-constraints) once #1154 is
+merged. -->
 
-FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
-`DynBox` type is `Copyable` as well.
+```
+class DynBox(template C:! Constraint,
+             A:! Allocator = typeof(heap))
+    if ConstraintObjectSafeOrCopyable(C) {
+  let ErasedType:! DynRef(ConstraintMinusCopyable(C));
+  external impl as Deref where .ResultType = ErasedType;
+  external impl as Movable;
+
+  // Allocate and initialize a new box object.
+  // TODO: Placeholder syntax.
+  fn Allocate![T:! C & Deletable]
+    (v: AutoClosure!(T), alloc: A = heap) -> Self;
+
+  // Create a `DynBox` to hold an already-allocated value.
+  fn Adopt[T:! C & Deletable](p: T*, alloc: A = heap) -> Self;
+
+  // Create a new `DynBox` by copying the value to a new
+  // allocation.
+  fn Clone[me: Self]() -> Self
+    if ConstraintHasCopyable(C);
+  fn Clone[A2:! Allocator, me: Self](alloc: A2)
+    -> DynBox(C, A2) if ConstraintHasCopyable(C);
+
+  external impl [template D:! Constraint, A2:! Allocator]
+    as AssignFrom(DynBox(D, A2))
+    if ConstraintHasCopyable(C)
+    and ConstraintRequirementSubset(D & Deletable, C);
+}
+
+// Can pass a `DynBox` to something expecting a `DynPtr`.
+external impl[template C:! Constraint,
+              template D:! Constraint]
+    DynBox(C) as ImplicitAs(DynPtr(D))
+    if ConstraintRequirementSubset(C & Deletable, D);
+```
 
 ### Dynamic value type
+
+A `DynValue(C)` is like a `DynBox(C)`, except it has value semantics. This means
+a `DynValue(C)` implements `C`. This allows a generic function written without
 
 FIXME: Requires: `Deletable`, and allocator. Provides: sized, unformed, movable,
 and constraints (`C`).
@@ -4552,12 +4651,13 @@ and constraints (`C`).
 FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
 `DynBox` type is `Copyable` as well.
 
-### Restrictions
+### Object-safe
 
-The first argument to these dynamic reference types must be a type-of-type that
+The first argument to these dynamic reference types are restricted to
+type-of-type that is _object-safe_, plus in some cases `Copyable`. This means it
 satisfies two restrictions:
 
--   all interfaces used in the type-of-type must be marked _object safe_, and
+-   all interfaces used in the type-of-type must be marked `object_safe`, and
 -   it must not have any free associated types or free associated constants used
     in a type.
 
