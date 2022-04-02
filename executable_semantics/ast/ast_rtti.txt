@@ -55,3 +55,4 @@ abstract class Expression : AstNode;
   class IntrinsicExpression : Expression;
   class IfExpression : Expression;
   class UnimplementedExpression : Expression;
+  class ArrayTypeLiteral : Expression;
