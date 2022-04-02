@@ -36,7 +36,7 @@ void ParseAndExecute(Fuzzing::CompilationUnit compilation_unit) {
     llvm::errs() << "Execution failed: " << result.error().message() << "\n";
     return;
   }
-  llvm::outs() << "Executed OK: " << *result;
+  llvm::outs() << "Executed OK: " << *result << "\n";
 }
 
 }  // namespace Carbon

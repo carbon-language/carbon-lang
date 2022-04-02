@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
-#define THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
+#ifndef EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
+#define EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
 
 #include "common/fuzzing/carbon.pb.h"
 
@@ -14,4 +14,4 @@ auto MaybeAddMain(Fuzzing::CompilationUnit& compilation_unit) -> void;
 
 }  // namespace Carbon
 
-#endif  // THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
+#endif  // EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_

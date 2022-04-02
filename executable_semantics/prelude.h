@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_
-#define THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_
+#ifndef EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_
+#define EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_
 
 #include <string_view>
 
@@ -20,4 +20,4 @@ void AddPrelude(
 
 }  // namespace Carbon
 
-#endif  // THIRD_PARTY_CARBON_LANG_EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_
+#endif  // EXECUTABLE_SEMANTICS_PRELUDE_UTIL_H_

@@ -90,6 +90,7 @@ cc_test(
     ],
 )
 
+# Needs `--config=proto-fuzzer` for `bazel build` / `bazel test`.
 cc_fuzz_test(
     name = "executable_semantics_fuzzer",
     size = "small",
