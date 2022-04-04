@@ -27,18 +27,6 @@
 
 namespace Carbon {
 
-CARBON_DIAGNOSTIC(TrailingComment, Error,
-                  "Trailing comments are not permitted.");
-CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-                  "Whitespace is required after '//'.");
-CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
-                  "Closing symbol without a corresponding opening symbol.");
-CARBON_DIAGNOSTIC(MismatchedClosing, Error,
-                  "Closing symbol does not match most recent opening symbol.");
-CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
-                  "Encountered unrecognized characters while parsing.");
-CARBON_DIAGNOSTIC(UnterminatedString, Error, "String is missing a terminator.");
-
 // TODO: Move Overload and VariantMatch somewhere more central.
 
 // Form an overload set from a list of functions. For example:
@@ -131,10 +119,15 @@ class TokenizedBuffer::Lexer {
       if (source_text.startswith("//")) {
         // Any comment must be the only non-whitespace on the line.
         if (set_indent_) {
+          CARBON_DIAGNOSTIC(TrailingComment, Error,
+                            "Trailing comments are not permitted.");
+
           emitter_.Emit(source_text.begin(), TrailingComment);
         }
         // The introducer '//' must be followed by whitespace or EOF.
         if (source_text.size() > 2 && !IsSpace(source_text[2])) {
+          CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
+                            "Whitespace is required after '//'.");
           emitter_.Emit(source_text.begin() + 2,
                         NoWhitespaceAfterCommentIntroducer);
         }
@@ -285,6 +278,8 @@ class TokenizedBuffer::Lexer {
           literal->ComputeValue(emitter_));
       return token;
     } else {
+      CARBON_DIAGNOSTIC(UnterminatedString, Error,
+                        "String is missing a terminator.");
       emitter_.Emit(literal->text().begin(), UnterminatedString);
       return buffer_.AddToken({.kind = TokenKind::Error(),
                                .token_line = string_line,
@@ -335,6 +330,9 @@ class TokenizedBuffer::Lexer {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
 
+      CARBON_DIAGNOSTIC(
+          UnmatchedClosing, Error,
+          "Closing symbol without a corresponding opening symbol.");
       emitter_.Emit(location, UnmatchedClosing);
       // Note that this still returns true as we do consume a symbol.
       return token;
@@ -412,6 +410,9 @@ class TokenizedBuffer::Lexer {
       }
 
       open_groups_.pop_back();
+      CARBON_DIAGNOSTIC(
+          MismatchedClosing, Error,
+          "Closing symbol does not match most recent opening symbol.");
       token_emitter_.Emit(opening_token, MismatchedClosing);
 
       CHECK(!buffer_.tokens().empty()) << "Must have a prior opening token!";
@@ -510,6 +511,8 @@ class TokenizedBuffer::Lexer {
          .token_line = current_line_,
          .column = current_column_,
          .error_length = static_cast<int32_t>(error_text.size())});
+    CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
+                      "Encountered unrecognized characters while parsing.");
     emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
 
     current_column_ += error_text.size();
