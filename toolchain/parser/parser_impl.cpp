@@ -17,8 +17,8 @@
 
 namespace Carbon {
 
-CARBON_DIAGNOSTIC(StackLimitExceeded, Error, "Exceeded recursion limit ({0})",
-                  int);
+CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
+                  "Expected `;` after expression.");
 
 // Manages the parser's stack depth, particularly decrementing on destruction.
 // This should only be instantiated through RETURN_IF_STACK_LIMITED.
@@ -31,6 +31,8 @@ class ParseTree::Parser::ScopedStackStep {
 
   auto VerifyUnderLimit() -> bool {
     if (parser_->stack_depth_ >= StackDepthLimit) {
+      CARBON_DIAGNOSTIC(StackLimitExceeded, Error,
+                        "Exceeded recursion limit ({0})", int);
       parser_->emitter_.Emit(*parser_->position_, StackLimitExceeded,
                              ParseTree::StackDepthLimit);
       return false;
@@ -73,46 +75,6 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   }
   return out;
 }
-
-CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
-                  "Expected function name after `fn` keyword.");
-CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
-                  "Expected `(` after function name.");
-CARBON_DIAGNOSTIC(
-    ExpectedFunctionBodyOrSemi, Error,
-    "Expected function definition or `;` after function declaration.");
-CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
-                  "Expected pattern in `var` declaration.");
-CARBON_DIAGNOSTIC(ExpectedParameterName, Error,
-                  "Expected parameter declaration.");
-CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
-                  llvm::StringRef, llvm::StringRef, llvm::StringRef);
-CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
-                  "Unrecognized declaration introducer.");
-CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
-CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
-CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
-                  TokenKind);
-CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
-CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
-                  "Expected `;` after expression.");
-CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
-                  TokenKind);
-CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
-                  "Expected identifier after `.`.");
-CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                  "Expected `,` or `{0}`.", TokenKind);
-CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                  "Whitespace missing {0} binary operator.", RelativeLocation);
-CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
-                  "Whitespace is not allowed {0} this unary operator.",
-                  RelativeLocation);
-CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
-                  "Whitespace is required {0} this unary operator.",
-                  RelativeLocation);
-CARBON_DIAGNOSTIC(
-    OperatorRequiresParentheses, Error,
-    "Parentheses are required to disambiguate operator precedence.");
 
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
@@ -322,6 +284,7 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
   }
 
   // TODO: Include the location of the matching open_paren in the diagnostic.
+  CARBON_DIAGNOSTIC(ExpectedCloseParen, Error, "Unexpected tokens before `)`.");
   emitter_.Emit(*position_, ExpectedCloseParen);
   SkipTo(tokens_.GetMatchedClosingToken(open_paren));
   AddLeafNode(kind, Consume(TokenKind::CloseParen()));
@@ -354,6 +317,8 @@ auto ParseTree::Parser::ParseList(TokenKind open, TokenKind close,
 
       if (!NextTokenIsOneOf({close, TokenKind::Comma()})) {
         if (!element_error) {
+          CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
+                            "Expected `,` or `{0}`.", TokenKind);
           emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close);
         }
         has_errors = true;
@@ -397,10 +362,14 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
 
   switch (kind) {
     case PatternKind::Parameter:
+      CARBON_DIAGNOSTIC(ExpectedParameterName, Error,
+                        "Expected parameter declaration.");
       emitter_.Emit(*position_, ExpectedParameterName);
       break;
 
     case PatternKind::Variable:
+      CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
+                        "Expected pattern in `var` declaration.");
       emitter_.Emit(*position_, ExpectedVariableName);
       break;
   }
@@ -446,6 +415,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
       ConsumeIf(TokenKind::OpenCurlyBrace());
   if (!maybe_open_curly) {
     // Recover by parsing a single statement.
+    CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     emitter_.Emit(*position_, ExpectedCodeBlock);
     return ParseStatement();
   }
@@ -493,6 +463,8 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                         ParseNodeKind::DeclaredName());
   if (!name_n) {
+    CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
+                      "Expected function name after `fn` keyword.");
     emitter_.Emit(*position_, ExpectedFunctionName);
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
@@ -503,6 +475,8 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 
   TokenizedBuffer::Token open_paren = *position_;
   if (tokens_.GetKind(open_paren) != TokenKind::OpenParen()) {
+    CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
+                      "Expected `(` after function name.");
     emitter_.Emit(open_paren, ExpectedFunctionParams);
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
@@ -524,6 +498,9 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     }
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
+    CARBON_DIAGNOSTIC(
+        ExpectedFunctionBodyOrSemi, Error,
+        "Expected function definition or `;` after function declaration.");
     emitter_.Emit(*position_, ExpectedFunctionBodyOrSemi);
     if (tokens_.GetLine(*position_) == tokens_.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
@@ -596,6 +573,8 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   }
 
   // We didn't recognize an introducer for a valid declaration.
+  CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                    "Unrecognized declaration introducer.");
   emitter_.Emit(*position_, UnrecognizedDeclaration);
 
   // Skip forward past any end of a declaration we simply didn't understand so
@@ -657,6 +636,9 @@ auto ParseTree::Parser::ParseBraceExpression() -> llvm::Optional<Node> {
         auto start_elem = GetSubtreeStartPosition();
 
         auto diagnose_invalid_syntax = [&] {
+          CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error,
+                            "Expected {0}{1}{2}.", llvm::StringRef,
+                            llvm::StringRef, llvm::StringRef);
           bool can_be_type = kind != Value;
           bool can_be_value = kind != Type;
           emitter_.Emit(*position_, ExpectedStructLiteralField,
@@ -736,6 +718,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
       return ParseBraceExpression();
 
     default:
+      CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_.Emit(*position_, ExpectedExpression);
       return llvm::None;
   }
@@ -753,6 +736,8 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   if (name) {
     AddLeafNode(ParseNodeKind::DesignatedName(), *name);
   } else {
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
+                      "Expected identifier after `.`.");
     emitter_.Emit(*position_, ExpectedIdentifierAfterDot);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
@@ -876,6 +861,9 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
     if (!is_valid_as_infix) {
+      CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
+                        "Whitespace missing {0} binary operator.",
+                        RelativeLocation);
       emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace,
                     tokens_.HasLeadingWhitespace(*position_)
                         ? RelativeLocation::After
@@ -891,12 +879,18 @@ auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     if (NextTokenKind().IsSymbol() &&
         (prefix ? tokens_.HasTrailingWhitespace(*position_)
                 : tokens_.HasLeadingWhitespace(*position_))) {
+      CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
+                        "Whitespace is not allowed {0} this unary operator.",
+                        RelativeLocation);
       emitter_.Emit(
           *position_, UnaryOperatorHasWhitespace,
           prefix ? RelativeLocation::After : RelativeLocation::Before);
     }
     // Pre/postfix operators must not satisfy the infix operator rules.
     if (is_valid_as_infix) {
+      CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
+                        "Whitespace is required {0} this unary operator.",
+                        RelativeLocation);
       emitter_.Emit(
           *position_, UnaryOperatorRequiresWhitespace,
           prefix ? RelativeLocation::Before : RelativeLocation::After);
@@ -930,6 +924,11 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
 
 auto ParseTree::Parser::ParseOperatorExpression(
     PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
+  // May be omitted a couple different ways here.
+  CARBON_DIAGNOSTIC(
+      OperatorRequiresParentheses, Error,
+      "Parentheses are required to disambiguate operator precedence.");
+
   RETURN_IF_STACK_LIMITED(llvm::None);
   auto start = GetSubtreeStartPosition();
 
@@ -1047,6 +1046,8 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
   auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
   if (!open_paren) {
+    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
+                      TokenKind);
     emitter_.Emit(*position_, ExpectedParenAfter, introducer);
   }
 
@@ -1113,6 +1114,8 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   auto semi =
       ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
   if (!semi) {
+    CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
+                      TokenKind);
     emitter_.Emit(*position_, ExpectedSemiAfter, keyword_kind);
     // FIXME: Try to skip to a semicolon to recover.
   }
