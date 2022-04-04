@@ -14,8 +14,8 @@
 
 namespace Carbon {
 
-// Adapts radix for use with formatv.
-auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
+// Adapts Radix for use with formatv.
+static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
     -> llvm::raw_ostream& {
   switch (radix) {
     case LexedNumericLiteral::Radix::Binary:
@@ -31,75 +31,24 @@ auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
   return out;
 }
 
-namespace {
-struct EmptyDigitSequence : DiagnosticBase<EmptyDigitSequence> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Empty digit sequence in numeric literal.";
-};
-
-struct InvalidDigit : DiagnosticBase<InvalidDigit> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-
-  auto Format() -> std::string {
-    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
-                         radix)
-        .str();
-  }
-
-  char digit;
-  LexedNumericLiteral::Radix radix;
-};
-
-struct InvalidDigitSeparator : DiagnosticBase<InvalidDigitSeparator> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Misplaced digit separator in numeric literal.";
-};
-
-struct IrregularDigitSeparators : DiagnosticBase<IrregularDigitSeparators> {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-irregular-digit-separators";
-
-  auto Format() -> std::string {
-    CHECK((radix == LexedNumericLiteral::Radix::Decimal ||
-           radix == LexedNumericLiteral::Radix::Hexadecimal))
-        << "unexpected radix: " << radix;
-    return llvm::formatv(
-               "Digit separators in {0} number should appear every {1} "
-               "characters from the right.",
-               radix,
-               (radix == LexedNumericLiteral::Radix::Decimal ? "3" : "4"))
-        .str();
-  }
-
-  LexedNumericLiteral::Radix radix;
-};
-
-struct UnknownBaseSpecifier : DiagnosticBase<UnknownBaseSpecifier> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Unknown base specifier in numeric literal.";
-};
-
-struct BinaryRealLiteral : DiagnosticBase<BinaryRealLiteral> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Binary real number literals are not supported.";
-};
-
-struct WrongRealLiteralExponent : DiagnosticBase<WrongRealLiteralExponent> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-
-  auto Format() -> std::string {
-    return llvm::formatv("Expected '{0}' to introduce exponent.", expected)
-        .str();
-  }
-
-  char expected;
-};
-
-}  // namespace
+CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
+                  "Misplaced digit separator in numeric literal.");
+CARBON_DIAGNOSTIC(InvalidDigit, Error,
+                  "Invalid digit '{0}' in {1} numeric literal.", char,
+                  LexedNumericLiteral::Radix);
+CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
+                  "Empty digit sequence in numeric literal.");
+CARBON_DIAGNOSTIC(
+    IrregularDigitSeparators, Error,
+    "Digit separators in {0} number should appear every {1} characters "
+    "from the right.",
+    LexedNumericLiteral::Radix, int);
+CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
+                  "Unknown base specifier in numeric literal.");
+CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
+                  "Binary real number literals are not supported.");
+CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
+                  "Expected '{0}' to introduce exponent.", char);
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedNumericLiteral> {
@@ -368,19 +317,18 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       // next to another digit separator, or at the end.
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
-        emitter_.EmitError<InvalidDigitSeparator>(text.begin() + i);
+        emitter_.Emit(text.begin() + 1, InvalidDigitSeparator);
       }
       ++num_digit_separators;
       continue;
     }
 
-    emitter_.EmitError<InvalidDigit>(text.begin() + i,
-                                     {.digit = c, .radix = radix});
+    emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
     return {.ok = false};
   }
 
   if (num_digit_separators == static_cast<int>(text.size())) {
-    emitter_.EmitError<EmptyDigitSequence>(text.begin());
+    emitter_.Emit(text.begin(), EmptyDigitSequence);
     return {.ok = false};
   }
 
@@ -410,8 +358,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   }
 
   auto diagnose_irregular_digit_separators = [&]() {
-    emitter_.EmitError<IrregularDigitSeparators>(text.begin(),
-                                                 {.radix = radix});
+    emitter_.Emit(text.begin(), IrregularDigitSeparators, radix,
+                  radix == Radix::Decimal ? 3 : 4);
   };
 
   // For decimal and hexadecimal digit sequences, digit separators must form
@@ -439,7 +387,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
       int_part_ != "0") {
-    emitter_.EmitError<UnknownBaseSpecifier>(int_part_.begin());
+    emitter_.Emit(int_part_.begin(), UnknownBaseSpecifier);
     return false;
   }
   return true;
@@ -460,8 +408,8 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   }
 
   if (radix_ == Radix::Binary) {
-    emitter_.EmitError<BinaryRealLiteral>(literal_.text_.begin() +
-                                          literal_.radix_point_);
+    emitter_.Emit(literal_.text_.begin() + literal_.radix_point_,
+                  BinaryRealLiteral);
     // Carry on and parse the binary real literal anyway.
   }
 
@@ -481,9 +429,8 @@ auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
 
   char expected_exponent_kind = (radix_ == Radix::Decimal ? 'e' : 'p');
   if (literal_.text_[literal_.exponent_] != expected_exponent_kind) {
-    emitter_.EmitError<WrongRealLiteralExponent>(
-        literal_.text_.begin() + literal_.exponent_,
-        {.expected = expected_exponent_kind});
+    emitter_.Emit(literal_.text_.begin() + literal_.exponent_,
+                  WrongRealLiteralExponent, expected_exponent_kind);
     return false;
   }
 

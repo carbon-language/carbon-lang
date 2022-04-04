@@ -17,68 +17,43 @@ namespace {
 
 using ::testing::InSequence;
 
-struct FakeDiagnostic : DiagnosticBase<FakeDiagnostic> {
-  static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
-  // TODO: consider ways to put the Message into `format` to allow dynamic
-  // selection of the message.
-  static constexpr llvm::StringLiteral Message = "{0}";
-
-  auto Format() -> std::string {
-    // Work around a bug in Clang's unused const variable warning by marking it
-    // used here with a no-op.
-    static_cast<void>(ShortName);
-
-    return llvm::formatv(Message.data(), message).str();
-  }
-
-  std::string message;
-};
+CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringRef);
 
 struct FakeDiagnosticLocationTranslator
-    : DiagnosticLocationTranslator<Diagnostic::Location> {
-  auto GetLocation(Diagnostic::Location loc) -> Diagnostic::Location override {
+    : DiagnosticLocationTranslator<DiagnosticLocation> {
+  auto GetLocation(DiagnosticLocation loc) -> DiagnosticLocation override {
     return loc;
   }
 };
-
-// Produces a location for the given line and column.
-static auto MakeLoc(int line, int col) -> Diagnostic::Location {
-  return {.file_name = "test", .line_number = line, .column_number = col};
-}
 
 TEST(SortedDiagnosticEmitterTest, SortErrors) {
   FakeDiagnosticLocationTranslator translator;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
-  DiagnosticEmitter<Diagnostic::Location> emitter(translator, sorting_consumer);
+  DiagnosticEmitter<DiagnosticLocation> emitter(translator, sorting_consumer);
 
-  emitter.EmitError<FakeDiagnostic>(MakeLoc(2, 1), {.message = "M1"});
-  emitter.EmitError<FakeDiagnostic>(MakeLoc(1, 1), {.message = "M2"});
-  emitter.EmitError<FakeDiagnostic>(MakeLoc(1, 3), {.message = "M3"});
-  emitter.EmitError<FakeDiagnostic>(MakeLoc(3, 4), {.message = "M4"});
-  emitter.EmitError<FakeDiagnostic>(MakeLoc(3, 2), {.message = "M5"});
+  emitter.Emit({"f", 2, 1}, TestDiagnostic, "M1");
+  emitter.Emit({"f", 1, 1}, TestDiagnostic, "M2");
+  emitter.Emit({"f", 1, 3}, TestDiagnostic, "M3");
+  emitter.Emit({"f", 3, 4}, TestDiagnostic, "M4");
+  emitter.Emit({"f", 3, 2}, TestDiagnostic, "M5");
 
   InSequence s;
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(1, 1), DiagnosticMessage("M2"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 1, 1, "M2")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(1, 3), DiagnosticMessage("M3"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 1, 3, "M3")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(2, 1), DiagnosticMessage("M1"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 2, 1, "M1")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(3, 2), DiagnosticMessage("M5"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 3, 2, "M5")));
   EXPECT_CALL(consumer, HandleDiagnostic(
-                            AllOf(DiagnosticLevel(Diagnostic::Error),
-                                  DiagnosticAt(3, 4), DiagnosticMessage("M4"),
-                                  DiagnosticShortName("fake-diagnostic"))));
+                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                         DiagnosticLevel::Error, 3, 4, "M4")));
   sorting_consumer.Flush();
 }
 
