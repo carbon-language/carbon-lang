@@ -95,7 +95,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
--   [Dynamic reference types](#dynamic-reference-types)
+-   [Dynamic wrapper types](#dynamic-wrapper-types)
     -   [Dynamic pointer type](#dynamic-pointer-type)
     -   [Dynamic box type](#dynamic-box-type)
     -   [Dynamic value type](#dynamic-value-type)
@@ -2427,6 +2427,7 @@ Rust also supports
 when using a trait as a constraint. This is helpful when specifying concrete
 types for all associated types in a trait in order to
 [make it object safe so it can be used to define a trait object type](https://rust-lang.github.io/rfcs/0195-associated-items.html#trait-objects).
+Note that we have [the same use case](#no-free-associated-types) in Carbon.
 
 Rust is adding trait aliases
 ([RFC](https://github.com/rust-lang/rfcs/blob/master/text/1733-trait-alias.md),
@@ -4443,11 +4444,11 @@ There are a few reasons for this feature:
 -   Matching the functionality of non-virtual methods in base classes, so
     interfaces can be a replacement for inheritance.
 -   Potentially reduce dynamic dispatch when using the interface in a
-    [`DynPtr`](#dynamic-reference-types).
+    [dynamic wrapper type](#dynamic-wrapper-types).
 
 Note that this applies to associated entities, not interface parameters.
 
-## Dynamic reference types
+## Dynamic wrapper types
 
 Generics provide enough structure to support runtime dispatch for values with
 types that vary at runtime, without giving up type safety. Both Rust (trait
@@ -4461,18 +4462,19 @@ expressivity by allowing types to vary at runtime, with
 potential to allow developers to reduce code size at the expense of more runtime
 dispatch, but this design does not prioritize that use case at this time.
 
-These dynamic reference types work by
+These dynamic wrapper types work by
 [_type erasure_](terminology.md#type-erasure). That means a single reference
 type, like `DynPtr(C)`, can be used to access values with a variety of runtime
 types. The reference type stores both a pointer to the value and a
 [dynamic-dispatch witness table](terminology.md#dynamic-dispatch-witness-table).
-The pointer to the value allows the reference type to have a fixed size, even
-though the values it points to may have different sizes. The process of erasing
-a type, when converting from a value of an original type to the reference type,
-saves both the address of the value and the witness table specific to the
-original type. The witness table stores the type-specific implementation of the
-operations. The set of operations stored in the witness table is given by a
-type-of-type, `C`, that the original type must satisfy.
+The pointer to the value allows the reference type to have a fixed size, and so
+implements [`Sized`](#sized-types-and-type-of-types), even though the values it
+points to may have different sizes. The process of erasing a type, when
+converting from a value of an original type to the reference type, saves both
+the address of the value and the witness table specific to the original type.
+The witness table stores the type-specific implementation of the operations. The
+set of operations stored in the witness table is given by a type-of-type, `C`,
+that the original type must satisfy.
 
 Note that there are [some restrictions](#object-safe) needed on the type-of-type
 parameter for type soundness.
@@ -4526,9 +4528,9 @@ for (var element: DynPtr(Printable) in dynamic) {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
-If `C` is [object-safe](#object-safe-interfaces), then the result of
-dereferencing a `DynPtr(C)` value will have type `DynRef(C)` which implements
-`C`. `C` can also include `Copyable`, in which case dereferencing will give
+If `C` is [object-safe](#object-safe), then the result of dereferencing a
+`DynPtr(C)` value will have type `DynRef(C)` which implements `C`. `C` can also
+include `Copyable`, in which case dereferencing will give
 `DynRef(CMinusCopyable)` where `CMinusCopyable` has just the object-safe parts
 of `C`.
 
@@ -4582,6 +4584,7 @@ class DynPtr(template C:! Constraint)
   external impl as Deref where .ResultType = ErasedType;
   external impl as AssignFrom(like DynPtr(C));
   external impl as Movable;
+  external impl as HasUnformed;
   fn Clone[A:! Allocator, me: Self](alloc: A = heap) -> Self
     if ConstraintHasCopyable(C);
 }
@@ -4595,11 +4598,20 @@ external impl[template C:! Constraint,
     if ConstraintRequirementSubset(C, D);
 ```
 
+**Open question:** `DynRef` exists as the type that you get by dereferencing a
+`DynPtr` (or [`DynBox`](#dynamic-box-type)). We could make it a bit more capable
+by also implementing `Movable`, `HasUnformed`, `Copyable`, and possibly others.
+The main concern is whether that would cause confusion due to it being the
+reference that is moved or copied, not the value itself. The idea is to nudge
+people toward [`DynValue`](#dynamic-value-type), which has less surprising
+semantics.
+
 ### Dynamic box type
 
-`DynBox(C)` is like `DynPtr(C)`, except with ownership. A `DynBox(C)` has an
-allocator, which it uses to deallocate the value it points to when the
-`DynBox(C)` is destroyed, and so can only point to `Deletable` values.
+`DynBox(C)` is like [`DynPtr(C)`](#dynamic-pointer-type), except with ownership.
+A `DynBox(C)` has an allocator, which it uses to deallocate the value it points
+to when the `DynBox(C)` is destroyed, and so can only point to `Deletable`
+values.
 
 <!-- Link to [Destructor constraints](#destructor-constraints) once #1154 is
 merged. -->
@@ -4643,27 +4655,50 @@ external impl[template C:! Constraint,
 ### Dynamic value type
 
 A `DynValue(C)` is like a `DynBox(C)`, except it has value semantics. This means
-a `DynValue(C)` implements `C`. This allows a generic function written without
+a `DynValue(C)` implements `C` directly, like `DynRef(C)`, but with ownership
+like `DynBox(C)`. A function that takes a generic type parameter with an
+[object-safe](#object-safe) constraint may be passed a `DynValue` to get dynamic
+dispatch, without the function author having to make any special accommodation.
 
-FIXME: Requires: `Deletable`, and allocator. Provides: sized, unformed, movable,
-and constraints (`C`).
+Like with `DynBox`, only types implementing `Deletable` may be held in a
+`DynValue`.
 
-FIXME: Optionally can have a `Copyable` constraint, in which case the resulting
-`DynBox` type is `Copyable` as well.
+```
+class DynValue(template C:! Constraint,
+               A:! Allocator = typeof(heap))
+    if ConstraintObjectSafeOrCopyable(C) {
+
+  // Allocate and initialize a new `DynValue` object.
+  // TODO: Placeholder syntax.
+  fn Allocate![T:! C & Deletable]
+    (v: AutoClosure!(T), alloc: A = heap) -> Self;
+
+  // Create a `DynValue` to hold an already-allocated value.
+  fn Adopt[T:! C & Deletable](p: T*, alloc: A = heap) -> Self;
+
+  impl as C;
+  external impl as Movable;
+  external impl as HasUnformed;
+}
+```
+
+Note that in addition to [object-safe](#object-safe) constraints, `DynValue(C)`
+is `Copyable` if `C` includes `Copyable`.
 
 ### Object-safe
 
-The first argument to these dynamic reference types are restricted to
-type-of-type that is _object-safe_, plus in some cases `Copyable`. This means it
-satisfies two restrictions:
+The first argument to these dynamic wrapper types are restricted to a
+type-of-type that is _object-safe_. This means it satisfies two restrictions:
 
 -   all interfaces used in the type-of-type must be marked `object_safe`, and
 -   it must not have any free associated types or free associated constants used
     in a type.
 
-In addition, these types may be restricted to types implementing `Copyable`
-(even though that isn't an object-safe interface) in exchange for additional
-capabilities.
+In most cases, these dynamic wrapper types also allow the first type-of-type
+argument to implement `Copyable`, even though `Copyable` is not an object-safe
+interface. In these cases, using a restriction that includes `Copyable` means
+that only values with types implementing `Copyable` may be wrapped, in exchange
+for additional capabilities, such as a `Clone` method.
 
 #### Object-safe interfaces
 
@@ -4795,7 +4830,7 @@ This feature is about allowing a function's type parameter to be passed in as a
 dynamic (non-generic) parameter. All values of that type would still be required
 to have the same type. This would be an alternative application of dynamic
 dispatch and dynamic types. Where
-[dynamic reference types](#dynamic-reference-types) are primarily about the
+[dynamic wrapper types](#dynamic-wrapper-types) are primarily about the
 expressive power of allowing types to vary at runtime, this feature is primarily
 about reducing code size at the cost of more dynamic dispatch work at runtime.
 
@@ -4908,4 +4943,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
--   [#1149: Generic details 13: Dynamic reference types](https://github.com/carbon-language/carbon-lang/pull/1149)
+-   [#1149: Generic details 13: Dynamic wrapper types](https://github.com/carbon-language/carbon-lang/pull/1149)
