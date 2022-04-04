@@ -31,25 +31,6 @@ static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
   return out;
 }
 
-CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
-                  "Misplaced digit separator in numeric literal.");
-CARBON_DIAGNOSTIC(InvalidDigit, Error,
-                  "Invalid digit '{0}' in {1} numeric literal.", char,
-                  LexedNumericLiteral::Radix);
-CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
-                  "Empty digit sequence in numeric literal.");
-CARBON_DIAGNOSTIC(
-    IrregularDigitSeparators, Error,
-    "Digit separators in {0} number should appear every {1} characters "
-    "from the right.",
-    LexedNumericLiteral::Radix, int);
-CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
-                  "Unknown base specifier in numeric literal.");
-CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
-                  "Binary real number literals are not supported.");
-CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
-                  "Expected '{0}' to introduce exponent.", char);
-
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
     -> llvm::Optional<LexedNumericLiteral> {
   LexedNumericLiteral result;
@@ -317,17 +298,24 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       // next to another digit separator, or at the end.
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
+        CARBON_DIAGNOSTIC(InvalidDigitSeparator, Error,
+                          "Misplaced digit separator in numeric literal.");
         emitter_.Emit(text.begin() + 1, InvalidDigitSeparator);
       }
       ++num_digit_separators;
       continue;
     }
 
+    CARBON_DIAGNOSTIC(InvalidDigit, Error,
+                      "Invalid digit '{0}' in {1} numeric literal.", char,
+                      LexedNumericLiteral::Radix);
     emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
     return {.ok = false};
   }
 
   if (num_digit_separators == static_cast<int>(text.size())) {
+    CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
+                      "Empty digit sequence in numeric literal.");
     emitter_.Emit(text.begin(), EmptyDigitSequence);
     return {.ok = false};
   }
@@ -358,6 +346,11 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   }
 
   auto diagnose_irregular_digit_separators = [&]() {
+    CARBON_DIAGNOSTIC(
+        IrregularDigitSeparators, Error,
+        "Digit separators in {0} number should appear every {1} characters "
+        "from the right.",
+        LexedNumericLiteral::Radix, int);
     emitter_.Emit(text.begin(), IrregularDigitSeparators, radix,
                   radix == Radix::Decimal ? 3 : 4);
   };
@@ -387,6 +380,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
       int_part_ != "0") {
+    CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
+                      "Unknown base specifier in numeric literal.");
     emitter_.Emit(int_part_.begin(), UnknownBaseSpecifier);
     return false;
   }
@@ -408,6 +403,8 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   }
 
   if (radix_ == Radix::Binary) {
+    CARBON_DIAGNOSTIC(BinaryRealLiteral, Error,
+                      "Binary real number literals are not supported.");
     emitter_.Emit(literal_.text_.begin() + literal_.radix_point_,
                   BinaryRealLiteral);
     // Carry on and parse the binary real literal anyway.
@@ -429,6 +426,8 @@ auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
 
   char expected_exponent_kind = (radix_ == Radix::Decimal ? 'e' : 'p');
   if (literal_.text_[literal_.exponent_] != expected_exponent_kind) {
+    CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
+                      "Expected '{0}' to introduce exponent.", char);
     emitter_.Emit(literal_.text_.begin() + literal_.exponent_,
                   WrongRealLiteralExponent, expected_exponent_kind);
     return false;
