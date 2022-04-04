@@ -27,43 +27,17 @@
 
 namespace Carbon {
 
-struct TrailingComment : DiagnosticBase<TrailingComment> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
-  static constexpr llvm::StringLiteral Message =
-      "Trailing comments are not permitted.";
-};
-
-struct NoWhitespaceAfterCommentIntroducer
-    : DiagnosticBase<NoWhitespaceAfterCommentIntroducer> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
-  static constexpr llvm::StringLiteral Message =
-      "Whitespace is required after '//'.";
-};
-
-struct UnmatchedClosing : DiagnosticBase<UnmatchedClosing> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
-  static constexpr llvm::StringLiteral Message =
-      "Closing symbol without a corresponding opening symbol.";
-};
-
-struct MismatchedClosing : DiagnosticBase<MismatchedClosing> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
-  static constexpr llvm::StringLiteral Message =
-      "Closing symbol does not match most recent opening symbol.";
-};
-
-struct UnrecognizedCharacters : DiagnosticBase<UnrecognizedCharacters> {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-unrecognized-characters";
-  static constexpr llvm::StringLiteral Message =
-      "Encountered unrecognized characters while parsing.";
-};
-
-struct UnterminatedString : DiagnosticBase<UnterminatedString> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-string-terminator";
-  static constexpr llvm::StringLiteral Message =
-      "String is missing a terminator.";
-};
+CARBON_DIAGNOSTIC(TrailingComment, Error,
+                  "Trailing comments are not permitted.");
+CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
+                  "Whitespace is required after '//'.");
+CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                  "Closing symbol without a corresponding opening symbol.");
+CARBON_DIAGNOSTIC(MismatchedClosing, Error,
+                  "Closing symbol does not match most recent opening symbol.");
+CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
+                  "Encountered unrecognized characters while parsing.");
+CARBON_DIAGNOSTIC(UnterminatedString, Error, "String is missing a terminator.");
 
 // TODO: Move Overload and VariantMatch somewhere more central.
 
@@ -157,12 +131,12 @@ class TokenizedBuffer::Lexer {
       if (source_text.startswith("//")) {
         // Any comment must be the only non-whitespace on the line.
         if (set_indent_) {
-          emitter_.EmitError<TrailingComment>(source_text.begin());
+          emitter_.Emit(source_text.begin(), TrailingComment);
         }
         // The introducer '//' must be followed by whitespace or EOF.
         if (source_text.size() > 2 && !IsSpace(source_text[2])) {
-          emitter_.EmitError<NoWhitespaceAfterCommentIntroducer>(
-              source_text.begin() + 2);
+          emitter_.Emit(source_text.begin() + 2,
+                        NoWhitespaceAfterCommentIntroducer);
         }
         while (!source_text.empty() && source_text.front() != '\n') {
           ++current_column_;
@@ -311,7 +285,7 @@ class TokenizedBuffer::Lexer {
           literal->ComputeValue(emitter_));
       return token;
     } else {
-      emitter_.EmitError<UnterminatedString>(literal->text().begin());
+      emitter_.Emit(literal->text().begin(), UnterminatedString);
       return buffer_.AddToken({.kind = TokenKind::Error(),
                                .token_line = string_line,
                                .column = string_column,
@@ -361,7 +335,7 @@ class TokenizedBuffer::Lexer {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
 
-      emitter_.EmitError<UnmatchedClosing>(location);
+      emitter_.Emit(location, UnmatchedClosing);
       // Note that this still returns true as we do consume a symbol.
       return token;
     }
@@ -438,7 +412,7 @@ class TokenizedBuffer::Lexer {
       }
 
       open_groups_.pop_back();
-      token_emitter_.EmitError<MismatchedClosing>(opening_token);
+      token_emitter_.Emit(opening_token, MismatchedClosing);
 
       CHECK(!buffer_.tokens().empty()) << "Must have a prior opening token!";
       Token prev_token = buffer_.tokens().end()[-1];
@@ -536,7 +510,7 @@ class TokenizedBuffer::Lexer {
          .token_line = current_line_,
          .column = current_column_,
          .error_length = static_cast<int32_t>(error_text.size())});
-    emitter_.EmitError<UnrecognizedCharacters>(error_text.begin());
+    emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
 
     current_column_ += error_text.size();
     source_text = source_text.drop_front(error_text.size());
@@ -909,7 +883,7 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
 }
 
 auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
-    const char* loc) -> Diagnostic::Location {
+    const char* loc) -> DiagnosticLocation {
   CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
       << "location not within buffer";
   int64_t offset = loc - buffer_->source_->text().begin();
@@ -952,7 +926,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
 }
 
 auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
-    -> Diagnostic::Location {
+    -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   auto& token_info = buffer_->GetTokenInfo(token);
   auto& line_info = buffer_->GetLineInfo(token_info.token_line);

@@ -257,7 +257,7 @@ class TokenizedBuffer {
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given token into a diagnostic location.
-    auto GetLocation(Token token) -> Diagnostic::Location override;
+    auto GetLocation(Token token) -> DiagnosticLocation override;
 
    private:
     TokenizedBuffer* buffer_;
@@ -382,7 +382,7 @@ class TokenizedBuffer {
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto GetLocation(const char* loc) -> Diagnostic::Location override;
+    auto GetLocation(const char* loc) -> DiagnosticLocation override;
 
    private:
     TokenizedBuffer* buffer_;
