@@ -151,6 +151,14 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(*if_expr.else_expression(), enclosing_scope));
       break;
     }
+    case ExpressionKind::ArrayTypeLiteral: {
+      auto& array_literal = cast<ArrayTypeLiteral>(expression);
+      RETURN_IF_ERROR(ResolveNames(array_literal.element_type_expression(),
+                                   enclosing_scope));
+      RETURN_IF_ERROR(
+          ResolveNames(array_literal.size_expression(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
@@ -161,7 +169,8 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::TypeTypeLiteral:
       break;
     case ExpressionKind::UnimplementedExpression:
-      FATAL() << "Unimplemented";
+      return FATAL_COMPILATION_ERROR(expression.source_loc())
+             << "Unimplemented";
   }
   return Success();
 }
@@ -171,6 +180,14 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
+      RETURN_IF_ERROR(ResolveNames(binding.type(), enclosing_scope));
+      if (binding.name() != AnonymousName) {
+        RETURN_IF_ERROR(enclosing_scope.Add(binding.name(), &binding));
+      }
+      break;
+    }
+    case PatternKind::GenericBinding: {
+      auto& binding = cast<GenericBinding>(pattern);
       RETURN_IF_ERROR(ResolveNames(binding.type(), enclosing_scope));
       if (binding.name() != AnonymousName) {
         RETURN_IF_ERROR(enclosing_scope.Add(binding.name(), &binding));
@@ -314,8 +331,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
-        RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
         RETURN_IF_ERROR(ResolveNames(binding->type(), function_scope));
+        RETURN_IF_ERROR(function_scope.Add(binding->name(), binding));
       }
       if (function.is_method()) {
         RETURN_IF_ERROR(ResolveNames(function.me_pattern(), function_scope));
@@ -335,9 +352,17 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
-      for (Nonnull<Declaration*> member : class_decl.members()) {
-        RETURN_IF_ERROR(AddExposedNames(*member, class_scope));
+      if (class_decl.type_params().has_value()) {
+        RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
       }
+
+      // TODO: Disable unqualified access of members by other members for now.
+      // Put it back later, but in a way that turns unqualified accesses
+      // into qualified ones, so that generic classes and impls
+      // behave the in the right way. -Jeremy
+      // for (Nonnull<Declaration*> member : class_decl.members()) {
+      //   AddExposedNames(*member, class_scope);
+      // }
       for (Nonnull<Declaration*> member : class_decl.members()) {
         RETURN_IF_ERROR(ResolveNames(*member, class_scope));
       }

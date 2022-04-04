@@ -15,16 +15,19 @@
 
 namespace Carbon {
 
+// Selects between compile-time and run-time behavior.
+enum class Phase { CompileTime, RunTime };
+
 // The stack of Actions currently being executed by the interpreter.
 class ActionStack {
  public:
   // Constructs an empty compile-time ActionStack.
-  ActionStack() = default;
+  ActionStack() : phase_(Phase::CompileTime) {}
 
   // Constructs an empty run-time ActionStack that allocates global variables
   // on `heap`.
   explicit ActionStack(Nonnull<HeapAllocationInterface*> heap)
-      : globals_(RuntimeScope(heap)) {}
+      : globals_(RuntimeScope(heap)), phase_(Phase::RunTime) {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -120,6 +123,7 @@ class ActionStack {
   Stack<std::unique_ptr<Action>> todo_;
   std::optional<Nonnull<const Value*>> result_;
   std::optional<RuntimeScope> globals_;
+  Phase phase_;
 };
 
 }  // namespace Carbon

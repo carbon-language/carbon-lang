@@ -9,8 +9,6 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::Eq;
-
 auto MakeSuccess() -> ErrorOr<Success> { return Success(); }
 
 auto MakeError(std::string_view message) -> ErrorOr<Success> {

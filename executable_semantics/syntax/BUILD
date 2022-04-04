@@ -4,7 +4,10 @@
 
 load("@mypy_integration//:mypy.bzl", "mypy_test")
 
-package(default_visibility = ["//executable_semantics:__pkg__"])
+package(default_visibility = [
+    "//executable_semantics:__pkg__",
+    "//executable_semantics/fuzzing:__pkg__",
+])
 
 cc_library(
     name = "bison_wrap",
@@ -66,6 +69,7 @@ cc_library(
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:paren_contents",
         "//executable_semantics/ast:pattern",
+        "//executable_semantics/ast:value_category",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
