@@ -572,6 +572,39 @@ class UnimplementedExpression : public Expression {
   std::vector<Nonnull<AstNode*>> children_;
 };
 
+// A literal representing a statically-sized array type.
+class ArrayTypeLiteral : public Expression {
+ public:
+  // Constructs an array type literal which uses the given expressions to
+  // represent the element type and size.
+  ArrayTypeLiteral(SourceLocation source_loc,
+                   Nonnull<Expression*> element_type_expression,
+                   Nonnull<Expression*> size_expression)
+      : Expression(AstNodeKind::ArrayTypeLiteral, source_loc),
+        element_type_expression_(element_type_expression),
+        size_expression_(size_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromArrayTypeLiteral(node->kind());
+  }
+
+  auto element_type_expression() const -> const Expression& {
+    return *element_type_expression_;
+  }
+  auto element_type_expression() -> Expression& {
+    return *element_type_expression_;
+  }
+
+  auto size_expression() const -> const Expression& {
+    return *size_expression_;
+  }
+  auto size_expression() -> Expression& { return *size_expression_; }
+
+ private:
+  Nonnull<Expression*> element_type_expression_;
+  Nonnull<Expression*> size_expression_;
+};
+
 // Converts paren_contents to an Expression, interpreting the parentheses as
 // grouping if their contents permit that interpretation, or as forming a
 // tuple otherwise.
