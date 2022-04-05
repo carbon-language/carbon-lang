@@ -84,7 +84,7 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
 void ImplScope::Print(llvm::raw_ostream& out) const {
   out << "impls: ";
   llvm::ListSeparator sep;
-  for (Impl impl : impls_) {
+  for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
   }
   out << "\n";

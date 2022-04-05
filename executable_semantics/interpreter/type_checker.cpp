@@ -1440,14 +1440,14 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             const ImplScope& impl_scope)
+                                             const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), impl_scope));
+    RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), enclosing_scope));
     deduced->set_symbolic_identity(arena_->New<VariableType>(deduced));
     ASSIGN_OR_RETURN(Nonnull<const Value*> type_of_type,
                      InterpExp(&deduced->type(), arena_, trace_));
@@ -1464,7 +1464,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   // Bring the impl bindings into scope.
   ImplScope function_scope;
-  function_scope.AddParent(&impl_scope);
+  function_scope.AddParent(&enclosing_scope);
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     CHECK(impl_binding->type_var()->symbolic_identity().has_value());
     function_scope.Add(impl_binding->interface(),
