@@ -258,7 +258,7 @@ message Statement {
     MatchStatement match = 8;
     ContinuationStatement continuation = 9;
     RunStatement run = 10;
-    AwaitStatement await = 11;
+    AwaitStatement await_statement = 11;
     BreakStatement break_statement = 12;
     ContinueStatement continue_statement = 13;
   }
