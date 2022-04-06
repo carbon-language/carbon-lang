@@ -421,7 +421,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
 
     case StatementKind::Await:
       // Initializes with the default value; there's nothing to set.
-      statement_proto.mutable_await();
+      statement_proto.mutable_await_statement();
       break;
 
     case StatementKind::Break:
