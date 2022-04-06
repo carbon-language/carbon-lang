@@ -492,7 +492,7 @@ def _impl(ctx):
 
         # TODO: this should really be `fuzzer`, but `-fsanitize=fuzzer` triggers
         # a clang crash when running `bazel test --config=fuzzer ...`. See
-        # https://docs.google.com/document/d/1AwnLwwgIeRTOafcSQbfBLeG8zFkWBccO1fUg4p2DTT8
+        # https://github.com/carbon-language/carbon-lang/issues/1173
         implies = ["asan"],
     )
 
