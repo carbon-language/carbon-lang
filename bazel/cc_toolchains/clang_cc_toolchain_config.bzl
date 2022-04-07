@@ -128,9 +128,6 @@ def _impl(ctx):
                             "-Wctad-maybe-unsupported",
                             # Unfortunately, LLVM isn't clean for this warning.
                             "-Wno-unused-parameter",
-                            # We use partial sets of designated initializers in
-                            # test code.
-                            "-Wno-missing-field-initializers",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],
