@@ -1502,8 +1502,9 @@ For more about these, see
 Whether the destructor is defined implicitly or explicitly, the compiler
 implements the
 [`Destructible`](/docs/design/generics/details.md#destructor-constraints)
-[type-of-type](/docs/design/generics/terminology.md#type-of-type). It is illegal
-to directly implement `Destructible` for a type.
+[type-of-type](/docs/design/generics/terminology.md#type-of-type). This
+type-of-type does not have any named members. It is illegal to directly
+implement `Destructible` for a type.
 
 Final classes and base classes with virtual destructors automatically implement
 the [`Deletable`](/docs/design/generics/details.md#destructor-constraints)
