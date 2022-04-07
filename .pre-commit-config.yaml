@@ -116,12 +116,6 @@ repos:
               .*/testdata/.*\.golden
           )$
       - id: check-links
-        name: Check links in non-proposal files
-        exclude: ^proposals/.*$
-      - id: check-links
-        name: Check links in proposal files
-        args: ['--anchors-only']
-        files: ^proposals/.*$
 
 # Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.
