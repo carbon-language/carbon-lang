@@ -37,6 +37,6 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
 
 }  // namespace Carbon
 
-DEFINE_BINARY_PROTO_FUZZER(const Carbon::Fuzzing::Carbon& input) {
+DEFINE_TEXT_PROTO_FUZZER(const Carbon::Fuzzing::Carbon& input) {
   Carbon::ParseAndExecute(input.compilation_unit());
 }

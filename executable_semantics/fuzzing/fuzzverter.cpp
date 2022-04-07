@@ -4,14 +4,11 @@
 
 // An utility for converting between fuzzer protos and Carbon sources.
 //
-// For example, to convert a crashing input in binary proto to carbon source:
-// `fuzzverter --from=binary_proto --input file.binaryproto --to=carbon_source`
+// For example, to convert a crashing input in text proto to carbon source:
+// `fuzzverter --from=text_proto --input file.textproto --to=carbon_source`
 //
-// To generate a new binary proto from carbon source for seeding the corpus:
-// `fuzzverter --from=carbon_source --input file.carbon --to=binary_proto`
-//
-// To convert a binary proto to text proto:
-// `fuzzverter --from=binary_proto --input file.binaryproto --to=text_proto`
+// To generate a new text proto from carbon source for seeding the corpus:
+// `fuzzverter --from=carbon_source --input file.carbon --to=text_proto`
 
 #include <google/protobuf/text_format.h>
 
@@ -32,12 +29,8 @@
 namespace Carbon {
 
 // Reads a file and returns its contents as a string.
-static auto ReadFile(std::string_view file_name, bool binary = false)
-    -> ErrorOr<std::string> {
+static auto ReadFile(std::string_view file_name) -> ErrorOr<std::string> {
   auto mode = std::ios::in;
-  if (binary) {
-    mode |= std::ios::binary;
-  }
   std::ifstream file(file_name, mode);
   if (!file.is_open()) {
     return ErrorBuilder() << "Could not open " << file_name << " for reading";
@@ -48,12 +41,9 @@ static auto ReadFile(std::string_view file_name, bool binary = false)
 }
 
 // Writes string `s` to `file_name`.
-static auto WriteFile(std::string_view s, std::string_view file_name,
-                      bool binary = false) -> ErrorOr<Success> {
+static auto WriteFile(std::string_view s, std::string_view file_name)
+    -> ErrorOr<Success> {
   auto mode = std::ios::out;
-  if (binary) {
-    mode |= std::ios::binary;
-  }
   std::ofstream file(file_name, mode);
   if (!file.is_open()) {
     return ErrorBuilder() << "Could not open " << file_name << " for writing";
@@ -86,28 +76,6 @@ static auto WriteTextProto(const Fuzzing::Carbon& carbon_proto,
   return WriteFile(proto_string, output_file_name);
 }
 
-// Reads binary Carbon proto from a file.
-static auto ReadBinaryProto(std::string_view input_file_name)
-    -> ErrorOr<Fuzzing::Carbon> {
-  ASSIGN_OR_RETURN(const std::string input_contents,
-                   ReadFile(input_file_name, /*binary=*/true));
-  Fuzzing::Carbon carbon_proto;
-  if (!carbon_proto.ParseFromString(input_contents)) {
-    return Error("Could not parse binary proto");
-  }
-  return carbon_proto;
-}
-
-// Writes a binary representation of `carbon_proto` to a file.
-auto WriteBinaryProto(const Fuzzing::Carbon& carbon_proto,
-                      std::string_view output_file_name) -> ErrorOr<Success> {
-  std::string proto_string;
-  if (!carbon_proto.SerializeToString(&proto_string)) {
-    return Error("Failed to convert to binary proto");
-  }
-  return WriteFile(proto_string, output_file_name, /*binary=*/true);
-}
-
 // Reads Carbon source from a file, and converts to Carbon proto.
 static auto ReadCarbonAsProto(std::string_view input_file_name)
     -> ErrorOr<Fuzzing::Carbon> {
@@ -131,16 +99,7 @@ static auto WriteProtoAsCarbon(const Fuzzing::Carbon& carbon_proto,
   return WriteFile(carbon_source, output_file_name);
 }
 
-// Conversion routines from text_proto.
-
-static auto TextProtoToBinaryProto(std::string_view input_file_name,
-                                   std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
-                   ReadTextProto(input_file_name));
-  return WriteBinaryProto(carbon_proto, output_file_name);
-}
-
+// Converts text proto to Carbon source.
 static auto TextProtoToCarbon(std::string_view input_file_name,
                               std::string_view output_file_name)
     -> ErrorOr<Success> {
@@ -149,40 +108,13 @@ static auto TextProtoToCarbon(std::string_view input_file_name,
   return WriteProtoAsCarbon(carbon_proto, output_file_name);
 }
 
-// Conversion routines from binary_proto.
-
-static auto BinaryProtoToTextProto(std::string_view input_file_name,
-                                   std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(Fuzzing::Carbon carbon_proto,
-                   ReadBinaryProto(input_file_name));
-  return WriteTextProto(carbon_proto, output_file_name);
-}
-
-static auto BinaryProtoToCarbon(std::string_view input_file_name,
-                                std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(Fuzzing::Carbon carbon_proto,
-                   ReadBinaryProto(input_file_name));
-  return WriteProtoAsCarbon(carbon_proto, output_file_name);
-}
-
-// Conversion routines from carbon_source.
-
+// Converts Carbon source to text proto.
 static auto CarbonToTextProto(std::string_view input_file_name,
                               std::string_view output_file_name)
     -> ErrorOr<Success> {
   ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
                    ReadCarbonAsProto(input_file_name));
   return WriteTextProto(carbon_proto, output_file_name);
-}
-
-static auto CarbonToBinaryProto(std::string_view input_file_name,
-                                std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
-                   ReadCarbonAsProto(input_file_name));
-  return WriteBinaryProto(carbon_proto, output_file_name);
 }
 
 // Unsupported conversion.
@@ -194,7 +126,7 @@ static auto Unsupported(std::string_view input_file_name,
 }  // namespace Carbon
 
 // Command line options for defining input/output format.
-enum FileFormat { text_proto = 0, binary_proto, carbon_source };
+enum FileFormat { text_proto = 0, carbon_source };
 
 // Returns string representation of an enum option.
 template <typename T>
@@ -208,7 +140,6 @@ auto main(int argc, char* argv[]) -> int {
 
   const auto file_format_values =
       llvm::cl::values(clEnumVal(text_proto, "Text protocol buffer"),
-                       clEnumVal(binary_proto, "Binary protocol buffer"),
                        clEnumVal(carbon_source, "Carbon source string"));
 
   llvm::cl::opt<FileFormat> input_format(
@@ -223,25 +154,15 @@ auto main(int argc, char* argv[]) -> int {
 
   using ConverterFunc = std::function<Carbon::ErrorOr<Carbon::Success>(
       std::string_view input_file_name, std::string_view output_file_name)>;
-  ConverterFunc converters[][3] = {
+  ConverterFunc converters[][2] = {
       // From text_proto.
       {
           Carbon::Unsupported,
-          Carbon::TextProtoToBinaryProto,
           Carbon::TextProtoToCarbon,
       },
-
-      // From binary_proto.
-      {
-          Carbon::BinaryProtoToTextProto,
-          Carbon::Unsupported,
-          Carbon::BinaryProtoToCarbon,
-      },
-
       // From carbon_source
       {
           Carbon::CarbonToTextProto,
-          Carbon::CarbonToBinaryProto,
           Carbon::Unsupported,
       },
   };

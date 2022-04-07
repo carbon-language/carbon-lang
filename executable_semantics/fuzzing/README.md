@@ -32,18 +32,8 @@ implementation.
 ## Fuzzer data format
 
 `libprotobuf-mutator` supports fuzzer inputs in either text or binary protocol
-buffer format. `executable_semantics_fuzzer` uses binary proto format with
+buffer format. `executable_semantics_fuzzer` uses text proto format with
 `Carbon` proto message definition in `common/fuzzing/Carbon.proto`.
-
-Binary protocol buffer format works better in the presence of frequent changes
-to protocol buffer definition. For example, renaming a field is 100% backwards
-compatible, meaning the instances of `Carbon` proto serialized before renaming
-was done will continue to work as before with no reqired changes, whereas old
-field name will be treated as an error by the text protocol buffer parser, and
-the field and all its contents will be ignored.
-
-As an additional bonus, binary proto format is also a bit faster than text proto
-format.
 
 ## Running the fuzzer
 
@@ -63,13 +53,13 @@ To run in 'fuzzing' mode:
 ```bash
 bazel build --config=proto-fuzzer //executable_semantics/fuzzing:executable_semantics_fuzzer
 
-executable_semantics_fuzzer
+bazel-bin/executable_semantics/fuzzing/executable_semantics_fuzzer
 ```
 
 It's also possible to run the fuzzer on a single input:
 
 ```bash
-executable_semantics_fuzzer /tmp/crash.binaryproto
+bazel-bin/executable_semantics/fuzzing/executable_semantics_fuzzer /tmp/crash.textproto
 ```
 
 ## Investigating a crash
@@ -80,35 +70,22 @@ A separate tool called `fuzzverter` can be used for things like converting a
 crashing input to Carbon source code for running `executable_semantics` on the
 code directly.
 
-To convert a binary proto file containing `Fuzzing::Carbon` message to Carbon
+To convert a text proto file containing `Fuzzing::Carbon` message to Carbon
 source:
 
 ```bash
-fuzzverter --from=binary_proto --input /tmp/crash.binaryproto --to=carbon_source
-```
-
-To convert a binary proto file containing `Fuzzing::Carbon` message to a textual
-protocol buffer representation (text proto):
-
-```bash
-fuzzverter --from=binary_proto --input /tmp/crash.binaryproto --to=text_proto
+bazel-bin/executable_semantics/fuzzing/fuzzverter --from=text_proto --input /tmp/crash.textproto--to=carbon_source
 ```
 
 ## Generating new fuzzer corpus entries
 
 The ability of the fuzzing framework to generate 'interesting' inputs can be
 improved by providing 'seed' inputs known as the fuzzer corpus. The inputs need
-to be in the binary proto format, and contain an instance of `Fuzzing::Carbon`
+to be in the text proto format, and contain an instance of `Fuzzing::Carbon`
 proto message.
-
-To generate a binary proto from Carbon source:
-
-```bash
-fuzzverter --from=carbon_source --input /tmp/crash.carbon --to=binary_proto --output /tmp/crash.binaryproto
-```
 
 To generate a text proto from Carbon source:
 
 ```bash
-fuzzverter --from=carbon_source --input /tmp/crash.carbon --to=text_proto
+bazel-bin/executable_semantics/fuzzing/fuzzverter --from=carbon_source --input /tmp/crash.carbon --to=text_proto --output /tmp/crash.textproto
 ```
