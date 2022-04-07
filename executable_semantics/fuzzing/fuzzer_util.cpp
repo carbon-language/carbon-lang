@@ -5,6 +5,7 @@
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 
 #include "common/check.h"
+#include "common/fuzzing/proto_to_carbon.h"
 
 namespace Carbon {
 
@@ -16,7 +17,7 @@ fn Main() -> i32 {
 }
 )";
 
-auto MaybeAddMain(const Fuzzing::CompilationUnit& compilation_unit)
+auto FuzzerUtil::ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string {
   const bool has_main = std::any_of(
       compilation_unit.declarations().begin(),
@@ -25,7 +26,8 @@ auto MaybeAddMain(const Fuzzing::CompilationUnit& compilation_unit)
         return decl.kind_case() == Fuzzing::Declaration::kFunction &&
                decl.function().name() == "Main";
       });
-  return has_main ? "" : EmptyMain;
+  return Carbon::ProtoToCarbon(carbon_proto.compilation_unit()) +
+         (has_main ? "" : EmptyMain);
 }
 
 }  // namespace Carbon

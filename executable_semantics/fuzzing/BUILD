@@ -24,6 +24,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common/fuzzing:carbon_cc_proto",
+        "//common/fuzzing:proto_to_carbon_lib",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -57,7 +58,6 @@ cc_binary(
         ":fuzzer_util",
         "//common:error",
         "//common/fuzzing:carbon_cc_proto",
-        "//common/fuzzing:proto_to_carbon_lib",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
         "//executable_semantics/syntax",
@@ -98,7 +98,6 @@ cc_fuzz_test(
     deps = [
         ":fuzzer_util",
         "//common/fuzzing:carbon_cc_proto",
-        "//common/fuzzing:proto_to_carbon_lib",
         "//executable_semantics:prelude",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",

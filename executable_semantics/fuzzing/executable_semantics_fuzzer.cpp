@@ -6,7 +6,6 @@
 #include <libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h>
 
 #include "common/fuzzing/carbon.pb.h"
-#include "common/fuzzing/proto_to_carbon.h"
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/prelude.h"
@@ -17,8 +16,7 @@ namespace Carbon {
 
 // Parses and executes a fuzzer-generated program.
 void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
-  const std::string source =
-      ProtoToCarbon(compilation_unit) + MaybeAddMain(compilation_unit);
+  const std::string source = FuzzerUtil::ProtoToCarbon(compilation_unit);
 
   Arena arena;
   ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,

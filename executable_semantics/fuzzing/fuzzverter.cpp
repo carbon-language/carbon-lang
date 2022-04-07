@@ -22,7 +22,6 @@
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
-#include "common/fuzzing/proto_to_carbon.h"
 #include "executable_semantics/common/error.h"
 #include "executable_semantics/fuzzing/ast_to_proto.h"
 #include "executable_semantics/fuzzing/fuzzer_util.h"
@@ -128,8 +127,7 @@ static auto WriteProtoAsCarbon(const Fuzzing::Carbon& carbon_proto,
                                std::string_view output_file_name)
     -> ErrorOr<Success> {
   const std::string carbon_source =
-      ProtoToCarbon(carbon_proto.compilation_unit()) +
-      MaybeAddMain(carbon_proto.compilation_unit());
+      FuzzerUtil::ProtoToCarbon(carbon_proto.compilation_unit());
   return WriteFile(carbon_source, output_file_name);
 }
 
