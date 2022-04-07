@@ -26,8 +26,7 @@ auto FuzzerUtil::ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit)
         return decl.kind_case() == Fuzzing::Declaration::kFunction &&
                decl.function().name() == "Main";
       });
-  return Carbon::ProtoToCarbon(carbon_proto.compilation_unit()) +
-         (has_main ? "" : EmptyMain);
+  return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }
 
 }  // namespace Carbon
