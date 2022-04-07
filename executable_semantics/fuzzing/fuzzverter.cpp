@@ -124,12 +124,12 @@ static auto ReadCarbonAsProto(std::string_view input_file_name)
 }
 
 // Converts Carbon proto to Carbon source, and writes to a file.
-static auto WriteProtoAsCarbon(Fuzzing::Carbon& carbon_proto,
+static auto WriteProtoAsCarbon(const Fuzzing::Carbon& carbon_proto,
                                std::string_view output_file_name)
     -> ErrorOr<Success> {
-  MaybeAddMain(*carbon_proto.mutable_compilation_unit());
   const std::string carbon_source =
-      ProtoToCarbon(carbon_proto.compilation_unit());
+      ProtoToCarbon(carbon_proto.compilation_unit()) +
+      MaybeAddMain(carbon_proto.compilation_unit());
   return WriteFile(carbon_source, output_file_name);
 }
 

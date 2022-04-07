@@ -9,8 +9,10 @@
 
 namespace Carbon {
 
-// Adds an empty `Main()` declaration if `compilation_unit` does not have one.
-auto MaybeAddMain(Fuzzing::CompilationUnit& compilation_unit) -> void;
+// Returns a string with an empty `Main()` definition if `compilation_unit` does
+// not have one.
+auto MaybeAddMain(const Fuzzing::CompilationUnit& compilation_unit)
+    -> std::string;
 
 }  // namespace Carbon
 

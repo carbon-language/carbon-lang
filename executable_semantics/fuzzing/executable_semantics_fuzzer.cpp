@@ -16,11 +16,9 @@
 namespace Carbon {
 
 // Parses and executes a fuzzer-generated program.
-// Takes `compilation_unit` by value to allow modifications like adding
-// `Main()`.
-void ParseAndExecute(Fuzzing::CompilationUnit compilation_unit) {
-  MaybeAddMain(compilation_unit);
-  const std::string source = ProtoToCarbon(compilation_unit);
+void ParseAndExecute(constFuzzing::CompilationUnit& compilation_unit) {
+  const std::string source =
+      ProtoToCarbon(compilation_unit) + MaybeAddMain(compilation_unit);
 
   Arena arena;
   ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,

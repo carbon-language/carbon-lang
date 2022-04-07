@@ -24,8 +24,6 @@ cc_library(
     deps = [
         "//common:check",
         "//common/fuzzing:carbon_cc_proto",
-        "//executable_semantics/ast",
-        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )
