@@ -3504,12 +3504,12 @@ There are four type-of-types related to
     using the `UnsafeDelete` method on the correct `Allocator`, but it may be
     unsafe. The concerning case is deleting a pointer to a derived class through
     a pointer to its base class without a virtual destructor.
--   `TriviallyDestructible` types have empty destructors. This type-of-type may
-    be used with [specialization](#lookup-resolution-and-specialization) to
-    unlock specific optimizations.
+-   `TrivialDestructor` types have empty destructors. This type-of-type may be
+    used with [specialization](#lookup-resolution-and-specialization) to unlock
+    specific optimizations.
 
-The type-of-types `Concrete`, `Deletable`, and `TriviallyDestructible` all
-extend `Destructible`. Combinations of them may be formed using
+The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
+`Destructible`. Combinations of them may be formed using
 [the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
 a generic function that both instantiates and deletes values of a type `T` would
 require `T` implement `Concrete & Deletable`.

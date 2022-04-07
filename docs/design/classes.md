@@ -1549,18 +1549,18 @@ current class.
 `partial Self` in order to prove no use of virtual methods.
 
 Types satisfy the
-[`TriviallyDestructible`](/docs/design/generics/details.md#destructor-constraints)
+[`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
 type-of-type if:
 
 -   the class declaration does not define a destructor or the class defines the
     destructor with an empty body `{ }`,
--   all data members are `TriviallyDestructible`, and
--   all base classes are `TriviallyDestructible`.
+-   all data members implement `TrivialDestructor`, and
+-   all base classes implement `TrivialDestructor`.
 
-For example, a [struct type](#struct-types) is `TriviallyDestructible` if all
-its members are.
+For example, a [struct type](#struct-types) implements `TrivialDestructor` if
+all its members do.
 
-`TriviallyDestructible` implies that their destructor does nothing, which may be
+`TrivialDestructor` implies that their destructor does nothing, which may be
 used to generate optimized specializations.
 
 There is no provision for handling failure in a destructor. All operations that
