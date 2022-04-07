@@ -1476,25 +1476,25 @@ The properties of a type, whether type is abstract, base, or final, and whether
 the destructor is virtual or non-virtual, determines which
 [type-of-types](/docs/design/generics/terminology.md#type-of-type) it satisfies.
 
--   Non-abstract classes are `Instantiable`. This means you can create local and
-    member variables of this type. `Instantiable` types have destructors that
-    are called when the local variable goes out of scope or the containing
-    object of the member variable is destroyed.
+-   Non-abstract classes are `Concrete`. This means you can create local and
+    member variables of this type. `Concrete` types have destructors that are
+    called when the local variable goes out of scope or the containing object of
+    the member variable is destroyed.
 -   Final classes and classes with a virtual destructor are `Deletable`. These
     may be safely deleted through a pointer.
--   Classes that are `Instantiable`, `Deletable`, or both are `Destructible`.
-    These are types that may be deleted through a pointer, but it might not be
-    safe. The concerning situation is when you have a pointer to a base class
-    without a virtual destructor. It is unsafe to delete that pointer when it is
+-   Classes that are `Concrete`, `Deletable`, or both are `Destructible`. These
+    are types that may be deleted through a pointer, but it might not be safe.
+    The concerning situation is when you have a pointer to a base class without
+    a virtual destructor. It is unsafe to delete that pointer when it is
     actually pointing to a derived class.
 
-| Class    | Destructor  | `Instantiable` | `Deletable` | `Destructible` |
-| -------- | ----------- | -------------- | ----------- | -------------- |
-| abstract | non-virtual | no             | no          | no             |
-| abstract | virtual     | no             | yes         | yes            |
-| base     | non-virtual | yes            | no          | yes            |
-| base     | virtual     | yes            | yes         | yes            |
-| final    | any         | yes            | yes         | yes            |
+| Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
+| -------- | ----------- | ---------- | ----------- | -------------- |
+| abstract | non-virtual | no         | no          | no             |
+| abstract | virtual     | no         | yes         | yes            |
+| base     | non-virtual | yes        | no          | yes            |
+| base     | virtual     | yes        | yes         | yes            |
+| final    | any         | yes        | yes         | yes            |
 
 For more about these, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
@@ -1530,7 +1530,7 @@ function expecting a `Deletable` type, use the `UnsafeAllowDelete`
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
-adapter UnsafeAllowDelete(T:! Instantiable) extends T {
+adapter UnsafeAllowDelete(T:! Concrete) extends T {
   impl as Deletable {}
 }
 

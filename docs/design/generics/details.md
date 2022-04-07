@@ -3407,7 +3407,7 @@ Knowing a type is sized is a precondition to declaring variables of that type,
 taking values of that type as parameters, returning values of that type, and
 defining arrays of that type. Users will not typically need to express the
 `Sized` constraint explicitly, though, since it will usually be a dependency of
-some other constraint the type will need such as `Movable` or `Instantiable`.
+some other constraint the type will need such as `Movable` or `Concrete`.
 
 **Note:** The compiler will determine which types are "sized", this is not
 something types will implement explicitly like ordinary interfaces.
@@ -3497,7 +3497,7 @@ requests those capabilities?
 There are four type-of-types related to
 [the destructors of types](/docs/design/classes.md#destructors):
 
--   `Instantiable` types may be local or member variables.
+-   `Concrete` types may be local or member variables.
 -   `Deletable` types may be safely deallocated by pointer using the `Delete`
     method on the `Allocator` used to allocate it.
 -   `Destructible` types have a destructor and may be deallocated by pointer
@@ -3508,11 +3508,11 @@ There are four type-of-types related to
     be used with [specialization](#lookup-resolution-and-specialization) to
     unlock specific optimizations.
 
-The type-of-types `Instantiable`, `Deletable`, and `TriviallyDestructible` all
+The type-of-types `Concrete`, `Deletable`, and `TriviallyDestructible` all
 extend `Destructible`. Combinations of them may be formed using
 [the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
 a generic function that both instantiates and deletes values of a type `T` would
-require `T` implement `Instantiable & Deletable`.
+require `T` implement `Concrete & Deletable`.
 
 Types are forbidden from explicitly implementing these type-of-types directly.
 Instead they use
