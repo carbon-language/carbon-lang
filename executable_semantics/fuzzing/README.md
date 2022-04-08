@@ -85,5 +85,5 @@ to be a `Fuzzing::Carbon` text proto.
 To generate a text proto from Carbon source:
 
 ```bash
-bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=carbon_to_proto --input /tmp/crash.carbon --output /tmp/crash.textproto
+bazel-bin/executable_semantics/fuzzing/fuzzverter --mode carbon_to_proto --input /tmp/crash.carbon --output /tmp/crash.textproto
 ```
