@@ -4623,7 +4623,7 @@ external impl [T:! ImplicitAs(f64)]
 }
 // ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
 //             with `T == f32` since `f32 is ImplicitAs(f64)`.
-var now_allowed: Meters = height.Scale(scale);
+var now_allowed: Meters = height * scale;
 ```
 
 Observe that the [prioritization rule](#prioritization-rule) will still prefer
@@ -4709,6 +4709,11 @@ external impl [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters;
 ```
 
+In addition, the generated impl definition for a `like` is implicitly injected
+at the end of the (unique) source file in which the impl is first declared. That
+is, it is injected in the API file if the impl is declared in an API file, and
+in the sole impl file declaring the impl otherwise.
+
 If one `impl` declaration uses `like`, other declarations must use `like` in the
 same way to match.
 
@@ -4737,7 +4742,8 @@ there is one from `Vector(T)` to `Vector(String)`, so the following use of
 ```
 // ❌ Illegal: Can't convert a value with type
 //             `Vector(T:! ImplicitAs(String))`
-//             to `Vector(String)`.
+//             to `Vector(String)` for `me`
+//             parameter of `Printable.Print`.
 external impl Vector(like String) as Printable;
 ```
 
