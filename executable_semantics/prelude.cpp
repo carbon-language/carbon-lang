@@ -9,15 +9,12 @@
 namespace Carbon {
 
 // Adds the Carbon prelude to `declarations`.
-void AddPrelude(
-    std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
-    std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
-  Carbon::ErrorOr<Carbon::AST> parse_result =
-      Carbon::Parse(arena, prelude_file_name, false);
+void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
+                std::vector<Nonnull<Declaration*>>* declarations) {
+  ErrorOr<AST> parse_result = Parse(arena, prelude_file_name, false);
   if (!parse_result.ok()) {
     // Try again with tracing, to help diagnose the problem.
-    Carbon::ErrorOr<Carbon::AST> trace_parse_result =
-        Carbon::Parse(arena, prelude_file_name, true);
+    ErrorOr<AST> trace_parse_result = Parse(arena, prelude_file_name, true);
     FATAL() << "Failed to parse prelude: "
             << trace_parse_result.error().message();
   }

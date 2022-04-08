@@ -74,7 +74,7 @@ To convert a text proto file containing `Fuzzing::Carbon` message to Carbon
 source:
 
 ```bash
-bazel-bin/executable_semantics/fuzzing/fuzzverter --from=text_proto --input /tmp/crash.textproto--to=carbon_source
+bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=proto_to_carbon --input /tmp/crash.textproto
 ```
 
 ## Generating new fuzzer corpus entries
@@ -87,5 +87,5 @@ proto message.
 To generate a text proto from Carbon source:
 
 ```bash
-bazel-bin/executable_semantics/fuzzing/fuzzverter --from=carbon_source --input /tmp/crash.carbon --to=text_proto --output /tmp/crash.textproto
+bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=carbon_to_proto --input /tmp/crash.carbon --output /tmp/crash.textproto
 ```

@@ -5,10 +5,10 @@
 // An utility for converting between fuzzer protos and Carbon sources.
 //
 // For example, to convert a crashing input in text proto to carbon source:
-// `fuzzverter --from=text_proto --input file.textproto --to=carbon_source`
+// `fuzzverter --mode=proto_to_carbon --input file.textproto`
 //
 // To generate a new text proto from carbon source for seeding the corpus:
-// `fuzzverter --from=carbon_source --input file.carbon --to=text_proto`
+// `fuzzverter --mode=carbon_to_proto --input file.carbon`
 
 #include <google/protobuf/text_format.h>
 
@@ -52,33 +52,25 @@ static auto WriteFile(std::string_view s, std::string_view file_name)
   return Success();
 }
 
-// Reads text Carbon proto from a file.
-static auto ReadTextProto(std::string_view input_file_name)
-    -> ErrorOr<Fuzzing::Carbon> {
+// Converts text proto to Carbon source.
+static auto TextProtoToCarbon(std::string_view input_file_name,
+                              std::string_view output_file_name)
+    -> ErrorOr<Success> {
   ASSIGN_OR_RETURN(const std::string input_contents, ReadFile(input_file_name));
   Fuzzing::Carbon carbon_proto;
   if (!google::protobuf::TextFormat::ParseFromString(input_contents,
                                                      &carbon_proto)) {
     return Error("Could not parse text proto");
   }
-  return carbon_proto;
+  const std::string carbon_source =
+      FuzzerUtil::ProtoToCarbon(carbon_proto.compilation_unit());
+  return WriteFile(carbon_source, output_file_name);
 }
 
-// Writes text representation of `carbon_proto` to a file.
-static auto WriteTextProto(const Fuzzing::Carbon& carbon_proto,
-                           std::string_view output_file_name)
+// Converts Carbon source to text proto.
+static auto CarbonToTextProto(std::string_view input_file_name,
+                              std::string_view output_file_name)
     -> ErrorOr<Success> {
-  std::string proto_string;
-  google::protobuf::TextFormat::Printer p;
-  if (!p.PrintToString(carbon_proto, &proto_string)) {
-    return Error("Failed to convert to text proto");
-  }
-  return WriteFile(proto_string, output_file_name);
-}
-
-// Reads Carbon source from a file, and converts to Carbon proto.
-static auto ReadCarbonAsProto(std::string_view input_file_name)
-    -> ErrorOr<Fuzzing::Carbon> {
   Carbon::Arena arena;
   const ErrorOr<AST> ast = Carbon::Parse(&arena, input_file_name,
                                          /*trace=*/false);
@@ -87,93 +79,54 @@ static auto ReadCarbonAsProto(std::string_view input_file_name)
   }
   Fuzzing::Carbon carbon_proto;
   *carbon_proto.mutable_compilation_unit() = AstToProto(*ast);
-  return carbon_proto;
+
+  std::string proto_string;
+  google::protobuf::TextFormat::Printer p;
+  if (!p.PrintToString(carbon_proto, &proto_string)) {
+    return Error("Failed to convert to text proto");
+  }
+  return WriteFile(proto_string, output_file_name);
 }
 
-// Converts Carbon proto to Carbon source, and writes to a file.
-static auto WriteProtoAsCarbon(const Fuzzing::Carbon& carbon_proto,
-                               std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  const std::string carbon_source =
-      FuzzerUtil::ProtoToCarbon(carbon_proto.compilation_unit());
-  return WriteFile(carbon_source, output_file_name);
-}
+// Command line options for defining input/output format.
+enum class ConversionMode { TextProtoToCarbon, CarbonToTextProto };
 
-// Converts text proto to Carbon source.
-static auto TextProtoToCarbon(std::string_view input_file_name,
-                              std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(Fuzzing::Carbon carbon_proto,
-                   ReadTextProto(input_file_name));
-  return WriteProtoAsCarbon(carbon_proto, output_file_name);
-}
-
-// Converts Carbon source to text proto.
-static auto CarbonToTextProto(std::string_view input_file_name,
-                              std::string_view output_file_name)
-    -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
-                   ReadCarbonAsProto(input_file_name));
-  return WriteTextProto(carbon_proto, output_file_name);
-}
-
-// Unsupported conversion.
-static auto Unsupported(std::string_view input_file_name,
-                        std::string_view output_file_name) -> ErrorOr<Success> {
-  return Error("Unsupported");
+// Returns string representation of an enum option.
+static auto GetEnumString(llvm::cl::opt<ConversionMode>& o) -> llvm::StringRef {
+  // TODO: is there a better way?
+  return o.getParser().getOption(static_cast<int>(ConversionMode(o)));
 }
 
 }  // namespace Carbon
 
-// Command line options for defining input/output format.
-enum FileFormat { text_proto = 0, carbon_source };
-
-// Returns string representation of an enum option.
-template <typename T>
-static auto GetEnumString(llvm::cl::opt<T>& o) -> llvm::StringRef {
-  // TODO: is there a better way?
-  return o.getParser().getOption(o);
-}
-
 auto main(int argc, char* argv[]) -> int {
   llvm::InitLLVM init_llvm(argc, argv);
 
-  const auto file_format_values =
-      llvm::cl::values(clEnumVal(text_proto, "Text protocol buffer"),
-                       clEnumVal(carbon_source, "Carbon source string"));
-
-  llvm::cl::opt<FileFormat> input_format(
-      "from", llvm::cl::desc("Input file format"), file_format_values);
-  llvm::cl::opt<FileFormat> output_format(
-      "to", llvm::cl::desc("Output file format"), file_format_values);
+  llvm::cl::opt<Carbon::ConversionMode> mode(
+      "mode", llvm::cl::desc("Conversion mode"),
+      llvm::cl::values(
+          clEnumValN(Carbon::ConversionMode::TextProtoToCarbon,
+                     "proto_to_carbon", "Convert text proto to Carbon source"),
+          clEnumValN(Carbon::ConversionMode::CarbonToTextProto,
+                     "carbon_to_proto",
+                     "Convert Carbon source to text proto")));
   llvm::cl::opt<std::string> input_file_name(
       "input", llvm::cl::desc("<input file>"), llvm::cl::init("/dev/stdin"));
   llvm::cl::opt<std::string> output_file_name(
       "output", llvm::cl::desc("<output file>"), llvm::cl::init("/dev/stdout"));
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
-  using ConverterFunc = std::function<Carbon::ErrorOr<Carbon::Success>(
-      std::string_view input_file_name, std::string_view output_file_name)>;
-  ConverterFunc converters[][2] = {
-      // From text_proto.
-      {
-          Carbon::Unsupported,
-          Carbon::TextProtoToCarbon,
-      },
-      // From carbon_source
-      {
-          Carbon::CarbonToTextProto,
-          Carbon::Unsupported,
-      },
-  };
-
-  const Carbon::ErrorOr<Carbon::Success> result =
-      converters[input_format][output_format](input_file_name,
-                                              output_file_name);
+  const Carbon::ErrorOr<Carbon::Success> result = [&]() {
+    switch (mode) {
+      case Carbon::ConversionMode::TextProtoToCarbon:
+        return Carbon::TextProtoToCarbon(input_file_name, output_file_name);
+      case Carbon::ConversionMode::CarbonToTextProto:
+        return Carbon::CarbonToTextProto(input_file_name, output_file_name);
+    }
+  }();
   if (!result.ok()) {
-    llvm::errs() << "Conversion from " << GetEnumString(input_format) << " to "
-                 << GetEnumString(output_format)
-                 << " failed: " << result.error().message() << "\n";
+    llvm::errs() << GetEnumString(mode)
+                 << " conversion failed: " << result.error().message() << "\n";
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
