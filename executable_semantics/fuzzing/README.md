@@ -33,7 +33,7 @@ implementation.
 
 `libprotobuf-mutator` supports fuzzer inputs in either text or binary protocol
 buffer format. `executable_semantics_fuzzer` uses text proto format with
-`Carbon` proto message definition in `common/fuzzing/Carbon.proto`.
+`Carbon` proto message definition in `common/fuzzing/carbon.proto`.
 
 ## Running the fuzzer
 
