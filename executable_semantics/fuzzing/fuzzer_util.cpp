@@ -17,7 +17,7 @@ fn Main() -> i32 {
 }
 )";
 
-auto FuzzerUtil::ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit)
+auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string {
   const bool has_main = std::any_of(
       compilation_unit.declarations().begin(),

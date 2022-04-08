@@ -14,8 +14,8 @@
 #include "executable_semantics/common/arena.h"
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/exec_program.h"
-#include "executable_semantics/prelude.h"
 #include "executable_semantics/syntax/parse.h"
+#include "executable_semantics/syntax/prelude.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 

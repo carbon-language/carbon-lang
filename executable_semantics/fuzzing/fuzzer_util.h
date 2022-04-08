@@ -7,13 +7,13 @@
 
 #include "common/fuzzing/carbon.pb.h"
 
-namespace Carbon::FuzzerUtil {
+namespace Carbon {
 
 // Converts `compilation_unit` to Carbon. Adds an default `Main()`
 // definition if one is not present in the proto.
-auto ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit)
+auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string;
 
-}  // namespace Carbon::FuzzerUtil
+}  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_

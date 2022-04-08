@@ -98,9 +98,9 @@ cc_fuzz_test(
     deps = [
         ":fuzzer_util",
         "//common/fuzzing:carbon_cc_proto",
-        "//executable_semantics:prelude",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
+        "//executable_semantics/syntax:prelude",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",

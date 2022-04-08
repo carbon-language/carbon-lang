@@ -14,30 +14,16 @@ filegroup(
     srcs = ["data/prelude.carbon"],
 )
 
-cc_library(
-    name = "prelude",
-    srcs = ["prelude.cpp"],
-    hdrs = ["prelude.h"],
-    data = [":standard_libraries"],
-    deps = [
-        "//common:error",
-        "//executable_semantics/ast:declaration",
-        "//executable_semantics/common:arena",
-        "//executable_semantics/common:nonnull",
-        "//executable_semantics/syntax",
-    ],
-)
-
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
     deps = [
-        ":prelude",
         "//common:error",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
+        "//executable_semantics/syntax:prelude",
         "@llvm-project//llvm:Support",
     ],
 )
