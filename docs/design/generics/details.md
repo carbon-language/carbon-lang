@@ -95,10 +95,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Dynamic wrapper types](#dynamic-wrapper-types)
+    -   [Dynamic pointer type](#dynamic-pointer-type)
+    -   [Dynamic box type](#dynamic-box-type)
+    -   [Dynamic value type](#dynamic-value-type)
+    -   [Object-safe](#object-safe)
+        -   [Object-safe interfaces](#object-safe-interfaces)
+        -   [No free associated types](#no-free-associated-types)
+        -   [`AsBaseType`](#asbasetype)
 -   [Future work](#future-work)
-    -   [Dynamic types](#dynamic-types)
-        -   [Runtime type parameters](#runtime-type-parameters)
-        -   [Runtime type fields](#runtime-type-fields)
+    -   [Runtime type parameters](#runtime-type-parameters)
     -   [Abstract return types](#abstract-return-types)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
@@ -2421,6 +2427,7 @@ Rust also supports
 when using a trait as a constraint. This is helpful when specifying concrete
 types for all associated types in a trait in order to
 [make it object safe so it can be used to define a trait object type](https://rust-lang.github.io/rfcs/0195-associated-items.html#trait-objects).
+Note that we have [the same use case](#no-free-associated-types) in Carbon.
 
 Rust is adding trait aliases
 ([RFC](https://github.com/rust-lang/rfcs/blob/master/text/1733-trait-alias.md),
@@ -3387,8 +3394,9 @@ What is the size of a type?
     [classes](/docs/design/classes.md), and most other concrete types.
 -   It could be known generically. This means that it will be known at codegen
     time, but not at type-checking time.
--   It could be dynamic. For example, it could be a
-    [dynamic type](#runtime-type-fields), a slice, variable-sized type (such as
+-   It could be dynamic. For example, it could be the result of derferencing a
+    [dynamic pointer type](#dynamic-pointer-type), a slice, variable-sized type
+    (such as
     [found in Rust](https://doc.rust-lang.org/nomicon/exotic-sizes.html#dynamically-sized-types-dsts)),
     or you could dereference a pointer to a base class that could actually point
     to a [derived class](/docs/design/classes.md#inheritance).
@@ -4436,30 +4444,395 @@ There are a few reasons for this feature:
 -   Matching the functionality of non-virtual methods in base classes, so
     interfaces can be a replacement for inheritance.
 -   Potentially reduce dynamic dispatch when using the interface in a
-    [`DynPtr`](#dynamic-types).
+    [dynamic wrapper type](#dynamic-wrapper-types).
 
 Note that this applies to associated entities, not interface parameters.
 
-## Future work
-
-### Dynamic types
+## Dynamic wrapper types
 
 Generics provide enough structure to support runtime dispatch for values with
-types that vary at runtime, without giving up type safety. Both Rust and Swift
-have demonstrated the value of this feature.
+types that vary at runtime, without giving up type safety. Both Rust (trait
+objects: [1](https://doc.rust-lang.org/book/ch17-02-trait-objects.html),
+[2](https://doc.rust-lang.org/std/keyword.dyn.html),
+[3](https://doc.rust-lang.org/reference/types/trait-object.html)) and Swift
+([existentials or protocols-as-types](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID275))
+have demonstrated the value of this feature. The main goal is increasing
+expressivity by allowing types to vary at runtime, with
+[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch). There is the
+potential to allow developers to reduce code size at the expense of more runtime
+dispatch, but this design does not prioritize that use case at this time.
 
-#### Runtime type parameters
+These dynamic wrapper types work by
+[_type erasure_](terminology.md#type-erasure). That means a single reference
+type, like `DynPtr(C)`, can be used to access values with a variety of runtime
+types. The reference type stores both a pointer to the value and a
+[dynamic-dispatch witness table](terminology.md#dynamic-dispatch-witness-table).
+The pointer to the value allows the reference type to have a fixed size, and so
+implements [`Sized`](#sized-types-and-type-of-types), even though the values it
+points to may have different sizes. The process of erasing a type, when
+converting from a value of an original type to the reference type, saves both
+the address of the value and the witness table specific to the original type.
+The witness table stores the type-specific implementation of the operations. The
+set of operations stored in the witness table is given by a type-of-type, `C`,
+that the original type must satisfy.
+
+Note that there are [some restrictions](#object-safe) needed on the type-of-type
+parameter for type soundness.
+
+### Dynamic pointer type
+
+A `DynPtr(C)` represents a "pointer to some unknown type `T` that satisfies
+type-of-type `C`," as long as `C` satisfies [the restrictions](#object-safe).
+This means that a variable of type `DynPtr(C)` may be assigned any `T*` pointer
+value where `T is C`. `DynPtr(C)` values act like pointers:
+
+-   They do not own what they point to.
+-   They have an assignment operator which allows them to point to new values,
+    with potentially different runtime types as long as they all satisfy `C`.
+-   They may be copied or moved, and have an unformed state.
+-   They have a fixed size, unlike the values they point to. Note that the size
+    of a `DynPtr` is larger than a regular pointer in order to also store a
+    witness table pointer.
+
+Example:
+
+```
+class AnInt {
+  var x: Int;
+  impl as Printable {
+    fn Print[me: Self]() { PrintInt(me.x); }
+  }
+}
+class AString {
+  var x: String;
+  impl as Printable {
+    fn Print[me: Self]() { PrintString(me.x); }
+  }
+}
+
+var i: AnInt = {.x = 3};
+var s: AString = {.x = "Hello"};
+
+var i_dynamic: DynPtr(Printable) = &i;
+i_dynamic->Print();  // Prints "3".
+var s_dynamic: DynPtr(Printable) = &s;
+s_dynamic->Print();  // Prints "Hello".
+
+var dynamic: Array(DynPtr(Printable), 2) = (&i, &s);
+for (var element: DynPtr(Printable) in dynamic) {
+  // Prints "3" and then "Hello".
+  element->Print();
+}
+```
+
+This corresponds to
+[a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
+
+If `C` is [object-safe](#object-safe), then the result of dereferencing a
+`DynPtr(C)` value will have type `DynRef(C)` which implements `C`. `C` can also
+include `Copyable`, in which case dereferencing will give
+`DynRef(CMinusCopyable)` where `CMinusCopyable` has just the object-safe parts
+of `C`.
+
+Note that the definition of `DynPtr` and `DynRef` requires the ability to define
+parameters that are constraints, as well as a number of compile-time functions
+that operate on constraint values:
+
+```
+// Returns true iff `C` only has object-safe interfaces.
+fn ConstraintObjectSafe(
+    template C:! Constraint) -> bool;
+
+// Returns true iff `C` only has object-safe interfaces
+// plus possibly the `Copyable` interface.
+fn ConstraintObjectSafeOrCopyable(
+    template C:! Constraint) -> bool;
+
+// Returns true iff `C` includes a requirement on the
+// `Copyable` interface, plus possibly others.
+fn ConstraintHasCopyable(
+    template C:! Constraint) -> bool;
+
+// Returns `C` without the `Copyable` interface. If `C`
+// does not include `Copyable`, it just returns `C`.
+fn ConstraintMinusCopyable(
+    template C:! Constraint) -> Constraint;
+
+// Return true iff `D` has a subset of the requirements
+// of `C`. This means that any type `T` that implements
+// `C` must necessarily also implement `D`. Note that
+// there are other ways `C` could imply `D`, such as
+// there existing a blanket implementation of `D` for
+// types implementing `C`, that are not considered by
+// this function.
+fn ConstraintRequirementSubset(
+    template C:! Constraint,
+    template D:! Constraint) -> bool;
+```
+
+With these, we can give definitions of `DynPtr` and `DynRef`:
+
+```
+class DynRef(template C:! Constraint)
+    if ConstraintObjectSafe(C) {
+  impl as C;
+}
+
+class DynPtr(template C:! Constraint)
+    if ConstraintObjectSafeOrCopyable(C) {
+  let ErasedType:! DynRef(ConstraintMinusCopyable(C));
+  external impl as Deref where .ResultType = ErasedType;
+  external impl as AssignFrom(like DynPtr(C));
+  external impl as Movable;
+  external impl as HasUnformed;
+  fn Clone[A:! Allocator, me: Self](alloc: A = heap) -> Self
+    if ConstraintHasCopyable(C);
+}
+
+external impl[template C:! Constraint, T:! C]
+    T* as ImplicitAs(DynPtr(C));
+
+external impl[template C:! Constraint,
+              template D:! Constraint]
+    DynPtr(C) as ImplicitAs(DynPtr(D))
+    if ConstraintRequirementSubset(C, D);
+```
+
+**Open question:** `DynRef` exists as the type that you get by dereferencing a
+`DynPtr` (or [`DynBox`](#dynamic-box-type)). We could make it a bit more capable
+by also implementing `Movable`, `HasUnformed`, `Copyable`, and possibly others.
+The main concern is whether that would cause confusion due to it being the
+reference that is moved or copied, not the value itself. The idea is to nudge
+people toward [`DynValue`](#dynamic-value-type), which has less surprising
+semantics.
+
+### Dynamic box type
+
+`DynBox(C)` is like [`DynPtr(C)`](#dynamic-pointer-type), except with ownership.
+A `DynBox(C)` has an allocator, which it uses to deallocate the value it points
+to when the `DynBox(C)` is destroyed, and so can only point to `Deletable`
+values.
+
+<!-- Link to [Destructor constraints](#destructor-constraints) once #1154 is
+merged. -->
+
+```
+class DynBox(template C:! Constraint,
+             A:! Allocator = typeof(heap))
+    if ConstraintObjectSafeOrCopyable(C) {
+  let ErasedType:! DynRef(ConstraintMinusCopyable(C));
+  external impl as Deref where .ResultType = ErasedType;
+  external impl as Movable;
+
+  // Allocate and initialize a new box object.
+  // TODO: Placeholder syntax.
+  fn Allocate![T:! C & Deletable]
+    (v: AutoClosure!(T), alloc: A = heap) -> Self;
+
+  // Create a `DynBox` to hold an already-allocated value.
+  fn Adopt[T:! C & Deletable](p: T*, alloc: A = heap) -> Self;
+
+  // Create a new `DynBox` by copying the value to a new
+  // allocation.
+  fn Clone[me: Self]() -> Self
+    if ConstraintHasCopyable(C);
+  fn Clone[A2:! Allocator, me: Self](alloc: A2)
+    -> DynBox(C, A2) if ConstraintHasCopyable(C);
+
+  external impl [template D:! Constraint, A2:! Allocator]
+    as AssignFrom(DynBox(D, A2))
+    if ConstraintHasCopyable(C)
+    and ConstraintRequirementSubset(D & Deletable, C);
+}
+
+// Can pass a `DynBox` to something expecting a `DynPtr`.
+external impl[template C:! Constraint,
+              template D:! Constraint]
+    DynBox(C) as ImplicitAs(DynPtr(D))
+    if ConstraintRequirementSubset(C & Deletable, D);
+```
+
+### Dynamic value type
+
+A `DynValue(C)` is like a `DynBox(C)`, except it has value semantics. This means
+a `DynValue(C)` implements `C` directly, like `DynRef(C)`, but with ownership
+like `DynBox(C)`. A function that takes a generic type parameter with an
+[object-safe](#object-safe) constraint may be passed a `DynValue` to get dynamic
+dispatch, without the function author having to make any special accommodation.
+
+Like with `DynBox`, only types implementing `Deletable` may be held in a
+`DynValue`.
+
+```
+class DynValue(template C:! Constraint,
+               A:! Allocator = typeof(heap))
+    if ConstraintObjectSafeOrCopyable(C) {
+
+  // Allocate and initialize a new `DynValue` object.
+  // TODO: Placeholder syntax.
+  fn Allocate![T:! C & Deletable]
+    (v: AutoClosure!(T), alloc: A = heap) -> Self;
+
+  // Create a `DynValue` to hold an already-allocated value.
+  fn Adopt[T:! C & Deletable](p: T*, alloc: A = heap) -> Self;
+
+  impl as C;
+  external impl as Movable;
+  external impl as HasUnformed;
+}
+```
+
+Note that in addition to [object-safe](#object-safe) constraints, `DynValue(C)`
+is `Copyable` if `C` includes `Copyable`.
+
+### Object-safe
+
+The first argument to these dynamic wrapper types are restricted to a
+type-of-type that is _object-safe_. This means it satisfies two restrictions:
+
+-   all interfaces used in the type-of-type must be marked `object_safe`, and
+-   it must not have any free associated types or free associated constants used
+    in a type.
+
+In most cases, these dynamic wrapper types also allow the first type-of-type
+argument to implement `Copyable`, even though `Copyable` is not an object-safe
+interface. In these cases, using a restriction that includes `Copyable` means
+that only values with types implementing `Copyable` may be wrapped, in exchange
+for additional capabilities, such as a `Clone` method.
+
+#### Object-safe interfaces
+
+FIXME
+
+The interfaces used in FIXME must all be _object safe_. Only interfaces that are
+declared using the `object_safe` keyword before the `interface` introducer
+satisfy this requirement. Interfaces declared with that keyword have the
+additional restriction that member functions must not use `Self` outside of the
+type of a `me` parameter. The `me` parameter must either be `me: Self` or
+`addr me: Self*`, and can not use `Self` in any other way.
+
+```
+object_safe interface Printable {
+  // ✅ Allowed: `Self` only used in the type of `me`.
+  fn Print[me: Self]();
+}
+```
+
+**Open question:** The `object_safe` keyword is provisional syntax, subject to
+revision.
+
+<!-- FIXME: update the description of interface declarations in the "Declaring
+interfaces and named constraints" section once #1084 is merged. -->
+
+This is similar to the "object safe" restriction in Rust
+([1](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md),
+[2](https://doc.rust-lang.org/reference/items/traits.html#object-safety)) and
+for the same reasons. Consider an interface that takes `Self` as an argument:
+
+```
+interface EqualCompare {
+  fn IsEqual[me: Self](rhs: Self) -> Bool;
+}
+```
+
+and implementations of this interface for two different types:
+
+```
+external impl AnInt as EqualCompare {
+  fn IsEqual[me: AnInt](rhs: AnInt) -> bool {
+    return me.x == rhs.x;
+  }
+}
+external impl AString as EqualCompare {
+  fn IsEqual[me: AString](rhs: AString) -> bool {
+    return me.x == rhs.x;
+  }
+}
+```
+
+FIXME: Haven't introduced `DynPtr` yet.
+
+Now given two values of type `DynPtr(EqualCompare)`, what happens if we try and
+call `IsEqual`?
+
+```
+var i_dyn_eq: DynPtr(EqualCompare) = &i;
+var s_dyn_eq: DynPtr(EqualCompare) = &s;
+// These are unsound: runtime type confusion
+i_dyn_eq->IsEqual(*s_dyn_eq);
+s_dyn_eq->IsEqual(*i_dyn_eq);
+```
+
+For `*i_dyn_eq` to implement `EqualCompare.IsEqual`, it needs to accept any
+value for `rhs` that is the result of dereferencing a ``DynPtr(EqualCompare)`
+value, including `*s_dyn_eq`. But `i_dyn_eq->IsEquals(...)` is going to call
+`AnInt.(EqualCompare.IsEqual)` which can only deal with values of type `AnInt`.
+So this construction is unsound.
+
+Similarly, we can't generally convert a return value using a specific type (like
+`AnInt`) into a value using the dynamic type, that has a different
+representation.
+
+#### No free associated types
+
+FIXME: any [associated type](#associated-types) or other
+[associated constant](#associated-constants) used in a type must either be
+assigned using a [`where` clause](#where-constraints) or have a
+[default](#interface-defaults).
+
+FIXME: Unassigned associated types with defaults will use the defaults.
+
+FIXME: Example:
+
+```
+interface Container {
+  let ElementType:! Type;
+  let IteratorType:! Iterator where .ElementType == ElementType;
+  fn Find[me: Self](needle: ElementType) -> Optional(IteratorType);
+}
+
+class Vector(T:! Type) {
+  impl as Container where .ElementType = T
+                      and .IteratorType = VectorIter(T);
+}
+
+
+class HashSet(T:! Hashable) {
+  impl as Container where .ElementType = T
+                      and .IteratorType = HashSetIter(T);
+}
+```
+
+Given a `DynPtr(Container)` that could point to a `Vector(i32)` or a
+`HashSet(String)`, how would you call `Find`? Since `ElementType` can vary,
+there is no single argument type. Further, the only possible return type is
+`Optional(DynValue(Iterator))`, but Carbon has no way of constructing such a
+value from an `Optional(Container.IteratorType)`, and the
+`where .ElementType == ElementType` constraint would be lost regardless.
+
+#### `AsBaseType`
+
+FIXME: Object-safe + no free associated types also means the type-of-type is
+equivalent to an abstract base class, `AsBaseClass(C)`.
+https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#inheritance
+
+FIXME: MAYBE: A generic type `FIXME(C, T)` where `T is C` and `C` is object-safe
+that descends from `AsBaseType(C)` and implements it by delegating to a `T*`.
+
+FIXME: A type `Dyn-FIXME(C)` where `C` is object-safe that descends from
+`AsBaseType(C)` and implements it by delegating to a `DynPtr(C)`.
+
+## Future work
+
+### Runtime type parameters
 
 This feature is about allowing a function's type parameter to be passed in as a
 dynamic (non-generic) parameter. All values of that type would still be required
-to have the same type.
-
-#### Runtime type fields
-
-Instead of passing in a single type parameter to a function, we could store a
-type per value. This changes the data layout of the value, and so is a somewhat
-more invasive change. It also means that when a function operates on multiple
-values they could have different real types.
+to have the same type. This would be an alternative application of dynamic
+dispatch and dynamic types. Where
+[dynamic wrapper types](#dynamic-wrapper-types) are primarily about the
+expressive power of allowing types to vary at runtime, this feature is primarily
+about reducing code size at the cost of more dynamic dispatch work at runtime.
 
 ### Abstract return types
 
@@ -4570,3 +4943,4 @@ be included in the declaration as well.
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1149: Generic details 13: Dynamic wrapper types](https://github.com/carbon-language/carbon-lang/pull/1149)
