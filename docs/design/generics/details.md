@@ -4466,15 +4466,15 @@ class HashMap(
 }
 ```
 
-Note that, unlike functions, every parameters to a type must either be generic
+Note that, unlike functions, every parameter to a type must either be generic
 or template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
 
-Two types are the same if they have the same name and same parameters. Carbon's
+Two types are the same if they have the same name and the same arguments. Carbon's
 [manual type equality](#manual-type-equality) approach means that the compiler
 may not always be able to tell when two type expressions are equal without help
 from the user, in the form of [`observe` declarations](#observe-declarations).
-This means Carbon will not in general be able to determining when types are
-inequal.
+This means Carbon will not in general be able to determine when types are
+unequal.
 
 Unlike an [interface's parameters](#parameterized-interfaces), a type's
 parameters may be [deduced](terminology.md#deduced-parameter), as in:
@@ -4483,6 +4483,12 @@ parameters may be [deduced](terminology.md#deduced-parameter), as in:
 fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
     (haystack: HashMap(KeyType, ValueType), needle: KeyType)
     -> bool { ... }
+fn MyMapContains(s: String) {
+  var map: HashMap(String, i32) = (("foo", 3), ("bar", 5));
+  // ✅ Deduces `KeyType` = `String` from the types of both arguments.
+  // Deduces `ValueType` = `i32` from the type of the first argument.
+  return ContainsKey(map, s);
+}
 ```
 
 Note that restrictions on the type's parameters from the type's declaration can
@@ -4523,8 +4529,7 @@ The default implementation of this interface is provided by a
 
 ```
 // Default blanket implementation
-impl [T:! Movable] T as OptionalStorage {
-  let Storage:! Type = (bool, T);
+impl [T:! Movable] T as OptionalStorage where .Storage = (bool, T) {
   ...
 }
 ```
@@ -4535,13 +4540,11 @@ patterns:
 
 ```
 // Specialization for pointers, using nullptr == None
-final external impl [T:! Type] T* as OptionalStorage {
-  let Storage:! Type = Array(Byte, sizeof(T*));
+final external impl [T:! Type] T* as OptionalStorage where .Storage = Array(Byte, sizeof(T*)) {
   ...
 }
 // Specialization for type `bool`.
-final external impl bool as OptionalStorage {
-  let Storage:! Type = Byte;
+final external impl bool as OptionalStorage where .Storage = Byte {
   ...
 }
 ```
@@ -4553,10 +4556,10 @@ can delegate to `OptionalStorage` for anything that can vary with `T`:
 ```
 class Optional(T:! Movable) {
   fn None() -> Self {
-    return {.storage = T.(OptionalStorage.MakeNone())};
+    return {.storage = T.(OptionalStorage.MakeNone)()};
   }
   fn Some(x: T) -> Self {
-    return {.storage = T.(OptionalStorage.Make(x))};
+    return {.storage = T.(OptionalStorage.Make)(x)};
   }
   ...
   private var storage: T.(OptionalStorage.Storage);
