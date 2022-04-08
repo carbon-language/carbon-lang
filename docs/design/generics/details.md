@@ -4466,15 +4466,15 @@ class HashMap(
 }
 ```
 
-Note that, unlike functions, every parameter to a type must either be generic
-or template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+Note that, unlike functions, every parameter to a type must either be generic or
+template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
 
-Two types are the same if they have the same name and the same arguments. Carbon's
-[manual type equality](#manual-type-equality) approach means that the compiler
-may not always be able to tell when two type expressions are equal without help
-from the user, in the form of [`observe` declarations](#observe-declarations).
-This means Carbon will not in general be able to determine when types are
-unequal.
+Two types are the same if they have the same name and the same arguments.
+Carbon's [manual type equality](#manual-type-equality) approach means that the
+compiler may not always be able to tell when two type expressions are equal
+without help from the user, in the form of
+[`observe` declarations](#observe-declarations). This means Carbon will not in
+general be able to determine when types are unequal.
 
 Unlike an [interface's parameters](#parameterized-interfaces), a type's
 parameters may be [deduced](terminology.md#deduced-parameter), as in:
@@ -4529,7 +4529,8 @@ The default implementation of this interface is provided by a
 
 ```
 // Default blanket implementation
-impl [T:! Movable] T as OptionalStorage where .Storage = (bool, T) {
+impl [T:! Movable] T as OptionalStorage
+    where .Storage = (bool, T) {
   ...
 }
 ```
@@ -4540,11 +4541,13 @@ patterns:
 
 ```
 // Specialization for pointers, using nullptr == None
-final external impl [T:! Type] T* as OptionalStorage where .Storage = Array(Byte, sizeof(T*)) {
+final external impl [T:! Type] T* as OptionalStorage
+    where .Storage = Array(Byte, sizeof(T*)) {
   ...
 }
 // Specialization for type `bool`.
-final external impl bool as OptionalStorage where .Storage = Byte {
+final external impl bool as OptionalStorage
+    where .Storage = Byte {
   ...
 }
 ```
