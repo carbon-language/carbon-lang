@@ -70,12 +70,13 @@ cc_test(
 )
 
 cc_library(
-    name = "generic_binding",
+    name = "impl_binding",
     hdrs = [
-        "generic_binding.h",
+        "impl_binding.h",
     ],
     deps = [
         ":ast_node",
+        ":pattern",
         ":source_location",
         ":value_category",
         "//common:check",
@@ -93,7 +94,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
-        ":generic_binding",
+        ":impl_binding",
         ":pattern",
         ":return_term",
         ":source_location",
@@ -125,7 +126,6 @@ cc_library(
     hdrs = ["expression.h"],
     deps = [
         ":ast_node",
-        ":generic_binding",
         ":paren_contents",
         ":source_location",
         ":static_scope",
@@ -203,8 +203,10 @@ cc_library(
         ":source_location",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

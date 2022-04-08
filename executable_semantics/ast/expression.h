@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <map>
 #include <optional>
 #include <string>
 #include <variant>
@@ -12,7 +13,6 @@
 
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
-#include "executable_semantics/ast/generic_binding.h"
 #include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
@@ -25,12 +25,14 @@ namespace Carbon {
 
 class Value;
 class VariableType;
+class ImplBinding;
 
 class Expression : public AstNode {
  public:
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) {
     return InheritsFromExpression(node->kind());
@@ -43,7 +45,10 @@ class Expression : public AstNode {
   }
 
   // The static type of this expression. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
@@ -354,7 +359,10 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
-class ImplBinding;
+class GenericBinding;
+
+using BindingMap =
+    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
 
 class CallExpression : public Expression {
  public:
@@ -390,10 +398,17 @@ class CallExpression : public Expression {
     impls_ = impls;
   }
 
+  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+
+  void set_deduced_args(const BindingMap& deduced_args) {
+    deduced_args_ = deduced_args;
+  }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
   std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  BindingMap deduced_args_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -465,11 +480,15 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(std::string_view intrinsic_name,
-                               Nonnull<TupleLiteral*> args,
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> ErrorOr<Intrinsic>;
+
+  explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
       : Expression(AstNodeKind::IntrinsicExpression, source_loc),
-        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        intrinsic_(intrinsic),
         args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -481,11 +500,6 @@ class IntrinsicExpression : public Expression {
   auto args() -> TupleLiteral& { return *args_; }
 
  private:
-  // Returns the enumerator corresponding to the intrinsic named `name`,
-  // or raises a fatal compile error if there is no such enumerator.
-  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
-      -> Intrinsic;
-
   Intrinsic intrinsic_;
   Nonnull<TupleLiteral*> args_;
 };
@@ -556,6 +570,39 @@ class UnimplementedExpression : public Expression {
 
   std::string label_;
   std::vector<Nonnull<AstNode*>> children_;
+};
+
+// A literal representing a statically-sized array type.
+class ArrayTypeLiteral : public Expression {
+ public:
+  // Constructs an array type literal which uses the given expressions to
+  // represent the element type and size.
+  ArrayTypeLiteral(SourceLocation source_loc,
+                   Nonnull<Expression*> element_type_expression,
+                   Nonnull<Expression*> size_expression)
+      : Expression(AstNodeKind::ArrayTypeLiteral, source_loc),
+        element_type_expression_(element_type_expression),
+        size_expression_(size_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromArrayTypeLiteral(node->kind());
+  }
+
+  auto element_type_expression() const -> const Expression& {
+    return *element_type_expression_;
+  }
+  auto element_type_expression() -> Expression& {
+    return *element_type_expression_;
+  }
+
+  auto size_expression() const -> const Expression& {
+    return *size_expression_;
+  }
+  auto size_expression() -> Expression& { return *size_expression_; }
+
+ private:
+  Nonnull<Expression*> element_type_expression_;
+  Nonnull<Expression*> size_expression_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

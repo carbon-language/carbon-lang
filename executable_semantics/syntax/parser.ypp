@@ -62,6 +62,7 @@
   #include "common/check.h"
   #include "executable_semantics/syntax/parse_and_lex_context.h"
   #include "llvm/ADT/StringExtras.h"
+  #include "llvm/Support/raw_ostream.h"
 }  // %code top
 
 %code requires {
@@ -86,13 +87,13 @@
 
 %code {
   void Carbon::Parser::error(const location_type&, const std::string& message) {
-    context.PrintDiagnostic(message);
+    context.RecordSyntaxError(message);
   }
 }  // %code
 
 %token <int> integer_literal
 %token <std::string> identifier
-%token <std::string> intrinsic_identifier
+%token <IntrinsicExpression::Intrinsic> intrinsic_identifier
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
@@ -158,6 +159,7 @@
 %type <Nonnull<Pattern*>> paren_pattern
 %type <Nonnull<TuplePattern*>> tuple_pattern
 %type <Nonnull<TuplePattern*>> maybe_empty_tuple_pattern
+%type <std::optional<Nonnull<TuplePattern*>>> type_params
 %type <ParenContents<Pattern>> paren_pattern_base
 %type <ParenContents<Pattern>> paren_pattern_contents
 %type <Nonnull<AlternativeSignature*>> alternative
@@ -310,6 +312,8 @@ primary_expression:
 | paren_expression { $$ = $1; }
 | struct_literal { $$ = $1; }
 | struct_type_literal { $$ = $1; }
+| LEFT_SQUARE_BRACKET expression SEMICOLON expression RIGHT_SQUARE_BRACKET
+    { $$ = arena->New<ArrayTypeLiteral>(context.source_loc(), $2, $4); }
 ;
 postfix_expression:
   primary_expression
@@ -579,10 +583,21 @@ non_expression_pattern:
       $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3,
                                       std::nullopt);
     }
+| binding_lhs COLON_BANG expression
+    { $$ = arena->New<GenericBinding>(context.source_loc(), $1, $3); }
 | paren_pattern
     { $$ = $1; }
 | postfix_expression tuple_pattern
-    { $$ = arena->New<AlternativePattern>(context.source_loc(), $1, $2); }
+    {
+      ErrorOr<Nonnull<AlternativePattern*>> alternative_pattern =
+          AlternativePattern::Create(arena, context.source_loc(), $1, $2);
+      if (alternative_pattern.ok()) {
+        $$ = *alternative_pattern;
+      } else {
+        context.RecordSyntaxError(alternative_pattern.error().message());
+        YYERROR;
+      }
+    }
 | VAR non_expression_pattern
     { $$ = arena->New<VarPattern>(context.source_loc(), $2); }
 ;
@@ -773,20 +788,20 @@ deduced_param_list:
       $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
-| generic_binding COMMA deduced_param_list
+| deduced_param_list COMMA generic_binding
     {
-      $$ = $3;
-      $$.push_back($1);
+      $$ = $1;
+      $$.push_back($3);
     }
 | variable_declaration
     {
       $$ = std::vector<Nonnull<AstNode*>>();
       $$.push_back($1);
     }
-| variable_declaration COMMA deduced_param_list
+| deduced_param_list COMMA variable_declaration
     {
-      $$ = $3;
-      $$.push_back($1);
+      $$ = $1;
+      $$.push_back($3);
     }
 ;
 deduced_params:
@@ -804,13 +819,25 @@ receiver:
 function_declaration:
   FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
-      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           $6, $7);
+      ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+      if (fn.ok()) {
+        $$ = *fn;
+      } else {
+        context.RecordSyntaxError(fn.error().message());
+        YYERROR;
+      }
     }
 | FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
-      $$ = arena->New<FunctionDeclaration>(context.source_loc(), $2, $3, $4, $5,
-                                           $6, std::nullopt);
+      ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+      if (fn.ok()) {
+        $$ = *fn;
+      } else {
+        context.RecordSyntaxError(fn.error().message());
+        YYERROR;
+      }
     }
 ;
 variable_declaration: identifier COLON pattern
@@ -846,11 +873,17 @@ alternative_list_contents:
       $$.push_back(std::move($3));
     }
 ;
+type_params:
+  // Empty
+    { $$ = std::nullopt; }
+| tuple_pattern
+    { $$ = $1; }
+;
 declaration:
   function_declaration
     { $$ = $1; }
-| CLASS identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $4); }
+| CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+    { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $3, $5); }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
 | VAR variable_declaration SEMICOLON
@@ -870,9 +903,9 @@ declaration:
     }
 | INTERFACE identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
-      auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
+      auto ty_ty = arena->New<TypeTypeLiteral>(context.source_loc());
       auto self =
-          arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
+          arena->New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, self, $4);
     }
 | impl_kind IMPL expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE

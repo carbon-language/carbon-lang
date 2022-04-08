@@ -11,7 +11,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
@@ -44,6 +44,17 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   llvm::StringRef subcommand_text = args[0];
   llvm::SmallVector<llvm::StringRef, 16> subcommand_args(
       std::next(args.begin()), args.end());
+
+  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
+  std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
+  // TODO: Figure out command-line support (llvm::cl?), this is temporary.
+  if (!subcommand_args.empty() &&
+      subcommand_args[0] == "--print-errors=streamed") {
+    subcommand_args.erase(subcommand_args.begin());
+  } else {
+    sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
+    consumer = sorting_consumer.get();
+  }
   switch (GetSubcommand(subcommand_text)) {
     case Subcommand::Unknown:
       error_stream_ << "ERROR: Unknown subcommand '" << subcommand_text
@@ -52,13 +63,14 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 #define CARBON_SUBCOMMAND(Name, ...) \
   case Subcommand::Name:             \
-    return Run##Name##Subcommand(subcommand_args);
+    return Run##Name##Subcommand(*consumer, subcommand_args);
 #include "toolchain/driver/flags.def"
   }
   llvm_unreachable("All subcommands handled!");
 }
 
-auto Driver::RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
+                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // FIXME: We should support getting detailed help on a subcommand by looking
   // for it as a positional parameter here.
   if (!args.empty()) {
@@ -93,7 +105,8 @@ auto Driver::RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   return true;
 }
 
-auto Driver::RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args)
+auto Driver::RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
+                                     llvm::ArrayRef<llvm::StringRef> args)
     -> bool {
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
@@ -117,13 +130,14 @@ auto Driver::RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args)
                           });
     return false;
   }
-  auto tokenized_source =
-      TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
+  auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
+  consumer.Flush();
   tokenized_source.Print(output_stream_);
   return !tokenized_source.has_errors();
 }
 
-auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
+auto Driver::RunDumpParseTreeSubcommand(DiagnosticConsumer& consumer,
+                                        llvm::ArrayRef<llvm::StringRef> args)
     -> bool {
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
@@ -147,10 +161,9 @@ auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
                           });
     return false;
   }
-  auto tokenized_source =
-      TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
-  auto parse_tree =
-      ParseTree::Parse(tokenized_source, ConsoleDiagnosticConsumer());
+  auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
+  auto parse_tree = ParseTree::Parse(tokenized_source, consumer);
+  consumer.Flush();
   parse_tree.Print(output_stream_);
   return !tokenized_source.has_errors() && !parse_tree.has_errors();
 }
