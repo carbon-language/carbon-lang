@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <map>
 #include <optional>
 #include <string>
 #include <variant>
@@ -23,12 +24,15 @@
 namespace Carbon {
 
 class Value;
+class VariableType;
+class ImplBinding;
 
 class Expression : public AstNode {
  public:
   ~Expression() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) {
     return InheritsFromExpression(node->kind());
@@ -41,16 +45,17 @@ class Expression : public AstNode {
   }
 
   // The static type of this expression. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value category of this expression. Cannot be called before
   // typechecking.
@@ -123,20 +128,20 @@ class IdentifierExpression : public Expression {
 
   auto name() const -> const std::string& { return name_; }
 
-  // Returns the NamedEntityView this identifier refers to. Cannot be called
+  // Returns the ValueNodeView this identifier refers to. Cannot be called
   // before name resolution.
-  auto named_entity() const -> const NamedEntityView& { return *named_entity_; }
+  auto value_node() const -> const ValueNodeView& { return *value_node_; }
 
-  // Sets the value returned by named_entity. Can be called only once,
+  // Sets the value returned by value_node. Can be called only once,
   // during name resolution.
-  void set_named_entity(NamedEntityView named_entity) {
-    CHECK(!named_entity_.has_value());
-    named_entity_ = std::move(named_entity);
+  void set_value_node(ValueNodeView value_node) {
+    CHECK(!value_node_.has_value());
+    value_node_ = std::move(value_node);
   }
 
  private:
   std::string name_;
-  std::optional<NamedEntityView> named_entity_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 class FieldAccessExpression : public Expression {
@@ -156,9 +161,23 @@ class FieldAccessExpression : public Expression {
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
 
+  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
+  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const ImplBinding*> impl) {
+    CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
  private:
   Nonnull<Expression*> aggregate_;
   std::string field_;
+  std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -340,6 +359,11 @@ class PrimitiveOperatorExpression : public Expression {
   std::vector<Nonnull<Expression*>> arguments_;
 };
 
+class GenericBinding;
+
+using BindingMap =
+    std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -358,9 +382,33 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
+  // Maps each of `function`'s generic parameters to the AST node
+  // that identifies the witness table for the corresponding argument.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impls(
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
+    CHECK(impls_.empty());
+    impls_ = impls;
+  }
+
+  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+
+  void set_deduced_args(const BindingMap& deduced_args) {
+    deduced_args_ = deduced_args;
+  }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  BindingMap deduced_args_;
 };
 
 class FunctionTypeLiteral : public Expression {
@@ -432,11 +480,15 @@ class IntrinsicExpression : public Expression {
     Print,
   };
 
-  explicit IntrinsicExpression(std::string_view intrinsic_name,
-                               Nonnull<TupleLiteral*> args,
+  // Returns the enumerator corresponding to the intrinsic named `name`,
+  // or raises a fatal compile error if there is no such enumerator.
+  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
+      -> ErrorOr<Intrinsic>;
+
+  explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
       : Expression(AstNodeKind::IntrinsicExpression, source_loc),
-        intrinsic_(FindIntrinsic(intrinsic_name, source_loc)),
+        intrinsic_(intrinsic),
         args_(args) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -448,13 +500,37 @@ class IntrinsicExpression : public Expression {
   auto args() -> TupleLiteral& { return *args_; }
 
  private:
-  // Returns the enumerator corresponding to the intrinsic named `name`,
-  // or raises a fatal compile error if there is no such enumerator.
-  static auto FindIntrinsic(std::string_view name, SourceLocation source_loc)
-      -> Intrinsic;
-
   Intrinsic intrinsic_;
   Nonnull<TupleLiteral*> args_;
+};
+
+class IfExpression : public Expression {
+ public:
+  explicit IfExpression(SourceLocation source_loc,
+                        Nonnull<Expression*> condition,
+                        Nonnull<Expression*> then_expression,
+                        Nonnull<Expression*> else_expression)
+      : Expression(AstNodeKind::IfExpression, source_loc),
+        condition_(condition),
+        then_expression_(then_expression),
+        else_expression_(else_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIfExpression(node->kind());
+  }
+
+  auto condition() const -> Nonnull<Expression*> { return condition_; }
+  auto then_expression() const -> Nonnull<Expression*> {
+    return then_expression_;
+  }
+  auto else_expression() const -> Nonnull<Expression*> {
+    return else_expression_;
+  }
+
+ private:
+  Nonnull<Expression*> condition_;
+  Nonnull<Expression*> then_expression_;
+  Nonnull<Expression*> else_expression_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
@@ -494,6 +570,39 @@ class UnimplementedExpression : public Expression {
 
   std::string label_;
   std::vector<Nonnull<AstNode*>> children_;
+};
+
+// A literal representing a statically-sized array type.
+class ArrayTypeLiteral : public Expression {
+ public:
+  // Constructs an array type literal which uses the given expressions to
+  // represent the element type and size.
+  ArrayTypeLiteral(SourceLocation source_loc,
+                   Nonnull<Expression*> element_type_expression,
+                   Nonnull<Expression*> size_expression)
+      : Expression(AstNodeKind::ArrayTypeLiteral, source_loc),
+        element_type_expression_(element_type_expression),
+        size_expression_(size_expression) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromArrayTypeLiteral(node->kind());
+  }
+
+  auto element_type_expression() const -> const Expression& {
+    return *element_type_expression_;
+  }
+  auto element_type_expression() -> Expression& {
+    return *element_type_expression_;
+  }
+
+  auto size_expression() const -> const Expression& {
+    return *size_expression_;
+  }
+  auto size_expression() -> Expression& { return *size_expression_; }
+
+ private:
+  Nonnull<Expression*> element_type_expression_;
+  Nonnull<Expression*> size_expression_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

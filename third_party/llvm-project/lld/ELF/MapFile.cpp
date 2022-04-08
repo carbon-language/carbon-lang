@@ -19,15 +19,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "MapFile.h"
+#include "Driver.h"
 #include "InputFiles.h"
 #include "LinkerScript.h"
 #include "OutputSections.h"
-#include "SymbolTable.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
-#include "lld/Common/Strings.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -37,7 +38,8 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf;
 
-using SymbolMapTy = DenseMap<const SectionBase *, SmallVector<Defined *, 4>>;
+using SymbolMapTy = DenseMap<const SectionBase *,
+                             SmallVector<std::pair<Defined *, uint64_t>, 0>>;
 
 static constexpr char indent8[] = "        ";          // 8 spaces
 static constexpr char indent16[] = "                "; // 16 spaces
@@ -67,7 +69,7 @@ static std::vector<Defined *> getSymbols() {
 static SymbolMapTy getSectionSyms(ArrayRef<Defined *> syms) {
   SymbolMapTy ret;
   for (Defined *dr : syms)
-    ret[dr->section].push_back(dr);
+    ret[dr->section].emplace_back(dr, dr->getVA());
 
   // Sort symbols by address. We want to print out symbols in the
   // order in the output file rather than the order they appeared
@@ -76,12 +78,11 @@ static SymbolMapTy getSectionSyms(ArrayRef<Defined *> syms) {
   for (auto &it : ret) {
     // Deduplicate symbols which need a canonical PLT entry/copy relocation.
     set.clear();
-    llvm::erase_if(it.second,
-                   [&](Defined *sym) { return !set.insert(sym).second; });
-
-    llvm::stable_sort(it.second, [](Defined *a, Defined *b) {
-      return a->getVA() < b->getVA();
+    llvm::erase_if(it.second, [&](std::pair<Defined *, uint64_t> a) {
+      return !set.insert(a.first).second;
     });
+
+    llvm::stable_sort(it.second, llvm::less_second());
   }
   return ret;
 }
@@ -91,9 +92,9 @@ static SymbolMapTy getSectionSyms(ArrayRef<Defined *> syms) {
 // we do that in batch using parallel-for.
 static DenseMap<Symbol *, std::string>
 getSymbolStrings(ArrayRef<Defined *> syms) {
-  std::vector<std::string> str(syms.size());
+  auto strs = std::make_unique<std::string[]>(syms.size());
   parallelForEachN(0, syms.size(), [&](size_t i) {
-    raw_string_ostream os(str[i]);
+    raw_string_ostream os(strs[i]);
     OutputSection *osec = syms[i]->getOutputSection();
     uint64_t vma = syms[i]->getVA();
     uint64_t lma = osec ? osec->getLMA() + vma - osec->getVA(0) : 0;
@@ -103,7 +104,7 @@ getSymbolStrings(ArrayRef<Defined *> syms) {
 
   DenseMap<Symbol *, std::string> ret;
   for (size_t i = 0, e = syms.size(); i < e; ++i)
-    ret[syms[i]] = std::move(str[i]);
+    ret[syms[i]] = std::move(strs[i]);
   return ret;
 }
 
@@ -184,7 +185,7 @@ static void writeMapFile(raw_fd_ostream &os) {
           writeHeader(os, isec->getVA(), osec->getLMA() + isec->outSecOff,
                       isec->getSize(), isec->alignment);
           os << indent8 << toString(isec) << '\n';
-          for (Symbol *sym : sectionSyms[isec])
+          for (Symbol *sym : llvm::make_first_range(sectionSyms[isec]))
             os << symStr[sym] << '\n';
         }
         continue;
@@ -307,7 +308,19 @@ void elf::writeArchiveStats() {
   }
 
   os << "members\textracted\tarchive\n";
-  for (const ArchiveFile *f : archiveFiles)
-    os << f->getMemberCount() << '\t' << f->getExtractedMemberCount() << '\t'
-       << f->getName() << '\n';
+
+  SmallVector<StringRef, 0> archives;
+  DenseMap<CachedHashStringRef, unsigned> all, extracted;
+  for (ELFFileBase *file : objectFiles)
+    if (file->archiveName.size())
+      ++extracted[CachedHashStringRef(file->archiveName)];
+  for (BitcodeFile *file : bitcodeFiles)
+    if (file->archiveName.size())
+      ++extracted[CachedHashStringRef(file->archiveName)];
+  for (std::pair<StringRef, unsigned> f : driver->archiveFiles) {
+    unsigned &v = extracted[CachedHashString(f.first)];
+    os << f.second << '\t' << v << '\t' << f.first << '\n';
+    // If the archive occurs multiple times, other instances have a count of 0.
+    v = 0;
+  }
 }

@@ -162,6 +162,24 @@ RISCVTTIImpl::getRegisterBitWidth(TargetTransformInfo::RegisterKind K) const {
   llvm_unreachable("Unsupported register kind");
 }
 
+InstructionCost RISCVTTIImpl::getSpliceCost(VectorType *Tp, int Index) {
+  std::pair<InstructionCost, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+
+  unsigned Cost = 2; // vslidedown+vslideup.
+  // TODO: LMUL should increase cost.
+  // TODO: Multiplying by LT.first implies this legalizes into multiple copies
+  // of similar code, but I think we expand through memory.
+  return Cost * LT.first;
+}
+
+InstructionCost RISCVTTIImpl::getShuffleCost(TTI::ShuffleKind Kind,
+                                             VectorType *Tp, ArrayRef<int> Mask,
+                                             int Index, VectorType *SubTp) {
+  if (Kind == TTI::SK_Splice && isa<ScalableVectorType>(Tp))
+    return getSpliceCost(Tp, Index);
+  return BaseT::getShuffleCost(Kind, Tp, Mask, Index, SubTp);
+}
+
 InstructionCost RISCVTTIImpl::getGatherScatterOpCost(
     unsigned Opcode, Type *DataTy, const Value *Ptr, bool VariableMask,
     Align Alignment, TTI::TargetCostKind CostKind, const Instruction *I) {
@@ -197,10 +215,7 @@ void RISCVTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   // Support explicit targets enabled for SiFive with the unrolling preferences
   // below
   bool UseDefaultPreferences = true;
-  if (ST->getTuneCPU().contains("sifive-e76") ||
-      ST->getTuneCPU().contains("sifive-s76") ||
-      ST->getTuneCPU().contains("sifive-u74") ||
-      ST->getTuneCPU().contains("sifive-7"))
+  if (ST->getProcFamily() == RISCVSubtarget::SiFive7)
     UseDefaultPreferences = false;
 
   if (UseDefaultPreferences)
@@ -277,4 +292,17 @@ void RISCVTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
 void RISCVTTIImpl::getPeelingPreferences(Loop *L, ScalarEvolution &SE,
                                          TTI::PeelingPreferences &PP) {
   BaseT::getPeelingPreferences(L, SE, PP);
+}
+
+InstructionCost RISCVTTIImpl::getRegUsageForType(Type *Ty) {
+  TypeSize Size = Ty->getPrimitiveSizeInBits();
+  if (Ty->isVectorTy()) {
+    if (Size.isScalable() && ST->hasVInstructions())
+      return divideCeil(Size.getKnownMinValue(), RISCV::RVVBitsPerBlock);
+
+    if (ST->useRVVForFixedLengthVectors())
+      return divideCeil(Size, ST->getMinRVVVectorSizeInBits());
+  }
+
+  return BaseT::getRegUsageForType(Ty);
 }

@@ -40,7 +40,7 @@ struct CeilDivUIOpConverter : public OpRewritePattern<arith::CeilDivUIOp> {
     Value minusOne = rewriter.create<arith::SubIOp>(loc, a, one);
     Value quotient = rewriter.create<arith::DivUIOp>(loc, minusOne, b);
     Value plusOne = rewriter.create<arith::AddIOp>(loc, quotient, one);
-    rewriter.replaceOpWithNewOp<SelectOp>(op, compare, zero, plusOne);
+    rewriter.replaceOpWithNewOp<arith::SelectOp>(op, compare, zero, plusOne);
     return success();
   }
 };
@@ -62,7 +62,7 @@ struct CeilDivSIOpConverter : public OpRewritePattern<arith::CeilDivSIOp> {
     // Compute x = (b>0) ? -1 : 1.
     Value compare =
         rewriter.create<arith::CmpIOp>(loc, arith::CmpIPredicate::sgt, b, zero);
-    Value x = rewriter.create<SelectOp>(loc, compare, minusOne, plusOne);
+    Value x = rewriter.create<arith::SelectOp>(loc, compare, minusOne, plusOne);
     // Compute positive res: 1 + ((x+a)/b).
     Value xPlusA = rewriter.create<arith::AddIOp>(loc, x, a);
     Value xPlusADivB = rewriter.create<arith::DivSIOp>(loc, xPlusA, b);
@@ -91,7 +91,8 @@ struct CeilDivSIOpConverter : public OpRewritePattern<arith::CeilDivSIOp> {
     Value compareRes =
         rewriter.create<arith::OrIOp>(loc, firstTerm, secondTerm);
     // Perform substitution and return success.
-    rewriter.replaceOpWithNewOp<SelectOp>(op, compareRes, posRes, negRes);
+    rewriter.replaceOpWithNewOp<arith::SelectOp>(op, compareRes, posRes,
+                                                 negRes);
     return success();
   }
 };
@@ -113,7 +114,7 @@ struct FloorDivSIOpConverter : public OpRewritePattern<arith::FloorDivSIOp> {
     // Compute x = (b<0) ? 1 : -1.
     Value compare =
         rewriter.create<arith::CmpIOp>(loc, arith::CmpIPredicate::slt, b, zero);
-    Value x = rewriter.create<SelectOp>(loc, compare, plusOne, minusOne);
+    Value x = rewriter.create<arith::SelectOp>(loc, compare, plusOne, minusOne);
     // Compute negative res: -1 - ((x-a)/b).
     Value xMinusA = rewriter.create<arith::SubIOp>(loc, x, a);
     Value xMinusADivB = rewriter.create<arith::DivSIOp>(loc, xMinusA, b);
@@ -140,7 +141,8 @@ struct FloorDivSIOpConverter : public OpRewritePattern<arith::FloorDivSIOp> {
     Value compareRes =
         rewriter.create<arith::OrIOp>(loc, firstTerm, secondTerm);
     // Perform substitution and return success.
-    rewriter.replaceOpWithNewOp<SelectOp>(op, compareRes, negRes, posRes);
+    rewriter.replaceOpWithNewOp<arith::SelectOp>(op, compareRes, negRes,
+                                                 posRes);
     return success();
   }
 };
@@ -156,19 +158,17 @@ public:
     Value rhs = op.getRhs();
 
     Location loc = op.getLoc();
+    // If any operand is NaN, 'cmp' will be true (and 'select' returns 'lhs').
+    static_assert(pred == arith::CmpFPredicate::UGT ||
+                  pred == arith::CmpFPredicate::ULT,
+                  "pred must be either UGT or ULT");
     Value cmp = rewriter.create<arith::CmpFOp>(loc, pred, lhs, rhs);
-    Value select = rewriter.create<SelectOp>(loc, cmp, lhs, rhs);
+    Value select = rewriter.create<arith::SelectOp>(loc, cmp, lhs, rhs);
 
-    auto floatType = getElementTypeOrSelf(lhs.getType()).cast<FloatType>();
+    // Handle the case where rhs is NaN: 'isNaN(rhs) ? rhs : select'.
     Value isNaN = rewriter.create<arith::CmpFOp>(loc, arith::CmpFPredicate::UNO,
-                                                 lhs, rhs);
-
-    Value nan = rewriter.create<arith::ConstantFloatOp>(
-        loc, APFloat::getQNaN(floatType.getFloatSemantics()), floatType);
-    if (VectorType vectorType = lhs.getType().dyn_cast<VectorType>())
-      nan = rewriter.create<SplatOp>(loc, vectorType, nan);
-
-    rewriter.replaceOpWithNewOp<SelectOp>(op, isNaN, nan, select);
+                                                 rhs, rhs);
+    rewriter.replaceOpWithNewOp<arith::SelectOp>(op, isNaN, rhs, select);
     return success();
   }
 };
@@ -184,14 +184,14 @@ public:
 
     Location loc = op.getLoc();
     Value cmp = rewriter.create<arith::CmpIOp>(loc, pred, lhs, rhs);
-    rewriter.replaceOpWithNewOp<SelectOp>(op, cmp, lhs, rhs);
+    rewriter.replaceOpWithNewOp<arith::SelectOp>(op, cmp, lhs, rhs);
     return success();
   }
 };
 
 struct ArithmeticExpandOpsPass
     : public ArithmeticExpandOpsBase<ArithmeticExpandOpsPass> {
-  void runOnFunction() override {
+  void runOnOperation() override {
     RewritePatternSet patterns(&getContext());
     ConversionTarget target(getContext());
 
@@ -211,8 +211,8 @@ struct ArithmeticExpandOpsPass
       arith::MinUIOp
     >();
     // clang-format on
-    if (failed(
-            applyPartialConversion(getFunction(), target, std::move(patterns))))
+    if (failed(applyPartialConversion(getOperation(), target,
+                                      std::move(patterns))))
       signalPassFailure();
   }
 };
@@ -226,8 +226,8 @@ void mlir::arith::populateArithmeticExpandOpsPatterns(
     CeilDivSIOpConverter,
     CeilDivUIOpConverter,
     FloorDivSIOpConverter,
-    MaxMinFOpConverter<MaxFOp, arith::CmpFPredicate::OGT>,
-    MaxMinFOpConverter<MinFOp, arith::CmpFPredicate::OLT>,
+    MaxMinFOpConverter<MaxFOp, arith::CmpFPredicate::UGT>,
+    MaxMinFOpConverter<MinFOp, arith::CmpFPredicate::ULT>,
     MaxMinIOpConverter<MaxSIOp, arith::CmpIPredicate::sgt>,
     MaxMinIOpConverter<MaxUIOp, arith::CmpIPredicate::ugt>,
     MaxMinIOpConverter<MinSIOp, arith::CmpIPredicate::slt>,

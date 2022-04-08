@@ -107,16 +107,14 @@ TEST(PrecedenceTest, DirectRelations) {
 }
 
 TEST(PrecedenceTest, IndirectRelations) {
-  EXPECT_THAT(
-      PrecedenceGroup::GetPriority(
-          PrecedenceGroup::ForTrailing(TokenKind::Star(), true)->level,
-          PrecedenceGroup::ForTrailing(TokenKind::OrKeyword(), true)->level),
-      Eq(OperatorPriority::LeftFirst));
-  EXPECT_THAT(
-      PrecedenceGroup::GetPriority(
-          PrecedenceGroup::ForTrailing(TokenKind::OrKeyword(), true)->level,
-          PrecedenceGroup::ForTrailing(TokenKind::Star(), true)->level),
-      Eq(OperatorPriority::RightFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
+                  PrecedenceGroup::ForTrailing(TokenKind::Star(), true)->level,
+                  PrecedenceGroup::ForTrailing(TokenKind::Or(), true)->level),
+              Eq(OperatorPriority::LeftFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
+                  PrecedenceGroup::ForTrailing(TokenKind::Or(), true)->level,
+                  PrecedenceGroup::ForTrailing(TokenKind::Star(), true)->level),
+              Eq(OperatorPriority::RightFirst));
 
   EXPECT_THAT(
       PrecedenceGroup::GetPriority(
@@ -132,7 +130,7 @@ TEST(PrecedenceTest, IndirectRelations) {
 TEST(PrecedenceTest, IncomparableOperators) {
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),
-                  *PrecedenceGroup::ForLeading(TokenKind::NotKeyword())),
+                  *PrecedenceGroup::ForLeading(TokenKind::Not())),
               Eq(OperatorPriority::Ambiguous));
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),

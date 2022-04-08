@@ -15,17 +15,17 @@ namespace Carbon::Testing {
 namespace {
 
 TEST(SourceBufferTest, StringRep) {
-  SourceBuffer buffer =
-      SourceBuffer::CreateFromText(llvm::Twine("Hello") + " World");
+  auto buffer = SourceBuffer::CreateFromText(llvm::Twine("Hello") + " World");
+  EXPECT_EQ("/text", buffer->filename());
+  EXPECT_EQ("Hello World", buffer->text());
+}
 
-  EXPECT_EQ("/text", buffer.Filename());
-  EXPECT_EQ("Hello World", buffer.Text());
-
+TEST(SourceBufferText, StringRepWithFilename) {
   // Give a custom filename.
-  auto buffer2 =
+  auto buffer =
       SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
-  EXPECT_EQ("/custom/text", buffer2.Filename());
-  EXPECT_EQ("Hello World Again!", buffer2.Text());
+  EXPECT_EQ("/custom/text", buffer->filename());
+  EXPECT_EQ("Hello World Again!", buffer->text());
 }
 
 auto CreateTestFile(llvm::StringRef text) -> std::string {
@@ -54,8 +54,21 @@ TEST(SourceBufferTest, FileRep) {
 
   SourceBuffer& buffer = *expected_buffer;
 
-  EXPECT_EQ(test_file_path, buffer.Filename());
-  EXPECT_EQ("Hello World", buffer.Text());
+  EXPECT_EQ(test_file_path, buffer.filename());
+  EXPECT_EQ("Hello World", buffer.text());
+}
+
+TEST(SourceBufferTest, FileRepEmpty) {
+  auto test_file_path = CreateTestFile("");
+
+  auto expected_buffer = SourceBuffer::CreateFromFile(test_file_path);
+  ASSERT_TRUE(static_cast<bool>(expected_buffer))
+      << "Error message: " << toString(expected_buffer.takeError());
+
+  SourceBuffer& buffer = *expected_buffer;
+
+  EXPECT_EQ(test_file_path, buffer.filename());
+  EXPECT_EQ("", buffer.text());
 }
 
 }  // namespace

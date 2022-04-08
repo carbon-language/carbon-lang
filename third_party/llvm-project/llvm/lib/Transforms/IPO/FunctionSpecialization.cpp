@@ -6,15 +6,24 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This specialises functions with constant parameters (e.g. functions,
-// globals). Constant parameters like function pointers and constant globals
-// are propagated to the callee by specializing the function.
+// This specialises functions with constant parameters. Constant parameters
+// like function pointers and constant globals are propagated to the callee by
+// specializing the function. The main benefit of this pass at the moment is
+// that indirect calls are transformed into direct calls, which provides inline
+// opportunities that the inliner would not have been able to achieve. That's
+// why function specialisation is run before the inliner in the optimisation
+// pipeline; that is by design. Otherwise, we would only benefit from constant
+// passing, which is a valid use-case too, but hasn't been explored much in
+// terms of performance uplifts, cost-model and compile-time impact.
 //
 // Current limitations:
-// - It does not yet handle integer ranges.
+// - It does not yet handle integer ranges. We do support "literal constants",
+//   but that's off by default under an option.
 // - Only 1 argument per function is specialised,
-// - The cost-model could be further looked into,
-// - We are not yet caching analysis results.
+// - The cost-model could be further looked into (it mainly focuses on inlining
+//   benefits),
+// - We are not yet caching analysis results, but profiling and checking where
+//   extra compile time is spent didn't suggest this to be a problem.
 //
 // Ideas:
 // - With a function specialization attribute for arguments, we could have
@@ -30,8 +39,12 @@
 //   https://reviews.llvm.org/D106426 for details. Perhaps there is a
 //   compile-time friendlier way to control/limit the number of specialisations
 //   for recursive functions.
-// - Don't transform the function if there is no function specialization
-//   happens.
+// - Don't transform the function if function specialization does not trigger;
+//   the SCCPSolver may make IR changes.
+//
+// References:
+// - 2021 LLVM Dev Mtg “Introducing function specialisation, and can we enable
+//   it by default?”, https://www.youtube.com/watch?v=zJiCjeXgV5Q
 //
 //===----------------------------------------------------------------------===//
 
@@ -263,6 +276,7 @@ class FunctionSpecializer {
   std::function<TargetLibraryInfo &(Function &)> GetTLI;
 
   SmallPtrSet<Function *, 2> SpecializedFuncs;
+  SmallVector<Instruction *> ReplacedWithConstant;
 
 public:
   FunctionSpecializer(SCCPSolver &Solver,
@@ -307,6 +321,15 @@ public:
     return Changed;
   }
 
+  void removeDeadInstructions() {
+    for (auto *I : ReplacedWithConstant) {
+      LLVM_DEBUG(dbgs() << "FnSpecialization: Removing dead instruction "
+                        << *I << "\n");
+      I->eraseFromParent();
+    }
+    ReplacedWithConstant.clear();
+  }
+
   bool tryToReplaceWithConstant(Value *V) {
     if (!V->getType()->isSingleValueType() || isa<CallBase>(V) ||
         V->user_empty())
@@ -317,17 +340,26 @@ public:
       return false;
     auto *Const =
         isConstant(IV) ? Solver.getConstant(IV) : UndefValue::get(V->getType());
-    V->replaceAllUsesWith(Const);
 
-    for (auto *U : Const->users())
+    LLVM_DEBUG(dbgs() << "FnSpecialization: Replacing " << *V
+                      << "\nFnSpecialization: with " << *Const << "\n");
+
+    // Record uses of V to avoid visiting irrelevant uses of const later.
+    SmallVector<Instruction *> UseInsts;
+    for (auto *U : V->users())
       if (auto *I = dyn_cast<Instruction>(U))
         if (Solver.isBlockExecutable(I->getParent()))
-          Solver.visit(I);
+          UseInsts.push_back(I);
+
+    V->replaceAllUsesWith(Const);
+
+    for (auto *I : UseInsts)
+      Solver.visit(I);
 
     // Remove the instruction from Block and Solver.
     if (auto *I = dyn_cast<Instruction>(V)) {
       if (I->isSafeToRemove()) {
-        I->eraseFromParent();
+        ReplacedWithConstant.push_back(I);
         Solver.removeLatticeValueFor(I);
       }
     }
@@ -873,7 +905,8 @@ bool llvm::runFunctionSpecialization(
     Changed = true;
   }
 
-  // Clean up the IR by removing ssa_copy intrinsics.
+  // Clean up the IR by removing dead instructions and ssa_copy intrinsics.
+  FS.removeDeadInstructions();
   removeSSACopy(M);
   return Changed;
 }

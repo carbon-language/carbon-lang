@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implementing interfaces](#implementing-interfaces)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
-    -   [Qualified member names](#qualified-member-names)
+    -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Generics](#generics)
     -   [Return type](#return-type)
@@ -100,6 +100,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
     -   [Observing interface requirements](#observing-interface-requirements)
     -   [Observing blanket impls](#observing-blanket-impls)
+-   [Operator overloading](#operator-overloading)
+    -   [Binary operators](#binary-operators)
+    -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -107,7 +110,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Abstract return types](#abstract-return-types)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
-    -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types and higher-ranked types](#generic-associated-types-and-higher-ranked-types)
         -   [Generic associated types](#generic-associated-types)
@@ -193,9 +195,9 @@ This includes members of `ConvertibleToString` that are not explicitly named in
 the `impl` definition but have defaults. Whether the implementation is defined
 as [internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
-for a `Song` value `s` by writing a
-[qualified](terminology.md#qualified-and-unqualified-member-names) function
-call, like `s.(ConvertibleToString.ToString)()`.
+for a `Song` value `s` by a writing function call
+[using a qualified member access expression](terminology.md#qualified-member-access-expression),
+like `s.(ConvertibleToString.ToString)()`.
 
 If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
@@ -410,8 +412,9 @@ Carbon requires `impl`s defined in a different library to be `external` so that
 the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
 conflicting names that both affected the API of a single type. As a consequence
-of this restriction, you can find all the names of direct (unqualified) members
-of a type in the definition of that type. The only thing that may be in another
+of this restriction, you can find all the names of direct members (those
+available by [simple member access](terminology.md#simple-member-access)) of a
+type in the definition of that type. The only thing that may be in another
 library is an `impl` of an interface.
 
 You might also use `external impl` to implement an interface for a type to avoid
@@ -481,8 +484,10 @@ same library as the class?
 different files based on explicit configuration in that file. For example, we
 could support a declaration that a given interface or a given method of an
 interface is "in scope" for a particular type in this file. With that
-declaration, the method could be called unqualified. This avoids most concerns
-arising from name collisions between interfaces. It has a few downsides though:
+declaration, the method could be called using
+[simple member access](terminology.md#simple-member-access). This avoids most
+concerns arising from name collisions between interfaces. It has a few downsides
+though:
 
 -   It increases variability between files, since the same type will have
     different APIs depending on these declarations. This makes it harder to
@@ -500,12 +505,15 @@ Swift and Rust, we don't allow a type's API to be modified outside its
 definition. So in Carbon a type's API is consistent no matter what is imported,
 unlike Swift and Rust.
 
-### Qualified member names
+### Qualified member names and compound member access
 
 Given a value of type `Point3` and an interface `Vector` implemented for that
-type, you can access the methods from that interface using the member's
-_qualified name_, whether or not the implementation is done externally with an
-`external impl` declaration:
+type, you can access the methods from that interface using a
+[qualified member access expression](terminology.md#qualified-member-access-expression)
+whether or not the implementation is done externally with an `external impl`
+declaration. The qualified member access expression writes the member's
+_qualified name_ in the parentheses of the
+[compound member access syntax](/docs/design/expressions/member_access.md):
 
 ```
 var p1: Point3 = {.x = 1.0, .y = 2.0};
@@ -586,7 +594,9 @@ present in the signature of the function to type check the body of
 
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
-to adding a `Vector` qualification to all unqualified member accesses of `T`:
+to adding a `Vector`
+[qualification](#qualified-member-names-and-compound-member-access) to replace
+all simple member accesses of `T`:
 
 ```
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: Double) -> T {
@@ -790,7 +800,8 @@ signatures. Implementing `Vector` would not imply an implementation of
 An interface's name may be used in a few different contexts:
 
 -   to define [an `impl` for a type](#implementing-interfaces),
--   as a namespace name in [a qualified name](#qualified-member-names), and
+-   as a namespace name in
+    [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [type-of-type](terminology.md#type-of-type) for
     [a generic type parameter](#generics).
 
@@ -811,7 +822,8 @@ aliases for the corresponding qualified names inside `Vector` as a namespace.
 
 The requirements determine which types are values of a given type-of-type. The
 set of names in a type-of-type determines the API of a generic type value and
-define the result of qualified member name lookup.
+define the result of [member access](/docs/design/expressions/member_access.md)
+into the type-of-type.
 
 This general structure of type-of-types holds not just for interfaces, but
 others described in the rest of this document.
@@ -880,9 +892,8 @@ members of those interfaces.
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
 associated type, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint ignores the
-unqualified member names defined for a type, but a template constraint can
-depend on them.
+inside a `template constraint`. Note that a generic constraint ignores the names
+of members defined for a type, but a template constraint can depend on them.
 
 There is an analogy between declarations used in a `constraint` and in an
 `interface` definition. If an `interface` `I` has (non-`alias`) declarations
@@ -1040,9 +1051,9 @@ constraint {
 }
 ```
 
-Conflicts can be resolved at the call site using
-[the qualified name syntax](#qualified-member-names), or by defining a named
-constraint explicitly and renaming the methods:
+Conflicts can be resolved at the call site using a
+[qualified member access expression](#qualified-member-names-and-compound-member-access),
+or by defining a named constraint explicitly and renaming the methods:
 
 ```
 constraint RenderableAndEndOfGame {
@@ -1569,7 +1580,7 @@ adapter SongByTitle for Song {
 }
 ```
 
-or using qualified names:
+or using a qualified member access expression:
 
 ```
 adapter SongByTitle for Song {
@@ -1859,9 +1870,8 @@ external impl Window as DrawingContext { ... }
 
 An adapter can make that much more convenient by making a compatible type where
 the interface is [implemented internally](terminology.md#internal-impl). This
-avoids having to
-[qualify](terminology.md#qualified-and-unqualified-member-names) each call to
-methods in the interface.
+avoids having to [qualify](terminology.md#qualified-member-access-expression)
+each call to methods in the interface.
 
 ```
 adapter DrawInWindow for Window {
@@ -2588,14 +2598,13 @@ fn Contains
 the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
 However, inside the body of `Contains`, `CT.ElementType` will only act like the
 implementation of `Comparable` is [external](#external-impl). That is, items
-from the `needles` container won't have an unqualified `Compare` method member,
-but can still be implicitly converted to `Comparable` and can still call
-`Compare` using the qualified member syntax, `needle.(Comparable.Compare)(elt)`.
-The rule is that an `==` `where` constraint between two type variables does not
-modify the set of unqualified member names of either type. (If you write
+from the `needles` container won't directly have a `Compare` method member, but
+can still be implicitly converted to `Comparable` and can still call `Compare`
+using the compound member access syntax, `needle.(Comparable.Compare)(elt)`. The
+rule is that an `==` `where` constraint between two type variables does not
+modify the set of member names of either type. (If you write
 `where .ElementType = String` with a `=` and a concrete type, then
-`.ElementType` is actually set to `String` including the complete unqualified
-`String` API.)
+`.ElementType` is actually set to `String` including the complete `String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -2884,9 +2893,9 @@ This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
 **Note:** These implied constraints affect the _requirements_ of a generic type
-parameter, but not its _unqualified member names_. This way you can always look
-at the declaration to see how name resolution works, without having to look up
-the definitions of everything it is used as an argument to.
+parameter, but not its _member names_. This way you can always look at the
+declaration to see how name resolution works, without having to look up the
+definitions of everything it is used as an argument to.
 
 **Limitation:** To limit readability concerns and ambiguity, this feature is
 limited to a single signature. Consider this interface declaration:
@@ -4638,6 +4647,351 @@ In the case of an error, a quality Carbon implementation will do a deeper search
 for chains of requirements and blanket impls and suggest `observe` declarations
 that would make the code compile if any solution is found.
 
+## Operator overloading
+
+Operations are overloaded for a type by implementing an interface specific to
+that interface for that type. For example, types implement the `Negatable`
+interface to overload the unary `-` operator:
+
+```
+// Unary `-`.
+interface Negatable {
+  let Result:! Type = Self;
+  fn Negate[me: Self]() -> Result;
+}
+```
+
+Expressions using operators are rewritten into calls to these interface methods.
+For example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
+
+The interfaces and rewrites used for a given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+[Question-for-leads issue #1058](https://github.com/carbon-language/carbon-lang/issues/1058)
+defines the naming scheme for these interfaces.
+
+### Binary operators
+
+Binary operators will have an interface that is
+[parameterized](#parameterized-interfaces) based on the second operand. For
+example, to say a type may be converted to another type using an `as`
+expression, implement the
+[`As` interface](/docs/design/expressions/as_expressions.md#extensibility):
+
+```
+interface As(Dest:! Type) {
+  fn Convert[me: Self]() -> Dest;
+}
+```
+
+The expression `x as U` is rewritten to `x.(As(U).Convert)()`. Note that the
+parameterization of the interface means it can be implemented multiple times to
+support multiple operand types.
+
+Unlike `as`, for most binary operators the interface's argument will be the
+_type_ of the right-hand operand instead of its _value_. Consider an interface
+for a binary operator like `*`:
+
+```
+// Binary `*`.
+interface MultipliableWith(U:! Type) {
+  let Result:! Type = Self;
+  fn Multiply[me: Self](other: U) -> Result;
+}
+```
+
+A use of binary `*` in source code will be rewritten to use this interface:
+
+```
+var left: Meters = ...;
+var right: f64 = ...;
+var result: auto = left * right;
+// Equivalent to:
+var equivalent: left.(MultipliableWith(f64).Result)
+    = left.(MultipliableWith(f64).Multiply)(right);
+```
+
+Note that if the types of the two operands are different, then swapping the
+order of the operands will result in a different implementation being selected.
+It is up to the developer to make those consistent when that is appropriate. The
+standard library will provide [adapters](#adapting-types) for defining the
+second implementation from the first, as in:
+
+```
+interface ComparableWith(RHS:! Type) {
+  fn Compare[me: Self](right: RHS) -> CompareResult;
+}
+
+adapter ReverseComparison
+    (T:! Type, U:! ComparableWith(RHS)) for T {
+  impl as ComparableWith(U) {
+    fn Compare[me: Self](right: RHS) -> CompareResult {
+      return ReverseCompareResult(right.Compare(me));
+    }
+  }
+}
+
+external impl SongByTitle as ComparableWith(SongTitle);
+external impl SongTitle as ComparableWith(SongByTitle)
+    = ReverseComparison(SongTitle, SongByTitle);
+```
+
+In some cases the reverse operation may not be defined. For example, a library
+might support subtracting a vector from a point, but not the other way around.
+
+Further note that even if the reverse implementation exists,
+[the impl prioritization rule](#prioritization-rule) might not pick it. For
+example, if we have two types that support comparison with anything implementing
+an interface that the other implements:
+
+```
+interface IntLike {
+  fn AsInt[me: Self]() -> i64;
+}
+
+class EvenInt { ... }
+external impl EvenInt as IntLike;
+external impl EvenInt as ComparableWith(EvenInt);
+// Allow `EvenInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] EvenInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(EvenInt);
+
+class PositiveInt { ... }
+external impl PositiveInt as IntLike;
+external impl PositiveInt as ComparableWith(PositiveInt);
+// Allow `PositiveInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] PositiveInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(PositiveInt);
+```
+
+Then it will favor selecting the implementation based on the type of the
+left-hand operand:
+
+```
+var even: EvenInt = ...;
+var positive: PositiveInt = ...;
+// Uses `EvenInt as ComparableWith(T)` impl
+if (even < positive) { ... }
+// Uses `PositiveInt as ComparableWith(T)` impl
+if (positive > even) { ... }
+```
+
+### `like` operator for implicit conversions
+
+Because the type of the operands is directly used to select the implementation
+to use, there are no automatic implicit conversions, unlike with function or
+method calls. Given both a method and an interface implementation for
+multiplying by a value of type `f64`:
+
+```
+class Meters {
+  fn Scale[me: Self](s: f64) -> Self;
+}
+// "Implementation One"
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+the method will work with any argument that can be implicitly converted to `f64`
+but the operator overload will only work with values that have the specific type
+of `f64`:
+
+```
+var height: Meters = ...;
+var scale: f32 = 1.25;
+// ✅ Allowed: `scale` implicitly converted
+//             from `f32` to `f64`.
+var allowed: Meters = height.Scale(scale);
+// ❌ Illegal: `Meters` doesn't implement
+//             `MultipliableWith(f32)`.
+var illegal: Meters = height * scale;
+```
+
+The workaround is to define a parameterized implementation that performs the
+conversion. The implementation is for types that implement the
+[`ImplicitAs` interface](/docs/design/expressions/implicit_conversions.md#extensibility).
+
+```
+// "Implementation Two"
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters {
+  fn Multiply[me: Self](other: T) -> Result {
+    // Carbon will implicitly convert `other` from type
+    // `T` to `f64` to perform this call.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
+  }
+}
+// ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
+//             with `T == f32` since `f32 is ImplicitAs(f64)`.
+var now_allowed: Meters = height * scale;
+```
+
+Observe that the [prioritization rule](#prioritization-rule) will still prefer
+the unparameterized impl when there is an exact match.
+
+To reduce the boilerplate needed to support these implicit conversions when
+defining operator overloads, Carbon has the `like` operator. This operator can
+only be used in the type or type-of-type part of an `impl` declaration, as part
+of a forward declaration or definition, in a place of a type.
+
+```
+// Notice `f64` has been replaced by `like f64`
+// compared to "implementation one" above.
+external impl Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+This `impl` definition actually defines two implementations. The first is the
+same as this definition with `like f64` replaced by `f64`, giving something
+equivalent to "implementation one". The second implementation replaces the
+`like f64` with a parameter that ranges over types that can be implicitly
+converted to `f64`, equivalent to "implementation two".
+
+In general, each `like` adds one additional impl. There is always the impl with
+all of the `like` expressions replaced by their arguments with the definition
+supplied in the source code. In addition, for each `like` expression, there is
+an impl with it replaced by a new parameter. These additional impls will
+delegate to the main impl, which will trigger implicit conversions according to
+[Carbon's ordinary implicit conversion rules](/docs/design/expressions/implicit_conversions.md).
+In this example, there are two uses of `like`, producing three implementations
+
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+is equivalent to "implementation one", "implementation two", and:
+
+```
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    // Will implicitly convert `me` to `Meters` in order to
+    // match the signature of this `Multiply` method.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
+  }
+}
+```
+
+`like` may be used in forward declarations in a way analogous to impl
+definitions.
+
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters;
+}
+```
+
+is equivalent to:
+
+```
+// All `like`s removed. Same as the declaration part of
+// "implementation one", without the body of the definition.
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters;
+
+// First `like` replaced with a wildcard.
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters;
+
+// Second `like` replaced with a wildcard. Same as the
+// declaration part of "implementation two", without the
+// body of the definition.
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters;
+```
+
+In addition, the generated impl definition for a `like` is implicitly injected
+at the end of the (unique) source file in which the impl is first declared. That
+is, it is injected in the API file if the impl is declared in an API file, and
+in the sole impl file declaring the impl otherwise. This means an `impl`
+declaration using `like` in an API file also makes the parameterized definition
+
+If one `impl` declaration uses `like`, other declarations must use `like` in the
+same way to match.
+
+The `like` operator may be nested, as in:
+
+```
+external impl like Vector(like String) as Printable;
+```
+
+Which will generate implementations with declarations:
+
+```
+external impl Vector(String) as Printable;
+external impl [T:! ImplicitAs(Vector(String))] T as Printable;
+external impl [T:! ImplicitAs(String)] Vector(T) as Printable;
+```
+
+The generated implementations must be legal or the `like` is illegal. For
+example, it must be legal to define those impls in this library by the
+[orphan rule](#orphan-rule). In addition, the generated `impl` definitions must
+only require implicit conversions that are guaranteed to exist. For example,
+there existing an implicit conversion from `T` to `String` does not imply that
+there is one from `Vector(T)` to `Vector(String)`, so the following use of
+`like` is illegal:
+
+```
+// ❌ Illegal: Can't convert a value with type
+//             `Vector(T:! ImplicitAs(String))`
+//             to `Vector(String)` for `me`
+//             parameter of `Printable.Print`.
+external impl Vector(like String) as Printable;
+```
+
+Since the additional implementation definitions are generated eagerly, these
+errors will be reported in the file with the first declaration.
+
+The argument to `like` must either not mention any type parameters, or those
+parameters must be able to be determined due to being repeated outside of the
+`like` expression.
+
+```
+// ✅ Allowed: no parameters
+external impl like Meters as Printable;
+
+// ❌ Illegal: No other way to determine `T`
+external impl [T:! IntLike] like T as Printable;
+
+// ❌ Illegal: `T` being used in a `where` clause
+//             is insufficient.
+external impl [T:! IntLike] like T
+    as MultipliableWith(i64) where .Result = T;
+
+// ❌ Illegal: `like` can't be used in a `where`
+//             clause.
+external impl Meters as MultipliableWith(f64)
+    where .Result = like Meters;
+
+// ✅ Allowed: `T` can be determined by another
+//             part of the query.
+external impl [T:! IntLike] like T
+    as MultipliableWith(T) where .Result = T;
+external impl [T:! IntLike] T
+    as MultipliableWith(like T) where .Result = T;
+
+// ✅ Allowed: Only one `like` used at a time, so this
+//             is equivalent to the above two examples.
+external impl [T:! IntLike] like T
+    as MultipliableWith(like T) where .Result = T;
+```
+
+> > > > > > > upstream/trunk
+
 ## Future work
 
 ### Dynamic types
@@ -4686,11 +5040,6 @@ supported and made safe.
 
 The idea is that you would write tests alongside an interface that validate the
 expected behavior of any type implementing that interface.
-
-### Operator overloading
-
-We will need a story for defining how an operation is overloaded for a type by
-implementing an interface for that type.
 
 ### Impls with state
 
@@ -4769,3 +5118,4 @@ be included in the declaration as well.
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
+-   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)

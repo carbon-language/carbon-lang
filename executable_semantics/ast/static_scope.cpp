@@ -5,43 +5,50 @@
 #include "executable_semantics/ast/static_scope.h"
 
 #include "executable_semantics/common/error.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
-void StaticScope::Add(std::string name, NamedEntityView entity) {
+auto StaticScope::Add(std::string name, ValueNodeView entity)
+    -> ErrorOr<Success> {
   auto [it, success] = declared_names_.insert({name, entity});
   if (!success && it->second != entity) {
-    FATAL_COMPILATION_ERROR(entity.base().source_loc())
-        << "Duplicate name `" << name << "` also found at "
-        << it->second.base().source_loc();
+    return FATAL_COMPILATION_ERROR(entity.base().source_loc())
+           << "Duplicate name `" << name << "` also found at "
+           << it->second.base().source_loc();
   }
+  return Success();
 }
 
 auto StaticScope::Resolve(const std::string& name,
-                          SourceLocation source_loc) const -> NamedEntityView {
-  std::optional<NamedEntityView> result = TryResolve(name, source_loc);
-  if (!result.has_value()) {
-    FATAL_COMPILATION_ERROR(source_loc) << "could not resolve '" << name << "'";
+                          SourceLocation source_loc) const
+    -> ErrorOr<ValueNodeView> {
+  ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
+                   TryResolve(name, source_loc));
+  if (!result) {
+    return FATAL_COMPILATION_ERROR(source_loc)
+           << "could not resolve '" << name << "'";
   }
   return *result;
 }
 
 auto StaticScope::TryResolve(const std::string& name,
                              SourceLocation source_loc) const
-    -> std::optional<NamedEntityView> {
+    -> ErrorOr<std::optional<ValueNodeView>> {
   auto it = declared_names_.find(name);
   if (it != declared_names_.end()) {
-    return it->second;
+    return std::make_optional(it->second);
   }
-  std::optional<NamedEntityView> result;
+  std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    auto parent_result = parent->TryResolve(name, source_loc);
+    ASSIGN_OR_RETURN(std::optional<ValueNodeView> parent_result,
+                     parent->TryResolve(name, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      FATAL_COMPILATION_ERROR(source_loc)
-          << "'" << name << "' is ambiguous between "
-          << result->base().source_loc() << " and "
-          << parent_result->base().source_loc();
+      return FATAL_COMPILATION_ERROR(source_loc)
+             << "'" << name << "' is ambiguous between "
+             << result->base().source_loc() << " and "
+             << parent_result->base().source_loc();
     }
     result = parent_result;
   }

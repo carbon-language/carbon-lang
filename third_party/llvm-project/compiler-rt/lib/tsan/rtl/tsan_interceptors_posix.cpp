@@ -289,20 +289,25 @@ void ScopedInterceptor::DisableIgnoresImpl() {
 }
 
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
-#if SANITIZER_FREEBSD
-# define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION(func)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(func)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS_THR(func)
-#elif SANITIZER_NETBSD
-# define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION(func)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(func) \
-         INTERCEPT_FUNCTION(__libc_##func)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS_THR(func) \
-         INTERCEPT_FUNCTION(__libc_thr_##func)
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD
+#  define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION(func)
 #else
-# define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION_VER(func, ver)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(func)
-# define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS_THR(func)
+#  define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION_VER(func, ver)
+#endif
+#if SANITIZER_FREEBSD
+#  define TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(func) \
+    INTERCEPT_FUNCTION(_pthread_##func)
+#else
+#  define TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(func)
+#endif
+#if SANITIZER_NETBSD
+#  define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(func) \
+    INTERCEPT_FUNCTION(__libc_##func)
+#  define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS_THR(func) \
+    INTERCEPT_FUNCTION(__libc_thr_##func)
+#else
+#  define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(func)
+#  define TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS_THR(func)
 #endif
 
 #define READ_STRING_OF_LEN(thr, pc, s, len, n)                 \
@@ -1536,7 +1541,7 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   return 0;
 }
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#if SANITIZER_GLIBC
 TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat, version, fd, buf);
   if (fd > 0)
@@ -1549,20 +1554,20 @@ TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
 #endif
 
 TSAN_INTERCEPTOR(int, fstat, int fd, void *buf) {
-#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_ANDROID || SANITIZER_NETBSD
-  SCOPED_TSAN_INTERCEPTOR(fstat, fd, buf);
-  if (fd > 0)
-    FdAccess(thr, pc, fd);
-  return REAL(fstat)(fd, buf);
-#else
+#if SANITIZER_GLIBC
   SCOPED_TSAN_INTERCEPTOR(__fxstat, 0, fd, buf);
   if (fd > 0)
     FdAccess(thr, pc, fd);
   return REAL(__fxstat)(0, fd, buf);
+#else
+  SCOPED_TSAN_INTERCEPTOR(fstat, fd, buf);
+  if (fd > 0)
+    FdAccess(thr, pc, fd);
+  return REAL(fstat)(fd, buf);
 #endif
 }
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#if SANITIZER_GLIBC
 TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, version, fd, buf);
   if (fd > 0)
@@ -1574,7 +1579,7 @@ TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
 #define TSAN_MAYBE_INTERCEPT___FXSTAT64
 #endif
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#if SANITIZER_GLIBC
 TSAN_INTERCEPTOR(int, fstat64, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, 0, fd, buf);
   if (fd > 0)
@@ -2204,6 +2209,7 @@ void atfork_child() {
   FdOnFork(thr, pc);
 }
 
+#if !SANITIZER_IOS
 TSAN_INTERCEPTOR(int, vfork, int fake) {
   // Some programs (e.g. openjdk) call close for all file descriptors
   // in the child process. Under tsan it leads to false positives, because
@@ -2220,6 +2226,7 @@ TSAN_INTERCEPTOR(int, vfork, int fake) {
   // Instead we simply turn vfork into fork.
   return WRAP(fork)(fake);
 }
+#endif
 
 #if SANITIZER_LINUX
 TSAN_INTERCEPTOR(int, clone, int (*fn)(void *), void *stack, int flags,
@@ -2711,6 +2718,26 @@ TSAN_INTERCEPTOR(void, thr_exit, tid_t *state) {
 #define TSAN_MAYBE_INTERCEPT_THR_EXIT
 #endif
 
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, cond_init, void *c, void *a)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, cond_destroy, void *c)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, cond_signal, void *c)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, cond_broadcast, void *c)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, cond_wait, void *c, void *m)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, mutex_init, void *m, void *a)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, mutex_destroy, void *m)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, mutex_lock, void *m)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, mutex_trylock, void *m)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, mutex_unlock, void *m)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_init, void *l, void *a)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_destroy, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_rdlock, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_tryrdlock, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_wrlock, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_trywrlock, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, rwlock_unlock, void *l)
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, once, void *o, void (*i)())
+TSAN_INTERCEPTOR_FREEBSD_ALIAS(int, sigmask, int f, void *n, void *o)
+
 TSAN_INTERCEPTOR_NETBSD_ALIAS(int, cond_init, void *c, void *a)
 TSAN_INTERCEPTOR_NETBSD_ALIAS(int, cond_signal, void *c)
 TSAN_INTERCEPTOR_NETBSD_ALIAS(int, cond_broadcast, void *c)
@@ -2938,6 +2965,26 @@ void InitializeInterceptors() {
     Die();
   }
 #endif
+
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(cond_init);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(cond_destroy);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(cond_signal);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(cond_broadcast);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(cond_wait);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(mutex_init);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(mutex_destroy);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(mutex_lock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(mutex_trylock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(mutex_unlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_init);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_destroy);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_rdlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_tryrdlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_wrlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_trywrlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(rwlock_unlock);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(once);
+  TSAN_MAYBE_INTERCEPT_FREEBSD_ALIAS(sigmask);
 
   TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(cond_init);
   TSAN_MAYBE_INTERCEPT_NETBSD_ALIAS(cond_signal);

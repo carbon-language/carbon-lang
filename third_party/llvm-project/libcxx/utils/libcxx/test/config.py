@@ -245,10 +245,6 @@ class Configuration(object):
             # Build the tests in the same configuration as libcxx itself,
             # to avoid mismatches if linked statically.
             self.cxx.compile_flags += ['-D_CRT_STDIO_ISO_WIDE_SPECIFIERS']
-            # Required so that tests using min/max don't fail on Windows,
-            # and so that those tests don't have to be changed to tolerate
-            # this insanity.
-            self.cxx.compile_flags += ['-DNOMINMAX']
         additional_flags = self.get_lit_conf('test_compiler_flags')
         if additional_flags:
             self.cxx.compile_flags += shlex.split(additional_flags)
@@ -288,11 +284,6 @@ class Configuration(object):
 
     def configure_compile_flags_header_includes(self):
         support_path = os.path.join(self.libcxx_src_root, 'test', 'support')
-        if self.cxx_stdlib_under_test != 'libstdc++' and \
-           not self.target_info.is_windows() and \
-           not self.target_info.is_zos():
-            self.cxx.compile_flags += [
-                '-include', os.path.join(support_path, 'nasty_macros.h')]
         if self.cxx_stdlib_under_test == 'msvc':
             self.cxx.compile_flags += [
                 '-include', os.path.join(support_path,
@@ -317,8 +308,8 @@ class Configuration(object):
         if triple is not None:
             cxx_target_headers = os.path.join(path, triple, cxx, version)
             if os.path.isdir(cxx_target_headers):
-                self.cxx.compile_flags += ['-I' + cxx_target_headers]
-        self.cxx.compile_flags += ['-I' + cxx_headers]
+                self.cxx.compile_flags += ['-isystem', cxx_target_headers]
+        self.cxx.compile_flags += ['-isystem', cxx_headers]
         if self.libcxx_obj_root is not None:
             cxxabi_headers = os.path.join(self.libcxx_obj_root, 'include',
                                           'c++build')

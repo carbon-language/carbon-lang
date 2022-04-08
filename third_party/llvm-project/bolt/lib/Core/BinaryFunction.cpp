@@ -28,7 +28,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1406,7 +1406,7 @@ add_instruction:
 
     // Record offset of the instruction for profile matching.
     if (BC.keepOffsetForInstruction(Instruction))
-      MIB->addAnnotation(Instruction, "Offset", static_cast<uint32_t>(Offset));
+      MIB->setOffset(Instruction, static_cast<uint32_t>(Offset));
 
     if (BC.MIB->isNoop(Instruction)) {
       // NOTE: disassembly loses the correct size information for noops.
@@ -1875,21 +1875,7 @@ bool BinaryFunction::postProcessIndirectBranches(
     BC.MIB->setJumpTable(*LastIndirectJump, LastJT, LastJTIndexReg, AllocId);
     HasUnknownControlFlow = false;
 
-    // re-populate successors based on the jump table.
-    std::set<const MCSymbol *> JTLabels;
-    LastIndirectJumpBB->removeAllSuccessors();
-    const JumpTable *JT = getJumpTableContainingAddress(LastJT);
-    for (const MCSymbol *Label : JT->Entries)
-      JTLabels.emplace(Label);
-    for (const MCSymbol *Label : JTLabels) {
-      BinaryBasicBlock *BB = getBasicBlockForLabel(Label);
-      // Ignore __builtin_unreachable()
-      if (!BB) {
-        assert(Label == getFunctionEndLabel() && "if no BB found, must be end");
-        continue;
-      }
-      LastIndirectJumpBB->addSuccessor(BB);
-    }
+    LastIndirectJumpBB->updateJumpTableSuccessors();
   }
 
   if (HasFixedIndirectBranch)
@@ -1989,9 +1975,8 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
         break;
       }
     }
-    if (LastNonNop && !MIB->hasAnnotation(*LastNonNop, "Offset"))
-      MIB->addAnnotation(*LastNonNop, "Offset", static_cast<uint32_t>(Offset),
-                         AllocatorId);
+    if (LastNonNop && !MIB->getOffset(*LastNonNop))
+      MIB->setOffset(*LastNonNop, static_cast<uint32_t>(Offset), AllocatorId);
   };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
@@ -2014,9 +1999,8 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     bool IsLKMarker = BC.LKMarkers.count(InstrInputAddr);
     // Mark all nops with Offset for profile tracking purposes.
     if (MIB->isNoop(Instr) || IsLKMarker) {
-      if (!MIB->hasAnnotation(Instr, "Offset"))
-        MIB->addAnnotation(Instr, "Offset", static_cast<uint32_t>(Offset),
-                           AllocatorId);
+      if (!MIB->getOffset(Instr))
+        MIB->setOffset(Instr, static_cast<uint32_t>(Offset), AllocatorId);
       if (IsSDTMarker || IsLKMarker)
         HasSDTMarker = true;
       else
@@ -2033,7 +2017,8 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
       assert(PrevInstr && "no previous instruction for a fall through");
       if (MIB->isUnconditionalBranch(Instr) &&
           !MIB->isUnconditionalBranch(*PrevInstr) &&
-          !MIB->getConditionalTailCall(*PrevInstr)) {
+          !MIB->getConditionalTailCall(*PrevInstr) &&
+          !MIB->isReturn(*PrevInstr)) {
         // Temporarily restore inserter basic block.
         InsertBB = PrevBB;
       } else {
@@ -2216,7 +2201,7 @@ void BinaryFunction::postProcessCFG() {
   if (!requiresAddressTranslation() && !opts::Instrument) {
     for (BinaryBasicBlock *BB : layout())
       for (MCInst &Inst : *BB)
-        BC.MIB->removeAnnotation(Inst, "Offset");
+        BC.MIB->clearOffset(Inst);
   }
 
   assert((!isSimple() || validateCFG()) &&
@@ -2233,8 +2218,7 @@ void BinaryFunction::calculateMacroOpFusionStats() {
 
     // Check offset of the second instruction.
     // FIXME: arch-specific.
-    const uint32_t Offset =
-        BC.MIB->getAnnotationWithDefault<uint32_t>(*std::next(II), "Offset", 0);
+    const uint32_t Offset = BC.MIB->getOffsetWithDefault(*std::next(II), 0);
     if (!Offset || (getAddress() + Offset) % 64)
       continue;
 
@@ -3615,13 +3599,13 @@ void BinaryFunction::insertBasicBlocks(
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout, const bool UpdateCFIState,
     const bool RecomputeLandingPads) {
-  const auto StartIndex = Start ? getIndex(Start) : -1;
+  const int64_t StartIndex = Start ? getIndex(Start) : -1LL;
   const size_t NumNewBlocks = NewBBs.size();
 
   BasicBlocks.insert(BasicBlocks.begin() + (StartIndex + 1), NumNewBlocks,
                      nullptr);
 
-  auto I = StartIndex + 1;
+  int64_t I = StartIndex + 1;
   for (std::unique_ptr<BinaryBasicBlock> &BB : NewBBs) {
     assert(!BasicBlocks[I]);
     BasicBlocks[I++] = BB.release();
@@ -4325,8 +4309,7 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
 
     for (MCInst &Inst : *BB) {
       constexpr uint32_t InvalidOffset = std::numeric_limits<uint32_t>::max();
-      if (Offset == BC.MIB->getAnnotationWithDefault<uint32_t>(Inst, "Offset",
-                                                               InvalidOffset))
+      if (Offset == BC.MIB->getOffsetWithDefault(Inst, InvalidOffset))
         return &Inst;
     }
 

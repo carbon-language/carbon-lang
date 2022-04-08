@@ -62,6 +62,8 @@ bool getEnableNoNaNsFPMath();
 
 bool getEnableNoSignedZerosFPMath();
 
+bool getEnableApproxFuncFPMath();
+
 bool getEnableNoTrappingFPMath();
 
 DenormalMode::DenormalModeKind getDenormalFPMath();
@@ -139,6 +141,8 @@ bool getXRayOmitFunctionIndex();
 bool getDebugStrictDwarf();
 
 unsigned getAlignLoops();
+
+bool getJMCInstrument();
 
 /// Create this object with static storage to register codegen-related command
 /// line options.

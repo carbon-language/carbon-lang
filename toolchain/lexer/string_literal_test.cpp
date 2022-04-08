@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
@@ -20,8 +21,8 @@ class StringLiteralTest : public ::testing::Test {
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
-    assert(result);
-    EXPECT_EQ(result->Text(), text);
+    CHECK(result);
+    EXPECT_EQ(result->text(), text);
     return *result;
   }
 
@@ -83,20 +84,22 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : valid) {
+    SCOPED_TRACE(test);
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue()) << test;
+    EXPECT_TRUE(result.hasValue());
     if (result) {
-      EXPECT_EQ(result->Text(), test);
+      EXPECT_EQ(result->text(), test);
     }
   }
 
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
       "")",
-      R"("\)",  //
+      R"("\)",
       R"("\")",
-      R"("\\)",  //
+      R"("\\)",
       R"("\\\")",
       R"("""
       )",
@@ -104,11 +107,16 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       """)",
       R"(" \
       ")",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
-    EXPECT_FALSE(LexedStringLiteral::Lex(test).hasValue())
-        << "`" << test << "`";
+    SCOPED_TRACE(test);
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.hasValue());
+    if (result) {
+      EXPECT_FALSE(result->is_terminated());
+    }
   }
 }
 
@@ -194,7 +202,7 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
   for (auto [test, contents] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test.trim());
-    EXPECT_FALSE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -218,7 +226,7 @@ TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   for (auto [test, contents] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -267,27 +275,36 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   for (llvm::StringLiteral test : testcases) {
     error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
 }
 
 TEST_F(StringLiteralTest, TabInString) {
   auto value = Parse("\"x\ty\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "x\ty");
 }
 
 TEST_F(StringLiteralTest, TabAtEndOfString) {
   auto value = Parse("\"\t\t\t\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "\t\t\t");
 }
 
 TEST_F(StringLiteralTest, TabInBlockString) {
   auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
-  EXPECT_TRUE(error_tracker.SeenError());
+  EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "x\ty\n");
+}
+
+TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
+  std::string text = "u{";
+  text.append(10000, '9');
+  text.append("}");
+  auto value = Parse("\"\\" + text + "\"");
+  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_EQ(value, text);
 }
 
 }  // namespace

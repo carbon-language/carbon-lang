@@ -50,10 +50,10 @@ constexpr void test() {
 #ifndef TEST_HAS_NO_WIDE_CHARACTERS
   test<wchar_t>();
 #endif
-#ifndef _LIBCPP_HAS_NO_CHAR8_T
+#ifndef TEST_HAS_NO_CHAR8_T
   test<char8_t>();
 #endif
-#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
+#ifndef TEST_HAS_NO_UNICODE_CHARS
   test<char16_t>();
   test<char32_t>();
 #endif

@@ -24,6 +24,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
@@ -32,7 +33,8 @@ using ::testing::StrEq;
 class LexerTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
-    source_storage.push_back(SourceBuffer::CreateFromText(text.str()));
+    source_storage.push_back(
+        std::move(*SourceBuffer::CreateFromText(text.str())));
     return source_storage.back();
   }
 
@@ -47,7 +49,7 @@ class LexerTest : public ::testing::Test {
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
   auto buffer = Lex("");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
@@ -55,7 +57,7 @@ TEST_F(LexerTest, HandlesEmptyBuffer) {
 
 TEST_F(LexerTest, TracksLinesAndColumns) {
   auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" \"\"\"baz\n  a\n \"\"\" y");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Semi(),
@@ -102,7 +104,7 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
 
 TEST_F(LexerTest, HandlesNumericLiteral) {
   auto buffer = Lex("12-578\n  1  2\n0x12_3ABC\n0b10_10_11\n1_234_567\n1.5e9");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::IntegerLiteral(),
@@ -151,21 +153,21 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
                    .text = "1.5e9"},
                   {.kind = TokenKind::EndOfFile(), .line = 6, .column = 6},
               }));
-  auto token_12 = buffer.Tokens().begin();
+  auto token_12 = buffer.tokens().begin();
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_12), 12);
-  auto token_578 = buffer.Tokens().begin() + 2;
+  auto token_578 = buffer.tokens().begin() + 2;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_578), 578);
-  auto token_1 = buffer.Tokens().begin() + 3;
+  auto token_1 = buffer.tokens().begin() + 3;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_1), 1);
-  auto token_2 = buffer.Tokens().begin() + 4;
+  auto token_2 = buffer.tokens().begin() + 4;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_2), 2);
-  auto token_0x12_3abc = buffer.Tokens().begin() + 5;
+  auto token_0x12_3abc = buffer.tokens().begin() + 5;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_0x12_3abc), 0x12'3abc);
-  auto token_0b10_10_11 = buffer.Tokens().begin() + 6;
+  auto token_0b10_10_11 = buffer.tokens().begin() + 6;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_0b10_10_11), 0b10'10'11);
-  auto token_1_234_567 = buffer.Tokens().begin() + 7;
+  auto token_1_234_567 = buffer.tokens().begin() + 7;
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_1_234_567), 1'234'567);
-  auto token_1_5e9 = buffer.Tokens().begin() + 8;
+  auto token_1_5e9 = buffer.tokens().begin() + 8;
   auto value_1_5e9 = buffer.GetRealLiteral(*token_1_5e9);
   EXPECT_EQ(value_1_5e9.Mantissa().getZExtValue(), 15);
   EXPECT_EQ(value_1_5e9.Exponent().getSExtValue(), 8);
@@ -174,7 +176,7 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
 
 TEST_F(LexerTest, HandlesInvalidNumericLiterals) {
   auto buffer = Lex("14x 15_49 0x3.5q 0x3_4.5_6 0ops");
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Error(),
@@ -223,7 +225,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
     13._
   )";
   auto buffer = Lex(source_text);
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::IntegerLiteral(), .text = "1"},
@@ -272,24 +274,24 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                   // newline
                   {.kind = TokenKind::IntegerLiteral(), .text = "13"},
                   {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::UnderscoreKeyword()},
+                  {.kind = TokenKind::Underscore()},
                   // newline
                   {.kind = TokenKind::EndOfFile()},
               }));
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
           {.kind = TokenKind::Error(),
            .line = 1,
            .column = 1,
+           // 💩 takes 4 bytes, and we count column as bytes offset.
            .text = llvm::StringRef("$$💩", 6)},
-          // 💩 takes 4 bytes, and we count column as bytes offset.
           {.kind = TokenKind::Minus(), .line = 1, .column = 7},
           {.kind = TokenKind::Error(), .line = 1, .column = 8, .text = "$"},
           // newline
@@ -303,19 +305,13 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Backslash(),
            .line = 3,
            .column = 1,
-           .text = llvm::StringRef("\"", 1)},
+           .text = "\\"},
+          {.kind = TokenKind::Error(), .line = 3, .column = 2, .text = "\"\\"},
           // newline
-          {.kind = TokenKind::Error(),
-           .line = 4,
-           .column = 1,
-           .text = llvm::StringRef("\"", 1)},
-          {.kind = TokenKind::Backslash(),
-           .line = 4,
-           .column = 2,
-           .text = llvm::StringRef("\\", 1)},
+          {.kind = TokenKind::Error(), .line = 4, .column = 1, .text = "\"x"},
           {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
       }));
 }
@@ -325,7 +321,7 @@ TEST_F(LexerTest, Symbols) {
   // common code, but we want to check specific patterns to verify things like
   // max-munch rule and handling of interesting symbols.
   auto buffer = Lex("<<<");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::LessLess()},
                           {TokenKind::Less()},
@@ -333,7 +329,7 @@ TEST_F(LexerTest, Symbols) {
                       }));
 
   buffer = Lex("<<=>>");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::LessLessEqual()},
                           {TokenKind::GreaterGreater()},
@@ -341,7 +337,7 @@ TEST_F(LexerTest, Symbols) {
                       }));
 
   buffer = Lex("< <=> >");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::Less()},
                           {TokenKind::LessEqualGreater()},
@@ -350,7 +346,7 @@ TEST_F(LexerTest, Symbols) {
                       }));
 
   buffer = Lex("\\/?@&^!");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::Backslash()},
                           {TokenKind::Slash()},
@@ -365,7 +361,7 @@ TEST_F(LexerTest, Symbols) {
 
 TEST_F(LexerTest, Parens) {
   auto buffer = Lex("()");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::OpenParen()},
                           {TokenKind::CloseParen()},
@@ -373,7 +369,7 @@ TEST_F(LexerTest, Parens) {
                       }));
 
   buffer = Lex("((()()))");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::OpenParen()},
                           {TokenKind::OpenParen()},
@@ -389,7 +385,7 @@ TEST_F(LexerTest, Parens) {
 
 TEST_F(LexerTest, CurlyBraces) {
   auto buffer = Lex("{}");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::OpenCurlyBrace()},
                           {TokenKind::CloseCurlyBrace()},
@@ -397,7 +393,7 @@ TEST_F(LexerTest, CurlyBraces) {
                       }));
 
   buffer = Lex("{{{}{}}}");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::OpenCurlyBrace()},
                           {TokenKind::OpenCurlyBrace()},
@@ -414,8 +410,8 @@ TEST_F(LexerTest, CurlyBraces) {
 TEST_F(LexerTest, MatchingGroups) {
   {
     TokenizedBuffer buffer = Lex("(){}");
-    ASSERT_FALSE(buffer.HasErrors());
-    auto it = buffer.Tokens().begin();
+    ASSERT_FALSE(buffer.has_errors());
+    auto it = buffer.tokens().begin();
     auto open_paren_token = *it++;
     auto close_paren_token = *it++;
     EXPECT_EQ(close_paren_token,
@@ -430,13 +426,13 @@ TEST_F(LexerTest, MatchingGroups) {
               buffer.GetMatchedOpeningToken(close_curly_token));
     auto eof_token = *it++;
     EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile());
-    EXPECT_EQ(buffer.Tokens().end(), it);
+    EXPECT_EQ(buffer.tokens().end(), it);
   }
 
   {
     TokenizedBuffer buffer = Lex("({x}){(y)} {{((z))}}");
-    ASSERT_FALSE(buffer.HasErrors());
-    auto it = buffer.Tokens().begin();
+    ASSERT_FALSE(buffer.has_errors());
+    auto it = buffer.tokens().begin();
     auto open_paren_token = *it++;
     auto open_curly_token = *it++;
     ASSERT_EQ("x", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
@@ -493,13 +489,13 @@ TEST_F(LexerTest, MatchingGroups) {
 
     auto eof_token = *it++;
     EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile());
-    EXPECT_EQ(buffer.Tokens().end(), it);
+    EXPECT_EQ(buffer.tokens().end(), it);
   }
 }
 
 TEST_F(LexerTest, MismatchedGroups) {
   auto buffer = Lex("{");
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {TokenKind::OpenCurlyBrace()},
@@ -508,14 +504,14 @@ TEST_F(LexerTest, MismatchedGroups) {
               }));
 
   buffer = Lex("}");
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Error(), .text = "}"},
                           {TokenKind::EndOfFile()},
                       }));
 
   buffer = Lex("{(}");
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
@@ -527,7 +523,7 @@ TEST_F(LexerTest, MismatchedGroups) {
       }));
 
   buffer = Lex(")({)");
-  EXPECT_TRUE(buffer.HasErrors());
+  EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
@@ -564,7 +560,7 @@ TEST_F(LexerTest, Whitespace) {
                   // EOF
                   false};
   int pos = 0;
-  for (TokenizedBuffer::Token token : buffer.Tokens()) {
+  for (TokenizedBuffer::Token token : buffer.tokens()) {
     ASSERT_LT(pos, std::size(space));
     EXPECT_THAT(buffer.HasLeadingWhitespace(token), Eq(space[pos]));
     ++pos;
@@ -576,36 +572,34 @@ TEST_F(LexerTest, Whitespace) {
 
 TEST_F(LexerTest, Keywords) {
   auto buffer = Lex("   fn");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::FnKeyword(), .column = 4, .indent_column = 4},
-          {TokenKind::EndOfFile()},
-      }));
+  EXPECT_FALSE(buffer.has_errors());
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
+                  {TokenKind::EndOfFile()},
+              }));
 
-  buffer = Lex("and or not if else for loop return var break continue _");
-  EXPECT_FALSE(buffer.HasErrors());
+  buffer = Lex("and or not if else for return var break continue _");
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::AndKeyword()},
-                          {TokenKind::OrKeyword()},
-                          {TokenKind::NotKeyword()},
-                          {TokenKind::IfKeyword()},
-                          {TokenKind::ElseKeyword()},
-                          {TokenKind::ForKeyword()},
-                          {TokenKind::LoopKeyword()},
-                          {TokenKind::ReturnKeyword()},
-                          {TokenKind::VarKeyword()},
-                          {TokenKind::BreakKeyword()},
-                          {TokenKind::ContinueKeyword()},
-                          {TokenKind::UnderscoreKeyword()},
+                          {TokenKind::And()},
+                          {TokenKind::Or()},
+                          {TokenKind::Not()},
+                          {TokenKind::If()},
+                          {TokenKind::Else()},
+                          {TokenKind::For()},
+                          {TokenKind::Return()},
+                          {TokenKind::Var()},
+                          {TokenKind::Break()},
+                          {TokenKind::Continue()},
+                          {TokenKind::Underscore()},
                           {TokenKind::EndOfFile()},
                       }));
 }
 
 TEST_F(LexerTest, Comments) {
   auto buffer = Lex(" ;\n  // foo\n  ;\n");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Semi(),
@@ -620,21 +614,21 @@ TEST_F(LexerTest, Comments) {
               }));
 
   buffer = Lex("// foo\n//\n// bar");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
 
   // Make sure weird characters aren't a problem.
   buffer = Lex("  // foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
 
   // Make sure we can lex a comment at the end of the input.
   buffer = Lex("//");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
@@ -649,13 +643,13 @@ TEST_F(LexerTest, InvalidComments) {
   };
   for (llvm::StringLiteral testcase : testcases) {
     auto buffer = Lex(testcase);
-    EXPECT_TRUE(buffer.HasErrors());
+    EXPECT_TRUE(buffer.has_errors());
   }
 }
 
 TEST_F(LexerTest, Identifiers) {
   auto buffer = Lex("   foobar");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Identifier(),
                            .column = 4,
@@ -666,14 +660,14 @@ TEST_F(LexerTest, Identifiers) {
 
   // Check different kinds of identifier character sequences.
   buffer = Lex("_foo_bar");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Identifier(), .text = "_foo_bar"},
                           {TokenKind::EndOfFile()},
                       }));
 
   buffer = Lex("foo2bar00");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Identifier(), .text = "foo2bar00"},
@@ -682,7 +676,7 @@ TEST_F(LexerTest, Identifiers) {
 
   // Check that we can parse identifiers that start with a keyword.
   buffer = Lex("fnord");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Identifier(), .text = "fnord"},
                           {TokenKind::EndOfFile()},
@@ -690,7 +684,7 @@ TEST_F(LexerTest, Identifiers) {
 
   // Check multiple identifiers with indent and interning.
   buffer = Lex("   foo;bar\nbar \n  foo\tfoo");
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Identifier(),
@@ -742,7 +736,7 @@ TEST_F(LexerTest, StringLiterals) {
   )";
 
   auto buffer = Lex(testcase);
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::StringLiteral(),
@@ -798,34 +792,37 @@ TEST_F(LexerTest, StringLiterals) {
 
 TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
+      // clang-format off
       R"(")",
       R"("""
-      "")",        //
-      R"("\)",     //
-      R"("\")",    //
-      R"("\\)",    //
-      R"("\\\")",  //
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
       R"(""")",
       R"("""
-      )",  //
+      )",
       R"("""\)",
       R"(#"""
       """)",
+      // clang-format on
   };
 
   for (llvm::StringLiteral test : invalid) {
+    SCOPED_TRACE(test);
     auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_TRUE(buffer.has_errors());
 
     // We should have formed at least one error token.
     bool found_error = false;
-    for (TokenizedBuffer::Token token : buffer.Tokens()) {
+    for (TokenizedBuffer::Token token : buffer.tokens()) {
       if (buffer.GetKind(token) == TokenKind::Error()) {
         found_error = true;
         break;
       }
     }
-    EXPECT_TRUE(found_error) << "`" << test << "`";
+    EXPECT_TRUE(found_error);
   }
 }
 
@@ -838,7 +835,7 @@ TEST_F(LexerTest, TypeLiterals) {
   )";
 
   auto buffer = Lex(testcase);
-  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_FALSE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::Identifier(),
@@ -918,63 +915,107 @@ TEST_F(LexerTest, TypeLiterals) {
                   {.kind = TokenKind::EndOfFile(), .line = 6, .column = 3},
               }));
 
-  auto token_i1 = buffer.Tokens().begin() + 1;
+  auto token_i1 = buffer.tokens().begin() + 1;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i1), 1);
-  auto token_i20 = buffer.Tokens().begin() + 2;
+  auto token_i20 = buffer.tokens().begin() + 2;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i20), 20);
-  auto token_i999999999999 = buffer.Tokens().begin() + 3;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ull);
-  auto token_u1 = buffer.Tokens().begin() + 6;
+  auto token_i999999999999 = buffer.tokens().begin() + 3;
+  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ULL);
+  auto token_u1 = buffer.tokens().begin() + 6;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u1), 1);
-  auto token_u64 = buffer.Tokens().begin() + 7;
+  auto token_u64 = buffer.tokens().begin() + 7;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u64), 64);
-  auto token_f32 = buffer.Tokens().begin() + 9;
+  auto token_f32 = buffer.tokens().begin() + 9;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f32), 32);
-  auto token_f80 = buffer.Tokens().begin() + 10;
+  auto token_f80 = buffer.tokens().begin() + 10;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f80), 80);
-  auto token_f1 = buffer.Tokens().begin() + 11;
+  auto token_f1 = buffer.tokens().begin() + 11;
   EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
 }
 
-TEST_F(LexerTest, Diagnostics) {
+TEST_F(LexerTest, TypeLiteralTooManyDigits) {
+  std::string code = "i";
+  constexpr int Count = 10000;
+  code.append(Count, '9');
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsDiagnostic(
+                  DiagnosticKind::TooManyDigits, DiagnosticLevel::Error, 1, 2,
+                  HasSubstr(llvm::formatv(" {0} ", Count)))));
+  auto buffer = Lex(code, consumer);
+  EXPECT_TRUE(buffer.has_errors());
+  ASSERT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::Error(),
+           .line = 1,
+           .column = 1,
+           .indent_column = 1,
+           .text = {code}},
+          {.kind = TokenKind::EndOfFile(), .line = 1, .column = Count + 2},
+      }));
+}
+
+TEST_F(LexerTest, DiagnosticTrailingComment) {
   llvm::StringLiteral testcase = R"(
     // Hello!
     var String x; // trailing comment
-    //no space after comment
-    "hello\bworld\xab"
-    0x123abc
-    #"
   )";
 
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
-                            DiagnosticAt(3, 19),
-                            DiagnosticMessage(HasSubstr("Trailing comment")))));
   EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(4, 7),
-                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 12),
-          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(5, 20),
-          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
-  EXPECT_CALL(
-      consumer,
-      HandleDiagnostic(AllOf(
-          DiagnosticAt(6, 10),
-          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(
-                  DiagnosticAt(7, 5),
-                  DiagnosticMessage(HasSubstr("unrecognized character")))));
-
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TrailingComment,
+                                            DiagnosticLevel::Error, 3, 19, _)));
   Lex(testcase, consumer);
+}
+
+TEST_F(LexerTest, DiagnosticWhitespace) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::NoWhitespaceAfterCommentIntroducer,
+                            DiagnosticLevel::Error, 1, 3, _)));
+  Lex("//no space after comment", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::UnknownEscapeSequence,
+                            DiagnosticLevel::Error, 1, 8, HasSubstr("`b`"))));
+  Lex(R"("hello\bworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticBadHex) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::HexadecimalEscapeMissingDigits,
+                            DiagnosticLevel::Error, 1, 9, _)));
+  Lex(R"("hello\xabworld")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticInvalidDigit) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsDiagnostic(
+                            DiagnosticKind::InvalidDigit,
+                            DiagnosticLevel::Error, 1, 6, HasSubstr("'a'"))));
+  Lex("0x123abc", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::UnterminatedString,
+                                            DiagnosticLevel::Error, 1, 1, _)));
+  Lex(R"(#" ")", consumer);
+}
+
+TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            IsDiagnostic(DiagnosticKind::UnrecognizedCharacters,
+                                         DiagnosticLevel::Error, 1, 1, _)));
+  Lex("\b", consumer);
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
@@ -990,9 +1031,9 @@ auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   return line.str();
 }
 
-TEST_F(LexerTest, Printing) {
+TEST_F(LexerTest, PrintingBasic) {
   auto buffer = Lex(";");
-  ASSERT_FALSE(buffer.HasErrors());
+  ASSERT_FALSE(buffer.has_errors());
   std::string print_storage;
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
@@ -1004,13 +1045,47 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
                     "indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
-  // Test kind padding.
-  buffer = Lex("(;foo;)");
-  ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+TEST_F(LexerTest, PrintingInteger) {
+  auto buffer = Lex("123");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+                    "column: 1, indent: 1, spelling: '123', value: `123`, "
+                    "has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingReal) {
+  auto buffer = Lex("2.5");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(
+      GetAndDropLine(print),
+      StrEq(
+          "token: { index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
+          "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true }"));
+  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_TRUE(print.empty()) << print;
+}
+
+TEST_F(LexerTest, PrintingPadding) {
+  // Test kind padding.
+  auto buffer = Lex("(;foo;)");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
+  buffer.Print(print_stream);
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 0, kind:  'OpenParen', line: 1, column: "
                     "1, indent: 1, spelling: '(', closing_token: 4 }"));
@@ -1031,13 +1106,16 @@ TEST_F(LexerTest, Printing) {
               StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
                     "8, indent: 1, spelling: '' }"));
   EXPECT_TRUE(print.empty()) << print;
+}
 
+TEST_F(LexerTest, PrintingPaddingDigits) {
   // Test digit padding with max values of 9, 10, and 11.
-  buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
-  ASSERT_FALSE(buffer.HasErrors());
-  print_storage.clear();
+  auto buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
+  ASSERT_FALSE(buffer.has_errors());
+  std::string print_storage;
+  llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
-  print = print_stream.str();
+  llvm::StringRef print = print_stream.str();
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
@@ -1060,7 +1138,7 @@ TEST_F(LexerTest, Printing) {
 TEST_F(LexerTest, PrintingAsYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
-  ASSERT_FALSE(buffer.HasErrors());
+  ASSERT_FALSE(buffer.has_errors());
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);
   buffer.Print(print_stream);

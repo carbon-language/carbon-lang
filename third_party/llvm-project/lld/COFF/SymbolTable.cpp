@@ -56,6 +56,7 @@ void SymbolTable::addFile(InputFile *file) {
   MachineTypes mt = file->getMachineType();
   if (config->machine == IMAGE_FILE_MACHINE_UNKNOWN) {
     config->machine = mt;
+    driver->addWinSysRootLibSearchPaths();
   } else if (mt != IMAGE_FILE_MACHINE_UNKNOWN && config->machine != mt) {
     error(toString(file) + ": machine type " + machineToStr(mt) +
           " conflicts with " + machineToStr(config->machine));
@@ -134,7 +135,7 @@ getFileLineDwarf(const SectionChunk *c, uint32_t addr) {
   const DILineInfo &lineInfo = *optionalLineInfo;
   if (lineInfo.FileName == DILineInfo::BadString)
     return None;
-  return std::make_pair(saver.save(lineInfo.FileName), lineInfo.Line);
+  return std::make_pair(saver().save(lineInfo.FileName), lineInfo.Line);
 }
 
 static Optional<std::pair<StringRef, uint32_t>>

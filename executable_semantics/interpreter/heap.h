@@ -27,13 +27,13 @@ class Heap : public HeapAllocationInterface {
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
-  auto Read(const Address& a, SourceLocation source_loc)
-      -> Nonnull<const Value*>;
+  auto Read(const Address& a, SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
-  void Write(const Address& a, Nonnull<const Value*> v,
-             SourceLocation source_loc);
+  auto Write(const Address& a, Nonnull<const Value*> v,
+             SourceLocation source_loc) -> ErrorOr<Success>;
 
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
@@ -50,7 +50,8 @@ class Heap : public HeapAllocationInterface {
 
  private:
   // Signal an error if the allocation is no longer alive.
-  void CheckAlive(AllocationId allocation, SourceLocation source_loc);
+  auto CheckAlive(AllocationId allocation, SourceLocation source_loc) const
+      -> ErrorOr<Success>;
 
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;

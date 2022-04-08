@@ -61,14 +61,15 @@ struct SerializedAffineMap {
   AffineMap affineMap() { return affineMapAttr.getValue(); }
 };
 
-enum class LinalgOperandDefUsage { input, output, attribute };
+enum class LinalgOperandDefUsage { Input, Output, IndexAttr };
 
 struct LinalgOperandDef {
   std::string name;
   LinalgOperandDefUsage usage;
-  std::string typeVar;
+  Optional<std::string> typeVar;
   Optional<SerializedAffineMap> shapeMap;
-  Optional<SerializedAffineMap> attributeMap;
+  Optional<SerializedAffineMap> indexAttrMap;
+  Optional<SmallVector<int64_t>> defaultVals;
 };
 
 enum class LinalgIteratorTypeDef {
@@ -175,18 +176,21 @@ struct MappingTraits<LinalgStructuredOpConfig> {
 ///     the argument. Only tensor arguments have a `shape_map`. Each shape must
 ///     be normalized over the same list of symbols and have no dimension
 ///     inputs.
-///   - `attribute_map`: An optional AffineMap from all op symbols to the
-///     attribute symbols. During op creation these symbols are replaced by the
-///     corresponding `name` attribute values. Only attribute arguments have
-///     an `attribute_map`.
+///   - `index_attr_map`: An optional AffineMap from all op symbols to the
+///     index attribute symbols. During op creation these symbols are replaced
+///     by the corresponding `name` index attribue values. Only index attribute
+///     arguments have an `index_attr_map`.
+///   - `default_vals`: An optional default initialization for index attribute
+///     arguments.
 template <>
 struct MappingTraits<LinalgOperandDef> {
   static void mapping(IO &io, LinalgOperandDef &info) {
     io.mapRequired("name", info.name);
     io.mapRequired("usage", info.usage);
-    io.mapRequired("type_var", info.typeVar);
+    io.mapOptional("type_var", info.typeVar);
     io.mapOptional("shape_map", info.shapeMap);
-    io.mapOptional("attribute_map", info.attributeMap);
+    io.mapOptional("index_attr_map", info.indexAttrMap);
+    io.mapOptional("default_vals", info.defaultVals);
   }
 };
 
@@ -194,9 +198,9 @@ struct MappingTraits<LinalgOperandDef> {
 template <>
 struct ScalarEnumerationTraits<LinalgOperandDefUsage> {
   static void enumeration(IO &io, LinalgOperandDefUsage &value) {
-    io.enumCase(value, "InputOperand", LinalgOperandDefUsage::input);
-    io.enumCase(value, "OutputOperand", LinalgOperandDefUsage::output);
-    io.enumCase(value, "IndexAttribute", LinalgOperandDefUsage::attribute);
+    io.enumCase(value, "Input", LinalgOperandDefUsage::Input);
+    io.enumCase(value, "Output", LinalgOperandDefUsage::Output);
+    io.enumCase(value, "IndexAttr", LinalgOperandDefUsage::IndexAttr);
   }
 };
 
@@ -395,7 +399,10 @@ findTypeValue(StringRef typeVar, SmallVectorImpl<LinalgOperandDef> &args) {
 
   // Search all argument types.
   for (const auto &it : llvm::enumerate(args)) {
-    if (it.value().typeVar == typeVar)
+    if (it.value().usage != LinalgOperandDefUsage::Input &&
+        it.value().usage != LinalgOperandDefUsage::Output)
+      continue;
+    if (it.value().typeVar.getValue() == typeVar)
       return llvm::formatv("block.getArgument({0}).getType()", it.index())
           .str();
   }
@@ -509,18 +516,17 @@ def {0} : LinalgStructuredBase_Op<"{1}", !listconcat([AttrSizedOperandSegments],
       }]>
       {5}
     ];
-    let printer = [{{ return ::printNamedStructuredOp(p, *this); }];
-    let parser = [{{
-      return ::parseNamedStructuredOp<{0}>(parser, result);
-    }];
+    let hasCustomAssemblyFormat = 1;
     let hasFolder = 1;
 
     let extraClassDeclaration = structuredOpsBaseDecls # [{{
       // Auto-generated.
       ArrayAttr iterator_types();
       ArrayAttr indexing_maps();
-      static void regionBuilder(ImplicitLocOpBuilder &b, Block &block);
-      static std::function<void(ImplicitLocOpBuilder &b, Block &)>
+      static void regionBuilder(ImplicitLocOpBuilder &b,
+                                Block &block, ArrayRef<NamedAttribute> attrs);
+      static std::function<void(ImplicitLocOpBuilder &,
+                                Block &, ArrayRef<NamedAttribute>)>
       getRegionBuilder() {{
         return regionBuilder;
       }
@@ -561,13 +567,60 @@ static const char structuredOpBuilderFormat[] = R"FMT(
   }]>
 )FMT";
 
-// The iterator_types() method implementation. Parameters:
+// The iterator_types() method for structured ops. Parameters:
 // {0}: Class name
 // {1}: Comma interleaved iterator type names.
 static const char structuredOpIteratorTypesFormat[] =
     R"FMT(
-ArrayAttr {0}::iterator_types() {
+ArrayAttr {0}::iterator_types() {{
   return Builder(getContext()).getStrArrayAttr(SmallVector<StringRef>{{ {1} });
+}
+)FMT";
+
+// The iterator_types() method for rank polymorphic structured ops. Parameters:
+// {0}: Class name
+static const char rankPolyStructuredOpIteratorTypesFormat[] =
+    R"FMT(
+ArrayAttr {0}::iterator_types() {{
+  int64_t rank = getRank(getOutputOperand(0));
+  return Builder(getContext()).getStrArrayAttr(
+    SmallVector<StringRef>(rank, getParallelIteratorTypeName()));
+}
+)FMT";
+
+// The indexing_maps() method for structured ops. Parameters:
+// {0}: Class name
+// {1}: Comma-separated list of dimension variable names.
+// {2}: Statements
+static const char structuredOpIndexingMapsFormat[] = R"FMT(
+ArrayAttr {0}::indexing_maps() {{
+  static const char memoizeAttr[] = "linalg.memoized_indexing_maps";
+  ArrayAttr cached = getOperation()->getAttrOfType<ArrayAttr>(memoizeAttr);
+  if (cached)
+    return cached;
+
+  MLIRContext *context = getContext();
+  auto symbolBindings = getSymbolBindings(*this);
+  SmallVector<AffineMap> maps;
+  {2}
+  cached = Builder(context).getAffineMapArrayAttr(maps);
+  getOperation()->setAttr(memoizeAttr, cached);
+  return cached;
+}
+)FMT";
+
+// The indexing_maps() method for rank polymorphic structured ops. Parameters:
+// {0}: Class name
+static const char rankPolyStructuredOpIndexingMapsFormat[] = R"FMT(
+ArrayAttr {0}::indexing_maps() {{
+  MLIRContext *context = getContext();
+  AffineMap scalarMap = AffineMap::get(getNumParallelLoops(), 0, context);
+  AffineMap tensorMap = AffineMap::getMultiDimIdentityMap(
+    getNumParallelLoops(), context);
+  SmallVector<AffineMap> indexingMaps;
+  for (OpOperand *opOperand : getInputAndOutputOperands())
+    indexingMaps.push_back(isScalar(opOperand) ? scalarMap : tensorMap);
+  return Builder(getContext()).getAffineMapArrayAttr(indexingMaps);
 }
 )FMT";
 
@@ -585,6 +638,18 @@ void {0}::getEffects(SmallVectorImpl<
       SmallVector<Value> outputBuffers = getOutputBufferOperands();
       getGenericEffectsImpl(effects,
         getOperation()->getResults(), inputBuffers, outputBuffers);
+}
+)FMT";
+
+// Implementation of parse/print.
+// Parameters:
+// {0}: Class name
+static const char structuredOpParserFormat[] = R"FMT(
+ParseResult {0}::parse(OpAsmParser &parser, OperationState &result) {{
+  return ::parseNamedStructuredOp<{0}>(parser, result);
+}
+void {0}::print(OpAsmPrinter &p) {{
+  ::printNamedStructuredOp(p, *this);
 }
 )FMT";
 
@@ -618,20 +683,32 @@ static LogicalResult generateNamedGenericOpOds(LinalgOpConfig &opConfig,
 
   // Assemble the attribute specific logic required for the op definition.
   if (llvm::any_of(opConfig.structuredOp->args, [](LinalgOperandDef &arg) {
-        return arg.usage == LinalgOperandDefUsage::attribute;
+        return arg.usage == LinalgOperandDefUsage::IndexAttr;
       })) {
     SmallVector<std::string> attrDefs;
     SmallVector<std::string> attrParams;
     SmallVector<std::string> attrStmts;
     for (LinalgOperandDef &arg : opConfig.structuredOp->args) {
-      if (arg.usage != LinalgOperandDefUsage::attribute)
+      if (arg.usage != LinalgOperandDefUsage::IndexAttr)
         continue;
-      assert(arg.attributeMap.hasValue() && arg.typeVar == "I64");
-      static const char defFmt[] = "RankedI64ElementsAttr<[{0}]>:${1}";
+      assert(arg.indexAttrMap.hasValue());
+      assert(arg.defaultVals.hasValue());
+      size_t size = arg.indexAttrMap->affineMap().getNumResults();
+      assert(arg.defaultVals.getValue().size() == size);
+      static const char typeFmt[] = "RankedI64ElementsAttr<[{0}]>";
+      static const char defFmt[] = "DefaultValuedAttr<{0}, \"{1}\">:${2}";
       static const char paramFmt[] = "\"Attribute\":${0}";
       static const char stmtFmt[] = "$_state.addAttribute(\"{0}\", {0});";
-      attrDefs.push_back(llvm::formatv(
-          defFmt, arg.attributeMap->affineMap().getNumResults(), arg.name));
+      std::string defaultVals;
+      llvm::raw_string_ostream ss(defaultVals);
+      ss << "{ ";
+      llvm::interleave(
+          arg.defaultVals.getValue(), ss,
+          [&](int64_t val) { ss << "static_cast<int64_t>(" << val << ")"; },
+          ", ");
+      ss << " }";
+      attrDefs.push_back(llvm::formatv(defFmt, llvm::formatv(typeFmt, size),
+                                       ss.str(), arg.name));
       attrParams.push_back(llvm::formatv(paramFmt, arg.name));
       attrStmts.push_back(llvm::formatv(stmtFmt, arg.name));
     }
@@ -669,11 +746,17 @@ generateNamedGenericOpDefns(LinalgOpConfig &opConfig,
   // Compute the number of scalar and tensor arguments.
   int64_t numOfArgs =
       llvm::count_if(opConfig.structuredOp->args, [](LinalgOperandDef &arg) {
-        return arg.usage != LinalgOperandDefUsage::attribute;
+        return arg.usage != LinalgOperandDefUsage::IndexAttr;
       });
 
-  // Reference iterators.
-  {
+  // An operation that accesses only scalars and scalar/rank zero tensors is
+  // rank polymorhpic. We implement rank polymorphism by generating different
+  // indexing maps and iterators that match the rank of the first output tensor.
+  // An operation is rank polymorphic if the iteration domain has rank zero.
+  bool isRankPolymorphic = opConfig.structuredOp->iteratorTypes.empty();
+
+  // Generate the iterator_types() method.
+  if (!isRankPolymorphic) {
     std::string iteratorsStr;
     llvm::raw_string_ostream ss(iteratorsStr);
     llvm::interleaveComma(opConfig.structuredOp->iteratorTypes, ss,
@@ -690,22 +773,25 @@ generateNamedGenericOpDefns(LinalgOpConfig &opConfig,
     ss.flush();
     os << llvm::formatv(structuredOpIteratorTypesFormat, className,
                         iteratorsStr);
+  } else {
+    os << llvm::formatv(rankPolyStructuredOpIteratorTypesFormat, className);
   }
 
-  // Static indexing maps.
+  // Generating the indexing_maps() method.
   if (auto &staticMaps =
           opConfig.structuredOp->indexingMaps.staticIndexingMaps) {
     if (staticMaps->empty())
       return emitError(genContext.getLoc()) << "op has no indexing maps";
-    AffineMap firstMap = staticMaps->front().affineMap();
+    if (!isRankPolymorphic) {
+      AffineMap firstMap = staticMaps->front().affineMap();
 
-    // Symbol bindings.
-    {
-      // For each symbol, generate a declaration for it, either with an
-      // AffineSymbolExpr or an AffineConstantExpr (if the symbol derives from
-      // an attribute).
-      // TODO: Possibly lift into a top-level method.
-      static const char structuredOpSymbolBindingsFormat[] = R"FMT(
+      // Symbol bindings.
+      {
+        // For each symbol, generate a declaration for it, either with an
+        // AffineSymbolExpr or an AffineConstantExpr (if the symbol derives from
+        // an attribute).
+        // TODO: Possibly lift into a top-level method.
+        static const char structuredOpSymbolBindingsFormat[] = R"FMT(
 static SmallVector<AffineExpr> getSymbolBindings({0} self) {
   MLIRContext *context = self.getContext();
   SmallVector<AffineExpr> exprs;
@@ -714,101 +800,83 @@ static SmallVector<AffineExpr> getSymbolBindings({0} self) {
 }
 )FMT";
 
-      unsigned symbolCount = firstMap.getNumSymbols();
-      SmallVector<std::string> symbolBindings;
-      for (unsigned i = 0; i < symbolCount; ++i) {
-        symbolBindings.push_back(llvm::formatv(
-            "  exprs.push_back(getAffineSymbolExpr({0}, context));", i));
-      }
+        unsigned symbolCount = firstMap.getNumSymbols();
+        SmallVector<std::string> symbolBindings;
+        for (unsigned i = 0; i < symbolCount; ++i) {
+          symbolBindings.push_back(llvm::formatv(
+              "  exprs.push_back(getAffineSymbolExpr({0}, context));", i));
+        }
 
-      // Access an index attribute. Parameters:
-      // {0}: Attribute name
-      // {1}: Symbol position
-      // {2}: Attribute index
-      static const char structuredOpAccessAttrFormat[] = R"FMT(
+        // Access an index attribute. Parameters:
+        // {0}: Attribute name
+        // {1}: Symbol position
+        // {2}: Attribute index
+        static const char structuredOpAccessAttrFormat[] = R"FMT(
 int64_t cst{1} = self.{0}().getValues<int64_t>()[{2}];
 exprs.push_back(getAffineConstantExpr(cst{1}, context));
 )FMT";
-      // Update all symbol bindings mapped to an attribute.
-      for (LinalgOperandDef &arg : opConfig.structuredOp->args) {
-        if (arg.usage != LinalgOperandDefUsage::attribute)
-          continue;
-        assert(arg.attributeMap.hasValue());
-        for (auto &en :
-             llvm::enumerate(arg.attributeMap->affineMap().getResults())) {
-          if (auto symbol = en.value().dyn_cast<AffineSymbolExpr>()) {
-            symbolBindings[symbol.getPosition()] =
-                llvm::formatv(structuredOpAccessAttrFormat, arg.name,
-                              symbol.getPosition(), en.index());
+        // Update all symbol bindings mapped to an attribute.
+        for (LinalgOperandDef &arg : opConfig.structuredOp->args) {
+          if (arg.usage != LinalgOperandDefUsage::IndexAttr)
+            continue;
+          assert(arg.indexAttrMap.hasValue());
+          for (auto &en :
+               llvm::enumerate(arg.indexAttrMap->affineMap().getResults())) {
+            if (auto symbol = en.value().dyn_cast<AffineSymbolExpr>()) {
+              symbolBindings[symbol.getPosition()] =
+                  llvm::formatv(structuredOpAccessAttrFormat, arg.name,
+                                symbol.getPosition(), en.index());
+            }
           }
         }
+
+        std::string symbolBindingsStr;
+        llvm::raw_string_ostream symbolBindingsSs(symbolBindingsStr);
+        llvm::interleave(symbolBindings, symbolBindingsSs, "\n");
+        symbolBindingsSs.flush();
+
+        os << llvm::formatv(structuredOpSymbolBindingsFormat, className,
+                            symbolBindingsStr);
       }
 
-      std::string symbolBindingsStr;
-      llvm::raw_string_ostream symbolBindingsSs(symbolBindingsStr);
-      llvm::interleave(symbolBindings, symbolBindingsSs, "\n");
-      symbolBindingsSs.flush();
+      // Indexing maps.
+      {
+        unsigned dimCount = firstMap.getNumDims();
 
-      os << llvm::formatv(structuredOpSymbolBindingsFormat, className,
-                          symbolBindingsStr);
-    }
+        // Generate a comma-separated list of dim identifiers to be passed to
+        // bindDims, ensuring tht AffineExpr identifiers are bound in the right
+        // order to the proper AffineDimExpr.
+        // This results in vars in scope like: d0, d1, d2...
+        SmallVector<unsigned> dimIndices;
+        for (unsigned i = 0; i < dimCount; ++i)
+          dimIndices.push_back(i);
+        std::string dimIdentsStr;
+        llvm::raw_string_ostream dimIdentsSs(dimIdentsStr);
+        llvm::interleaveComma(dimIndices, dimIdentsSs,
+                              [&](unsigned i) { dimIdentsSs << "d" << i; });
+        dimIdentsSs.flush();
 
-    // Indexing maps.
-    {
-      // Parameters:
-      // {0}: Class name
-      // {1}: Comma-separated list of dimension variable names.
-      // {2}: Statements
-      static const char structuredOpIndexingMapsFormat[] = R"FMT(
-ArrayAttr {0}::indexing_maps() {
-  static const char memoizeAttr[] = "linalg.memoized_indexing_maps";
-  ArrayAttr cached = getOperation()->getAttrOfType<ArrayAttr>(memoizeAttr);
-  if (cached)
-    return cached;
+        // Statements to add and simplify each affine map.
+        SmallVector<std::string> stmts;
+        for (auto &indexingMap : *staticMaps) {
+          // TODO: Assert that dim and symbol count match the first.
+          stmts.push_back(
+              llvm::formatv("maps.push_back({0});",
+                            generateCppExpression(indexingMap, "context")));
+          stmts.push_back(llvm::formatv(
+              "maps.back() = "
+              "simplifyAffineMap(maps.back().replaceDimsAndSymbols({{}, "
+              "symbolBindings, {0}, 0));",
+              dimCount));
+        }
 
-  MLIRContext *context = getContext();
-  auto symbolBindings = getSymbolBindings(*this);
-  SmallVector<AffineMap> maps;
-  {2}
-  cached = Builder(context).getAffineMapArrayAttr(maps);
-  getOperation()->setAttr(memoizeAttr, cached);
-  return cached;
-}
-)FMT";
-
-      unsigned dimCount = firstMap.getNumDims();
-
-      // Generate a comma-separated list of dim identifiers to be passed to
-      // bindDims, ensuring tht AffineExpr identifiers are bound in the right
-      // order to the proper AffineDimExpr.
-      // This results in vars in scope like: d0, d1, d2...
-      SmallVector<unsigned> dimIndices;
-      for (unsigned i = 0; i < dimCount; ++i)
-        dimIndices.push_back(i);
-      std::string dimIdentsStr;
-      llvm::raw_string_ostream dimIdentsSs(dimIdentsStr);
-      llvm::interleaveComma(dimIndices, dimIdentsSs,
-                            [&](unsigned i) { dimIdentsSs << "d" << i; });
-      dimIdentsSs.flush();
-
-      // Statements to add and simplify each affine map.
-      SmallVector<std::string> stmts;
-      for (auto &indexingMap : *staticMaps) {
-        // TODO: Assert that dim and symbol count match the first.
-        stmts.push_back(
-            llvm::formatv("maps.push_back({0});",
-                          generateCppExpression(indexingMap, "context")));
-        stmts.push_back(llvm::formatv(
-            "maps.back() = "
-            "simplifyAffineMap(maps.back().replaceDimsAndSymbols({{}, "
-            "symbolBindings, {0}, 0));",
-            dimCount));
+        // TODO: This needs to be memoized and/or converted to non-parser based
+        // C++ codegen prior to real use.
+        os << llvm::formatv(structuredOpIndexingMapsFormat, className,
+                            dimIdentsStr, interleaveToString(stmts, "\n  "));
       }
-
-      // TODO: This needs to be memoized and/or converted to non-parser based
-      // C++ codegen prior to real use.
-      os << llvm::formatv(structuredOpIndexingMapsFormat, className,
-                          dimIdentsStr, interleaveToString(stmts, "\n  "));
+    } else {
+      os << llvm::formatv(rankPolyStructuredOpIndexingMapsFormat, className);
     }
   } else {
     return emitError(genContext.getLoc())
@@ -842,31 +910,26 @@ std::string {0}::getLibraryCallName() {{
 
   // hasDynamicIndexingMaps() and verifyIndexingMapRequiredAttributes()
   if (llvm::any_of(opConfig.structuredOp->args, [](LinalgOperandDef &arg) {
-        return arg.usage == LinalgOperandDefUsage::attribute;
+        return arg.usage == LinalgOperandDefUsage::IndexAttr;
       })) {
     std::vector<std::string> attrVerifications;
     for (LinalgOperandDef &arg : opConfig.structuredOp->args) {
-      if (arg.usage != LinalgOperandDefUsage::attribute)
+      if (arg.usage != LinalgOperandDefUsage::IndexAttr)
         continue;
-      assert(arg.attributeMap.hasValue() && arg.typeVar == "I64");
+      assert(arg.indexAttrMap.hasValue());
       // Verify index attribute. Paramters:
       // {0}: Attribute name
       // {1}: Attribute size
       static const char attrFmt[] = R"FMT(
 if (auto attr = op->getAttrOfType<DenseElementsAttr>("{0}")) {{
   if (!attr.getType().getElementType().isInteger(64))
-    return op->emitError(
-      "incorrect element type for indexing map required attribute '{0}'");
+    return op->emitError("incorrect element type for index attribute '{0}'");
   if (attr.getType().getShape() != ArrayRef<int64_t>{{ {1} })
-    return op->emitError(
-      "incorrect shape for indexing map required attribute '{0}'");
-} else {
-  return op->emitError(
-    "missing indexing map required attribute '{0}'");
+    return op->emitError("incorrect shape for index attribute '{0}'");
 }
 )FMT";
       attrVerifications.push_back(llvm::formatv(
-          attrFmt, arg.name, arg.attributeMap->affineMap().getNumResults()));
+          attrFmt, arg.name, arg.indexAttrMap->affineMap().getNumResults()));
     }
 
     // Generates the verifyIndexingMapRequiredAttributes method. Parameters:
@@ -891,7 +954,8 @@ LogicalResult {0}::verifyIndexingMapRequiredAttributes() {{
     // {1}: Number of args
     // {2}: Statements
     static const char structuredOpRegionBuilderFormat[] = R"FMT(
-void {0}::regionBuilder(ImplicitLocOpBuilder &b, Block &block) {{
+void {0}::regionBuilder(ImplicitLocOpBuilder &b,
+                        Block &block, ArrayRef<NamedAttribute> attrs) {{
   assert({1} > 0 && block.getNumArguments() == {1} &&
          "{0} regionBuilder expects {1} (>=0) args");
   RegionBuilderHelper helper(block.getArgument(0).getContext(), block);
@@ -906,7 +970,7 @@ void {0}::regionBuilder(ImplicitLocOpBuilder &b, Block &block) {{
     int localCounter = 0;
     SmallVector<std::string> stmts;
     for (LinalgOperandDef &arg : args) {
-      if (arg.usage != LinalgOperandDefUsage::output)
+      if (arg.usage != LinalgOperandDefUsage::Output)
         continue;
 
       // Find the assignment that correlates with the argument.
@@ -1007,6 +1071,9 @@ void {0}::regionBuilder(ImplicitLocOpBuilder &b, Block &block) {{
     os << llvm::formatv(structuredOpRegionBuilderFormat, className, numOfArgs,
                         interleaveToString(stmts, "\n  "));
   }
+
+  // Parser and printer.
+  os << llvm::formatv(structuredOpParserFormat, className);
 
   // Canonicalizers and folders.
   os << llvm::formatv(structuredOpFoldersFormat, className);

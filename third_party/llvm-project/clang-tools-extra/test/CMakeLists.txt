@@ -17,6 +17,8 @@ string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} CLANG_TOOLS_DIR ${LLVM_RUN
 
 llvm_canonicalize_cmake_booleans(
   CLANG_TIDY_ENABLE_STATIC_ANALYZER
+  CLANG_PLUGIN_SUPPORT
+  LLVM_INSTALL_TOOLCHAIN_ONLY
   )
 
 configure_lit_site_cfg(
@@ -77,6 +79,33 @@ foreach(dep ${LLVM_UTILS_DEPS})
     list(APPEND CLANG_TOOLS_TEST_DEPS ${dep})
   endif()
 endforeach()
+
+if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  llvm_add_library(
+      CTTestTidyModule
+      MODULE clang-tidy/CTTestTidyModule.cpp
+      PLUGIN_TOOL clang-tidy
+      DEPENDS clang-tidy-headers)
+
+  if(CLANG_BUILT_STANDALONE)
+    # LLVMHello library is needed below
+    if (EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Transforms/Hello
+       AND NOT TARGET LLVMHello)
+      add_subdirectory(${LLVM_MAIN_SRC_DIR}/lib/Transforms/Hello
+        lib/Transforms/Hello)
+    endif()
+  endif()
+
+  if(TARGET CTTestTidyModule)
+      list(APPEND CLANG_TOOLS_TEST_DEPS CTTestTidyModule LLVMHello)
+      target_include_directories(CTTestTidyModule PUBLIC BEFORE "${CLANG_TOOLS_SOURCE_DIR}")
+      if(CLANG_PLUGIN_SUPPORT AND (WIN32 OR CYGWIN))
+        set(LLVM_LINK_COMPONENTS
+          Support
+        )
+      endif()
+  endif()
+endif()
 
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}

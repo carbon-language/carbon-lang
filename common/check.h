@@ -23,19 +23,26 @@ namespace Carbon {
 //   CHECK(is_valid) << "Data is not valid!";
 #define CHECK(condition)                                                  \
   (condition) ? (void)0                                                   \
-              : RAW_EXITING_STREAM().TreatAsBug()                         \
+              : RAW_EXITING_STREAM()                                      \
                     << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
                     << ": " #condition                                    \
                     << Carbon::Internal::ExitingStream::AddSeparator()
+
+// DCHECK calls CHECK in debug mode, and does nothing otherwise.
+#ifndef NDEBUG
+#define DCHECK(condition) CHECK(condition)
+#else
+#define DCHECK(condition) CHECK(true || (condition))
+#endif
 
 // This is similar to CHECK, but is unconditional. Writing FATAL() is clearer
 // than CHECK(false) because it avoids confusion about control flow.
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL()                     \
-  RAW_EXITING_STREAM().TreatAsBug() \
-      << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
+#define FATAL()                                                              \
+  RAW_EXITING_STREAM() << "FATAL failure at " << __FILE__ << ":" << __LINE__ \
+                       << ": "
 
 }  // namespace Carbon
 

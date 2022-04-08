@@ -73,6 +73,18 @@ DEFAULT_FEATURES = [
             void f() { new int(3); }
           """, ['-shared'])),
 
+  # Check for a Windows UCRT bug (fixed in UCRT/Windows 10.0.20348.0):
+  # https://developercommunity.visualstudio.com/t/utf-8-locales-break-ctype-functions-for-wchar-type/1653678
+  Feature(name='broken-utf8-wchar-ctype',
+          when=lambda cfg: '_WIN32' in compilerMacros(cfg) and not programSucceeds(cfg, """
+          #include <locale.h>
+          #include <wctype.h>
+          int main(int, char**) {
+            setlocale(LC_ALL, "en_US.UTF-8");
+            return towlower(L'\\xDA') != L'\\xFA';
+          }
+          """)),
+
   # Whether Bash can run on the executor.
   # This is not always the case, for example when running on embedded systems.
   #
@@ -83,6 +95,8 @@ DEFAULT_FEATURES = [
   # manages to find binaries to execute.
   Feature(name='executor-has-no-bash',
           when=lambda cfg: runScriptExitCode(cfg, ['%{exec} bash -c \'bash --version\'']) != 0),
+  Feature(name='has-clang-tidy',
+          when=lambda cfg: runScriptExitCode(cfg, ['clang-tidy --version']) == 0),
 
   Feature(name='apple-clang',                                                                                                      when=_isAppleClang),
   Feature(name=lambda cfg: 'apple-clang-{__clang_major__}'.format(**compilerMacros(cfg)),                                          when=_isAppleClang),
@@ -119,7 +133,6 @@ macros = {
   '_LIBCPP_HAS_THREAD_API_PTHREAD': 'libcpp-has-thread-api-pthread',
   '_LIBCPP_NO_VCRUNTIME': 'libcpp-no-vcruntime',
   '_LIBCPP_ABI_VERSION': 'libcpp-abi-version',
-  '_LIBCPP_ABI_UNSTABLE': 'libcpp-abi-unstable',
   '_LIBCPP_HAS_NO_FILESYSTEM_LIBRARY': 'libcpp-has-no-filesystem-library',
   '_LIBCPP_HAS_NO_RANDOM_DEVICE': 'libcpp-has-no-random-device',
   '_LIBCPP_HAS_NO_LOCALIZATION': 'libcpp-has-no-localization',
@@ -129,22 +142,10 @@ macros = {
   '_LIBCPP_HAS_NO_UNICODE': 'libcpp-has-no-unicode',
 }
 for macro, feature in macros.items():
-  DEFAULT_FEATURES += [
-    Feature(name=lambda cfg, m=macro, f=feature: f + (
-              '={}'.format(compilerMacros(cfg)[m]) if compilerMacros(cfg)[m] else ''
-            ),
-            when=lambda cfg, m=macro: m in compilerMacros(cfg),
-
-            # FIXME: This is a hack that should be fixed using module maps.
-            # If modules are enabled then we have to lift all of the definitions
-            # in <__config_site> onto the command line.
-            actions=lambda cfg, m=macro: [
-              AddCompileFlag('-Wno-macro-redefined -D{}'.format(m) + (
-                '={}'.format(compilerMacros(cfg)[m]) if compilerMacros(cfg)[m] else ''
-              ))
-            ]
-    )
-  ]
+  DEFAULT_FEATURES.append(
+    Feature(name=lambda cfg, m=macro, f=feature: f + ('={}'.format(compilerMacros(cfg)[m]) if compilerMacros(cfg)[m] else ''),
+            when=lambda cfg, m=macro: m in compilerMacros(cfg))
+  )
 
 
 # Mapping from canonical locale names (used in the tests) to possible locale

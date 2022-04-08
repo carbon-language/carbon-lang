@@ -10,6 +10,7 @@
 #define BOLT_PASSES_SHRINKWRAPPING_H
 
 #include "bolt/Passes/FrameAnalysis.h"
+#include "llvm/MC/MCRegisterInfo.h"
 
 namespace llvm {
 namespace bolt {
@@ -295,7 +296,7 @@ class ShrinkWrapping {
   /// of moving this Callee-Saved Reg
   DenseMap<unsigned, std::vector<uint32_t>> DeletedPushCFIs;
   DenseMap<unsigned, std::vector<uint32_t>> DeletedPopCFIs;
-  std::vector<bool> HasDeletedOffsetCFIs;
+  BitVector HasDeletedOffsetCFIs;
   SmallPtrSet<const MCCFIInstruction *, 16> UpdatedCFIs;
   std::vector<BitVector> UsesByReg;
   std::vector<int64_t> PushOffsetByReg;
@@ -307,8 +308,8 @@ class ShrinkWrapping {
   std::vector<MCInst *> BestSavePos;
 
   /// Pass stats
-  static uint64_t SpillsMovedRegularMode;
-  static uint64_t SpillsMovedPushPopMode;
+  static std::atomic_uint64_t SpillsMovedRegularMode;
+  static std::atomic_uint64_t SpillsMovedPushPopMode;
 
   Optional<unsigned> AnnotationIndex;
 

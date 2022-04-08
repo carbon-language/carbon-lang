@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -51,6 +52,9 @@ struct CSKYOperand;
 class CSKYAsmParser : public MCTargetAsmParser {
 
   const MCRegisterInfo *MRI;
+
+  unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
+                                      unsigned Kind) override;
 
   bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
                                   int64_t Lower, int64_t Upper, Twine Msg);
@@ -302,6 +306,14 @@ public:
   }
 
   bool isRegSeq() const { return isRegSeqTemplate<CSKY::R0, CSKY::R31>(); }
+
+  bool isRegSeqV1() const {
+    return isRegSeqTemplate<CSKY::F0_32, CSKY::F15_32>();
+  }
+
+  bool isRegSeqV2() const {
+    return isRegSeqTemplate<CSKY::F0_32, CSKY::F31_32>();
+  }
 
   static bool isLegalRegList(unsigned from, unsigned to) {
     if (from == 0 && to == 0)
@@ -603,6 +615,11 @@ public:
 #define GET_MATCHER_IMPLEMENTATION
 #define GET_MNEMONIC_SPELL_CHECKER
 #include "CSKYGenAsmMatcher.inc"
+
+static MCRegister convertFPR32ToFPR64(MCRegister Reg) {
+  assert(Reg >= CSKY::F0_32 && Reg <= CSKY::F31_32 && "Invalid register");
+  return Reg - CSKY::F0_32 + CSKY::F0_64;
+}
 
 static std::string CSKYMnemonicSpellCheck(StringRef S, const FeatureBitset &FBS,
                                           unsigned VariantID = 0);
@@ -1464,6 +1481,40 @@ OperandMatchResultTy CSKYAsmParser::tryParseRegister(unsigned &RegNo,
 }
 
 bool CSKYAsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
+
+unsigned CSKYAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
+                                                   unsigned Kind) {
+  CSKYOperand &Op = static_cast<CSKYOperand &>(AsmOp);
+
+  if (!Op.isReg())
+    return Match_InvalidOperand;
+
+  MCRegister Reg = Op.getReg();
+
+  if (CSKYMCRegisterClasses[CSKY::FPR32RegClassID].contains(Reg)) {
+    // As the parser couldn't differentiate an FPR64 from an FPR32, coerce the
+    // register from FPR32 to FPR64 if necessary.
+    if (Kind == MCK_FPR64 || Kind == MCK_sFPR64_V) {
+      Op.Reg.RegNum = convertFPR32ToFPR64(Reg);
+      if (Kind == MCK_sFPR64_V &&
+          (Op.Reg.RegNum < CSKY::F0_64 || Op.Reg.RegNum > CSKY::F15_64))
+        return Match_InvalidRegOutOfRange;
+      if (Kind == MCK_FPR64 &&
+          (Op.Reg.RegNum < CSKY::F0_64 || Op.Reg.RegNum > CSKY::F31_64))
+        return Match_InvalidRegOutOfRange;
+      return Match_Success;
+    }
+  }
+
+  if (CSKYMCRegisterClasses[CSKY::GPRRegClassID].contains(Reg)) {
+    if (Kind == MCK_GPRPair) {
+      Op.Reg.RegNum = MRI->getEncodingValue(Reg) + CSKY::R0_R1;
+      return Match_Success;
+    }
+  }
+
+  return Match_InvalidOperand;
+}
 
 void CSKYAsmParser::emitToStreamer(MCStreamer &S, const MCInst &Inst) {
   MCInst CInst;

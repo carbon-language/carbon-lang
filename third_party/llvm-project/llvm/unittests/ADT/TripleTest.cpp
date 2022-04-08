@@ -354,6 +354,18 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::Linux, T.getOS());
   EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
+  T = Triple("loongarch32-unknown-unknown");
+  EXPECT_EQ(Triple::loongarch32, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("loongarch64-unknown-linux");
+  EXPECT_EQ(Triple::loongarch64, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::Linux, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
   T = Triple("riscv32-unknown-unknown");
   EXPECT_EQ(Triple::riscv32, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
@@ -949,6 +961,18 @@ TEST(TripleTest, BitWidthPredicates) {
   EXPECT_TRUE(T.isArch32Bit());
   EXPECT_FALSE(T.isArch64Bit());
   EXPECT_TRUE(T.isCSKY());
+
+  T.setArch(Triple::loongarch32);
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
+  EXPECT_TRUE(T.isLoongArch());
+
+  T.setArch(Triple::loongarch64);
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
+  EXPECT_TRUE(T.isArch64Bit());
+  EXPECT_TRUE(T.isLoongArch());
 }
 
 TEST(TripleTest, BitWidthArchVariants) {
@@ -1091,6 +1115,14 @@ TEST(TripleTest, BitWidthArchVariants) {
   T.setArch(Triple::csky);
   EXPECT_EQ(Triple::csky, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
+
+  T.setArch(Triple::loongarch32);
+  EXPECT_EQ(Triple::loongarch32, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::loongarch64, T.get64BitArchVariant().getArch());
+
+  T.setArch(Triple::loongarch64);
+  EXPECT_EQ(Triple::loongarch32, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::loongarch64, T.get64BitArchVariant().getArch());
 
   T.setArch(Triple::thumbeb);
   EXPECT_EQ(Triple::thumbeb, T.get32BitArchVariant().getArch());
@@ -1269,6 +1301,16 @@ TEST(TripleTest, EndianArchVariants) {
   T.setArch(Triple::csky);
   EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::csky, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::loongarch32);
+  EXPECT_TRUE(T.isLittleEndian());
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::loongarch32, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::loongarch64);
+  EXPECT_TRUE(T.isLittleEndian());
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::loongarch64, T.getLittleEndianArchVariant().getArch());
 }
 
 TEST(TripleTest, getOSVersion) {
@@ -1392,6 +1434,23 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_TRUE(T.getEnvironment() == Triple::MacABI);
   EXPECT_TRUE(T.isMacCatalystEnvironment());
   EXPECT_FALSE(T.isSimulatorEnvironment());
+
+  T = Triple("x86_64-apple-driverkit20.1.0");
+  EXPECT_TRUE(T.isDriverKit());
+  EXPECT_TRUE(T.isOSDarwin());
+  EXPECT_FALSE(T.isMacOSX());
+  EXPECT_FALSE(T.isiOS());
+  Version = T.getDriverKitVersion();
+  EXPECT_EQ(VersionTuple(20, 1), Version);
+
+  T = Triple("x86_64-apple-driverkit20");
+  Version = T.getDriverKitVersion();
+  EXPECT_EQ(VersionTuple(20, 0), Version);
+
+  // DriverKit version should default to 19.0.
+  T = Triple("x86_64-apple-driverkit");
+  Version = T.getDriverKitVersion();
+  EXPECT_EQ(VersionTuple(19, 0), Version);
 }
 
 TEST(TripleTest, getEnvironmentVersion) {
@@ -1484,6 +1543,10 @@ TEST(TripleTest, FileFormat) {
 
   EXPECT_EQ(Triple::ELF, Triple("csky-unknown-unknown").getObjectFormat());
   EXPECT_EQ(Triple::ELF, Triple("csky-unknown-linux").getObjectFormat());
+
+  EXPECT_EQ(Triple::ELF,
+            Triple("loongarch32-unknown-unknown").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("loongarch64-unknown-linux").getObjectFormat());
 
   Triple MSVCNormalized(Triple::normalize("i686-pc-windows-msvc-elf"));
   EXPECT_EQ(Triple::ELF, MSVCNormalized.getObjectFormat());
@@ -1700,6 +1763,150 @@ TEST(TripleTest, ParseARMArch) {
     Triple T = Triple("arm64e");
     EXPECT_EQ(Triple::aarch64, T.getArch());
     EXPECT_EQ(Triple::AArch64SubArch_arm64e, T.getSubArch());
+  }
+}
+
+TEST(TripleTest, isArmT32) {
+  // Not isArmT32
+  {
+    Triple T = Triple("thumbv6m");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv8m.base");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv7s");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv7k");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv7ve");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv6");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv6m");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv6k");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv6t2");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv5");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv5te");
+    EXPECT_FALSE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv4t");
+    EXPECT_FALSE(T.isArmT32());
+  }
+
+  // isArmT32
+  {
+    Triple T = Triple("arm");
+    EXPECT_TRUE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv7m");
+    EXPECT_TRUE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv7em");
+    EXPECT_TRUE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv8m.main");
+    EXPECT_TRUE(T.isArmT32());
+  }
+  {
+    Triple T = Triple("armv8.1m.main");
+    EXPECT_TRUE(T.isArmT32());
+  }
+}
+
+TEST(TripleTest, isArmMClass) {
+  // not M-class
+  {
+    Triple T = Triple("armv7s");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv7k");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv7ve");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv6");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv6k");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv6t2");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv5");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv5te");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv4t");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("arm");
+    EXPECT_FALSE(T.isArmMClass());
+  }
+
+  // is M-class
+  {
+    Triple T = Triple("armv6m");
+    EXPECT_TRUE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv7m");
+    EXPECT_TRUE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv7em");
+    EXPECT_TRUE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv8m.base");
+    EXPECT_TRUE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv8m.main");
+    EXPECT_TRUE(T.isArmMClass());
+  }
+  {
+    Triple T = Triple("armv8.1m.main");
+    EXPECT_TRUE(T.isArmMClass());
   }
 }
 } // end anonymous namespace

@@ -9,9 +9,7 @@
 #ifndef LLD_ELF_INPUT_SECTION_H
 #define LLD_ELF_INPUT_SECTION_H
 
-#include "Config.h"
 #include "Relocations.h"
-#include "Thunks.h"
 #include "lld/Common/LLVM.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseSet.h"
@@ -21,13 +19,12 @@
 namespace lld {
 namespace elf {
 
+class InputFile;
 class Symbol;
-struct SectionPiece;
 
 class Defined;
 struct Partition;
 class SyntheticSection;
-class MergeSyntheticSection;
 template <class ELFT> class ObjFile;
 class OutputSection;
 
@@ -65,7 +62,7 @@ public:
   // The 1-indexed partition that this section is assigned to by the garbage
   // collector, or 0 if this section is dead. Normally there is only one
   // partition, so this will either be 0 or 1.
-  uint8_t partition;
+  uint8_t partition = 1;
   elf::Partition &getPartition() const;
 
   // These corresponds to the fields in Elf_Shdr.
@@ -96,8 +93,8 @@ protected:
                         uint32_t entsize, uint32_t alignment, uint32_t type,
                         uint32_t info, uint32_t link)
       : name(name), sectionKind(sectionKind), bss(false), keepUnique(false),
-        partition(0), alignment(alignment), flags(flags), entsize(entsize),
-        type(type), link(link), info(info) {}
+        alignment(alignment), flags(flags), entsize(entsize), type(type),
+        link(link), info(info) {}
 };
 
 // This corresponds to a section of an input file.
@@ -118,6 +115,12 @@ public:
   // ObjFile<ELFT>, but in order to avoid ELFT, we use InputFile as
   // its static type.
   InputFile *file;
+
+  // Input sections are part of an output section. Special sections
+  // like .eh_frame and merge sections are first combined into a
+  // synthetic section that is then added to an output section. In all
+  // cases this points one level up.
+  SectionBase *parent = nullptr;
 
   // Section index of the relocation section if exists.
   uint32_t relSecIdx = 0;
@@ -159,12 +162,6 @@ public:
     return rawData;
   }
 
-  // Input sections are part of an output section. Special sections
-  // like .eh_frame and merge sections are first combined into a
-  // synthetic section that is then added to an output section. In all
-  // cases this points one level up.
-  SectionBase *parent = nullptr;
-
   // The next member in the section group if this section is in a group. This is
   // used by --gc-sections.
   InputSectionBase *nextInSectionGroup = nullptr;
@@ -184,7 +181,7 @@ public:
   Defined *getEnclosingFunction(uint64_t offset);
 
   // Returns a source location string. Used to construct an error message.
-  template <class ELFT> std::string getLocation(uint64_t offset);
+  std::string getLocation(uint64_t offset);
   std::string getSrcMsg(const Symbol &sym, uint64_t offset);
   std::string getObjMsg(uint64_t offset);
 
@@ -218,17 +215,17 @@ public:
 
 
   template <typename T> llvm::ArrayRef<T> getDataAs() const {
-    size_t s = data().size();
+    size_t s = rawData.size();
     assert(s % sizeof(T) == 0);
-    return llvm::makeArrayRef<T>((const T *)data().data(), s / sizeof(T));
+    return llvm::makeArrayRef<T>((const T *)rawData.data(), s / sizeof(T));
   }
+
+  mutable ArrayRef<uint8_t> rawData;
 
 protected:
   template <typename ELFT>
   void parseCompressedHeader();
   void uncompress() const;
-
-  mutable ArrayRef<uint8_t> rawData;
 
   // This field stores the uncompressed size of the compressed data in rawData,
   // or -1 if rawData is not compressed (either because the section wasn't
@@ -242,6 +239,7 @@ protected:
 // have to be as compact as possible, which is why we don't store the size (can
 // be found by looking at the next one).
 struct SectionPiece {
+  SectionPiece() = default;
   SectionPiece(size_t off, uint32_t hash, bool live)
       : inputOff(off), live(live), hash(hash >> 1) {}
 
@@ -279,8 +277,8 @@ public:
   llvm::CachedHashStringRef getData(size_t i) const {
     size_t begin = pieces[i].inputOff;
     size_t end =
-        (pieces.size() - 1 == i) ? data().size() : pieces[i + 1].inputOff;
-    return {toStringRef(data().slice(begin, end - begin)), pieces[i].hash};
+        (pieces.size() - 1 == i) ? rawData.size() : pieces[i + 1].inputOff;
+    return {toStringRef(rawData.slice(begin, end - begin)), pieces[i].hash};
   }
 
   // Returns the SectionPiece at a given input section offset.
@@ -292,7 +290,7 @@ public:
   SyntheticSection *getParent() const;
 
 private:
-  void splitStrings(ArrayRef<uint8_t> a, size_t size);
+  void splitStrings(StringRef s, size_t size);
   void splitNonStrings(ArrayRef<uint8_t> a, size_t size);
 };
 
@@ -302,7 +300,7 @@ struct EhSectionPiece {
       : inputOff(off), sec(sec), size(size), firstRelocation(firstRelocation) {}
 
   ArrayRef<uint8_t> data() const {
-    return {sec->data().data() + this->inputOff, size};
+    return {sec->rawData.data() + this->inputOff, size};
   }
 
   size_t inputOff;

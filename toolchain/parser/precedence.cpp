@@ -199,7 +199,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
     case TokenKind::Star():
       return PrecedenceGroup(TermPrefix);
 
-    case TokenKind::NotKeyword():
+    case TokenKind::Not():
       return PrecedenceGroup(LogicalPrefix);
 
     case TokenKind::Minus():
@@ -233,9 +233,9 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = CompoundAssignment, .is_binary = true};
 
     // Logical operators.
-    case TokenKind::AndKeyword():
+    case TokenKind::And():
       return Trailing{.level = LogicalAnd, .is_binary = true};
-    case TokenKind::OrKeyword():
+    case TokenKind::Or():
       return Trailing{.level = LogicalOr, .is_binary = true};
 
     // Bitwise operators.
@@ -243,7 +243,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = BitwiseAnd, .is_binary = true};
     case TokenKind::Pipe():
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::XorKeyword():
+    case TokenKind::Xor():
       return Trailing{.level = BitwiseXor, .is_binary = true};
     case TokenKind::GreaterGreater():
     case TokenKind::LessLess():
@@ -282,7 +282,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 
     // Prefix-only operators.
     case TokenKind::Tilde():
-    case TokenKind::NotKeyword():
+    case TokenKind::Not():
       break;
 
     // Symbolic tokens that might be operators eventually.

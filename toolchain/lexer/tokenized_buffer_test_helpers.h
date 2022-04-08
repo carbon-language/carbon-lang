@@ -7,6 +7,7 @@
 
 #include <gmock/gmock.h>
 
+#include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/YAMLParser.h"
@@ -69,14 +70,14 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
   llvm::ArrayRef<ExpectedToken> all_expected = raw_all_expected;
 
   bool matches = true;
-  auto buffer_it = buffer.Tokens().begin();
+  auto buffer_it = buffer.tokens().begin();
   for (const ExpectedToken& expected : all_expected) {
-    if (buffer_it == buffer.Tokens().end()) {
+    if (buffer_it == buffer.tokens().end()) {
       // The size check outside the loop will fail and print useful info.
       break;
     }
 
-    int index = buffer_it - buffer.Tokens().begin();
+    int index = buffer_it - buffer.tokens().begin();
     auto token = *buffer_it++;
 
     TokenKind actual_kind = buffer.GetKind(token);
@@ -130,8 +131,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
       matches = false;
     }
 
-    assert(!expected.string_contents ||
-           expected.kind == TokenKind::StringLiteral());
+    CHECK(!expected.string_contents ||
+          expected.kind == TokenKind::StringLiteral());
     if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {
@@ -143,7 +144,7 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     }
   }
 
-  int actual_size = buffer.Tokens().end() - buffer.Tokens().begin();
+  int actual_size = buffer.tokens().end() - buffer.tokens().begin();
   if (static_cast<int>(all_expected.size()) != actual_size) {
     *result_listener << "\nExpected " << all_expected.size()
                      << " tokens but found " << actual_size << ".";

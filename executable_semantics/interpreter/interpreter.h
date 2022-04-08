@@ -15,7 +15,6 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/heap.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -24,19 +23,20 @@ namespace Carbon {
 
 // Interprets the program defined by `ast`, allocating values on `arena` and
 // printing traces if `trace` is true.
-auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace) -> int;
+auto InterpProgram(const AST& ast, Nonnull<Arena*> arena, bool trace)
+    -> ErrorOr<int>;
 
 // Interprets `e` at compile-time, allocating values on `arena` and
 // printing traces if `trace` is true. The caller must ensure that all the
 // code this evaluates has been typechecked.
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena, bool trace)
-    -> Nonnull<const Value*>;
+    -> ErrorOr<Nonnull<const Value*>>;
 
 // Interprets `p` at compile-time, allocating values on `arena` and
 // printing traces if `trace` is true. The caller must ensure that all the
 // code this evaluates has been typechecked.
 auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
-    -> Nonnull<const Value*>;
+    -> ErrorOr<Nonnull<const Value*>>;
 
 // Attempts to match `v` against the pattern `p`, returning whether matching
 // is successful. If it is, populates **bindings with the variables bound by
@@ -44,12 +44,14 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena, bool trace)
 // is not permitted to bind variables. **bindings may be modified even if the
 // match is unsuccessful, so it should typically be created for the
 // PatternMatch call and then merged into an existing scope on success.
+// The matches for generic variables in the pattern are output in
+// `generic_args`.
 // TODO: consider moving this to a separate header.
 [[nodiscard]] auto PatternMatch(Nonnull<const Value*> p,
                                 Nonnull<const Value*> v,
                                 SourceLocation source_loc,
-                                std::optional<Nonnull<RuntimeScope*>> bindings)
-    -> bool;
+                                std::optional<Nonnull<RuntimeScope*>> bindings,
+                                BindingMap& generic_args) -> bool;
 
 }  // namespace Carbon
 

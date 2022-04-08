@@ -13,6 +13,7 @@
 #include "llvm/Transforms/Instrumentation/SanitizerCoverage.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/CFG.h"
@@ -917,8 +918,7 @@ void ModuleSanitizerCoverage::InjectTraceForGep(
 
 void ModuleSanitizerCoverage::InjectTraceForLoadsAndStores(
     Function &, ArrayRef<LoadInst *> Loads, ArrayRef<StoreInst *> Stores) {
-  auto CallbackIdx = [&](const Value *Ptr) -> int {
-    auto ElementTy = cast<PointerType>(Ptr->getType())->getElementType();
+  auto CallbackIdx = [&](Type *ElementTy) -> int {
     uint64_t TypeSize = DL->getTypeStoreSizeInBits(ElementTy);
     return TypeSize == 8     ? 0
            : TypeSize == 16  ? 1
@@ -932,7 +932,7 @@ void ModuleSanitizerCoverage::InjectTraceForLoadsAndStores(
   for (auto LI : Loads) {
     IRBuilder<> IRB(LI);
     auto Ptr = LI->getPointerOperand();
-    int Idx = CallbackIdx(Ptr);
+    int Idx = CallbackIdx(LI->getType());
     if (Idx < 0)
       continue;
     IRB.CreateCall(SanCovLoadFunction[Idx],
@@ -941,7 +941,7 @@ void ModuleSanitizerCoverage::InjectTraceForLoadsAndStores(
   for (auto SI : Stores) {
     IRBuilder<> IRB(SI);
     auto Ptr = SI->getPointerOperand();
-    int Idx = CallbackIdx(Ptr);
+    int Idx = CallbackIdx(SI->getValueOperand()->getType());
     if (Idx < 0)
       continue;
     IRB.CreateCall(SanCovStoreFunction[Idx],

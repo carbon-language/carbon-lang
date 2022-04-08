@@ -237,8 +237,8 @@ std::string llvm::getUniqueModuleId(Module *M) {
   return ("." + Str).str();
 }
 
-void VFABI::setVectorVariantNames(
-    CallInst *CI, const SmallVector<std::string, 8> &VariantMappings) {
+void VFABI::setVectorVariantNames(CallInst *CI,
+                                  ArrayRef<std::string> VariantMappings) {
   if (VariantMappings.empty())
     return;
 
@@ -263,4 +263,17 @@ void VFABI::setVectorVariantNames(
 #endif
   CI->addFnAttr(
       Attribute::get(M->getContext(), MappingsAttrName, Buffer.str()));
+}
+
+void llvm::embedBufferInModule(Module &M, MemoryBufferRef Buf,
+                               StringRef SectionName) {
+  // Embed the buffer into the module.
+  Constant *ModuleConstant = ConstantDataArray::get(
+      M.getContext(), makeArrayRef(Buf.getBufferStart(), Buf.getBufferSize()));
+  GlobalVariable *GV = new GlobalVariable(
+      M, ModuleConstant->getType(), true, GlobalValue::PrivateLinkage,
+      ModuleConstant, "llvm.embedded.object");
+  GV->setSection(SectionName);
+
+  appendToCompilerUsed(M, GV);
 }

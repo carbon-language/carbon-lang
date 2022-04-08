@@ -436,7 +436,7 @@ void fir::factory::genFinalization(fir::FirOpBuilder &builder,
   auto ifOp = builder.create<fir::IfOp>(loc, isAllocated,
                                         /*withElseRegion=*/false);
   auto insPt = builder.saveInsertionPoint();
-  builder.setInsertionPointToStart(&ifOp.thenRegion().front());
+  builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
   genFinalizeAndFree(builder, loc, addr);
   builder.restoreInsertionPoint(insPt);
 }
@@ -675,8 +675,8 @@ void fir::factory::genReallocIfNeeded(fir::FirOpBuilder &builder,
           // reallocate = reallocate || previous != required
           auto cmp = builder.create<arith::CmpIOp>(
               loc, arith::CmpIPredicate::ne, castPrevious, required);
-          mustReallocate =
-              builder.create<mlir::SelectOp>(loc, cmp, cmp, mustReallocate);
+          mustReallocate = builder.create<mlir::arith::SelectOp>(
+              loc, cmp, cmp, mustReallocate);
         };
         llvm::SmallVector<mlir::Value> previousLbounds;
         llvm::SmallVector<mlir::Value> previousExtents =

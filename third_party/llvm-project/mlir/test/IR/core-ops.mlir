@@ -61,20 +61,20 @@ func @standard_instrs(tensor<4x4x?xf32>, f32, i32, index, i64, f16) {
   %tci1 = arith.constant dense<1> : tensor<42xi1>
   %vci1 = arith.constant dense<1> : vector<42xi1>
 
-  // CHECK: %{{.*}} = select %{{.*}}, %arg3, %arg3 : index
-  %21 = select %true, %idx, %idx : index
+  // CHECK: %{{.*}} = arith.select %{{.*}}, %arg3, %arg3 : index
+  %21 = arith.select %true, %idx, %idx : index
 
-  // CHECK: %{{.*}} = select %{{.*}}, %{{.*}}, %{{.*}} : tensor<42xi1>, tensor<42xi32>
-  %22 = select %tci1, %tci32, %tci32 : tensor<42 x i1>, tensor<42 x i32>
+  // CHECK: %{{.*}} = arith.select %{{.*}}, %{{.*}}, %{{.*}} : tensor<42xi1>, tensor<42xi32>
+  %22 = arith.select %tci1, %tci32, %tci32 : tensor<42 x i1>, tensor<42 x i32>
 
-  // CHECK: %{{.*}} = select %{{.*}}, %{{.*}}, %{{.*}} : vector<42xi1>, vector<42xi32>
-  %23 = select %vci1, %vci32, %vci32 : vector<42 x i1>, vector<42 x i32>
+  // CHECK: %{{.*}} = arith.select %{{.*}}, %{{.*}}, %{{.*}} : vector<42xi1>, vector<42xi32>
+  %23 = arith.select %vci1, %vci32, %vci32 : vector<42 x i1>, vector<42 x i32>
 
-  // CHECK: %{{.*}} = select %{{.*}}, %arg3, %arg3 : index
-  %24 = "std.select"(%true, %idx, %idx) : (i1, index, index) -> index
+  // CHECK: %{{.*}} = arith.select %{{.*}}, %arg3, %arg3 : index
+  %24 = "arith.select"(%true, %idx, %idx) : (i1, index, index) -> index
 
-  // CHECK: %{{.*}} = select %{{.*}}, %{{.*}}, %{{.*}} : tensor<42xi32>
-  %25 = std.select %true, %tci32, %tci32 : tensor<42 x i32>
+  // CHECK: %{{.*}} = arith.select %{{.*}}, %{{.*}}, %{{.*}} : tensor<42xi32>
+  %25 = arith.select %true, %tci32, %tci32 : tensor<42 x i32>
 
   %64 = arith.constant dense<0.> : vector<4 x f32>
   %tcf32 = arith.constant dense<0.> : tensor<42 x f32>
@@ -98,9 +98,6 @@ func @standard_instrs(tensor<4x4x?xf32>, f32, i32, index, i64, f16) {
 
   // CHECK: %{{.*}} = arith.cmpf oeq, %{{.*}}, %{{.*}}: vector<4xf32>
   %70 = arith.cmpf oeq, %vcf32, %vcf32 : vector<4 x f32>
-
-  // CHECK: = constant unit
-  %73 = constant unit
 
   // CHECK: arith.constant true
   %74 = arith.constant true
@@ -295,18 +292,6 @@ func @test_dimop(%arg0: tensor<4x4x?xf32>) {
   return
 }
 
-// CHECK-LABEL: func @test_splat_op
-// CHECK-SAME: [[S:%arg[0-9]+]]: f32
-func @test_splat_op(%s : f32) {
-  %v = splat %s : vector<8xf32>
-  // CHECK: splat [[S]] : vector<8xf32>
-  %t = splat %s : tensor<8xf32>
-  // CHECK: splat [[S]] : tensor<8xf32>
-  %u = "std.splat"(%s) : (f32) -> vector<4xf32>
-  // CHECK: splat [[S]] : vector<4xf32>
-  return
-}
-
 // CHECK-LABEL: func @tensor_load_store
 func @tensor_load_store(%0 : memref<4x4xi32>, %1 : tensor<4x4xi32>) {
   // CHECK-SAME: (%[[MEMREF:.*]]: memref<4x4xi32>,
@@ -322,20 +307,6 @@ func @unranked_tensor_load_store(%0 : memref<*xi32>, %1 : tensor<*xi32>) {
   // CHECK-SAME:  %[[TENSOR:.*]]: tensor<*xi32>)
   // CHECK: memref.tensor_store %[[TENSOR]], %[[MEMREF]] : memref<*xi32>
   memref.tensor_store %1, %0 : memref<*xi32>
-  return
-}
-
-// CHECK-LABEL: func @generic_atomic_rmw
-// CHECK-SAME: ([[BUF:%.*]]: memref<1x2xf32>, [[I:%.*]]: index, [[J:%.*]]: index)
-func @generic_atomic_rmw(%I: memref<1x2xf32>, %i : index, %j : index) {
-  %x = generic_atomic_rmw %I[%i, %j] : memref<1x2xf32> {
-  // CHECK-NEXT: generic_atomic_rmw [[BUF]]{{\[}}[[I]], [[J]]] : memref
-    ^bb0(%old_value : f32):
-      %c1 = arith.constant 1.0 : f32
-      %out = arith.addf %c1, %old_value : f32
-      atomic_yield %out : f32
-  // CHECK: index_attr = 8 : index
-  } { index_attr = 8 : index }
   return
 }
 

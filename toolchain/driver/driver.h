@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
 
@@ -45,7 +46,8 @@ class Driver {
   //
   // Returns true if appropriate help text was found and printed. If an invalid
   // positional parameter (or flag) is provided, returns false.
-  auto RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunHelpSubcommand(DiagnosticConsumer& consumer,
+                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Subcommand that dumps the token information for the provided source file.
   //
@@ -55,7 +57,8 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, this
   // returns false and any information about the failure is printed to the
   // registered error stream (stderr by default).
-  auto RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
+                               llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Subcommand that dumps the parse tree for the provided source file.
   //
@@ -65,7 +68,8 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, this
   // returns false and any information about the failure is printed to the
   // registered error stream (stderr by default).
-  auto RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunDumpParseTreeSubcommand(DiagnosticConsumer& consumer,
+                                  llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
  private:
   auto ReportExtraArgs(llvm::StringRef subcommand_text,

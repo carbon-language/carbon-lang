@@ -13,9 +13,9 @@
 #   define _CRT_RAND_S
 #endif // defined(_LIBCPP_USING_WIN32_RANDOM)
 
-#include "limits"
-#include "random"
-#include "system_error"
+#include <limits>
+#include <random>
+#include <system_error>
 
 #if defined(__sun__)
 #   define rename solaris_headers_are_broken
@@ -68,10 +68,8 @@ random_device::operator()()
 
 #elif defined(_LIBCPP_USING_ARC4_RANDOM)
 
-random_device::random_device(const string& __token)
+random_device::random_device(const string&)
 {
-    if (__token != "/dev/urandom")
-        __throw_system_error(ENOENT, ("random device not supported " + __token).c_str());
 }
 
 random_device::~random_device()

@@ -7,7 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Analysis/Presburger/IntegerPolyhedron.h"
-#include "../AffineStructuresParser.h"
+#include "./Utils.h"
+#include "mlir/Analysis/Presburger/Simplex.h"
 #include "mlir/IR/MLIRContext.h"
 
 #include <gmock/gmock.h>
@@ -16,7 +17,7 @@
 #include <numeric>
 
 namespace mlir {
-
+using namespace presburger_utils;
 using testing::ElementsAre;
 
 enum class TestFunction { Sample, Empty };
@@ -36,29 +37,53 @@ makeSetFromConstraints(unsigned ids, ArrayRef<SmallVector<int64_t, 4>> ineqs,
   return set;
 }
 
+static void dump(ArrayRef<int64_t> vec) {
+  for (int64_t x : vec)
+    llvm::errs() << x << ' ';
+  llvm::errs() << '\n';
+}
+
 /// If fn is TestFunction::Sample (default):
-/// If hasSample is true, check that findIntegerSample returns a valid sample
-/// for the IntegerPolyhedron poly.
-/// If hasSample is false, check that findIntegerSample returns None.
+///
+///   If hasSample is true, check that findIntegerSample returns a valid sample
+///   for the IntegerPolyhedron poly. Also check that getIntegerLexmin finds a
+///   non-empty lexmin.
+///
+///   If hasSample is false, check that findIntegerSample returns None and
+///   getIntegerLexMin returns Empty.
 ///
 /// If fn is TestFunction::Empty, check that isIntegerEmpty returns the
 /// opposite of hasSample.
 static void checkSample(bool hasSample, const IntegerPolyhedron &poly,
                         TestFunction fn = TestFunction::Sample) {
   Optional<SmallVector<int64_t, 8>> maybeSample;
+  MaybeOptimum<SmallVector<int64_t, 8>> maybeLexMin;
   switch (fn) {
   case TestFunction::Sample:
     maybeSample = poly.findIntegerSample();
+    maybeLexMin = poly.findIntegerLexMin();
+
     if (!hasSample) {
       EXPECT_FALSE(maybeSample.hasValue());
       if (maybeSample.hasValue()) {
-        for (auto x : *maybeSample)
-          llvm::errs() << x << ' ';
-        llvm::errs() << '\n';
+        llvm::errs() << "findIntegerSample gave sample: ";
+        dump(*maybeSample);
+      }
+
+      EXPECT_TRUE(maybeLexMin.isEmpty());
+      if (maybeLexMin.isBounded()) {
+        llvm::errs() << "getIntegerLexMin gave sample: ";
+        dump(*maybeLexMin);
       }
     } else {
       ASSERT_TRUE(maybeSample.hasValue());
       EXPECT_TRUE(poly.containsPoint(*maybeSample));
+
+      ASSERT_FALSE(maybeLexMin.isEmpty());
+      if (maybeLexMin.isUnbounded())
+        EXPECT_TRUE(Simplex(poly).isUnbounded());
+      if (maybeLexMin.isBounded())
+        EXPECT_TRUE(poly.containsPoint(*maybeLexMin));
     }
     break;
   case TestFunction::Empty:
@@ -96,17 +121,6 @@ static void checkPermutationsSample(bool hasSample, unsigned nDim,
     checkSample(hasSample,
                 makeSetFromConstraints(nDim, permutedIneqs, permutedEqs), fn);
   } while (std::next_permutation(perm.begin(), perm.end()));
-}
-
-/// Parses a IntegerPolyhedron from a StringRef. It is expected that the
-/// string represents a valid IntegerSet, otherwise it will violate a gtest
-/// assertion.
-static IntegerPolyhedron parsePoly(StringRef str, MLIRContext *context) {
-  FailureOr<IntegerPolyhedron> poly = parseIntegerSetToFAC(str, context);
-
-  EXPECT_TRUE(succeeded(poly));
-
-  return *poly;
 }
 
 TEST(IntegerPolyhedronTest, removeInequality) {
@@ -169,7 +183,7 @@ TEST(IntegerPolyhedronTest, removeIdRange) {
   EXPECT_THAT(set.getInequality(0),
               testing::ElementsAre(10, 11, 12, 20, 30, 40));
 
-  set.removeIdRange(IntegerPolyhedron::IdKind::Dimension, 0, 2);
+  set.removeIdRange(IntegerPolyhedron::IdKind::SetDim, 0, 2);
   EXPECT_THAT(set.getInequality(0), testing::ElementsAre(12, 20, 30, 40));
 
   set.removeIdRange(IntegerPolyhedron::IdKind::Local, 1, 1);
@@ -635,9 +649,11 @@ static void checkDivisionRepresentation(
   // Check that the `dividends` and `expectedDividends` match. If the
   // denominator for a division is zero, we ignore its dividend.
   EXPECT_TRUE(dividends.size() == expectedDividends.size());
-  for (unsigned i = 0, e = dividends.size(); i < e; ++i)
-    if (denominators[i] != 0)
+  for (unsigned i = 0, e = dividends.size(); i < e; ++i) {
+    if (denominators[i] != 0) {
       EXPECT_TRUE(expectedDividends[i] == dividends[i]);
+    }
+  }
 }
 
 TEST(IntegerPolyhedronTest, computeLocalReprSimple) {
@@ -734,6 +750,61 @@ TEST(IntegerPolyhedronTest, computeLocalReprTightUpperBound) {
   }
 }
 
+TEST(IntegerPolyhedronTest, computeLocalReprFromEquality) {
+  MLIRContext context;
+  {
+    IntegerPolyhedron poly =
+        parsePoly("(i, j, q) : (-4*q + i + j == 0)", &context);
+    // Convert `q` to a local variable.
+    poly.convertDimToLocal(2, 3);
+
+    std::vector<SmallVector<int64_t, 8>> divisions = {{-1, -1, 0, 0}};
+    SmallVector<unsigned, 8> denoms = {4};
+
+    checkDivisionRepresentation(poly, divisions, denoms);
+  }
+  {
+    IntegerPolyhedron poly =
+        parsePoly("(i, j, q) : (4*q - i - j == 0)", &context);
+    // Convert `q` to a local variable.
+    poly.convertDimToLocal(2, 3);
+
+    std::vector<SmallVector<int64_t, 8>> divisions = {{-1, -1, 0, 0}};
+    SmallVector<unsigned, 8> denoms = {4};
+
+    checkDivisionRepresentation(poly, divisions, denoms);
+  }
+  {
+    IntegerPolyhedron poly =
+        parsePoly("(i, j, q) : (3*q + i + j - 2 == 0)", &context);
+    // Convert `q` to a local variable.
+    poly.convertDimToLocal(2, 3);
+
+    std::vector<SmallVector<int64_t, 8>> divisions = {{1, 1, 0, -2}};
+    SmallVector<unsigned, 8> denoms = {3};
+
+    checkDivisionRepresentation(poly, divisions, denoms);
+  }
+}
+
+TEST(IntegerPolyhedronTest, computeLocalReprFromEqualityAndInequality) {
+  MLIRContext context;
+  {
+    IntegerPolyhedron poly =
+        parsePoly("(i, j, q, k) : (-3*k + i + j == 0, 4*q - "
+                  "i - j + 2 >= 0, -4*q + i + j >= 0)",
+                  &context);
+    // Convert `q` and `k` to local variables.
+    poly.convertDimToLocal(2, 4);
+
+    std::vector<SmallVector<int64_t, 8>> divisions = {{1, 1, 0, 0, 1},
+                                                      {-1, -1, 0, 0, 0}};
+    SmallVector<unsigned, 8> denoms = {4, 3};
+
+    checkDivisionRepresentation(poly, divisions, denoms);
+  }
+}
+
 TEST(IntegerPolyhedronTest, computeLocalReprNoRepr) {
   MLIRContext context;
   IntegerPolyhedron poly =
@@ -745,6 +816,21 @@ TEST(IntegerPolyhedronTest, computeLocalReprNoRepr) {
   SmallVector<unsigned, 8> denoms = {0};
 
   // Check that no division is computed.
+  checkDivisionRepresentation(poly, divisions, denoms);
+}
+
+TEST(IntegerPolyhedronTest, computeLocalReprNegConstNormalize) {
+  MLIRContext context;
+  IntegerPolyhedron poly = parsePoly(
+      "(x, q) : (-1 - 3*x - 6 * q >= 0, 6 + 3*x + 6*q >= 0)", &context);
+  // Convert q to a local variable.
+  poly.convertDimToLocal(1, 2);
+
+  // q = floor((-1/3 - x)/2)
+  //   = floor((1/3) + (-1 - x)/2)
+  //   = floor((-1 - x)/2).
+  std::vector<SmallVector<int64_t, 8>> divisions = {{-1, 0, -1}};
+  SmallVector<unsigned, 8> denoms = {2};
   checkDivisionRepresentation(poly, divisions, denoms);
 }
 
@@ -967,6 +1053,201 @@ TEST(IntegerPolyhedronTest, mergeDivisionsConstants) {
     EXPECT_EQ(poly1.getNumLocalIds(), 2u);
     EXPECT_EQ(poly2.getNumLocalIds(), 2u);
   }
+}
+
+TEST(IntegerPolyhedronTest, negativeDividends) {
+  // (x) : (exists y = [-x + 1 / 2], z = [-x - 2 / 3]: y + z >= x).
+  IntegerPolyhedron poly1(1);
+  poly1.addLocalFloorDiv({-1, 1}, 2); // y = [x + 1 / 2].
+  // Normalization test with negative dividends
+  poly1.addLocalFloorDiv({-3, 0, -6}, 9); // z = [3x + 6 / 9] -> [x + 2 / 3].
+  poly1.addInequality({-1, 1, 1, 0});     // y + z >= x.
+
+  // (x) : (exists y = [x + 1 / 3], z = [x + 2 / 3]: y + z <= x).
+  IntegerPolyhedron poly2(1);
+  // Normalization test.
+  poly2.addLocalFloorDiv({-2, 2}, 4);     // y = [-2x + 2 / 4] -> [-x + 1 / 2].
+  poly2.addLocalFloorDiv({-1, 0, -2}, 3); // z = [-x - 2 / 3].
+  poly2.addInequality({1, -1, -1, 0});    // y + z <= x.
+
+  poly1.mergeLocalIds(poly2);
+
+  // Merging triggers normalization.
+  std::vector<SmallVector<int64_t, 8>> divisions = {{-1, 0, 0, 1},
+                                                    {-1, 0, 0, -2}};
+  SmallVector<unsigned, 8> denoms = {2, 3};
+  checkDivisionRepresentation(poly1, divisions, denoms);
+}
+
+void expectRationalLexMin(const IntegerPolyhedron &poly,
+                          ArrayRef<Fraction> min) {
+  auto lexMin = poly.findRationalLexMin();
+  ASSERT_TRUE(lexMin.isBounded());
+  EXPECT_EQ(ArrayRef<Fraction>(*lexMin), min);
+}
+
+void expectNoRationalLexMin(OptimumKind kind, const IntegerPolyhedron &poly) {
+  ASSERT_NE(kind, OptimumKind::Bounded)
+      << "Use expectRationalLexMin for bounded min";
+  EXPECT_EQ(poly.findRationalLexMin().getKind(), kind);
+}
+
+TEST(IntegerPolyhedronTest, getRationalLexMin) {
+  MLIRContext context;
+  expectRationalLexMin(
+      parsePoly("(x, y, z) : (x + 10 >= 0, y + 40 >= 0, z + 30 >= 0)",
+                &context),
+      {{-10, 1}, {-40, 1}, {-30, 1}});
+  expectRationalLexMin(
+      parsePoly(
+          "(x, y, z) : (2*x + 7 >= 0, 3*y - 5 >= 0, 8*z + 10 >= 0, 9*z >= 0)",
+          &context),
+      {{-7, 2}, {5, 3}, {0, 1}});
+  expectRationalLexMin(
+      parsePoly(
+          "(x, y) : (3*x + 2*y + 10 >= 0, -3*y + 10 >= 0, 4*x - 7*y - 10 >= 0)",
+          &context),
+      {{-50, 29}, {-70, 29}});
+
+  // Test with some locals. This is basically x >= 11, 0 <= x - 2e <= 1.
+  // It'll just choose x = 11, e = 5.5 since it's rational lexmin.
+  expectRationalLexMin(
+      parsePoly(
+          "(x, y) : (x - 2*(x floordiv 2) == 0, y - 2*x >= 0, x - 11 >= 0)",
+          &context),
+      {{11, 1}, {22, 1}});
+
+  expectRationalLexMin(parsePoly("(x, y) : (3*x + 2*y + 10 >= 0,"
+                                 "-4*x + 7*y + 10 >= 0, -3*y + 10 >= 0)",
+                                 &context),
+                       {{-50, 9}, {10, 3}});
+
+  // Cartesian product of above with itself.
+  expectRationalLexMin(
+      parsePoly("(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0,"
+                "-3*y + 10 >= 0, 3*z + 2*w + 10 >= 0, -4*z + 7*w + 10 >= 0,"
+                "-3*w + 10 >= 0)",
+                &context),
+      {{-50, 9}, {10, 3}, {-50, 9}, {10, 3}});
+
+  // Same as above but for the constraints on z and w, we express "10" in terms
+  // of x and y. We know that x and y still have to take the values
+  // -50/9 and 10/3 since their constraints are the same and their values are
+  // minimized first. Accordingly, the values -9x - 12y,  -9x - 0y - 10,
+  // and -9x - 15y + 10 are all equal to 10.
+  expectRationalLexMin(
+      parsePoly(
+          "(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0, "
+          "-3*y + 10 >= 0, 3*z + 2*w - 9*x - 12*y >= 0,"
+          "-4*z + 7*w + - 9*x - 9*y - 10 >= 0, -3*w - 9*x - 15*y + 10 >= 0)",
+          &context),
+      {{-50, 9}, {10, 3}, {-50, 9}, {10, 3}});
+
+  // Same as above with one constraint removed, making the lexmin unbounded.
+  expectNoRationalLexMin(
+      OptimumKind::Unbounded,
+      parsePoly("(x, y, z, w) : (3*x + 2*y + 10 >= 0, -4*x + 7*y + 10 >= 0,"
+                "-3*y + 10 >= 0, 3*z + 2*w - 9*x - 12*y >= 0,"
+                "-4*z + 7*w + - 9*x - 9*y - 10>= 0)",
+                &context));
+
+  // Again, the lexmin is unbounded.
+  expectNoRationalLexMin(
+      OptimumKind::Unbounded,
+      parsePoly("(x, y, z) : (2*x + 5*y + 8*z - 10 >= 0,"
+                "2*x + 10*y + 8*z - 10 >= 0, 2*x + 5*y + 10*z - 10 >= 0)",
+                &context));
+
+  // The set is empty.
+  expectNoRationalLexMin(OptimumKind::Empty,
+                         parsePoly("(x) : (2*x >= 0, -x - 1 >= 0)", &context));
+}
+
+void expectIntegerLexMin(const IntegerPolyhedron &poly, ArrayRef<int64_t> min) {
+  auto lexMin = poly.findIntegerLexMin();
+  ASSERT_TRUE(lexMin.isBounded());
+  EXPECT_EQ(ArrayRef<int64_t>(*lexMin), min);
+}
+
+void expectNoIntegerLexMin(OptimumKind kind, const IntegerPolyhedron &poly) {
+  ASSERT_NE(kind, OptimumKind::Bounded)
+      << "Use expectRationalLexMin for bounded min";
+  EXPECT_EQ(poly.findRationalLexMin().getKind(), kind);
+}
+
+TEST(IntegerPolyhedronTest, getIntegerLexMin) {
+  MLIRContext context;
+  expectIntegerLexMin(parsePoly("(x, y, z) : (2*x + 13 >= 0, 4*y - 3*x - 2  >= "
+                                "0, 11*z + 5*y - 3*x + 7 >= 0)",
+                                &context),
+                      {-6, -4, 0});
+  // Similar to above but no lower bound on z.
+  expectNoIntegerLexMin(OptimumKind::Unbounded,
+                        parsePoly("(x, y, z) : (2*x + 13 >= 0, 4*y - 3*x - 2  "
+                                  ">= 0, -11*z + 5*y - 3*x + 7 >= 0)",
+                                  &context));
+}
+
+static void
+expectComputedVolumeIsValidOverapprox(const IntegerPolyhedron &poly,
+                                      Optional<uint64_t> trueVolume,
+                                      Optional<uint64_t> resultBound) {
+  expectComputedVolumeIsValidOverapprox(poly.computeVolume(), trueVolume,
+                                        resultBound);
+}
+
+TEST(IntegerPolyhedronTest, computeVolume) {
+  MLIRContext context;
+
+  // 0 <= x <= 3 + 1/3, -5.5 <= y <= 2 + 3/5, 3 <= z <= 1.75.
+  // i.e. 0 <= x <= 3, -5 <= y <= 2, 3 <= z <= 3 + 1/4.
+  // So volume is 4 * 8 * 1 = 32.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y, z) : (x >= 0, -3*x + 10 >= 0, 2*y + 11 >= 0,"
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
+                &context),
+      /*trueVolume=*/32ull, /*resultBound=*/32ull);
+
+  // Same as above but y has bounds 2 + 1/5 <= y <= 2 + 3/5. So the volume is
+  // zero.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y, z) : (x >= 0, -3*x + 10 >= 0, 5*y - 11 >= 0,"
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
+                &context),
+      /*trueVolume=*/0ull, /*resultBound=*/0ull);
+
+  // Now x is unbounded below but y still has no integer values.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y, z) : (-3*x + 10 >= 0, 5*y - 11 >= 0,"
+                "-5*y + 13 >= 0, z - 3 >= 0, -4*z + 13 >= 0)",
+                &context),
+      /*trueVolume=*/0ull, /*resultBound=*/0ull);
+
+  // A diamond shape, 0 <= x + y <= 10, 0 <= x - y <= 10,
+  // with vertices at (0, 0), (5, 5), (5, 5), (10, 0).
+  // x and y can take 11 possible values so result computed is 11*11 = 121.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y) : (x + y >= 0, -x - y + 10 >= 0, x - y >= 0,"
+                "-x + y + 10 >= 0)",
+                &context),
+      /*trueVolume=*/61ull, /*resultBound=*/121ull);
+
+  // Effectively the same diamond as above; constrain the variables to be even
+  // and double the constant terms of the constraints. The algorithm can't
+  // eliminate locals exactly, so the result is an overapproximation by
+  // computing that x and y can take 21 possible values so result is 21*21 =
+  // 441.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y) : (x + y >= 0, -x - y + 20 >= 0, x - y >= 0,"
+                " -x + y + 20 >= 0, x - 2*(x floordiv 2) == 0,"
+                "y - 2*(y floordiv 2) == 0)",
+                &context),
+      /*trueVolume=*/61ull, /*resultBound=*/441ull);
+
+  // Unbounded polytope.
+  expectComputedVolumeIsValidOverapprox(
+      parsePoly("(x, y) : (2*x - y >= 0, y - 3*x >= 0)", &context),
+      /*trueVolume=*/{}, /*resultBound=*/{});
 }
 
 } // namespace mlir

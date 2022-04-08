@@ -18,12 +18,8 @@ contributions.
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
         -   [`python3` and `pip3`](#python3-and-pip3)
-    -   [Linux only](#linux-only)
-        -   [`go get`](#go-get)
-        -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
         -   [Manual installations (not recommended)](#manual-installations-not-recommended)
     -   [pre-commit](#pre-commit)
@@ -111,38 +107,6 @@ periodically run `pip3 list --outdated`, then `pip3 install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
 
-### Linux only
-
-Linux-specific package managers are typically used for packages which work
-through [brew](#homebrew) on MacOS, but not on Linux.
-
-Installation instructions assume Debian- or Ubuntu-based Linux distributions
-with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
-
-#### `go get`
-
-[go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
-
-Our recommended way of installing is:
-
-```bash
-apt install golang
-```
-
-To get the latest version of `go` packages, it will be necessary to periodically
-re-run the original `go get ...` command used to install the package.
-
-#### Cargo (optional)
-
-Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux.
-
-Our recommended way of installing is to run
-[the canonical install command](https://rustup.rs/).
-
-To get the latest version of `cargo` packages, it will be necessary to
-periodically re-run the original `cargo install ...` command used.
-
 ## Main tools
 
 These tools are key for contributions, primarily focused on validating
@@ -159,26 +123,6 @@ Our recommended way of installing is:
 ```bash
 brew install bazelisk
 ```
-
-### buildifier
-
-[Buildifier](https://github.com/bazelbuild/buildtools/tree/master/buildifier) is
-a tool for formatting Bazel BUILD files, and is distributing separately from
-Bazel.
-
-Our recommended way of installing is:
-
--   Linux:
-
-    ```bash
-    go get github.com/bazelbuild/buildtools/buildifier
-    ```
-
--   MacOS:
-
-    ```bash
-    brew install buildifier
-    ```
 
 ### Clang and LLVM
 
@@ -338,6 +282,10 @@ git on large repositories, such as `carbon-lang`.
 Our recommended way of installing is:
 
 -   Linux:
+
+    > If you don't have Rust's [Cargo](https://doc.rust-lang.org/cargo/) package
+    > manager, install it first with
+    > [the official install command](https://rustup.rs/).
 
     ```bash
     brew install watchman

@@ -29,7 +29,6 @@ header_markup = {
     "shared_mutex": ["ifndef _LIBCPP_HAS_NO_THREADS"],
     "thread": ["ifndef _LIBCPP_HAS_NO_THREADS"],
 
-    "experimental/filesystem": ["ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY"],
     "filesystem": ["ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY"],
     "format": ["ifndef _LIBCPP_HAS_NO_INCOMPLETE_FORMAT"],
 
@@ -202,11 +201,11 @@ def produce_test(test_filename, exclusions=None, post_include=None):
 
 
 def main():
+    produce_test('clang_tidy.sh.cpp')
     produce_test('double_include.sh.cpp')
-    produce_test('min_max_macros.compile.pass.cpp',
-                 post_include='TEST_MACROS();')
-    produce_test('no_assert_include.compile.pass.cpp',
-                 exclusions=['cassert'])
+    produce_test('min_max_macros.compile.pass.cpp', post_include='TEST_MACROS();')
+    produce_test('nasty_macros.compile.pass.cpp')
+    produce_test('no_assert_include.compile.pass.cpp', exclusions=['cassert'])
 
 
 if __name__ == '__main__':

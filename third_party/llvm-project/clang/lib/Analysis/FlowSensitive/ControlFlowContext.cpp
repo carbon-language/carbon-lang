@@ -38,6 +38,8 @@ buildStmtToBasicBlockMap(const CFG &Cfg) {
 
       StmtToBlock[Stmt.getValue().getStmt()] = Block;
     }
+    if (const Stmt *TerminatorStmt = Block->getTerminatorStmt())
+      StmtToBlock[TerminatorStmt] = Block;
   }
   return StmtToBlock;
 }
@@ -49,6 +51,7 @@ ControlFlowContext::build(const Decl *D, Stmt *S, ASTContext *C) {
   Options.AddImplicitDtors = true;
   Options.AddTemporaryDtors = true;
   Options.AddInitializers = true;
+  Options.AddCXXDefaultInitExprInCtors = true;
 
   // Ensure that all sub-expressions in basic blocks are evaluated.
   Options.setAllAlwaysAdd();

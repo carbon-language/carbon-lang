@@ -1,6 +1,7 @@
 # REQUIRES: asserts
 # RUN: llvm-mc -triple=arm64-apple-darwin11 -filetype=obj -o %t %s
-# RUN: llvm-jitlink -noexec -debug-only=jitlink %t 2>&1 | FileCheck %s
+# RUN: llvm-jitlink -noexec -phony-externals -debug-only=jitlink %t 2>&1 | \
+# RUN:   FileCheck %s
 #
 # Check that splitting of eh-frame sections works.
 #

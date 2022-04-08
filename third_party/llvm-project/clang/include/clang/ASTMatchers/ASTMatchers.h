@@ -5170,6 +5170,25 @@ AST_POLYMORPHIC_MATCHER(isNoThrow,
   return FnTy->isNothrow();
 }
 
+/// Matches consteval function declarations and if consteval/if ! consteval
+/// statements.
+///
+/// Given:
+/// \code
+///   consteval int a();
+///   void b() { if consteval {} }
+///   void c() { if ! consteval {} }
+///   void d() { if ! consteval {} else {} }
+/// \endcode
+/// functionDecl(isConsteval())
+///   matches the declaration of "int a()".
+/// ifStmt(isConsteval())
+///   matches the if statement in "void b()", "void c()", "void d()".
+AST_POLYMORPHIC_MATCHER(isConsteval,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(FunctionDecl, IfStmt)) {
+  return Node.isConsteval();
+}
+
 /// Matches constexpr variable and function declarations,
 ///        and if constexpr.
 ///
@@ -5190,6 +5209,23 @@ AST_POLYMORPHIC_MATCHER(isConstexpr,
                                                         FunctionDecl,
                                                         IfStmt)) {
   return Node.isConstexpr();
+}
+
+/// Matches constinit variable declarations.
+///
+/// Given:
+/// \code
+///   constinit int foo = 42;
+///   constinit const char* bar = "bar";
+///   int baz = 42;
+///   [[clang::require_constant_initialization]] int xyz = 42;
+/// \endcode
+/// varDecl(isConstinit())
+///   matches the declaration of `foo` and `bar`, but not `baz` and `xyz`.
+AST_MATCHER(VarDecl, isConstinit) {
+  if (const auto *CIA = Node.getAttr<ConstInitAttr>())
+    return CIA->isConstinit();
+  return false;
 }
 
 /// Matches selection statements with initializer.
@@ -7637,7 +7673,7 @@ AST_MATCHER_P(FunctionDecl, hasExplicitSpecifier, internal::Matcher<Expr>,
   return InnerMatcher.matches(*ES.getExpr(), Finder, Builder);
 }
 
-/// Matches function and namespace declarations that are marked with
+/// Matches functions, variables and namespace declarations that are marked with
 /// the inline keyword.
 ///
 /// Given
@@ -7647,18 +7683,22 @@ AST_MATCHER_P(FunctionDecl, hasExplicitSpecifier, internal::Matcher<Expr>,
 ///   namespace n {
 ///   inline namespace m {}
 ///   }
+///   inline int Foo = 5;
 /// \endcode
 /// functionDecl(isInline()) will match ::f().
 /// namespaceDecl(isInline()) will match n::m.
-AST_POLYMORPHIC_MATCHER(isInline,
-                        AST_POLYMORPHIC_SUPPORTED_TYPES(NamespaceDecl,
-                                                        FunctionDecl)) {
+/// varDecl(isInline()) will match Foo;
+AST_POLYMORPHIC_MATCHER(isInline, AST_POLYMORPHIC_SUPPORTED_TYPES(NamespaceDecl,
+                                                                  FunctionDecl,
+                                                                  VarDecl)) {
   // This is required because the spelling of the function used to determine
   // whether inline is specified or not differs between the polymorphic types.
   if (const auto *FD = dyn_cast<FunctionDecl>(&Node))
     return FD->isInlineSpecified();
-  else if (const auto *NSD = dyn_cast<NamespaceDecl>(&Node))
+  if (const auto *NSD = dyn_cast<NamespaceDecl>(&Node))
     return NSD->isInline();
+  if (const auto *VD = dyn_cast<VarDecl>(&Node))
+    return VD->isInline();
   llvm_unreachable("Not a valid polymorphic type");
 }
 

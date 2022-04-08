@@ -7,6 +7,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -36,47 +37,48 @@ void ActionStack::Start(std::unique_ptr<Action> action) {
   todo_.Push(std::move(action));
 }
 
-void ActionStack::Initialize(NamedEntityView named_entity,
+void ActionStack::Initialize(ValueNodeView value_node,
                              Nonnull<const Value*> value) {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
-      action->scope()->Initialize(named_entity, value);
+      action->scope()->Initialize(value_node, value);
       return;
     }
   }
-  globals_->Initialize(named_entity, value);
+  globals_->Initialize(value_node, value);
 }
 
-auto ActionStack::ValueOfName(NamedEntityView named_entity,
+auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
-    -> Nonnull<const Value*> {
-  if (std::optional<Nonnull<const Value*>> constant_value =
-          named_entity.constant_value();
-      constant_value.has_value()) {
-    return *constant_value;
+    -> ErrorOr<Nonnull<const Value*>> {
+  std::optional<const Value*> value = (phase_ == Phase::CompileTime)
+                                          ? value_node.symbolic_identity()
+                                          : value_node.constant_value();
+  if (value.has_value()) {
+    return *value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {
-    // TODO: have static name resolution identify the scope of named_entity
+    // TODO: have static name resolution identify the scope of value_node
     // as an AstNode, and then perform lookup _only_ on the Action associated
     // with that node. This will help keep unwanted dynamic-scoping behavior
     // from sneaking in.
     if (action->scope().has_value()) {
       std::optional<Nonnull<const Value*>> result =
-          action->scope()->Get(named_entity);
+          action->scope()->Get(value_node);
       if (result.has_value()) {
         return *result;
       }
     }
   }
   if (globals_.has_value()) {
-    std::optional<Nonnull<const Value*>> result = globals_->Get(named_entity);
+    std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
     if (result.has_value()) {
       return *result;
     }
   }
   // TODO: Move these errors to compile time and explain them more clearly.
-  FATAL_RUNTIME_ERROR(source_loc)
-      << "could not find `" << named_entity.name() << "`";
+  return FATAL_RUNTIME_ERROR(source_loc)
+         << "could not find `" << value_node.base() << "`";
 }
 
 void ActionStack::MergeScope(RuntimeScope scope) {
@@ -110,7 +112,7 @@ void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
   fragment.StoreReversed(std::move(reversed_todo));
 }
 
-void ActionStack::FinishAction() {
+auto ActionStack::FinishAction() -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::ExpressionAction:
@@ -123,9 +125,11 @@ void ActionStack::FinishAction() {
     case Action::Kind::DeclarationAction:
       PopScopes();
   }
+  return Success();
 }
 
-void ActionStack::FinishAction(Nonnull<const Value*> result) {
+auto ActionStack::FinishAction(Nonnull<const Value*> result)
+    -> ErrorOr<Success> {
   std::unique_ptr<Action> act = todo_.Pop();
   switch (act->kind()) {
     case Action::Kind::StatementAction:
@@ -139,27 +143,33 @@ void ActionStack::FinishAction(Nonnull<const Value*> result) {
       PopScopes();
       SetResult(result);
   }
+  return Success();
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child) {
+auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::move(child));
+  return Success();
 }
 
-void ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope) {
+auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
+    -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
   todo_.Push(std::move(child));
+  return Success();
 }
 
-void ActionStack::RunAgain() {
+auto ActionStack::RunAgain() -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
+  return Success();
 }
 
-void ActionStack::UnwindTo(Nonnull<const Statement*> ast_node) {
+auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
+    -> ErrorOr<Success> {
   while (true) {
     if (const auto* statement_action =
             llvm::dyn_cast<StatementAction>(todo_.Top().get());
@@ -169,24 +179,30 @@ void ActionStack::UnwindTo(Nonnull<const Statement*> ast_node) {
     }
     todo_.Pop();
   }
+  return Success();
 }
 
-void ActionStack::UnwindPast(Nonnull<const Statement*> ast_node) {
-  UnwindTo(ast_node);
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
+    -> ErrorOr<Success> {
+  RETURN_IF_ERROR(UnwindTo(ast_node));
   todo_.Pop();
   PopScopes();
+  return Success();
 }
 
-void ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
-                             Nonnull<const Value*> result) {
-  UnwindPast(ast_node);
+auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
+                             Nonnull<const Value*> result) -> ErrorOr<Success> {
+  RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
+  return Success();
 }
 
-void ActionStack::Resume(Nonnull<const ContinuationValue*> continuation) {
+auto ActionStack::Resume(Nonnull<const ContinuationValue*> continuation)
+    -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
   continuation->stack().RestoreTo(todo_);
+  return Success();
 }
 
 static auto IsRunAction(const Action& action) -> bool {
@@ -194,7 +210,7 @@ static auto IsRunAction(const Action& action) -> bool {
   return statement != nullptr && llvm::isa<Run>(statement->statement());
 }
 
-void ActionStack::Suspend() {
+auto ActionStack::Suspend() -> ErrorOr<Success> {
   // Pause the current continuation
   todo_.Pop();
   std::vector<std::unique_ptr<Action>> paused;
@@ -205,6 +221,7 @@ void ActionStack::Suspend() {
       llvm::cast<const ContinuationValue>(*todo_.Top()->results()[0]);
   // Update the continuation with the paused stack.
   continuation.stack().StoreReversed(std::move(paused));
+  return Success();
 }
 
 void ActionStack::PopScopes() {

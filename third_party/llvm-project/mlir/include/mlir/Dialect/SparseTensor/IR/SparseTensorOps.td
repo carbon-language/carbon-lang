@@ -18,12 +18,8 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 // Base class.
 //===----------------------------------------------------------------------===//
 
-class SparseTensor_Op<string mnemonic, list<OpTrait> traits = []>
-  : Op<SparseTensor_Dialect, mnemonic, traits> {
-  let printer = [{ return ::print(p, *this); }];
-  let verifier = [{ return ::verify(*this); }];
-  let parser = [{ return ::parse$cppClass(parser, result); }];
-}
+class SparseTensor_Op<string mnemonic, list<Trait> traits = []>
+  : Op<SparseTensor_Dialect, mnemonic, traits>;
 
 //===----------------------------------------------------------------------===//
 // Sparse Tensor Operations.
@@ -50,6 +46,7 @@ def SparseTensor_NewOp : SparseTensor_Op<"new", [NoSideEffect]>,
     ```
   }];
   let assemblyFormat = "$source attr-dict `:` type($source) `to` type($result)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_InitOp : SparseTensor_Op<"init", [NoSideEffect]>,
@@ -72,6 +69,7 @@ def SparseTensor_InitOp : SparseTensor_Op<"init", [NoSideEffect]>,
     ```
   }];
   let assemblyFormat = "`[` $sizes `]` attr-dict `:` type($result)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ConvertOp : SparseTensor_Op<"convert",
@@ -113,6 +111,7 @@ def SparseTensor_ConvertOp : SparseTensor_Op<"convert",
   }];
   let assemblyFormat = "$source attr-dict `:` type($source) `to` type($dest)";
   let hasFolder = 1;
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ToPointersOp : SparseTensor_Op<"pointers", [NoSideEffect]>,
@@ -137,6 +136,7 @@ def SparseTensor_ToPointersOp : SparseTensor_Op<"pointers", [NoSideEffect]>,
   }];
   let assemblyFormat = "$tensor `,` $dim attr-dict `:` type($tensor)"
       " `to` type($result)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ToIndicesOp : SparseTensor_Op<"indices", [NoSideEffect]>,
@@ -161,6 +161,7 @@ def SparseTensor_ToIndicesOp : SparseTensor_Op<"indices", [NoSideEffect]>,
   }];
   let assemblyFormat = "$tensor `,` $dim attr-dict `:` type($tensor)"
       " `to` type($result)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ToValuesOp : SparseTensor_Op<"values", [NoSideEffect]>,
@@ -183,6 +184,7 @@ def SparseTensor_ToValuesOp : SparseTensor_Op<"values", [NoSideEffect]>,
     ```
   }];
   let assemblyFormat = "$tensor attr-dict `:` type($tensor) `to` type($result)";
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -217,6 +219,7 @@ def SparseTensor_LexInsertOp : SparseTensor_Op<"lex_insert", []>,
   }];
   let assemblyFormat = "$tensor `,` $indices `,` $value attr-dict `:`"
                        " type($tensor) `,` type($indices) `,` type($value)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ExpandOp : SparseTensor_Op<"expand", []>,
@@ -239,7 +242,7 @@ def SparseTensor_ExpandOp : SparseTensor_Op<"expand", []>,
     dimension (e.g. a full row for matrices). The added array and count are used
     to store new indices when a false value is encountered in the filled array.
     All arrays should be allocated before the loop (possibly even shared between
-    loops in a future optimization) so that their *dense* intitialization can be
+    loops in a future optimization) so that their *dense* initialization can be
     amortized over many iterations. Setting and resetting the dense arrays in
     the loop nest itself is kept *sparse* by only iterating over set elements
     through an indirection using the added array, so that the operations are
@@ -258,6 +261,7 @@ def SparseTensor_ExpandOp : SparseTensor_Op<"expand", []>,
   }];
   let assemblyFormat = "$tensor attr-dict `:` type($tensor) `to` type($values)"
                        " `,` type($filled) `,` type($added) `,` type($count)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_CompressOp : SparseTensor_Op<"compress", []>,
@@ -292,6 +296,7 @@ def SparseTensor_CompressOp : SparseTensor_Op<"compress", []>,
                         " $added `,` $count attr-dict `:` type($tensor) `,`"
 			" type($indices) `,` type($values) `,` type($filled) `,`"
 			" type($added) `,` type($count)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_LoadOp : SparseTensor_Op<"load", [SameOperandsAndResultType]>,
@@ -324,6 +329,7 @@ def SparseTensor_LoadOp : SparseTensor_Op<"load", [SameOperandsAndResultType]>,
     ```
   }];
   let assemblyFormat = "$tensor (`hasInserts` $hasInserts^)? attr-dict `:` type($tensor)";
+  let hasVerifier = 1;
 }
 
 def SparseTensor_ReleaseOp : SparseTensor_Op<"release", []>,
@@ -349,6 +355,28 @@ def SparseTensor_ReleaseOp : SparseTensor_Op<"release", []>,
     ```
   }];
   let assemblyFormat = "$tensor attr-dict `:` type($tensor)";
+  let hasVerifier = 1;
+}
+
+def SparseTensor_OutOp : SparseTensor_Op<"out", []>,
+    Arguments<(ins AnyType:$tensor, AnyType:$dest)> {
+  string summary = "Outputs a sparse tensor to the given destination";
+  string description = [{
+    Outputs the contents of a sparse tensor to the destination defined by an
+    opaque pointer provided by `dest`. For targets that have access to a file
+    system, for example, this pointer may specify a filename (or file) for output.
+    The form of the operation is kept deliberately very general to allow for
+    alternative implementations in the future, such as sending the contents to
+    a buffer defined by a pointer.
+
+    Example:
+
+    ```mlir
+    sparse_tensor.out %t, %dest : tensor<1024x1024xf64, #CSR>, !Dest
+    ```
+  }];
+  let assemblyFormat = "$tensor `,` $dest attr-dict `:` type($tensor) `,` type($dest)";
+  let hasVerifier = 1;
 }
 
 #endif // SPARSETENSOR_OPS

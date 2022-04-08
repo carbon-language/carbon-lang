@@ -19,6 +19,7 @@
 #include "llvm/Pass.h"
 
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 
 using namespace lldb_private;
@@ -85,8 +86,7 @@ static llvm::FunctionType *cloneToStructRetFnTy(llvm::CallInst *call_inst) {
   // create a return type by getting the pointer type of the old return type,
   // and inserting a new initial argument of pointer type of the original
   // return type.
-  Log *log(
-      GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE | LIBLLDB_LOG_EXPRESSIONS));
+  Log *log = GetLog(LLDBLog::Language | LLDBLog::Expressions);
 
   assert(call_inst && "no CallInst");
   llvm::Function *orig = call_inst->getCalledFunction();
@@ -187,18 +187,17 @@ static bool fixupX86StructRetCalls(llvm::Module &module) {
     (new llvm::StoreInst(new_func_cast, new_func_ptr, call_inst))
         ->setName("new_func_ptr_load_cast");
     // load the new function address ready for a jump
-    llvm::LoadInst *new_func_addr_load =
-        new llvm::LoadInst(new_func_ptr->getType()->getPointerElementType(),
-                           new_func_ptr, "load_func_pointer", call_inst);
+    llvm::LoadInst *new_func_addr_load = new llvm::LoadInst(
+        new_func_ptr_type, new_func_ptr, "load_func_pointer", call_inst);
     // and create a callinstruction from it
     llvm::CallInst *new_call_inst =
         llvm::CallInst::Create(new_func_type, new_func_addr_load, new_call_args,
                                "new_func_call", call_inst);
     new_call_inst->setCallingConv(call_inst->getCallingConv());
     new_call_inst->setTailCall(call_inst->isTailCall());
-    llvm::LoadInst *lldb_save_result_address = new llvm::LoadInst(
-        return_value_alloc->getType()->getPointerElementType(),
-        return_value_alloc, "save_return_val", call_inst);
+    llvm::LoadInst *lldb_save_result_address =
+        new llvm::LoadInst(func->getReturnType(), return_value_alloc,
+                           "save_return_val", call_inst);
 
     // Now remove the old broken call
     call_inst->replaceAllUsesWith(lldb_save_result_address);

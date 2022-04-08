@@ -11,6 +11,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/AArch64TargetParser.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/Host.h"
 
@@ -392,6 +393,9 @@ fp16_fml_fallthrough:
   }
 
   if (std::find(ItBegin, ItEnd, "+v8.4a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v8.5a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v8.6a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v8.7a") != ItEnd ||
       std::find(ItBegin, ItEnd, "+v8.8a") != ItEnd ||
       std::find(ItBegin, ItEnd, "+v9a") != ItEnd ||
       std::find(ItBegin, ItEnd, "+v9.1a") != ItEnd ||

@@ -82,6 +82,19 @@ struct FormatStyle {
     ///       argument1, argument2);
     /// \endcode
     BAS_AlwaysBreak,
+    /// Always break after an open bracket, if the parameters don't fit
+    /// on a single line. Closing brackets will be placed on a new line.
+    /// E.g.:
+    /// \code
+    ///   someLongFunction(
+    ///       argument1, argument2
+    ///   )
+    /// \endcode
+    ///
+    /// \warning
+    ///  Note: This currently only applies to parentheses.
+    /// \endwarning
+    BAS_BlockIndent,
   };
 
   /// If ``true``, horizontally aligns arguments after an open bracket.
@@ -1757,17 +1770,29 @@ struct FormatStyle {
   /// \version 3.8
   BraceWrappingFlags BraceWrapping;
 
-  /// If ``true``, concept will be placed on a new line.
-  /// \code
-  ///   true:
-  ///    template<typename T>
-  ///    concept ...
-  ///
-  ///   false:
-  ///    template<typename T> concept ...
-  /// \endcode
-  /// \version 13
-  bool BreakBeforeConceptDeclarations;
+  /// Different ways to break before concept declarations.
+  enum BreakBeforeConceptDeclarationsStyle {
+    /// Keep the template declaration line together with ``concept``.
+    /// \code
+    ///   template <typename T> concept C = ...;
+    /// \endcode
+    BBCDS_Never,
+    /// Breaking between template declaration and ``concept`` is allowed. The
+    /// actual behavior depends on the content and line breaking rules and
+    /// penalities.
+    BBCDS_Allowed,
+    /// Always break before ``concept``, putting it in the line after the
+    /// template declaration.
+    /// \code
+    ///   template <typename T>
+    ///   concept C = ...;
+    /// \endcode
+    BBCDS_Always,
+  };
+
+  /// The concept declaration style to use.
+  /// \version 12
+  BreakBeforeConceptDeclarationsStyle BreakBeforeConceptDeclarations;
 
   /// If ``true``, ternary operators will be placed after line breaks.
   /// \code
@@ -2097,7 +2122,7 @@ struct FormatStyle {
   /// Defines when to put an empty line after access modifiers.
   /// ``EmptyLineBeforeAccessModifier`` configuration handles the number of
   /// empty lines between two access modifiers.
-  /// \version 14
+  /// \version 13
   EmptyLineAfterAccessModifierStyle EmptyLineAfterAccessModifier;
 
   /// Different styles for empty line before access modifiers.
@@ -2160,7 +2185,7 @@ struct FormatStyle {
   };
 
   /// Defines in which cases to put empty line before access modifiers.
-  /// \version 13
+  /// \version 12
   EmptyLineBeforeAccessModifierStyle EmptyLineBeforeAccessModifier;
 
   /// If ``true``, clang-format detects whether function calls and
@@ -2272,7 +2297,7 @@ struct FormatStyle {
   ///
   /// For example: `KJ_IF_MAYBE
   /// <https://github.com/capnproto/capnproto/blob/master/kjdoc/tour.md#maybes>`_
-  /// \version 14
+  /// \version 13
   std::vector<std::string> IfMacros;
 
   /// \brief A vector of macros that should be interpreted as type declarations
@@ -2496,7 +2521,10 @@ struct FormatStyle {
   /// \version 12
   IndentExternBlockStyle IndentExternBlock;
 
-  /// Indent the requires clause in a template
+  /// Indent the requires clause in a template. This only applies when
+  /// ``RequiresClausePosition`` is ``OwnLine``, or ``WithFollowing``.
+  ///
+  /// In clang-format 13 and 14 it was named ``IndentRequires``.
   /// \code
   ///    true:
   ///    template <typename It>
@@ -2512,8 +2540,8 @@ struct FormatStyle {
   ///      //....
   ///    }
   /// \endcode
-  /// \version 13
-  bool IndentRequires;
+  /// \version 15
+  bool IndentRequiresClause;
 
   /// The number of columns to use for indentation.
   /// \code
@@ -2542,6 +2570,38 @@ struct FormatStyle {
   /// \endcode
   /// \version 3.7
   bool IndentWrappedFunctionNames;
+
+  /// Insert braces after control statements (``if``, ``else``, ``for``, ``do``,
+  /// and ``while``) in C++ unless the control statements are inside macro
+  /// definitions or the braces would enclose preprocessor directives.
+  /// \warning
+  ///  Setting this option to `true` could lead to incorrect code formatting due
+  ///  to clang-format's lack of complete semantic information. As such, extra
+  ///  care should be taken to review code changes made by this option.
+  /// \endwarning
+  /// \code
+  ///   false:                                    true:
+  ///
+  ///   if (isa<FunctionDecl>(D))        vs.      if (isa<FunctionDecl>(D)) {
+  ///     handleFunctionDecl(D);                    handleFunctionDecl(D);
+  ///   else if (isa<VarDecl>(D))                 } else if (isa<VarDecl>(D)) {
+  ///     handleVarDecl(D);                         handleVarDecl(D);
+  ///   else                                      } else {
+  ///     return;                                   return;
+  ///                                             }
+  ///
+  ///   while (i--)                      vs.      while (i--) {
+  ///     for (auto *A : D.attrs())                 for (auto *A : D.attrs()) {
+  ///       handleAttr(A);                            handleAttr(A);
+  ///                                               }
+  ///                                             }
+  ///
+  ///   do                               vs.      do {
+  ///     --i;                                      --i;
+  ///   while (i);                                } while (i);
+  /// \endcode
+  /// \version 15
+  bool InsertBraces;
 
   /// A vector of prefixes ordered by the desired groups for Java imports.
   ///
@@ -2699,7 +2759,7 @@ struct FormatStyle {
   /// readability to have the signature indented two levels and to use
   /// ``OuterScope``. The KJ style guide requires ``OuterScope``.
   /// `KJ style guide
-  /// <https://github.com/capnproto/capnproto/blob/master/kjdoc/style-guide.md>`_
+  /// <https://github.com/capnproto/capnproto/blob/master/style-guide.md>`_
   /// \version 13
   LambdaBodyIndentationKind LambdaBodyIndentation;
 
@@ -2943,7 +3003,7 @@ struct FormatStyle {
   ///    # define BAR
   ///    #endif
   /// \endcode
-  /// \version 14
+  /// \version 13
   int PPIndentWidth;
 
   /// See documentation of ``RawStringFormats``.
@@ -3029,7 +3089,7 @@ struct FormatStyle {
 
   /// \brief Reference alignment style (overrides ``PointerAlignment`` for
   /// references).
-  /// \version 14
+  /// \version 13
   ReferenceAlignmentStyle ReferenceAlignment;
 
   // clang-format off
@@ -3048,6 +3108,141 @@ struct FormatStyle {
   /// \version 4
   bool ReflowComments;
   // clang-format on
+
+  /// Remove optional braces of control statements (``if``, ``else``, ``for``,
+  /// and ``while``) in C++ according to the LLVM coding style.
+  /// \warning
+  ///  This option will be renamed and expanded to support other styles.
+  /// \endwarning
+  /// \warning
+  ///  Setting this option to `true` could lead to incorrect code formatting due
+  ///  to clang-format's lack of complete semantic information. As such, extra
+  ///  care should be taken to review code changes made by this option.
+  /// \endwarning
+  /// \code
+  ///   false:                                     true:
+  ///
+  ///   if (isa<FunctionDecl>(D)) {        vs.     if (isa<FunctionDecl>(D))
+  ///     handleFunctionDecl(D);                     handleFunctionDecl(D);
+  ///   } else if (isa<VarDecl>(D)) {              else if (isa<VarDecl>(D))
+  ///     handleVarDecl(D);                          handleVarDecl(D);
+  ///   }
+  ///
+  ///   if (isa<VarDecl>(D)) {             vs.     if (isa<VarDecl>(D)) {
+  ///     for (auto *A : D.attrs()) {                for (auto *A : D.attrs())
+  ///       if (shouldProcessAttr(A)) {                if (shouldProcessAttr(A))
+  ///         handleAttr(A);                             handleAttr(A);
+  ///       }                                      }
+  ///     }
+  ///   }
+  ///
+  ///   if (isa<FunctionDecl>(D)) {        vs.     if (isa<FunctionDecl>(D))
+  ///     for (auto *A : D.attrs()) {                for (auto *A : D.attrs())
+  ///       handleAttr(A);                             handleAttr(A);
+  ///     }
+  ///   }
+  ///
+  ///   if (auto *D = (T)(D)) {            vs.     if (auto *D = (T)(D)) {
+  ///     if (shouldProcess(D)) {                    if (shouldProcess(D))
+  ///       handleVarDecl(D);                          handleVarDecl(D);
+  ///     } else {                                   else
+  ///       markAsIgnored(D);                          markAsIgnored(D);
+  ///     }                                        }
+  ///   }
+  ///
+  ///   if (a) {                           vs.     if (a)
+  ///     b();                                       b();
+  ///   } else {                                   else if (c)
+  ///     if (c) {                                   d();
+  ///       d();                                   else
+  ///     } else {                                   e();
+  ///       e();
+  ///     }
+  ///   }
+  /// \endcode
+  /// \version 14
+  bool RemoveBracesLLVM;
+
+  /// \brief The possible positions for the requires clause. The
+  /// ``IndentRequires`` option is only used if the ``requires`` is put on the
+  /// start of a line.
+  enum RequiresClausePositionStyle {
+    /// Always put the ``requires`` clause on its own line.
+    /// \code
+    ///   template <typename T>
+    ///   requires C<T>
+    ///   struct Foo {...
+    ///
+    ///   template <typename T>
+    ///   requires C<T>
+    ///   void bar(T t) {...
+    ///
+    ///   template <typename T>
+    ///   void baz(T t)
+    ///   requires C<T>
+    ///   {...
+    /// \endcode
+    RCPS_OwnLine,
+    /// Try to put the clause together with the preceding part of a declaration.
+    /// For class templates: stick to the template declaration.
+    /// For function templates: stick to the template declaration.
+    /// For function declaration followed by a requires clause: stick to the
+    /// parameter list.
+    /// \code
+    ///   template <typename T> requires C<T>
+    ///   struct Foo {...
+    ///
+    ///   template <typename T> requires C<T>
+    ///   void bar(T t) {...
+    ///
+    ///   template <typename T>
+    ///   void baz(T t) requires C<T>
+    ///   {...
+    /// \endcode
+    RCPS_WithPreceding,
+    /// Try to put the ``requires`` clause together with the class or function
+    /// declaration.
+    /// \code
+    ///   template <typename T>
+    ///   requires C<T> struct Foo {...
+    ///
+    ///   template <typename T>
+    ///   requires C<T> void bar(T t) {...
+    ///
+    ///   template <typename T>
+    ///   void baz(T t)
+    ///   requires C<T> {...
+    /// \endcode
+    RCPS_WithFollowing,
+    /// Try to put everything in the same line if possible. Otherwise normal
+    /// line breaking rules take over.
+    /// \code
+    ///   // Fitting:
+    ///   template <typename T> requires C<T> struct Foo {...
+    ///
+    ///   template <typename T> requires C<T> void bar(T t) {...
+    ///
+    ///   template <typename T> void bar(T t) requires C<T> {...
+    ///
+    ///   // Not fitting, one possible example:
+    ///   template <typename LongName>
+    ///   requires C<LongName>
+    ///   struct Foo {...
+    ///
+    ///   template <typename LongName>
+    ///   requires C<LongName>
+    ///   void bar(LongName ln) {
+    ///
+    ///   template <typename LongName>
+    ///   void bar(LongName ln)
+    ///       requires C<LongName> {
+    /// \endcode
+    RCPS_SingleLine,
+  };
+
+  /// \brief The position of the ``requires`` clause.
+  /// \version 15
+  RequiresClausePositionStyle RequiresClausePosition;
 
   /// \brief The style if definition blocks should be separated.
   enum SeparateDefinitionStyle {
@@ -3126,7 +3321,7 @@ struct FormatStyle {
   ///      int bar;                           int bar;
   ///    } // namespace b                   } // namespace b
   /// \endcode
-  /// \version 14
+  /// \version 13
   unsigned ShortNamespaceLines;
 
   /// Include sorting options.
@@ -3433,6 +3628,25 @@ struct FormatStyle {
     ///    object.operator++ (10);                object.operator++(10);
     /// \endcode
     bool AfterOverloadedOperator;
+    /// If ``true``, put space between requires keyword in a requires clause and
+    /// opening parentheses, if there is one.
+    /// \code
+    ///    true:                                  false:
+    ///    template<typename T>            vs.    template<typename T>
+    ///    requires (A<T> && B<T>)                requires(A<T> && B<T>)
+    ///    ...                                    ...
+    /// \endcode
+    bool AfterRequiresInClause;
+    /// If ``true``, put space between requires keyword in a requires expression
+    /// and opening parentheses.
+    /// \code
+    ///    true:                                  false:
+    ///    template<typename T>            vs.    template<typename T>
+    ///    concept C = requires (T t) {           concept C = requires(T t) {
+    ///                  ...                                    ...
+    ///                }                                      }
+    /// \endcode
+    bool AfterRequiresInExpression;
     /// If ``true``, put a space before opening parentheses only if the
     /// parentheses are not empty.
     /// \code
@@ -3446,7 +3660,8 @@ struct FormatStyle {
         : AfterControlStatements(false), AfterForeachMacros(false),
           AfterFunctionDeclarationName(false),
           AfterFunctionDefinitionName(false), AfterIfMacros(false),
-          AfterOverloadedOperator(false), BeforeNonEmptyParentheses(false) {}
+          AfterOverloadedOperator(false), AfterRequiresInClause(false),
+          AfterRequiresInExpression(false), BeforeNonEmptyParentheses(false) {}
 
     bool operator==(const SpaceBeforeParensCustom &Other) const {
       return AfterControlStatements == Other.AfterControlStatements &&
@@ -3456,6 +3671,8 @@ struct FormatStyle {
              AfterFunctionDefinitionName == Other.AfterFunctionDefinitionName &&
              AfterIfMacros == Other.AfterIfMacros &&
              AfterOverloadedOperator == Other.AfterOverloadedOperator &&
+             AfterRequiresInClause == Other.AfterRequiresInClause &&
+             AfterRequiresInExpression == Other.AfterRequiresInExpression &&
              BeforeNonEmptyParentheses == Other.BeforeNonEmptyParentheses;
     }
   };
@@ -3543,7 +3760,7 @@ struct FormatStyle {
     SIAS_Leave
   };
   /// The SpacesInAnglesStyle to use for template argument lists.
-  /// \version 14
+  /// \version 3.4
   SpacesInAnglesStyle SpacesInAngles;
 
   /// If ``true``, spaces will be inserted around if/for/switch/while
@@ -3611,7 +3828,7 @@ struct FormatStyle {
   ///   ///  - Foo                                /// - Foo
   ///   ///    - Bar                              ///   - Bar
   /// \endcode
-  /// \version 14
+  /// \version 13
   SpacesInLineComment SpacesInLineCommentPrefix;
 
   /// If ``true``, spaces will be inserted after ``(`` and before ``)``.
@@ -3822,8 +4039,8 @@ struct FormatStyle {
            IndentGotoLabels == R.IndentGotoLabels &&
            IndentPPDirectives == R.IndentPPDirectives &&
            IndentExternBlock == R.IndentExternBlock &&
-           IndentRequires == R.IndentRequires && IndentWidth == R.IndentWidth &&
-           Language == R.Language &&
+           IndentRequiresClause == R.IndentRequiresClause &&
+           IndentWidth == R.IndentWidth && Language == R.Language &&
            IndentWrappedFunctionNames == R.IndentWrappedFunctionNames &&
            JavaImportGroups == R.JavaImportGroups &&
            JavaScriptQuotes == R.JavaScriptQuotes &&
@@ -3858,6 +4075,8 @@ struct FormatStyle {
            QualifierOrder == R.QualifierOrder &&
            RawStringFormats == R.RawStringFormats &&
            ReferenceAlignment == R.ReferenceAlignment &&
+           RemoveBracesLLVM == R.RemoveBracesLLVM &&
+           RequiresClausePosition == R.RequiresClausePosition &&
            SeparateDefinitionBlocks == R.SeparateDefinitionBlocks &&
            ShortNamespaceLines == R.ShortNamespaceLines &&
            SortIncludes == R.SortIncludes &&
@@ -3994,7 +4213,7 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
 /// document, are retained in \p Style.
 ///
 /// If AllowUnknownOptions is true, no errors are emitted if unknown
-/// format options are occured.
+/// format options are occurred.
 ///
 /// If set all diagnostics are emitted through the DiagHandler.
 std::error_code

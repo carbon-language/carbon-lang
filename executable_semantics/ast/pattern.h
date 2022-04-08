@@ -38,6 +38,7 @@ class Pattern : public AstNode {
   ~Pattern() override = 0;
 
   void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromPattern(node->kind());
@@ -50,16 +51,17 @@ class Pattern : public AstNode {
   }
 
   // The static type of this pattern. Cannot be called before typechecking.
-  auto static_type() const -> const Value& { return **static_type_; }
+  auto static_type() const -> const Value& {
+    CHECK(static_type_.has_value());
+    return **static_type_;
+  }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
-  void set_static_type(Nonnull<const Value*> type) { static_type_ = type; }
-
-  // Returns whether the static type has been set. Should only be called
-  // during typechecking: before typechecking it's guaranteed to be false,
-  // and after typechecking it's guaranteed to be true.
-  auto has_static_type() const -> bool { return static_type_.has_value(); }
+  void set_static_type(Nonnull<const Value*> type) {
+    CHECK(!static_type_.has_value());
+    static_type_ = type;
+  }
 
   // The value of this pattern. Cannot be called before typechecking.
   // TODO rename to avoid confusion with BindingPattern::constant_value
@@ -86,6 +88,12 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
+class BindingPattern;
+
+// Returns all `BindingPattern`s in the AST subtree rooted at `pattern`.
+auto GetBindings(const Pattern& pattern)
+    -> std::vector<Nonnull<const BindingPattern*>>;
+
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
@@ -97,17 +105,37 @@ class AutoPattern : public Pattern {
   }
 };
 
+class VarPattern : public Pattern {
+ public:
+  explicit VarPattern(SourceLocation source_loc, Nonnull<Pattern*> pattern)
+      : Pattern(AstNodeKind::VarPattern, source_loc), pattern_(pattern) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromVarPattern(node->kind());
+  }
+
+  auto pattern() const -> const Pattern& { return *pattern_; }
+  auto pattern() -> Pattern& { return *pattern_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+ private:
+  Nonnull<Pattern*> pattern_;
+};
+
 // A pattern that matches a value of a specified type, and optionally binds
 // a name to it.
 class BindingPattern : public Pattern {
  public:
-  using ImplementsCarbonNamedEntity = void;
+  using ImplementsCarbonValueNode = void;
 
   BindingPattern(SourceLocation source_loc, std::string name,
-                 Nonnull<Pattern*> type)
+                 Nonnull<Pattern*> type,
+                 std::optional<ValueCategory> value_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
-        type_(type) {}
+        type_(type),
+        value_category_(value_category) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -115,22 +143,43 @@ class BindingPattern : public Pattern {
 
   // The name this pattern binds, if any. If equal to AnonymousName, indicates
   // that this BindingPattern does not bind a name, which in turn means it
-  // should not be used as a NamedEntity.
+  // should not be used as a ValueNode.
   auto name() const -> const std::string& { return name_; }
 
   // The pattern specifying the type of values that this pattern matches.
   auto type() const -> const Pattern& { return *type_; }
   auto type() -> Pattern& { return *type_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  // Returns the value category of this pattern. Can only be called after
+  // typechecking.
+  auto value_category() const -> ValueCategory {
+    return value_category_.value();
+  }
+
+  // Returns whether the value category has been set. Should only be called
+  // during typechecking.
+  auto has_value_category() const -> bool {
+    return value_category_.has_value();
+  }
+
+  // Sets the value category of the variable being bound. Can only be called
+  // once during typechecking
+  void set_value_category(ValueCategory vc) {
+    CHECK(!value_category_.has_value());
+    value_category_ = vc;
+  }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
 
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
+  std::optional<ValueCategory> value_category_;
 };
 
 // A pattern that matches a tuple value field-wise.
@@ -151,6 +200,58 @@ class TuplePattern : public Pattern {
 
  private:
   std::vector<Nonnull<Pattern*>> fields_;
+};
+
+class GenericBinding : public Pattern {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  GenericBinding(SourceLocation source_loc, std::string name,
+                 Nonnull<Expression*> type)
+      : Pattern(AstNodeKind::GenericBinding, source_loc),
+        name_(std::move(name)),
+        type_(type) {}
+
+  void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromGenericBinding(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;
+  }
+
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return symbolic_identity_;
+  }
+  void set_symbolic_identity(Nonnull<const Value*> value) {
+    CHECK(!symbolic_identity_.has_value());
+    symbolic_identity_ = value;
+  }
+
+  // The impl binding associated with this type variable.
+  auto impl_binding() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_binding_;
+  }
+  // Set the impl binding.
+  void set_impl_binding(Nonnull<const ImplBinding*> binding) {
+    CHECK(!impl_binding_.has_value());
+    impl_binding_ = binding;
+  }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> type_;
+  std::optional<Nonnull<const Value*>> symbolic_identity_;
+  std::optional<Nonnull<const ImplBinding*>> impl_binding_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
@@ -176,6 +277,19 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
 // A pattern that matches an alternative of a choice type.
 class AlternativePattern : public Pattern {
  public:
+  // Constructs an AlternativePattern that matches the alternative specified
+  // by `alternative`, if its arguments match `arguments`.
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     Nonnull<Expression*> alternative,
+                     Nonnull<TuplePattern*> arguments)
+      -> ErrorOr<Nonnull<AlternativePattern*>> {
+    ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
+                     RequireFieldAccess(alternative));
+    return arena->New<AlternativePattern>(source_loc,
+                                          &field_access->aggregate(),
+                                          field_access->field(), arguments);
+  }
+
   // Constructs an AlternativePattern that matches a value of the type
   // specified by choice_type if it represents an alternative named
   // alternative_name, and its arguments match `arguments`.
@@ -187,12 +301,6 @@ class AlternativePattern : public Pattern {
         choice_type_(choice_type),
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
-
-  // Constructs an AlternativePattern that matches the alternative specified
-  // by `alternative`, if its arguments match `arguments`.
-  AlternativePattern(SourceLocation source_loc,
-                     Nonnull<Expression*> alternative,
-                     Nonnull<TuplePattern*> arguments);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativePattern(node->kind());
@@ -207,6 +315,9 @@ class AlternativePattern : public Pattern {
   auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
+  static auto RequireFieldAccess(Nonnull<Expression*> alternative)
+      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
+
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;
   Nonnull<TuplePattern*> arguments_;

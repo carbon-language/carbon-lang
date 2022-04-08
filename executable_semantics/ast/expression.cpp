@@ -20,13 +20,14 @@ using llvm::isa;
 
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
-    -> Intrinsic {
+    -> ErrorOr<Intrinsic> {
   static const auto& intrinsic_map =
       *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    FATAL_COMPILATION_ERROR(source_loc) << "Unknown intrinsic '" << name << "'";
+    return FATAL_COMPILATION_ERROR(source_loc)
+           << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }
@@ -115,12 +116,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       PrintFields(out, cast<StructTypeLiteral>(*this).fields(), ": ");
       out << "}";
       break;
-    case ExpressionKind::IntLiteral:
-      out << cast<IntLiteral>(*this).value();
-      break;
-    case ExpressionKind::BoolLiteral:
-      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
-      break;
     case ExpressionKind::PrimitiveOperatorExpression: {
       out << "(";
       const auto& op = cast<PrimitiveOperatorExpression>(*this);
@@ -141,9 +136,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << ")";
       break;
     }
-    case ExpressionKind::IdentifierExpression:
-      out << cast<IdentifierExpression>(*this).name();
-      break;
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(*this);
       out << call.function();
@@ -154,6 +146,67 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
+    case ExpressionKind::FunctionTypeLiteral: {
+      const auto& fn = cast<FunctionTypeLiteral>(*this);
+      out << "fn " << fn.parameter() << " -> " << fn.return_type();
+      break;
+    }
+    case ExpressionKind::IntrinsicExpression:
+      out << "intrinsic_expression(";
+      switch (cast<IntrinsicExpression>(*this).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
+          out << "print";
+      }
+      out << ")";
+      break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_expr = cast<IfExpression>(*this);
+      out << "if " << *if_expr.condition() << " then "
+          << *if_expr.then_expression() << " else "
+          << *if_expr.else_expression();
+      break;
+    }
+    case ExpressionKind::UnimplementedExpression: {
+      const auto& unimplemented = cast<UnimplementedExpression>(*this);
+      out << "UnimplementedExpression<" << unimplemented.label() << ">(";
+      llvm::ListSeparator sep;
+      for (Nonnull<const AstNode*> child : unimplemented.children()) {
+        out << sep << *child;
+      }
+      out << ")";
+      break;
+    }
+    case ExpressionKind::ArrayTypeLiteral: {
+      const auto& array_literal = cast<ArrayTypeLiteral>(*this);
+      out << "[" << array_literal.element_type_expression() << "; "
+          << array_literal.size_expression() << "]";
+      break;
+    }
+    case ExpressionKind::IdentifierExpression:
+    case ExpressionKind::IntLiteral:
+    case ExpressionKind::BoolLiteral:
+    case ExpressionKind::BoolTypeLiteral:
+    case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::StringLiteral:
+    case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
+    case ExpressionKind::ContinuationTypeLiteral:
+      PrintID(out);
+      break;
+  }
+}
+
+void Expression::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case ExpressionKind::IdentifierExpression:
+      out << cast<IdentifierExpression>(*this).name();
+      break;
+    case ExpressionKind::IntLiteral:
+      out << cast<IntLiteral>(*this).value();
+      break;
+    case ExpressionKind::BoolLiteral:
+      out << (cast<BoolLiteral>(*this).value() ? "true" : "false");
+      break;
     case ExpressionKind::BoolTypeLiteral:
       out << "Bool";
       break;
@@ -174,29 +227,20 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
-    case ExpressionKind::FunctionTypeLiteral: {
-      const auto& fn = cast<FunctionTypeLiteral>(*this);
-      out << "fn " << fn.parameter() << " -> " << fn.return_type();
-      break;
-    }
+    case ExpressionKind::IndexExpression:
+    case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::IfExpression:
+    case ExpressionKind::TupleLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::StructTypeLiteral:
+    case ExpressionKind::CallExpression:
+    case ExpressionKind::PrimitiveOperatorExpression:
     case ExpressionKind::IntrinsicExpression:
-      out << "intrinsic_expression(";
-      switch (cast<IntrinsicExpression>(*this).intrinsic()) {
-        case IntrinsicExpression::Intrinsic::Print:
-          out << "print";
-      }
-      out << ")";
+    case ExpressionKind::UnimplementedExpression:
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::ArrayTypeLiteral:
+      out << "...";
       break;
-    case ExpressionKind::UnimplementedExpression: {
-      const auto& unimplemented = cast<UnimplementedExpression>(*this);
-      out << "UnimplementedExpression<" << unimplemented.label() << ">(";
-      llvm::ListSeparator sep;
-      for (Nonnull<const AstNode*> child : unimplemented.children()) {
-        out << sep << *child;
-      }
-      out << ")";
-      break;
-    }
   }
 }
 

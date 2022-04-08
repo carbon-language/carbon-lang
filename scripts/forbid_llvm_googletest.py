@@ -18,10 +18,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import os
-import shutil
 import subprocess
-from pathlib import Path
+
+import scripts_utils  # type: ignore
 
 _MESSAGE = """\
 Dependencies on @llvm-project//llvm:gtest are forbidden, but a dependency path
@@ -34,31 +33,10 @@ dependencies on @llvm-project//llvm:gtest must be avoided.
 """
 
 
-def locate_bazel() -> str:
-    """Returns the bazel command.
-
-    We use the `BAZEL` environment variable if present. If not, then we try to
-    use `bazelisk` and then `bazel`.
-    """
-    bazel = os.environ.get("BAZEL")
-    if bazel:
-        return bazel
-
-    if shutil.which("bazelisk"):
-        return "bazelisk"
-
-    if shutil.which("bazel"):
-        return "bazel"
-
-    exit("Unable to run Bazel")
-
-
 def main() -> None:
-    # Change the working directory to the repository root so that the remaining
-    # operations reliably operate relative to that root.
-    os.chdir(Path(__file__).parent.parent)
+    scripts_utils.chdir_repo_root()
     args = [
-        locate_bazel(),
+        scripts_utils.locate_bazel(),
         "query",
         "somepath(//..., @llvm-project//llvm:gtest)",
     ]

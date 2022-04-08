@@ -44,20 +44,20 @@ RuntimeScope::~RuntimeScope() {
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
-  for (const auto& [named_entity, value] : locals_) {
-    out << sep << named_entity.name() << ": " << *value;
+  for (const auto& [value_node, value] : locals_) {
+    out << sep << value_node.base() << ": " << *value;
   }
   out << "}";
 }
 
-void RuntimeScope::Initialize(NamedEntityView named_entity,
+void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
-  CHECK(!named_entity.constant_value().has_value());
+  CHECK(!value_node.constant_value().has_value());
   CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
-      {named_entity, heap_->arena().New<LValue>(Address(allocations_.back()))});
-  CHECK(success) << "Duplicate definition of " << named_entity.name();
+      {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
+  CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
@@ -65,15 +65,15 @@ void RuntimeScope::Merge(RuntimeScope other) {
   locals_.merge(other.locals_);
   CHECK(other.locals_.empty())
       << "Duplicate definition of " << other.locals_.size()
-      << " names, including " << other.locals_.begin()->first.name();
+      << " names, including " << other.locals_.begin()->first.base();
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
 }
 
-auto RuntimeScope::Get(NamedEntityView named_entity) const
+auto RuntimeScope::Get(ValueNodeView value_node) const
     -> std::optional<Nonnull<const LValue*>> {
-  auto it = locals_.find(named_entity);
+  auto it = locals_.find(value_node);
   if (it != locals_.end()) {
     return it->second;
   } else {
@@ -116,7 +116,7 @@ void Action::Print(llvm::raw_ostream& out) const {
       out << "ScopeAction";
   }
   out << "<" << pos_ << ">";
-  if (results_.size() > 0) {
+  if (!results_.empty()) {
     out << "(";
     llvm::ListSeparator sep;
     for (auto& result : results_) {

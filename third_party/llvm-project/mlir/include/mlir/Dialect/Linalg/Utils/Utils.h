@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_DIALECT_LINALG_UTILS_H_
-#define MLIR_DIALECT_LINALG_UTILS_H_
+#ifndef MLIR_DIALECT_LINALG_UTILS_UTILS_H
+#define MLIR_DIALECT_LINALG_UTILS_UTILS_H
 
 #include "mlir/Dialect/Linalg/Analysis/DependenceAnalysis.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
@@ -41,7 +41,7 @@ template <typename T, unsigned N>
 void applyPermutationToVector(SmallVector<T, N> &inVec,
                               ArrayRef<int64_t> permutation) {
   SmallVector<T, N> auxVec(inVec.size());
-  for (auto en : enumerate(permutation))
+  for (const auto &en : enumerate(permutation))
     auxVec[en.index()] = inVec[en.value()];
   inVec = auxVec;
 }
@@ -107,27 +107,38 @@ tensor::ExtractSliceOp makeComposedExtractSliceOp(
     OpBuilder &b, Location loc, Value source, ArrayRef<OpFoldResult> offsets,
     ArrayRef<OpFoldResult> sizes, ArrayRef<OpFoldResult> strides);
 
-/// Create a PadTensorOp that pads `source` to the size of the statically sized
-/// `type` whose static sizes are assumed to be greater than the dynamic
+/// Create a tensor::PadOp that pads `source` to the size of the statically
+/// sized `type` whose static sizes are assumed to be greater than the dynamic
 /// `source` size. The padding introduces trailing `pad` values until the target
 /// size is met. If `source` is defined by one or more LinalgOps that have been
 /// padded with the same value and sizes, return their padded result instead of
-/// creating a PadTensorOp.
+/// creating a tensor::PadOp.
 ///
 /// Example:
 /// ```
 /// %0 = tensor.extract_slice %arg0 [%iv0, %iv1] [%sz0, %sz1]
-/// %1 = linalg.pad_tensor %0 low[0, 0] high[...] { linalg.yield %cst }
+/// %1 = tensor.pad %0 low[0, 0] high[...] { tensor.yield %cst }
 /// %2 = linalg.matmul ins(...) outs(%1)
 /// %3 = tensor.extract_slice %2 [0, 0] [%sz0, %sz1]
 /// ```
 /// makeComposedPadHighOp(source=%3, pad=%cst) returns %2
 /// makeComposedPadHighOp(source=%3, pad=%other_cst) returns %4
 /// ```
-/// %4 = linalg.pad_tensor %3 low[0, 0] high[...] { linalg.yield %other_cst }
+/// %4 = tensor.pad %3 low[0, 0] high[...] { tensor.yield %other_cst }
 /// ```
 Value makeComposedPadHighOp(OpBuilder &b, Location loc, RankedTensorType type,
                             Value source, Value pad, bool nofold);
+
+/// Returns a GenericOp that tansposes `inputTensor` into `outputTensor` using
+/// `transposeVector` to permute the `inputTensor` dimensions.
+GenericOp makeTransposeOp(OpBuilder &b, Location loc, Value inputTensor,
+                          Value outputTensor,
+                          ArrayRef<int64_t> transposeVector);
+
+/// Returns GenericOp that copies an n-D memref. Unlike the current
+/// implementation of memref::CopyOp, this op can further tile, lower to loops
+/// or vectorize.
+GenericOp makeMemRefCopyOp(OpBuilder &b, Location loc, Value from, Value to);
 
 //===----------------------------------------------------------------------===//
 // Fusion / Tiling utilities
@@ -263,10 +274,10 @@ public:
   /// Returns the loop ops generated from tiling.
   ArrayRef<scf::ForOp> getLoopOps() { return tileLoopOps; }
 
-private:
   /// Returns true if the tile loop nest has no tile loops.
   bool isEmpty();
 
+private:
   /// Returns true if the tile loop nest invariants are satisfied:
   /// - The `rootOp` has been tiled at least once.
   /// - The number of tile loop operations and dimensions match.
@@ -431,4 +442,4 @@ struct GenerateLoopNest {
 } // namespace linalg
 } // namespace mlir
 
-#endif // MLIR_DIALECT_LINALG_UTILS_H_
+#endif // MLIR_DIALECT_LINALG_UTILS_UTILS_H

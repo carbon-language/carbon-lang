@@ -19,6 +19,7 @@
 #include "llvm/ProfileData/InstrProfCorrelator.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ProfileData/InstrProfWriter.h"
+#include "llvm/ProfileData/MemProf.h"
 #include "llvm/ProfileData/ProfileCommon.h"
 #include "llvm/ProfileData/RawMemProfReader.h"
 #include "llvm/ProfileData/SampleProfReader.h"
@@ -89,6 +90,7 @@ static void exitWithError(Error E, StringRef Whence = "") {
       }
       exitWithError(IPE.message(), std::string(Whence), std::string(Hint));
     });
+    return;
   }
 
   exitWithError(toString(std::move(E)), std::string(Whence));
@@ -237,13 +239,42 @@ static void overlapInput(const std::string &BaseFilename,
 /// Load an input into a writer context.
 static void loadInput(const WeightedFile &Input, SymbolRemapper *Remapper,
                       const InstrProfCorrelator *Correlator,
-                      WriterContext *WC) {
+                      const StringRef ProfiledBinary, WriterContext *WC) {
   std::unique_lock<std::mutex> CtxGuard{WC->Lock};
 
   // Copy the filename, because llvm::ThreadPool copied the input "const
   // WeightedFile &" by value, making a reference to the filename within it
   // invalid outside of this packaged task.
   std::string Filename = Input.Filename;
+
+  using ::llvm::memprof::RawMemProfReader;
+  if (RawMemProfReader::hasFormat(Input.Filename)) {
+    auto ReaderOrErr = RawMemProfReader::create(Input.Filename, ProfiledBinary);
+    if (!ReaderOrErr) {
+      exitWithError(ReaderOrErr.takeError(), Input.Filename);
+    }
+    std::unique_ptr<RawMemProfReader> Reader = std::move(ReaderOrErr.get());
+    // Check if the profile types can be merged, e.g. clang frontend profiles
+    // should not be merged with memprof profiles.
+    if (Error E = WC->Writer.mergeProfileKind(Reader->getProfileKind())) {
+      consumeError(std::move(E));
+      WC->Errors.emplace_back(
+          make_error<StringError>(
+              "Cannot merge MemProf profile with Clang generated profile.",
+              std::error_code()),
+          Filename);
+      return;
+    }
+
+    // Add the records into the writer context.
+    for (const memprof::MemProfRecord &MR : *Reader) {
+      WC->Writer.addRecord(MR, [&](Error E) {
+        instrprof_error IPE = InstrProfError::take(std::move(E));
+        WC->Errors.emplace_back(make_error<InstrProfError>(IPE), Filename);
+      });
+    }
+    return;
+  }
 
   auto ReaderOrErr = InstrProfReader::create(Input.Filename, Correlator);
   if (Error E = ReaderOrErr.takeError()) {
@@ -255,9 +286,7 @@ static void loadInput(const WeightedFile &Input, SymbolRemapper *Remapper,
   }
 
   auto Reader = std::move(ReaderOrErr.get());
-  bool IsIRProfile = Reader->isIRLevelProfile();
-  bool HasCSIRProfile = Reader->hasCSIRLevelProfile();
-  if (Error E = WC->Writer.setIsIRLevelProfile(IsIRProfile, HasCSIRProfile)) {
+  if (Error E = WC->Writer.mergeProfileKind(Reader->getProfileKind())) {
     consumeError(std::move(E));
     WC->Errors.emplace_back(
         make_error<StringError>(
@@ -266,7 +295,6 @@ static void loadInput(const WeightedFile &Input, SymbolRemapper *Remapper,
         Filename);
     return;
   }
-  WC->Writer.setInstrEntryBBEnabled(Reader->instrEntryBBEnabled());
 
   for (auto &I : *Reader) {
     if (Remapper)
@@ -333,7 +361,8 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
                               SymbolRemapper *Remapper,
                               StringRef OutputFilename,
                               ProfileFormat OutputFormat, bool OutputSparse,
-                              unsigned NumThreads, FailureMode FailMode) {
+                              unsigned NumThreads, FailureMode FailMode,
+                              const StringRef ProfiledBinary) {
   if (OutputFormat != PF_Binary && OutputFormat != PF_Compact_Binary &&
       OutputFormat != PF_Ext_Binary && OutputFormat != PF_Text)
     exitWithError("unknown format is specified");
@@ -366,14 +395,15 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
 
   if (NumThreads == 1) {
     for (const auto &Input : Inputs)
-      loadInput(Input, Remapper, Correlator.get(), Contexts[0].get());
+      loadInput(Input, Remapper, Correlator.get(), ProfiledBinary,
+                Contexts[0].get());
   } else {
     ThreadPool Pool(hardware_concurrency(NumThreads));
 
     // Load the inputs in parallel (N/NumThreads serial steps).
     unsigned Ctx = 0;
     for (const auto &Input : Inputs) {
-      Pool.async(loadInput, Input, Remapper, Correlator.get(),
+      Pool.async(loadInput, Input, Remapper, Correlator.get(), ProfiledBinary,
                  Contexts[Ctx].get());
       Ctx = (Ctx + 1) % NumThreads;
     }
@@ -590,7 +620,7 @@ static void supplementInstrProfile(
   SmallSet<instrprof_error, 4> WriterErrorCodes;
   auto WC = std::make_unique<WriterContext>(OutputSparse, ErrorLock,
                                             WriterErrorCodes);
-  loadInput(Inputs[0], nullptr, nullptr, WC.get());
+  loadInput(Inputs[0], nullptr, nullptr, /*ProfiledBinary=*/"", WC.get());
   if (WC->Errors.size() > 0)
     exitWithError(std::move(WC->Errors[0].first), InstrFilename);
 
@@ -661,8 +691,8 @@ static void populateProfileSymbolList(MemoryBuffer *Buffer,
   StringRef Data = Buffer->getBuffer();
   Data.split(SymbolVec, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
-  for (StringRef symbol : SymbolVec)
-    PSL.add(symbol);
+  for (StringRef SymbolStr : SymbolVec)
+    PSL.add(SymbolStr.trim());
 }
 
 static void handleExtBinaryWriter(sampleprof::SampleProfileWriter &Writer,
@@ -970,6 +1000,9 @@ static int merge_main(int argc, const char *argv[]) {
   cl::opt<std::string> DebugInfoFilename(
       "debug-info", cl::init(""),
       cl::desc("Use the provided debug info to correlate the raw profile."));
+  cl::opt<std::string> ProfiledBinary(
+      "profiled-binary", cl::init(""),
+      cl::desc("Path to binary from which the profile was collected."));
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
@@ -1012,7 +1045,7 @@ static int merge_main(int argc, const char *argv[]) {
   if (ProfileKind == instr)
     mergeInstrProfile(WeightedInputs, DebugInfoFilename, Remapper.get(),
                       OutputFilename, OutputFormat, OutputSparse, NumThreads,
-                      FailureMode);
+                      FailureMode, ProfiledBinary);
   else
     mergeSampleProfile(WeightedInputs, Remapper.get(), OutputFilename,
                        OutputFormat, ProfileSymbolListFile, CompressAllSections,
@@ -1043,7 +1076,7 @@ static void overlapInstrProfile(const std::string &BaseFilename,
     OS << "Sum of edge counts for profile " << TestFilename << " is 0.\n";
     exit(0);
   }
-  loadInput(WeightedInput, nullptr, nullptr, &Context);
+  loadInput(WeightedInput, nullptr, nullptr, /*ProfiledBinary=*/"", &Context);
   overlapInput(BaseFilename, TestFilename, &Context, Overlap, FuncFilter, OS,
                IsCS);
   Overlap.dump(OS);
@@ -2095,7 +2128,8 @@ static int showInstrProfile(const std::string &Filename, bool ShowCounts,
                             bool ShowAllFunctions, bool ShowCS,
                             uint64_t ValueCutoff, bool OnlyListBelow,
                             const std::string &ShowFunction, bool TextFormat,
-                            bool ShowBinaryIds, raw_fd_ostream &OS) {
+                            bool ShowBinaryIds, bool ShowCovered,
+                            raw_fd_ostream &OS) {
   auto ReaderOrErr = InstrProfReader::create(Filename);
   std::vector<uint32_t> Cutoffs = std::move(DetailedSummaryCutoffs);
   if (ShowDetailedSummary && Cutoffs.empty()) {
@@ -2151,6 +2185,13 @@ static int showInstrProfile(const std::string &Filename, bool ShowCounts,
 
     assert(Func.Counts.size() > 0 && "function missing entry counter");
     Builder.addRecord(Func);
+
+    if (ShowCovered) {
+      if (std::any_of(Func.Counts.begin(), Func.Counts.end(),
+                      [](uint64_t C) { return C; }))
+        OS << Func.Name << "\n";
+      continue;
+    }
 
     uint64_t FuncMax = 0;
     uint64_t FuncSum = 0;
@@ -2228,7 +2269,7 @@ static int showInstrProfile(const std::string &Filename, bool ShowCounts,
   if (Reader->hasError())
     exitWithError(Reader->getError(), Filename);
 
-  if (TextFormat)
+  if (TextFormat || ShowCovered)
     return 0;
   std::unique_ptr<ProfileSummary> PS(Builder.getSummary());
   bool IsIR = Reader->isIRLevelProfile();
@@ -2475,20 +2516,53 @@ static int showSampleProfile(const std::string &Filename, bool ShowCounts,
   return 0;
 }
 
-static int showMemProfProfile(const std::string &Filename, raw_fd_ostream &OS) {
-  auto ReaderOr = llvm::memprof::RawMemProfReader::create(Filename);
+static int showMemProfProfile(const std::string &Filename,
+                              const std::string &ProfiledBinary,
+                              raw_fd_ostream &OS) {
+  auto ReaderOr =
+      llvm::memprof::RawMemProfReader::create(Filename, ProfiledBinary);
   if (Error E = ReaderOr.takeError())
-    exitWithError(std::move(E), Filename);
+    // Since the error can be related to the profile or the binary we do not
+    // pass whence. Instead additional context is provided where necessary in
+    // the error message.
+    exitWithError(std::move(E), /*Whence*/ "");
 
   std::unique_ptr<llvm::memprof::RawMemProfReader> Reader(
       ReaderOr.get().release());
-  Reader->printSummaries(OS);
+
+  Reader->printYAML(OS);
+  return 0;
+}
+
+static int showDebugInfoCorrelation(const std::string &Filename,
+                                    bool ShowDetailedSummary,
+                                    bool ShowProfileSymbolList,
+                                    raw_fd_ostream &OS) {
+  std::unique_ptr<InstrProfCorrelator> Correlator;
+  if (auto Err = InstrProfCorrelator::get(Filename).moveInto(Correlator))
+    exitWithError(std::move(Err), Filename);
+  if (auto Err = Correlator->correlateProfileData())
+    exitWithError(std::move(Err), Filename);
+
+  InstrProfSymtab Symtab;
+  if (auto Err = Symtab.create(
+          StringRef(Correlator->getNamesPointer(), Correlator->getNamesSize())))
+    exitWithError(std::move(Err), Filename);
+
+  if (ShowProfileSymbolList)
+    Symtab.dumpNames(OS);
+  // TODO: Read "Profile Data Type" from debug info to compute and show how many
+  // counters the section holds.
+  if (ShowDetailedSummary)
+    OS << "Counters section size: 0x"
+       << Twine::utohexstr(Correlator->getCountersSectionSize()) << " bytes\n";
+  OS << "Found " << Correlator->getDataSize() << " functions\n";
+
   return 0;
 }
 
 static int show_main(int argc, const char *argv[]) {
-  cl::opt<std::string> Filename(cl::Positional, cl::Required,
-                                cl::desc("<profdata-file>"));
+  cl::opt<std::string> Filename(cl::Positional, cl::desc("<profdata-file>"));
 
   cl::opt<bool> ShowCounts("counts", cl::init(false),
                            cl::desc("Show counter values for shown functions"));
@@ -2549,8 +2623,23 @@ static int show_main(int argc, const char *argv[]) {
                "extbinary format"));
   cl::opt<bool> ShowBinaryIds("binary-ids", cl::init(false),
                               cl::desc("Show binary ids in the profile. "));
+  cl::opt<std::string> DebugInfoFilename(
+      "debug-info", cl::init(""),
+      cl::desc("Read and extract profile metadata from debug info and show "
+               "the functions it found."));
+  cl::opt<bool> ShowCovered(
+      "covered", cl::init(false),
+      cl::desc("Show only the functions that have been executed."));
+  cl::opt<std::string> ProfiledBinary(
+      "profiled-binary", cl::init(""),
+      cl::desc("Path to binary from which the profile was collected."));
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data summary\n");
+
+  if (Filename.empty() && DebugInfoFilename.empty())
+    exitWithError(
+        "the positional argument '<profdata-file>' is required unless '--" +
+        DebugInfoFilename.ArgStr + "' is provided");
 
   if (Filename == OutputFilename) {
     errs() << sys::path::filename(argv[0])
@@ -2566,18 +2655,22 @@ static int show_main(int argc, const char *argv[]) {
   if (ShowAllFunctions && !ShowFunction.empty())
     WithColor::warning() << "-function argument ignored: showing all functions\n";
 
+  if (!DebugInfoFilename.empty())
+    return showDebugInfoCorrelation(DebugInfoFilename, ShowDetailedSummary,
+                                    ShowProfileSymbolList, OS);
+
   if (ProfileKind == instr)
     return showInstrProfile(
         Filename, ShowCounts, TopNFunctions, ShowIndirectCallTargets,
         ShowMemOPSizes, ShowDetailedSummary, DetailedSummaryCutoffs,
         ShowAllFunctions, ShowCS, ValueCutoff, OnlyListBelow, ShowFunction,
-        TextFormat, ShowBinaryIds, OS);
+        TextFormat, ShowBinaryIds, ShowCovered, OS);
   if (ProfileKind == sample)
     return showSampleProfile(Filename, ShowCounts, TopNFunctions,
                              ShowAllFunctions, ShowDetailedSummary,
                              ShowFunction, ShowProfileSymbolList,
                              ShowSectionInfoOnly, ShowHotFuncList, OS);
-  return showMemProfProfile(Filename, OS);
+  return showMemProfProfile(Filename, ProfiledBinary, OS);
 }
 
 int main(int argc, const char *argv[]) {

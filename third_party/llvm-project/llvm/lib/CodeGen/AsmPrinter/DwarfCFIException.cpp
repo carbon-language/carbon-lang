@@ -33,8 +33,7 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-DwarfCFIExceptionBase::DwarfCFIExceptionBase(AsmPrinter *A)
-    : EHStreamer(A), shouldEmitCFI(false), hasEmittedCFISections(false) {}
+DwarfCFIExceptionBase::DwarfCFIExceptionBase(AsmPrinter *A) : EHStreamer(A) {}
 
 void DwarfCFIExceptionBase::markFunctionEnd() {
   endFragment();
@@ -52,10 +51,9 @@ void DwarfCFIExceptionBase::endFragment() {
 }
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
-    : DwarfCFIExceptionBase(A), shouldEmitPersonality(false),
-      forceEmitPersonality(false), shouldEmitLSDA(false) {}
+    : DwarfCFIExceptionBase(A) {}
 
-DwarfCFIException::~DwarfCFIException() {}
+DwarfCFIException::~DwarfCFIException() = default;
 
 /// endModule - Emit all exception information that should come after the
 /// content.

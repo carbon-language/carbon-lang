@@ -35,64 +35,41 @@ class SourceBuffer {
  public:
   static auto CreateFromText(llvm::Twine text,
                              llvm::StringRef filename = "/text")
-      -> SourceBuffer;
+      -> llvm::Expected<SourceBuffer>;
   static auto CreateFromFile(llvm::StringRef filename)
       -> llvm::Expected<SourceBuffer>;
 
   // Use one of the factory functions above to create a source buffer.
   SourceBuffer() = delete;
 
-  // Cannot copy as there may be non-trivial owned file data, see the class
+  // Cannot copy as there may be non-trivial owned file data; see the class
   // comment for details.
   SourceBuffer(const SourceBuffer& arg) = delete;
 
-  SourceBuffer(SourceBuffer&& arg) noexcept
-      : filename_(std::move(arg.filename_)),
-        text_(arg.text_),
-        is_string_rep_(arg.is_string_rep_) {
-    // The easy case in when we don't need to transfer an allocated string
-    // representation.
-    if (!arg.is_string_rep_) {
-      // Take ownership of a non-string representation by clearing its text.
-      arg.text_ = llvm::StringRef();
-      return;
-    }
-
-    // If the argument is using a string rep we need to move that storage over
-    // and recreate our text `StringRef` to point at our storage.
-    new (&string_storage_) std::string(std::move(arg.string_storage_));
-    text_ = string_storage_;
-  }
+  SourceBuffer(SourceBuffer&& arg) noexcept;
 
   ~SourceBuffer();
 
-  [[nodiscard]] auto Filename() const -> llvm::StringRef { return filename_; }
+  [[nodiscard]] auto filename() const -> llvm::StringRef { return filename_; }
 
-  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
+  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
 
  private:
-  SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
-      : filename_(fake_filename.str()),
-        is_string_rep_(true),
-        string_storage_(std::move(buffer_text)) {
-    text_ = string_storage_;
-  }
-
-  explicit SourceBuffer(llvm::StringRef filename)
-      : filename_(filename.str()), text_(), is_string_rep_(false) {}
-
-  std::string filename_;
-
-  llvm::StringRef text_;
-
-  bool is_string_rep_;
-
-  // We use a transparent union to avoid constructing the storage.
-  // FIXME: We should replace this and the boolean with an optional which would
-  // be much simpler.
-  union {
-    std::string string_storage_;
+  enum class ContentMode {
+    Uninitialized,
+    MMapped,
+    Owned,
   };
+
+  // Constructor for mmapped content.
+  SourceBuffer(std::string filename, llvm::StringRef text);
+  // Constructor for owned content.
+  SourceBuffer(std::string filename, std::string text);
+
+  ContentMode content_mode_;
+  std::string filename_;
+  std::string text_storage_;
+  llvm::StringRef text_;
 };
 
 }  // namespace Carbon

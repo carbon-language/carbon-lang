@@ -25,18 +25,12 @@ def SCF_Dialect : Dialect {
 }
 
 // Base class for SCF dialect ops.
-class SCF_Op<string mnemonic, list<OpTrait> traits = []> :
-    Op<SCF_Dialect, mnemonic, traits> {
-  // For every standard op, there needs to be a:
-  //   * void print(OpAsmPrinter &p, ${C++ class of Op} op)
-  //   * LogicalResult verify(${C++ class of Op} op)
-  //   * ParseResult parse${C++ class of Op}(OpAsmParser &parser,
-  //                                         OperationState &result)
-  // functions.
-  let printer = [{ return ::print(p, *this); }];
-  let verifier = [{ return ::verify(*this); }];
-  let parser = [{ return ::parse$cppClass(parser, result); }];
-}
+class SCF_Op<string mnemonic, list<Trait> traits = []> :
+    Op<SCF_Dialect, mnemonic, traits>;
+
+//===----------------------------------------------------------------------===//
+// ConditionOp
+//===----------------------------------------------------------------------===//
 
 def ConditionOp : SCF_Op<"condition", [
   HasParent<"WhileOp">,
@@ -56,9 +50,6 @@ def ConditionOp : SCF_Op<"condition", [
 
   let assemblyFormat =
       [{ `(` $condition `)` attr-dict ($args^ `:` type($args))? }];
-
-  // Override the default verifier, everything is checked by traits.
-  let verifier = ?;
 }
 
 //===----------------------------------------------------------------------===//
@@ -89,15 +80,15 @@ def ExecuteRegionOp : SCF_Op<"execute_region"> {
     affine.for %i = 0 to 100 {
       "foo"() : () -> ()
       %v = scf.execute_region -> i64 {
-        cond_br %cond, ^bb1, ^bb2
+        cf.cond_br %cond, ^bb1, ^bb2
 
       ^bb1:
         %c1 = arith.constant 1 : i64
-        br ^bb3(%c1 : i64)
+        cf.br ^bb3(%c1 : i64)
 
       ^bb2:
         %c2 = arith.constant 2 : i64
-        br ^bb3(%c2 : i64)
+        cf.br ^bb3(%c2 : i64)
 
       ^bb3(%x : i64):
         scf.yield %x : i64
@@ -112,12 +103,14 @@ def ExecuteRegionOp : SCF_Op<"execute_region"> {
   let regions = (region AnyRegion:$region);
 
   let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
 
   let hasFolder = 0;
+  let hasVerifier = 1;
 }
 
 def ForOp : SCF_Op<"for",
-      [DeclareOpInterfaceMethods<LoopLikeOpInterface>,
+      [AutomaticAllocationScope, DeclareOpInterfaceMethods<LoopLikeOpInterface>,
        DeclareOpInterfaceMethods<RegionBranchOpInterface>,
        SingleBlockImplicitTerminator<"scf::YieldOp">,
        RecursiveSideEffects]> {
@@ -309,18 +302,17 @@ def ForOp : SCF_Op<"for",
     /// induction variable. LoopOp only has one region, so 0 is the only valid
     /// value for `index`.
     OperandRange getSuccessorEntryOperands(unsigned index);
-
-    /// Returns the number of invocations of the body block if the loop bounds
-    /// are constants. Returns `kUnknownNumRegionInvocations` otherwise.
-    void getNumRegionInvocations(ArrayRef<Attribute> operands,
-                                 SmallVectorImpl<int64_t> &countPerRegion);
   }];
 
   let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
 }
 
 def IfOp : SCF_Op<"if",
-      [DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+      [DeclareOpInterfaceMethods<RegionBranchOpInterface,
+                                 ["getNumRegionInvocations",
+                                  "getRegionInvocationBounds"]>,
        SingleBlockImplicitTerminator<"scf::YieldOp">, RecursiveSideEffects,
        NoRegionArguments]> {
   let summary = "if-then-else operation";
@@ -404,19 +396,16 @@ def IfOp : SCF_Op<"if",
     YieldOp thenYield();
     Block* elseBlock();
     YieldOp elseYield();
-
-    /// If the condition is a constant, returns 1 for the executed block and 0
-    /// for the other. Otherwise, returns `kUnknownNumRegionInvocations` for
-    /// both successors.
-    void getNumRegionInvocations(ArrayRef<Attribute> operands,
-                                 SmallVectorImpl<int64_t> &countPerRegion);
   }];
   let hasFolder = 1;
   let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
 }
 
 def ParallelOp : SCF_Op<"parallel",
-    [AttrSizedOperandSegments,
+    [AutomaticAllocationScope,
+     AttrSizedOperandSegments,
      DeclareOpInterfaceMethods<LoopLikeOpInterface>,
      RecursiveSideEffects,
      SingleBlockImplicitTerminator<"scf::YieldOp">]> {
@@ -494,6 +483,8 @@ def ParallelOp : SCF_Op<"parallel",
   }];
 
   let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
 }
 
 def ReduceOp : SCF_Op<"reduce", [HasParent<"ParallelOp">]> {
@@ -541,7 +532,9 @@ def ReduceOp : SCF_Op<"reduce", [HasParent<"ParallelOp">]> {
   ];
 
   let arguments = (ins AnyType:$operand);
+  let hasCustomAssemblyFormat = 1;
   let regions = (region SizedRegion<1>:$reductionOperator);
+  let hasVerifier = 1;
 }
 
 def ReduceReturnOp :
@@ -560,6 +553,7 @@ def ReduceReturnOp :
 
   let arguments = (ins AnyType:$result);
   let assemblyFormat = "$result attr-dict `:` type($result)";
+  let hasVerifier = 1;
 }
 
 def WhileOp : SCF_Op<"while",
@@ -692,6 +686,8 @@ def WhileOp : SCF_Op<"while",
   }];
 
   let hasCanonicalizer = 1;
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
 }
 
 def YieldOp : SCF_Op<"yield", [NoSideEffect, ReturnLike, Terminator,
@@ -715,10 +711,6 @@ def YieldOp : SCF_Op<"yield", [NoSideEffect, ReturnLike, Terminator,
 
   let assemblyFormat =
       [{  attr-dict ($results^ `:` type($results))? }];
-
-  // Override default verifier (defined in SCF_Op), no custom verification
-  // needed.
-  let verifier = ?;
 }
 
 #endif // MLIR_DIALECT_SCF_SCFOPS

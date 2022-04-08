@@ -15,9 +15,9 @@ namespace {
 
 // Not much to test here, so just verify that the API compiles and returns the
 // data in the `.def` file.
-#define CARBON_PARSE_NODE_KIND(Name)                   \
-  TEST(ParseNodeKindTest, Name) {                      \
-    EXPECT_EQ(#Name, ParseNodeKind::Name().GetName()); \
+#define CARBON_PARSE_NODE_KIND(Name)                \
+  TEST(ParseNodeKindTest, Name) {                   \
+    EXPECT_EQ(#Name, ParseNodeKind::Name().name()); \
   }
 #include "toolchain/parser/parse_node_kind.def"
 

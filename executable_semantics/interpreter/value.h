@@ -44,6 +44,7 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
+    Witness,
     IntType,
     BoolType,
     TypeType,
@@ -52,6 +53,7 @@ class Value {
     AutoType,
     StructType,
     NominalClassType,
+    InterfaceType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
@@ -61,7 +63,9 @@ class Value {
     StringType,
     StringValue,
     TypeOfClassType,
+    TypeOfInterfaceType,
     TypeOfChoiceType,
+    StaticArrayType,
   };
 
   Value(const Value&) = delete;
@@ -73,13 +77,15 @@ class Value {
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
   auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc) const -> Nonnull<const Value*>;
+                SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
   // set to `field_value`. `path` must be a valid field path for *this.
   auto SetField(Nonnull<Arena*> arena, const FieldPath& path,
                 Nonnull<const Value*> field_value,
-                SourceLocation source_loc) const -> Nonnull<const Value*>;
+                SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the enumerator corresponding to the most-derived type of this
   // object.
@@ -124,6 +130,15 @@ class FunctionValue : public Value {
   explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
       : Value(Kind::FunctionValue), declaration_(declaration) {}
 
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
+                         const BindingMap& type_args,
+                         const std::map<Nonnull<const ImplBinding*>,
+                                        Nonnull<const Witness*>>& wits)
+      : Value(Kind::FunctionValue),
+        declaration_(declaration),
+        type_args_(type_args),
+        witnesses_(wits) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionValue;
   }
@@ -132,8 +147,17 @@ class FunctionValue : public Value {
     return *declaration_;
   }
 
+  auto type_args() const -> const BindingMap& { return type_args_; }
+
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
+    return witnesses_;
+  }
+
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
+  BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -145,6 +169,17 @@ class BoundMethodValue : public Value {
         declaration_(declaration),
         receiver_(receiver) {}
 
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+                            Nonnull<const Value*> receiver,
+                            const BindingMap& type_args,
+                            const std::map<Nonnull<const ImplBinding*>,
+                                           Nonnull<const Witness*>>& wits)
+      : Value(Kind::BoundMethodValue),
+        declaration_(declaration),
+        receiver_(receiver),
+        type_args_(type_args),
+        witnesses_(wits) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
   }
@@ -155,9 +190,18 @@ class BoundMethodValue : public Value {
 
   auto receiver() const -> Nonnull<const Value*> { return receiver_; }
 
+  auto type_args() const -> const BindingMap& { return type_args_; }
+
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
+    return witnesses_;
+  }
+
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
+  BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
 // The value of a location in memory.
@@ -331,20 +375,20 @@ class BindingPlaceholderValue : public Value {
   explicit BindingPlaceholderValue() : Value(Kind::BindingPlaceholderValue) {}
 
   // Represents a named placeholder.
-  explicit BindingPlaceholderValue(NamedEntityView named_entity)
+  explicit BindingPlaceholderValue(ValueNodeView value_node)
       : Value(Kind::BindingPlaceholderValue),
-        named_entity_(std::move(named_entity)) {}
+        value_node_(std::move(value_node)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BindingPlaceholderValue;
   }
 
-  auto named_entity() const -> const std::optional<NamedEntityView>& {
-    return named_entity_;
+  auto value_node() const -> const std::optional<ValueNodeView>& {
+    return value_node_;
   }
 
  private:
-  std::optional<NamedEntityView> named_entity_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // The int type.
@@ -382,11 +426,13 @@ class FunctionType : public Value {
  public:
   FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
+               Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         deduced_(deduced),
         parameters_(parameters),
-        return_type_(return_type) {}
+        return_type_(return_type),
+        impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -397,11 +443,17 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  // The bindings for the witness tables (impls) required by the
+  // bounds on the type parameters of the generic function.
+  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+    return impl_bindings_;
+  }
 
  private:
   std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
 // A pointer type.
@@ -452,20 +504,68 @@ class StructType : public Value {
 };
 
 // A class type.
+// TODO: Consider splitting this class into several classes.
 class NominalClassType : public Value {
  public:
-  NominalClassType(Nonnull<const ClassDeclaration*> declaration)
+  // Construct a non-generic class type or a generic class type that has
+  // not yet been applied to type arguments.
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
       : Value(Kind::NominalClassType), declaration_(declaration) {}
+
+  // Construct a class type that represents the result of applying the
+  // given generic class to the `type_args`.
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                            const BindingMap& type_args)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args) {}
+
+  // Construct a class type that represents the result of applying the
+  // given generic class to the `type_args` and that records the result of the
+  // compile-time search for any required impls.
+  explicit NominalClassType(
+      Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
+      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args),
+        impls_(impls) {}
+
+  // Construct a fully instantiated generic class type to represent the
+  // run-time type of an object.
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                            const BindingMap& type_args,
+                            const std::map<Nonnull<const ImplBinding*>,
+                                           Nonnull<const Witness*>>& wits)
+      : Value(Kind::NominalClassType),
+        declaration_(declaration),
+        type_args_(type_args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
+  auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Return the declaration of the member with the given name.
-  auto FindMember(const std::string& name) const
-      -> std::optional<Nonnull<const Declaration*>>;
+  // Maps each of the class's generic parameters to the AST node that
+  // identifies the witness table for the corresponding argument.
+  // Should not be called on 1) a non-generic class, 2) a generic-class
+  // that is not instantiated, or 3) a fully instantiated runtime type
+  // of a generic class.
+  auto impls() const
+      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
+    return impls_;
+  }
+
+  // Maps each of the class's generic parameters to the witness table
+  // for the corresponding argument. Should only be called on a fully
+  // instantiated runtime type of a generic class.
+  auto witnesses() const
+      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
+    return witnesses_;
+  }
 
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
@@ -474,9 +574,49 @@ class NominalClassType : public Value {
 
  private:
   Nonnull<const ClassDeclaration*> declaration_;
+  BindingMap type_args_;
+  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
 };
 
-auto FieldTypes(const NominalClassType&) -> std::vector<NamedValue>;
+// Return the declaration of the member with the given name.
+auto FindMember(const std::string& name,
+                llvm::ArrayRef<Nonnull<Declaration*>> members)
+    -> std::optional<Nonnull<const Declaration*>>;
+
+// An interface type.
+class InterfaceType : public Value {
+ public:
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
+      : Value(Kind::InterfaceType), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::InterfaceType;
+  }
+
+  auto declaration() const -> const InterfaceDeclaration& {
+    return *declaration_;
+  }
+
+ private:
+  Nonnull<const InterfaceDeclaration*> declaration_;
+};
+
+// The witness table for an impl.
+class Witness : public Value {
+ public:
+  explicit Witness(Nonnull<const ImplDeclaration*> declaration)
+      : Value(Kind::Witness), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::Witness;
+  }
+
+  auto declaration() const -> const ImplDeclaration& { return *declaration_; }
+
+ private:
+  Nonnull<const ImplDeclaration*> declaration_;
+};
 
 // A choice type.
 class ChoiceType : public Value {
@@ -627,6 +767,21 @@ class TypeOfClassType : public Value {
   Nonnull<const NominalClassType*> class_type_;
 };
 
+class TypeOfInterfaceType : public Value {
+ public:
+  explicit TypeOfInterfaceType(Nonnull<const InterfaceType*> iface_type)
+      : Value(Kind::TypeOfInterfaceType), iface_type_(iface_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfInterfaceType;
+  }
+
+  auto interface_type() const -> const InterfaceType& { return *iface_type_; }
+
+ private:
+  Nonnull<const InterfaceType*> iface_type_;
+};
+
 // The type of an expression whose value is a choice type. Currently there is no
 // way to explicitly name such a type in Carbon code, but we are tentatively
 // using `typeof(ChoiceName)` as the debug-printing format, in anticipation of
@@ -644,6 +799,30 @@ class TypeOfChoiceType : public Value {
 
  private:
   Nonnull<const ChoiceType*> choice_type_;
+};
+
+// The type of a statically-sized array.
+//
+// Note that values of this type are represented as tuples.
+class StaticArrayType : public Value {
+ public:
+  // Constructs a statically-sized array type with the given element type and
+  // size.
+  StaticArrayType(Nonnull<const Value*> element_type, size_t size)
+      : Value(Kind::StaticArrayType),
+        element_type_(element_type),
+        size_(size) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::StaticArrayType;
+  }
+
+  auto element_type() const -> const Value& { return *element_type_; }
+  auto size() const -> size_t { return size_; }
+
+ private:
+  Nonnull<const Value*> element_type_;
+  size_t size_;
 };
 
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool;

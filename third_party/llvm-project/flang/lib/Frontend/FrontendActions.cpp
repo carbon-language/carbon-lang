@@ -11,7 +11,13 @@
 #include "flang/Frontend/CompilerInstance.h"
 #include "flang/Frontend/FrontendOptions.h"
 #include "flang/Frontend/PreprocessorOptions.h"
+#include "flang/Lower/Bridge.h"
 #include "flang/Lower/PFTBuilder.h"
+#include "flang/Lower/Support/Verifier.h"
+#include "flang/Optimizer/Support/FIRContext.h"
+#include "flang/Optimizer/Support/InitFIR.h"
+#include "flang/Optimizer/Support/KindMapping.h"
+#include "flang/Optimizer/Support/Utils.h"
 #include "flang/Parser/dump-parse-tree.h"
 #include "flang/Parser/parsing.h"
 #include "flang/Parser/provenance.h"
@@ -20,6 +26,10 @@
 #include "flang/Semantics/runtime-type-info.h"
 #include "flang/Semantics/semantics.h"
 #include "flang/Semantics/unparse-with-symbols.h"
+
+#include "mlir/IR/Dialect.h"
+#include "mlir/Pass/PassManager.h"
+#include "mlir/Target/LLVMIR/ModuleTranslation.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <clang/Basic/Diagnostic.h>
@@ -37,12 +47,61 @@ bool PrescanAndParseAction::BeginSourceFileAction() {
 }
 
 bool PrescanAndSemaAction::BeginSourceFileAction() {
-  return RunPrescan() && RunParse() && RunSemanticChecks();
+  return RunPrescan() && RunParse() && RunSemanticChecks() &&
+      GenerateRtTypeTables();
 }
 
 bool PrescanAndSemaDebugAction::BeginSourceFileAction() {
-  // Semantic checks are made to succeed unconditionally.
-  return RunPrescan() && RunParse() && (RunSemanticChecks() || true);
+  // This is a "debug" action for development purposes. To facilitate this, the
+  // semantic checks are made to succeed unconditionally to prevent this action
+  // from exiting early (i.e. in the presence of semantic errors). We should
+  // never do this in actions intended for end-users or otherwise regular
+  // compiler workflows!
+  return RunPrescan() && RunParse() && (RunSemanticChecks() || true) &&
+      (GenerateRtTypeTables() || true);
+}
+
+bool CodeGenAction::BeginSourceFileAction() {
+  bool res = RunPrescan() && RunParse() && RunSemanticChecks();
+  if (!res)
+    return res;
+
+  CompilerInstance &ci = this->instance();
+
+  // Load the MLIR dialects required by Flang
+  mlir::DialectRegistry registry;
+  mlirCtx = std::make_unique<mlir::MLIRContext>(registry);
+  fir::support::registerNonCodegenDialects(registry);
+  fir::support::loadNonCodegenDialects(*mlirCtx);
+
+  // Create a LoweringBridge
+  const common::IntrinsicTypeDefaultKinds &defKinds =
+      ci.invocation().semanticsContext().defaultKinds();
+  fir::KindMapping kindMap(mlirCtx.get(),
+      llvm::ArrayRef<fir::KindTy>{fir::fromDefaultKinds(defKinds)});
+  lower::LoweringBridge lb = Fortran::lower::LoweringBridge::create(*mlirCtx,
+      defKinds, ci.invocation().semanticsContext().intrinsics(),
+      ci.parsing().allCooked(), /*triple=*/"native", kindMap);
+
+  // Create a parse tree and lower it to FIR
+  Fortran::parser::Program &parseTree{*ci.parsing().parseTree()};
+  lb.lower(parseTree, ci.invocation().semanticsContext());
+  mlirModule = std::make_unique<mlir::ModuleOp>(lb.getModule());
+
+  // Run the default passes.
+  mlir::PassManager pm(mlirCtx.get(), mlir::OpPassManager::Nesting::Implicit);
+  pm.enableVerifier(/*verifyPasses=*/true);
+  pm.addPass(std::make_unique<Fortran::lower::VerifierPass>());
+
+  if (mlir::failed(pm.run(*mlirModule))) {
+    unsigned diagID =
+        ci.diagnostics().getCustomDiagID(clang::DiagnosticsEngine::Error,
+            "verification of lowering to FIR failed");
+    ci.diagnostics().Report(diagID);
+    return false;
+  }
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -165,25 +224,18 @@ void DebugUnparseWithSymbolsAction::ExecuteAction() {
 
 void DebugDumpSymbolsAction::ExecuteAction() {
   CompilerInstance &ci = this->instance();
-  auto &semantics = ci.semantics();
 
-  auto tables{Fortran::semantics::BuildRuntimeDerivedTypeTables(
-      instance().invocation().semanticsContext())};
-  // The runtime derived type information table builder may find and report
-  // semantic errors. So it is important that we report them _after_
-  // BuildRuntimeDerivedTypeTables is run.
-  reportFatalSemanticErrors();
-
-  if (!tables.schemata) {
+  if (!ci.getRtTyTables().schemata) {
     unsigned DiagID =
         ci.diagnostics().getCustomDiagID(clang::DiagnosticsEngine::Error,
             "could not find module file for __fortran_type_info");
     ci.diagnostics().Report(DiagID);
     llvm::errs() << "\n";
+    return;
   }
 
   // Dump symbols
-  semantics.DumpSymbols(llvm::outs());
+  ci.semantics().DumpSymbols(llvm::outs());
 }
 
 void DebugDumpAllAction::ExecuteAction() {
@@ -197,27 +249,20 @@ void DebugDumpAllAction::ExecuteAction() {
   Fortran::parser::DumpTree(
       llvm::outs(), parseTree, &ci.invocation().asFortran());
 
-  auto &semantics = ci.semantics();
-  auto tables{Fortran::semantics::BuildRuntimeDerivedTypeTables(
-      instance().invocation().semanticsContext())};
-  // The runtime derived type information table builder may find and report
-  // semantic errors. So it is important that we report them _after_
-  // BuildRuntimeDerivedTypeTables is run.
-  reportFatalSemanticErrors();
-
-  if (!tables.schemata) {
+  if (!ci.getRtTyTables().schemata) {
     unsigned DiagID =
         ci.diagnostics().getCustomDiagID(clang::DiagnosticsEngine::Error,
             "could not find module file for __fortran_type_info");
     ci.diagnostics().Report(DiagID);
     llvm::errs() << "\n";
+    return;
   }
 
   // Dump symbols
   llvm::outs() << "=====================";
   llvm::outs() << " Flang: symbols dump ";
   llvm::outs() << "=====================\n";
-  semantics.DumpSymbols(llvm::outs());
+  ci.semantics().DumpSymbols(llvm::outs());
 }
 
 void DebugDumpParseTreeNoSemaAction::ExecuteAction() {
@@ -354,6 +399,95 @@ void GetSymbolsSourcesAction::ExecuteAction() {
   }
 
   ci.semantics().DumpSymbolsSources(llvm::outs());
+}
+
+#include "flang/Tools/CLOptions.inc"
+
+// Lower the previously generated MLIR module into an LLVM IR module
+void CodeGenAction::GenerateLLVMIR() {
+  assert(mlirModule && "The MLIR module has not been generated yet.");
+
+  CompilerInstance &ci = this->instance();
+
+  fir::support::loadDialects(*mlirCtx);
+  fir::support::registerLLVMTranslation(*mlirCtx);
+
+  // Set-up the MLIR pass manager
+  mlir::PassManager pm(mlirCtx.get(), mlir::OpPassManager::Nesting::Implicit);
+
+  pm.addPass(std::make_unique<Fortran::lower::VerifierPass>());
+  pm.enableVerifier(/*verifyPasses=*/true);
+  mlir::PassPipelineCLParser passPipeline("", "Compiler passes to run");
+
+  // Create the pass pipeline
+  fir::createMLIRToLLVMPassPipeline(pm);
+
+  // Run the pass manager
+  if (!mlir::succeeded(pm.run(*mlirModule))) {
+    unsigned diagID = ci.diagnostics().getCustomDiagID(
+        clang::DiagnosticsEngine::Error, "Lowering to LLVM IR failed");
+    ci.diagnostics().Report(diagID);
+  }
+
+  // Translate to LLVM IR
+  llvm::Optional<llvm::StringRef> moduleName = mlirModule->getName();
+  llvmCtx = std::make_unique<llvm::LLVMContext>();
+  llvmModule = mlir::translateModuleToLLVMIR(
+      *mlirModule, *llvmCtx, moduleName ? *moduleName : "FIRModule");
+
+  if (!llvmModule) {
+    unsigned diagID = ci.diagnostics().getCustomDiagID(
+        clang::DiagnosticsEngine::Error, "failed to create the LLVM module");
+    ci.diagnostics().Report(diagID);
+    return;
+  }
+}
+
+void EmitLLVMAction::ExecuteAction() {
+  CompilerInstance &ci = this->instance();
+  GenerateLLVMIR();
+
+  // If set, use the predefined outupt stream to print the generated module.
+  if (!ci.IsOutputStreamNull()) {
+    llvmModule->print(
+        ci.GetOutputStream(), /*AssemblyAnnotationWriter=*/nullptr);
+    return;
+  }
+
+  // No predefined output stream was set. Create an output file and dump the
+  // generated module there.
+  std::unique_ptr<llvm::raw_ostream> os = ci.CreateDefaultOutputFile(
+      /*Binary=*/false, /*InFile=*/GetCurrentFileOrBufferName(), "ll");
+  if (!os) {
+    unsigned diagID = ci.diagnostics().getCustomDiagID(
+        clang::DiagnosticsEngine::Error, "failed to create the output file");
+    ci.diagnostics().Report(diagID);
+    return;
+  }
+  llvmModule->print(*os, /*AssemblyAnnotationWriter=*/nullptr);
+}
+
+void EmitMLIRAction::ExecuteAction() {
+  CompilerInstance &ci = this->instance();
+
+  // Print the output. If a pre-defined output stream exists, dump the MLIR
+  // content there.
+  if (!ci.IsOutputStreamNull()) {
+    mlirModule->print(ci.GetOutputStream());
+    return;
+  }
+
+  // ... otherwise, print to a file.
+  std::unique_ptr<llvm::raw_pwrite_stream> os{ci.CreateDefaultOutputFile(
+      /*Binary=*/true, /*InFile=*/GetCurrentFileOrBufferName(), "mlir")};
+  if (!os) {
+    unsigned diagID = ci.diagnostics().getCustomDiagID(
+        clang::DiagnosticsEngine::Error, "failed to create the output file");
+    ci.diagnostics().Report(diagID);
+    return;
+  }
+
+  mlirModule->print(*os);
 }
 
 void EmitObjAction::ExecuteAction() {

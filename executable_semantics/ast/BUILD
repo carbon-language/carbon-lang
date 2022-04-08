@@ -70,6 +70,23 @@ cc_test(
 )
 
 cc_library(
+    name = "impl_binding",
+    hdrs = [
+        "impl_binding.h",
+    ],
+    deps = [
+        ":ast_node",
+        ":pattern",
+        ":source_location",
+        ":value_category",
+        "//common:check",
+        "//common:ostream",
+        "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
     hdrs = [
@@ -77,6 +94,7 @@ cc_library(
     ],
     deps = [
         ":ast_node",
+        ":impl_binding",
         ":pattern",
         ":return_term",
         ":source_location",
@@ -93,6 +111,7 @@ cc_library(
     name = "return_term",
     hdrs = ["return_term.h"],
     deps = [
+        ":expression",
         ":source_location",
         "//common:check",
         "//common:ostream",
@@ -184,8 +203,10 @@ cc_library(
         ":source_location",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//executable_semantics/common:error",
         "//executable_semantics/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

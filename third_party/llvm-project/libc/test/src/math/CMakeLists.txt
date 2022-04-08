@@ -983,26 +983,60 @@ add_fp_unittest(
     libc.src.__support.FPUtil.fputil
 )
 
-# The quad precision test for sqrt against MPFR currently suffers
-# from insufficient precision in MPFR calculations leading to
-# https://hal.archives-ouvertes.fr/hal-01091186/document. We will
-# renable after fixing the precision issue.
-if(${LIBC_TARGET_ARCHITECTURE_IS_X86})
-  add_fp_unittest(
-    sqrtl_test
-    NEED_MPFR
-    SUITE
-      libc_math_unittests
-    SRCS
-      sqrtl_test.cpp
-    DEPENDS
-      libc.include.math
-      libc.src.math.sqrtl
-      libc.src.__support.FPUtil.fputil
-  )
-else()
-  message(STATUS "Skipping sqrtl_test")
-endif()
+add_fp_unittest(
+  sqrtl_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    sqrtl_test.cpp
+  DEPENDS
+    libc.include.math
+    libc.src.math.sqrtl
+    libc.src.__support.FPUtil.fputil
+)
+
+add_fp_unittest(
+  generic_sqrtf_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    generic_sqrtf_test.cpp
+  DEPENDS
+    libc.src.__support.FPUtil.fputil
+    libc.src.__support.FPUtil.generic.sqrt
+  COMPILE_OPTIONS
+    -O3
+)
+
+add_fp_unittest(
+  generic_sqrt_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    generic_sqrt_test.cpp
+  DEPENDS
+    libc.src.__support.FPUtil.fputil
+    libc.src.__support.FPUtil.generic.sqrt
+  COMPILE_OPTIONS
+    -O3
+)
+
+add_fp_unittest(
+  generic_sqrtl_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    generic_sqrtl_test.cpp
+  DEPENDS
+    libc.src.__support.FPUtil.fputil
+    libc.src.__support.FPUtil.generic.sqrt
+  COMPILE_OPTIONS
+    -O3
+)
 
 add_fp_unittest(
   remquof_test
@@ -1191,6 +1225,45 @@ add_fp_unittest(
   DEPENDS
     libc.include.math
     libc.src.math.logf
+    libc.src.__support.FPUtil.fputil
+)
+
+add_fp_unittest(
+  log2f_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    log2f_test.cpp
+  DEPENDS
+    libc.include.math
+    libc.src.math.log2f
+    libc.src.__support.FPUtil.fputil
+)
+
+add_fp_unittest(
+  log10f_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    log10f_test.cpp
+  DEPENDS
+    libc.include.math
+    libc.src.math.log10f
+    libc.src.__support.FPUtil.fputil
+)
+
+add_fp_unittest(
+  log1pf_test
+  NEED_MPFR
+  SUITE
+    libc_math_unittests
+  SRCS
+    log1pf_test.cpp
+  DEPENDS
+    libc.include.math
+    libc.src.math.log1pf
     libc.src.__support.FPUtil.fputil
 )
 

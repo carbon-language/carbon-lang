@@ -6,6 +6,7 @@
 
 #include "executable_semantics/common/error.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -20,26 +21,30 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   return a;
 }
 
-auto Heap::Read(const Address& a, SourceLocation source_loc)
-    -> Nonnull<const Value*> {
-  this->CheckAlive(a.allocation_, source_loc);
+auto Heap::Read(const Address& a, SourceLocation source_loc) const
+    -> ErrorOr<Nonnull<const Value*>> {
+  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   return values_[a.allocation_.index_]->GetField(arena_, a.field_path_,
                                                  source_loc);
 }
 
-void Heap::Write(const Address& a, Nonnull<const Value*> v,
-                 SourceLocation source_loc) {
-  this->CheckAlive(a.allocation_, source_loc);
-  values_[a.allocation_.index_] = values_[a.allocation_.index_]->SetField(
-      arena_, a.field_path_, v, source_loc);
+auto Heap::Write(const Address& a, Nonnull<const Value*> v,
+                 SourceLocation source_loc) -> ErrorOr<Success> {
+  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  ASSIGN_OR_RETURN(values_[a.allocation_.index_],
+                   values_[a.allocation_.index_]->SetField(
+                       arena_, a.field_path_, v, source_loc));
+  return Success();
 }
 
-void Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) {
+auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
+    -> ErrorOr<Success> {
   if (!alive_[allocation.index_]) {
-    FATAL_RUNTIME_ERROR(source_loc)
-        << "undefined behavior: access to dead value "
-        << *values_[allocation.index_];
+    return FATAL_RUNTIME_ERROR(source_loc)
+           << "undefined behavior: access to dead value "
+           << *values_[allocation.index_];
   }
+  return Success();
 }
 
 void Heap::Deallocate(AllocationId allocation) {
