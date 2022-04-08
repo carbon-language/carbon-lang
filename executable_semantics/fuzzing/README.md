@@ -73,7 +73,7 @@ code directly.
 To convert a `Fuzzing::Carbon` text proto to Carbon source:
 
 ```bash
-bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=proto_to_carbon --input /tmp/crash.textproto
+bazel-bin/executable_semantics/fuzzing/fuzzverter --mode proto_to_carbon --input /tmp/crash.textproto
 ```
 
 ## Generating new fuzzer corpus entries
