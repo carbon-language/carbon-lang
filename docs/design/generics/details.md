@@ -4712,7 +4712,8 @@ external impl [T:! ImplicitAs(f64)]
 In addition, the generated impl definition for a `like` is implicitly injected
 at the end of the (unique) source file in which the impl is first declared. That
 is, it is injected in the API file if the impl is declared in an API file, and
-in the sole impl file declaring the impl otherwise.
+in the sole impl file declaring the impl otherwise. This means an `impl`
+declaration using `like` in an API file also makes the parameterized definition
 
 If one `impl` declaration uses `like`, other declarations must use `like` in the
 same way to match.
@@ -4746,6 +4747,9 @@ there is one from `Vector(T)` to `Vector(String)`, so the following use of
 //             parameter of `Printable.Print`.
 external impl Vector(like String) as Printable;
 ```
+
+Since the additional implementation definitions are generated eagerly, these
+errors will be reported in the file with the first declaration.
 
 The argument to `like` must either not mention any type parameters, or those
 parameters must be able to be determined due to being repeated outside of the
