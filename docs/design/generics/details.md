@@ -4308,6 +4308,12 @@ interface in its parameter list. There is a
 [workaround](#interfaces-with-parameters-constrained-by-the-same-interface) for
 the use cases when this would come up.
 
+An expression forming a constraint, such as `C & D`, is incomplete if any of the
+interfaces or constraints used in the expression are incomplete. A constraint
+expression using a [`where` clause](#where-constraints), like `C where ...`, is
+invalid if `C` is incomplete, since there is no way to look up member names of
+`C` that appear after `where`.
+
 An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
@@ -4346,7 +4352,9 @@ these rules:
 
 -   The definition must be in the same library as the declaration. They must
     either be in the same file, or the declaration can be in the API file and
-    the definition in an impl file.
+    the definition in an impl file. **Future work:** Carbon may require the
+    definition of [parameterized impls](#parameterized-impls) to be in the API
+    file, to support separate compilation.
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
     `where` clause. Later declarations may omit the `where` clause by writing
@@ -4409,9 +4417,8 @@ For implementations to agree:
 -   The presence of modifier keywords such as `external` before `impl` must
     match between a forward declaration and definition.
 -   If either declaration includes a `where` clause, they must both include one.
-    If neither uses
-    `where _`, they must match in that they produce the associated constants
-    with the same values considered separately.
+    If neither uses `where _`, they must match in that they produce the
+    associated constants with the same values considered separately.
 
 ### Declaration examples
 
@@ -4608,7 +4615,8 @@ interface Vector {
 }
 ```
 
-A default function or method may also be defined out of line:
+A default function or method may also be defined out of line, later in the same
+file as the interface definition:
 
 ```
 interface Vector {
