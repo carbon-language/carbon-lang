@@ -17,7 +17,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
-      out << "interface " << iface_decl.name() << " {\n";
+      PrintID(out);
+      out << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
         out << *m;
       }
@@ -26,15 +27,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     }
     case DeclarationKind::ImplDeclaration: {
       const auto& impl_decl = cast<ImplDeclaration>(*this);
-      switch (impl_decl.kind()) {
-        case ImplKind::InternalImpl:
-          break;
-        case ImplKind::ExternalImpl:
-          out << "external ";
-          break;
-      }
-      out << "impl " << *impl_decl.impl_type() << " as "
-          << impl_decl.interface() << " {\n";
+      PrintID(out);
+      out << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
         out << *m;
       }
@@ -47,7 +41,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
-      out << "class " << class_decl.name() << " {\n";
+      PrintID(out);
+      if (class_decl.type_params().has_value()) {
+        out << **class_decl.type_params();
+      }
+      out << " {\n";
       for (Nonnull<Declaration*> m : class_decl.members()) {
         out << *m;
       }
@@ -57,7 +55,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
-      out << "choice " << choice.name() << " {\n";
+      PrintID(out);
+      out << " {\n";
       for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
         out << *alt << ";\n";
       }
@@ -67,11 +66,55 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      out << "var " << var.binding();
+      PrintID(out);
       if (var.has_initializer()) {
         out << " = " << var.initializer();
       }
       out << ";\n";
+      break;
+    }
+  }
+}
+
+void Declaration::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case DeclarationKind::InterfaceDeclaration: {
+      const auto& iface_decl = cast<InterfaceDeclaration>(*this);
+      out << "interface" << iface_decl.name();
+      break;
+    }
+    case DeclarationKind::ImplDeclaration: {
+      const auto& impl_decl = cast<ImplDeclaration>(*this);
+      switch (impl_decl.kind()) {
+        case ImplKind::InternalImpl:
+          break;
+        case ImplKind::ExternalImpl:
+          out << "external ";
+          break;
+      }
+      out << "impl " << *impl_decl.impl_type() << " as "
+          << impl_decl.interface();
+      break;
+    }
+    case DeclarationKind::FunctionDeclaration:
+      out << "fn " << cast<FunctionDeclaration>(*this).name();
+      break;
+
+    case DeclarationKind::ClassDeclaration: {
+      const auto& class_decl = cast<ClassDeclaration>(*this);
+      out << "class " << class_decl.name();
+      break;
+    }
+
+    case DeclarationKind::ChoiceDeclaration: {
+      const auto& choice = cast<ChoiceDeclaration>(*this);
+      out << "choice " << choice.name();
+      break;
+    }
+
+    case DeclarationKind::VariableDeclaration: {
+      const auto& var = cast<VariableDeclaration>(*this);
+      out << "var " << var.binding();
       break;
     }
   }
@@ -98,6 +141,8 @@ void GenericBinding::Print(llvm::raw_ostream& out) const {
   out << name() << ":! " << type();
 }
 
+void GenericBinding::PrintID(llvm::raw_ostream& out) const { out << name(); }
+
 void ReturnTerm::Print(llvm::raw_ostream& out) const {
   switch (kind_) {
     case ReturnKind::Omitted:
@@ -112,29 +157,38 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-// Look for the `me` parameter in the `deduced_parameters_`
-// and put it in the `me_pattern_`.
-void FunctionDeclaration::ResolveDeducedAndReceiver(
-    const std::vector<Nonnull<AstNode*>>& deduced_params) {
+auto FunctionDeclaration::Create(
+    Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
+    std::vector<Nonnull<AstNode*>> deduced_params,
+    std::optional<Nonnull<BindingPattern*>> me_pattern,
+    Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
+    std::optional<Nonnull<Block*>> body)
+    -> ErrorOr<Nonnull<FunctionDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  // Look for the `me` parameter in the `deduced_parameters`
+  // and put it in the `me_pattern`.
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:
-        deduced_parameters_.push_back(&cast<GenericBinding>(*param));
+        resolved_params.push_back(&cast<GenericBinding>(*param));
         break;
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
-        if (me_pattern_.has_value() || bp->name() != "me") {
-          FATAL_COMPILATION_ERROR(source_loc())
-              << "illegal binding pattern in implicit parameter list";
+        if (me_pattern.has_value() || bp->name() != "me") {
+          return FATAL_COMPILATION_ERROR(source_loc)
+                 << "illegal binding pattern in implicit parameter list";
         }
-        me_pattern_ = bp;
+        me_pattern = bp;
         break;
       }
       default:
-        FATAL_COMPILATION_ERROR(source_loc())
-            << "illegal AST node in implicit parameter list";
+        return FATAL_COMPILATION_ERROR(source_loc)
+               << "illegal AST node in implicit parameter list";
     }
   }
+  return arena->New<FunctionDeclaration>(source_loc, name, resolved_params,
+                                         me_pattern, param_pattern, return_term,
+                                         body);
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
@@ -159,6 +213,10 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
   out << "alt " << name() << " " << signature();
+}
+
+void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
+  out << name();
 }
 
 }  // namespace Carbon

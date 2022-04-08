@@ -30,13 +30,6 @@ class ExitingStream {
         "destruction!");
   }
 
-  // Indicates that the program is exiting due to a bug in the program, rather
-  // than, e.g., invalid input.
-  auto TreatAsBug() -> ExitingStream& {
-    treat_as_bug_ = true;
-    return *this;
-  }
-
   // If the bool cast occurs, it's because the condition is false. This supports
   // && short-circuiting the creation of ExitingStream.
   explicit operator bool() const { return true; }
@@ -52,7 +45,7 @@ class ExitingStream {
     return *this;
   }
 
-  auto operator<<(AddSeparator /*unused*/) -> ExitingStream& {
+  auto operator<<(AddSeparator /*discarded*/) -> ExitingStream& {
     separator_ = true;
     return *this;
   }
@@ -60,22 +53,15 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*unused*/, ExitingStream& rhs) {
+  [[noreturn]] friend auto operator|(Helper /*discarded*/, ExitingStream& rhs) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    if (rhs.treat_as_bug_) {
-      std::abort();
-    } else {
-      std::exit(-1);
-    }
+    std::abort();
   }
 
  private:
   // Whether a separator should be printed if << is used again.
   bool separator_ = false;
-
-  // Whether the program is exiting due to a bug.
-  bool treat_as_bug_ = false;
 };
 
 }  // namespace Carbon::Internal

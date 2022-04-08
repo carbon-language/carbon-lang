@@ -29,6 +29,11 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << binding.name() << ": " << binding.type();
       break;
     }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(*this);
+      out << binding.name() << ":! " << binding.type();
+      break;
+    }
     case PatternKind::TuplePattern: {
       const auto& tuple = cast<TuplePattern>(*this);
       out << "(";
@@ -54,6 +59,40 @@ void Pattern::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void Pattern::PrintID(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case PatternKind::AutoPattern:
+      out << "auto";
+      break;
+    case PatternKind::BindingPattern: {
+      const auto& binding = cast<BindingPattern>(*this);
+      out << binding.name();
+      break;
+    }
+    case PatternKind::GenericBinding: {
+      const auto& binding = cast<GenericBinding>(*this);
+      out << binding.name();
+      break;
+    }
+    case PatternKind::TuplePattern: {
+      out << "(...)";
+      break;
+    }
+    case PatternKind::AlternativePattern: {
+      const auto& alternative = cast<AlternativePattern>(*this);
+      out << alternative.choice_type() << "." << alternative.alternative_name()
+          << "(...)";
+      break;
+    }
+    case PatternKind::VarPattern:
+      out << "var ...";
+      break;
+    case PatternKind::ExpressionPattern:
+      out << "...";
+      break;
+  }
+}
+
 // Equivalent to `GetBindings`, but stores its output in `bindings` instead of
 // returning it.
 static void GetBindingsImpl(
@@ -73,6 +112,7 @@ static void GetBindingsImpl(
       return;
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:
+    case PatternKind::GenericBinding:
       return;
     case PatternKind::VarPattern:
       GetBindingsImpl(cast<VarPattern>(pattern).pattern(), bindings);
@@ -108,22 +148,14 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-    -> FieldAccessExpression& {
+auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
+    -> ErrorOr<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
-    FATAL_PROGRAM_ERROR(alternative->source_loc())
-        << "Alternative pattern must have the form of a field access.";
+    return FATAL_PROGRAM_ERROR(alternative->source_loc())
+           << "Alternative pattern must have the form of a field access.";
   }
-  return cast<FieldAccessExpression>(*alternative);
+  return &cast<FieldAccessExpression>(*alternative);
 }
-
-AlternativePattern::AlternativePattern(SourceLocation source_loc,
-                                       Nonnull<Expression*> alternative,
-                                       Nonnull<TuplePattern*> arguments)
-    : Pattern(AstNodeKind::AlternativePattern, source_loc),
-      choice_type_(&RequireFieldAccess(alternative).aggregate()),
-      alternative_name_(RequireFieldAccess(alternative).field()),
-      arguments_(arguments) {}
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
                                    const ParenContents<Expression>& contents)

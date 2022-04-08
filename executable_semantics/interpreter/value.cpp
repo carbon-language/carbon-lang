@@ -12,6 +12,7 @@
 #include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -29,7 +30,8 @@ auto StructValue::FindField(const std::string& name) const
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
-                      SourceLocation source_loc) -> Nonnull<const Value*> {
+                      SourceLocation source_loc)
+    -> ErrorOr<Nonnull<const Value*>> {
   const std::string& f = field.name();
 
   if (field.witness().has_value()) {
@@ -40,10 +42,15 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                 FindMember(f, witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
-          return arena->New<BoundMethodValue>(&fun_decl, v);
+          if (fun_decl.is_method()) {
+            return arena->New<BoundMethodValue>(&fun_decl, v);
+          } else {
+            // Class function.
+            return *fun_decl.constant_value();
+          }
         } else {
-          FATAL_COMPILATION_ERROR(source_loc)
-              << "member " << f << " not in " << *witness;
+          return FATAL_COMPILATION_ERROR(source_loc)
+                 << "member " << f << " not in " << *witness;
         }
       }
       default:
@@ -55,52 +62,62 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        FATAL_RUNTIME_ERROR(source_loc) << "member " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "member " << f << " not in " << *v;
       }
       return *field;
     }
     case Value::Kind::NominalClassValue: {
-      const NominalClassValue& object = cast<NominalClassValue>(*v);
+      const auto& object = cast<NominalClassValue>(*v);
       // Look for a field
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(object.inits()).FindField(f);
-      if (field == std::nullopt) {
+      if (field.has_value()) {
+        return *field;
+      } else {
         // Look for a method in the object's class
-        const NominalClassType& class_type =
-            cast<NominalClassType>(object.type());
+        const auto& class_type = cast<NominalClassType>(object.type());
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          FATAL_RUNTIME_ERROR(source_loc)
-              << "member " << f << " not in " << *v << " or its " << class_type;
+          return FATAL_RUNTIME_ERROR(source_loc)
+                 << "member " << f << " not in " << *v << " or its "
+                 << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), &object);
+          return arena->New<BoundMethodValue>(&m.declaration(), &object,
+                                              class_type.type_args(),
+                                              class_type.witnesses());
         } else {
           // Found a class function
-          return *func;
+          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
+              &(*func)->declaration(), class_type.type_args(),
+              class_type.witnesses());
+          return fun;
         }
       }
-      return *field;
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "alternative " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
     }
     case Value::Kind::NominalClassType: {
+      // Access a class function.
       const NominalClassType& class_type = cast<NominalClassType>(*v);
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "class function " << f << " not in " << *v;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "class function " << f << " not in " << *v;
       }
-      return *fun;
+      return arena->New<FunctionValue>(&(*fun)->declaration(),
+                                       class_type.type_args(),
+                                       class_type.witnesses());
     }
     default:
       FATAL() << "field access not allowed for value " << *v;
@@ -108,10 +125,11 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 }
 
 auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                     SourceLocation source_loc) const -> Nonnull<const Value*> {
+                     SourceLocation source_loc) const
+    -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    value = GetMember(arena, value, field, source_loc);
+    ASSIGN_OR_RETURN(value, GetMember(arena, value, field, source_loc));
   }
   return value;
 }
@@ -121,7 +139,7 @@ static auto SetFieldImpl(
     std::vector<FieldPath::Component>::const_iterator path_begin,
     std::vector<FieldPath::Component>::const_iterator path_end,
     Nonnull<const Value*> field_value, SourceLocation source_loc)
-    -> Nonnull<const Value*> {
+    -> ErrorOr<Nonnull<const Value*>> {
   if (path_begin == path_end) {
     return field_value;
   }
@@ -133,11 +151,12 @@ static auto SetFieldImpl(
                                return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
-        FATAL_RUNTIME_ERROR(source_loc)
-            << "field " << (*path_begin).name() << " not in " << *value;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "field " << (*path_begin).name() << " not in " << *value;
       }
-      it->value = SetFieldImpl(arena, it->value, path_begin + 1, path_end,
-                               field_value, source_loc);
+      ASSIGN_OR_RETURN(it->value,
+                       SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                                    field_value, source_loc));
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
@@ -150,11 +169,13 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        FATAL_RUNTIME_ERROR(source_loc) << "index " << (*path_begin).name()
-                                        << " out of range in " << *value;
+        return FATAL_RUNTIME_ERROR(source_loc)
+               << "index " << (*path_begin).name() << " out of range in "
+               << *value;
       }
-      elements[index] = SetFieldImpl(arena, elements[index], path_begin + 1,
-                                     path_end, field_value, source_loc);
+      ASSIGN_OR_RETURN(elements[index],
+                       SetFieldImpl(arena, elements[index], path_begin + 1,
+                                    path_end, field_value, source_loc));
       return arena->New<TupleValue>(elements);
     }
     default:
@@ -164,7 +185,8 @@ static auto SetFieldImpl(
 
 auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                      Nonnull<const Value*> field_value,
-                     SourceLocation source_loc) const -> Nonnull<const Value*> {
+                     SourceLocation source_loc) const
+    -> ErrorOr<Nonnull<const Value*>> {
   return SetFieldImpl(arena, Nonnull<const Value*>(this),
                       path.components_.begin(), path.components_.end(),
                       field_value, source_loc);
@@ -258,7 +280,7 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (fn_type.deduced().size() > 0) {
+      if (!fn_type.deduced().empty()) {
         out << "[";
         unsigned int i = 0;
         for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {
@@ -283,18 +305,40 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*this);
+      const auto& class_type = cast<NominalClassType>(*this);
       out << "class " << class_type.declaration().name();
+      if (!class_type.type_args().empty()) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : class_type.type_args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
+      if (!class_type.impls().empty()) {
+        out << " impls ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, impl] : class_type.impls()) {
+          out << sep << impl;
+        }
+      }
+      if (!class_type.witnesses().empty()) {
+        out << " witnesses ";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : class_type.witnesses()) {
+          out << sep << *witness;
+        }
+      }
       break;
     }
     case Value::Kind::InterfaceType: {
-      const InterfaceType& iface_type = cast<InterfaceType>(*this);
+      const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface " << iface_type.declaration().name();
       break;
     }
     case Value::Kind::Witness: {
       const auto& witness = cast<Witness>(*this);
-      out << "impl " << *witness.declaration().impl_type() << " as "
+      out << "witness " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
       break;
     }
@@ -302,7 +346,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
     case Value::Kind::VariableType:
-      out << cast<VariableType>(*this).binding().name();
+      out << cast<VariableType>(*this).binding();
       break;
     case Value::Kind::ContinuationValue: {
       out << cast<ContinuationValue>(*this).stack();
@@ -333,6 +377,12 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
       break;
+    case Value::Kind::StaticArrayType: {
+      const auto& array_type = cast<StaticArrayType>(*this);
+      out << "[" << array_type.element_type() << "; " << array_type.size()
+          << "]";
+      break;
+    }
   }
 }
 
@@ -402,8 +452,18 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       return true;
     }
     case Value::Kind::NominalClassType:
-      return cast<NominalClassType>(*t1).declaration().name() ==
-             cast<NominalClassType>(*t2).declaration().name();
+      if (cast<NominalClassType>(*t1).declaration().name() !=
+          cast<NominalClassType>(*t2).declaration().name()) {
+        return false;
+      }
+      for (const auto& [ty_var1, ty1] :
+           cast<NominalClassType>(*t1).type_args()) {
+        if (!TypeEqual(ty1,
+                       cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+          return false;
+        }
+      }
+      return true;
     case Value::Kind::InterfaceType:
       return cast<InterfaceType>(*t1).declaration().name() ==
              cast<InterfaceType>(*t2).declaration().name();
@@ -440,6 +500,12 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
+    case Value::Kind::StaticArrayType: {
+      const auto& array1 = cast<StaticArrayType>(*t1);
+      const auto& array2 = cast<StaticArrayType>(*t2);
+      return TypeEqual(&array1.element_type(), &array2.element_type()) &&
+             array1.size() == array2.size();
+    }
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -486,8 +552,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
              (!body1.has_value() || *body1 == *body2);
     }
     case Value::Kind::BoundMethodValue: {
-      const BoundMethodValue& m1 = cast<BoundMethodValue>(*v1);
-      const BoundMethodValue& m2 = cast<BoundMethodValue>(*v2);
+      const auto& m1 = cast<BoundMethodValue>(*v1);
+      const auto& m2 = cast<BoundMethodValue>(*v2);
       std::optional<Nonnull<const Statement*>> body1 = m1.declaration().body();
       std::optional<Nonnull<const Statement*>> body2 = m2.declaration().body();
       return ValueEqual(m1.receiver(), m2.receiver()) &&
@@ -541,6 +607,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -583,38 +650,26 @@ auto NominalClassType::FindFunction(const std::string& name) const
   return std::nullopt;
 }
 
-auto FieldTypes(const NominalClassType& class_type) -> std::vector<NamedValue> {
-  std::vector<NamedValue> field_types;
-  for (Nonnull<Declaration*> m : class_type.declaration().members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration: {
-        const auto& var = cast<VariableDeclaration>(*m);
-        field_types.push_back({.name = var.binding().name(),
-                               .value = &var.binding().static_type()});
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return field_types;
-}
-
 auto FindMember(const std::string& name,
                 llvm::ArrayRef<Nonnull<Declaration*>> members)
     -> std::optional<Nonnull<const Declaration*>> {
   for (Nonnull<const Declaration*> member : members) {
     if (std::optional<std::string> mem_name = GetName(*member);
         mem_name.has_value()) {
-      if (*mem_name == name)
+      if (*mem_name == name) {
         return member;
+      }
     }
   }
   return std::nullopt;
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {
-  out << "impl " << *type_var_ << " as " << *iface_;
+  out << "impl binding " << *type_var_ << " as " << *iface_;
+}
+
+void ImplBinding::PrintID(llvm::raw_ostream& out) const {
+  out << *type_var_ << " as " << *iface_;
 }
 
 }  // namespace Carbon
