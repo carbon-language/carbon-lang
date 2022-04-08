@@ -1,4 +1,4 @@
-# Executable Semantics Structured Fuzzer
+# Executable semantics structured fuzzer
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -12,7 +12,7 @@ Fuzz testing is based on generating a large amount of random inputs for a
 software component in order to trigger bugs and unexpected behavior. Basic
 fuzzing uses randomly generated arrays of bytes as inputs, which works great for
 some applications but is problematic for testing the logic that operates on
-highly structured data, as most of random inputs are immediately rejected as
+highly structured data, as most random inputs are immediately rejected as
 invalid before any interesting parts of the code get a chance to run.
 
 Structured fuzzing addresses this issue by ensuring the randomly generated data
@@ -33,7 +33,7 @@ implementation.
 
 `libprotobuf-mutator` supports fuzzer inputs in either text or binary protocol
 buffer format. `executable_semantics_fuzzer` uses text proto format with
-`Carbon` proto message definition in `common/fuzzing/Carbon.proto`.
+`Carbon` proto message definition in `common/fuzzing/carbon.proto`.
 
 ## Running the fuzzer
 
@@ -70,8 +70,7 @@ A separate tool called `fuzzverter` can be used for things like converting a
 crashing input to Carbon source code for running `executable_semantics` on the
 code directly.
 
-To convert a text proto file containing `Fuzzing::Carbon` message to Carbon
-source:
+To convert a `Fuzzing::Carbon` text proto to Carbon source:
 
 ```bash
 bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=proto_to_carbon --input /tmp/crash.textproto
@@ -81,8 +80,7 @@ bazel-bin/executable_semantics/fuzzing/fuzzverter --mode=proto_to_carbon --input
 
 The ability of the fuzzing framework to generate 'interesting' inputs can be
 improved by providing 'seed' inputs known as the fuzzer corpus. The inputs need
-to be in the text proto format, and contain an instance of `Fuzzing::Carbon`
-proto message.
+to be a `Fuzzing::Carbon` text proto.
 
 To generate a text proto from Carbon source:
 
