@@ -81,8 +81,7 @@ bazel-bin/executable_semantics/fuzzing/fuzzverter --from=text_proto --input /tmp
 
 The ability of the fuzzing framework to generate 'interesting' inputs can be
 improved by providing 'seed' inputs known as the fuzzer corpus. The inputs need
-to be in the text proto format, and contain an instance of `Fuzzing::Carbon`
-proto message.
+to be a `Fuzzing::Carbon` text proto.
 
 To generate a text proto from Carbon source:
 
