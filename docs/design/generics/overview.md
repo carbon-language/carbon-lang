@@ -654,8 +654,7 @@ external impl Distance as MultipliableWith(like f64) ...
 
 ## Future work
 
--   Support functions should have a way to accept types that types that vary at
-    runtime.
+-   Functions should have a way to accept types that vary at runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
     to support evolution.
 -   There should be a way to define generic associated and higher-ranked/kinded
