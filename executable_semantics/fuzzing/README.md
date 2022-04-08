@@ -70,7 +70,7 @@ A separate tool called `fuzzverter` can be used for things like converting a
 crashing input to Carbon source code for running `executable_semantics` on the
 code directly.
 
-To convert a text proto file containing `Fuzzing::Carbon` message to Carbon
+To convert a `Fuzzing::Carbon` text proto to Carbon
 source:
 
 ```bash
