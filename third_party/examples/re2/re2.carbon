@@ -889,9 +889,7 @@ class RE2.Arg {
     return me.arg_->Parse(str, n);
   }
 
-  // TODO: Existential types / `Dyn(Parseable)`. What we want here
-  // is a `Dyn(Parseable*)`, but that doesn't really make sense b/c
-  // `Parseable*` would be a pointer to a constraint.
+  // TODO: Existential types or `DynPtr(Parseable)`.
   private let type_: Parseable;
   private var arg_: Nullable(type_*);
 }
