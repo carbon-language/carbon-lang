@@ -95,17 +95,15 @@ static auto GetEnumString(llvm::cl::opt<ConversionMode>& o) -> llvm::StringRef {
   return o.getParser().getOption(static_cast<int>(ConversionMode(o)));
 }
 
-}  // namespace Carbon
-
-auto main(int argc, char* argv[]) -> int {
+int Main(int argc, char* argv[]) -> ErrorOr<Success> {
   llvm::InitLLVM init_llvm(argc, argv);
 
-  llvm::cl::opt<Carbon::ConversionMode> mode(
+  llvm::cl::opt<ConversionMode> mode(
       "mode", llvm::cl::desc("Conversion mode"),
       llvm::cl::values(
-          clEnumValN(Carbon::ConversionMode::TextProtoToCarbon,
+          clEnumValN(ConversionMode::TextProtoToCarbon,
                      "proto_to_carbon", "Convert text proto to Carbon source"),
-          clEnumValN(Carbon::ConversionMode::CarbonToTextProto,
+          clEnumValN(ConversionMode::CarbonToTextProto,
                      "carbon_to_proto",
                      "Convert Carbon source to text proto")));
   llvm::cl::opt<std::string> input_file_name(
@@ -114,14 +112,18 @@ auto main(int argc, char* argv[]) -> int {
       "output", llvm::cl::desc("<output file>"), llvm::cl::init("/dev/stdout"));
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
-  const Carbon::ErrorOr<Carbon::Success> result = [&]() {
-    switch (mode) {
-      case Carbon::ConversionMode::TextProtoToCarbon:
-        return Carbon::TextProtoToCarbon(input_file_name, output_file_name);
-      case Carbon::ConversionMode::CarbonToTextProto:
-        return Carbon::CarbonToTextProto(input_file_name, output_file_name);
-    }
-  }();
+  switch (mode) {
+    case ConversionMode::TextProtoToCarbon:
+      return TextProtoToCarbon(input_file_name, output_file_name);
+    case ConversionMode::CarbonToTextProto:
+      return CarbonToTextProto(input_file_name, output_file_name);
+  }
+}
+
+}  // namespace Carbon
+
+auto main(int argc, char* argv[]) -> int {
+  auto result = Carbon::Main(argc, argv)
   if (!result.ok()) {
     llvm::errs() << GetEnumString(mode)
                  << " conversion failed: " << result.error().message() << "\n";
