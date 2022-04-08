@@ -4315,7 +4315,8 @@ An interface or named constraint may be forward declared subject to these rules:
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
     includes an `impl as` or `extends` declaration inside an interface or named
-    constraint.
+    constraint, but excludes specifying the values for associated constants
+    because that would involve name lookup into the incomplete constraint.
 -   An attempt to define the body of a generic function using an incomplete
     interface or named constraint is illegal.
 -   An attempt to call a generic function using an incomplete interface or named
@@ -4407,7 +4408,8 @@ For implementations to agree:
 
 -   The presence of modifier keywords such as `external` before `impl` must
     match between a forward declaration and definition.
--   If a both declarations include `where` clauses, that is neither use
+-   If either declaration includes a `where` clause, they must both include one.
+    If neither uses
     `where _`, they must match in that they produce the associated constants
     with the same values considered separately.
 
@@ -4463,18 +4465,18 @@ class MyClass {
   // Definition of previously declared external impl.
   // Note: no need to repeat assignments to associated
   // constants.
-  external impl as Interface1 { }
+  external impl as Interface1 where _ { }
 
   // Definition of previously declared internal impl.
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
-  impl as Interface3  where .T3 = f32 { }
+  impl as Interface3 where .T3 = f32 { }
 
   // Redeclaration of previously declared internal impl.
   // Every internal implementation must be declared in
   // the class definition.
-  impl as Interface4;
+  impl as Interface4 where _;
 
   // Forward declaration of external implementation.
   external impl MyClass as Interface5 where .T5 = u64;
@@ -4488,12 +4490,12 @@ class MyClass {
 // this library.
 
 // Definition of previously declared external impls.
-external impl MyClass as Interface2 { }
-external impl MyClass as Interface5 { }
+external impl MyClass as Interface2 where _ { }
+external impl MyClass as Interface5 where _ { }
 
 // Definition of previously declared internal impls.
-impl MyClass as Interface4 { }
-impl MyClass as Interface6 { }
+impl MyClass as Interface4 where _ { }
+impl MyClass as Interface6 where _ { }
 ```
 
 ### Example of declaring interfaces with cyclic references
