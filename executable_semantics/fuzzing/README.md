@@ -12,7 +12,7 @@ Fuzz testing is based on generating a large amount of random inputs for a
 software component in order to trigger bugs and unexpected behavior. Basic
 fuzzing uses randomly generated arrays of bytes as inputs, which works great for
 some applications but is problematic for testing the logic that operates on
-highly structured data, as most of random inputs are immediately rejected as
+highly structured data, as most random inputs are immediately rejected as
 invalid before any interesting parts of the code get a chance to run.
 
 Structured fuzzing addresses this issue by ensuring the randomly generated data
