@@ -17,7 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Built-in comparisons and implicit conversions](#built-in-comparisons-and-implicit-conversions)
         -   [Consistency with implicit conversions](#consistency-with-implicit-conversions)
         -   [Comparisons with constants](#comparisons-with-constants)
-    -   [Overloading](#overloading)
+    -   [Extensibility](#extensibility)
+        -   [Equality](#equality)
+        -   [Ordering](#ordering)
+        -   [Compatibility of equality and ordering](#compatibility-of-equality-and-ordering)
+        -   [Custom result types](#custom-result-types)
     -   [Default implementations for basic types](#default-implementations-for-basic-types)
 -   [Open questions](#open-questions)
 -   [Alternatives considered](#alternatives-considered)
@@ -42,6 +46,15 @@ standard mathematical meaning:
 Comparison operators all return a `bool`; they evaluate to `true` when the
 indicated comparison is true. All comparison operators are infix binary
 operators.
+
+These operators have predefined meanings for some of Carbon's
+[built-in types](#built-in-comparisons-and-implicit-conversions), as well as for
+simple ["data" types](#default-implementations-for-basic-types) like structs and
+tuples.
+
+User-defined types can define the meaning of these operations by
+[implementing an interface](#extensibility) provided as part of the Carbon
+standard library.
 
 ## Details
 
@@ -222,29 +235,210 @@ literal that cannot be represented in `i32`. Such comparisons would always be
 tautological. This decision should be revisited if it proves problematic in
 practice, for example in templated code where the literal is sometimes in range.
 
-### Overloading
+### Extensibility
 
-Separate interfaces will be provided to permit overloading equality and
-relational comparisons. The exact design of those interfaces is left to a future
-proposal. As non-binding design guidance for such a proposal:
+User-defined types can extend the behavior of the comparison operators by
+implementing interfaces. In this section, various properties are specified that
+such implementations "should" satisfy. These properties are not enforced in
+general, but the standard library might detect violations of some of them in
+some circumstances. These properties may be assumed by generic code, resulting
+in unexpected behavior if they are violated.
 
--   The interface for equality comparisons should primarily provide the ability
-    to override the behavior of `==`. The `!=` operator can optionally also be
-    overridden, with a default implementation that returns `not (a == b)`. This
-    conversation was marked as resolved by chandlerc Show conversation
-    Overriding `!=` separately from `==` is expected to be used to support
-    floating-point NaN comparisons and for C++ interoperability.
+#### Equality
 
--   The interface for relational comparisons should primarily provide the
-    ability to specify a three-way comparison operator. The individual
-    relational comparison operators can optionally be overridden separately,
-    with a default implementation in terms of the three-way comparison operator.
-    This facility is expected to be used primarily to support C++
-    interoperability.
+Comparison operators can be provided for user-defined types by implementing the
+`EqWith` and `CompareWith` interfaces.
 
--   Overloaded comparison operators may wish to produce a type other than
-    `bool`, for uses such as a vector comparison producing a vector of `bool`
-    values. We should decide whether we wish to support such uses.
+The `EqWith` interface is used to define the semantics of the `==` and `!=`
+operators for a given pair of types:
+
+```
+interface EqWith(U:! Type) {
+  fn Equal[me: Self](u: U) -> bool;
+  default fn NotEqual[me: Self](u: U) -> bool {
+    return not (me == u);
+  }
+}
+constraint Eq {
+  extends EqWith(Self);
+}
+```
+
+Given `x: T` and `y: U`:
+
+-   The expression `x == y` calls `x.(EqWith(U).Equal)(y)`.
+-   The expression `x != y` calls `x.(EqWith(U).NotEqual)(y)`.
+
+**Note:** This is only a consequence of the rewrite rules for normal cases; see
+[custom result types](#custom-result-types) for the actual rewrite rules.
+
+The behavior of `NotEqual` can be overridden separately from the behavior of
+`Equal` to support cases like floating-point NaN values, where two values can
+compare neither equal nor not-equal. An implementation of `EqWith` should not
+allow both `Equal` and `NotEqual` to return `true` for the same pair of values,
+and these operations should have no observable side-effects.
+
+#### Ordering
+
+The `OrderedWith` interface is used to define the semantics of the `<`, `<=`,
+`>`, and `>=` operators for a given pair of types.
+
+```
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater,
+  Incomparable
+}
+interface OrderedWith(U:! Type) {
+  fn Compare[me: Self](u: U) -> Ordering;
+  default fn Less[me: Self](u: U) -> bool {
+    return me.Compare(u) == Ordering.Less;
+  }
+  default fn LessOrEquivalent[me: Self](u: U) -> bool {
+    let c: Ordering = me.Compare(u);
+    return c == Ordering.Less or c == Ordering.Equivalent;
+  }
+  default fn Greater[me: Self](u: U) -> bool {
+    return me.Compare(u) == Ordering.Greater;
+  }
+  default fn GreaterOrEquivalent[me: Self](u: U) -> bool {
+    let c: Ordering = me.Compare(u);
+    return c == Ordering.Greater or c == Ordering.Equivalent;
+  }
+}
+constraint Ordered {
+  extends OrderedWith(Self);
+}
+```
+
+**TODO:** Revise the above when we have a concrete design for enumerated types.
+
+Given `x: T` and `y: U`:
+
+-   The expression `x < y` calls `x.(OrderedWith(U).Less)(y)`.
+-   The expression `x <= y` calls `x.(OrderedWith(U).LessOrEquivalent)(y)`.
+-   The expression `x > y` calls `x.(OrderedWith(U).Greater)(y)`.
+-   The expression `x >= y` calls `x.(OrderedWith(U).GreaterOrEquivalent)(y)`.
+
+**Note:** This is only a consequence of the rewrite rules for normal cases; see
+[custom result types](#custom-result-types) for the actual rewrite rules.
+
+The default implementations of `Less`, `LessOrEquivalent`, `Greater`, and
+`GreaterOrEquivalent` can be overridden if a more efficient version can be
+implemented. The behaviors of such overrides should follow those of the above
+default implementations, and the members of an `OrderedWith` implementation
+should have no observable side-effects.
+
+`OrderedWith` implementations should be _transitive_. That is, given `V:! Type`,
+`U:! OrderedWith(V)`, `T:! OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
+`c: V`, then:
+
+-   If `a <= b` and `b <= c` then `a <= c`, and moreover if either `a < b` or
+    `b < c` then `a < c`.
+-   If `a >= b` and `b >= c` then `a >= c`, and moreover if either `a > b` or
+    `b > c` then `a > c`.
+-   If `a` and `b` are equivalent, then any comparison between `b` and `c`
+    produces the same result as the corresponding comparison between `a` and
+    `c`. Similarly, if `b` and `c` are equivalent, then any comparison between
+    `a` and `b` produces the same result as the corresponding comparison between
+    `b` and `c`.
+
+`OrderedWith` implementations should also be _consistent under reversal_. That
+is, given types `T` and `U` where `T is OrderedWith(U)` and
+`U is OrderedWith(T)`, and values `a: T` and `b: U`:
+
+-   If `a.(OrderedWith.Compare)(b)` is `Ordering.Greater`, then
+    `b.(OrderedWith.Compare)(a)` is `Ordering.Less`, and the other way around.
+-   Otherwise, `a.(OrderedWith.Compare)(b)` returns the same value as
+    `b.(OrderedWith.Compare)(a)`.
+
+There is no expectation that an `Ordered` implementation be a total order, a
+weak order, or a partial order, and in particular the implementation for
+floating-point types is none of these because NaN values do not compare less
+than or equivalent to themselves.
+
+**TODO:** The standard library should provide a way to specify that an ordering
+is a weak, partial, or total ordering, and a way to request such an ordering in
+a generic.
+
+#### Compatibility of equality and ordering
+
+There is no expectation that a pair of types that implements `OrderedWith` also
+implements `EqWith`. If a pair of types does implement both, however, the
+equality relation provided by `x.(EqWith.Equal)(y)` should be a refinement of
+the equivalence relation provided by
+`x.(OrderedWith.Compare)(y) == Ordering.Equivalent`.
+
+#### Custom result types
+
+The result of the above comparison interfaces is always `bool`. There may be use
+cases where a different result type is desired. For example, an embedded
+domain-specific language may wish to customize the behavior of `<` to produce
+some other type, or a SIMD vector type may wish for comparisons to produce a
+SIMD vector of `bool`s. Similarly, when interoperating with C++, a type might
+provide only a subset of the normal set of operators and so may not implement
+`Ordered` despite providing some subset of the expected functionality.
+
+To support such cases, the following additional interfaces are provided:
+
+```
+interface PrimitiveEq(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+interface PrimitiveNe(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+interface PrimitiveLt(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+interface PrimitiveLe(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+interface PrimitiveGt(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+interface PrimitiveGe(T:! Other) {
+  let Result:! Type;
+  fn Op[me: Self](t: T) -> Result;
+}
+
+impl [U:! Type, T:! EqWith(U)] T as PrimitiveEq(U) where .Result = bool {
+  alias Op = T.Equal;
+}
+impl [U:! Type, T:! EqWith(U)] T as PrimitiveNe(U) where .Result = bool {
+  alias Op = T.NotEqual;
+}
+impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveLt(U) where .Result = bool {
+  alias Op = T.Less;
+}
+impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveLe(U) where .Result = bool {
+  alias Op = T.LessOrEquivalent;
+}
+impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveGt(U) where .Result = bool {
+  alias Op = T.Greater;
+}
+impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveGe(U) where .Result = bool {
+  alias Op = T.GreaterOrEquivalent;
+}
+```
+
+Given `x: T` and `y: U`:
+
+-   The expression `x == y` is rewritten to `x.(PrimitiveEq(U).Op)(y)`.
+-   The expression `x != y` is rewritten to `x.(PrimitiveNe(U).Op)(y)`.
+-   The expression `x < y` is rewritten to `x.(PrimitiveLt(U).Op)(y)`.
+-   The expression `x <= y` is rewritten to `x.(PrimitiveLe(U).Op)(y)`.
+-   The expression `x > y` is rewritten to `x.(PrimitiveGt(U).Op)(y)`.
+-   The expression `x >= y` is rewritten to `x.(PrimitiveGe(U).Op)(y)`.
+
+These interfaces are only intended for special cases and should be avoided where
+possible.
 
 ### Default implementations for basic types
 
