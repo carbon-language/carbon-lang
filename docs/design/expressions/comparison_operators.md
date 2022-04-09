@@ -272,11 +272,43 @@ Given `x: T` and `y: U`:
 **Note:** This is only a consequence of the rewrite rules for normal cases; see
 [custom result types](#custom-result-types) for the actual rewrite rules.
 
+```
+class Path {
+  private var drive: String;
+  private var path: String;
+  private fn CanonicalPath[me: Self]() -> String;
+
+  external impl as Eq {
+    fn Equal[me: Self](other: Self) -> bool {
+      return (me.drive, me.CanonicalPath()) ==
+             (other.drive, other.CanonicalPath());
+    }
+  }
+}
+```
+
 The behavior of `NotEqual` can be overridden separately from the behavior of
 `Equal` to support cases like floating-point NaN values, where two values can
 compare neither equal nor not-equal. An implementation of `EqWith` should not
 allow both `Equal` and `NotEqual` to return `true` for the same pair of values,
 and these operations should have no observable side-effects.
+
+```
+external impl MyFloat as Eq {
+  fn Equal[me: MyFloat](other: MyFloat) -> bool {
+    if (me.IsNaN() or other.IsNaN()) {
+      return false;
+    }
+    return me.Representation() == other.Representation();
+  }
+  fn NotEqual[me: MyFloat](other: MyFloat) -> bool {
+    if (me.IsNaN() or other.IsNaN()) {
+      return false;
+    }
+    return me.Representation() != other.Representation();
+  }
+}
+```
 
 #### Ordering
 
@@ -324,6 +356,27 @@ Given `x: T` and `y: U`:
 **Note:** This is only a consequence of the rewrite rules for normal cases; see
 [custom result types](#custom-result-types) for the actual rewrite rules.
 
+For example:
+
+```
+class MyWidget {
+  var width: i32;
+  var height: i32;
+
+  fn Size[me: Self]() -> i32 { return me.width * me.height; }
+
+  // Widgets are normally ordered by size.
+  external impl as Ordered {
+    fn Compare[me: Self](other: Self) -> Ordering {
+      return me.Size().(Ordered.Compare)(other.Size());
+    }
+  }
+}
+fn F(a: MyWidget, b: MyWidget) -> bool {
+  return a <= b;
+}
+```
+
 The default implementations of `Less`, `LessOrEquivalent`, `Greater`, and
 `GreaterOrEquivalent` can be overridden if a more efficient version can be
 implemented. The behaviors of such overrides should follow those of the above
@@ -338,11 +391,9 @@ should have no observable side-effects.
     `b < c` then `a < c`.
 -   If `a >= b` and `b >= c` then `a >= c`, and moreover if either `a > b` or
     `b > c` then `a > c`.
--   If `a` and `b` are equivalent, then any comparison between `b` and `c`
-    produces the same result as the corresponding comparison between `a` and
-    `c`. Similarly, if `b` and `c` are equivalent, then any comparison between
-    `a` and `b` produces the same result as the corresponding comparison between
-    `b` and `c`.
+-   If `a` and `b` are equivalent, then `a.Compare(c) == b.Compare(c)`.
+    Similarly, if `b` and `c` are equivalent, then
+    `a.Compare(b) == a.Compare(c)`.
 
 `OrderedWith` implementations should also be _consistent under reversal_. That
 is, given types `T` and `U` where `T is OrderedWith(U)` and
@@ -439,6 +490,20 @@ Given `x: T` and `y: U`:
 
 These interfaces are only intended for special cases and should be avoided where
 possible.
+
+```
+class SIMDVector(N:! i32, T:! Type) {
+  // ...
+
+  external impl [U:! Type where T is OrderedWith(.Self)]
+      as PrimitiveEq(SIMDVector(N, U)) where .Result = SIMDVector(N, bool) {
+    fn Op[me: Self](other: SIMDVector(N, U)) -> SIMDVector(N, bool) {
+      return me.ForEachLane(T.OrderedWith(U).Equal, other);
+    }
+  }
+  // ...
+}
+```
 
 ### Default implementations for basic types
 

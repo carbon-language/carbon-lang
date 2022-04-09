@@ -102,7 +102,7 @@ unordered with respect to binary arithmetic, bitwise operators, and unary `not`.
 
 ```
 // OK
-var x: i32* as Comparable;
+var x: i32* as Eq;
 // OK, `x as (U*)` not `(x as U)*`.
 var y: auto = x as U*;
 
