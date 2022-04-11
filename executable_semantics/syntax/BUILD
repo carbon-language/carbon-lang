@@ -43,11 +43,11 @@ cc_library(
     hdrs = ["prelude.h"],
     data = ["//executable_semantics:standard_libraries"],
     deps = [
+        ":syntax",
         "//common:error",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
-        ":syntax",
     ],
 )
 
