@@ -17,8 +17,9 @@ namespace Carbon {
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(Nonnull<const std::string*> input_file_name, bool trace)
-      : input_file_name_(input_file_name), trace_(trace) {}
+  ParseAndLexContext(Nonnull<const std::string*> input_file_name,
+                     bool parser_debug)
+      : input_file_name_(input_file_name), parser_debug_(parser_debug) {}
 
   // Formats ands records a lexer error. Returns an error token as a
   // convenience.
@@ -31,7 +32,7 @@ class ParseAndLexContext {
                           static_cast<int>(current_token_position.begin.line));
   }
 
-  auto trace() const -> bool { return trace_; }
+  auto parser_debug() const -> bool { return parser_debug_; }
 
   // The source range of the token being (or just) lex'd.
   location current_token_position;
@@ -45,7 +46,7 @@ class ParseAndLexContext {
   // when *this is called.
   Nonnull<const std::string*> input_file_name_;
 
-  bool trace_;
+  bool parser_debug_;
 
   std::vector<std::string> error_messages_;
 };

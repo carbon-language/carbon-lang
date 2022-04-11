@@ -20,8 +20,8 @@ namespace Carbon {
 
 class TypeChecker {
  public:
-  explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), trace_(trace) {}
+  explicit TypeChecker(Nonnull<Arena*> arena, llvm::raw_ostream* trace_stream)
+      : arena_(arena), trace_stream_(trace_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
   // on the individual nodes.
@@ -176,7 +176,7 @@ class TypeChecker {
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
 
-  bool trace_;
+  llvm::raw_ostream* trace_stream_;
 };
 
 }  // namespace Carbon

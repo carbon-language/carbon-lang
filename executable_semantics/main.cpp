@@ -18,14 +18,13 @@
 #include "executable_semantics/syntax/prelude.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/raw_ostream.h"
 
-// Prints an error message and returns error code value.
-auto PrintError(const Carbon::Error& error) -> int {
-  llvm::errs() << error.message() << "\n";
-  return EXIT_FAILURE;
-}
+namespace Carbon {
 
-auto main(int argc, char* argv[]) -> int {
+namespace cl = llvm::cl;
+
+auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
@@ -36,28 +35,54 @@ auto main(int argc, char* argv[]) -> int {
   // is piped to stdout.
   llvm::errs().tie(&llvm::outs());
 
-  using llvm::cl::desc;
-  using llvm::cl::opt;
-  opt<bool> trace_option("trace", desc("Enable tracing"));
-  opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
-                                   llvm::cl::Required);
-  opt<std::string> prelude_file_name(
-      "prelude", desc("<prelude file>"),
-      llvm::cl::init("executable_semantics/data/prelude.carbon"));
+  cl::opt<std::string> input_file_name(cl::Positional, cl::desc("<input file>"),
+                                       cl::Required);
+  cl::opt<bool> parser_debug("parser_debug",
+                             cl::desc("Enable debug output from the parser"));
+  cl::opt<std::string> trace_file_name(
+      "trace_file",
+      cl::desc("Output file for tracing; set to `-` to output to stdout."));
+  cl::opt<std::string> prelude_file_name(
+      "prelude", cl::desc("<prelude file>"),
+      cl::init("executable_semantics/data/prelude.carbon"));
 
-  llvm::cl::ParseCommandLineOptions(argc, argv);
+  cl::ParseCommandLineOptions(argc, argv);
 
-  Carbon::Arena arena;
-  Carbon::ErrorOr<Carbon::AST> ast =
-      Carbon::Parse(&arena, input_file_name, trace_option);
-  if (!ast.ok()) {
-    return PrintError(ast.error());
+  // Set up a stream for trace output.
+  std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
+  llvm::raw_ostream* trace_stream = nullptr;
+  if (!trace_file_name.empty()) {
+    if (trace_file_name == "-") {
+      trace_stream = &llvm::outs();
+    } else {
+      std::error_code err;
+      scoped_trace_stream =
+          std::make_unique<llvm::raw_fd_ostream>(trace_file_name, err);
+      if (err) {
+        return Error(err.message());
+      }
+      trace_stream = scoped_trace_stream.get();
+    }
   }
-  AddPrelude(prelude_file_name, &arena, &ast->declarations);
+
+  Arena arena;
+  ASSIGN_OR_RETURN(AST ast, Parse(&arena, input_file_name, parser_debug));
+  AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
-  Carbon::ErrorOr<int> result = Carbon::ExecProgram(&arena, *ast, trace_option);
-  if (!result.ok()) {
-    return PrintError(result.error());
+  ASSIGN_OR_RETURN(int return_code, ExecProgram(&arena, ast, trace_stream));
+  // Print the return code to stdout even when we aren't tracing.
+  (trace_stream == nullptr ? llvm::outs() : *trace_stream)
+      << "result: " << return_code << "\n";
+  return Success();
+}
+
+}  // namespace Carbon
+
+auto main(int argc, char* argv[]) -> int {
+  if (auto result = Carbon::Main(argc, argv); !result.ok()) {
+    llvm::errs() << result.error().message() << "\n";
+    return EXIT_FAILURE;
   }
+  return EXIT_SUCCESS;
 }
