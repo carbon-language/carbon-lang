@@ -16,6 +16,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 </p>
 
 <a href="docs/images/snippets.md#quicksort">
+<!--
+Edit snippet in docs/images/snippets.md and:
+https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+-->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
      alt="Quicksort code in Carbon. Follow the link to read more.">
 </a>
@@ -70,6 +74,10 @@ is built out of a consistent set of language constructs that should feel
 familiar. C++ code like this:
 
 <a href="docs/images/snippets.md#c">
+<!--
+Edit snippet in docs/images/snippets.md and:
+https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+-->
 <img src="docs/images/cpp_snippet.svg" width="600"
      alt="A snippet of C++ code. Follow the link to read it.">
 </a>
@@ -77,6 +85,10 @@ familiar. C++ code like this:
 can be mechanically transformed to Carbon, like so:
 
 <a href="docs/images/snippets.md#carbon">
+<!--
+Edit snippet in docs/images/snippets.md and:
+https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+-->
 <img src="docs/images/carbon_snippet.svg" width="600"
      alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
@@ -88,6 +100,10 @@ existing C++ investment. Carbon won't add a sea of dependencies or slow down
 your performance-critical code. For example:
 
 <a href="docs/images/snippets.md#mixed">
+<!--
+Edit snippet in docs/images/snippets.md and:
+https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
+-->
 <img src="docs/images/mixed_snippet.svg" width="600"
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
 </a>
