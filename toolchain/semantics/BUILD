@@ -7,7 +7,10 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "function",
     hdrs = ["function.h"],
-    deps = ["//toolchain/parser:parse_tree"],
+    deps = [
+        "//common:ostream",
+        "//toolchain/parser:parse_tree",
+    ],
 )
 
 cc_library(
@@ -37,12 +40,24 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "semantics_ir_test_helpers",
+    testonly = 1,
+    hdrs = ["semantics_ir_test_helpers.h"],
+    deps = [
+        ":semantics_ir",
+        "//common:check",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_test(
     name = "semantics_ir_factory_test",
     size = "small",
     srcs = ["semantics_ir_factory_test.cpp"],
     deps = [
         ":semantics_ir_factory",
+        ":semantics_ir_test_helpers",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",

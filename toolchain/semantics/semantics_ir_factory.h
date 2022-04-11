@@ -5,8 +5,6 @@
 #ifndef TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 #define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
-#include <optional>
-
 #include "llvm/ADT/StringMap.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"

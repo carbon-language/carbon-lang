@@ -11,7 +11,7 @@
 namespace Carbon {
 
 void SemanticsIR::Block::Add(llvm::StringRef name, Node named_entity) {
-  ordering_.push_back(named_entity);
+  nodes_.push_back(named_entity);
   name_lookup_.insert({name, named_entity});
 }
 
@@ -19,9 +19,9 @@ auto SemanticsIR::AddFunction(Block& block, ParseTree::Node decl_node,
                               ParseTree::Node name_node)
     -> Semantics::Function& {
   int32_t index = functions_.size();
-  functions_.push_back(Semantics::Function(decl_node, name_node));
-  block.Add(parse_tree_->GetNodeText(name_node),
-            Node(Node::Kind::Function, index));
+  llvm::StringRef name = parse_tree_->GetNodeText(name_node);
+  functions_.push_back(Semantics::Function(decl_node, name, name_node));
+  block.Add(name, Node(Node::Kind::Function, index));
   return functions_[index];
 }
 

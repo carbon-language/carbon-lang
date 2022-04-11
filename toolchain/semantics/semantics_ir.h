@@ -47,10 +47,26 @@ class SemanticsIR {
    public:
     void Add(llvm::StringRef name, Node named_entity);
 
+    auto nodes() const -> llvm::ArrayRef<Node> { return nodes_; }
+    auto name_lookup() const -> const llvm::StringMap<Node>& {
+      return name_lookup_;
+    }
+
    private:
-    llvm::SmallVector<Node> ordering_;
+    friend class SemanticsIR;
+
+    llvm::SmallVector<Node> nodes_;
     llvm::StringMap<Node> name_lookup_;
   };
+
+  auto GetFunction(Node node) const -> llvm::Optional<Semantics::Function> {
+    if (node.kind_ != Node::Kind::Function) {
+      return llvm::None;
+    }
+    return functions_[node.index_];
+  }
+
+  auto root_block() const -> const Block& { return root_block_; }
 
  private:
   friend class SemanticsIRFactory;
