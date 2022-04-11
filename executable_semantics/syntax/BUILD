@@ -47,7 +47,7 @@ cc_library(
         "//executable_semantics/ast:declaration",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
-        "//executable_semantics/syntax",
+        ":syntax",
     ],
 )
 
