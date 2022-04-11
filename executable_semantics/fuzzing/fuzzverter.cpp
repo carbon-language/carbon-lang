@@ -28,6 +28,8 @@
 
 namespace Carbon {
 
+namespace cl = llvm::cl;
+
 // Reads a file and returns its contents as a string.
 static auto ReadFile(std::string_view file_name) -> ErrorOr<std::string> {
   std::ifstream file(file_name, std::ios::in);
@@ -89,15 +91,21 @@ static auto CarbonToTextProto(std::string_view input_file_name,
 // Command line options for defining input/output format.
 enum class ConversionMode { TextProtoToCarbon, CarbonToTextProto };
 
-// Returns string representation of an enum option.
-static auto GetEnumString(llvm::cl::opt<ConversionMode>& o) -> llvm::StringRef {
-  // TODO: is there a better way?
-  return o.getParser().getOption(static_cast<int>(ConversionMode(o)));
-}
+auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
+  cl::opt<ConversionMode> mode(
+      "mode", cl::desc("Conversion mode"),
+      cl::values(
+          clEnumValN(ConversionMode::TextProtoToCarbon, "proto_to_carbon",
+                     "Convert text proto to Carbon source"),
+          clEnumValN(ConversionMode::CarbonToTextProto, "carbon_to_proto",
+                     "Convert Carbon source to text proto")),
+      cl::Required);
+  cl::opt<std::string> input_file_name("input", cl::desc("<input file>"),
+                                       cl::init("/dev/stdin"));
+  cl::opt<std::string> output_file_name("output", cl::desc("<output file>"),
+                                        cl::init("/dev/stdout"));
+  cl::ParseCommandLineOptions(argc, argv);
 
-// Performs the conversion specified by `mode`.
-auto Convert(const ConversionMode mode, std::string_view input_file_name,
-             std::string_view output_file_name) -> ErrorOr<Success> {
   switch (mode) {
     case ConversionMode::TextProtoToCarbon:
       return TextProtoToCarbon(input_file_name, output_file_name);
@@ -110,26 +118,8 @@ auto Convert(const ConversionMode mode, std::string_view input_file_name,
 
 auto main(int argc, char* argv[]) -> int {
   llvm::InitLLVM init_llvm(argc, argv);
-
-  llvm::cl::opt<Carbon::ConversionMode> mode(
-      "mode", llvm::cl::desc("Conversion mode"),
-      llvm::cl::values(
-          clEnumValN(Carbon::ConversionMode::TextProtoToCarbon,
-                     "proto_to_carbon", "Convert text proto to Carbon source"),
-          clEnumValN(Carbon::ConversionMode::CarbonToTextProto,
-                     "carbon_to_proto",
-                     "Convert Carbon source to text proto")));
-  llvm::cl::opt<std::string> input_file_name(
-      "input", llvm::cl::desc("<input file>"), llvm::cl::init("/dev/stdin"));
-  llvm::cl::opt<std::string> output_file_name(
-      "output", llvm::cl::desc("<output file>"), llvm::cl::init("/dev/stdout"));
-  llvm::cl::ParseCommandLineOptions(argc, argv);
-
-  if (const auto result =
-          Carbon::Convert(mode, input_file_name, output_file_name);
-      !result.ok()) {
-    llvm::errs() << GetEnumString(mode)
-                 << " conversion failed: " << result.error().message() << "\n";
+  if (const auto result = Carbon::Main(argc, argv); !result.ok()) {
+    llvm::errs() << "fuzzverter failed: " << result.error().message() << "\n";
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
