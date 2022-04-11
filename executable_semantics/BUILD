@@ -17,13 +17,13 @@ filegroup(
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    data = [":standard_libraries"],
     deps = [
         "//common:error",
         "//executable_semantics/common:arena",
         "//executable_semantics/common:nonnull",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
+        "//executable_semantics/syntax:prelude",
         "@llvm-project//llvm:Support",
     ],
 )
