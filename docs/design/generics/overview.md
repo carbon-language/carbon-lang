@@ -35,6 +35,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
     -   [Parameterized impls](#parameterized-impls)
+    -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
 
@@ -627,14 +628,30 @@ library defining some name from its type structure. If a library defines
 multiple implementations with the same type structure, they must be listed in
 priority order in a prioritization block.
 
+### Operator overloading
+
+To overload an operator, implement the corresponding interface from the standard
+library. For example, to define how the unary `-` operator behaves for a type,
+implement the `Negatable` interface for that type. The interfaces and rewrites
+used for a given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+
+As a convenience, there is a shorcut for defining an implementation that
+supports any type implicitly convertible to a specified type, using `like`:
+
+```
+// Support multiplying values of type `Distance` with
+// values of type `f64` or any type implicitly
+// convertible to `f64`.
+external impl Distance as MultipliableWith(like f64) ...
+```
+
 ## Future work
 
 -   Support functions should have a way to accept types that types that vary at
     runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
     to support evolution.
--   Types should be able to define overloads for operators by implementing
-    standard interfaces.
 -   There should be a way to provide default implementations of methods in
     interfaces and other ways to reuse code across implementations.
 -   There should be a way to define generic associated and higher-ranked/kinded
