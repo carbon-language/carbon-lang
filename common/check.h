@@ -23,7 +23,7 @@ namespace Carbon {
 //   CHECK(is_valid) << "Data is not valid!";
 #define CHECK(condition)                                                  \
   (condition) ? (void)0                                                   \
-              : RAW_EXITING_STREAM().TreatAsBug()                         \
+              : RAW_EXITING_STREAM()                                      \
                     << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
                     << ": " #condition                                    \
                     << Carbon::Internal::ExitingStream::AddSeparator()
@@ -40,9 +40,9 @@ namespace Carbon {
 //
 // For example:
 //   FATAL() << "Unreachable!";
-#define FATAL()                     \
-  RAW_EXITING_STREAM().TreatAsBug() \
-      << "FATAL failure at " << __FILE__ << ":" << __LINE__ << ": "
+#define FATAL()                                                              \
+  RAW_EXITING_STREAM() << "FATAL failure at " << __FILE__ << ":" << __LINE__ \
+                       << ": "
 
 }  // namespace Carbon
 

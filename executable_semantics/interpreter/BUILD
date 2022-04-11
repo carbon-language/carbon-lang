@@ -68,6 +68,10 @@ cc_library(
     name = "exec_program",
     srcs = ["exec_program.cpp"],
     hdrs = ["exec_program.h"],
+    visibility = [
+        "//executable_semantics:__pkg__",
+        "//executable_semantics/fuzzing:__pkg__",
+    ],
     deps = [
         ":interpreter",
         ":resolve_control_flow",
