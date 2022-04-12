@@ -104,6 +104,58 @@ class [[nodiscard]] ErrorOr {
   std::variant<Error, T> val_;
 };
 
+// A helper class for accumulating error message and converting to
+// `Carbon::Error`/`Carbon::ErrorOr<T>`.
+class ErrorBuilder {
+ public:
+  ErrorBuilder() : out_(message_) {}
+
+  // Accumulates string message.
+  template <typename T>
+  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+    out_ << message;
+    return *this;
+  }
+
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
+  operator Error() { return Error(message_); }
+
+  template <typename T>
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
+  operator ErrorOr<T>() {
+    return Error(message_);
+  }
+
+ private:
+  std::string message_;
+  llvm::raw_string_ostream out_;
+};
+
 }  // namespace Carbon
+
+// Macro hackery to get a unique variable name.
+#define MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
+#define MAKE_UNIQUE_NAME(a, b, c) MAKE_UNIQUE_NAME_IMPL(a, b, c)
+
+#define RETURN_IF_ERROR_IMPL(unique_name, expr)                           \
+  if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
+      !(unique_name).ok()) {                                              \
+    return std::move(unique_name).error();                                \
+  }
+
+#define RETURN_IF_ERROR(expr) \
+  RETURN_IF_ERROR_IMPL(       \
+      MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+
+#define ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)                 \
+  auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
+  if (!(unique_name).ok()) {                                          \
+    return std::move(unique_name).error();                            \
+  }                                                                   \
+  var = std::move(*(unique_name)); /* NOLINT(bugprone-macro-parentheses) */
+
+#define ASSIGN_OR_RETURN(var, expr) \
+  ASSIGN_OR_RETURN_IMPL(            \
+      MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), var, expr)
 
 #endif  // COMMON_ERROR_H_

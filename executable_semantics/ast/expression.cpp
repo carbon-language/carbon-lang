@@ -8,7 +8,7 @@
 #include <optional>
 
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
@@ -26,7 +26,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    return FATAL_COMPILATION_ERROR(source_loc)
+    return CompilationErrorBuilder(source_loc)
            << "Unknown intrinsic '" << name << "'";
   }
   return it->second;

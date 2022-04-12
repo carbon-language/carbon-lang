@@ -8,7 +8,7 @@
 
 #include "common/check.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -49,7 +49,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             return *fun_decl.constant_value();
           }
         } else {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationErrorBuilder(source_loc)
                  << "member " << f << " not in " << *witness;
         }
       }
@@ -62,7 +62,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeErrorBuilder(source_loc)
                << "member " << f << " not in " << *v;
       }
       return *field;
@@ -80,7 +80,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          return FATAL_RUNTIME_ERROR(source_loc)
+          return RuntimeErrorBuilder(source_loc)
                  << "member " << f << " not in " << *v << " or its "
                  << class_type;
         } else if ((*func)->declaration().is_method()) {
@@ -101,7 +101,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeErrorBuilder(source_loc)
                << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
@@ -112,7 +112,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeErrorBuilder(source_loc)
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
@@ -151,7 +151,7 @@ static auto SetFieldImpl(
                                return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeErrorBuilder(source_loc)
                << "field " << (*path_begin).name() << " not in " << *value;
       }
       ASSIGN_OR_RETURN(it->value,
@@ -169,7 +169,7 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeErrorBuilder(source_loc)
                << "index " << (*path_begin).name() << " out of range in "
                << *value;
       }

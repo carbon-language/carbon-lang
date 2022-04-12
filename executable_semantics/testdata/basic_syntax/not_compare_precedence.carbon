@@ -7,6 +7,7 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/not_compare_precedence.carbon:16: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
 
 package ExecutableSemanticsTest api;
 

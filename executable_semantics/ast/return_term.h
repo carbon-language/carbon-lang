@@ -11,8 +11,8 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
+#include "executable_semantics/common/source_location.h"
 
 namespace Carbon {
 

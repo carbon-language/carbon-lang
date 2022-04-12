@@ -4,7 +4,7 @@
 
 #include "executable_semantics/interpreter/heap.h"
 
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -40,7 +40,7 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (!alive_[allocation.index_]) {
-    return FATAL_RUNTIME_ERROR(source_loc)
+    return RuntimeErrorBuilder(source_loc)
            << "undefined behavior: access to dead value "
            << *values_[allocation.index_];
   }

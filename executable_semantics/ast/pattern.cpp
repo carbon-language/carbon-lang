@@ -9,7 +9,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -151,7 +151,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
     -> ErrorOr<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
-    return FATAL_PROGRAM_ERROR(alternative->source_loc())
+    return CompilationErrorBuilder(alternative->source_loc())
            << "Alternative pattern must have the form of a field access.";
   }
   return &cast<FieldAccessExpression>(*alternative);

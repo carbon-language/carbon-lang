@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "executable_semantics/ast/source_location.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
+#include "executable_semantics/common/source_location.h"
 
 namespace Carbon {
 
