@@ -519,13 +519,18 @@ class IfExpression : public Expression {
     return InheritsFromIfExpression(node->kind());
   }
 
-  auto condition() const -> Nonnull<Expression*> { return condition_; }
-  auto then_expression() const -> Nonnull<Expression*> {
-    return then_expression_;
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+
+  auto then_expression() const -> const Expression& {
+    return *then_expression_;
   }
-  auto else_expression() const -> Nonnull<Expression*> {
-    return else_expression_;
+  auto then_expression() -> Expression& { return *then_expression_; }
+
+  auto else_expression() const -> const Expression& {
+    return *else_expression_;
   }
+  auto else_expression() -> Expression& { return *else_expression_; }
 
  private:
   Nonnull<Expression*> condition_;
