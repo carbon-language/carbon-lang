@@ -62,8 +62,8 @@ We believe Carbon must support:
 
 Many languages share these goals, and they can often be addressed independently
 in a language's design. For the Carbon project, they are prioritized in that
-order to help make clear what tradeoffs we intend to make. Lower priorities
-goals are still fundamental to Carbon: Carbon would not exist without C++
+order to help make clear what tradeoffs we intend to make. Lower priority goals
+are still fundamental to Carbon: Carbon would not exist without C++
 interoperability and migration.
 
 Read the [language overview](docs/design/) for more on the language design
