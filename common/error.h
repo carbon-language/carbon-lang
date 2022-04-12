@@ -108,12 +108,12 @@ class [[nodiscard]] ErrorOr {
 // `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
-  ErrorBuilder() : out_(message_) {}
+  ErrorBuilder() : out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
 
   // Accumulates string message.
   template <typename T>
   [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
-    out_ << message;
+    *out_ << message;
     return *this;
   }
 
@@ -128,7 +128,8 @@ class ErrorBuilder {
 
  private:
   std::string message_;
-  llvm::raw_string_ostream out_;
+  // Use a pointer to allow move construction.
+  std::unique_ptr<llvm::raw_string_ostream> out_;
 };
 
 }  // namespace Carbon

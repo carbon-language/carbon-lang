@@ -21,26 +21,23 @@ namespace Carbon {
 // Use CHECK/FATAL for internal errors. The generic program error option is
 // provided as a fallback for cases that don't fit those classifications.
 
-class CompilationErrorBuilder : public ErrorBuilder {
- public:
-  explicit CompilationErrorBuilder(SourceLocation loc) {
-    (void)(*this << "COMPILATION ERROR: " << loc << ": ");
-  }
-};
+inline auto CompilationErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+  ErrorBuilder builder;
+  (void)(builder << "COMPILATION ERROR: " << loc << ": ");
+  return builder;
+}
 
-class ProgramErrorBuilder : public ErrorBuilder {
- public:
-  explicit ProgramErrorBuilder(SourceLocation loc) {
-    (void)(*this << "PROGRAM ERROR: " << loc << ": ");
-  }
-};
+inline auto ProgramErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+  ErrorBuilder builder;
+  (void)(builder << "PROGRAM ERROR: " << loc << ": ");
+  return builder;
+}
 
-class RuntimeErrorBuilder : public ErrorBuilder {
- public:
-  explicit RuntimeErrorBuilder(SourceLocation loc) {
-    (void)(*this << "RUNTIME ERROR: " << loc << ": ");
-  }
-};
+inline auto RuntimeErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+  ErrorBuilder builder;
+  (void)(builder << "RUNTIME ERROR: " << loc << ": ");
+  return builder;
+}
 
 }  // namespace Carbon
 
