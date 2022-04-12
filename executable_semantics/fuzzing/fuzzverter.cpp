@@ -92,6 +92,8 @@ static auto CarbonToTextProto(std::string_view input_file_name,
 enum class ConversionMode { TextProtoToCarbon, CarbonToTextProto };
 
 auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
+  llvm::InitLLVM init_llvm(argc, argv);
+
   cl::opt<ConversionMode> mode(
       "mode", cl::desc("Conversion mode"),
       cl::values(
@@ -117,9 +119,8 @@ auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
 }  // namespace Carbon
 
 auto main(int argc, char* argv[]) -> int {
-  llvm::InitLLVM init_llvm(argc, argv);
   if (const auto result = Carbon::Main(argc, argv); !result.ok()) {
-    llvm::errs() << "fuzzverter failed: " << result.error().message() << "\n";
+    llvm::errs() << result.error().message() << "\n";
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
