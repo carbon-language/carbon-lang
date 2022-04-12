@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -50,7 +51,7 @@ auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
 
   // Set up a stream for trace output.
   std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
-  llvm::raw_ostream* trace_stream = nullptr;
+  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream;
   if (!trace_file_name.empty()) {
     if (trace_file_name == "-") {
       trace_stream = &llvm::outs();
@@ -72,7 +73,7 @@ auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
   // Typecheck and run the parsed program.
   ASSIGN_OR_RETURN(int return_code, ExecProgram(&arena, ast, trace_stream));
   // Print the return code to stdout even when we aren't tracing.
-  (trace_stream == nullptr ? llvm::outs() : *trace_stream)
+  (trace_stream == nullptr ? llvm::outs() : **trace_stream)
       << "result: " << return_code << "\n";
   return Success();
 }

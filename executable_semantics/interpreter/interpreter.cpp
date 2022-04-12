@@ -48,7 +48,7 @@ class Interpreter {
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
-              llvm::raw_ostream* trace_stream)
+              std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
@@ -118,7 +118,7 @@ class Interpreter {
   // contents of any non-completed continuations at the end of execution.
   std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
-  llvm::raw_ostream* trace_stream_;
+  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
   Phase phase_;
 };
 
@@ -284,9 +284,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "--- step lvalue " << exp << " (" << exp.source_loc()
-                   << ") --->\n";
+  if (trace_stream_) {
+    **trace_stream_ << "--- step lvalue " << exp << " (" << exp.source_loc()
+                    << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -374,13 +374,13 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "instantiating: " << *type << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "instantiating: " << *type << "\n";
   }
   switch (type->kind()) {
     case Value::Kind::VariableType: {
-      if (trace_stream_ != nullptr) {
-        *trace_stream_ << "case VariableType\n";
+      if (trace_stream_) {
+        **trace_stream_ << "case VariableType\n";
       }
       ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
@@ -391,8 +391,8 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return value;
     }
     case Value::Kind::NominalClassType: {
-      if (trace_stream_ != nullptr) {
-        *trace_stream_ << "case NominalClassType\n";
+      if (trace_stream_) {
+        **trace_stream_ << "case NominalClassType\n";
       }
       const auto& class_type = cast<NominalClassType>(*type);
       BindingMap inst_type_args;
@@ -400,15 +400,15 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         ASSIGN_OR_RETURN(inst_type_args[ty_var],
                          InstantiateType(ty_arg, source_loc));
       }
-      if (trace_stream_ != nullptr) {
-        *trace_stream_ << "finished instantiating ty_arg\n";
+      if (trace_stream_) {
+        **trace_stream_ << "finished instantiating ty_arg\n";
       }
       std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
       for (const auto& [bind, impl] : class_type.impls()) {
         ASSIGN_OR_RETURN(Nonnull<const Value*> witness_addr,
                          todo_.ValueOfNode(impl, source_loc));
-        if (trace_stream_ != nullptr) {
-          *trace_stream_ << "witness_addr: " << *witness_addr << "\n";
+        if (trace_stream_) {
+          **trace_stream_ << "witness_addr: " << *witness_addr << "\n";
         }
         // If the witness came directly from an `impl` declaration (via
         // `constant_value`), then it is a `Witness`. If the witness
@@ -429,8 +429,8 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         }
         witnesses[bind] = witness;
       }
-      if (trace_stream_ != nullptr) {
-        *trace_stream_ << "finished finding witnesses\n";
+      if (trace_stream_) {
+        **trace_stream_ << "finished finding witnesses\n";
       }
       return arena_->New<NominalClassType>(&class_type.declaration(),
                                            inst_type_args, witnesses);
@@ -541,9 +541,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "--- step exp " << exp << " (" << exp.source_loc()
-                   << ") --->\n";
+  if (trace_stream_) {
+    **trace_stream_ << "--- step exp " << exp << " (" << exp.source_loc()
+                    << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::IndexExpression: {
@@ -698,8 +698,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             const FunctionValue& fun_val =
                 cast<FunctionValue>(*act.results()[0]);
             const FunctionDeclaration& function = fun_val.declaration();
-            if (trace_stream_ != nullptr) {
-              *trace_stream_ << "*** call function " << function.name() << "\n";
+            if (trace_stream_) {
+              **trace_stream_ << "*** call function " << function.name()
+                              << "\n";
             }
             ASSIGN_OR_RETURN(Nonnull<const Value*> converted_args,
                              Convert(act.results()[1],
@@ -921,9 +922,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 auto Interpreter::StepPattern() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Pattern& pattern = cast<PatternAction>(act).pattern();
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "--- step pattern " << pattern << " ("
-                   << pattern.source_loc() << ") --->\n";
+  if (trace_stream_) {
+    **trace_stream_ << "--- step pattern " << pattern << " ("
+                    << pattern.source_loc() << ") --->\n";
   }
   switch (pattern.kind()) {
     case PatternKind::AutoPattern: {
@@ -992,10 +993,10 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "--- step stmt ";
-    stmt.PrintDepth(1, *trace_stream_);
-    *trace_stream_ << " (" << stmt.source_loc() << ") --->\n";
+  if (trace_stream_) {
+    **trace_stream_ << "--- step stmt ";
+    stmt.PrintDepth(1, **trace_stream_);
+    **trace_stream_ << " (" << stmt.source_loc() << ") --->\n";
   }
   switch (stmt.kind()) {
     case StatementKind::Match: {
@@ -1212,9 +1213,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "--- step declaration (" << decl.source_loc()
-                   << ") --->\n";
+  if (trace_stream_) {
+    **trace_stream_ << "--- step declaration (" << decl.source_loc()
+                    << ") --->\n";
   }
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
@@ -1268,24 +1269,25 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    PrintState(*trace_stream_);
+  if (trace_stream_) {
+    PrintState(**trace_stream_);
   }
   todo_.Start(std::move(action));
   while (!todo_.IsEmpty()) {
     RETURN_IF_ERROR(Step());
-    if (trace_stream_ != nullptr) {
-      PrintState(*trace_stream_);
+    if (trace_stream_) {
+      PrintState(**trace_stream_);
     }
   }
   return Success();
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   llvm::raw_ostream* trace_stream) -> ErrorOr<int> {
+                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<int> {
   Interpreter interpreter(Phase::RunTime, arena, trace_stream);
-  if (trace_stream != nullptr) {
-    *trace_stream << "********** initializing globals **********\n";
+  if (trace_stream) {
+    **trace_stream << "********** initializing globals **********\n";
   }
 
   for (Nonnull<Declaration*> declaration : ast.declarations) {
@@ -1293,8 +1295,8 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
         std::make_unique<DeclarationAction>(declaration)));
   }
 
-  if (trace_stream != nullptr) {
-    *trace_stream << "********** calling main function **********\n";
+  if (trace_stream) {
+    **trace_stream << "********** calling main function **********\n";
   }
 
   RETURN_IF_ERROR(interpreter.RunAllSteps(
@@ -1304,7 +1306,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               llvm::raw_ostream* trace_stream)
+               std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
     -> ErrorOr<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   RETURN_IF_ERROR(
@@ -1313,7 +1315,7 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
 }
 
 auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
-                   llvm::raw_ostream* trace_stream)
+                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
     -> ErrorOr<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   RETURN_IF_ERROR(interpreter.RunAllSteps(std::make_unique<PatternAction>(p)));

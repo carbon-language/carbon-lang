@@ -434,9 +434,9 @@ auto TypeChecker::Substitute(
       }
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(&class_type.declaration(), type_args);
-      if (trace_stream_ != nullptr) {
-        *trace_stream_ << "substitution: " << class_type << " => "
-                       << *new_class_type << "\n";
+      if (trace_stream_) {
+        **trace_stream_ << "substitution: " << class_type << " => "
+                        << *new_class_type << "\n";
       }
       return new_class_type;
     }
@@ -475,11 +475,11 @@ auto TypeChecker::Substitute(
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "checking expression " << *e;
-    *trace_stream_ << "\nconstants: ";
-    PrintConstants(*trace_stream_);
-    *trace_stream_ << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking expression " << *e;
+    **trace_stream_ << "\nconstants: ";
+    PrintConstants(**trace_stream_);
+    **trace_stream_ << "\n";
   }
   switch (e->kind()) {
     case ExpressionKind::IndexExpression: {
@@ -906,8 +906,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   .declaration();
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
-            if (trace_stream_ != nullptr) {
-              *trace_stream_ << "pattern matching type params and args ";
+            if (trace_stream_) {
+              **trace_stream_ << "pattern matching type params and args ";
             }
             ASSIGN_OR_RETURN(
                 Nonnull<const Value*> arg,
@@ -1092,14 +1092,14 @@ auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     const ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "checking pattern " << *p;
+  if (trace_stream_) {
+    **trace_stream_ << "checking pattern " << *p;
     if (expected) {
-      *trace_stream_ << ", expecting " << **expected;
+      **trace_stream_ << ", expecting " << **expected;
     }
-    *trace_stream_ << "\nconstants: ";
-    PrintConstants(*trace_stream_);
-    *trace_stream_ << "\n";
+    **trace_stream_ << "\nconstants: ";
+    PrintConstants(**trace_stream_);
+    **trace_stream_ << "\n";
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
@@ -1183,9 +1183,9 @@ auto TypeChecker::TypeCheckPattern(
         }
         RETURN_IF_ERROR(TypeCheckPattern(field, expected_field_type, impl_scope,
                                          enclosing_value_category));
-        if (trace_stream_ != nullptr)
-          *trace_stream_ << "finished checking tuple pattern field " << *field
-                         << "\n";
+        if (trace_stream_)
+          **trace_stream_ << "finished checking tuple pattern field " << *field
+                          << "\n";
         field_types.push_back(&field->static_type());
       }
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
@@ -1253,8 +1253,8 @@ auto TypeChecker::TypeCheckPattern(
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "checking statement " << *s << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking statement " << *s << "\n";
   }
   switch (s->kind()) {
     case StatementKind::Match: {
@@ -1444,8 +1444,8 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                              const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** declaring function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** declaring function " << f->name() << "\n";
   }
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
@@ -1526,9 +1526,9 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // TODO: Check that main doesn't have any parameters.
   }
 
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** finished declaring function " << f->name()
-                   << " of type " << f->static_type() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished declaring function " << f->name()
+                    << " of type " << f->static_type() << "\n";
   }
   return Success();
 }
@@ -1536,8 +1536,8 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** checking function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** checking function " << f->name() << "\n";
   }
   // if f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration
@@ -1552,15 +1552,15 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                          *impl_binding->type_var()->symbolic_identity(),
                          impl_binding);
     }
-    if (trace_stream_ != nullptr)
-      *trace_stream_ << function_scope;
+    if (trace_stream_)
+      **trace_stream_ << function_scope;
     RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
     if (!f->return_term().is_omitted()) {
       RETURN_IF_ERROR(ExpectReturnOnAllPaths(f->body(), f->source_loc()));
     }
   }
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** finished checking function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished checking function " << f->name() << "\n";
   }
   return Success();
 }
@@ -1568,8 +1568,8 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** declaring class " << class_decl->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   if (class_decl->type_params().has_value()) {
     ImplScope class_scope;
@@ -1577,8 +1577,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     RETURN_IF_ERROR(TypeCheckPattern(*class_decl->type_params(), std::nullopt,
                                      class_scope, ValueCategory::Let));
     AddPatternImpls(*class_decl->type_params(), class_scope);
-    if (trace_stream_ != nullptr) {
-      *trace_stream_ << class_scope;
+    if (trace_stream_) {
+      **trace_stream_ << class_scope;
     }
 
     Nonnull<NominalClassType*> class_type =
@@ -1604,9 +1604,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
     }
   }
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** finished declaring class " << class_decl->name()
-                   << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished declaring class " << class_decl->name()
+                    << "\n";
   }
   return Success();
 }
@@ -1614,23 +1614,23 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 auto TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** checking class " << class_decl->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** checking class " << class_decl->name() << "\n";
   }
   ImplScope class_scope;
   class_scope.AddParent(&impl_scope);
   if (class_decl->type_params().has_value()) {
     AddPatternImpls(*class_decl->type_params(), class_scope);
   }
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << class_scope;
+  if (trace_stream_) {
+    **trace_stream_ << class_scope;
   }
   for (Nonnull<Declaration*> m : class_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope));
   }
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "** finished checking class " << class_decl->name()
-                   << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished checking class " << class_decl->name()
+                    << "\n";
   }
   return Success();
 }
@@ -1666,8 +1666,8 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                          ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "declaring " << *impl_decl << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
   RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> iface_type,
@@ -1711,14 +1711,14 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                            const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "checking " << *impl_decl << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking " << *impl_decl << "\n";
   }
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
   }
-  if (trace_stream_ != nullptr) {
-    *trace_stream_ << "finished checking impl\n";
+  if (trace_stream_) {
+    **trace_stream_ << "finished checking impl\n";
   }
   return Success();
 }
