@@ -73,7 +73,7 @@ auto Main(int argc, char* argv[]) -> ErrorOr<Success> {
   // Typecheck and run the parsed program.
   ASSIGN_OR_RETURN(int return_code, ExecProgram(&arena, ast, trace_stream));
   // Print the return code to stdout even when we aren't tracing.
-  (trace_stream == nullptr ? llvm::outs() : **trace_stream)
+  (trace_stream ? **trace_stream : llvm::outs())
       << "result: " << return_code << "\n";
   return Success();
 }
