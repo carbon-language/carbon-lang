@@ -49,7 +49,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             return *fun_decl.constant_value();
           }
         } else {
-          return CompilationErrorBuilder(source_loc)
+          return CompilationError(source_loc)
                  << "member " << f << " not in " << *witness;
         }
       }
@@ -62,8 +62,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        return RuntimeErrorBuilder(source_loc)
-               << "member " << f << " not in " << *v;
+        return RuntimeError(source_loc) << "member " << f << " not in " << *v;
       }
       return *field;
     }
@@ -80,9 +79,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          return RuntimeErrorBuilder(source_loc)
-                 << "member " << f << " not in " << *v << " or its "
-                 << class_type;
+          return RuntimeError(source_loc) << "member " << f << " not in " << *v
+                                          << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
@@ -101,7 +99,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        return RuntimeErrorBuilder(source_loc)
+        return RuntimeError(source_loc)
                << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
@@ -112,7 +110,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        return RuntimeErrorBuilder(source_loc)
+        return RuntimeError(source_loc)
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
@@ -151,7 +149,7 @@ static auto SetFieldImpl(
                                return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
-        return RuntimeErrorBuilder(source_loc)
+        return RuntimeError(source_loc)
                << "field " << (*path_begin).name() << " not in " << *value;
       }
       ASSIGN_OR_RETURN(it->value,
@@ -169,9 +167,8 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return RuntimeErrorBuilder(source_loc)
-               << "index " << (*path_begin).name() << " out of range in "
-               << *value;
+        return RuntimeError(source_loc) << "index " << (*path_begin).name()
+                                        << " out of range in " << *value;
       }
       ASSIGN_OR_RETURN(elements[index],
                        SetFieldImpl(arena, elements[index], path_begin + 1,

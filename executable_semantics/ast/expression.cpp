@@ -26,8 +26,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    return CompilationErrorBuilder(source_loc)
-           << "Unknown intrinsic '" << name << "'";
+    return CompilationError(source_loc) << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }

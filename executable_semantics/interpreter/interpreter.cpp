@@ -560,7 +560,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
-          return RuntimeErrorBuilder(exp.source_loc())
+          return RuntimeError(exp.source_loc())
                  << "index " << i << " out of range in " << tuple;
         }
         return todo_.FinishAction(tuple.elements()[i]);
@@ -813,7 +813,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             }
           }
           default:
-            return RuntimeErrorBuilder(exp.source_loc())
+            return RuntimeError(exp.source_loc())
                    << "in call, expected a function, not " << *act.results()[0];
         }
       } else if (act.pos() == 3) {

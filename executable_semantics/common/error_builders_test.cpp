@@ -12,17 +12,17 @@ namespace Carbon::Testing {
 namespace {
 
 TEST(ErrorBuildersTest, CompilationError) {
-  Error err = CompilationErrorBuilder(SourceLocation("x", 1)) << "test";
+  Error err = CompilationError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.message(), "COMPILATION ERROR: x:1: test");
 }
 
 TEST(ErrorBuildersTest, ProgramError) {
-  Error err = ProgramErrorBuilder(SourceLocation("x", 1)) << "test";
+  Error err = ProgramError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.message(), "PROGRAM ERROR: x:1: test");
 }
 
 TEST(ErrorBuildersTest, RuntimeError) {
-  Error err = RuntimeErrorBuilder(SourceLocation("x", 1)) << "test";
+  Error err = RuntimeError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.message(), "RUNTIME ERROR: x:1: test");
 }
 

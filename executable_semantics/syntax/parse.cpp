@@ -44,7 +44,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
   std::string name_str(input_file_name);
   FILE* input_file = fopen(name_str.c_str(), "r");
   if (input_file == nullptr) {
-    return ProgramErrorBuilder(SourceLocation(name_str.c_str(), 0))
+    return ProgramError(SourceLocation(name_str.c_str(), 0))
            << "Error opening file: " << std::strerror(errno);
   }
 

@@ -151,7 +151,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
     -> ErrorOr<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
-    return ProgramErrorBuilder(alternative->source_loc())
+    return ProgramError(alternative->source_loc())
            << "Alternative pattern must have the form of a field access.";
   }
   return &cast<FieldAccessExpression>(*alternative);

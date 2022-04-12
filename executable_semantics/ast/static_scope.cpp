@@ -13,7 +13,7 @@ auto StaticScope::Add(std::string name, ValueNodeView entity)
     -> ErrorOr<Success> {
   auto [it, success] = declared_names_.insert({name, entity});
   if (!success && it->second != entity) {
-    return CompilationErrorBuilder(entity.base().source_loc())
+    return CompilationError(entity.base().source_loc())
            << "Duplicate name `" << name << "` also found at "
            << it->second.base().source_loc();
   }
@@ -26,8 +26,7 @@ auto StaticScope::Resolve(const std::string& name,
   ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
                    TryResolve(name, source_loc));
   if (!result) {
-    return CompilationErrorBuilder(source_loc)
-           << "could not resolve '" << name << "'";
+    return CompilationError(source_loc) << "could not resolve '" << name << "'";
   }
   return *result;
 }
@@ -45,7 +44,7 @@ auto StaticScope::TryResolve(const std::string& name,
                      parent->TryResolve(name, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      return CompilationErrorBuilder(source_loc)
+      return CompilationError(source_loc)
              << "'" << name << "' is ambiguous between "
              << result->base().source_loc() << " and "
              << parent_result->base().source_loc();

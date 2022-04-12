@@ -14,26 +14,26 @@ namespace Carbon {
 // non-recoverable errors with user input.
 //
 // For example:
-//   return ProgramErrorBuilder(line_num) << "Line is bad!";
-//   return ProgramErrorBuilder() << "Application is bad!";
+//   return ProgramError(line_num) << "Line is bad!";
+//   return ProgramError() << "Application is bad!";
 //
 // Where possible, try to identify the error as a compilation or runtime error.
 // Use CHECK/FATAL for internal errors. The generic program error option is
 // provided as a fallback for cases that don't fit those classifications.
 
-inline auto CompilationErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+inline auto CompilationError(SourceLocation loc) -> ErrorBuilder {
   ErrorBuilder builder;
   (void)(builder << "COMPILATION ERROR: " << loc << ": ");
   return builder;
 }
 
-inline auto ProgramErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
   ErrorBuilder builder;
   (void)(builder << "PROGRAM ERROR: " << loc << ": ");
   return builder;
 }
 
-inline auto RuntimeErrorBuilder(SourceLocation loc) -> ErrorBuilder {
+inline auto RuntimeError(SourceLocation loc) -> ErrorBuilder {
   ErrorBuilder builder;
   (void)(builder << "RUNTIME ERROR: " << loc << ": ");
   return builder;
