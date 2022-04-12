@@ -105,7 +105,7 @@ class [[nodiscard]] ErrorOr {
 };
 
 // A helper class for accumulating error message and converting to
-// `Carbon::Error`/`Carbon::ErrorOr<T>`.
+// `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
   ErrorBuilder() : out_(message_) {}
