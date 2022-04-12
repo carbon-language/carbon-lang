@@ -5,13 +5,8 @@
 #ifndef EXECUTABLE_SEMANTICS_COMMON_ERROR_BUILDERS_H_
 #define EXECUTABLE_SEMANTICS_COMMON_ERROR_BUILDERS_H_
 
-#include <optional>
-
-#include "common/check.h"
 #include "common/error.h"
 #include "executable_semantics/common/source_location.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -22,8 +17,9 @@ namespace Carbon {
 //   return ProgramErrorBuilder(line_num) << "Line is bad!";
 //   return ProgramErrorBuilder() << "Application is bad!";
 //
-// Where possible, try to identify the error as a compilation or
-// runtime error. Use CHECK/FATAL for internal errors.
+// Where possible, try to identify the error as a compilation or runtime error.
+// Use CHECK/FATAL for internal errors. The generic program error option is
+// provided as a fallback for cases that don't fit those classifications.
 
 class CompilationErrorBuilder : public ErrorBuilder {
  public:

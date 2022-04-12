@@ -17,9 +17,7 @@ cc_library(
     hdrs = ["error_builders.h"],
     deps = [
         ":source_location",
-        "//common:check",
         "//common:error",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -30,7 +28,6 @@ cc_test(
         ":error_builders",
         ":source_location",
         "@com_google_googletest//:gtest_main",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -39,7 +36,6 @@ cc_library(
     hdrs = ["nonnull.h"],
     deps = [
         "//common:check",
-        "@llvm-project//llvm:Support",
     ],
 )
 
