@@ -888,12 +888,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& if_expr = cast<IfExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(if_expr.condition()));
+            std::make_unique<ExpressionAction>(&if_expr.condition()));
       } else if (act.pos() == 1) {
         const auto& condition = cast<BoolValue>(*act.results()[0]);
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            condition.value() ? if_expr.then_expression()
-                              : if_expr.else_expression()));
+            condition.value() ? &if_expr.then_expression()
+                              : &if_expr.else_expression()));
       } else {
         return todo_.FinishAction(act.results()[1]);
       }
