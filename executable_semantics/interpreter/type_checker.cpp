@@ -13,7 +13,7 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/interpreter/impl_scope.h"
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/value.h"
@@ -42,10 +42,9 @@ static auto ExpectExactType(SourceLocation source_loc,
                             Nonnull<const Value*> expected,
                             Nonnull<const Value*> actual) -> ErrorOr<Success> {
   if (!TypeEqual(expected, actual)) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "type error in " << context << "\n"
-           << "expected: " << *expected << "\n"
-           << "actual: " << *actual;
+    return CompilationError(source_loc) << "type error in " << context << "\n"
+                                        << "expected: " << *expected << "\n"
+                                        << "actual: " << *actual;
   }
   return Success();
 }
@@ -55,10 +54,9 @@ static auto ExpectPointerType(SourceLocation source_loc,
                               Nonnull<const Value*> actual)
     -> ErrorOr<Success> {
   if (actual->kind() != Value::Kind::PointerType) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "type error in " << context << "\n"
-           << "expected a pointer type\n"
-           << "actual: " << *actual;
+    return CompilationError(source_loc) << "type error in " << context << "\n"
+                                        << "expected a pointer type\n"
+                                        << "actual: " << *actual;
   }
   return Success();
 }
@@ -116,7 +114,7 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
                                        Nonnull<const Value*> value)
     -> ErrorOr<Success> {
   if (!IsConcreteType(value)) {
-    return FATAL_COMPILATION_ERROR(source_loc)
+    return CompilationError(source_loc)
            << "Expected a type, but got " << *value;
   } else {
     return Success();
@@ -230,7 +228,7 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
                              Nonnull<const Value*> expected,
                              Nonnull<const Value*> actual) -> ErrorOr<Success> {
   if (!IsImplicitlyConvertible(actual, expected)) {
-    return FATAL_COMPILATION_ERROR(source_loc)
+    return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
            << *expected << "'";
@@ -257,7 +255,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     case Value::Kind::TupleValue: {
       if (arg_type->kind() != Value::Kind::TupleValue) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "type error in argument deduction\n"
                << "expected: " << *param_type << "\n"
                << "actual: " << *arg_type;
@@ -265,7 +263,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       const auto& param_tup = cast<TupleValue>(*param_type);
       const auto& arg_tup = cast<TupleValue>(*arg_type);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "mismatch in tuple sizes, expected "
                << param_tup.elements().size() << " but got "
                << arg_tup.elements().size();
@@ -279,7 +277,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     case Value::Kind::StructType: {
       if (arg_type->kind() != Value::Kind::StructType) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "type error in argument deduction\n"
                << "expected: " << *param_type << "\n"
                << "actual: " << *arg_type;
@@ -287,14 +285,14 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
       const auto& param_struct = cast<StructType>(*param_type);
       const auto& arg_struct = cast<StructType>(*arg_type);
       if (param_struct.fields().size() != arg_struct.fields().size()) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "mismatch in struct field counts, expected "
                << param_struct.fields().size() << " but got "
                << arg_struct.fields().size();
       }
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         if (param_struct.fields()[i].name != arg_struct.fields()[i].name) {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationError(source_loc)
                  << "mismatch in field names, " << param_struct.fields()[i].name
                  << " != " << arg_struct.fields()[i].name;
         }
@@ -306,7 +304,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     case Value::Kind::FunctionType: {
       if (arg_type->kind() != Value::Kind::FunctionType) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "type error in argument deduction\n"
                << "expected: " << *param_type << "\n"
                << "actual: " << *arg_type;
@@ -322,7 +320,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
     }
     case Value::Kind::PointerType: {
       if (arg_type->kind() != Value::Kind::PointerType) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "type error in argument deduction\n"
                << "expected: " << *param_type << "\n"
                << "actual: " << *arg_type;
@@ -349,7 +347,7 @@ auto TypeChecker::ArgumentDeduction(SourceLocation source_loc,
           return Success();
         }
       }
-      return FATAL_COMPILATION_ERROR(source_loc)
+      return CompilationError(source_loc)
              << "type error in argument deduction\n"
              << "expected: " << *param_type << "\n"
              << "actual: " << *arg_type;
@@ -497,7 +495,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                            InterpExp(&index.offset(), arena_, trace_));
           int i = cast<IntValue>(*offset_value).value();
           if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
-            return FATAL_COMPILATION_ERROR(e->source_loc())
+            return CompilationError(e->source_loc())
                    << "index " << i << " is out of range for type "
                    << tuple_type;
           }
@@ -515,7 +513,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         default:
-          return FATAL_COMPILATION_ERROR(e->source_loc()) << "expected a tuple";
+          return CompilationError(e->source_loc()) << "expected a tuple";
       }
     }
     case ExpressionKind::TupleLiteral: {
@@ -573,7 +571,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return Success();
             }
           }
-          return FATAL_COMPILATION_ERROR(access.source_loc())
+          return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
                  << access.field();
         }
@@ -599,7 +597,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             return Success();
           } else {
-            return FATAL_COMPILATION_ERROR(e->source_loc())
+            return CompilationError(e->source_loc())
                    << "class " << t_class.declaration().name()
                    << " does not have a field named " << access.field();
           }
@@ -610,7 +608,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           std::optional<Nonnull<const Value*>> parameter_types =
               choice.FindAlternative(access.field());
           if (!parameter_types.has_value()) {
-            return FATAL_COMPILATION_ERROR(e->source_loc())
+            return CompilationError(e->source_loc())
                    << "choice " << choice.name()
                    << " does not have a field named " << access.field();
           }
@@ -641,10 +639,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
-            return FATAL_COMPILATION_ERROR(access.source_loc())
+            return CompilationError(access.source_loc())
                    << access.field() << " is not a class function";
           } else {
-            return FATAL_COMPILATION_ERROR(access.source_loc())
+            return CompilationError(access.source_loc())
                    << class_type << " does not have a class function named "
                    << access.field();
           }
@@ -674,14 +672,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_impl(*var_type.binding().impl_binding());
                 return Success();
               } else {
-                return FATAL_COMPILATION_ERROR(e->source_loc())
+                return CompilationError(e->source_loc())
                        << "field access, " << access.field() << " not in "
                        << iface_decl.name();
               }
               break;
             }
             default:
-              return FATAL_COMPILATION_ERROR(e->source_loc())
+              return CompilationError(e->source_loc())
                      << "field access, unexpected " << aggregate_type
                      << " of non-interface type " << typeof_var << " in " << *e;
           }
@@ -708,14 +706,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             access.set_impl(*var_type.binding().impl_binding());
             return Success();
           } else {
-            return FATAL_COMPILATION_ERROR(e->source_loc())
+            return CompilationError(e->source_loc())
                    << "field access, " << access.field() << " not in "
                    << iface_decl.name();
           }
           break;
         }
         default:
-          return FATAL_COMPILATION_ERROR(e->source_loc())
+          return CompilationError(e->source_loc())
                  << "field access, unexpected " << aggregate_type << " in "
                  << *e;
       }
@@ -728,7 +726,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             cast<FunctionDeclaration>(ident.value_node().base());
         if (!function.has_static_type()) {
           CHECK(function.return_term().is_auto());
-          return FATAL_COMPILATION_ERROR(ident.source_loc())
+          return CompilationError(ident.source_loc())
                  << "Function calls itself, but has a deduced return type";
         }
       }
@@ -822,7 +820,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         case Operator::AddressOf:
           if (op.arguments()[0]->value_category() != ValueCategory::Var) {
-            return FATAL_COMPILATION_ERROR(op.arguments()[0]->source_loc())
+            return CompilationError(op.arguments()[0]->source_loc())
                    << "Argument to " << ToString(op.op())
                    << " should be an lvalue.";
           }
@@ -853,7 +851,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               // has been added to the type checking of function signatures.
               if (auto it = deduced_type_args.find(deduced_param);
                   it == deduced_type_args.end()) {
-                return FATAL_COMPILATION_ERROR(e->source_loc())
+                return CompilationError(e->source_loc())
                        << "could not deduce type argument for type parameter "
                        << deduced_param->name() << "\n"
                        << "in " << call;
@@ -880,7 +878,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 case Value::Kind::TypeType:
                   break;
                 default:
-                  return FATAL_COMPILATION_ERROR(e->source_loc())
+                  return CompilationError(e->source_loc())
                          << "unexpected type of deduced parameter "
                          << *impl_binding->interface();
               }
@@ -913,7 +911,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
                                call.source_loc(), std::nullopt, generic_args));
           } else {
-            return FATAL_COMPILATION_ERROR(call.source_loc())
+            return CompilationError(call.source_loc())
                    << "attempt to instantiate a non-generic class: " << *e;
           }
           // Find impls for all the impl bindings of the class.
@@ -934,7 +932,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 case Value::Kind::TypeType:
                   break;
                 default:
-                  return FATAL_COMPILATION_ERROR(e->source_loc())
+                  return CompilationError(e->source_loc())
                          << "unexpected type of deduced parameter "
                          << *impl_binding->interface();
               }
@@ -948,7 +946,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return Success();
         }
         default: {
-          return FATAL_COMPILATION_ERROR(e->source_loc())
+          return CompilationError(e->source_loc())
                  << "in call, expected a function\n"
                  << *e << "\nnot an operator of type "
                  << call.function().static_type() << "\n";
@@ -980,7 +978,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           if (intrinsic_exp.args().fields().size() != 1) {
-            return FATAL_COMPILATION_ERROR(e->source_loc())
+            return CompilationError(e->source_loc())
                    << "__intrinsic_print takes 1 argument";
           }
           RETURN_IF_ERROR(
@@ -1040,8 +1038,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<const Value*> size_value,
           InterpExp(&array_literal.size_expression(), arena_, trace_));
       if (cast<IntValue>(size_value)->value() < 0) {
-        return FATAL_COMPILATION_ERROR(
-                   array_literal.size_expression().source_loc())
+        return CompilationError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
       }
       array_literal.set_static_type(arena_->New<TypeType>());
@@ -1107,7 +1104,7 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
       if (!GetBindings(binding.type()).empty()) {
-        return FATAL_COMPILATION_ERROR(binding.type().source_loc())
+        return CompilationError(binding.type().source_loc())
                << "The type of a binding pattern cannot contain bindings.";
       }
       RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), std::nullopt,
@@ -1122,7 +1119,7 @@ auto TypeChecker::TypeCheckPattern(
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
                             std::nullopt, generic_args)) {
-            return FATAL_COMPILATION_ERROR(binding.type().source_loc())
+            return CompilationError(binding.type().source_loc())
                    << "Type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
           }
@@ -1146,7 +1143,7 @@ auto TypeChecker::TypeCheckPattern(
       ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                        InterpExp(&binding.type(), arena_, trace_));
       if (expected) {
-        return FATAL_COMPILATION_ERROR(binding.type().source_loc())
+        return CompilationError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
                   "type: "
                << binding;
@@ -1165,12 +1162,11 @@ auto TypeChecker::TypeCheckPattern(
       auto& tuple = cast<TuplePattern>(*p);
       std::vector<Nonnull<const Value*>> field_types;
       if (expected && (*expected)->kind() != Value::Kind::TupleValue) {
-        return FATAL_COMPILATION_ERROR(p->source_loc())
-               << "didn't expect a tuple";
+        return CompilationError(p->source_loc()) << "didn't expect a tuple";
       }
       if (expected && tuple.fields().size() !=
                           cast<TupleValue>(**expected).elements().size()) {
-        return FATAL_COMPILATION_ERROR(tuple.source_loc())
+        return CompilationError(tuple.source_loc())
                << "tuples of different length";
       }
       for (size_t i = 0; i < tuple.fields().size(); ++i) {
@@ -1197,7 +1193,7 @@ auto TypeChecker::TypeCheckPattern(
       RETURN_IF_ERROR(TypeCheckExp(&alternative.choice_type(), impl_scope));
       if (alternative.choice_type().static_type().kind() !=
           Value::Kind::TypeOfChoiceType) {
-        return FATAL_COMPILATION_ERROR(alternative.source_loc())
+        return CompilationError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
       if (expected) {
@@ -1212,7 +1208,7 @@ auto TypeChecker::TypeCheckPattern(
           cast<ChoiceType>(choice_type)
               .FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
-        return FATAL_COMPILATION_ERROR(alternative.source_loc())
+        return CompilationError(alternative.source_loc())
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
@@ -1302,7 +1298,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                  &assign.lhs().static_type(),
                                  &assign.rhs().static_type()));
       if (assign.lhs().value_category() != ValueCategory::Var) {
-        return FATAL_COMPILATION_ERROR(assign.source_loc())
+        return CompilationError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
       return Success();
@@ -1377,7 +1373,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     std::optional<Nonnull<Statement*>> opt_stmt, SourceLocation source_loc)
     -> ErrorOr<Success> {
   if (!opt_stmt) {
-    return FATAL_COMPILATION_ERROR(source_loc)
+    return CompilationError(source_loc)
            << "control-flow reaches end of function that provides a `->` "
               "return "
               "type without reaching a return statement";
@@ -1387,7 +1383,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Match: {
       auto& match = cast<Match>(*stmt);
       if (!IsExhaustive(match)) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "non-exhaustive match may allow control-flow to reach the "
                   "end "
                   "of a function that provides a `->` return type";
@@ -1402,7 +1398,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Block: {
       auto& block = cast<Block>(*stmt);
       if (block.statements().empty()) {
-        return FATAL_COMPILATION_ERROR(stmt->source_loc())
+        return CompilationError(stmt->source_loc())
                << "control-flow reaches end of function that provides a `->` "
                   "return type without reaching a return statement";
       }
@@ -1431,7 +1427,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
-      return FATAL_COMPILATION_ERROR(stmt->source_loc())
+      return CompilationError(stmt->source_loc())
              << "control-flow reaches end of function that provides a `->` "
                 "return type without reaching a return statement";
   }
@@ -1497,7 +1493,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   } else {
     // We have to type-check the body in order to determine the return type.
     if (!f->body().has_value()) {
-      return FATAL_COMPILATION_ERROR(f->return_term().source_loc())
+      return CompilationError(f->return_term().source_loc())
              << "Function declaration has deduced return type but no body";
     }
     RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
@@ -1515,7 +1511,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 
   if (f->name() == "Main") {
     if (!f->return_term().type_expression().has_value()) {
-      return FATAL_COMPILATION_ERROR(f->return_term().source_loc())
+      return CompilationError(f->return_term().source_loc())
              << "`Main` must have an explicit return type";
     }
     RETURN_IF_ERROR(ExpectExactType(
@@ -1696,7 +1692,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                    "member of implementation", iface_mem_type,
                                    &(*mem)->static_type()));
       } else {
-        return FATAL_COMPILATION_ERROR(impl_decl->source_loc())
+        return CompilationError(impl_decl->source_loc())
                << "implementation missing " << *mem_name;
       }
     }
@@ -1793,7 +1789,7 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
           dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
         // TODO: consider adding support for `auto`
-        return FATAL_COMPILATION_ERROR(var.source_loc())
+        return CompilationError(var.source_loc())
                << "Type of a top-level variable must be an expression.";
       }
       if (var.has_initializer()) {
@@ -1845,7 +1841,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
       if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
-        return FATAL_COMPILATION_ERROR(var.binding().type().source_loc())
+        return CompilationError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
       Expression& type =

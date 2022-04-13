@@ -14,9 +14,9 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "executable_semantics/ast/ast_node.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/nonnull.h"
+#include "executable_semantics/common/source_location.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
