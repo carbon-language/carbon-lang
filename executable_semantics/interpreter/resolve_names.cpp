@@ -167,8 +167,7 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::TypeTypeLiteral:
       break;
     case ExpressionKind::UnimplementedExpression:
-      return FATAL_COMPILATION_ERROR(expression.source_loc())
-             << "Unimplemented";
+      return CompilationError(expression.source_loc()) << "Unimplemented";
   }
   return Success();
 }
@@ -376,7 +375,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         RETURN_IF_ERROR(
             ResolveNames(alternative->signature(), enclosing_scope));
         if (!alternative_names.insert(alternative->name()).second) {
-          return FATAL_COMPILATION_ERROR(alternative->source_loc())
+          return CompilationError(alternative->source_loc())
                  << "Duplicate name `" << alternative->name()
                  << "` in choice type";
         }

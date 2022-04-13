@@ -19,7 +19,7 @@
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/fuzzing/ast_to_proto.h"
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 #include "executable_semantics/syntax/parse.h"

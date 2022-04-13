@@ -7,7 +7,7 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/return_term.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 
@@ -39,14 +39,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
   switch (statement->kind()) {
     case StatementKind::Return: {
       if (!function.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "return is not within a function body";
       }
       const ReturnTerm& function_return =
           (*function)->declaration->return_term();
       if (function_return.is_auto()) {
         if ((*function)->saw_return_in_auto) {
-          return FATAL_COMPILATION_ERROR(statement->source_loc())
+          return CompilationError(statement->source_loc())
                  << "Only one return is allowed in a function with an `auto` "
                     "return type.";
         }
@@ -55,7 +55,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       auto& ret = cast<Return>(*statement);
       ret.set_function((*function)->declaration);
       if (ret.is_omitted_expression() != function_return.is_omitted()) {
-        return FATAL_COMPILATION_ERROR(ret.source_loc())
+        return CompilationError(ret.source_loc())
                << ret << " should"
                << (function_return.is_omitted() ? " not" : "")
                << " provide a return value, to match the function's signature.";
@@ -64,14 +64,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
     }
     case StatementKind::Break:
       if (!loop.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "break is not within a loop body";
       }
       cast<Break>(*statement).set_loop(*loop);
       return Success();
     case StatementKind::Continue:
       if (!loop.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "continue is not within a loop body";
       }
       cast<Continue>(*statement).set_loop(*loop);

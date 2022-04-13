@@ -4,7 +4,7 @@
 
 #include "executable_semantics/interpreter/impl_scope.h"
 
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -29,9 +29,8 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
   ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
                    TryResolve(iface_type, type, source_loc));
   if (!result.has_value()) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "could not find implementation of " << *iface_type << " for "
-           << *type;
+    return CompilationError(source_loc) << "could not find implementation of "
+                                        << *iface_type << " for " << *type;
   }
   return *result;
 }
@@ -50,9 +49,8 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                      parent->TryResolve(iface_type, type, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      return FATAL_COMPILATION_ERROR(source_loc)
-             << "ambiguous implementations of " << *iface_type << " for "
-             << *type;
+      return CompilationError(source_loc) << "ambiguous implementations of "
+                                          << *iface_type << " for " << *type;
     }
     result = parent_result;
   }

@@ -58,7 +58,7 @@ cc_binary(
         ":fuzzer_util",
         "//common:error",
         "//common/fuzzing:carbon_cc_proto",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
         "//executable_semantics/common:nonnull",
         "//executable_semantics/syntax",
         "@com_google_protobuf//:protobuf_headers",
