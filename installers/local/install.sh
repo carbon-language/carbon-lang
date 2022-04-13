@@ -16,22 +16,54 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --install_path)
+      INSTALL_PATH="$2"
+      shift
+      shift
+      ;;
     *)
       STANDARD_LIBRARIES+=("$1")
+      echo $1
       shift
       ;;
   esac
 done
 
-echo "Installing files using sudo..."
-sudo -- /usr/bin/bash -eu - <<EOF
-mkdir -p /usr/lib/carbon/data
-cp -f "${CARBON}" /usr/lib/carbon/carbon
-chmod 755 /usr/lib/carbon/carbon
-ln -fs /usr/lib/carbon/carbon /usr/bin/carbon-cam
-for f in "${STANDARD_LIBRARIES}"; do
-  cp -f "\${f}" /usr/lib/carbon/data/
-  chmod 644 "/usr/lib/carbon/data/\$(basename "\${f}")"
-done
+# If the install path is relative, change it to be based on the working dir.
+if [[ ! "${INSTALL_PATH}" = /* ]]; then
+  INSTALL_PATH="${BUILD_WORKING_DIRECTORY}/${INSTALL_PATH}"
+fi
+
+# Prepare the install script to run.
+SCRIPT=$(cat <<EOF
+  # Ensure directories exist.
+  mkdir -p "${INSTALL_PATH}/bin"
+  mkdir -p "${INSTALL_PATH}/lib/carbon/data"
+
+  # Install files to lib.
+  cp -f "${CARBON}" "${INSTALL_PATH}/lib/carbon/carbon"
+  chmod 755 "${INSTALL_PATH}/lib/carbon/carbon"
+  for f in $(printf " %q" "${STANDARD_LIBRARIES[@]}"); do
+    cp -f "\${f}" "${INSTALL_PATH}/lib/carbon/data/"
+    chmod 644 "${INSTALL_PATH}/lib/carbon/data/\$(basename "\${f}")"
+  done
+
+  # Add symlinks in bin.
+  ln -fs "${INSTALL_PATH}/lib/carbon/carbon" "${INSTALL_PATH}/bin/carbon-cam"
 EOF
+)
+
+# Only use sudo if the target directory isn't user-owned.
+ACCESS_PATH="${INSTALL_PATH}"
+while [[ ! -e "${ACCESS_PATH}" ]]; do
+  ACCESS_PATH="$(dirname "${ACCESS_PATH}")"
+done
+
+if [[ -O "${ACCESS_PATH}" ]]; then
+  echo "Installing files..."
+  echo "${SCRIPT}" | /usr/bin/bash -eux -
+else
+  echo "Installing files using sudo..."
+  echo "${SCRIPT}" | sudo -- /usr/bin/bash -eux -
+fi
 echo "All done."
