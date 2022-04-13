@@ -13,10 +13,10 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/return_term.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
+#include "executable_semantics/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 

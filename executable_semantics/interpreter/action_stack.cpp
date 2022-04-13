@@ -77,7 +77,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
     }
   }
   // TODO: Move these errors to compile time and explain them more clearly.
-  return FATAL_RUNTIME_ERROR(source_loc)
+  return RuntimeError(source_loc)
          << "could not find `" << value_node.base() << "`";
 }
 
