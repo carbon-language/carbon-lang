@@ -35,8 +35,10 @@ void SemanticsIRFactory::ProcessRoots() {
 
 void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
                                              ParseTree::Node decl_node) {
+  llvm::Optional<ParseTree::Node> code_block;
   llvm::Optional<Semantics::Function> fn;
   for (ParseTree::Node node : semantics_.parse_tree_->children(decl_node)) {
+    llvm::errs() << semantics_.parse_tree_->node_kind(node).name() << "\n";
     switch (semantics_.parse_tree_->node_kind(node)) {
       case ParseNodeKind::DeclaredName():
         fn = semantics_.AddFunction(block, decl_node, node);
@@ -47,14 +49,15 @@ void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
         // Function::AddParameter.
         break;
       case ParseNodeKind::CodeBlock():
-        CHECK(fn);
+        CHECK(!fn);
+        CHECK(!code_block);
+        code_block = node;
         // TODO: Should accumulate the definition into the code block.
         break;
       case ParseNodeKind::ReturnType():
         CHECK(fn);
-        fn->
-            // TODO
-            break;
+        // TODO
+        break;
       default:
         FATAL() << "Unhandled node kind: "
                 << semantics_.parse_tree_->node_kind(node).name();

@@ -44,7 +44,7 @@ TEST_F(SemanticsIRFactoryTest, SimpleProgram) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(// package FactoryTest api;
 
-           fn Add(var x: i32, var y: i32) {
+           fn Add(x: i32, y: i32) {
              return x + y;
            }
 
