@@ -163,6 +163,12 @@ interface Comparable {
 }
 ```
 
+Functions and methods may be given a default implementation by prefixing the
+declaration with `default` and putting the function body in curly braces
+`{`...`}` in place of the terminating `;` of the function declaration. To
+prevent that implementation from being overridden, use `final` instead of
+`default`.
+
 Interfaces describe functionality, but not data; no variables may be declared in
 an interface.
 
@@ -648,12 +654,9 @@ external impl Distance as MultipliableWith(like f64) ...
 
 ## Future work
 
--   Support functions should have a way to accept types that types that vary at
-    runtime.
+-   Functions should have a way to accept types that vary at runtime.
 -   You should have the ability to mark entities as `upcoming` or `deprecated`
     to support evolution.
--   There should be a way to provide default implementations of methods in
-    interfaces and other ways to reuse code across implementations.
 -   There should be a way to define generic associated and higher-ranked/kinded
     types.
 
@@ -665,3 +668,4 @@ external impl Distance as MultipliableWith(like f64) ...
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
