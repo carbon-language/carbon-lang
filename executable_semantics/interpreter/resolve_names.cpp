@@ -144,11 +144,9 @@ static auto ResolveNames(Expression& expression,
       break;
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(expression);
-      RETURN_IF_ERROR(ResolveNames(*if_expr.condition(), enclosing_scope));
-      RETURN_IF_ERROR(
-          ResolveNames(*if_expr.then_expression(), enclosing_scope));
-      RETURN_IF_ERROR(
-          ResolveNames(*if_expr.else_expression(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(if_expr.condition(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(if_expr.then_expression(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(if_expr.else_expression(), enclosing_scope));
       break;
     }
     case ExpressionKind::ArrayTypeLiteral: {

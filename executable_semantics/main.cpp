@@ -15,6 +15,7 @@
 #include "executable_semantics/common/nonnull.h"
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
+#include "executable_semantics/syntax/prelude.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
@@ -22,24 +23,6 @@
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-
-// Adds the Carbon prelude to `declarations`.
-static void AddPrelude(
-    std::string_view prelude_file_name, Carbon::Nonnull<Carbon::Arena*> arena,
-    std::vector<Carbon::Nonnull<Carbon::Declaration*>>* declarations) {
-  Carbon::ErrorOr<Carbon::AST> parse_result =
-      Carbon::Parse(arena, prelude_file_name, false);
-  if (!parse_result.ok()) {
-    // Try again with tracing, to help diagnose the problem.
-    Carbon::ErrorOr<Carbon::AST> trace_parse_result =
-        Carbon::Parse(arena, prelude_file_name, true);
-    FATAL() << "Failed to parse prelude: "
-            << trace_parse_result.error().message();
-  }
-  const auto& prelude = *parse_result;
-  declarations->insert(declarations->begin(), prelude.declarations.begin(),
-                       prelude.declarations.end());
-}
 
 // Prints an error message and returns error code value.
 auto PrintError(const Carbon::Error& error) -> int {
