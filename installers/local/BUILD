@@ -4,7 +4,7 @@
 #
 # Installs Carbon to /usr/bin and /usr/lib/carbon.
 #
-# To install to /usr/lib, run:
+# To install to /usr, run:
 #   bazel run -c opt //installers/local:install
 #
 # To use a custom install path, run:
