@@ -15,7 +15,7 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/common/arena.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/action_stack.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -561,7 +561,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         const auto& tuple = cast<TupleValue>(*act.results()[0]);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
-          return FATAL_RUNTIME_ERROR_NO_LINE()
+          return RuntimeError(exp.source_loc())
                  << "index " << i << " out of range in " << tuple;
         }
         return todo_.FinishAction(tuple.elements()[i]);
@@ -815,7 +815,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             }
           }
           default:
-            return FATAL_RUNTIME_ERROR(exp.source_loc())
+            return RuntimeError(exp.source_loc())
                    << "in call, expected a function, not " << *act.results()[0];
         }
       } else if (act.pos() == 3) {
@@ -890,12 +890,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& if_expr = cast<IfExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(if_expr.condition()));
+            std::make_unique<ExpressionAction>(&if_expr.condition()));
       } else if (act.pos() == 1) {
         const auto& condition = cast<BoolValue>(*act.results()[0]);
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            condition.value() ? if_expr.then_expression()
-                              : if_expr.else_expression()));
+            condition.value() ? &if_expr.then_expression()
+                              : &if_expr.else_expression()));
       } else {
         return todo_.FinishAction(act.results()[1]);
       }

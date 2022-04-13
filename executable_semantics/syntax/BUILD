@@ -85,7 +85,7 @@ cc_library(
         "//executable_semantics/ast:pattern",
         "//executable_semantics/ast:value_category",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],

@@ -7,7 +7,8 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_type_deduction_unused.carbon:19: could not deduce type argument for type parameter T
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_type_deduction_unused.carbon:20: could not deduce type argument for type parameter T
+// CHECK: in id(0)
 
 package ExecutableSemanticsTest api;
 

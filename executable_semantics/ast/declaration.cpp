@@ -175,14 +175,14 @@ auto FunctionDeclaration::Create(
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
         if (me_pattern.has_value() || bp->name() != "me") {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
         me_pattern = bp;
         break;
       }
       default:
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "illegal AST node in implicit parameter list";
     }
   }

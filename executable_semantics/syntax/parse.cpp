@@ -6,7 +6,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
-#include "executable_semantics/common/error.h"
+#include "executable_semantics/common/error_builders.h"
 #include "executable_semantics/syntax/lexer.h"
 #include "executable_semantics/syntax/parse_and_lex_context.h"
 #include "executable_semantics/syntax/parser.h"
@@ -43,10 +43,11 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
 
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
            bool parser_debug) -> ErrorOr<AST> {
-  FILE* input_file = fopen(std::string(input_file_name).c_str(), "r");
+  std::string name_str(input_file_name);
+  FILE* input_file = fopen(name_str.c_str(), "r");
   if (input_file == nullptr) {
-    return FATAL_PROGRAM_ERROR_NO_LINE() << "Error opening '" << input_file_name
-                                         << "': " << std::strerror(errno);
+    return ProgramError(SourceLocation(name_str.c_str(), 0))
+           << "Error opening file: " << std::strerror(errno);
   }
 
   // Prepare the lexer.
