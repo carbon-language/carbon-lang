@@ -4,7 +4,7 @@
 //
 // RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_argument_deduction.carbon:28: type error in argument deduction
