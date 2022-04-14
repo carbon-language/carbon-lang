@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -20,6 +21,7 @@
 #include "executable_semantics/syntax/prelude.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -37,23 +39,45 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   // is piped to stdout.
   llvm::errs().tie(&llvm::outs());
 
-  cl::opt<bool> trace_option("trace", cl::desc("Enable tracing"));
   cl::opt<std::string> input_file_name(cl::Positional, cl::desc("<input file>"),
                                        cl::Required);
+  cl::opt<bool> parser_debug("parser_debug",
+                             cl::desc("Enable debug output from the parser"));
+  cl::opt<std::string> trace_file_name(
+      "trace_file",
+      cl::desc("Output file for tracing; set to `-` to output to stdout."));
 
   // Find the path of the executable if possible and use that as a relative root
   cl::opt<std::string> prelude_file_name("prelude", cl::desc("<prelude file>"),
                                          cl::init(default_prelude_file.str()));
   cl::ParseCommandLineOptions(argc, argv);
 
+  // Set up a stream for trace output.
+  std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
+  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream;
+  if (!trace_file_name.empty()) {
+    if (trace_file_name == "-") {
+      trace_stream = &llvm::outs();
+    } else {
+      std::error_code err;
+      scoped_trace_stream =
+          std::make_unique<llvm::raw_fd_ostream>(trace_file_name, err);
+      if (err) {
+        return Error(err.message());
+      }
+      trace_stream = scoped_trace_stream.get();
+    }
+  }
+
   Arena arena;
-  ASSIGN_OR_RETURN(AST ast, Parse(&arena, input_file_name, trace_option));
+  ASSIGN_OR_RETURN(AST ast, Parse(&arena, input_file_name, parser_debug));
   AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
-  ASSIGN_OR_RETURN(int unused_return_code,
-                   ExecProgram(&arena, ast, trace_option));
-  (void)unused_return_code;
+  ASSIGN_OR_RETURN(int return_code, ExecProgram(&arena, ast, trace_stream));
+  // Print the return code to stdout even when we aren't tracing.
+  (trace_stream ? **trace_stream : llvm::outs())
+      << "result: " << return_code << "\n";
   return Success();
 }
 

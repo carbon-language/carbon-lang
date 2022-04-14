@@ -432,9 +432,9 @@ auto TypeChecker::Substitute(
       }
       Nonnull<const NominalClassType*> new_class_type =
           arena_->New<NominalClassType>(&class_type.declaration(), type_args);
-      if (trace_) {
-        llvm::outs() << "substitution: " << class_type << " => "
-                     << *new_class_type << "\n";
+      if (trace_stream_) {
+        **trace_stream_ << "substitution: " << class_type << " => "
+                        << *new_class_type << "\n";
       }
       return new_class_type;
     }
@@ -473,11 +473,11 @@ auto TypeChecker::Substitute(
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "checking expression " << *e;
-    llvm::outs() << "\nconstants: ";
-    PrintConstants(llvm::outs());
-    llvm::outs() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking expression " << *e;
+    **trace_stream_ << "\nconstants: ";
+    PrintConstants(**trace_stream_);
+    **trace_stream_ << "\n";
   }
   switch (e->kind()) {
     case ExpressionKind::IndexExpression: {
@@ -492,7 +492,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                           "tuple index", arena_->New<IntType>(),
                                           &index.offset().static_type()));
           ASSIGN_OR_RETURN(auto offset_value,
-                           InterpExp(&index.offset(), arena_, trace_));
+                           InterpExp(&index.offset(), arena_, trace_stream_));
           int i = cast<IntValue>(*offset_value).value();
           if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
             return CompilationError(e->source_loc())
@@ -541,7 +541,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       for (auto& arg : struct_type.fields()) {
         RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
         ASSIGN_OR_RETURN(auto value,
-                         InterpExp(&arg.expression(), arena_, trace_));
+                         InterpExp(&arg.expression(), arena_, trace_stream_));
         RETURN_IF_ERROR(
             ExpectIsConcreteType(arg.expression().source_loc(), value));
       }
@@ -690,8 +690,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // If `T` is a type variable and `foo` is a class function in an
           // interface implemented by `T`, then `T.foo` accesses the `foo` class
           // function of `T`.
-          ASSIGN_OR_RETURN(Nonnull<const Value*> var_addr,
-                           InterpExp(&access.aggregate(), arena_, trace_));
+          ASSIGN_OR_RETURN(
+              Nonnull<const Value*> var_addr,
+              InterpExp(&access.aggregate(), arena_, trace_stream_));
           const VariableType& var_type = cast<VariableType>(*var_addr);
           const InterfaceType& iface_type = cast<InterfaceType>(aggregate_type);
           const InterfaceDeclaration& iface_decl = iface_type.declaration();
@@ -903,11 +904,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   .declaration();
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
-            if (trace_) {
-              llvm::outs() << "pattern matching type params and args ";
+            if (trace_stream_) {
+              **trace_stream_ << "pattern matching type params and args ";
             }
-            ASSIGN_OR_RETURN(Nonnull<const Value*> arg,
-                             InterpExp(&call.argument(), arena_, trace_));
+            ASSIGN_OR_RETURN(
+                Nonnull<const Value*> arg,
+                InterpExp(&call.argument(), arena_, trace_stream_));
             CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
                                call.source_loc(), std::nullopt, generic_args));
           } else {
@@ -957,11 +959,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
       ASSIGN_OR_RETURN(Nonnull<const Value*> param_type,
-                       InterpExp(&fn.parameter(), arena_, trace_));
+                       InterpExp(&fn.parameter(), arena_, trace_stream_));
       RETURN_IF_ERROR(
           ExpectIsConcreteType(fn.parameter().source_loc(), param_type));
       ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
-                       InterpExp(&fn.return_type(), arena_, trace_));
+                       InterpExp(&fn.return_type(), arena_, trace_stream_));
       RETURN_IF_ERROR(
           ExpectIsConcreteType(fn.return_type().source_loc(), ret_type));
       fn.set_static_type(arena_->New<TypeType>());
@@ -1022,9 +1024,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
       RETURN_IF_ERROR(
           TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
-      ASSIGN_OR_RETURN(
-          Nonnull<const Value*> element_type,
-          InterpExp(&array_literal.element_type_expression(), arena_, trace_));
+      ASSIGN_OR_RETURN(Nonnull<const Value*> element_type,
+                       InterpExp(&array_literal.element_type_expression(),
+                                 arena_, trace_stream_));
       RETURN_IF_ERROR(ExpectIsConcreteType(
           array_literal.element_type_expression().source_loc(), element_type));
 
@@ -1036,7 +1038,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                           &array_literal.size_expression().static_type()));
       ASSIGN_OR_RETURN(
           Nonnull<const Value*> size_value,
-          InterpExp(&array_literal.size_expression(), arena_, trace_));
+          InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
       if (cast<IntValue>(size_value)->value() < 0) {
         return CompilationError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
@@ -1087,14 +1089,14 @@ auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     const ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "checking pattern " << *p;
+  if (trace_stream_) {
+    **trace_stream_ << "checking pattern " << *p;
     if (expected) {
-      llvm::outs() << ", expecting " << **expected;
+      **trace_stream_ << ", expecting " << **expected;
     }
-    llvm::outs() << "\nconstants: ";
-    PrintConstants(llvm::outs());
-    llvm::outs() << "\n";
+    **trace_stream_ << "\nconstants: ";
+    PrintConstants(**trace_stream_);
+    **trace_stream_ << "\n";
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
@@ -1110,7 +1112,7 @@ auto TypeChecker::TypeCheckPattern(
       RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), std::nullopt,
                                        impl_scope, enclosing_value_category));
       ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                       InterpPattern(&binding.type(), arena_, trace_));
+                       InterpPattern(&binding.type(), arena_, trace_stream_));
       if (expected) {
         if (IsConcreteType(type)) {
           RETURN_IF_ERROR(
@@ -1129,7 +1131,7 @@ auto TypeChecker::TypeCheckPattern(
       RETURN_IF_ERROR(ExpectIsConcreteType(binding.source_loc(), type));
       binding.set_static_type(type);
       ASSIGN_OR_RETURN(Nonnull<const Value*> binding_value,
-                       InterpPattern(&binding, arena_, trace_));
+                       InterpPattern(&binding, arena_, trace_stream_));
       SetValue(&binding, binding_value);
 
       if (!binding.has_value_category()) {
@@ -1141,7 +1143,7 @@ auto TypeChecker::TypeCheckPattern(
       auto& binding = cast<GenericBinding>(*p);
       RETURN_IF_ERROR(TypeCheckExp(&binding.type(), impl_scope));
       ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                       InterpExp(&binding.type(), arena_, trace_));
+                       InterpExp(&binding.type(), arena_, trace_stream_));
       if (expected) {
         return CompilationError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
@@ -1150,7 +1152,7 @@ auto TypeChecker::TypeCheckPattern(
       }
       binding.set_static_type(type);
       ASSIGN_OR_RETURN(Nonnull<const Value*> val,
-                       InterpPattern(&binding, arena_, trace_));
+                       InterpPattern(&binding, arena_, trace_stream_));
       binding.set_symbolic_identity(val);
       Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
           binding.source_loc(), &binding, &binding.static_type());
@@ -1177,14 +1179,14 @@ auto TypeChecker::TypeCheckPattern(
         }
         RETURN_IF_ERROR(TypeCheckPattern(field, expected_field_type, impl_scope,
                                          enclosing_value_category));
-        if (trace_)
-          llvm::outs() << "finished checking tuple pattern field " << *field
-                       << "\n";
+        if (trace_stream_)
+          **trace_stream_ << "finished checking tuple pattern field " << *field
+                          << "\n";
         field_types.push_back(&field->static_type());
       }
       tuple.set_static_type(arena_->New<TupleValue>(std::move(field_types)));
       ASSIGN_OR_RETURN(Nonnull<const Value*> tuple_value,
-                       InterpPattern(&tuple, arena_, trace_));
+                       InterpPattern(&tuple, arena_, trace_stream_));
       SetValue(&tuple, tuple_value);
       return Success();
     }
@@ -1217,7 +1219,7 @@ auto TypeChecker::TypeCheckPattern(
                                        enclosing_value_category));
       alternative.set_static_type(&choice_type);
       ASSIGN_OR_RETURN(Nonnull<const Value*> alternative_value,
-                       InterpPattern(&alternative, arena_, trace_));
+                       InterpPattern(&alternative, arena_, trace_stream_));
       SetValue(&alternative, alternative_value);
       return Success();
     }
@@ -1226,7 +1228,7 @@ auto TypeChecker::TypeCheckPattern(
       RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
       ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
-                       InterpPattern(p, arena_, trace_));
+                       InterpPattern(p, arena_, trace_stream_));
       SetValue(p, expr_value);
       return Success();
     }
@@ -1238,7 +1240,7 @@ auto TypeChecker::TypeCheckPattern(
                                        let_var_pattern.value_category()));
       let_var_pattern.set_static_type(&let_var_pattern.pattern().static_type());
       ASSIGN_OR_RETURN(Nonnull<const Value*> pattern_value,
-                       InterpPattern(&let_var_pattern, arena_, trace_));
+                       InterpPattern(&let_var_pattern, arena_, trace_stream_));
       SetValue(&let_var_pattern, pattern_value);
       return Success();
   }
@@ -1247,8 +1249,8 @@ auto TypeChecker::TypeCheckPattern(
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "checking statement " << *s << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking statement " << *s << "\n";
   }
   switch (s->kind()) {
     case StatementKind::Match: {
@@ -1438,15 +1440,15 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                              const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "** declaring function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** declaring function " << f->name() << "\n";
   }
   // Bring the deduced parameters into scope
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), enclosing_scope));
     deduced->set_symbolic_identity(arena_->New<VariableType>(deduced));
     ASSIGN_OR_RETURN(Nonnull<const Value*> type_of_type,
-                     InterpExp(&deduced->type(), arena_, trace_));
+                     InterpExp(&deduced->type(), arena_, trace_stream_));
     deduced->set_static_type(type_of_type);
   }
   // Create the impl_bindings
@@ -1486,7 +1488,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
     ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
-                     InterpExp(*return_expression, arena_, trace_));
+                     InterpExp(*return_expression, arena_, trace_stream_));
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -1520,9 +1522,9 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // TODO: Check that main doesn't have any parameters.
   }
 
-  if (trace_) {
-    llvm::outs() << "** finished declaring function " << f->name()
-                 << " of type " << f->static_type() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished declaring function " << f->name()
+                    << " of type " << f->static_type() << "\n";
   }
   return Success();
 }
@@ -1530,8 +1532,8 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "** checking function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** checking function " << f->name() << "\n";
   }
   // if f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration
@@ -1546,15 +1548,15 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                          *impl_binding->type_var()->symbolic_identity(),
                          impl_binding);
     }
-    if (trace_)
-      llvm::outs() << function_scope;
+    if (trace_stream_)
+      **trace_stream_ << function_scope;
     RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
     if (!f->return_term().is_omitted()) {
       RETURN_IF_ERROR(ExpectReturnOnAllPaths(f->body(), f->source_loc()));
     }
   }
-  if (trace_) {
-    llvm::outs() << "** finished checking function " << f->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished checking function " << f->name() << "\n";
   }
   return Success();
 }
@@ -1562,8 +1564,8 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "** declaring class " << class_decl->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   if (class_decl->type_params().has_value()) {
     ImplScope class_scope;
@@ -1571,8 +1573,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     RETURN_IF_ERROR(TypeCheckPattern(*class_decl->type_params(), std::nullopt,
                                      class_scope, ValueCategory::Let));
     AddPatternImpls(*class_decl->type_params(), class_scope);
-    if (trace_) {
-      llvm::outs() << class_scope;
+    if (trace_stream_) {
+      **trace_stream_ << class_scope;
     }
 
     Nonnull<NominalClassType*> class_type =
@@ -1598,9 +1600,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
     }
   }
-  if (trace_) {
-    llvm::outs() << "** finished declaring class " << class_decl->name()
-                 << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished declaring class " << class_decl->name()
+                    << "\n";
   }
   return Success();
 }
@@ -1608,22 +1610,23 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 auto TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "** checking class " << class_decl->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** checking class " << class_decl->name() << "\n";
   }
   ImplScope class_scope;
   class_scope.AddParent(&impl_scope);
   if (class_decl->type_params().has_value()) {
     AddPatternImpls(*class_decl->type_params(), class_scope);
   }
-  if (trace_) {
-    llvm::outs() << class_scope;
+  if (trace_stream_) {
+    **trace_stream_ << class_scope;
   }
   for (Nonnull<Declaration*> m : class_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, class_scope));
   }
-  if (trace_) {
-    llvm::outs() << "** finished checking class " << class_decl->name() << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "** finished checking class " << class_decl->name()
+                    << "\n";
   }
   return Success();
 }
@@ -1659,18 +1662,18 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                          ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "declaring " << *impl_decl << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
   RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> iface_type,
-                   InterpExp(&impl_decl->interface(), arena_, trace_));
+                   InterpExp(&impl_decl->interface(), arena_, trace_stream_));
   const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
   impl_decl->set_interface_type(iface_type);
 
   RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), enclosing_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
-                   InterpExp(impl_decl->impl_type(), arena_, trace_));
+                   InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
   enclosing_scope.Add(iface_type, impl_type_value, impl_decl);
 
   for (Nonnull<Declaration*> m : impl_decl->members()) {
@@ -1704,14 +1707,14 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                            const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (trace_) {
-    llvm::outs() << "checking " << *impl_decl << "\n";
+  if (trace_stream_) {
+    **trace_stream_ << "checking " << *impl_decl << "\n";
   }
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
   }
-  if (trace_) {
-    llvm::outs() << "finished checking impl\n";
+  if (trace_stream_) {
+    **trace_stream_ << "finished checking impl\n";
   }
   return Success();
 }
@@ -1722,8 +1725,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     RETURN_IF_ERROR(TypeCheckExp(&alternative->signature(), enclosing_scope));
-    ASSIGN_OR_RETURN(auto signature,
-                     InterpExp(&alternative->signature(), arena_, trace_));
+    ASSIGN_OR_RETURN(auto signature, InterpExp(&alternative->signature(),
+                                               arena_, trace_stream_));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
@@ -1849,7 +1852,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
                                        enclosing_scope, var.value_category()));
       ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
-                       InterpExp(&type, arena_, trace_));
+                       InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
       break;
     }

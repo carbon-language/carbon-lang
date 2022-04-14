@@ -10,11 +10,14 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_EXEC_PROGRAM_H_
 
 #include "executable_semantics/ast/ast.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
 // Runs the top-level declaration list.
-auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int>;
+auto ExecProgram(Nonnull<Arena*> arena, AST ast,
+                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<int>;
 
 }  // namespace Carbon
 
