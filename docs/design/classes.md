@@ -1496,8 +1496,7 @@ the destructor is virtual or non-virtual, determines which
 | base     | virtual     | yes        | yes         | yes            |
 | final    | any         | yes        | yes         | yes            |
 
-
-The compiler automatically determines which of these 
+The compiler automatically determines which of these
 [type-of-types](/docs/design/generics/terminology.md#type-of-type) a given type
 satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
 `Destructible` directly. For more about these constraints, see
