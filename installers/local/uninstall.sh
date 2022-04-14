@@ -26,9 +26,11 @@ if [[ ! "${INSTALL_PATH}" = /* ]]; then
 fi
 
 # Prepare the uninstall script to run.
+# TODO: As more files are added, consider sharing better with install.sh. Maybe
+# still keep deleting legacy (no longer installed) files.
 SCRIPT=$(cat <<EOF
   # Clean up deliberately installed files.
-  rm -f "${INSTALL_PATH}/bin/carbon-cam"
+  rm -f "${INSTALL_PATH}/bin/carbon-explorer"
   rm -rf "${INSTALL_PATH}/lib/carbon"
 
   # Clean up higher level directories in case we created them.

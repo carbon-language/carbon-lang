@@ -5,6 +5,7 @@
 #include "executable_semantics/main.h"
 
 auto main(int argc, char** argv) -> int {
+  // This assumes execution from bazel, in runfiles.
   return Carbon::ExecutableSemanticsMain(
       "executable_semantics/data/prelude.carbon", argc, argv);
 }

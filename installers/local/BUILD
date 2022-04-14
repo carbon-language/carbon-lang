@@ -25,7 +25,7 @@ load("install.bzl", "install_path_rule")
 # Turns `--//installers/local:install_path=arg` into `$(INSTALL_PATH)`.
 install_path_rule(
     name = "install_path",
-    build_setting_default = "/usr/lib",
+    build_setting_default = "/usr",
 )
 
 sh_binary(

@@ -41,15 +41,14 @@ SCRIPT=$(cat <<EOF
   mkdir -p "${INSTALL_PATH}/lib/carbon/data"
 
   # Install files to lib.
-  cp -f "${CARBON}" "${INSTALL_PATH}/lib/carbon/carbon"
-  chmod 755 "${INSTALL_PATH}/lib/carbon/carbon"
+  install -m 755 "${CARBON}" "${INSTALL_PATH}/lib/carbon/carbon"
   for f in $(printf " %q" "${STANDARD_LIBRARIES[@]}"); do
-    cp -f "\${f}" "${INSTALL_PATH}/lib/carbon/data/"
-    chmod 644 "${INSTALL_PATH}/lib/carbon/data/\$(basename "\${f}")"
+    install -m 644 "\${f}" "${INSTALL_PATH}/lib/carbon/data/"
   done
 
   # Add symlinks in bin.
-  ln -fs "${INSTALL_PATH}/lib/carbon/carbon" "${INSTALL_PATH}/bin/carbon-cam"
+  ln -fs "${INSTALL_PATH}/lib/carbon/carbon" \
+    "${INSTALL_PATH}/bin/carbon-explorer"
 EOF
 )
 
