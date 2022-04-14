@@ -1536,8 +1536,8 @@ RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
 
 If a virtual method is transitively called from inside a destructor, the
 implementation from the current class is used, not any overrides from derived
-classes. It is illegal if that method is abstract and not implemented in the
-current class.
+classes. It will abort the execution of the program if that method is abstract
+and not implemented in the current class.
 
 **Future work:** Allow or require destructors to be declared as taking
 `partial Self` in order to prove no use of virtual methods.
