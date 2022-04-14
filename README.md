@@ -126,7 +126,7 @@ Learn more about Carbon's design:
 
 -   [Project goals](docs/project/goals.md)
 -   [Language overview](docs/design/)
--   [explorer](explorer/)
+-   [Executable semantics](executable_semantics/)
 
 ## Join us
 
