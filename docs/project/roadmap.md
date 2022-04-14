@@ -45,8 +45,8 @@ and it should be possible to write non-trivial Carbon programs.
 An initial rough framework for the core standard library functionality should be
 provided, as necessary to support the core language components. A largely
 complete implementation of the core language design should be available in
-executable semantics. The toolchain should be able to parse the core language
-design, with some support for name lookup and type-checking.
+explorer. The toolchain should be able to parse the core language design, with
+some support for name lookup and type-checking.
 
 We should have begun writing non-trivial portions of the standard library, such
 as common higher-level data structures and algorithms.
@@ -120,7 +120,7 @@ overarching value proposition.
 
 We should have a clear understanding of the syntax and semantics used by these
 example ports. We should be able to demonstrate that self-contained portions of
-the ported code work correctly using the executable semantics implementation.
+the ported code work correctly using the explorer implementation.
 
 ### Demo implementation of core features with working examples
 
@@ -169,7 +169,7 @@ This should include both a human readable rendering of the formal semantics as
 well as an execution environment to run test cases through those semantics. The
 implementation should cover enough of the core language that example code, such
 as the above ports of woff2 and RE2 and the Carbon standard library, can be
-verified with the executable semantics implementation.
+verified with the explorer implementation.
 
 ## Beyond 2022
 
