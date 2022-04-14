@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_point_equal.carbon:21: type error in name binding: 'class Point(T = i32)' is not implicitly convertible to 'class Point(T = Bool)'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point(T:! Type) {
   var x: T;

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 var x: i32 = 0;
 

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:29: GetX is not a class function
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point {
 

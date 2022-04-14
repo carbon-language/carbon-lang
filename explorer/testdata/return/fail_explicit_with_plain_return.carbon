@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/return/fail_explicit_with_plain_return.carbon:15: return; should provide a return value, to match the function's signature.
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn F() -> () {
   return;

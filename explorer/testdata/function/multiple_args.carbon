@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test multiple arguments
 fn f(x: i32, y: i32) -> i32 {

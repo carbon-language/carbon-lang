@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_generic_in_pattern.carbon:17: Generic binding may not occur in pattern with expected type: T:! i32
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var t: auto = 5;

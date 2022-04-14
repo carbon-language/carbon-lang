@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:15: The type of a binding pattern cannot contain bindings.
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: (T: Type) = 1;

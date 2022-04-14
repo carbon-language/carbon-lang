@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/not_compare_precedence.carbon:15: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn CompareBools(a: Bool, b: Bool) -> Bool {
   return not a == b;

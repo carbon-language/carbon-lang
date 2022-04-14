@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_type_mismatch.carbon:16: type error in initializer of variable: 'Bool' is not implicitly convertible to 'i32'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test type checking of global variable. Error expected.
 

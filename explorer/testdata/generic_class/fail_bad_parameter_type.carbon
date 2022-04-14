@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_bad_parameter_type.carbon:16: unexpected type of deduced parameter i32
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point(T:! i32) {
 

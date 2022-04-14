@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_field_missing.carbon:20: type error in name binding: '{.x: i32}' is not implicitly convertible to 'class Point'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point {
   var x: i32;

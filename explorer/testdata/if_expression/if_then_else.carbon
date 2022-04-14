@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 12
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var cond: if true then Bool else i32 = true;

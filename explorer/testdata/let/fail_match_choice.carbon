@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:29: Cannot assign to rvalue 'x'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 choice Ints {
   None,

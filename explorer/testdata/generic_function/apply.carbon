@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: -2
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn apply[T:! Type, U:! Type](f: __Fn (T) -> U, x: T) -> U {
   return f(x);

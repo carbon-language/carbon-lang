@@ -9,10 +9,10 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/import/fail_order.carbon:18: syntax error, unexpected IMPORT, expecting END_OF_FILE
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   return 0;
 }
 
-import ExecutableSemanticsTest library "Nonexistent";
+import ExplorerTest library "Nonexistent";

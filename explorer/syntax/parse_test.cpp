@@ -16,7 +16,7 @@ namespace Carbon::Testing {
 namespace {
 
 static constexpr std::string_view FileContents = R"(
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Foo() {}
 )";

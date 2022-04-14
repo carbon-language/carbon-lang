@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_local_assign.carbon:16: Cannot assign to rvalue 'x'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   let x: auto = 10;

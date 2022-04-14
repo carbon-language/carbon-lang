@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_size_mismatch.carbon:15: type error in name binding: '(i32, i32, i32)' is not implicitly convertible to '[i32; 2]'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: [i32; 2] = (0, 1, 2);

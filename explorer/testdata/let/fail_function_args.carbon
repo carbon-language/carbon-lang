@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:16: Cannot assign to rvalue 'y'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn f((var x: i32, y: i32)) -> i32 {
   x = 0;

@@ -6,6 +6,5 @@
 
 auto main(int argc, char** argv) -> int {
   // This assumes execution from bazel, in runfiles.
-  return Carbon::ExecutableSemanticsMain("explorer/data/prelude.carbon", argc,
-                                         argv);
+  return Carbon::ExplorerMain("explorer/data/prelude.carbon", argc, argv);
 }

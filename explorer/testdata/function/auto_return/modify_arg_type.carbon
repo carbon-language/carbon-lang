@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Id(t: Type) -> auto { return t; }
 

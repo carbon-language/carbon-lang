@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_field_access_mismatch.carbon:21: class Point does not have a field named z
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point {
   var x: i32;

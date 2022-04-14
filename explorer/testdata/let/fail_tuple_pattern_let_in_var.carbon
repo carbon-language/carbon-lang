@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_in_var.carbon:15: syntax error, unexpected LET
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var (var a: auto, b: auto, let c:auto, d: auto) = (1, 2, 3, 4);

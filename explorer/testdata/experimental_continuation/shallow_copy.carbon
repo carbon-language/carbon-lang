@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 3
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Assignment for continuations is shallow, so `k2` refers to the same
 // continuation as `k1`.

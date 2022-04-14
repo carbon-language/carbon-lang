@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:19: field access, Scale not in Vector
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 interface Vector {
   fn Add[me: Self](b: Self) -> Self;

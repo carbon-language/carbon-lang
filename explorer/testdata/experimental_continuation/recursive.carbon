@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 10
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test recursive functions inside continuations.
 

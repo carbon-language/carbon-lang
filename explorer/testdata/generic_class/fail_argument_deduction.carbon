@@ -11,7 +11,7 @@
 // CHECK: expected: i32
 // CHECK: actual: Bool
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point(T:! Type) {
   var x: T;

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test that mutations to a global variable in one function is visible
 // in another function.

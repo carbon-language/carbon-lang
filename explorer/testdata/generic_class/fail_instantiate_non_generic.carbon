@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:23: attempt to instantiate a non-generic class: Point(i32)
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point {
   fn Origin() -> Point {

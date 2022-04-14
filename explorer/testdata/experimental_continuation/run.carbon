@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 1
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test creating and running a continuation.
 

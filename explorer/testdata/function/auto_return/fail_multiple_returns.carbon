@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_multiple_returns.carbon:18: Only one return is allowed in a function with an `auto` return type.
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Add(x: i32, y: i32) -> auto {
   if (x == 0) {

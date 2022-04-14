@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:16: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:15
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Foo {
   var x: i32;

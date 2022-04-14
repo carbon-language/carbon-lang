@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_match_no_return.carbon:17: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 0;

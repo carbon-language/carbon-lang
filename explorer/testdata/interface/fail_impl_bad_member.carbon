@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:28: type error in member of implementation: 'fn (i32) -> i32' is not implicitly convertible to 'fn (i32) -> class Point'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 interface Vector {
   fn Add[me: Self](b: Self) -> Self;

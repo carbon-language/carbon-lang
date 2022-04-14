@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_no_return.carbon:15: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn NoReturn() -> auto {
 }

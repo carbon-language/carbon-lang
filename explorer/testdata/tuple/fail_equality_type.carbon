@@ -8,7 +8,7 @@
 // CHECK: expected: (i32, i32)
 // CHECK: actual: (i32)
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var t1: (i32,i32) = (5, 2);

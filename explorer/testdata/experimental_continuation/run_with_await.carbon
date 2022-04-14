@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 3
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test pausing a continuation with `__await` and restarting it with
 // `__run`.

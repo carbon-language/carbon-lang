@@ -11,7 +11,7 @@
 // CHECK: expected: i32
 // CHECK: actual: T:! Type
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn id[T:! Type](x: T) -> T {
   return x + 0;

@@ -25,7 +25,7 @@
 // CHECK: --- step exp Main() (<Main()>:0) --->
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   return 0;

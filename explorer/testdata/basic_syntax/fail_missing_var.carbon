@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:16: syntax error, unexpected COLON, expecting EQUAL or SEMICOLON
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   // error

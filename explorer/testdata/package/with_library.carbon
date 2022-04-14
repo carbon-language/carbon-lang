@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest library "Foo" api;
+package ExplorerTest library "Foo" api;
 
 fn Main() -> i32 {
   return 0;

@@ -79,7 +79,7 @@ boilerplate at the top:
 // AUTOUPDATE: explorer %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 ```
 
 To explain this boilerplate:

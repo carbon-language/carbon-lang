@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:15: field access, unexpected T:! Type of non-interface type Type in a.x
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn BadFieldAccess[T:! Type](a: T) -> T {
   return a.x;

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_global_assign.carbon:17: Cannot assign to rvalue 'x'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 let x: i32 = 10;
 

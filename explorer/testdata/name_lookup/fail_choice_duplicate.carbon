@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_choice_duplicate.carbon:16: Duplicate name `None` in choice type
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 choice Ints {
   None,

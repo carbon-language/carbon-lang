@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_integer.carbon:15: Invalid integer literal: 11111111111111111111111111
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   return 11111111111111111111111111;

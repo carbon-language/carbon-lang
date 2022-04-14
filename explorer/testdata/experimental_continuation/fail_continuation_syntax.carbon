@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_continuation_syntax.carbon:16: syntax error, unexpected identifier, expecting LEFT_CURLY_BRACE
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 0;

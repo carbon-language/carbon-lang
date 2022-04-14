@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_no_impl.carbon:31: could not find implementation of interface Vector for class Point
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 interface Vector {
   fn Add[me: Self](b: Self) -> Self;

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:14: Expected expression for variable type
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 var a: auto;
 

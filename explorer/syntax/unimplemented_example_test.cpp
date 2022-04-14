@@ -16,7 +16,7 @@ using ::testing::ElementsAre;
 
 TEST(UnimplementedExampleTest, VerifyPrecedence) {
   static constexpr std::string_view Program = R"(
-    package ExecutableSemanticsTest api;
+    package ExplorerTest api;
     fn Main() -> i32 {
       return 1 __unimplemented_example_infix 2 == 3;
     }

@@ -11,9 +11,9 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
-import ExecutableSemanticsTest library "Nonexistent";
+import ExplorerTest library "Nonexistent";
 
 fn Main() -> i32 {
   return 0;

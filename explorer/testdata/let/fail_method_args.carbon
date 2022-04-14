@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:21: Cannot assign to rvalue 'x'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 class Point {
 

@@ -57,7 +57,7 @@ repos:
         entry: scripts/run_buildifier.py
         language: python
         files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
-      - id: executable-semantics-format-grammar
+      - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python

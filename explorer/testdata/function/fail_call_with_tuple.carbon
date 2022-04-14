@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_call_with_tuple.carbon:19: type error in call: '((i32, i32))' is not implicitly convertible to '(i32, i32)'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn f(x: i32, y: i32) -> i32 { return x + y; }
 

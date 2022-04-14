@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_context_nested.carbon:15: syntax error, unexpected LET
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   let (var a: auto, b: auto, c:auto, var (d: auto, let e:auto)) = (1, 2, 3, (4, 5));

@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:21: undefined behavior: access to dead value 1
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test that the read from x triggers an error because x is dead.
 // This test also demonstrates how by-reference free-variable capture

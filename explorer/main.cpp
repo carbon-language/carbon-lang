@@ -81,8 +81,8 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   return Success();
 }
 
-auto ExecutableSemanticsMain(llvm::StringRef default_prelude_file, int argc,
-                             char** argv) -> int {
+auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
+    -> int {
   if (auto result = Main(default_prelude_file, argc, argv); !result.ok()) {
     llvm::errs() << result.error().message() << "\n";
     return EXIT_FAILURE;

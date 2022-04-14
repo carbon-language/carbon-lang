@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_field_access_mismatch.carbon:15: struct {.x: i32, .y: i32} does not have a field named z
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   return {.x = 1, .y = 2}.z - 1;

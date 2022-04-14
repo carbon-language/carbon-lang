@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_order.carbon:17: could not find `y: i32`
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test that a global variable may not depend on a later global.
 // Error expected.

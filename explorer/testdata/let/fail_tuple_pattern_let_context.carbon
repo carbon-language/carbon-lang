@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_context.carbon:17: Cannot assign to rvalue 'c'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   let (var a: auto, b: auto, c:auto, d: auto) = (1, 2, 3, 4);

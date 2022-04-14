@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // This tests the call-by-value aspect of parameter passing.
 // This makes sure that when the value in `x` dies,

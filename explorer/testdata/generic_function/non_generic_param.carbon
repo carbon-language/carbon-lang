@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 1
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn snd[T:! Type](x: i32, y: T) -> T {
   return y;

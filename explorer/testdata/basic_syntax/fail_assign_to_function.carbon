@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_function.carbon:18: Cannot assign to rvalue 'F'
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn F() {}
 fn G() {}

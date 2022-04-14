@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Never actually called, so this only tests typechecking and semantic analysis.
 fn F(n: i32, p: i32*, q: i32***) -> i32* {

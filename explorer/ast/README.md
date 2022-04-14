@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 The code in this directory defines the AST that represents Carbon code in the
-rest of `executable-semantics`.
+rest of `explorer`.
 
 The AST is not quite immutable, because some node properties are set during some
 phase of static analysis, rather than during parsing. However, AST mutations are

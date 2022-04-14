@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_separate_decl.carbon:15: Function declaration has deduced return type but no body
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // This declaration is not allowed.
 fn Add(x: i32, y: i32) -> auto;

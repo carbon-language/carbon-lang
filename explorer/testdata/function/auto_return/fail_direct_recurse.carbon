@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_direct_recurse.carbon:18: Function calls itself, but has a deduced return type
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // This is required to fail even though the Recurse() call's return value isn't
 // used.

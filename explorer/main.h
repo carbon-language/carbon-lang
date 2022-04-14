@@ -10,8 +10,8 @@
 namespace Carbon {
 
 // Runs explorer.
-auto ExecutableSemanticsMain(llvm::StringRef default_prelude_file, int argc,
-                             char** argv) -> int;
+auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
+    -> int;
 
 }  // namespace Carbon
 

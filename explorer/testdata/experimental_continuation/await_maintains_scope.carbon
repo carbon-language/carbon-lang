@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 3
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 // Test access to block-scoped variables upon resuming a continuation.
 

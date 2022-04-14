@@ -9,7 +9,7 @@
 // AUTOUPDATE: %{explorer} %s
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_block_quotes_not_on_own_line.carbon:15: Invalid block string: Should end with triple quotes: error: closing """
 
-package ExecutableSemanticsTest api;
+package ExplorerTest api;
 
 fn Main() -> i32 {
   var s: String = """
