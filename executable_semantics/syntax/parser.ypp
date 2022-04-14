@@ -141,6 +141,7 @@
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
+%type <std::vector<Nonnull<AstNode*>>> impl_deduced_params
 %type <std::vector<Nonnull<AstNode*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
 %type <Nonnull<Pattern*>> non_expression_pattern
@@ -198,6 +199,7 @@
   FALSE
   FN
   FN_TYPE
+  FORALL
   IF
   IMPL
   IMPORT
@@ -810,6 +812,12 @@ deduced_params:
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
+impl_deduced_params:
+  // Empty
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
+| FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
+    { $$ = $3; }
+;
 receiver:
   // Empty
     { $$ = std::nullopt; }
@@ -908,8 +916,17 @@ declaration:
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, self, $4);
     }
-| impl_kind IMPL expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ImplDeclaration>(context.source_loc(), $1, $3, $5, $7); }
+| impl_kind IMPL impl_deduced_params expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+    {
+      ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
+          arena, context.source_loc(), $1, $4, $6, $3, $8);
+      if (impl.ok()) {
+        $$ = *impl;
+      } else {
+        context.RecordSyntaxError(impl.error().message());
+        YYERROR;
+      }
+    }
 ;
 impl_kind:
   // Internal

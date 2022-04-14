@@ -92,6 +92,9 @@ class Interpreter {
                SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
+  auto EvalImplExp(Nonnull<const Expression*> exp) const
+      -> ErrorOr<Nonnull<const Witness*>>;
+
   // Instantiate a type by replacing all type variables that occur inside the
   // type by the current values of those variables.
   //
@@ -102,6 +105,10 @@ class Interpreter {
   auto InstantiateType(Nonnull<const Value*> type,
                        SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
+
+  auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
+                    Nonnull<const Value*> arg, const ImplWitnessMap& witnesses)
+      -> ErrorOr<Success>;
 
   void PrintState(llvm::raw_ostream& out);
 
@@ -364,23 +371,49 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::ArrayTypeLiteral:
+    case ExpressionKind::InstantiateImpl:
       FATAL() << "Can't treat expression as lvalue: " << exp;
     case ExpressionKind::UnimplementedExpression:
       FATAL() << "Unimplemented: " << exp;
   }
 }
 
+auto Interpreter::EvalImplExp(Nonnull<const Expression*> exp) const
+    -> ErrorOr<Nonnull<const Witness*>> {
+  switch (exp->kind()) {
+    case ExpressionKind::InstantiateImpl: {
+      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(*exp);
+      ASSIGN_OR_RETURN(Nonnull<const Witness*> gen_impl,
+                       EvalImplExp(inst_impl.generic_impl()));
+      ImplWitnessMap witnesses;
+      for (auto& [bind, impl_exp] : inst_impl.impls()) {
+        ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
+      }
+      return arena_->New<Witness>(&gen_impl->declaration(),
+                                  inst_impl.type_args(), witnesses);
+    }
+    case ExpressionKind::IdentifierExpression: {
+      const auto& ident = cast<IdentifierExpression>(*exp);
+      ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        ASSIGN_OR_RETURN(value,
+                         heap_.Read(lvalue->address(), exp->source_loc()));
+      }
+      return cast<Witness>(value);
+    }
+    default: {
+      FATAL() << "EvalImplExp, unexpected expression: " << *exp;
+    }
+  }
+}
+
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_) {
-    llvm::outs() << "instantiating: " << *type << "\n";
-  }
   switch (type->kind()) {
     case Value::Kind::VariableType: {
-      if (trace_) {
-        llvm::outs() << "case VariableType\n";
-      }
       ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
@@ -390,46 +423,15 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return value;
     }
     case Value::Kind::NominalClassType: {
-      if (trace_) {
-        llvm::outs() << "case NominalClassType\n";
-      }
       const auto& class_type = cast<NominalClassType>(*type);
       BindingMap inst_type_args;
       for (const auto& [ty_var, ty_arg] : class_type.type_args()) {
         ASSIGN_OR_RETURN(inst_type_args[ty_var],
                          InstantiateType(ty_arg, source_loc));
       }
-      if (trace_) {
-        llvm::outs() << "finished instantiating ty_arg\n";
-      }
       std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
-      for (const auto& [bind, impl] : class_type.impls()) {
-        ASSIGN_OR_RETURN(Nonnull<const Value*> witness_addr,
-                         todo_.ValueOfNode(impl, source_loc));
-        if (trace_) {
-          llvm::outs() << "witness_addr: " << *witness_addr << "\n";
-        }
-        // If the witness came directly from an `impl` declaration (via
-        // `constant_value`), then it is a `Witness`. If the witness
-        // came from the runtime scope, then the `Witness` got wrapped
-        // in an `LValue` because that's what
-        // `RuntimeScope::Initialize` does.
-        Nonnull<const Witness*> witness;
-        if (llvm::isa<Witness>(witness_addr)) {
-          witness = cast<Witness>(witness_addr);
-        } else if (llvm::isa<LValue>(witness_addr)) {
-          ASSIGN_OR_RETURN(
-              Nonnull<const Value*> witness_value,
-              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                         source_loc));
-          witness = cast<Witness>(witness_value);
-        } else {
-          FATAL() << "expected a witness or LValue of a witness";
-        }
-        witnesses[bind] = witness;
-      }
-      if (trace_) {
-        llvm::outs() << "finished finding witnesses\n";
+      for (const auto& [bind, impl_exp] : class_type.impls()) {
+        ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
       }
       return arena_->New<NominalClassType>(&class_type.declaration(),
                                            inst_type_args, witnesses);
@@ -537,6 +539,104 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
+auto Interpreter::CallFunction(const CallExpression& call,
+                               Nonnull<const Value*> fun,
+                               Nonnull<const Value*> arg,
+                               const ImplWitnessMap& witnesses)
+    -> ErrorOr<Success> {
+  if (trace_) {
+    llvm::outs() << "calling function: " << *fun << "\n";
+  }
+  switch (fun->kind()) {
+    case Value::Kind::AlternativeConstructorValue: {
+      const auto& alt = cast<AlternativeConstructorValue>(*fun);
+      return todo_.FinishAction(arena_->New<AlternativeValue>(
+          alt.alt_name(), alt.choice_name(), arg));
+    }
+    case Value::Kind::FunctionValue: {
+      const FunctionValue& fun_val = cast<FunctionValue>(*fun);
+      const FunctionDeclaration& function = fun_val.declaration();
+      ASSIGN_OR_RETURN(Nonnull<const Value*> converted_args,
+                       Convert(arg, &function.param_pattern().static_type(),
+                               call.source_loc()));
+      RuntimeScope function_scope(&heap_);
+      // Bring the class type arguments into scope.
+      for (const auto& [bind, val] : fun_val.type_args()) {
+        function_scope.Initialize(bind, val);
+      }
+      // Bring the deduced type arguments into scope.
+      for (const auto& [bind, val] : call.deduced_args()) {
+        function_scope.Initialize(bind, val);
+      }
+      // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : witnesses) {
+        function_scope.Initialize(impl_bind, witness);
+      }
+      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
+        function_scope.Initialize(impl_bind, witness);
+      }
+      BindingMap generic_args;
+      CHECK(PatternMatch(&function.param_pattern().value(), converted_args,
+                         call.source_loc(), &function_scope, generic_args));
+      CHECK(function.body().has_value())
+          << "Calling a function that's missing a body";
+      return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
+                         std::move(function_scope));
+    }
+    case Value::Kind::BoundMethodValue: {
+      const auto& m = cast<BoundMethodValue>(*fun);
+      const FunctionDeclaration& method = m.declaration();
+      CHECK(method.is_method());
+      ASSIGN_OR_RETURN(Nonnull<const Value*> converted_args,
+                       Convert(arg, &method.param_pattern().static_type(),
+                               call.source_loc()));
+      RuntimeScope method_scope(&heap_);
+      BindingMap generic_args;
+      CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
+                         call.source_loc(), &method_scope, generic_args));
+      CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
+                         call.source_loc(), &method_scope, generic_args));
+      // Bring the class type arguments into scope.
+      for (const auto& [bind, val] : m.type_args()) {
+        method_scope.Initialize(bind, val);
+      }
+
+      // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : m.witnesses()) {
+        method_scope.Initialize(impl_bind, witness);
+      }
+      CHECK(method.body().has_value())
+          << "Calling a method that's missing a body";
+      return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
+                         std::move(method_scope));
+    }
+    case Value::Kind::NominalClassType: {
+      const NominalClassType& class_type = cast<NominalClassType>(*fun);
+      const ClassDeclaration& class_decl = class_type.declaration();
+      RuntimeScope type_params_scope(&heap_);
+      BindingMap generic_args;
+      if (class_decl.type_params().has_value()) {
+        CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
+                           call.source_loc(), &type_params_scope,
+                           generic_args));
+        switch (phase()) {
+          case Phase::RunTime:
+            return todo_.FinishAction(arena_->New<NominalClassType>(
+                &class_type.declaration(), generic_args, witnesses));
+          case Phase::CompileTime:
+            return todo_.FinishAction(arena_->New<NominalClassType>(
+                &class_type.declaration(), generic_args, call.impls()));
+        }
+      } else {
+        FATAL() << "instantiation of non-generic class " << class_type;
+      }
+    }
+    default:
+      return FATAL_RUNTIME_ERROR(call.source_loc())
+             << "in call, expected a function, not " << *fun;
+  }
+}
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -545,6 +645,28 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                  << ") --->\n";
   }
   switch (exp.kind()) {
+    case ExpressionKind::InstantiateImpl: {
+      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
+      } else if (act.pos() - 1 < int(inst_impl.impls().size())) {
+        auto iter = inst_impl.impls().begin();
+        std::advance(iter, act.pos() - 1);
+        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+      } else {
+        Nonnull<const Witness*> generic_witness =
+            cast<Witness>(act.results()[0]);
+        ImplWitnessMap witnesses;
+        int i = 0;
+        for (const auto& [impl_bind, impl_exp] : inst_impl.impls()) {
+          witnesses[impl_bind] = cast<Witness>(act.results()[i + 1]);
+          ++i;
+        }
+        return todo_.FinishAction(arena_->New<Witness>(
+            &generic_witness->declaration(), inst_impl.type_args(), witnesses));
+      }
+    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
@@ -672,160 +794,49 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.FinishAction(value);
       }
     }
-    case ExpressionKind::CallExpression:
+    case ExpressionKind::CallExpression: {
+      const CallExpression& call = cast<CallExpression>(exp);
+      // Don't evaluate the impls at compile time?
+      unsigned int num_impls =
+          phase() == Phase::CompileTime ? 0 : call.impls().size();
       if (act.pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<CallExpression>(exp).function()));
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&call.function()));
       } else if (act.pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<CallExpression>(exp).argument()));
-      } else if (act.pos() == 2) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&call.argument()));
+      } else if (num_impls > 0 && act.pos() < 2 + int(num_impls)) {
+        auto iter = call.impls().begin();
+        std::advance(iter, act.pos() - 2);
+        return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
+      } else if (act.pos() == 2 + int(num_impls)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
-        switch (act.results()[0]->kind()) {
-          case Value::Kind::AlternativeConstructorValue: {
-            const auto& alt =
-                cast<AlternativeConstructorValue>(*act.results()[0]);
-            return todo_.FinishAction(arena_->New<AlternativeValue>(
-                alt.alt_name(), alt.choice_name(), act.results()[1]));
+        ImplWitnessMap witnesses;
+        if (num_impls > 0) {
+          int i = 2;
+          for (const auto& [impl_bind, impl_exp] : call.impls()) {
+            witnesses[impl_bind] = cast<Witness>(act.results()[i]);
+            ++i;
           }
-          case Value::Kind::FunctionValue: {
-            const FunctionValue& fun_val =
-                cast<FunctionValue>(*act.results()[0]);
-            const FunctionDeclaration& function = fun_val.declaration();
-            if (trace_) {
-              llvm::outs() << "*** call function " << function.name() << "\n";
-            }
-            ASSIGN_OR_RETURN(Nonnull<const Value*> converted_args,
-                             Convert(act.results()[1],
-                                     &function.param_pattern().static_type(),
-                                     exp.source_loc()));
-            RuntimeScope function_scope(&heap_);
-            // Bring the class type arguments into scope.
-            for (const auto& [bind, val] : fun_val.type_args()) {
-              function_scope.Initialize(bind, val);
-            }
-            // Bring the deduced type arguments into scope.
-            for (const auto& [bind, val] :
-                 cast<CallExpression>(exp).deduced_args()) {
-              function_scope.Initialize(bind, val);
-            }
-
-            // Bring the impl witness tables into scope.
-            for (const auto& [impl_bind, impl_node] :
-                 cast<CallExpression>(exp).impls()) {
-              ASSIGN_OR_RETURN(Nonnull<const Value*> witness,
-                               todo_.ValueOfNode(impl_node, exp.source_loc()));
-              if (witness->kind() == Value::Kind::LValue) {
-                const auto& lval = cast<LValue>(*witness);
-                ASSIGN_OR_RETURN(witness,
-                                 heap_.Read(lval.address(), exp.source_loc()));
-              }
-              function_scope.Initialize(impl_bind, witness);
-            }
-            for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
-              function_scope.Initialize(impl_bind, witness);
-            }
-            BindingMap generic_args;
-            CHECK(PatternMatch(&function.param_pattern().value(),
-                               converted_args, exp.source_loc(),
-                               &function_scope, generic_args));
-            CHECK(function.body().has_value())
-                << "Calling a function that's missing a body";
-            return todo_.Spawn(
-                std::make_unique<StatementAction>(*function.body()),
-                std::move(function_scope));
-          }
-          case Value::Kind::BoundMethodValue: {
-            const auto& m = cast<BoundMethodValue>(*act.results()[0]);
-            const FunctionDeclaration& method = m.declaration();
-            CHECK(method.is_method());
-            ASSIGN_OR_RETURN(
-                Nonnull<const Value*> converted_args,
-                Convert(act.results()[1], &method.param_pattern().static_type(),
-                        exp.source_loc()));
-            RuntimeScope method_scope(&heap_);
-            BindingMap generic_args;
-            CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
-                               exp.source_loc(), &method_scope, generic_args));
-            CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
-                               exp.source_loc(), &method_scope, generic_args));
-            // Bring the class type arguments into scope.
-            for (const auto& [bind, val] : m.type_args()) {
-              method_scope.Initialize(bind, val);
-            }
-
-            // Bring the impl witness tables into scope.
-            for (const auto& [impl_bind, witness] : m.witnesses()) {
-              method_scope.Initialize(impl_bind, witness);
-            }
-            CHECK(method.body().has_value())
-                << "Calling a method that's missing a body";
-            return todo_.Spawn(
-                std::make_unique<StatementAction>(*method.body()),
-                std::move(method_scope));
-          }
-          case Value::Kind::NominalClassType: {
-            const NominalClassType& class_type =
-                cast<NominalClassType>(*act.results()[0]);
-            const ClassDeclaration& class_decl = class_type.declaration();
-            RuntimeScope type_params_scope(&heap_);
-            BindingMap generic_args;
-            if (class_decl.type_params().has_value()) {
-              CHECK(PatternMatch(&(*class_decl.type_params())->value(),
-                                 act.results()[1], exp.source_loc(),
-                                 &type_params_scope, generic_args));
-              switch (phase()) {
-                case Phase::RunTime: {
-                  std::map<Nonnull<const ImplBinding*>, const Witness*>
-                      witnesses;
-                  for (const auto& [impl_bind, impl_node] :
-                       cast<CallExpression>(exp).impls()) {
-                    ASSIGN_OR_RETURN(
-                        Nonnull<const Value*> witness,
-                        todo_.ValueOfNode(impl_node, exp.source_loc()));
-                    if (witness->kind() == Value::Kind::LValue) {
-                      const LValue& lval = cast<LValue>(*witness);
-                      ASSIGN_OR_RETURN(witness, heap_.Read(lval.address(),
-                                                           exp.source_loc()));
-                    }
-                    witnesses[impl_bind] = &cast<Witness>(*witness);
-                  }
-                  Nonnull<NominalClassType*> inst_class =
-                      arena_->New<NominalClassType>(&class_type.declaration(),
-                                                    generic_args, witnesses);
-                  return todo_.FinishAction(inst_class);
-                }
-                case Phase::CompileTime: {
-                  Nonnull<NominalClassType*> inst_class =
-                      arena_->New<NominalClassType>(
-                          &class_type.declaration(), generic_args,
-                          cast<CallExpression>(exp).impls());
-                  return todo_.FinishAction(inst_class);
-                }
-              }
-            } else {
-              FATAL() << "instantiation of non-generic class " << class_type;
-            }
-          }
-          default:
-            return FATAL_RUNTIME_ERROR(exp.source_loc())
-                   << "in call, expected a function, not " << *act.results()[0];
         }
-      } else if (act.pos() == 3) {
-        if (act.results().size() < 3) {
+        return CallFunction(call, act.results()[0], act.results()[1],
+                            witnesses);
+      } else if (act.pos() == 3 + int(num_impls)) {
+        if (act.results().size() < 3 + num_impls) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
         } else {
-          return todo_.FinishAction(act.results()[2]);
+          return todo_.FinishAction(act.results()[2 + int(num_impls)]);
         }
       } else {
-        FATAL() << "in handle_value with Call pos " << act.pos();
+        FATAL() << "in StepExp with Call pos " << act.pos();
       }
+    }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
       if (act.pos() == 0) {

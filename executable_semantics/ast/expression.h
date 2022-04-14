@@ -26,6 +26,7 @@ namespace Carbon {
 class Value;
 class VariableType;
 class ImplBinding;
+class ImplDeclaration;
 
 class Expression : public AstNode {
  public:
@@ -364,6 +365,8 @@ class GenericBinding;
 using BindingMap =
     std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
 
+using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;
+
 class CallExpression : public Expression {
  public:
   explicit CallExpression(SourceLocation source_loc,
@@ -386,14 +389,10 @@ class CallExpression : public Expression {
   // that identifies the witness table for the corresponding argument.
   // Should not be called before typechecking, or if `function` is not
   // a generic function.
-  auto impls() const
-      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
-    return impls_;
-  }
+  auto impls() const -> const ImplExpMap& { return impls_; }
 
   // Can only be called once, during typechecking.
-  void set_impls(
-      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls) {
+  void set_impls(const ImplExpMap& impls) {
     CHECK(impls_.empty());
     impls_ = impls;
   }
@@ -407,7 +406,7 @@ class CallExpression : public Expression {
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
+  ImplExpMap impls_;
   BindingMap deduced_args_;
 };
 
@@ -531,6 +530,53 @@ class IfExpression : public Expression {
   Nonnull<Expression*> condition_;
   Nonnull<Expression*> then_expression_;
   Nonnull<Expression*> else_expression_;
+};
+
+// Instantiate a generic impl.
+class InstantiateImpl : public Expression {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit InstantiateImpl(SourceLocation source_loc,
+                           Nonnull<Expression*> generic_impl,
+                           const BindingMap& type_args, const ImplExpMap& impls)
+      : Expression(AstNodeKind::InstantiateImpl, source_loc),
+        generic_impl_(generic_impl),
+        type_args_(type_args),
+        impls_(impls) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInstantiateImpl(node->kind());
+  }
+  auto generic_impl() const -> Nonnull<Expression*> { return generic_impl_; }
+  auto type_args() const -> const BindingMap& { return type_args_; }
+
+  // Maps each of the generic impl's impl bindings to the AST node
+  // that identifies the witness table for the corresponding argument.
+  auto impls() const -> const ImplExpMap& { return impls_; }
+
+  // See static_scope.h for API.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;  // TODO
+  }
+
+  // See static_scope.h for API.
+  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
+    return std::nullopt;  // TODO
+  }
+
+  // See static_scope.h for API.
+  auto static_type() const -> const Value& {
+    FATAL() << "InstantiateImpl does not have a static type";
+  }
+
+  // See static_scope.h for API.
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  Nonnull<Expression*> generic_impl_;
+  BindingMap type_args_;
+  ImplExpMap impls_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
