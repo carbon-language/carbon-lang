@@ -57,6 +57,21 @@ mypy_test(
 # Note that this Python script is intended to be run directly, and not through
 # Bazel. We have a rule for it so we can type check it.
 py_binary(
+    name = "run_bazel",
+    testonly = 1,
+    srcs = ["run_bazel.py"],
+    deps = [":scripts_utils"],
+)
+
+mypy_test(
+    name = "run_bazel_mypy_test",
+    include_imports = True,
+    deps = [":run_bazel"],
+)
+
+# Note that this Python script is intended to be run directly, and not through
+# Bazel. We have a rule for it so we can type check it.
+py_binary(
     name = "run_buildifier",
     testonly = 1,
     srcs = ["run_buildifier.py"],
@@ -67,4 +82,19 @@ mypy_test(
     name = "run_buildifier_mypy_test",
     include_imports = True,
     deps = [":run_buildifier"],
+)
+
+# Note that this Python script is intended to be run directly, and not through
+# Bazel. We have a rule for it so we can type check it.
+py_binary(
+    name = "run_buildozer",
+    testonly = 1,
+    srcs = ["run_buildozer.py"],
+    deps = [":scripts_utils"],
+)
+
+mypy_test(
+    name = "run_buildozer_mypy_test",
+    include_imports = True,
+    deps = [":run_buildozer"],
 )

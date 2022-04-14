@@ -64,6 +64,7 @@ for dep in deps:
         "@com_google_absl",
         "@com_google_googletest",
         "@com_github_google_benchmark",
+        "@com_github_protocolbuffers_protobuf",
     ):
         # This should never be reached from non-test code, but these targets do
         # exist. Specially diagnose them to try to provide a more helpful
