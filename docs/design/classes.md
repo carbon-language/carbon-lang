@@ -1496,21 +1496,14 @@ the destructor is virtual or non-virtual, determines which
 | base     | virtual     | yes        | yes         | yes            |
 | final    | any         | yes        | yes         | yes            |
 
-For more about these, see
+
+The compiler automatically determines which of these 
+[type-of-types](/docs/design/generics/terminology.md#type-of-type) a given type
+satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
+`Destructible` directly. For more about these constraints, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
 
-Whether the destructor is defined implicitly or explicitly, the compiler
-implements the
-[`Destructible`](/docs/design/generics/details.md#destructor-constraints)
-[type-of-type](/docs/design/generics/terminology.md#type-of-type). This
-type-of-type does not have any named members. It is illegal to directly
-implement `Destructible` for a type.
-
-Final classes and base classes with virtual destructors automatically implement
-the [`Deletable`](/docs/design/generics/details.md#destructor-constraints)
-[type-of-type](/docs/design/generics/terminology.md#type-of-type).
-
-Pointer to `Deletable` types may be passed to the `Delete` method of the
+A pointer to `Deletable` types may be passed to the `Delete` method of the
 `Allocator` [interface](/docs/design/generics/terminology.md#interface). To
 deallocate a pointer to a base class without a virtual destructor, which may
 only be done when it is not actually pointing to a value with a derived type,
