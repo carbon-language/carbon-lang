@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_FIELD_PATH_H_
-#define EXECUTABLE_SEMANTICS_INTERPRETER_FIELD_PATH_H_
+#ifndef EXPLORER_INTERPRETER_FIELD_PATH_H_
+#define EXPLORER_INTERPRETER_FIELD_PATH_H_
 
 #include <string>
 #include <vector>
@@ -91,4 +91,4 @@ class FieldPath {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_FIELD_PATH_H_
+#endif  // EXPLORER_INTERPRETER_FIELD_PATH_H_

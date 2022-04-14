@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_AST_H_
-#define EXECUTABLE_SEMANTICS_AST_AST_H_
+#ifndef EXPLORER_AST_AST_H_
+#define EXPLORER_AST_AST_H_
 
 #include <vector>
 
@@ -29,4 +29,4 @@ struct AST {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_AST_H_
+#endif  // EXPLORER_AST_AST_H_

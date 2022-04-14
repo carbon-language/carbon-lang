@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
-#define EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
+#ifndef EXPLORER_AST_RETURN_TERM_H_
+#define EXPLORER_AST_RETURN_TERM_H_
 
 #include <optional>
 #include <utility>
@@ -97,4 +97,4 @@ class ReturnTerm {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_RETURN_TERM_H_
+#endif  // EXPLORER_AST_RETURN_TERM_H_

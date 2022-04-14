@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
-#define EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
+#ifndef EXPLORER_AST_STATIC_SCOPE_H_
+#define EXPLORER_AST_STATIC_SCOPE_H_
 
 #include <functional>
 #include <string>
@@ -183,4 +183,4 @@ class StaticScope {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_STATIC_SCOPE_H_
+#endif  // EXPLORER_AST_STATIC_SCOPE_H_

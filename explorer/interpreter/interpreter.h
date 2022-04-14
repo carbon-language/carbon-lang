@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
-#define EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
+#ifndef EXPLORER_INTERPRETER_INTERPRETER_H_
+#define EXPLORER_INTERPRETER_INTERPRETER_H_
 
 #include <optional>
 #include <utility>
@@ -58,4 +58,4 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_INTERPRETER_H_
+#endif  // EXPLORER_INTERPRETER_INTERPRETER_H_

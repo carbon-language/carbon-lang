@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_PATTERN_H_
-#define EXECUTABLE_SEMANTICS_AST_PATTERN_H_
+#ifndef EXPLORER_AST_PATTERN_H_
+#define EXPLORER_AST_PATTERN_H_
 
 #include <optional>
 #include <string>
@@ -344,4 +344,4 @@ class ExpressionPattern : public Pattern {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_PATTERN_H_
+#endif  // EXPLORER_AST_PATTERN_H_

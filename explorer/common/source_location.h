@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_COMMON_SOURCE_LOCATION_H_
-#define EXECUTABLE_SEMANTICS_COMMON_SOURCE_LOCATION_H_
+#ifndef EXPLORER_COMMON_SOURCE_LOCATION_H_
+#define EXPLORER_COMMON_SOURCE_LOCATION_H_
 
 #include <string>
 #include <string_view>
@@ -42,4 +42,4 @@ class SourceLocation {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_COMMON_SOURCE_LOCATION_H_
+#endif  // EXPLORER_COMMON_SOURCE_LOCATION_H_

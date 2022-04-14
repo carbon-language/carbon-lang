@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
-#define EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
+#ifndef EXPLORER_AST_DECLARATION_H_
+#define EXPLORER_AST_DECLARATION_H_
 
 #include <string>
 #include <utility>
@@ -365,4 +365,4 @@ auto GetName(const Declaration&) -> std::optional<std::string>;
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_DECLARATION_H_
+#endif  // EXPLORER_AST_DECLARATION_H_

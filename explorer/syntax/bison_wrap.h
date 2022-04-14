@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_SYNTAX_BISON_WRAP_H_
-#define EXECUTABLE_SEMANTICS_SYNTAX_BISON_WRAP_H_
+#ifndef EXPLORER_SYNTAX_BISON_WRAP_H_
+#define EXPLORER_SYNTAX_BISON_WRAP_H_
 
 #include <optional>
 
@@ -42,4 +42,4 @@ class BisonWrap {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_SYNTAX_BISON_WRAP_H_
+#endif  // EXPLORER_SYNTAX_BISON_WRAP_H_

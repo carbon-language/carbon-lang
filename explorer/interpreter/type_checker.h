@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
-#define EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
+#ifndef EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#define EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
 #include <set>
 
@@ -182,4 +182,4 @@ class TypeChecker {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_TYPE_CHECKER_H_
+#endif  // EXPLORER_INTERPRETER_TYPE_CHECKER_H_

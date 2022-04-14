@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_MAIN_H_
-#define EXECUTABLE_SEMANTICS_MAIN_H_
+#ifndef EXPLORER_MAIN_H_
+#define EXPLORER_MAIN_H_
 
 #include "llvm/ADT/StringRef.h"
 
@@ -15,4 +15,4 @@ auto ExecutableSemanticsMain(llvm::StringRef default_prelude_file, int argc,
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_MAIN_H_
+#endif  // EXPLORER_MAIN_H_

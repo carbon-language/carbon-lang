@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
-#define EXECUTABLE_SEMANTICS_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
+#ifndef EXPLORER_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
+#define EXPLORER_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
 
 #include "explorer/common/arena.h"
 #include "explorer/common/nonnull.h"
@@ -37,4 +37,4 @@ class HeapAllocationInterface {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
+#endif  // EXPLORER_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
-#define EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
+#ifndef EXPLORER_AST_PAREN_CONTENTS_H_
+#define EXPLORER_AST_PAREN_CONTENTS_H_
 
 #include <optional>
 #include <string>
@@ -48,4 +48,4 @@ auto ParenContents<Term>::SingleTerm() const -> std::optional<Nonnull<Term*>> {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
+#endif  // EXPLORER_AST_PAREN_CONTENTS_H_
