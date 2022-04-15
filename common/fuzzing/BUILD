@@ -14,11 +14,13 @@ proto_library(
 
 cc_proto_library(
     name = "carbon_cc_proto",
+    testonly = 1,
     deps = [":carbon_proto"],
 )
 
 cc_library(
     name = "proto_to_carbon_lib",
+    testonly = 1,
     srcs = ["proto_to_carbon.cpp"],
     hdrs = ["proto_to_carbon.h"],
     deps = [
