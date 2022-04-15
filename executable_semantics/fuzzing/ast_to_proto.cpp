@@ -174,18 +174,12 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::IfExpression: {
       const auto& if_expression = cast<IfExpression>(expression);
       auto* if_proto = expression_proto.mutable_if_expression();
-      if (if_expression.condition()) {
-        *if_proto->mutable_condition() =
-            ExpressionToProto(*if_expression.condition());
-      }
-      if (if_expression.then_expression()) {
-        *if_proto->mutable_then_expression() =
-            ExpressionToProto(*if_expression.then_expression());
-      }
-      if (if_expression.else_expression()) {
-        *if_proto->mutable_else_expression() =
-            ExpressionToProto(*if_expression.else_expression());
-      }
+      *if_proto->mutable_condition() =
+          ExpressionToProto(if_expression.condition());
+      *if_proto->mutable_then_expression() =
+          ExpressionToProto(if_expression.then_expression());
+      *if_proto->mutable_else_expression() =
+          ExpressionToProto(if_expression.else_expression());
       break;
     }
 

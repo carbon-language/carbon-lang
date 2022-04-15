@@ -38,6 +38,20 @@ cc_library(
 )
 
 cc_library(
+    name = "prelude",
+    srcs = ["prelude.cpp"],
+    hdrs = ["prelude.h"],
+    data = ["//executable_semantics:standard_libraries"],
+    deps = [
+        ":syntax",
+        "//common:error",
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/common:arena",
+        "//executable_semantics/common:nonnull",
+    ],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
@@ -71,7 +85,7 @@ cc_library(
         "//executable_semantics/ast:pattern",
         "//executable_semantics/ast:value_category",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
         "//executable_semantics/common:nonnull",
         "@llvm-project//llvm:Support",
     ],

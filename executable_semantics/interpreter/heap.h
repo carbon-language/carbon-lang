@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/common/nonnull.h"
+#include "executable_semantics/common/source_location.h"
 #include "executable_semantics/interpreter/address.h"
 #include "executable_semantics/interpreter/heap_allocation_interface.h"
 #include "executable_semantics/interpreter/value.h"

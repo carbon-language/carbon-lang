@@ -6,7 +6,7 @@
 #define EXECUTABLE_SEMANTICS_AST_AST_NODE_H_
 
 #include "executable_semantics/ast/ast_rtti.h"
-#include "executable_semantics/ast/source_location.h"
+#include "executable_semantics/common/source_location.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {
