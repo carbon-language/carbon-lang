@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-"""Runs buildifier on passed-in BUILD files, mainly for pre-commit."""
+"""Runs bazel on arguments.
+
+This is provided for other scripts to run bazel without requiring it be
+manually installed.
+"""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -15,8 +19,8 @@ import scripts_utils  # type: ignore
 
 
 def main() -> None:
-    buildifier = scripts_utils.get_release(scripts_utils.Release.BUILDIFIER)
-    os.execv(buildifier, [buildifier] + sys.argv[1:])
+    bazel = scripts_utils.locate_bazel()
+    os.execv(bazel, [bazel] + sys.argv[1:])
 
 
 if __name__ == "__main__":
