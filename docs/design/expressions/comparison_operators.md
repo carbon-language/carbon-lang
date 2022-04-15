@@ -247,7 +247,7 @@ in unexpected behavior if they are violated.
 #### Equality
 
 Comparison operators can be provided for user-defined types by implementing the
-`EqWith` and `CompareWith` interfaces.
+`EqWith` and `OrderedWith` interfaces.
 
 The `EqWith` interface is used to define the semantics of the `==` and `!=`
 operators for a given pair of types:
@@ -287,6 +287,29 @@ class Path {
 }
 ```
 
+The `EqWith` overload is selected without considering possible implicit
+conversions. To permit implicit conversions in the operands of an `==` overload,
+the
+[`like` operator](/docs/design/generics/details.md#like-operator-for-implicit-conversions)
+can be used:
+
+```
+class MyInt {
+  var value: i32;
+  fn Value[me: Self]() -> i32 { return me.value; }
+}
+external impl i32 as ImplicitAs(MyInt);
+external impl like MyInt as EqWith(like MyInt) {
+  fn Equal[me: Self](other: Self) -> bool {
+    return me.Value() == other.Value();
+  }
+}
+fn CompareBothWays(a: MyInt, b: i32) -> bool {
+  // OK, calls above implementation three times.
+  return a == a and a == b and b == a;
+}
+```
+
 The behavior of `NotEqual` can be overridden separately from the behavior of
 `Equal` to support cases like floating-point NaN values, where two values can
 compare neither equal nor not-equal. An implementation of `EqWith` should not
@@ -294,7 +317,7 @@ allow both `Equal` and `NotEqual` to return `true` for the same pair of values,
 and these operations should have no observable side-effects.
 
 ```
-external impl MyFloat as Eq {
+external impl like MyFloat as Eq(like MyFloat) {
   fn Equal[me: MyFloat](other: MyFloat) -> bool {
     if (me.IsNaN() or other.IsNaN()) {
       return false;
@@ -309,6 +332,16 @@ external impl MyFloat as Eq {
   }
 }
 ```
+
+Heterogeneous comparisons must be defined both ways around:
+
+```
+external impl like MyInt as EqWith(like MyFloat);
+external impl like MyFloat as EqWith(like MyInt);
+```
+
+**TODO:** Add an adapter to the standard library to make it easy to define the
+reverse comparison.
 
 #### Ordering
 
@@ -342,6 +375,10 @@ interface OrderedWith(U:! Type) {
 constraint Ordered {
   extends OrderedWith(Self);
 }
+
+// Ordering.Less < Ordering.Equivalent < Ordering.Greater.
+// Ordering.Incomparable is incomparable with all three.
+external impl Ordering as Ordered;
 ```
 
 **TODO:** Revise the above when we have a concrete design for enumerated types.
@@ -374,6 +411,23 @@ class MyWidget {
 }
 fn F(a: MyWidget, b: MyWidget) -> bool {
   return a <= b;
+}
+```
+
+As for `EqWith`, the
+[`like` operator](/docs/design/generics/details.md#like-operator-for-implicit-conversions)
+can be used to permit implicit conversions when invoking a comparison, and
+heterogeneous comparisons must be defined both ways around:
+
+```
+fn ReverseOrdering(o: Ordering) -> Ordering {
+  return Ordering.Equivalent.(Ordered.Compare)(o);
+}
+external impl like MyInt as OrderedWith(like MyFloat);
+external impl like MyFloat as OrderedWith(like MyFloat) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    return Reverse(other.(OrderedWith(Self).Compare)(me));
+  }
 }
 ```
 
@@ -423,6 +477,10 @@ the equivalence relation provided by
 
 #### Custom result types
 
+**TODO:** Support a lower-level extensibility mechanism that allows a result
+type other than `bool`.
+
+<!--
 The result of the above comparison interfaces is always `bool`. There may be use
 cases where a different result type is desired. For example, an embedded
 domain-specific language may wish to customize the behavior of `<` to produce
@@ -504,6 +562,7 @@ class SIMDVector(N:! i32, T:! Type) {
   // ...
 }
 ```
+-->
 
 ### Default implementations for basic types
 
@@ -512,11 +571,26 @@ relational comparisons are also defined for all "data" types:
 
 -   [Tuples](../tuples.md)
 -   [Struct types](../classes.md#struct-types)
--   [Classes implementing an interface that identifies them as data classes.](../classes.md#interfaces-implemented-for-data-classes)
+-   [Classes implementing an interface that identifies them as data classes](../classes.md#interfaces-implemented-for-data-classes)
 
 Relational comparisons for these types provide a lexicographical ordering. In
 each case, the comparison is only available if it is supported by all element
 types.
+
+Because implicit conversions between data classes can reorder fields, the
+implementations for data classes do not permit implicit conversions on their
+arguments in general. Instead:
+
+-   Equality comparisons are permitted between any two data classes that have
+    the same unordered set of field names, if each corresponding pair of fields
+    has an `EqWith` implementation. Fields are compared in the order they appear
+    in the left-hand operand.
+-   Relational comparisons are permitted between any two data classes that have
+    the same ordered sequence of field names, if each corresponding pair of
+    fields has an `OrderedWith` implementation. Fields are compared in order.
+
+Comparisons between tuples permit implicit conversions for either operand, but
+not both.
 
 ## Open questions
 
