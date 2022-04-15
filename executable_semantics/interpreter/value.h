@@ -342,7 +342,7 @@ class AlternativeValue : public Value {
   Nonnull<const Value*> argument_;
 };
 
-// A function value.
+// A tuple value.
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
@@ -548,8 +548,8 @@ class NominalClassType : public Value {
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of an instantiated generic class's impl bindings to the
-  // AST node that identifies the witness table for the corresponding
+  // Maps each of an instantiated generic class's impl bindings to an
+  // expression that constructs the witness table for the corresponding
   // argument. Should not be called on 1) a non-generic class, 2) a
   // generic-class that is not instantiated, or 3) a fully
   // instantiated runtime type of a generic class.

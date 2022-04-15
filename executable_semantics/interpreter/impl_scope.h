@@ -65,10 +65,23 @@ class ImplScope {
   void Print(llvm::raw_ostream& out) const;
 
  private:
+  // Returns the associated impl for the given `iface` and `type` in
+  // the ancestor graph of this scope, or returns std::nullopt if there
+  // is none, or reports a compilation error is there is not a most
+  // specific impl for the given `iface` and `type`.
+  auto TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
+                  SourceLocation source_loc,
+                  const TypeChecker& type_checker) const
+      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+
+  // Returns the associated impl for the given `iface` and `type` in
+  // this scope, or returns std::nullopt if there is none, or reports
+  // a compilation error is there is not a most specific impl for the
+  // given `iface` and `type`.
   auto ResolveHere(Nonnull<const Value*> iface_type,
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const TypeChecker& type_checker) const
-      -> std::optional<Nonnull<Expression*>>;
+      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
  public:
   // The `Impl` struct is a key-value pair where the key is the

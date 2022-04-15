@@ -41,15 +41,13 @@ class TypeChecker {
       BindingMap& deduced, Nonnull<const Value*> param_type,
       Nonnull<const Value*> arg_type) const -> ErrorOr<Success>;
 
-  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-                    const ImplScope& impl_scope, SourceLocation source_loc,
-                    BindingMap& deduced_type_args, ImplExpMap& impls) const
-      -> ErrorOr<Success>;
-
-  auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> impl_type,
+  // If `impl` can be an implementation of interface `iface` for the
+  // given `type`, then return an expression that will produce the witness
+  // for this `impl` (at runtime). Otherwise return std::nullopt.
+  auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> ErrorOr<Nonnull<Expression*>>;
+      -> std::optional<Nonnull<Expression*>>;
 
  private:
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
@@ -173,13 +171,26 @@ class TypeChecker {
                   Nonnull<const Value*> expected,
                   Nonnull<const Value*> actual) const -> ErrorOr<Success>;
 
+  // Construct a type that is the same as `type` except that occurrences
+  // of type variables (aka. `GenericBinding`) are replaced by their
+  // corresponding type in `dict`.
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
 
+  // Add all of the `impl_bindings` into the `scope`.
   auto BringImplsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       ImplScope& scope, SourceLocation source_loc) -> ErrorOr<Success>;
+
+  // Find impls that satisfy all of the `impl_bindings`, but with the
+  // type variables in the `impl_bindings` replaced by the argument
+  // type in `deduced_type_args`.  The results are placed in the
+  // `impls` map.
+  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+                    const ImplScope& impl_scope, SourceLocation source_loc,
+                    BindingMap& deduced_type_args, ImplExpMap& impls) const
+      -> ErrorOr<Success>;
 
   // Sets value_node.constant_value() to `value`. Can be called multiple
   // times on the same value_node, so long as it is always called with

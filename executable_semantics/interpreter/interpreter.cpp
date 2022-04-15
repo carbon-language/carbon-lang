@@ -92,6 +92,12 @@ class Interpreter {
                SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Evaluate an impl expression to produce a witness, or signal an
+  // error.
+  //
+  // An impl expression is either
+  // 1) an IdentifierExpression whose value_node is an impl declaration, or
+  // 2) an InstantiateImpl expression.
   auto EvalImplExp(Nonnull<const Expression*> exp) const
       -> ErrorOr<Nonnull<const Witness*>>;
 
@@ -106,6 +112,8 @@ class Interpreter {
                        SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Call the function `fun` with the given `arg` and the `witnesses`
+  // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
                     Nonnull<const Value*> arg, const ImplWitnessMap& witnesses)
       -> ErrorOr<Success>;

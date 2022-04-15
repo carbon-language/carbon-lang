@@ -486,7 +486,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             const ImplScope::Impl& impl,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
-    -> ErrorOr<Nonnull<Expression*>> {
+    -> std::optional<Nonnull<Expression*>> {
   if (trace_) {
     llvm::outs() << "MatchImpl: looking for " << *impl_type << " as " << iface
                  << "\n";
@@ -498,14 +498,12 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     llvm::outs() << "] " << *impl.type << " as " << *impl.interface << "\n";
   }
   if (!TypeEqual(&iface, impl.interface)) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << iface << " != " << *impl.interface << "\n\n";
+    return std::nullopt;
   }
   if (impl.deduced.empty() && impl.impl_bindings.empty()) {
     // case: impl is a non-generic impl
     if (!TypeEqual(impl_type, impl.type)) {
-      return FATAL_COMPILATION_ERROR(source_loc)
-             << *impl_type << " != " << *impl.type << "\n\n";
+      return std::nullopt;
     }
     return impl.impl;
   } else {
@@ -522,14 +520,16 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
       llvm::outs() << "}\n";
     }
     if (!e.ok()) {
-      return FATAL_COMPILATION_ERROR(source_loc)
-             << *impl_type << " != " << *impl.type << "\n\n";
+      return std::nullopt;
     }
     // Check that all the type parameters were deduced
     // Find impls for all the impls bindings
     ImplExpMap impls;
-    RETURN_IF_ERROR(SatisfyImpls(impl.impl_bindings, impl_scope, source_loc,
-                                 deduced_type_args, impls));
+    ErrorOr<Success> m = SatisfyImpls(impl.impl_bindings, impl_scope,
+                                      source_loc, deduced_type_args, impls);
+    if (!m.ok()) {
+      return std::nullopt;
+    }
     if (trace_) {
       llvm::outs() << "matched with " << *impl.type << " as "
                    << *impl.interface << "\n\n";

@@ -26,7 +26,6 @@ namespace Carbon {
 class Value;
 class VariableType;
 class ImplBinding;
-class ImplDeclaration;
 
 class Expression : public AstNode {
  public:
@@ -385,8 +384,8 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  // Maps each of `function`'s generic parameters to the AST node
-  // that identifies the witness table for the corresponding argument.
+  // Maps each of `function`'s impl bindings to an expression
+  // that constructs a witness table.
   // Should not be called before typechecking, or if `function` is not
   // a generic function.
   auto impls() const -> const ImplExpMap& { return impls_; }
@@ -551,27 +550,9 @@ class InstantiateImpl : public Expression {
   auto generic_impl() const -> Nonnull<Expression*> { return generic_impl_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of the generic impl's impl bindings to the AST node
-  // that identifies the witness table for the corresponding argument.
+  // Maps each of the impl bindings to an expression that constructs
+  // the witness table for that impl.
   auto impls() const -> const ImplExpMap& { return impls_; }
-
-  // See static_scope.h for API.
-  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return std::nullopt;  // TODO
-  }
-
-  // See static_scope.h for API.
-  auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
-    return std::nullopt;  // TODO
-  }
-
-  // See static_scope.h for API.
-  auto static_type() const -> const Value& {
-    FATAL() << "InstantiateImpl does not have a static type";
-  }
-
-  // See static_scope.h for API.
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   Nonnull<Expression*> generic_impl_;
