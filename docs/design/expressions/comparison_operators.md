@@ -269,9 +269,6 @@ Given `x: T` and `y: U`:
 -   The expression `x == y` calls `x.(EqWith(U).Equal)(y)`.
 -   The expression `x != y` calls `x.(EqWith(U).NotEqual)(y)`.
 
-**Note:** This is only a consequence of the rewrite rules for normal cases; see
-[custom result types](#custom-result-types) for the actual rewrite rules.
-
 ```
 class Path {
   private var drive: String;
@@ -390,9 +387,6 @@ Given `x: T` and `y: U`:
 -   The expression `x > y` calls `x.(OrderedWith(U).Greater)(y)`.
 -   The expression `x >= y` calls `x.(OrderedWith(U).GreaterOrEquivalent)(y)`.
 
-**Note:** This is only a consequence of the rewrite rules for normal cases; see
-[custom result types](#custom-result-types) for the actual rewrite rules.
-
 For example:
 
 ```
@@ -479,90 +473,6 @@ the equivalence relation provided by
 
 **TODO:** Support a lower-level extensibility mechanism that allows a result
 type other than `bool`.
-
-<!--
-The result of the above comparison interfaces is always `bool`. There may be use
-cases where a different result type is desired. For example, an embedded
-domain-specific language may wish to customize the behavior of `<` to produce
-some other type, or a SIMD vector type may wish for comparisons to produce a
-SIMD vector of `bool`s. Similarly, when interoperating with C++, a type might
-provide only a subset of the normal set of operators and so may not implement
-`Ordered` despite providing some subset of the expected functionality.
-
-To support such cases, the following additional interfaces are provided:
-
-```
-interface PrimitiveEq(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-interface PrimitiveNe(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-interface PrimitiveLt(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-interface PrimitiveLe(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-interface PrimitiveGt(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-interface PrimitiveGe(T:! Other) {
-  let Result:! Type;
-  fn Op[me: Self](t: T) -> Result;
-}
-
-impl [U:! Type, T:! EqWith(U)] T as PrimitiveEq(U) where .Result = bool {
-  alias Op = T.Equal;
-}
-impl [U:! Type, T:! EqWith(U)] T as PrimitiveNe(U) where .Result = bool {
-  alias Op = T.NotEqual;
-}
-impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveLt(U) where .Result = bool {
-  alias Op = T.Less;
-}
-impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveLe(U) where .Result = bool {
-  alias Op = T.LessOrEquivalent;
-}
-impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveGt(U) where .Result = bool {
-  alias Op = T.Greater;
-}
-impl [U:! Type, T:! OrderedWith(U)] T as PrimitiveGe(U) where .Result = bool {
-  alias Op = T.GreaterOrEquivalent;
-}
-```
-
-Given `x: T` and `y: U`:
-
--   The expression `x == y` is rewritten to `x.(PrimitiveEq(U).Op)(y)`.
--   The expression `x != y` is rewritten to `x.(PrimitiveNe(U).Op)(y)`.
--   The expression `x < y` is rewritten to `x.(PrimitiveLt(U).Op)(y)`.
--   The expression `x <= y` is rewritten to `x.(PrimitiveLe(U).Op)(y)`.
--   The expression `x > y` is rewritten to `x.(PrimitiveGt(U).Op)(y)`.
--   The expression `x >= y` is rewritten to `x.(PrimitiveGe(U).Op)(y)`.
-
-These interfaces are only intended for special cases and should be avoided where
-possible.
-
-```
-class SIMDVector(N:! i32, T:! Type) {
-  // ...
-
-  external impl [U:! Type where T is OrderedWith(.Self)]
-      as PrimitiveEq(SIMDVector(N, U)) where .Result = SIMDVector(N, bool) {
-    fn Op[me: Self](other: SIMDVector(N, U)) -> SIMDVector(N, bool) {
-      return me.ForEachLane(T.OrderedWith(U).Equal, other);
-    }
-  }
-  // ...
-}
-```
--->
 
 ### Default implementations for basic types
 
