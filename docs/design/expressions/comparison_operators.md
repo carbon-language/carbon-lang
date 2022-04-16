@@ -520,5 +520,7 @@ in general. That decision is left to a future proposal.
 
 -   Proposal
     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+-   Proposal
+    [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
