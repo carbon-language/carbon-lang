@@ -434,8 +434,11 @@ fix-forward or a rollback.
 
 When squashing and merging, GitHub tries to generate a description, but it's
 recommended to use the first comment on the pull request review for the squashed
-commit description. Authors should keep it up-to-date, and reviewers should ask
-the author to clarify the pull request comment as needed.
+commit description. Authors should keep it up-to-date so that reviewers can merge
+when the change is ready. Reviewers shouldn't edit or rewrite this message
+themselves, and instead ask the author make those changes (possibly with
+suggestions) just like other parts of the code review. It's important that the
+commit message is one the author is comfortable with when merged.
 
 ## Resolving an impasse or conflict
 
