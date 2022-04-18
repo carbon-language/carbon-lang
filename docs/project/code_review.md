@@ -420,8 +420,9 @@ While all merges require at least one approval, a reviewer might approve before
 others are finished reviewing; all reviewers should be given time to comment to
 ensure there's a consensus.
 
-Prior to merging, the author should always resolve merge conflicts; the reviewer
-should never do this, even when they believe conflicts are trivial.
+Merge conflicts should be handled similarly to other code edits requested by the
+reviewer: the reviewer should ask the author to update the pull request's fork
+in order to have merge conflicts resolved.
 
 Either the author or reviewer may merge. The author may indicate they want to
 merge by informing the reviewer and adding the `DO NOT MERGE` label. The
@@ -434,8 +435,8 @@ fix-forward or a rollback.
 
 When squashing and merging, GitHub tries to generate a description, but it's
 recommended to use the first comment on the pull request review for the squashed
-commit description. Authors should keep it up-to-date so that reviewers can merge
-when the change is ready. Reviewers shouldn't edit or rewrite this message
+commit description. Authors should keep it up-to-date so that reviewers can
+merge when the change is ready. Reviewers shouldn't edit or rewrite this message
 themselves, and instead ask the author make those changes (possibly with
 suggestions) just like other parts of the code review. It's important that the
 commit message is one the author is comfortable with when merged.
