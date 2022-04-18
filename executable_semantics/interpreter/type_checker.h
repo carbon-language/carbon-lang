@@ -179,9 +179,9 @@ class TypeChecker {
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
 
   // Add all of the `impl_bindings` into the `scope`.
-  auto BringImplsIntoScope(
+  void BringImplsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-      ImplScope& scope, SourceLocation source_loc) -> ErrorOr<Success>;
+      ImplScope& scope, SourceLocation source_loc);
 
   // Find impls that satisfy all of the `impl_bindings`, but with the
   // type variables in the `impl_bindings` replaced by the argument

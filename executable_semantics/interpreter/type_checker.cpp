@@ -251,7 +251,8 @@ auto TypeChecker::ArgumentDeduction(
       if (std::find(type_params.begin(), type_params.end(),
                     &var_type.binding()) != type_params.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg_type});
-        if (!success) {  // Variable already has a match
+        if (!success) {
+          // Variable already has a match.
           // TODO: can we allow implicit conversions here?
           RETURN_IF_ERROR(ExpectExactType(source_loc, "argument deduction",
                                           it->second, arg_type));
@@ -501,13 +502,13 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
   if (impl.deduced.empty() && impl.impl_bindings.empty()) {
-    // case: impl is a non-generic impl
+    // case: impl is a non-generic impl.
     if (!TypeEqual(impl_type, impl.type)) {
       return std::nullopt;
     }
     return impl.impl;
   } else {
-    // case: impl is a generic impl
+    // case: impl is a generic impl.
     BindingMap deduced_type_args;
     ErrorOr<Success> e = ArgumentDeduction(
         source_loc, impl.deduced, deduced_type_args, impl.type, impl_type);
@@ -522,8 +523,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     if (!e.ok()) {
       return std::nullopt;
     }
-    // Check that all the type parameters were deduced
-    // Find impls for all the impls bindings
+    // Check that all the type parameters were deduced.
+    // Find impls for all the impls bindings.
     ImplExpMap impls;
     ErrorOr<Success> m = SatisfyImpls(impl.impl_bindings, impl_scope,
                                       source_loc, deduced_type_args, impls);
@@ -959,7 +960,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             parameters = Substitute(deduced_type_args, parameters);
             return_type = Substitute(deduced_type_args, return_type);
 
-            // Find impls for all the impl bindings of the function
+            // Find impls for all the impl bindings of the function.
             ImplExpMap impls;
             RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(), impl_scope,
                                          e->source_loc(), deduced_type_args,
@@ -1433,10 +1434,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       return Success();
     }
     case StatementKind::Await: {
-      // nothing to do here
+      // Nothing to do here.
       return Success();
     }
-  }  // switch
+  }
 }
 
 // Returns true if we can statically verify that `match` is exhaustive, meaning
@@ -1518,9 +1519,9 @@ auto TypeChecker::ExpectReturnOnAllPaths(
   }
 }
 
-auto TypeChecker::BringImplsIntoScope(
+void TypeChecker::BringImplsIntoScope(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings, ImplScope& scope,
-    SourceLocation source_loc) -> ErrorOr<Success> {
+    SourceLocation source_loc) {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     CHECK(impl_binding->type_var()->symbolic_identity().has_value());
     auto impl_id = arena_->New<IdentifierExpression>(source_loc, "impl");
@@ -1528,7 +1529,6 @@ auto TypeChecker::BringImplsIntoScope(
     scope.Add(impl_binding->interface(),
               *impl_binding->type_var()->symbolic_identity(), impl_id);
   }
-  return Success();
 }
 
 // TODO: Add checking to function definitions to ensure that
@@ -1539,7 +1539,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   if (trace_) {
     llvm::outs() << "** declaring function " << f->name() << "\n";
   }
-  // Bring the deduced parameters into scope
+  // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), enclosing_scope));
     deduced->set_symbolic_identity(arena_->New<VariableType>(deduced));
@@ -1547,7 +1547,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
                      InterpExp(&deduced->type(), arena_, trace_));
     deduced->set_static_type(type_of_type);
   }
-  // Create the impl_bindings
+  // Create the impl_bindings.
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
@@ -1559,8 +1559,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Bring the impl bindings into scope.
   ImplScope function_scope;
   function_scope.AddParent(&enclosing_scope);
-  RETURN_IF_ERROR(
-      BringImplsIntoScope(impl_bindings, function_scope, f->source_loc()));
+  BringImplsIntoScope(impl_bindings, function_scope, f->source_loc());
   // Type check the receiver pattern.
   if (f->is_method()) {
     RETURN_IF_ERROR(TypeCheckPattern(&f->me_pattern(), std::nullopt,
@@ -1628,25 +1627,13 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     llvm::outs() << "** checking function " << f->name() << "\n";
   }
   // if f->return_term().is_auto(), the function body was already
-  // type checked in DeclareFunctionDeclaration
+  // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
-    // Bring the impl's into scope
+    // Bring the impl's into scope.
     ImplScope function_scope;
     function_scope.AddParent(&impl_scope);
-    RETURN_IF_ERROR(BringImplsIntoScope(
-        cast<FunctionType>(f->static_type()).impl_bindings(), function_scope,
-        f->source_loc()));
-#if 0
-    for (Nonnull<const ImplBinding*> impl_binding :
-         cast<FunctionType>(f->static_type()).impl_bindings()) {
-      CHECK(impl_binding->type_var()->symbolic_identity().has_value());
-      auto impl_id = arena_->New<IdentifierExpression>(f->source_loc(), "impl");
-      impl_id->set_value_node(impl_binding);
-      function_scope.Add(impl_binding->interface(),
-                         *impl_binding->type_var()->symbolic_identity(),
-                         impl_id);
-    }
-#endif
+    BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
+                        function_scope, f->source_loc());
     if (trace_)
       llvm::outs() << function_scope;
     RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
@@ -1770,7 +1757,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
   impl_decl->set_interface_type(iface_type);
 
-  // Bring the deduced parameters into scope
+  // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
     RETURN_IF_ERROR(TypeCheckExp(&deduced->type(), enclosing_scope));
     deduced->set_symbolic_identity(arena_->New<VariableType>(deduced));
@@ -1778,7 +1765,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                      InterpExp(&deduced->type(), arena_, trace_));
     deduced->set_static_type(type_of_type);
   }
-  // Create the impl_bindings
+  // Create the impl_bindings.
   std::vector<Nonnull<ImplBinding*>> impl_bindings;
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
     Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
@@ -1792,25 +1779,24 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Bring the impl bindings into scope for the impl body.
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
-  RETURN_IF_ERROR(
-      BringImplsIntoScope(impl_bindings, impl_scope, impl_decl->source_loc()));
+  BringImplsIntoScope(impl_bindings, impl_scope, impl_decl->source_loc());
   // Check and interpret the impl_type
   RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
                    InterpExp(impl_decl->impl_type(), arena_, trace_));
 
-  // Bring this impl into the enclosing scope
+  // Bring this impl into the enclosing scope.
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
   impl_id->set_value_node(impl_decl);
   enclosing_scope.Add(iface_type, impl_decl->deduced_parameters(),
                       impl_type_value, impl_bindings, impl_id);
 
-  // Declare the impl members
+  // Declare the impl members.
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope));
   }
-  // Check that the interface is satisfied by the impl members
+  // Check that the interface is satisfied by the impl members.
   for (Nonnull<Declaration*> m : iface_decl.members()) {
     if (std::optional<std::string> mem_name = GetName(*m);
         mem_name.has_value()) {
@@ -1845,19 +1831,11 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_) {
     llvm::outs() << "checking " << *impl_decl << "\n";
   }
-  // Bring the impl's from the parameters into scope
+  // Bring the impl's from the parameters into scope.
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
-  RETURN_IF_ERROR(BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope,
-                                      impl_decl->source_loc()));
-#if 0
-  for (Nonnull<const ImplBinding*> impl_binding : impl_decl->impl_bindings()) {
-    CHECK(impl_binding->type_var()->symbolic_identity().has_value());
-    impl_scope.Add(impl_binding->interface(),
-		   *impl_binding->type_var()->symbolic_identity(),
-		   impl_binding);
-  }
-#endif
+  BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope,
+                      impl_decl->source_loc());
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     RETURN_IF_ERROR(TypeCheckDeclaration(m, impl_scope));
   }
@@ -1939,7 +1917,7 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       const auto* binding_type =
           dyn_cast<ExpressionPattern>(&var.binding().type());
       if (binding_type == nullptr) {
-        // TODO: consider adding support for `auto`
+        // TODO: consider adding support for `auto`.
         return FATAL_COMPILATION_ERROR(var.source_loc())
                << "Type of a top-level variable must be an expression.";
       }

@@ -40,9 +40,13 @@ fn sum_tuple[E:! Number](tuple: (E,E)) -> E {
   return total;
 }
 
+fn sum_points[E:! Number](tuple: (Point(E),Point(E))) -> Point(E) {
+  return sum_tuple(tuple);
+}
+
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 1, .y = 2};
   var q: Point(i32) = {.x = 4, .y = 3};
-  var r: Point(i32) = sum_tuple((p, q));
+  var r: Point(i32) = sum_points((p, q));
   return r.x - r.y;
 }

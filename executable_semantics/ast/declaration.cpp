@@ -218,8 +218,6 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                              std::vector<Nonnull<Declaration*>> members)
     -> ErrorOr<Nonnull<ImplDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
-  // Look for the `me` parameter in the `deduced_parameters`
-  // and put it in the `me_pattern`.
   for (Nonnull<AstNode*> param : deduced_params) {
     switch (param->kind()) {
       case AstNodeKind::GenericBinding:

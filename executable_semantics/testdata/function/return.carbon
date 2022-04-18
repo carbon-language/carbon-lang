@@ -12,9 +12,9 @@
 package ExecutableSemanticsTest api;
 
 fn f(x: i32) -> i32 {
-  return (x - 2) - 1;
+  return x - 1;
 }
 
 fn Main() -> i32 {
-  return f(3);
+  return f(1);
 }

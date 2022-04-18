@@ -16,15 +16,7 @@ namespace Carbon {
 
 void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
                     Nonnull<Expression*> impl) {
-  std::vector<Nonnull<ImplBinding*>> impl_bindings;
-  std::vector<Nonnull<const GenericBinding*>> deduced;
-  impls_.push_back(
-      {.interface = iface,
-       .deduced = deduced,
-       .type = type,
-       .impl_bindings =
-           llvm::ArrayRef<Nonnull<const ImplBinding*>>(impl_bindings),
-       .impl = impl});
+  Add(iface, {}, type, {}, impl);
 }
 
 void ImplScope::Add(Nonnull<const Value*> iface,
@@ -47,8 +39,9 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
                         Nonnull<const Value*> type, SourceLocation source_loc,
                         const TypeChecker& type_checker) const
     -> ErrorOr<Nonnull<Expression*>> {
-  ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> result,
-                   TryResolve(iface_type, type, source_loc, type_checker));
+  ASSIGN_OR_RETURN(
+      std::optional<Nonnull<Expression*>> result,
+      TryResolve(iface_type, type, source_loc, *this, type_checker));
   if (!result.has_value()) {
     return FATAL_COMPILATION_ERROR(source_loc)
            << "could not find implementation of " << *iface_type << " for "
@@ -60,14 +53,16 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
 auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc,
+                           const ImplScope& original_scope,
                            const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<Nonnull<Expression*>>> {
-  ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> result,
-                   ResolveHere(iface_type, type, source_loc, type_checker));
+  ASSIGN_OR_RETURN(
+      std::optional<Nonnull<Expression*>> result,
+      ResolveHere(iface_type, type, source_loc, original_scope, type_checker));
   for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    ASSIGN_OR_RETURN(
-        std::optional<Nonnull<Expression*>> parent_result,
-        parent->TryResolve(iface_type, type, source_loc, type_checker));
+    ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> parent_result,
+                     parent->TryResolve(iface_type, type, source_loc,
+                                        original_scope, type_checker));
     if (parent_result.has_value()) {
       if (result.has_value()) {
         return FATAL_COMPILATION_ERROR(source_loc)
@@ -84,28 +79,28 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
 auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
                             Nonnull<const Value*> impl_type,
                             SourceLocation source_loc,
+                            const ImplScope& original_scope,
                             const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<Nonnull<Expression*>>> {
-  std::optional<Nonnull<Expression*>> result = std::nullopt;
-  if (iface_type->kind() == Value::Kind::InterfaceType) {
-    const auto& iface = cast<InterfaceType>(*iface_type);
-    for (const Impl& impl : impls_) {
-      std::optional<Nonnull<Expression*>> m =
-          type_checker.MatchImpl(iface, impl_type, impl, *this, source_loc);
-      if (m.has_value()) {
-        if (result.has_value()) {
-          return FATAL_COMPILATION_ERROR(source_loc)
-                 << "ambiguous implementations of " << *iface_type << " for "
-                 << *impl_type;
-        } else {
-          result = *m;
-        }
-      }
-    }
-    return result;
-  } else {
+  if (iface_type->kind() != Value::Kind::InterfaceType) {
     FATAL() << "expected an interface, not " << *iface_type;
   }
+  const auto& iface = cast<InterfaceType>(*iface_type);
+  std::optional<Nonnull<Expression*>> result = std::nullopt;
+  for (const Impl& impl : impls_) {
+    std::optional<Nonnull<Expression*>> m = type_checker.MatchImpl(
+        iface, impl_type, impl, original_scope, source_loc);
+    if (m.has_value()) {
+      if (result.has_value()) {
+        return FATAL_COMPILATION_ERROR(source_loc)
+               << "ambiguous implementations of " << *iface_type << " for "
+               << *impl_type;
+      } else {
+        result = *m;
+      }
+    }
+  }
+  return result;
 }
 
 // TODO: Add indentation when printing the parents.

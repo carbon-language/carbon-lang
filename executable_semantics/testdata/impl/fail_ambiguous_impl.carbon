@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_ambiguous_impl.carbon:52: ambiguous implementations of interface Vector for class Point
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_ambiguous_impl.carbon:50: ambiguous implementations of interface Vector for class Point
 
 
 package ExecutableSemanticsTest api;
@@ -41,9 +41,7 @@ external impl Point as Vector {
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
-  var m: __Fn(T)->T = a.Add;
-  var n: __Fn(i32)->T = m(b).Scale;
-  return n(s);
+  return a.Add(b).Scale(s);
 }
 
 fn Main() -> i32 {
