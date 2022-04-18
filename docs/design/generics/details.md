@@ -4917,9 +4917,37 @@ class Optional(T:! Movable) {
 Note that the constraint on `T` is just `Movable`, not
 `Movable & OptionalStorage`, since the `Movable` requirement is
 [sufficient to guarantee](#lookup-resolution-and-specialization) that some
-implementation of `OptionalStorage` exists for `T`. Adding `OptionalStorage` to
-the constraints on `T` would make `Optional` harder for clients and obscure what
-types can be used with `Optional`.
+implementation of `OptionalStorage` exists for `T`. Carbon does not require that
+callers of `Optional`, even generic callers, to specify that the argument type
+implements `OptionalStorage`:
+
+```
+// ✅ Allowed: `T` just needs to be `Movable` to form
+//             `Optional(T)`, not `OptionalStorage`.
+fn First[T:! Movable & Eq](v: Vector(T)) -> Optional(T);
+```
+
+Adding `OptionalStorage` to the constraints on the parameter to `Optional` would
+obscure what types can be used as arguments. `OptionalStorage` is an
+implementation detail of `Optional` and need not appear in its public API.
+
+In this example, a `let` is used to avoid repeating `OptionalStorage` in the
+definition of `Optional`, since it has no name conflicts with the members of
+`Movable`:
+
+```
+class Optional(T:! Movable) {
+  private let U:! Movable & OptionalStorage = T;
+  fn None() -> Self {
+    return {.storage = U.MakeNone()};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = u.Make(x)};
+  }
+  ...
+  private var storage: U.Storage;
+}
+```
 
 ## Future work
 
