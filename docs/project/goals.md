@@ -163,7 +163,7 @@ We believe Carbon must support:
 7.  Interoperability with and migration from existing C++ code.
 
 While many languages share subsets of these goals, what distinguishes Carbon is
-their combination. For the Carbon project, they are prioritized in that order to
+their combination. For the Carbon project, they are prioritized in the above order to
 help make clear what tradeoffs we intend to make. However, each and every goal
 remains critically important: **Carbon _must_ have excellent C++
 interoperability and migration to be successful.**
