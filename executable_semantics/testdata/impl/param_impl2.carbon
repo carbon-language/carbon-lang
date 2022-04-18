@@ -33,20 +33,20 @@ external impl forall [U:! Number] Point(U) as Number {
   }
 }
 
-fn sum_tuple[E:! Number](tuple: (E,E)) -> E {
+fn sum[E:! Number](x: E, y: E) -> E {
   var total: E = E.Zero();
-  total = total.Add(tuple[0]);
-  total = total.Add(tuple[1]);
+  total = total.Add(x);
+  total = total.Add(y);
   return total;
 }
 
-fn sum_points[E:! Number](tuple: (Point(E),Point(E))) -> Point(E) {
-  return sum_tuple(tuple);
+fn sum_points[E:! Number](p: Point(E), q: Point(E)) -> Point(E) {
+  return sum(p, q);
 }
 
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 1, .y = 2};
   var q: Point(i32) = {.x = 4, .y = 3};
-  var r: Point(i32) = sum_points((p, q));
+  var r: Point(i32) = sum_points(p, q);
   return r.x - r.y;
 }
