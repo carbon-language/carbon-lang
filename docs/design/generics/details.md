@@ -4837,11 +4837,8 @@ When implementing an interface with an `impl as` requirement, that requirement
 must be satisfied either by an implementation in an imported library or an
 implementation somewhere in the same file. Implementing the requiring interface
 is a promise that the requirement will be implemented. This is like a
-
-<!-- [forward declaration of an impl](#declaring-implementations) -->
-
-forward declaration of an impl except that the definition can be broader instead
-of being required to match exactly.
+[forward declaration of an impl](#declaring-implementations) except that the
+definition can be broader instead of being required to match exactly.
 
 ```
 external impl Vector(i32) as Iterable { ... }
