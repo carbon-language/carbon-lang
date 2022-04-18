@@ -60,9 +60,11 @@ We believe Carbon must support:
 6. Modern OS platforms, hardware architectures, and environments
 7. Interoperability with and migration from existing C++ code
 
-Many languages share these goals, and they can often be addressed independently
-in a language's design. For the Carbon project, they are prioritized in that
-order to help make clear what tradeoffs we intend to make.
+While many languages share subsets of these goals, what distinguishes Carbon is
+their combination. For the Carbon project, they are prioritized in the above
+order to help make clear what tradeoffs we intend to make. However, each and
+every goal remains critically important: **Carbon _must_ have excellent C++
+interoperability and migration to be successful.**
 
 Read the [language overview](docs/design/) for more on the language design
 itself, and the [goals](docs/project/goals.md) for more on these values.

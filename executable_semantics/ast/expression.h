@@ -14,10 +14,10 @@
 #include "common/ostream.h"
 #include "executable_semantics/ast/ast_node.h"
 #include "executable_semantics/ast/paren_contents.h"
-#include "executable_semantics/ast/source_location.h"
 #include "executable_semantics/ast/static_scope.h"
 #include "executable_semantics/ast/value_category.h"
 #include "executable_semantics/common/arena.h"
+#include "executable_semantics/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
@@ -519,13 +519,18 @@ class IfExpression : public Expression {
     return InheritsFromIfExpression(node->kind());
   }
 
-  auto condition() const -> Nonnull<Expression*> { return condition_; }
-  auto then_expression() const -> Nonnull<Expression*> {
-    return then_expression_;
+  auto condition() const -> const Expression& { return *condition_; }
+  auto condition() -> Expression& { return *condition_; }
+
+  auto then_expression() const -> const Expression& {
+    return *then_expression_;
   }
-  auto else_expression() const -> Nonnull<Expression*> {
-    return else_expression_;
+  auto then_expression() -> Expression& { return *then_expression_; }
+
+  auto else_expression() const -> const Expression& {
+    return *else_expression_;
   }
+  auto else_expression() -> Expression& { return *else_expression_; }
 
  private:
   Nonnull<Expression*> condition_;

@@ -4,13 +4,13 @@
 //
 // RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/not_compare_precedence.carbon:15: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
 
 package ExecutableSemanticsTest api;
 
 fn CompareBools(a: Bool, b: Bool) -> Bool {
-  // CHECK: COMPILATION ERROR: {{.*}}.carbon:[[@LINE+1]]: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
   return not a == b;
 }

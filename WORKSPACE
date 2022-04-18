@@ -249,6 +249,20 @@ rules_proto_dependencies()
 rules_proto_toolchains()
 
 ###############################################################################
+# libprotobuf_mutator - for structured fuzzer testing.
+###############################################################################
+
+libprotobuf_mutator_version = "1.0"
+
+http_archive(
+    name = "com_google_libprotobuf_mutator",
+    build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
+    sha256 = "792f250fb546bde8590e72d64311ea00a70c175fd77df6bb5e02328fa15fe28e",
+    strip_prefix = "libprotobuf-mutator-%s" % libprotobuf_mutator_version,
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/v%s.tar.gz" % libprotobuf_mutator_version],
+)
+
+###############################################################################
 # Example conversion repositories
 ###############################################################################
 

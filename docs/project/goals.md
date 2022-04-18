@@ -162,21 +162,11 @@ We believe Carbon must support:
 6.  Modern OS platforms, hardware architectures, and environments.
 7.  Interoperability with and migration from existing C++ code.
 
-The first six of these represent our fundamental goals for the software we want
-to implement in Carbon. However, we cannot simply replace all of the existing
-C++ software and developers. Carbon must be reachable from where we are, which
-motivates the seventh goal around interoperability and migration.
-
-These are expected to be largely independent goals. We cannot give up any one of
-them, regardless of priority, without significant harm to our use cases. This
-means we expect to design the language largely in ways that enable all of these
-goals. However, the priority ordering provides guidance on how to manage the
-conflicts that do arise between goals. When we can tailor the design of language
-features to balance between different goals, we will strive to align that
-balance with this prioritization. When we are unable to find a compromise that
-enables both goals and we have a fundamental conflict or binary choice, we will
-weigh the factors going into that choice based on how they interact with this
-ranking.
+While many languages share subsets of these goals, what distinguishes Carbon is
+their combination. For the Carbon project, they are prioritized in the above
+order to help make clear what tradeoffs we intend to make. However, each and
+every goal remains critically important: **Carbon _must_ have excellent C++
+interoperability and migration to be successful.**
 
 ### Goals in detail
 
