@@ -1411,7 +1411,7 @@ it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
 ### Destructors
 
-Every non-abstract type is destructible, meaning has a defined destructor
+Every non-abstract type is _destructible_, meaning has a defined destructor
 function called when the lifetime of a value of that type ends, such as when a
 variable goes out of scope. The destructor for a class may be customized using
 the `destructor` keyword:
@@ -1487,6 +1487,10 @@ the destructor is virtual or non-virtual, determines which
     The concerning situation is when you have a pointer to a base class without
     a virtual destructor. It is unsafe to delete that pointer when it is
     actually pointing to a derived class.
+
+**Note:** The names `Deletable` and `Destructible` are **placeholders** since
+they do not conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 | Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
 | -------- | ----------- | ---------- | ----------- | -------------- |

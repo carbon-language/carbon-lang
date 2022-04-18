@@ -3510,6 +3510,10 @@ There are four type-of-types related to
     used with [specialization](#lookup-resolution-and-specialization) to unlock
     specific optimizations.
 
+**Note:** The names `Deletable` and `Destructible` are **placeholders** since
+they do not conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
+
 The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
 `Destructible`. Combinations of them may be formed using
 [the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
