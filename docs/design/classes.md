@@ -1488,8 +1488,9 @@ the destructor is virtual or non-virtual, determines which
     a virtual destructor. It is unsafe to delete that pointer when it is
     actually pointing to a derived class.
 
-**Note:** The names `Deletable` and `Destructible` are **placeholders** since
-they do not conform to the decision on
+**Note:** The names `Deletable` and `Destructible` are
+[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
+conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
 | Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
