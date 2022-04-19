@@ -546,23 +546,12 @@ auto TypeChecker::SatisfyImpls(
     BindingMap& deduced_type_args, ImplExpMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    switch (impl_binding->interface()->kind()) {
-      case Value::Kind::InterfaceType: {
-        ASSIGN_OR_RETURN(
-            Nonnull<Expression*> impl,
-            impl_scope.Resolve(impl_binding->interface(),
-                               deduced_type_args[impl_binding->type_var()],
-                               source_loc, *this));
-        impls.emplace(impl_binding, impl);
-        break;
-      }
-      case Value::Kind::TypeType:
-        break;
-      default:
-        return FATAL_COMPILATION_ERROR(source_loc)
-               << "unexpected type of deduced parameter "
-               << *impl_binding->interface();
-    }
+    ASSIGN_OR_RETURN(
+        Nonnull<Expression*> impl,
+        impl_scope.Resolve(impl_binding->interface(),
+                           deduced_type_args[impl_binding->type_var()],
+                           source_loc, *this));
+    impls.emplace(impl_binding, impl);
   }
   return Success();
 }
@@ -1550,11 +1539,23 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   // Create the impl_bindings.
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
-        deduced->source_loc(), deduced, &deduced->static_type());
-    deduced->set_impl_binding(impl_binding);
-    impl_binding->set_static_type(&deduced->static_type());
-    impl_bindings.push_back(impl_binding);
+    switch (deduced->static_type().kind()) {
+      case Value::Kind::InterfaceType: {
+        Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
+            deduced->source_loc(), deduced, &deduced->static_type());
+        deduced->set_impl_binding(impl_binding);
+        impl_binding->set_static_type(&deduced->static_type());
+        impl_bindings.push_back(impl_binding);
+        break;
+      }
+      case Value::Kind::TypeType:
+        // No `impl` binding needed for type parameter with bound `Type.
+        break;
+      default:
+        return FATAL_COMPILATION_ERROR(f->source_loc())
+               << "unexpected type of deduced parameter "
+               << deduced->static_type();
+    }
   }
   // Bring the impl bindings into scope.
   ImplScope function_scope;
@@ -1768,11 +1769,23 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Create the impl_bindings.
   std::vector<Nonnull<ImplBinding*>> impl_bindings;
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
-    Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
-        deduced->source_loc(), deduced, &deduced->static_type());
-    deduced->set_impl_binding(impl_binding);
-    impl_binding->set_static_type(&deduced->static_type());
-    impl_bindings.push_back(impl_binding);
+    switch (deduced->static_type().kind()) {
+      case Value::Kind::InterfaceType: {
+        Nonnull<ImplBinding*> impl_binding = arena_->New<ImplBinding>(
+            deduced->source_loc(), deduced, &deduced->static_type());
+        deduced->set_impl_binding(impl_binding);
+        impl_binding->set_static_type(&deduced->static_type());
+        impl_bindings.push_back(impl_binding);
+        break;
+      }
+      case Value::Kind::TypeType:
+        // No `impl` binding needed for type parameter with bound `Type.
+        break;
+      default:
+        return FATAL_COMPILATION_ERROR(impl_decl->source_loc())
+               << "unexpected type of deduced parameter "
+               << deduced->static_type();
+    }
   }
   impl_decl->set_impl_bindings(impl_bindings);
 
