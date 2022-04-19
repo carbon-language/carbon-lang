@@ -7,12 +7,11 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_method_from_class.carbon:29: GetX is not a class function
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_method_from_class.carbon:28: GetX is not a class function
 
 package ExecutableSemanticsTest api;
 
 class Point {
-
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
