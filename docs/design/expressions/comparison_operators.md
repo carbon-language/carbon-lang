@@ -301,9 +301,9 @@ external impl like MyInt as EqWith(like MyInt) {
     return me.Value() == other.Value();
   }
 }
-fn CompareBothWays(a: MyInt, b: i32) -> bool {
+fn CompareBothWays(a: MyInt, b: i32, c: MyInt) -> bool {
   // OK, calls above implementation three times.
-  return a == a and a == b and b == a;
+  return a == a and a != b and b == c;
 }
 ```
 
@@ -516,6 +516,7 @@ in general. That decision is left to a future proposal.
 -   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
 -   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
 -   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
+-   [Rename `OrderedWith` to `ComparableWith`](/proposals/p1178.md#use-comparablewith-instead-of-orderedwith)
 
 ## References
 
