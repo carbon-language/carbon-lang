@@ -35,6 +35,7 @@ cc_binary(
     srcs = ["main_bin.cpp"],
     deps = [
         ":main",
+        "@llvm-project//llvm:Support",
     ],
 )
 
