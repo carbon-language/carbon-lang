@@ -33,7 +33,7 @@ external impl forall [U:! Number] Point(U) as Number {
   }
 }
 
-fn sum[E:! Number](x: E, y: E) -> E {
+fn Sum[E:! Number](x: E, y: E) -> E {
   var total: E = E.Zero();
   total = total.Add(x);
   total = total.Add(y);
@@ -43,6 +43,6 @@ fn sum[E:! Number](x: E, y: E) -> E {
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 1, .y = 2};
   var q: Point(i32) = {.x = 4, .y = 3};
-  var r: Point(i32) = sum(p, q);
+  var r: Point(i32) = Sum(p, q);
   return r.x - r.y;
 }
