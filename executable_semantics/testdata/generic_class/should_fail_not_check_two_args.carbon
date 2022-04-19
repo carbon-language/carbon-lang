@@ -9,7 +9,7 @@
 package ExecutableSemanticsTest api;
 
 class Point(T:! Type) {
-
+  // Point(T, T) does not match class declaration
   fn Origin(zero: T) -> Point(T, T) {
     return {.x = zero, .y = zero};
   }
