@@ -1549,7 +1549,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
         break;
       }
       case Value::Kind::TypeType:
-        // No `impl` binding needed for type parameter with bound `Type.
+        // No `impl` binding needed for type parameter with bound `Type`.
         break;
       default:
         return FATAL_COMPILATION_ERROR(f->source_loc())
@@ -1779,7 +1779,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         break;
       }
       case Value::Kind::TypeType:
-        // No `impl` binding needed for type parameter with bound `Type.
+        // No `impl` binding needed for type parameter with bound `Type`.
         break;
       default:
         return FATAL_COMPILATION_ERROR(impl_decl->source_loc())
