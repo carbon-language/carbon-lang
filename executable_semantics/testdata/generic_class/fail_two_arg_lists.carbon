@@ -2,24 +2,25 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{executable_semantics} %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_two_arg_lists.carbon:19: in call, expected a function
+// CHECK: Point(T)(T)
+// CHECK: not an operator of type class Point(T = T:! Type)
+// CHECK-EMPTY:
 
 package ExecutableSemanticsTest api;
 
 class Point(T:! Type) {
 
-  // Should fail: wrote `Self(T)` instead of `Self`.
-  fn Origin(zero: T) -> Self(T) {
+  fn Origin(zero: T) -> Point(T)(T) {
     return {.x = zero, .y = zero};
   }
 
-  // Should fail: wrote `Self(T)` instead of `Self`.
-  fn GetX[me: Self(T)]() -> T {
+  fn GetX[me: Point(T)(T)]() -> T {
     return me.x;
   }
 

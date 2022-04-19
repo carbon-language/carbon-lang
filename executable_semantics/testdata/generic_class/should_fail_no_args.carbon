@@ -13,10 +13,12 @@ package ExecutableSemanticsTest api;
 
 class Point(T:! Type) {
 
+  // Should error, wrote `Point` instead of `Point(T)`.
   fn Origin(zero: T) -> Point {
     return {.x = zero, .y = zero};
   }
 
+  // Should error, wrote `Point` instead of `Point(T)`.
   fn GetX[me: Point]() -> T {
     return me.x;
   }
