@@ -104,7 +104,6 @@ class ImplScope {
                    const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
- private:
   std::vector<Impl> impls_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
 };
