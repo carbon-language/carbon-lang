@@ -17,6 +17,7 @@ auto main(int argc, char** argv) -> int {
   llvm::sys::path::append(prelude_path,
                           "executable_semantics/data/prelude.carbon");
 
+  // Behave as if the working directory is where `bazel run` was invoked.
   char* build_working_dir = getenv("BUILD_WORKING_DIRECTORY");
   if (build_working_dir != nullptr) {
     if (std::error_code err =
