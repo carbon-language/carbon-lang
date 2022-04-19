@@ -12,7 +12,6 @@
 package ExecutableSemanticsTest api;
 
 class Point(T:! i32) {
-
   fn Origin(zero: T) -> Point(T) {
     return {.x = zero, .y = zero};
   }
