@@ -178,6 +178,16 @@ class TypeChecker {
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
 
+  // For each deduced type parameter of a generic that has a
+  // non-trivial type (such as an interface), create an impl binding
+  // to serve as the parameter for passing a witness at runtime for
+  // the required impl.
+  auto CreateImplBindings(
+      llvm::ArrayRef<Nonnull<GenericBinding*>> deduced_parameters,
+      SourceLocation source_loc,
+      std::vector<Nonnull<const ImplBinding*>>& impl_bindings)
+      -> ErrorOr<Success>;
+
   // Add all of the `impl_bindings` into the `scope`.
   void BringImplsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
