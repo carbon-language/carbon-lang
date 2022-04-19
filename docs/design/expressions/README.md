@@ -65,6 +65,10 @@ graph BT
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
     negation["-x"]
+    click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    complement["^x"]
+    click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
@@ -79,6 +83,17 @@ graph BT
 
     modulo["x % y"]
     click modulo "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    bitwise_and>"x & y"]
+    bitwise_or>"x | y"]
+    bitwise_xor>"x ^ y"]
+    click bitwise_and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+    click bitwise_or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+    click bitwise_xor "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+
+    shift["x << y<br>
+           x >> y"]
+    click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
     comparison["x == y<br>
                 x != y<br>
@@ -104,11 +119,12 @@ graph BT
 
     memberAccess --> parens & braces & unqualifiedName
     negation --> memberAccess
+    complement --> memberAccess
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -----> memberAccess
-    multiplication & modulo & as --> negation
+    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> negation & complement
     addition --> multiplication
-    comparison --> modulo & addition & as
+    comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
     and & or --> comparison & not
     if & expressionEnd --> and & or
 ```
