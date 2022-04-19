@@ -7,27 +7,11 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_two_arg_lists.carbon:18: in call, expected a function
-// CHECK: Point(T)(T)
-// CHECK: not an operator of type class Point(T = T:! Type)
-// CHECK-EMPTY:
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_local_named_self.carbon:15: syntax error, unexpected COLON, expecting EQUAL
 
 package ExecutableSemanticsTest api;
 
-class Point(T:! Type) {
-  fn Origin(zero: T) -> Point(T)(T) {
-    return {.x = zero, .y = zero};
-  }
-
-  fn GetX[me: Point(T)(T)]() -> T {
-    return me.x;
-  }
-
-  var x: T;
-  var y: T;
-}
-
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32).Origin(0);
-  return p.GetX();
+  let Self: auto = 10;
+  return 0;
 }

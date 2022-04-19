@@ -220,6 +220,7 @@
   RIGHT_PARENTHESIS
   RIGHT_SQUARE_BRACKET
   RUN
+  SELF
   SEMICOLON
   SLASH
   STRING
@@ -302,6 +303,9 @@ primary_expression:
           << "Only i32 is supported for now: " << $1;
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
+| SELF
+    // FIXME: Create a new TypeLiteral for `Self`.
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | STRING
     { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
 | BOOL
