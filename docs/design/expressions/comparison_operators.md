@@ -309,12 +309,13 @@ fn CompareBothWays(a: MyInt, b: i32) -> bool {
 
 The behavior of `NotEqual` can be overridden separately from the behavior of
 `Equal` to support cases like floating-point NaN values, where two values can
-compare neither equal nor not-equal. An implementation of `EqWith` should not
-allow both `Equal` and `NotEqual` to return `true` for the same pair of values,
-and these operations should have no observable side-effects.
+compare neither equal nor not-equal, and thus both functions would return
+`false`. However, an implementation of `EqWith` should *not*
+allow both `Equal` and `NotEqual` to return `true` for the same pair of values.
+Additionally, these operations should have no observable side-effects.
 
 ```
-external impl like MyFloat as Eq(like MyFloat) {
+external impl like MyFloat as EqWith(like MyFloat) {
   fn Equal[me: MyFloat](other: MyFloat) -> bool {
     if (me.IsNaN() or other.IsNaN()) {
       return false;
@@ -418,7 +419,7 @@ fn ReverseOrdering(o: Ordering) -> Ordering {
   return Ordering.Equivalent.(Ordered.Compare)(o);
 }
 external impl like MyInt as OrderedWith(like MyFloat);
-external impl like MyFloat as OrderedWith(like MyFloat) {
+external impl like MyFloat as OrderedWith(like MyInt) {
   fn Compare[me: Self](other: Self) -> Ordering {
     return Reverse(other.(OrderedWith(Self).Compare)(me));
   }
@@ -463,7 +464,7 @@ a generic.
 
 #### Compatibility of equality and ordering
 
-There is no expectation that a pair of types that implements `OrderedWith` also
+There is no requirement that a pair of types that implements `OrderedWith` also
 implements `EqWith`. If a pair of types does implement both, however, the
 equality relation provided by `x.(EqWith.Equal)(y)` should be a refinement of
 the equivalence relation provided by
@@ -492,11 +493,11 @@ implementations for data classes do not permit implicit conversions on their
 arguments in general. Instead:
 
 -   Equality comparisons are permitted between any two data classes that have
-    the same unordered set of field names, if each corresponding pair of fields
+    the same _unordered set_ of field names, if each corresponding pair of fields
     has an `EqWith` implementation. Fields are compared in the order they appear
     in the left-hand operand.
 -   Relational comparisons are permitted between any two data classes that have
-    the same ordered sequence of field names, if each corresponding pair of
+    the same _ordered sequence_ of field names, if each corresponding pair of
     fields has an `OrderedWith` implementation. Fields are compared in order.
 
 Comparisons between tuples permit implicit conversions for either operand, but
