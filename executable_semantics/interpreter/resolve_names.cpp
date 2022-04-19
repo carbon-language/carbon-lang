@@ -349,6 +349,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
+      // FIXME: Doesn't seem like `Self` should be equivalent to the
+      // class' name when it has parameters.
+      RETURN_IF_ERROR(class_scope.Add("Self", &class_decl));
       if (class_decl.type_params().has_value()) {
         RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
       }
