@@ -70,6 +70,8 @@ graph BT
     complement["^x"]
     click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
+    unary((" "))
+
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
@@ -120,9 +122,10 @@ graph BT
     memberAccess --> parens & braces & unqualifiedName
     negation --> memberAccess
     complement --> memberAccess
+    unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -----> memberAccess
-    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> negation & complement
+    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
     and & or --> comparison & not
