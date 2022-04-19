@@ -22,13 +22,13 @@ class Point {
   var y: i32;
   impl Point as Vector {
     fn Zero() -> Point {
-        return {.x = 0, .y = 0};
+      return {.x = 0, .y = 0};
     }
     fn Add[me: Point](b: Point) -> Point {
-        return {.x = me.x + b.x, .y = me.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
     fn Scale[me: Point](v: i32) -> Point {
-        return {.x = me.x * v, .y = me.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
 }

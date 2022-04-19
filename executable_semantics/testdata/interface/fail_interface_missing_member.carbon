@@ -24,7 +24,7 @@ class Point {
   var y: i32;
   impl Point as Vector {
     fn Add[me: Point](b: Point) -> Point {
-        return {.x = me.x + b.x, .y = me.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
   }
 }
