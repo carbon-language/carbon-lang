@@ -12,7 +12,6 @@
 package ExecutableSemanticsTest api;
 
 class Point {
-
   fn Origin() -> Point {
     return {.x = 0, .y = 0};
   }
@@ -22,6 +21,6 @@ class Point {
 }
 
 fn Main() -> i32 {
-  var f: __Fn()->Point = Point.Origin;
+  var f: __Fn() -> Point = Point.Origin;
   return f().x;
 }
