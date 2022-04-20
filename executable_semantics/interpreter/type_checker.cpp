@@ -973,13 +973,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
             if (trace_stream_) {
-              **trace_stream_ << "pattern matching type params and args ";
+              **trace_stream_ << "pattern matching type params and args\n";
             }
+            RETURN_IF_ERROR(
+                ExpectType(call.source_loc(), "call",
+                           &(*class_decl.type_params())->static_type(),
+                           &call.argument().static_type()));
             ASSIGN_OR_RETURN(
                 Nonnull<const Value*> arg,
                 InterpExp(&call.argument(), arena_, trace_stream_));
             CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
-                               call.source_loc(), std::nullopt, generic_args));
+                               call.source_loc(), std::nullopt, generic_args,
+                               trace_stream_));
           } else {
             return CompilationError(call.source_loc())
                    << "attempt to instantiate a non-generic class: " << *e;
@@ -1190,7 +1195,7 @@ auto TypeChecker::TypeCheckPattern(
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args)) {
+                            std::nullopt, generic_args, trace_stream_)) {
             return CompilationError(binding.type().source_loc())
                    << "Type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
