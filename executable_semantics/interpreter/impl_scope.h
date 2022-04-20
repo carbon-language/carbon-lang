@@ -10,6 +10,8 @@
 namespace Carbon {
 
 class Value;
+class TypeChecker;
+class InterfaceType;
 
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
@@ -40,7 +42,14 @@ class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-           ValueNodeView impl);
+           Nonnull<Expression*> impl);
+  // For a parameterized impl, associates `iface` and `type`
+  // with the `impl` in this scope.
+  void Add(Nonnull<const Value*> iface,
+           llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
+           Nonnull<const Value*> type,
+           llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+           Nonnull<Expression*> impl);
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -50,31 +59,50 @@ class ImplScope {
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
   auto Resolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-               SourceLocation source_loc) const -> ErrorOr<ValueNodeView>;
+               SourceLocation source_loc, const TypeChecker& type_checker) const
+      -> ErrorOr<Nonnull<Expression*>>;
 
   void Print(llvm::raw_ostream& out) const;
-
- private:
-  auto TryResolve(Nonnull<const Value*> iface_type, Nonnull<const Value*> type,
-                  SourceLocation source_loc) const
-      -> ErrorOr<std::optional<ValueNodeView>>;
-  auto ResolveHere(Nonnull<const Value*> iface_type,
-                   Nonnull<const Value*> impl_type,
-                   SourceLocation source_loc) const
-      -> std::optional<ValueNodeView>;
 
   // The `Impl` struct is a key-value pair where the key is the
   // combination of a type and an interface, e.g., `List` and `Container`,
   // and the value is the result of statically resolving to the `impl`
-  // for `List` as `Container`, which is an `ValueNodeView`. The generality
-  // of `ValueNodeView` is needed (not just `ImplDeclaration`) because
-  // inside a generic, we need to map, e.g., from `T` and `Container` to the
-  // witness table that is passed into the generic.
+  // for `List` as `Container`, which is an `Expression` that produces
+  // the witness for that `impl`.
+  // When the `impl` is parameterized, `deduced` and `impl_bindings`
+  // are non-empty. The former contains the type parameters and the
+  // later are impl bindings, that is, parameters for witnesses.
   struct Impl {
     Nonnull<const Value*> interface;
+    std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
-    ValueNodeView impl;
+    std::vector<Nonnull<const ImplBinding*>> impl_bindings;
+    Nonnull<Expression*> impl;
   };
+
+ private:
+  // Returns the associated impl for the given `iface` and `type` in
+  // the ancestor graph of this scope, returns std::nullopt if there
+  // is none, or reports a compilation error is there is not a most
+  // specific impl for the given `iface` and `type`.
+  // Use `original_scope` to satisfy requirements of any generic impl
+  // that matches `iface` and `type`.
+  auto TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
+                  SourceLocation source_loc, const ImplScope& original_scope,
+                  const TypeChecker& type_checker) const
+      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+
+  // Returns the associated impl for the given `iface` and `type` in
+  // this scope, returns std::nullopt if there is none, or reports
+  // a compilation error is there is not a most specific impl for the
+  // given `iface` and `type`.
+  // Use `original_scope` to satisfy requirements of any generic impl
+  // that matches `iface` and `type`.
+  auto ResolveHere(Nonnull<const Value*> iface_type,
+                   Nonnull<const Value*> impl_type, SourceLocation source_loc,
+                   const ImplScope& original_scope,
+                   const TypeChecker& type_checker) const
+      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
