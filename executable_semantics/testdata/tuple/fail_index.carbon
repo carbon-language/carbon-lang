@@ -4,7 +4,7 @@
 //
 // RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/tuple/fail_index.carbon:16: index 2 is out of range for type (i32, i32)

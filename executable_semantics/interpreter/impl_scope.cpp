@@ -4,7 +4,6 @@
 
 #include "executable_semantics/interpreter/impl_scope.h"
 
-#include "executable_semantics/common/error.h"
 #include "executable_semantics/interpreter/type_checker.h"
 #include "executable_semantics/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
@@ -43,9 +42,8 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
       std::optional<Nonnull<Expression*>> result,
       TryResolve(iface_type, type, source_loc, *this, type_checker));
   if (!result.has_value()) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "could not find implementation of " << *iface_type << " for "
-           << *type;
+    return CompilationError(source_loc) << "could not find implementation of "
+                                        << *iface_type << " for " << *type;
   }
   return *result;
 }
@@ -65,9 +63,8 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                                         original_scope, type_checker));
     if (parent_result.has_value()) {
       if (result.has_value()) {
-        return FATAL_COMPILATION_ERROR(source_loc)
-               << "ambiguous implementations of " << *iface_type << " for "
-               << *type;
+        return CompilationError(source_loc) << "ambiguous implementations of "
+                                            << *iface_type << " for " << *type;
       } else {
         result = *parent_result;
       }
@@ -92,7 +89,7 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
         iface, impl_type, impl, original_scope, source_loc);
     if (m.has_value()) {
       if (result.has_value()) {
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "ambiguous implementations of " << *iface_type << " for "
                << *impl_type;
       } else {

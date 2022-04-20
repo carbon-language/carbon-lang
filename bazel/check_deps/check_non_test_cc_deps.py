@@ -61,9 +61,10 @@ for dep in deps:
         # distributed and so should be fine.
         continue
     if repo in (
+        "@com_github_google_benchmark",
+        "@com_github_protocolbuffers_protobuf",
         "@com_google_absl",
         "@com_google_googletest",
-        "@com_github_google_benchmark",
     ):
         # This should never be reached from non-test code, but these targets do
         # exist. Specially diagnose them to try to provide a more helpful

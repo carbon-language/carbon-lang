@@ -4,7 +4,7 @@
 //
 // RUN: %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: result: 0
@@ -21,10 +21,10 @@ class Point1 {
   var y: i32;
   impl Point1 as Vector {
     fn Add[me: Point1](b: Point1) -> Point1 {
-        return {.x = me.x + b.x, .y = me.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
     fn Scale[me: Point1](v: i32) -> Point1 {
-        return {.x = me.x * v, .y = me.y * v};
+      return {.x = me.x * v, .y = me.y * v};
     }
   }
 }
@@ -34,10 +34,10 @@ class Point2 {
   var y: i32;
   impl Point2 as Vector {
     fn Add[me: Point2](b: Point2) -> Point2 {
-        return {.x = me.x + b.x + 1, .y = me.y + b.y + 1};
+      return {.x = me.x + b.x + 1, .y = me.y + b.y + 1};
     }
     fn Scale[me: Point2](v: i32) -> Point2 {
-        return {.x = me.x * v * 2, .y = me.y * v * 2};
+      return {.x = me.x * v * 2, .y = me.y * v * 2};
     }
   }
 }

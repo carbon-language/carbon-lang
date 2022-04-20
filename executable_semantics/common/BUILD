@@ -13,23 +13,21 @@ cc_library(
 )
 
 cc_library(
-    name = "error",
-    hdrs = ["error.h"],
+    name = "error_builders",
+    hdrs = ["error_builders.h"],
     deps = [
-        "//common:check",
+        ":source_location",
         "//common:error",
-        "//executable_semantics/ast:source_location",
-        "@llvm-project//llvm:Support",
     ],
 )
 
 cc_test(
-    name = "error_test",
-    srcs = ["error_test.cpp"],
+    name = "error_builders_test",
+    srcs = ["error_builders_test.cpp"],
     deps = [
-        ":error",
+        ":error_builders",
+        ":source_location",
         "@com_google_googletest//:gtest_main",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -38,6 +36,14 @@ cc_library(
     hdrs = ["nonnull.h"],
     deps = [
         "//common:check",
-        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "source_location",
+    hdrs = ["source_location.h"],
+    deps = [
+        ":nonnull",
+        "//common:ostream",
     ],
 )

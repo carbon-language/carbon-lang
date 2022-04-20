@@ -54,8 +54,8 @@ lifetime groups in the future.
 
 For simplicity, `executable_semantics` generally treats all errors as fatal.
 Errors caused by bugs in the user-provided Carbon code should be reported with
-the macros in [`error.h`](common/error.h). Errors caused by bugs in
-`executable_semantics` itself should be reported with
+the error builders in [`error_builders.h`](common/error_builders.h). Errors
+caused by bugs in `executable_semantics` itself should be reported with
 [`CHECK` or `FATAL`](../common/check.h).
 
 ## Example Programs (Regression Tests)

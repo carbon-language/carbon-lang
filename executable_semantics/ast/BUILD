@@ -22,7 +22,7 @@ cc_library(
         "ast_rtti.h",
     ],
     deps = [
-        ":source_location",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -77,11 +77,11 @@ cc_library(
     deps = [
         ":ast_node",
         ":pattern",
-        ":source_location",
         ":value_category",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -97,12 +97,12 @@ cc_library(
         ":impl_binding",
         ":pattern",
         ":return_term",
-        ":source_location",
         ":statement",
         ":static_scope",
         ":value_category",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -112,10 +112,10 @@ cc_library(
     hdrs = ["return_term.h"],
     deps = [
         ":expression",
-        ":source_location",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:nonnull",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -127,13 +127,13 @@ cc_library(
     deps = [
         ":ast_node",
         ":paren_contents",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:indirect_value",
         "//common:ostream",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -159,8 +159,8 @@ cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
     deps = [
-        ":source_location",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
+        "//executable_semantics/common:source_location",
     ],
 )
 
@@ -171,12 +171,12 @@ cc_library(
     deps = [
         ":ast_node",
         ":expression",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:ostream",
         "//executable_semantics/common:arena",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -200,22 +200,13 @@ cc_library(
     hdrs = ["static_scope.h"],
     deps = [
         ":ast_node",
-        ":source_location",
         ":value_category",
         "//common:check",
         "//common:error",
-        "//executable_semantics/common:error",
+        "//executable_semantics/common:error_builders",
         "//executable_semantics/common:nonnull",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "source_location",
-    hdrs = ["source_location.h"],
-    deps = [
-        "//common:ostream",
-        "//executable_semantics/common:nonnull",
     ],
 )
 
@@ -228,12 +219,12 @@ cc_library(
         ":expression",
         ":pattern",
         ":return_term",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:check",
         "//common:ostream",
         "//executable_semantics/common:arena",
+        "//executable_semantics/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
