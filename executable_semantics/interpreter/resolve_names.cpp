@@ -166,6 +166,7 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
       break;
+    case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:
       return CompilationError(expression.source_loc()) << "Unimplemented";
   }
@@ -313,13 +314,19 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl = cast<ImplDeclaration>(declaration);
+      StaticScope impl_scope;
+      impl_scope.AddParent(&enclosing_scope);
+      for (Nonnull<GenericBinding*> binding : impl.deduced_parameters()) {
+        RETURN_IF_ERROR(ResolveNames(binding->type(), impl_scope));
+        RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
+      }
+      RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), impl_scope));
       RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
-      RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), enclosing_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
-        RETURN_IF_ERROR(AddExposedNames(*member, enclosing_scope));
+        RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));
       }
       for (Nonnull<Declaration*> member : impl.members()) {
-        RETURN_IF_ERROR(ResolveNames(*member, enclosing_scope));
+        RETURN_IF_ERROR(ResolveNames(*member, impl_scope));
       }
       break;
     }
