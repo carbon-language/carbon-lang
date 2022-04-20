@@ -24,10 +24,14 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
      alt="Quicksort code in Carbon. Follow the link to read more.">
 </a>
 
-<!-- Don't let the text wrap too narrowly to the left of the above image. -->
-<div><img src="docs/images/bumper.png">
+<!--
+Don't let the text wrap too narrowly to the left of the above image.
+The `div` reduces the vertical height.
+GitHub will autolink `img`, but won't produce a link when `href="#"`.
+-->
+<div><a href="#"><img src="docs/images/bumper.png"></a></div>
 
-**Fast and works with C++**</div>
+**Fast and works with C++**
 
 -   Performance matching C++ using LLVM, with low-level access to bits and
     addresses
