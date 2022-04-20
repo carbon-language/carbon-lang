@@ -21,6 +21,6 @@ class Point(T:! Type) {
 }
 
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32,i32).Create(0, 1);
+  var p: Point(i32) = Point(i32, i32).Create(0, 1);
   return p.x;
 }
