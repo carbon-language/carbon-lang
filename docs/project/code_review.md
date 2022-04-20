@@ -420,16 +420,12 @@ While all merges require at least one approval, a reviewer might approve before
 others are finished reviewing; all reviewers should be given time to comment to
 ensure there's a consensus.
 
-Merge conflicts should be handled similarly to other code edits requested by the
-reviewer: the reviewer should ask the author to update the pull request's fork
-in order to have merge conflicts resolved.
-
-Either the author or reviewer may merge. The author may indicate they want to
-merge by informing the reviewer and adding the `DO NOT MERGE` label. The
-reviewer is encouraged to coordinate with the author about merge timing if there
-are concerns about breaks. In either case, the developer doing the merge is
-expected to be available to help address post-commit issues, whether through a
-fix-forward or a rollback.
+Either the author or reviewer may merge and resolve conflicts. The author may
+indicate they want to merge by informing the reviewer and adding the
+`DO NOT MERGE` label. The reviewer is encouraged to coordinate with the author
+about merge timing if there are concerns about breaks. In either case, the
+developer doing the merge is expected to be available to help address
+post-commit issues, whether through a fix-forward or a rollback.
 
 ### Merge commit descriptions
 
