@@ -973,7 +973,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           BindingMap generic_args;
           if (class_decl.type_params().has_value()) {
             if (trace_stream_) {
-              **trace_stream_ << "pattern matching type params and args ";
+              **trace_stream_ << "pattern matching type params and args\n";
             }
             RETURN_IF_ERROR(
                 ExpectType(call.source_loc(), "call",
