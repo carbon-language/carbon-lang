@@ -11,6 +11,7 @@
 
 package ExecutableSemanticsTest api;
 
+// 42 cannot be used as the type of a parameter.
 fn f(x: 42) -> i32 {
   return x - 1;
 }

@@ -13,6 +13,7 @@ package ExecutableSemanticsTest api;
 
 fn Main () -> i32
 {
+  // 42 cannot be used as the type of a variable.
   var x: 42 = 0;
   return x;
 }

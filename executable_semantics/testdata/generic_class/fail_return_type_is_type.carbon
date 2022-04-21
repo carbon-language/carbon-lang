@@ -12,6 +12,7 @@
 package ExecutableSemanticsTest api;
 
 class Point(T:! Type) {
+  // The return type should be Point(T). Point by itself is not a type.
   fn Create(x: T, y: T) -> Point {
     return {.x = x, .y = y};
   }
