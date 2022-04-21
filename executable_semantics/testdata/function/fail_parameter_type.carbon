@@ -7,20 +7,14 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_return_type_is_type.carbon:17: Expected a type, but got class Point
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_parameter_type.carbon:14: Expected a type, but got 42
 
 package ExecutableSemanticsTest api;
 
-class Point(T:! Type) {
-  fn Create(x: T, y: T) -> Point {
-    return {.x = x, .y = y};
-  }
-
-  var x: T;
-  var y: T;
+fn f(x: 42) -> i32 {
+  return x - 1;
 }
 
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32).Create(0, 1);
-  return p.x;
+  return f(1);
 }
