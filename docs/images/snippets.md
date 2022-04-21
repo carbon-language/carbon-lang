@@ -6,6 +6,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Images
+
+Images are managed in
+[Google Drive](https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688).
+
 ## Quicksort
 
 A sample of quicksort in Carbon.
@@ -17,10 +22,10 @@ fn Partition[T:! Comparable & Movable](s: Span(T))
      -> i64 {
   var i: i64 = -1;
 
-  for (element: T in s) {
-    if (element <= s.Last()) {
+  for (e: T in s) {
+    if (e <= s.Last()) {
       ++i;
-      Swap(&s[i], &element);
+      Swap(&s[i], &e);
     }
   }
   return i;
@@ -41,11 +46,11 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 ### C++
 
 ```cpp
-// C++
+// C++:
 #include <iostream>
-#include <vector>
+#include <span>
 
-void WriteWithTotal(const std::vector<uint64_t>& v) {
+void WriteWithTotal(const std::span<uint64_t>& v) {
   uint64_t sum = 0;
   for (uint64_t e : v) {
     sum += e;
@@ -63,10 +68,10 @@ auto main(int argc, char** argv) -> int {
 ### Carbon
 
 ```cpp
-// Carbon
+// Carbon:
 package Summing api;
 
-fn WriteWithTotal(v: Vector(u64)) {
+fn WriteWithTotal(v: Slice(u64)) {
   var sum: u64 = 0;
   for (e: u64 in v) {
     sum += e;
@@ -84,11 +89,10 @@ fn Main() -> i64 {
 ### Mixed
 
 ```cpp
-// Carbon using C++'s vector
+// Carbon exposing a function for C++:
 package Summing api;
-import Cpp library "<vector>";
 
-fn WriteWithTotal(v: Cpp.std.vector(u64)) {
+fn WriteWithTotal(v: Slice(u64)) {
   var sum: u64 = 0;
   for (e: u64 in v) {
     sum += e;
@@ -97,10 +101,11 @@ fn WriteWithTotal(v: Cpp.std.vector(u64)) {
   Console.WriteLine("Total: {0}", sum);
 }
 
-// C++ calling Carbon
+// C++ calling Carbon:
 #include "summing.carbon.h"
 
 auto main(int argc, char** argv) -> int {
+  // Implicitly constructs Carbon::Slice from std::initializer_list.
   Summing::WriteWithTotal({1, 2, 3});
   return 0;
 }
