@@ -78,6 +78,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::Witness:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -86,7 +87,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -144,6 +144,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::Witness:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -152,7 +153,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
