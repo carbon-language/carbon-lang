@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_parameter_type.carbon:14: Expected a type, but got 42
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_parameter_type.carbon:15: Expected a type, but got 42
 
 package ExecutableSemanticsTest api;
 

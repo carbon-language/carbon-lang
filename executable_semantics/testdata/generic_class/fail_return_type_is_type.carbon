@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_return_type_is_type.carbon:17: Expected a type, but got class Point
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_return_type_is_type.carbon:18: Expected a type, but got class Point
 
 package ExecutableSemanticsTest api;
 
