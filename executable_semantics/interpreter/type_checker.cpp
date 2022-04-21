@@ -1543,8 +1543,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
   if (!opt_stmt) {
     return CompilationError(source_loc)
            << "control-flow reaches end of function that provides a `->` "
-              "return "
-              "type without reaching a return statement";
+              "return type without reaching a return statement";
   }
   Nonnull<Statement*> stmt = *opt_stmt;
   switch (stmt->kind()) {
