@@ -212,12 +212,28 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           return true;
         }
+        case Value::Kind::TypeType: {
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+            if (!IsImplicitlyConvertible(source_element, destination)) {
+              return false;
+            }
+          }
+          return true;
+        }
         default:
           return false;
       }
     }
     case Value::Kind::TypeType:
       return destination->kind() == Value::Kind::InterfaceType;
+    case Value::Kind::InterfaceType:
+      return destination->kind() == Value::Kind::TypeType;
+    case Value::Kind::TypeOfClassType: {
+      const auto& class_type = cast<TypeOfClassType>(*source).class_type();
+      return ((!class_type.declaration().type_params().has_value()) ||
+              (!class_type.type_args().empty())) &&
+             destination->kind() == Value::Kind::TypeType;
+    }
     default:
       return false;
   }
@@ -1017,7 +1033,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<NominalClassType*> class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);
-          call.set_static_type(class_type);
+          call.set_static_type(arena_->New<TypeOfClassType>(class_type));
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1589,6 +1605,9 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // We ignore the return value because return type expressions can't bring
     // new types into scope.
     RETURN_IF_ERROR(TypeCheckExp(*return_expression, function_scope));
+    RETURN_IF_ERROR(ExpectType(f->source_loc(), "return type",
+                               arena_->New<TypeType>(),
+                               &(*return_expression)->static_type()));
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
     ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
@@ -1738,11 +1757,8 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
 
   // Process the Self parameter.
-  RETURN_IF_ERROR(TypeCheckExp(&iface_decl->self()->type(), enclosing_scope));
-  iface_decl->self()->set_static_type(
-      arena_->New<VariableType>(iface_decl->self()));
-  iface_decl->self()->set_symbolic_identity(&iface_decl->self()->static_type());
-
+  RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
+                                   enclosing_scope, ValueCategory::Let));
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
   }

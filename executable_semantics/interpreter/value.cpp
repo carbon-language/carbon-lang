@@ -362,8 +362,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::TypeOfClassType:
       out << "typeof("
-          << cast<TypeOfClassType>(*this).class_type().declaration().name()
-          << ")";
+          //<< cast<TypeOfClassType>(*this).class_type().declaration().name()
+          << cast<TypeOfClassType>(*this).class_type() << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("
