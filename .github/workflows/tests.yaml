@@ -29,8 +29,7 @@ jobs:
   test:
     strategy:
       matrix:
-        # TODO: intentional breakage.
-        os: [ubuntuxx-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         build_mode: [fastbuild, opt]
         include:
           # Includes a new variable `excluded_test_tags` for matrix entries
