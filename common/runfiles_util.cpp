@@ -32,7 +32,6 @@ static auto GetProgramPath() -> std::string {
   std::error_code error;
   program_name = std::filesystem::canonical(program_name, error);
   CHECK(error.value() == 0);
-  llvm::errs() << "### program name=" << program_name << "\n";
   return program_name;
 }
 
