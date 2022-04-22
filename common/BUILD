@@ -70,6 +70,24 @@ cc_library(
 )
 
 cc_library(
+    name = "runfiles_util",
+    srcs = ["runfiles_util.cpp"],
+    hdrs = ["runfiles_util.h"],
+    deps = [
+        ":check",
+    ],
+)
+
+cc_test(
+    name = "runfiles_util_test",
+    srcs = ["runfiles_util_test.cpp"],
+    deps = [
+        ":runfiles_util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "string_helpers",
     srcs = ["string_helpers.cpp"],
     hdrs = ["string_helpers.h"],

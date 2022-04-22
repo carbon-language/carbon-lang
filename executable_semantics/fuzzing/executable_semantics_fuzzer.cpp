@@ -5,9 +5,8 @@
 #include <google/protobuf/text_format.h>
 #include <libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h>
 
-#include <filesystem>
-
 #include "common/fuzzing/carbon.pb.h"
+#include "common/runfiles_util.h"
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
@@ -15,25 +14,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
-
-std::string GetProgramPath() {
-  std::string program_name;
-#if defined(OS_MACOSX)
-#else
-  std::error_code error;
-  program_name = std::filesystem::canonical("/proc/self/exe", error);
-  CHECK(error.value() == 0);
-#endif
-  llvm::errs() << "### program name=" << program_name << "\n";
-  return program_name;
-}
-
-std::string GetRunfilesDir() {
-  const std::string program_name;
-  const std::string runfiles_dir = GetProgramPath() + ".runfiles";
-  CHECK(std::filesystem::exists(runfiles_dir));
-  return runfiles_dir;
-}
 
 // Parses and executes a fuzzer-generated program.
 void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
