@@ -5,8 +5,6 @@
 #include <google/protobuf/text_format.h>
 #include <libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h>
 
-#include <filesystem>
-
 #include "common/fuzzing/carbon.pb.h"
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 #include "executable_semantics/interpreter/exec_program.h"
@@ -24,7 +22,7 @@ static auto GetRunfilesDir() -> std::string {
       test_src_dir != nullptr
           ? test_src_dir
           : llvm::sys::fs::getMainExecutable(nullptr, nullptr) + ".runfiles";
-  CHECK(std::filesystem::exists(runfiles_dir))
+  CHECK(llvm::sys::fs::exists(runfiles_dir))
       << runfiles_dir << " doesn't exist";
   return runfiles_dir;
 }
