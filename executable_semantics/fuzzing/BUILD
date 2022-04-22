@@ -100,7 +100,6 @@ cc_fuzz_test(
     tags = ["manual"],
     deps = [
         ":fuzzer_util",
-        "//common:runfiles_util",
         "//common/fuzzing:carbon_cc_proto",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
