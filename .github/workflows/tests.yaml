@@ -31,6 +31,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         build_mode: [fastbuild, opt]
+        include:
+          # Includes a new variable `excluded_test_tags` for matrix entries
+          # matching `build_mode`.
+          - build_mode: fastbuild
+            excluded_test_tags: 'optonly'
+
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
@@ -137,4 +143,6 @@ jobs:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: bazelisk test -c ${{ matrix.build_mode }} //...:all
+        run:
+          bazelisk test -c ${{ matrix.build_mode }} --test_tag_filters -${{
+          matrix.excluded_test_tags }} //...:all
