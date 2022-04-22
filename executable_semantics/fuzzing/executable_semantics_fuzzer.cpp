@@ -11,6 +11,7 @@
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/prelude.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
@@ -38,9 +39,10 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
-  AddPrelude(
-      GetRunfilesDir() + "/carbon/executable_semantics/data/prelude.carbon",
-      &arena, &ast->declarations);
+  llvm::SmallString<256> prelude_path(GetRunfilesDir().c_str());
+  llvm::sys::path::append(prelude_path,
+                          "carbon/executable_semantics/data/prelude.carbon");
+  AddPrelude(prelude_path.str(), &arena, &ast->declarations);
   const ErrorOr<int> result =
       ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
   if (!result.ok()) {
