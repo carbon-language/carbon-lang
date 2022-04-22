@@ -16,10 +16,23 @@
 
 namespace Carbon {
 
-std::string GetRunfilesDir() {
-  const std::string program_name = std::filesystem::canonical("/proc/self/exe");
+std::string GetProgramPath() {
+  std::string program_name;
+#if defined(OS_MACOSX)
+#else
+  std::error_code error;
+  program_name = std::filesystem::canonical("/proc/self/exe", error);
+  CHECK(error.value() == 0);
+#endif
   llvm::errs() << "### program name=" << program_name << "\n";
-  return program_name + ".runfiles";
+  return program_name;
+}
+
+std::string GetRunfilesDir() {
+  const std::string program_name;
+  const std::string runfiles_dir = GetProgramPath() + ".runfiles";
+  CHECK(std::filesystem::exists(runfiles_dir));
+  return runfiles_dir;
 }
 
 // Parses and executes a fuzzer-generated program.
