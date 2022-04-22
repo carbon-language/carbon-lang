@@ -7,6 +7,7 @@ load("@mypy_integration//:mypy.bzl", "mypy_test")
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
     "//executable_semantics:__subpackages__",
+    "//installers:__subpackages__",
 ])
 
 filegroup(
@@ -14,9 +15,10 @@ filegroup(
     srcs = ["data/prelude.carbon"],
 )
 
-cc_binary(
-    name = "executable_semantics",
+cc_library(
+    name = "main",
     srcs = ["main.cpp"],
+    hdrs = ["main.h"],
     deps = [
         "//common:error",
         "//executable_semantics/common:arena",
@@ -24,6 +26,15 @@ cc_binary(
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
         "//executable_semantics/syntax:prelude",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "executable_semantics",
+    srcs = ["main_bin.cpp"],
+    deps = [
+        ":main",
         "@llvm-project//llvm:Support",
     ],
 )

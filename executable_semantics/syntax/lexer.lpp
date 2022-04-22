@@ -60,6 +60,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FORALL               "forall"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -162,6 +163,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {FALSE}               { return SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
+{FORALL}              { return SIMPLE_TOKEN(FORALL);              }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }

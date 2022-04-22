@@ -4,7 +4,7 @@
 //
 // RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_impl_missing_member.carbon:26: implementation missing Scale
@@ -21,7 +21,7 @@ class Point {
   var y: i32;
   impl Point as Vector {
     fn Add[me: Point](b: Point) -> Point {
-        return {.x = me.x + b.x, .y = me.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
   }
 }

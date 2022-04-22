@@ -6,6 +6,7 @@ load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 cc_library(
     name = "ast_to_proto_lib",
+    testonly = 1,
     srcs = ["ast_to_proto.cpp"],
     hdrs = ["ast_to_proto.h"],
     deps = [
@@ -19,6 +20,7 @@ cc_library(
 
 cc_library(
     name = "fuzzer_util",
+    testonly = 1,
     srcs = ["fuzzer_util.cpp"],
     hdrs = ["fuzzer_util.h"],
     deps = [
@@ -52,6 +54,7 @@ cc_test(
 
 cc_binary(
     name = "fuzzverter",
+    testonly = 1,
     srcs = ["fuzzverter.cpp"],
     deps = [
         ":ast_to_proto_lib",

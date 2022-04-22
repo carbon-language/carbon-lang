@@ -4,7 +4,7 @@
 //
 // RUN: %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: Hello world!

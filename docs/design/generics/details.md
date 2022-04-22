@@ -73,6 +73,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
+    -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
 -   [Parameterized impls](#parameterized-impls)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
@@ -3398,7 +3399,7 @@ Knowing a type is sized is a precondition to declaring variables of that type,
 taking values of that type as parameters, returning values of that type, and
 defining arrays of that type. Users will not typically need to express the
 `Sized` constraint explicitly, though, since it will usually be a dependency of
-some other constraint the type will need such as `Movable`.
+some other constraint the type will need such as `Movable` or `Concrete`.
 
 **Note:** The compiler will determine which types are "sized", this is not
 something types will implement explicitly like ordinary interfaces.
@@ -3478,13 +3479,43 @@ fn SortByAddress[T:! Type](v: Vector(T*)*) { ... }
 In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
-**Note:** To achieve this goal, the user will not even be allowed to destroy a
-value of type `T` in this case.
-
 **Open question:** Should `TypeId` be
 [implemented externally](terminology.md#external-impl) for types to avoid name
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
+
+### Destructor constraints
+
+There are four type-of-types related to
+[the destructors of types](/docs/design/classes.md#destructors):
+
+-   `Concrete` types may be local or member variables.
+-   `Deletable` types may be safely deallocated by pointer using the `Delete`
+    method on the `Allocator` used to allocate it.
+-   `Destructible` types have a destructor and may be deallocated by pointer
+    using the `UnsafeDelete` method on the correct `Allocator`, but it may be
+    unsafe. The concerning case is deleting a pointer to a derived class through
+    a pointer to its base class without a virtual destructor.
+-   `TrivialDestructor` types have empty destructors. This type-of-type may be
+    used with [specialization](#lookup-resolution-and-specialization) to unlock
+    specific optimizations.
+
+**Note:** The names `Deletable` and `Destructible` are
+[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
+conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
+
+The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
+`Destructible`. Combinations of them may be formed using
+[the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
+a generic function that both instantiates and deletes values of a type `T` would
+require `T` implement `Concrete & Deletable`.
+
+Types are forbidden from explicitly implementing these type-of-types directly.
+Instead they use
+[`destructor` declarations in their class definition](/docs/design/classes.md#destructors)
+and the compiler uses them to determine which of these type-of-types are
+implemented.
 
 ## Generic `let`
 

@@ -20,14 +20,15 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
 
   Arena arena;
   ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,
-                                     /*trace=*/false);
+                                     /*parser_debug=*/false);
   if (!ast.ok()) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
   AddPrelude("executable_semantics/data/prelude.carbon", &arena,
              &ast->declarations);
-  const ErrorOr<int> result = ExecProgram(&arena, *ast, /*trace=*/false);
+  const ErrorOr<int> result =
+      ExecProgram(&arena, *ast, /*trace_stream=*/nullptr);
   if (!result.ok()) {
     llvm::errs() << "Execution failed: " << result.error().message() << "\n";
     return;

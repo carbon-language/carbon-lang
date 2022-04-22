@@ -4,7 +4,7 @@
 //
 // RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{executable_semantics} --trace %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
 // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/global_variable/fail_init_type_mismatch.carbon:16: type error in initializer of variable: 'Bool' is not implicitly convertible to 'i32'

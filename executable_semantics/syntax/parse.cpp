@@ -14,15 +14,17 @@
 
 namespace Carbon {
 
-auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
-               std::string_view input_file_name, bool trace) -> ErrorOr<AST> {
+static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
+                      std::string_view input_file_name, bool parser_debug)
+    -> ErrorOr<AST> {
   // Prepare other parser arguments.
   std::optional<AST> ast = std::nullopt;
-  ParseAndLexContext context(arena->New<std::string>(input_file_name), trace);
+  ParseAndLexContext context(arena->New<std::string>(input_file_name),
+                             parser_debug);
 
   // Do the parse.
   auto parser = Parser(arena, scanner, context, &ast);
-  if (trace) {
+  if (parser_debug) {
     parser.set_debug_level(1);
   }
 
@@ -39,8 +41,8 @@ auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
   return *ast;
 }
 
-auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
-    -> ErrorOr<AST> {
+auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
+           bool parser_debug) -> ErrorOr<AST> {
   std::string name_str(input_file_name);
   FILE* input_file = fopen(name_str.c_str(), "r");
   if (input_file == nullptr) {
@@ -54,7 +56,8 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
   auto buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
   yy_switch_to_buffer(buffer, scanner);
 
-  ErrorOr<AST> result = ParseImpl(scanner, arena, input_file_name, trace);
+  ErrorOr<AST> result =
+      ParseImpl(scanner, arena, input_file_name, parser_debug);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);
@@ -65,7 +68,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name, bool trace)
 }
 
 auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
-                     std::string_view file_contents, bool trace)
+                     std::string_view file_contents, bool parser_debug)
     -> ErrorOr<AST> {
   // Prepare the lexer.
   yyscan_t scanner;
@@ -74,7 +77,8 @@ auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
       yy_scan_bytes(file_contents.data(), file_contents.size(), scanner);
   yy_switch_to_buffer(buffer, scanner);
 
-  ErrorOr<AST> result = ParseImpl(scanner, arena, input_file_name, trace);
+  ErrorOr<AST> result =
+      ParseImpl(scanner, arena, input_file_name, parser_debug);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);
