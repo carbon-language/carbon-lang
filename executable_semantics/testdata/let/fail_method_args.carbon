@@ -16,7 +16,7 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn SetX[me: Point](x :i32) {
+  fn SetX[me: Point](x: i32) {
     x = 10;
   }
 

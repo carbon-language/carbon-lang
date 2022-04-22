@@ -46,7 +46,7 @@ fn ScaleGeneric[U:! Vector](c: U, s: i32) -> U {
   return c.Scale(s);
 }
 
-fn AddAndScaleGeneric[T:! Vector, V:! Vector](a: T, b: V, s: i32) -> (T,V) {
+fn AddAndScaleGeneric[T:! Vector, V:! Vector](a: T, b: V, s: i32) -> (T, V) {
   return (ScaleGeneric(a.Add(a), s),
   	  ScaleGeneric(b.Add(b), s));
 }

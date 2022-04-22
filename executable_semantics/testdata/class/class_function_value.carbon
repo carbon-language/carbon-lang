@@ -21,6 +21,6 @@ class Point {
 }
 
 fn Main() -> i32 {
-  var f: __Fn()->Point = Point.Origin;
+  var f: __Fn() -> Point = Point.Origin;
   return f().x;
 }
