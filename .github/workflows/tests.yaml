@@ -29,14 +29,13 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # TODO: intentional breakage.
+        os: [ubuntuxx-latest, macos-latest]
         build_mode: [fastbuild, opt]
         include:
           # Includes a new variable `excluded_test_tags` for matrix entries
           # matching `build_mode`.
-          # TODO: can only specify `build_mode`?
-          - os: ubuntu-latest
-            build_mode: fastbuild
+          - build_mode: fastbuild
             excluded_test_tags: 'optonly'
 
     runs-on: ${{ matrix.os }}
