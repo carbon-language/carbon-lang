@@ -310,9 +310,9 @@ fn CompareBothWays(a: MyInt, b: i32, c: MyInt) -> bool {
 The behavior of `NotEqual` can be overridden separately from the behavior of
 `Equal` to support cases like floating-point NaN values, where two values can
 compare neither equal nor not-equal, and thus both functions would return
-`false`. However, an implementation of `EqWith` should *not*
-allow both `Equal` and `NotEqual` to return `true` for the same pair of values.
-Additionally, these operations should have no observable side-effects.
+`false`. However, an implementation of `EqWith` should _not_ allow both `Equal`
+and `NotEqual` to return `true` for the same pair of values. Additionally, these
+operations should have no observable side-effects.
 
 ```
 external impl like MyFloat as EqWith(like MyFloat) {
@@ -493,9 +493,9 @@ implementations for data classes do not permit implicit conversions on their
 arguments in general. Instead:
 
 -   Equality comparisons are permitted between any two data classes that have
-    the same _unordered set_ of field names, if each corresponding pair of fields
-    has an `EqWith` implementation. Fields are compared in the order they appear
-    in the left-hand operand.
+    the same _unordered set_ of field names, if each corresponding pair of
+    fields has an `EqWith` implementation. Fields are compared in the order they
+    appear in the left-hand operand.
 -   Relational comparisons are permitted between any two data classes that have
     the same _ordered sequence_ of field names, if each corresponding pair of
     fields has an `OrderedWith` implementation. Fields are compared in order.
