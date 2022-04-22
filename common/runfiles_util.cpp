@@ -29,6 +29,7 @@ static auto GetProgramPath() -> std::string {
 #else
   program_name = "/proc/self/exe";
 #endif
+  // Resolves symlinks to get to the actual binary.
   std::error_code error;
   program_name = std::filesystem::canonical(program_name, error);
   CHECK(error.value() == 0);
@@ -37,7 +38,6 @@ static auto GetProgramPath() -> std::string {
 
 auto GetRunfilesDir() -> std::string {
   std::string runfiles_dir = GetProgramPath() + ".runfiles";
-  llvm::errs() << "### runfiles dir=" << runfiles_dir << "\n";
   CHECK(std::filesystem::exists(runfiles_dir));
   return runfiles_dir;
 }
