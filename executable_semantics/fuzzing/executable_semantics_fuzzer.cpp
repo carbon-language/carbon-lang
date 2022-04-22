@@ -28,7 +28,7 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
   AddPrelude("executable_semantics/data/prelude.carbon", &arena,
              &ast->declarations);
   const ErrorOr<int> result =
-      ExecProgram(&arena, *ast, /*trace_stream=*/nullptr);
+      ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
   if (!result.ok()) {
     llvm::errs() << "Execution failed: " << result.error().message() << "\n";
     return;
