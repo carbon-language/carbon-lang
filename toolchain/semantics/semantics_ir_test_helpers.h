@@ -9,6 +9,7 @@
 #include <gtest/gtest-matchers.h>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon::Testing {
@@ -79,6 +80,16 @@ inline void PrintTo(const SemanticsIR::Node& node, std::ostream* output) {
       Testing::g_semantics_ir->GetFunction(node);
   CHECK(function != llvm::None);
   *output << *function;
+}
+
+// Prints a node for gmock. Needs to be in the matching namespace.
+inline void PrintTo(const SemanticsIR::Block& block, std::ostream* output) {
+  *output << "Block{";
+  llvm::ListSeparator sep;
+  for (const auto& entry : block.name_lookup()) {
+    *output << llvm::StringRef(sep) << entry.getKey();
+  }
+  *output << "}";
 }
 
 }  // namespace Carbon

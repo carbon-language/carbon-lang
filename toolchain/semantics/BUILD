@@ -48,6 +48,7 @@ cc_library(
         ":semantics_ir",
         "//common:check",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 

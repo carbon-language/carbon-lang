@@ -94,6 +94,8 @@ class ParseTree {
   // Returns the token the given parse tree node models.
   [[nodiscard]] auto node_token(Node n) const -> TokenizedBuffer::Token;
 
+  [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
+
   // Returns the text backing the token for the given node.
   //
   // This is a convenience method for chaining from a node through its token to

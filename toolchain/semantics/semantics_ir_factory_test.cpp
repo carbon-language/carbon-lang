@@ -74,19 +74,31 @@ TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
 TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(fn Foo() {}
-             fn Foo() {}
-            )");
+           fn Foo() {}
+          )");
   EXPECT_THAT(
       g_semantics_ir->root_block(),
       Block(ElementsAre(FunctionName("Foo"), FunctionName("Foo")),
             UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo")))));
 }
 
+TEST_F(SemanticsIRFactoryTest, FunctionOrder) {
+  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
+  Build(R"(fn Foo() {}
+           fn Bar() {}
+          )");
+  EXPECT_THAT(
+      g_semantics_ir->root_block(),
+      Block(ElementsAre(FunctionName("Bar"), FunctionName("Foo")),
+            UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo")),
+                                 MappedNode("Bar", FunctionName("Bar")))));
+}
+
 TEST_F(SemanticsIRFactoryTest, FunctionBody) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() { var x: i32 = 0; }");
   EXPECT_THAT(g_semantics_ir->root_block(),
-              Block(ElementsAre(FunctionName("Foo"), FunctionName("Foo")),
+              Block(ElementsAre(FunctionName("Foo")),
                     ElementsAre(MappedNode("Foo", FunctionName("Foo")))));
 }
 

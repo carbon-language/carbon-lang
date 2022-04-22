@@ -75,6 +75,11 @@ auto ParseTree::node_token(Node n) const -> TokenizedBuffer::Token {
   return node_impls_[n.index_].token;
 }
 
+auto ParseTree::node_subtree_size(Node n) const -> int32_t {
+  CHECK(n.is_valid());
+  return node_impls_[n.index_].subtree_size;
+}
+
 auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
   CHECK(n.is_valid());
   return tokens_->GetTokenText(node_impls_[n.index_].token);

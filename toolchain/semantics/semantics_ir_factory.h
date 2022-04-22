@@ -6,6 +6,7 @@
 #define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/iterator_range.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 
@@ -18,19 +19,29 @@ class SemanticsIRFactory {
   static auto Build(const ParseTree& parse_tree) -> SemanticsIR;
 
  private:
+  using ParseTreeIterator = std::reverse_iterator<ParseTree::PostorderIterator>;
+
   explicit SemanticsIRFactory(const ParseTree& parse_tree)
-      : semantics_(parse_tree) {}
+      : semantics_(parse_tree),
+        range_(llvm::reverse(parse_tree.postorder())),
+        cursor_(range_.begin()) {}
 
-  // Processes the roots of the ParseTree into semantics_, transitively
-  // handling children.
-  void ProcessRoots();
+  void Build();
 
-  // Turns a function node from the parse tree into a semantic function node,
-  // adding it to the containing scope.
-  void ProcessFunctionNode(SemanticsIR::Block& block,
-                           ParseTree::Node decl_node);
+  void ParseFunctionDeclaration(SemanticsIR::Block& block);
+
+  // Convenience accessor.
+  auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
+
+  auto GetSubtreeEnd() -> ParseTreeIterator {
+    auto iter = cursor_;
+    iter += parse_tree().node_subtree_size(*cursor_);
+    return iter;
+  }
 
   SemanticsIR semantics_;
+  llvm::iterator_range<ParseTreeIterator> range_;
+  ParseTreeIterator cursor_;
 };
 
 }  // namespace Carbon

@@ -4,6 +4,8 @@
 
 #include "toolchain/semantics/semantics_ir_factory.h"
 
+#include <stack>
+
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -13,54 +15,67 @@ namespace Carbon {
 
 auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
   SemanticsIRFactory builder(parse_tree);
-  builder.ProcessRoots();
+  builder.Build();
   return builder.semantics_;
 }
 
-void SemanticsIRFactory::ProcessRoots() {
-  for (ParseTree::Node node : semantics_.parse_tree_->roots()) {
-    switch (semantics_.parse_tree_->node_kind(node)) {
-      case ParseNodeKind::FunctionDeclaration():
-        ProcessFunctionNode(semantics_.root_block_, node);
-        break;
+void SemanticsIRFactory::Build() {
+  std::stack<int> depth_ends;
+  for (; cursor_ != range_.end();) {
+    ParseTree::Node n = *cursor_;
+    const auto node_kind = parse_tree().node_kind(n);
+    switch (node_kind) {
       case ParseNodeKind::FileEnd():
-        // No action needed.
+        // Discard.
+        CHECK(parse_tree().node_subtree_size(n) == 1);
+        ++cursor_;
+        break;
+      case ParseNodeKind::FunctionDeclaration():
+        ParseFunctionDeclaration(semantics_.root_block_);
         break;
       default:
-        FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->node_kind(node).name();
+        FATAL() << "Unhandled node kind at index " << n.index() << ": "
+                << node_kind.name();
     }
   }
 }
 
-void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
-                                             ParseTree::Node decl_node) {
-  llvm::Optional<ParseTree::Node> code_block;
-  llvm::Optional<Semantics::Function> fn;
-  for (ParseTree::Node node : semantics_.parse_tree_->children(decl_node)) {
-    llvm::errs() << semantics_.parse_tree_->node_kind(node).name() << "\n";
-    switch (semantics_.parse_tree_->node_kind(node)) {
+void SemanticsIRFactory::ParseFunctionDeclaration(SemanticsIR::Block& block) {
+  ParseTree::Node decl_node = *cursor_;
+  CHECK(parse_tree().node_kind(decl_node) ==
+        ParseNodeKind::FunctionDeclaration());
+  auto subtree_end = GetSubtreeEnd();
+  ++cursor_;
+
+  while (cursor_ != subtree_end) {
+    ParseTree::Node n = *cursor_;
+    const auto node_kind = parse_tree().node_kind(n);
+    llvm::Optional<Semantics::Function> fn;
+    /*
+    llvm::Optional<ParseTree::Node> code_block;
+    llvm::Optional<ParseTree::Node> return_type;
+    llvm::Optional<ParseTree::Node> parameter_list;
+    for (ParseTree::Node node : semantics_.parse_tree_->children(decl_node)) {
+      llvm::errs() << semantics_.parse_tree_->node_kind(node).name() << "\n";
+      */
+    switch (node_kind) {
       case ParseNodeKind::DeclaredName():
-        fn = semantics_.AddFunction(block, decl_node, node);
+        CHECK(parse_tree().node_subtree_size(n) == 1);
+        ++cursor_;
+        fn = semantics_.AddFunction(block, decl_node, n);
         break;
       case ParseNodeKind::ParameterList():
-        CHECK(fn);
-        // TODO: Maybe something like Semantics::AddVariable passed to
-        // Function::AddParameter.
+        cursor_ = GetSubtreeEnd();
         break;
       case ParseNodeKind::CodeBlock():
-        CHECK(!fn);
-        CHECK(!code_block);
-        code_block = node;
-        // TODO: Should accumulate the definition into the code block.
+        cursor_ = GetSubtreeEnd();
         break;
       case ParseNodeKind::ReturnType():
-        CHECK(fn);
-        // TODO
+        cursor_ = GetSubtreeEnd();
         break;
       default:
-        FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->node_kind(node).name();
+        FATAL() << "Unhandled node kind at index " << n.index() << ": "
+                << node_kind.name();
     }
   }
 }
