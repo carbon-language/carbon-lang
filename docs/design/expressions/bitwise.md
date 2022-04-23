@@ -184,7 +184,7 @@ implementing the following family of interfaces:
 
 ```
 // Unary `^`.
-interface Complement {
+interface BitComplement {
   let Result:! Type = Self;
   fn Op[me: Self]() -> Result;
 }
@@ -247,7 +247,7 @@ constraint RightShift {
 
 Given `x: T` and `y: U`:
 
--   The expression `^x` is rewritten to `x.(Complement.Op)()`.
+-   The expression `^x` is rewritten to `x.(BitComplement.Op)()`.
 -   The expression `x & y` is rewritten to `x.(BitAndWith(U).Op)(y)`.
 -   The expression `x | y` is rewritten to `x.(BitOrWith(U).Op)(y)`.
 -   The expression `x ^ y` is rewritten to `x.(BitXorWith(U).Op)(y)`.
