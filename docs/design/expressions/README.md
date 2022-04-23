@@ -237,30 +237,30 @@ fn Q(x: X) { x.(I.F)(); }
 
 Most expressions are modeled as operators:
 
-| Category   | Operator                        | Syntax         | Function                                                              |
-| ---------- | ------------------------------- | -------------- | --------------------------------------------------------------------- | ------------------------------- | ------------------------------ |
-| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`           | The negation of `x`.                                                  |
-| Bitwise    | [`^`](bitwise.md) (unary)       | `^x`           | The bitwise complement of `x`.                                        |
-| Arithmetic | [`+`](arithmetic.md)            | `x + y`        | The sum of `x` and `y`.                                               |
-| Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`        | The difference of `x` and `y`.                                        |
-| Arithmetic | [`*`](arithmetic.md)            | `x * y`        | The product of `x` and `y`.                                           |
-| Arithmetic | [`/`](arithmetic.md)            | `x / y`        | `x` divided by `y`, or the quotient thereof.                          |
-| Arithmetic | [`%`](arithmetic.md)            | `x % y`        | `x` modulo `y`.                                                       |
-| Bitwise    | [`&`](bitwise.md)               | `x & y`        | The bitwise AND of `x` and `y`.                                       |
-| Bitwise    | [`                              | `](bitwise.md) | `x                                                                    | y`                              | The bitwise OR of `x` and `y`. |
-| Bitwise    | [`^`](bitwise.md) (binary)      | `x             | y`                                                                    | The bitwise XOR of `x` and `y`. |
-| Bitwise    | [`<<`](bitwise.md)              | `x << y`       | `x` bit-shifted left `y` places.                                      |
-| Bitwise    | [`>>`](bitwise.md)              | `x >> y`       | `x` bit-shifted right `y` places.                                     |
-| Conversion | [`as`](as_expressions.md)       | `x as T`       | Converts the value `x` to the type `T`.                               |
-| Comparison | [`==`](comparison_operators.md) | `x == y`       | Equality: `true` if `x` is equal to `y`.                              |
-| Comparison | [`!=`](comparison_operators.md) | `x != y`       | Inequality: `true` if `x` is not equal to `y`.                        |
-| Comparison | [`<`](comparison_operators.md)  | `x < y`        | Less than: `true` if `x` is less than `y`.                            |
-| Comparison | [`<=`](comparison_operators.md) | `x <= y`       | Less than or equal: `true` if `x` is less than or equal to `y`.       |
-| Comparison | [`>`](comparison_operators.md)  | `x > y`        | Greater than: `true` if `x` is greater than to `y`.                   |
-| Comparison | [`>=`](comparison_operators.md) | `x >= y`       | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
-| Logical    | [`and`](logical_operators.md)   | `x and y`      | A short-circuiting logical AND: `true` if both operands are `true`.   |
-| Logical    | [`or`](logical_operators.md)    | `x or y`       | A short-circuiting logical OR: `true` if either operand is `true`.    |
-| Logical    | [`not`](logical_operators.md)   | `not x`        | Logical NOT: `true` if the operand is `false`.                        |
+| Category   | Operator                        | Syntax    | Function                                                              |
+| ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
+| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
+| Bitwise    | [`^`](bitwise.md) (unary)       | `^x`      | The bitwise complement of `x`.                                        |
+| Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
+| Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
+| Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |
+| Arithmetic | [`/`](arithmetic.md)            | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
+| Arithmetic | [`%`](arithmetic.md)            | `x % y`   | `x` modulo `y`.                                                       |
+| Bitwise    | [`&`](bitwise.md)               | `x & y`   | The bitwise AND of `x` and `y`.                                       |
+| Bitwise    | [`\|`](bitwise.md)              | `x \| y`  | The bitwise OR of `x` and `y`.                                        |
+| Bitwise    | [`^`](bitwise.md) (binary)      | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
+| Bitwise    | [`<<`](bitwise.md)              | `x << y`  | `x` bit-shifted left `y` places.                                      |
+| Bitwise    | [`>>`](bitwise.md)              | `x >> y`  | `x` bit-shifted right `y` places.                                     |
+| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
+| Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
+| Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
+| Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
+| Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
+| Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
+| Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
+| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
+| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
+| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
 ## Conversions and casts
 
