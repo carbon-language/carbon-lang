@@ -108,11 +108,15 @@ graph BT
     not["not x"]
     click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
+    logicalOperand((" "))
+
     and>"x and y"]
     click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
     or>"x or y"]
     click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    logicalExpression((" "))
 
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
@@ -128,13 +132,16 @@ graph BT
     multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
-    and & or --> comparison & not
-    if & expressionEnd --> and & or
+    logicalOperand --> comparison & not
+    and & or --> logicalOperand
+    logicalExpression --> and & or
+    if & expressionEnd --> logicalExpression
 ```
 
 The diagram's attributes are:
 
--   Each node represents a precedence group.
+-   Each non-empty node represents a precedence group. Empty circles are used to
+    simplify the graph, and do not represent a precedence group.
 
 -   When an expression is composed from different precedence groups, the
     interpretation is determined by the precedence edges:
