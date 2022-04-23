@@ -259,8 +259,7 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Don't provide an xor operator](/proposals/p1191.md#dont-provide-an-xor-operator)
--   [Use `~` for complement](/proposals/p1191.md#use--for-complement)
+-   [Use different symbols for bitwise operators](/proposals/p1191.md#use-different-symbols-for-bitwise-operators)
 -   [Provide different operators for arithmetic and logical shifts](/proposals/p1191.md#provide-different-operators-for-arithmetic-and-logical-shifts)
 -   [Provide rotate operators](/proposals/p1191.md#provide-rotate-operators)
 -   [Support shifting a constant by a variable](/proposals/p1191.md#support-shifting-a-constant-by-a-variable)
