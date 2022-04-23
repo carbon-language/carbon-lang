@@ -55,11 +55,17 @@ standard library.
 ## Precedence and associativity
 
 ```mermaid
-graph TD
-    negation["-x"] --> multiplicative & modulo
-    multiplicative>"x * y<br> x / y"] --> additive
-    additive>"x + y<br> x - y"]
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+graph BT
+    negation["-x"]
+    multiplication>"x * y<br>
+                    x / y"]
+    addition>"x + y<br>
+              x - y"]
     modulo["x % y"]
+
+    multiplication & modulo --> negation
+    addition --> multiplication
 ```
 
 <small>[Instructions for reading this diagram.](README.md#precedence)</small>
