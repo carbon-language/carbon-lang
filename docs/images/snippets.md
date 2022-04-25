@@ -49,6 +49,7 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 // C++:
 #include <math.h>
 
+#include <iostream>
 #include <span>
 #include <vector>
 
@@ -56,12 +57,12 @@ struct Vector2D {
   float x, y;
 };
 
-auto WriteTotalLength(std::span<Vector2D> vectors) {
-  var sum: f32 = 0;
+void WriteTotalLength(std::span<Vector2D> vectors) {
+  float sum = 0;
   for (const Vector2D& v : vectors) {
     sum += sqrt(v.x * v.x + v.y * v.y);
   }
-  Console.WriteLine("Total length: {0}", sum);
+  std::cout << "Total length: " << sum << "\n";
 }
 
 auto main(int argc, char** argv) -> int {
