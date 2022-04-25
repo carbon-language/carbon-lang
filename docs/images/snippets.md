@@ -77,7 +77,7 @@ fn WriteWithTotal(v: Slice(u64)) {
     sum += e;
     Console.WriteLine(e);
   }
-  Console.WriteLine(f"Total: {0}", sum);
+  Console.WriteLine("Total: {0}", sum);
 }
 
 fn Main() -> i64 {
