@@ -47,20 +47,28 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 
 ```cpp
 // C++:
-#include <iostream>
-#include <span>
+#include <math.h>
 
-void WriteWithTotal(const std::span<uint64_t>& v) {
-  uint64_t sum = 0;
-  for (uint64_t e : v) {
-    sum += e;
-    std::cout << e << "\n";
+#include <span>
+#include <vector>
+
+struct Vector2D {
+  float x, y;
+};
+
+auto WriteTotalLength(std::span<Vector2D> vectors) {
+  var sum: f32 = 0;
+  for (const Vector2D& v : vectors) {
+    sum += sqrt(v.x * v.x + v.y * v.y);
   }
-  std::cout << "Total: " <<  sum << "\n";
+  Console.WriteLine("Total length: {0}", sum);
 }
 
 auto main(int argc, char** argv) -> int {
-  WriteWithTotal({1, 2, 3});
+  std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  // Carbon's `Slice` supports implicit constructor from `std::vector`,
+  // similar to `std::span`.
+  WriteTotalLength(vectors);
   return 0;
 }
 ```
@@ -69,19 +77,26 @@ auto main(int argc, char** argv) -> int {
 
 ```cpp
 // Carbon:
-package Summing api;
+package Vector2DLength api;
 
-fn WriteWithTotal(v: Slice(u64)) {
-  var sum: u64 = 0;
-  for (e: u64 in v) {
-    sum += e;
-    Console.WriteLine(e);
-  }
-  Console.WriteLine("Total: {0}", sum);
+import Math;
+
+class Vector2D {
+  public var x: f32;
+  public var y: f32;
 }
 
-fn Main() -> i64 {
-  WriteWithTotal((1, 2, 3));
+fn WriteTotalLength(vectors: Slice(Vector2D)) {
+  var sum: f32 = 0;
+  for (v: Vector2D in vectors) {
+    sum += Math.Sqrt(v.x * v.x + v.y * v.y);
+  }
+  Console.WriteLine("Total length: {0}", sum);
+}
+
+fn Main() -> i32 {
+  Array<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  WriteTotalLength(vectors);
   return 0;
 }
 ```
@@ -89,24 +104,34 @@ fn Main() -> i64 {
 ### Mixed
 
 ```cpp
-// Carbon exposing a function for C++:
-package Summing api;
+// C++ code used in both Carbon and C++:
+struct Vector2D {
+  float x, y;
+};
 
-fn WriteWithTotal(v: Slice(u64)) {
-  var sum: u64 = 0;
-  for (e: u64 in v) {
-    sum += e;
-    Console.WriteLine(e);
+// Carbon exposing a function for C++:
+package Vector2DLength api;
+
+import Cpp library "vector2d.h";
+import Math;
+
+fn WriteTotalLength(vectors: Slice(Cpp.Vector2D)) {
+  var sum: f32 = 0;
+  for (v: Cpp.Vector2D in vectors) {
+    sum += Math.Sqrt(v.x * v.x + v.y * v.y);
   }
-  Console.WriteLine("Total: {0}", sum);
+  Console.WriteLine("Total length: {0}", sum);
 }
 
 // C++ calling Carbon:
-#include "summing.carbon.h"
+#include "vector2d.h"
+#include "vectorlength.carbon.h"
 
 auto main(int argc, char** argv) -> int {
-  // Implicitly constructs Carbon::Slice from std::initializer_list.
-  Summing::WriteWithTotal({1, 2, 3});
+  std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  // Carbon's `Slice` supports implicit constructor from `std::vector`,
+  // similar to `std::span`.
+  Vector2DLength::WriteTotalLength(vectors);
   return 0;
 }
 ```
