@@ -94,7 +94,7 @@ fn WriteTotalLength(vectors: Slice(Vector2D)) {
 }
 
 fn Main() -> i32 {
-  Array<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  Array(Vector2D) vectors = {{1.0, 2.0}, {2.0, 3.0}};
   // Carbon's `Slice` supports implicit construction from `Array`.
   WriteTotalLength(vectors);
   return 0;
