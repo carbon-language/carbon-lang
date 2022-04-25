@@ -75,20 +75,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 This documentation describes the design of the Carbon language, and the
-rationale for that design. The goal is to provide sufficient coverage of the
-design to support the following audiences:
-
--   People who wish to determine whether Carbon would be the right choice to use
-    for a project compared to other existing languages.
--   People working on the evolution of the Carbon language who wish to
-    understanding the rationale and motivation for existing design decisions.
--   People working on a specification or implementation of the Carbon language
-    who need a detailed understanding of the intended design.
--   People writing Carbon code who wish to understand why the language rules are
-    the way they are.
-
-For Carbon developers, documentation that is more suitable for learning the
-language will be made available separately.
+rationale for that design.
 
 ## Context and disclaimer
 
@@ -123,9 +110,8 @@ themselves) is also important. It is both an important signal but also a bias.
 ### Example code
 
 In order to keep example code consistent, we are making choices that may change
-later. In particular, where `$` is shown in examples, it is a placeholder: `$`
-is a well-known bad symbol due to international keyboard layouts, and will be
-cleaned up during evolution.
+later. In particular, where `$` is only used as a placeholder in examples, and
+will be replaced during evolution.
 
 ## Basic syntax
 
