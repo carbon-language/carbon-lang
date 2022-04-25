@@ -81,8 +81,8 @@ package Vector2DLength api;
 import Math;
 
 class Vector2D {
-  public var x: f32;
-  public var y: f32;
+  var x: f32;
+  var y: f32;
 }
 
 fn WriteTotalLength(vectors: Slice(Vector2D)) {
