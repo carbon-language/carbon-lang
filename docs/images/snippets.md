@@ -66,8 +66,7 @@ auto WriteTotalLength(std::span<Vector2D> vectors) {
 
 auto main(int argc, char** argv) -> int {
   std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
-  // Carbon's `Slice` supports implicit constructor from `std::vector`,
-  // similar to `std::span`.
+  // C++'s `std::span` supports implicit construction from `std::vector`.
   WriteTotalLength(vectors);
   return 0;
 }
@@ -96,6 +95,7 @@ fn WriteTotalLength(vectors: Slice(Vector2D)) {
 
 fn Main() -> i32 {
   Array<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  // Carbon's `Slice` supports implicit construction from `Array`.
   WriteTotalLength(vectors);
   return 0;
 }
@@ -129,7 +129,7 @@ fn WriteTotalLength(vectors: Slice(Cpp.Vector2D)) {
 
 auto main(int argc, char** argv) -> int {
   std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
-  // Carbon's `Slice` supports implicit constructor from `std::vector`,
+  // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
   Vector2DLength::WriteTotalLength(vectors);
   return 0;
