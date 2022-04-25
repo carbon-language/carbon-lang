@@ -22,62 +22,124 @@ auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
 void SemanticsIRFactory::Build() {
   std::stack<int> depth_ends;
   for (; cursor_ != range_.end();) {
-    ParseTree::Node n = *cursor_;
-    const auto node_kind = parse_tree().node_kind(n);
+    const auto node_kind = parse_tree().node_kind(*cursor_);
     switch (node_kind) {
       case ParseNodeKind::FileEnd():
         // Discard.
-        CHECK(parse_tree().node_subtree_size(n) == 1);
+        CHECK(parse_tree().node_subtree_size(*cursor_) == 1);
         ++cursor_;
         break;
       case ParseNodeKind::FunctionDeclaration():
-        ParseFunctionDeclaration(semantics_.root_block_);
+        TransformFunctionDeclaration(semantics_.root_block_);
         break;
       default:
-        FATAL() << "Unhandled node kind at index " << n.index() << ": "
+        FATAL() << "Unhandled node kind at index " << (*cursor_).index() << ": "
                 << node_kind.name();
     }
   }
 }
 
-void SemanticsIRFactory::ParseFunctionDeclaration(SemanticsIR::Block& block) {
-  ParseTree::Node decl_node = *cursor_;
-  CHECK(parse_tree().node_kind(decl_node) ==
-        ParseNodeKind::FunctionDeclaration());
+void SemanticsIRFactory::MovePastChildlessNode() {
+  CHECK(parse_tree().node_subtree_size(*cursor_) == 1);
+  ++cursor_;
+}
+
+auto SemanticsIRFactory::TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
+                                         size_t& handlers_index) -> bool {
+  auto kind = parse_tree().node_kind(*cursor_);
+  while (handlers_index < handlers.size()) {
+    const auto& candidate = handlers[handlers_index];
+    if (kind == candidate.kind) {
+      candidate.handler();
+      if (candidate.ordering != Ordering::Repeated) {
+        ++handlers_index;
+      }
+      return true;
+    } else if (candidate.ordering != Ordering::Required) {
+      ++handlers_index;
+    } else {
+      FATAL() << "At index " << (*cursor_).index() << " expected "
+              << candidate.kind.name() << ", found " << kind.name();
+    }
+  }
+  return false;
+}
+
+void SemanticsIRFactory::TransformCursorChildrenOrdered(
+    llvm::ArrayRef<NodeHandler> handlers) {
   auto subtree_end = GetSubtreeEnd();
   ++cursor_;
 
+  size_t handlers_index = 0;
   while (cursor_ != subtree_end) {
     ParseTree::Node n = *cursor_;
-    const auto node_kind = parse_tree().node_kind(n);
-    llvm::Optional<Semantics::Function> fn;
-    /*
-    llvm::Optional<ParseTree::Node> code_block;
-    llvm::Optional<ParseTree::Node> return_type;
-    llvm::Optional<ParseTree::Node> parameter_list;
-    for (ParseTree::Node node : semantics_.parse_tree_->children(decl_node)) {
-      llvm::errs() << semantics_.parse_tree_->node_kind(node).name() << "\n";
-      */
-    switch (node_kind) {
-      case ParseNodeKind::DeclaredName():
-        CHECK(parse_tree().node_subtree_size(n) == 1);
-        ++cursor_;
-        fn = semantics_.AddFunction(block, decl_node, n);
-        break;
-      case ParseNodeKind::ParameterList():
-        cursor_ = GetSubtreeEnd();
-        break;
-      case ParseNodeKind::CodeBlock():
-        cursor_ = GetSubtreeEnd();
-        break;
-      case ParseNodeKind::ReturnType():
-        cursor_ = GetSubtreeEnd();
-        break;
-      default:
-        FATAL() << "Unhandled node kind at index " << n.index() << ": "
-                << node_kind.name();
+    if (!TryHandleCursor(handlers, handlers_index)) {
+      FATAL() << "At index " << (*cursor_).index() << " unexpected node, found "
+              << parse_tree().node_kind(*cursor_).name();
     }
+    CHECK(n != *cursor_) << "Handler didn't move past "
+                         << parse_tree().node_kind(*cursor_).name();
   }
+  // See if any non-optional handlers remain.
+  while (handlers_index < handlers.size()) {
+    const auto& candidate = handlers[handlers_index];
+    if (candidate.ordering == Ordering::Required) {
+      FATAL() << "Didn't use required handler for " << candidate.kind.name();
+    }
+    ++handlers_index;
+  }
+}
+
+auto SemanticsIRFactory::TransformDeclaredName() -> Semantics::DeclaredName {
+  CHECK(parse_tree().node_kind(*cursor_) == ParseNodeKind::DeclaredName());
+
+  Semantics::DeclaredName name(parse_tree().GetNodeText(*cursor_), *cursor_);
+  MovePastChildlessNode();
+  return name;
+}
+
+void SemanticsIRFactory::TransformFunctionDeclaration(
+    SemanticsIR::Block& block) {
+  CHECK(parse_tree().node_kind(*cursor_) ==
+        ParseNodeKind::FunctionDeclaration());
+
+  ParseTree::Node node = *cursor_;
+  llvm::Optional<Semantics::DeclaredName> name;
+  TransformCursorChildrenOrdered({
+      {.kind = ParseNodeKind::CodeBlock(),
+       .handler = [&]() { cursor_ = GetSubtreeEnd(); },
+       .ordering = Ordering::Optional},
+      {.kind = ParseNodeKind::ReturnType(),
+       .handler = [&]() { cursor_ = GetSubtreeEnd(); },
+       .ordering = Ordering::Optional},
+      {.kind = ParseNodeKind::ParameterList(),
+       .handler = [&]() { TransformParameterList(); }},
+      {.kind = ParseNodeKind::DeclaredName(),
+       .handler = [&]() { name = TransformDeclaredName(); }},
+  });
+  semantics_.AddFunction(block, Semantics::Function(node, *name));
+}
+
+void SemanticsIRFactory::TransformPatternBinding() {
+  CHECK(parse_tree().node_kind(*cursor_) == ParseNodeKind::PatternBinding());
+
+  ParseTree::Node node = *cursor_;
+  TransformCursorChildrenOrdered({});
+  CHECK(*cursor_ != node);
+}
+
+void SemanticsIRFactory::TransformParameterList() {
+  CHECK(parse_tree().node_kind(*cursor_) == ParseNodeKind::ParameterList());
+
+  ParseTree::Node node = *cursor_;
+  TransformCursorChildrenOrdered({
+      {.kind = ParseNodeKind::ParameterListEnd(),
+       .handler = [&]() { MovePastChildlessNode(); }},
+      {.kind = ParseNodeKind::PatternBinding(),
+       .handler = [&]() { TransformPatternBinding(); },
+       .ordering = Ordering::Repeated},
+  });
+  CHECK(*cursor_ != node);
 }
 
 }  // namespace Carbon

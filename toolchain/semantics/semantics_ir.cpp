@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/semantics/declared_name.h"
 
 namespace Carbon {
 
@@ -15,14 +16,10 @@ void SemanticsIR::Block::Add(llvm::StringRef name, Node named_entity) {
   name_lookup_.insert({name, named_entity});
 }
 
-auto SemanticsIR::AddFunction(Block& block, ParseTree::Node decl_node,
-                              ParseTree::Node name_node)
-    -> Semantics::Function& {
+void SemanticsIR::AddFunction(Block& block, Semantics::Function function) {
   int32_t index = functions_.size();
-  llvm::StringRef name = parse_tree_->GetNodeText(name_node);
-  functions_.push_back(Semantics::Function(decl_node, name, name_node));
-  block.Add(name, Node(Node::Kind::Function, index));
-  return functions_[index];
+  functions_.push_back(function);
+  block.Add(function.name().str(), Node(Node::Kind::Function, index));
 }
 
 }  // namespace Carbon

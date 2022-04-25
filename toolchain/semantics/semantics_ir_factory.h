@@ -8,6 +8,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/declared_name.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
@@ -21,6 +22,18 @@ class SemanticsIRFactory {
  private:
   using ParseTreeIterator = std::reverse_iterator<ParseTree::PostorderIterator>;
 
+  enum class Ordering {
+    Required,
+    Optional,
+    Repeated,
+  };
+
+  struct NodeHandler {
+    ParseNodeKind kind;
+    std::function<void()> handler;
+    Ordering ordering = Ordering::Required;
+  };
+
   explicit SemanticsIRFactory(const ParseTree& parse_tree)
       : semantics_(parse_tree),
         range_(llvm::reverse(parse_tree.postorder())),
@@ -28,7 +41,20 @@ class SemanticsIRFactory {
 
   void Build();
 
-  void ParseFunctionDeclaration(SemanticsIR::Block& block);
+  // Parses the children of the current node, calling handlers for the
+  // respective kind and producing errors if unexpected kinds are found.
+  // This is used in parsing to help guarantee that subtrees are properly
+  // parsed without skipping nodes.
+  void TransformCursorChildrenOrdered(llvm::ArrayRef<NodeHandler> handlers);
+  auto TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
+                       size_t& handlers_index) -> bool;
+
+  auto TransformDeclaredName() -> Semantics::DeclaredName;
+  void TransformPatternBinding();
+  void TransformFunctionDeclaration(SemanticsIR::Block& block);
+  void TransformParameterList();
+
+  void MovePastChildlessNode();
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }

@@ -5,8 +5,11 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "function",
-    hdrs = ["function.h"],
+    name = "nodes",
+    hdrs = [
+        "declared_name.h",
+        "function.h",
+    ],
     deps = [
         "//common:ostream",
         "//toolchain/parser:parse_tree",
@@ -18,7 +21,7 @@ cc_library(
     srcs = ["semantics_ir.cpp"],
     hdrs = ["semantics_ir.h"],
     deps = [
-        ":function",
+        ":nodes",
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
@@ -31,6 +34,7 @@ cc_library(
     srcs = ["semantics_ir_factory.cpp"],
     hdrs = ["semantics_ir_factory.h"],
     deps = [
+        ":nodes",
         ":semantics_ir",
         "//common:check",
         "//toolchain/lexer:tokenized_buffer",
@@ -59,11 +63,11 @@ cc_test(
     deps = [
         ":semantics_ir_factory",
         ":semantics_ir_test_helpers",
+        "//common:gtest_main",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
-        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )

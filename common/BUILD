@@ -41,6 +41,18 @@ cc_test(
     ],
 )
 
+# This does extra initialization on top of googletest's gtest_main in order to
+# provide stack traces.
+cc_library(
+    name = "gtest_main",
+    testonly = 1,
+    srcs = ["gtest_main.cpp"],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "indirect_value",
     hdrs = ["indirect_value.h"],

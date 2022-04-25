@@ -51,7 +51,8 @@ MATCHER_P(FunctionName, name_matcher,
     *result_listener << "node is not a function";
     return result_listener;
   } else {
-    return ExplainMatchResult(name_matcher, function->name(), result_listener);
+    return ExplainMatchResult(name_matcher, function->name().str(),
+                              result_listener);
   }
 }
 

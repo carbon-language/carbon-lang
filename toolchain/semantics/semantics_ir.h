@@ -74,11 +74,8 @@ class SemanticsIR {
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
-  // Creates a function, adds it to the enclosing scope, and returns a reference
-  // for further mutations. On a name collision, it will not be added to the
-  // scope, but will still be returned.
-  auto AddFunction(Block& block, ParseTree::Node decl_node,
-                   ParseTree::Node name_node) -> Semantics::Function&;
+  // Creates a function and adds it to the enclosing block.
+  void AddFunction(Block& block, Semantics::Function function);
 
   // Indexed by Token::Function.
   llvm::SmallVector<Semantics::Function, 0> functions_;

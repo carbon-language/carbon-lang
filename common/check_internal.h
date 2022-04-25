@@ -5,7 +5,10 @@
 #ifndef COMMON_CHECK_INTERNAL_H_
 #define COMMON_CHECK_INTERNAL_H_
 
+#include <exception>
+
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -19,6 +22,9 @@ class ExitingStream {
   // followed by additional output. Otherwise, it renders as "". Primarily used
   // when building macros around these streams.
   struct AddSeparator {};
+
+  // Prints the stack trace.
+  struct AddStackTrace {};
 
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
@@ -45,18 +51,29 @@ class ExitingStream {
     return *this;
   }
 
-  auto operator<<(AddSeparator /*discarded*/) -> ExitingStream& {
+  auto operator<<(AddSeparator /*add_separator*/) -> ExitingStream& {
     separator_ = true;
+    return *this;
+  }
+
+  // Helper for printing the stack trace before the actual message.
+  auto operator<<(AddStackTrace /*add_stack_trace*/) -> ExitingStream& {
+    llvm::errs() << "=== BEGIN STACK TRACE ===\n";
+    llvm::sys::PrintStackTrace(llvm::errs());
+    llvm::errs() << "===  END STACK TRACE  ===\n";
     return *this;
   }
 
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*discarded*/, ExitingStream& rhs) {
+  [[noreturn]] friend auto operator|(Helper /*helper*/,
+                                     ExitingStream& /*rhs*/) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    std::abort();
+    // We don't want to use `abort()` in order to avoid duplicate stack trace
+    // prints, but
+    std::quick_exit(1);
   }
 
  private:
