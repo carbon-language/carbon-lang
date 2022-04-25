@@ -94,6 +94,7 @@ fn WriteTotalLength(vectors: Slice(Vector2D)) {
 }
 
 fn Main() -> i32 {
+  // A dynamically sized array, similar to `std::vector`.
   Array(Vector2D) vectors = {{1.0, 2.0}, {2.0, 3.0}};
   // Carbon's `Slice` supports implicit construction from `Array`.
   WriteTotalLength(vectors);
