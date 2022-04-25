@@ -50,11 +50,10 @@ auto InterpPattern(Nonnull<const Pattern*> p, Nonnull<Arena*> arena,
 // The matches for generic variables in the pattern are output in
 // `generic_args`.
 // TODO: consider moving this to a separate header.
-[[nodiscard]] auto PatternMatch(Nonnull<const Value*> p,
-                                Nonnull<const Value*> v,
-                                SourceLocation source_loc,
-                                std::optional<Nonnull<RuntimeScope*>> bindings,
-                                BindingMap& generic_args) -> bool;
+[[nodiscard]] auto PatternMatch(
+    Nonnull<const Value*> p, Nonnull<const Value*> v, SourceLocation source_loc,
+    std::optional<Nonnull<RuntimeScope*>> bindings, BindingMap& generic_args,
+    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream) -> bool;
 
 }  // namespace Carbon
 

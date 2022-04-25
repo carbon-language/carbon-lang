@@ -17,5 +17,5 @@ fn f(x: i32, y: i32) -> i32 {
 }
 
 fn Main() -> i32 {
-  return f(2,3) - 5;
+  return f(2, 3) - 5;
 }

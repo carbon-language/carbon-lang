@@ -321,14 +321,24 @@ class ImplDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     ImplKind kind, Nonnull<Expression*> impl_type,
+                     Nonnull<Expression*> interface,
+                     std::vector<Nonnull<AstNode*>> deduced_params,
+                     std::vector<Nonnull<Declaration*>> members)
+      -> ErrorOr<Nonnull<ImplDeclaration*>>;
+
+  // Use `Create` instead.
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,
                   Nonnull<Expression*> interface,
+                  std::vector<Nonnull<GenericBinding*>> deduced_params,
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         kind_(kind),
         impl_type_(impl_type),
         interface_(interface),
+        deduced_parameters_(std::move(deduced_params)),
         members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -347,17 +357,32 @@ class ImplDeclaration : public Declaration {
   auto interface_type() const -> Nonnull<const Value*> {
     return *interface_type_;
   }
+  auto deduced_parameters() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_parameters_;
+  }
+  auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
+    return deduced_parameters_;
+  }
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  void set_impl_bindings(llvm::ArrayRef<Nonnull<const ImplBinding*>> imps) {
+    impl_bindings_ = imps;
+  }
+  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+    return impl_bindings_;
+  }
 
  private:
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;  // TODO: make this optional
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
+  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
 // Return the name of a declaration, if it has one.

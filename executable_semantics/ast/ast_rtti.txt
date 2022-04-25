@@ -56,3 +56,4 @@ abstract class Expression : AstNode;
   class IfExpression : Expression;
   class UnimplementedExpression : Expression;
   class ArrayTypeLiteral : Expression;
+  class InstantiateImpl : Expression;
