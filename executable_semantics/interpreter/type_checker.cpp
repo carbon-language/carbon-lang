@@ -61,8 +61,74 @@ static auto ExpectPointerType(SourceLocation source_loc,
   return Success();
 }
 
-// Returns whether *value represents a concrete type, as opposed to a
-// type pattern or a non-type value.
+// Returns whether the value is a valid result from a type expression,
+// as opposed to a non-type value.
+static auto IsType(Nonnull<const Value*> value) -> bool {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::Witness:
+      return false;
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StructType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::VariableType:
+    case Value::Kind::StringType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::AutoType:
+      return true;
+    case Value::Kind::TupleValue: {
+      for (Nonnull<const Value*> field : cast<TupleValue>(*value).elements()) {
+        if (!IsType(field)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case Value::Kind::NominalClassType: {
+      const NominalClassType& class_type = cast<NominalClassType>(*value);
+      // A NominalClassType is concrete if
+      // 1) it is not a generic class (has no type parameters), or
+      // 2) it is a generic class applied to some type arguments.
+      return !class_type.declaration().type_params().has_value() ||
+             !class_type.type_args().empty();
+    }
+  }
+}
+
+auto TypeChecker::ExpectIsType(SourceLocation source_loc,
+                               Nonnull<const Value*> value)
+    -> ErrorOr<Success> {
+  if (!IsType(value)) {
+    return CompilationError(source_loc)
+           << "Expected a type, but got " << *value;
+  } else {
+    return Success();
+  }
+}
+
+// Returns whether *value represents the type of a Carbon value, as
+// opposed to a type pattern or a non-type value.
 static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
@@ -78,6 +144,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
+    case Value::Kind::Witness:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -85,9 +152,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
-    case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
-    case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -100,13 +165,22 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AutoType:
       // `auto` isn't a concrete type, it's a pattern that matches types.
       return false;
-    case Value::Kind::TupleValue:
+    case Value::Kind::TupleValue: {
       for (Nonnull<const Value*> field : cast<TupleValue>(*value).elements()) {
         if (!IsConcreteType(field)) {
           return false;
         }
       }
       return true;
+    }
+    case Value::Kind::NominalClassType: {
+      const NominalClassType& class_type = cast<NominalClassType>(*value);
+      // A NominalClassType is concrete if
+      // 1) it is not a generic class (has no type parameters), or
+      // 2) it is a generic class applied to some type arguments.
+      return !class_type.declaration().type_params().has_value() ||
+             !class_type.type_args().empty();
+    }
   }
 }
 
@@ -212,12 +286,28 @@ auto TypeChecker::IsImplicitlyConvertible(
           }
           return true;
         }
+        case Value::Kind::TypeType: {
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+            if (!IsImplicitlyConvertible(source_element, destination)) {
+              return false;
+            }
+          }
+          return true;
+        }
         default:
           return false;
       }
     }
     case Value::Kind::TypeType:
       return destination->kind() == Value::Kind::InterfaceType;
+    case Value::Kind::InterfaceType:
+      return destination->kind() == Value::Kind::TypeType;
+    case Value::Kind::TypeOfClassType: {
+      const auto& class_type = cast<TypeOfClassType>(*source).class_type();
+      return ((!class_type.declaration().type_params().has_value()) ||
+              (!class_type.type_args().empty())) &&
+             destination->kind() == Value::Kind::TypeType;
+    }
     default:
       return false;
   }
@@ -1017,7 +1107,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<NominalClassType*> class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);
-          call.set_static_type(class_type);
+          call.set_static_type(arena_->New<TypeOfClassType>(class_type));
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1188,6 +1278,7 @@ auto TypeChecker::TypeCheckPattern(
                                        impl_scope, enclosing_value_category));
       ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                        InterpPattern(&binding.type(), arena_, trace_stream_));
+      RETURN_IF_ERROR(ExpectIsType(binding.source_loc(), type));
       if (expected) {
         if (IsConcreteType(type)) {
           RETURN_IF_ERROR(
@@ -1452,8 +1543,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
   if (!opt_stmt) {
     return CompilationError(source_loc)
            << "control-flow reaches end of function that provides a `->` "
-              "return "
-              "type without reaching a return statement";
+              "return type without reaching a return statement";
   }
   Nonnull<Statement*> stmt = *opt_stmt;
   switch (stmt->kind()) {
@@ -1593,6 +1683,7 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
     // And shouldn't the type of this be Type?
     ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
                      InterpExp(*return_expression, arena_, trace_stream_));
+    RETURN_IF_ERROR(ExpectIsType(f->source_loc(), ret_type));
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -1738,11 +1829,8 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
 
   // Process the Self parameter.
-  RETURN_IF_ERROR(TypeCheckExp(&iface_decl->self()->type(), enclosing_scope));
-  iface_decl->self()->set_static_type(
-      arena_->New<VariableType>(iface_decl->self()));
-  iface_decl->self()->set_symbolic_identity(&iface_decl->self()->static_type());
-
+  RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
+                                   enclosing_scope, ValueCategory::Let));
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
   }

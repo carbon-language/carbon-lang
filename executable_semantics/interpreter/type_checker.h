@@ -144,6 +144,11 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
+  // Verifies that *value represents the result of a type expression,
+  // as opposed to a non-type value.
+  auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
+      -> ErrorOr<Success>;
+
   // Verifies that *value represents a concrete type, as opposed to a
   // type pattern or a non-type value.
   auto ExpectIsConcreteType(SourceLocation source_loc,
