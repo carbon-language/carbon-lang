@@ -14,6 +14,9 @@ namespace Carbon {
 auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string;
 
+// Parses and executes a fuzzer-generated program.
+void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit);
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_FUZZING_FUZZER_UTIL_H_
