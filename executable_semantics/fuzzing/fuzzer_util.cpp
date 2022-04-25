@@ -6,6 +6,10 @@
 
 #include "common/check.h"
 #include "common/fuzzing/proto_to_carbon.h"
+#include "executable_semantics/interpreter/exec_program.h"
+#include "executable_semantics/syntax/parse.h"
+#include "executable_semantics/syntax/prelude.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
@@ -27,6 +31,27 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
                decl.function().name() == "Main";
       });
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
+}
+
+void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
+  const std::string source = ProtoToCarbonWithMain(compilation_unit);
+
+  Arena arena;
+  ErrorOr<AST> ast = ParseFromString(&arena, "Fuzzer.carbon", source,
+                                     /*parser_debug=*/false);
+  if (!ast.ok()) {
+    llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
+    return;
+  }
+  AddPrelude("executable_semantics/data/prelude.carbon", &arena,
+             &ast->declarations);
+  const ErrorOr<int> result =
+      ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
+  if (!result.ok()) {
+    llvm::errs() << "Execution failed: " << result.error().message() << "\n";
+    return;
+  }
+  llvm::outs() << "Executed OK: " << *result << "\n";
 }
 
 }  // namespace Carbon
