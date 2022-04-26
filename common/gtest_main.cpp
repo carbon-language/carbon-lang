@@ -8,7 +8,6 @@
 #include "llvm/Support/InitLLVM.h"
 
 auto main(int argc, char** argv) -> int {
-  printf("Running main() from gtest_main.cpp\n");
   testing::InitGoogleTest(&argc, argv);
   llvm::setBugReportMsg(
       "Please report issues to "
