@@ -5,7 +5,7 @@
 #ifndef COMMON_CHECK_INTERNAL_H_
 #define COMMON_CHECK_INTERNAL_H_
 
-#include <cstdlib>
+#include <unistd.h>
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
@@ -68,7 +68,7 @@ class ExitingStream {
     // We assume LLVM's exit handling is installed, which will stack trace on
     // std::abort(). We print a stack trace on construction, so this avoids that
     // stack trace on exit.
-    std::quick_exit(1);
+    _exit(1);
   }
 
  private:
