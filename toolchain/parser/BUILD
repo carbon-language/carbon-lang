@@ -20,7 +20,7 @@ cc_test(
     srcs = ["parse_node_kind_test.cpp"],
     deps = [
         ":parse_node_kind",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -67,12 +67,12 @@ cc_test(
         ":parse_node_kind",
         ":parse_test_helpers",
         ":parse_tree",
+        "//common:gtest_main",
         "//common:ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
-        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -109,7 +109,7 @@ cc_test(
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",
+        "//common:gtest_main",
         "//toolchain/lexer:token_kind",
-        "@com_google_googletest//:gtest_main",
     ],
 )

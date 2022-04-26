@@ -62,7 +62,7 @@ cc_test(
     deps = [
         ":fn_inserter",
         ":matcher_test_base",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
         "@llvm-project//clang:tooling",
     ],
 )
@@ -83,7 +83,7 @@ cc_test(
     deps = [
         ":for_range",
         ":matcher_test_base",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
         "@llvm-project//clang:tooling",
     ],
 )
@@ -105,7 +105,7 @@ cc_test(
     deps = [
         ":matcher_test_base",
         ":var_decl",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
         "@llvm-project//clang:tooling",
     ],
 )

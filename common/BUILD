@@ -18,7 +18,7 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
     ],
 )
 
@@ -37,7 +37,23 @@ cc_test(
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+    ],
+)
+
+# This does extra initialization on top of googletest's gtest_main in order to
+# provide stack traces on unexpected exits, because we normally rely on LLVM
+# code for that.
+#
+# This replaces "@com_google_googletest//:gtest_main";
+# "@com_google_googletest//:gtest" should still be used directly.
+cc_library(
+    name = "gtest_main",
+    testonly = 1,
+    srcs = ["gtest_main.cpp"],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -51,7 +67,7 @@ cc_test(
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
     ],
 )
 
@@ -85,7 +101,7 @@ cc_test(
     srcs = ["string_helpers_test.cpp"],
     deps = [
         ":string_helpers",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
