@@ -39,7 +39,7 @@ documentation for Carbon, including:
 
 -   [goals](project/goals.md), and the
     [principles](project/principles/README.md) and [roadmap](project/roadmap.md)
-    derived from those goals
+    derived from those goals,
 -   how the project works, and
 -   how to contribute.
 
