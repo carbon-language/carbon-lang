@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <gtest/gtest.h>
-#include <stdio.h>
 
 #include "llvm/Support/InitLLVM.h"
 
