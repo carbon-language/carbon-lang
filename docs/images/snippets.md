@@ -53,22 +53,22 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 #include <span>
 #include <vector>
 
-struct Vector2D {
-  float x, y;
+struct Circle {
+  float r;
 };
 
-void WriteTotalLength(std::span<Vector2D> vectors) {
-  float sum = 0;
-  for (const Vector2D& v : vectors) {
-    sum += sqrt(v.x * v.x + v.y * v.y);
+void WriteTotalLength(std::span<Circle> circles) {
+  float area = 0;
+  for (const Circle& c : circles) {
+    area += M_PI * c.r * c.r;
   }
-  std::cout << "Total length: " << sum << "\n";
+  std::cout << "Total area: " << area << "\n";
 }
 
 auto main(int argc, char** argv) -> int {
-  std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  std::vector<Circle> circles = {{1.0}, {2.0}, {3.0}};
   // C++'s `std::span` supports implicit construction from `std::vector`.
-  WriteTotalLength(vectors);
+  WriteTotalArea(circles);
   return 0;
 }
 ```
@@ -77,28 +77,27 @@ auto main(int argc, char** argv) -> int {
 
 ```cpp
 // Carbon:
-package Vector2DLength api;
+package Geometry api;
 
 import Math;
 
-class Vector2D {
-  var x: f32;
-  var y: f32;
+class Circle {
+  var r: f32;
 }
 
-fn WriteTotalLength(vectors: Slice(Vector2D)) {
-  var sum: f32 = 0;
-  for (v: Vector2D in vectors) {
-    sum += Math.Sqrt(v.x * v.x + v.y * v.y);
+fn WriteTotalArea(circles: Slice(Circle)) {
+  var area: f32 = 0;
+  for (c: Circle in circles) {
+    area += Math.Pi * c.r * c.r;
   }
-  Console.WriteLine("Total length: {0}", sum);
+  Console.WriteLine("Total area: {0}", area);
 }
 
 fn Main() -> i32 {
   // A dynamically sized array, similar to `std::vector`.
-  Array(Vector2D) vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  Array(Circle) circles = {{1.0}, {2.0}, {3.0}};
   // Carbon's `Slice` supports implicit construction from `Array`.
-  WriteTotalLength(vectors);
+  WriteTotalArea(circles);
   return 0;
 }
 ```
@@ -107,33 +106,34 @@ fn Main() -> i32 {
 
 ```cpp
 // C++ code used in both Carbon and C++:
-struct Vector2D {
-  float x, y;
+struct Circle {
+  float r;
 };
 
 // Carbon exposing a function for C++:
-package Vector2DLength api;
+package Geometry api;
 
-import Cpp library "vector2d.h";
+import Cpp library "circle.h";
 import Math;
 
-fn WriteTotalLength(vectors: Slice(Cpp.Vector2D)) {
-  var sum: f32 = 0;
-  for (v: Cpp.Vector2D in vectors) {
-    sum += Math.Sqrt(v.x * v.x + v.y * v.y);
+fn WriteTotalArea(circles: Slice(Circle)) {
+  var area: f32 = 0;
+  for (c: Cpp.Circle in circles) {
+    area += Math.Pi * c.r * c.r;
   }
-  Console.WriteLine("Total length: {0}", sum);
+  Console.WriteLine("Total area: {0}", area);
 }
 
 // C++ calling Carbon:
-#include "vector2d.h"
-#include "vectorlength.carbon.h"
+#include <vector>
+#include "circle.h"
+#include "geometry.carbon.h"
 
 auto main(int argc, char** argv) -> int {
-  std::vector<Vector2D> vectors = {{1.0, 2.0}, {2.0, 3.0}};
+  std::vector<Circle> circles = {{1.0, 2.0}, {2.0, 3.0}};
   // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
-  Vector2DLength::WriteTotalLength(vectors);
+  Geometry::WriteTotalArea(circles);
   return 0;
 }
 ```
