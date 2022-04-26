@@ -130,7 +130,7 @@ fn WriteTotalArea(circles: Slice(Circle)) {
 #include "geometry.carbon.h"
 
 auto main(int argc, char** argv) -> int {
-  std::vector<Circle> circles = {{1.0, 2.0}, {2.0, 3.0}};
+  std::vector<Circle> circles = {{1.0}, {2.0}, {3.0}};
   // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
   Geometry::WriteTotalArea(circles);
