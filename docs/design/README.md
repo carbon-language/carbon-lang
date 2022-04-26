@@ -109,9 +109,8 @@ themselves) is also important. It is both an important signal but also a bias.
 
 ### Example code
 
-In order to keep example code consistent, we are making choices that may change
-later. In particular, where `$` is only used as a placeholder in examples, and
-will be replaced during evolution.
+Some syntax used in example code is provisional or placeholder, and may change
+later.
 
 ## Basic syntax
 
@@ -823,7 +822,7 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-class Stack(T:$$ Type) {
+class Stack(template T:! Type) {
   var storage: Array(T);
 
   fn Push(value: T);
@@ -853,7 +852,7 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```carbon
-fn Convert[T:$$ Type](source: T, U:$$ Type) -> U {
+fn Convert[template T:! Type](source: T, template U:! Type) -> U {
   var converted: U = source;
   return converted;
 }
