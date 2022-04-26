@@ -2,21 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{executable_semantics} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
+// RUN: %{not} %{executable_semantics} %s 2>&1 | \
+// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false --dump-input=always -v %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_args_mismatch.carbon:14: type error in call: '(Type, Type)' is not implicitly convertible to '(Type)'
 
 package ExecutableSemanticsTest api;
 
 class Point(T:! Type) {
-  fn Origin(zero: T) -> Point(T) {
+  // Point(T, T) does not match class declaration
+  fn Origin(zero: T) -> Point(T, T) {
     return {.x = zero, .y = zero};
   }
 
-  fn GetX[me: Point(T)]() -> T {
+  fn GetX[me: Point(T, T)]() -> T {
     return me.x;
   }
 

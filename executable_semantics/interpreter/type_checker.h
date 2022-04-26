@@ -30,17 +30,27 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
- private:
   // Perform type argument deduction, matching the parameter type `param`
   // against the argument type `arg`. Whenever there is an VariableType
   // in the parameter type, it is deduced to be the corresponding type
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  auto ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
-                         Nonnull<const Value*> param_type,
-                         Nonnull<const Value*> arg_type) -> ErrorOr<Success>;
+  auto ArgumentDeduction(
+      SourceLocation source_loc,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
+      BindingMap& deduced, Nonnull<const Value*> param_type,
+      Nonnull<const Value*> arg_type) const -> ErrorOr<Success>;
 
+  // If `impl` can be an implementation of interface `iface` for the
+  // given `type`, then return an expression that will produce the witness
+  // for this `impl` (at runtime). Otherwise return std::nullopt.
+  auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
+                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
+                 SourceLocation source_loc) const
+      -> std::optional<Nonnull<Expression*>>;
+
+ private:
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
@@ -134,13 +144,18 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
+  // Verifies that *value represents the result of a type expression,
+  // as opposed to a non-type value.
+  auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
+      -> ErrorOr<Success>;
+
   // Verifies that *value represents a concrete type, as opposed to a
   // type pattern or a non-type value.
   auto ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value) -> ErrorOr<Success>;
 
   // Returns the field names of the class together with their types.
-  auto FieldTypes(const NominalClassType& class_type)
+  auto FieldTypes(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
   // Returns true if source_fields and destination_fields contain the same set
@@ -149,22 +164,49 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields);
+      llvm::ArrayRef<NamedValue> destination_fields) const;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
   auto IsImplicitlyConvertible(Nonnull<const Value*> source,
-                               Nonnull<const Value*> destination) -> bool;
+                               Nonnull<const Value*> destination) const -> bool;
 
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual)
-      -> ErrorOr<Success>;
+                  Nonnull<const Value*> expected,
+                  Nonnull<const Value*> actual) const -> ErrorOr<Success>;
 
+  // Construct a type that is the same as `type` except that occurrences
+  // of type variables (aka. `GenericBinding`) are replaced by their
+  // corresponding type in `dict`.
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) -> Nonnull<const Value*>;
+                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+
+  // For each deduced type parameter of a generic that has a
+  // non-trivial type (such as an interface), create an impl binding
+  // to serve as the parameter for passing a witness at runtime for
+  // the required impl.
+  auto CreateImplBindings(
+      llvm::ArrayRef<Nonnull<GenericBinding*>> deduced_parameters,
+      SourceLocation source_loc,
+      std::vector<Nonnull<const ImplBinding*>>& impl_bindings)
+      -> ErrorOr<Success>;
+
+  // Add all of the `impl_bindings` into the `scope`.
+  void BringImplsIntoScope(
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+      ImplScope& scope, SourceLocation source_loc);
+
+  // Find impls that satisfy all of the `impl_bindings`, but with the
+  // type variables in the `impl_bindings` replaced by the argument
+  // type in `deduced_type_args`.  The results are placed in the
+  // `impls` map.
+  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+                    const ImplScope& impl_scope, SourceLocation source_loc,
+                    BindingMap& deduced_type_args, ImplExpMap& impls) const
+      -> ErrorOr<Success>;
 
   // Sets value_node.constant_value() to `value`. Can be called multiple
   // times on the same value_node, so long as it is always called with

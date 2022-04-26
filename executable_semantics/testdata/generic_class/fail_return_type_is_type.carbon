@@ -7,25 +7,21 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: RUNTIME ERROR: {{.*}}/executable_semantics/testdata/experimental_continuation/fail_lifetime.carbon:21: undefined behavior: access to dead value 1
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_return_type_is_type.carbon:18: Expected a type, but got class Point
 
 package ExecutableSemanticsTest api;
 
-// Test that the read from x triggers an error because x is dead.
-// This test also demonstrates how by-reference free-variable capture
-// is dangerous and can happen inside continuations.
-
-fn capture() -> __Continuation {
-  var x: i32 = 1;
-  __continuation k {
-    var y: i32 = x;
+class Point(T:! Type) {
+  // The return type should be Point(T). Point by itself is not a type.
+  fn Create(x: T, y: T) -> Point {
+    return {.x = x, .y = y};
   }
-  return k;
+
+  var x: T;
+  var y: T;
 }
 
 fn Main() -> i32 {
-  var k: __Continuation = capture();
-  // error, lifetime of x is over
-  __run k;
-  return 0;
+  var p: Point(i32) = Point(i32).Create(0, 1);
+  return p.x;
 }

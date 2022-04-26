@@ -2,25 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{executable_semantics} %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: result: 0
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/fail_parameter_type.carbon:15: Expected a type, but got 42
 
 package ExecutableSemanticsTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  var x: i32;
-  var y: i32;
+// 42 cannot be used as the type of a parameter.
+fn f(x: 42) -> i32 {
+  return x - 1;
 }
 
 fn Main() -> i32 {
-  var f: __Fn() -> Point = Point.Origin;
-  return f().x;
+  return f(1);
 }
