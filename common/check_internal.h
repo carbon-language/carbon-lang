@@ -27,9 +27,8 @@ class ExitingStream {
 
   ExitingStream() {
     // Start all messages with a stack trace.
-    llvm::errs() << "=== BEGIN STACK TRACE ===\n";
+    llvm::errs() << "Stack trace:\n";
     llvm::sys::PrintStackTrace(llvm::errs());
-    llvm::errs() << "===  END STACK TRACE  ===\n";
   }
 
   [[noreturn]] ~ExitingStream() {
