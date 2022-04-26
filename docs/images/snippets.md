@@ -57,7 +57,7 @@ struct Circle {
   float r;
 };
 
-void WriteTotalLength(std::span<Circle> circles) {
+void WriteTotalArea(std::span<Circle> circles) {
   float area = 0;
   for (const Circle& c : circles) {
     area += M_PI * c.r * c.r;
