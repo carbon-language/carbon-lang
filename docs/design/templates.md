@@ -44,11 +44,11 @@ are subject to full instantiation -- other parameters will be type checked and
 bound early to the extent possible. For example:
 
 ```
-class Stack(Type$$ T) {
-  var Array(T) storage;
+class Stack(template T:! Type) {
+  var storage: Array(T);
 
-  fn Push(T value);
-  fn Pop() -> T;
+  fn Push[addr me: Self*](value: T);
+  fn Pop[addr me: Self*]() -> T;
 }
 ```
 
@@ -59,23 +59,23 @@ instantiation.
 
 ### Functions with template parameters
 
-Both implicit and explicit function parameters in Carbon can be marked as
+Both deduced and explicit function parameters in Carbon can be marked as
 template parameters. When called, the arguments to these parameters trigger
 instantiation of the function definition, fully type checking and resolving that
-definition after substituting in the provided (or computed if implicit)
+definition after substituting in the provided (or computed if deduced)
 arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```
-fn Convert[Type$$ T](T source, Type$$ U) -> U {
-  var U converted = source;
+fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+  var converted: U = source;
   return converted;
 }
 
-fn Foo(Int i) -> Float {
-  // Instantiates with the `T` implicit argument set to `Int` and the `U`
-  // explicit argument set to `Float`, then calls with the runtime value `i`.
-  return Convert(i, Float);
+fn Foo(i: i32) -> f32 {
+  // Instantiates with the `T` deduced argument set to `i32` and the `U`
+  // explicit argument set to `f32`, then calls with the runtime value `i`.
+  return Convert(i, f32);
 }
 ```
 
