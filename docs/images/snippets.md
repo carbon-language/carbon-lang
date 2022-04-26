@@ -95,7 +95,7 @@ fn WriteTotalArea(circles: Slice(Circle)) {
 
 fn Main() -> i32 {
   // A dynamically sized array, similar to `std::vector`.
-  Array(Circle) circles = {{1.0}, {2.0}, {3.0}};
+  var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0}, {.r = 3.0});
   // Carbon's `Slice` supports implicit construction from `Array`.
   WriteTotalArea(circles);
   return 0;
