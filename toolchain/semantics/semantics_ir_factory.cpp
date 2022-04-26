@@ -124,7 +124,13 @@ void SemanticsIRFactory::TransformPatternBinding() {
   CHECK(parse_tree().node_kind(*cursor_) == ParseNodeKind::PatternBinding());
 
   ParseTree::Node node = *cursor_;
-  TransformCursorChildrenOrdered({});
+  llvm::Optional<Semantics::DeclaredName> name;
+  TransformCursorChildrenOrdered({
+      {.kind = ParseNodeKind::Literal(),
+       .handler = [&]() { MovePastChildlessNode(); }},
+      {.kind = ParseNodeKind::DeclaredName(),
+       .handler = [&]() { name = TransformDeclaredName(); }},
+  });
   CHECK(*cursor_ != node);
 }
 
