@@ -457,7 +457,7 @@ best; however, framing their contributions to the discussion as surfacing the
 information that underpins that belief will make the discussion more
 constructive, welcoming, and effective. Overall, everyone should strive to focus
 on data-based arguments to the extent they can, minimizing their use of appeals
-to emotion.
+to emotion or excessive rhetoric.
 
 None of this should preclude gathering information like polls of opinion among
 groups, or signaling agreement. Where community members stand and how many agree
