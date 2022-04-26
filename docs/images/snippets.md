@@ -46,6 +46,7 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 ### C++
 
 ```cpp
+// C++:
 #include <math.h>
 
 #include <iostream>
