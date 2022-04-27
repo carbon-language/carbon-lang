@@ -5325,8 +5325,6 @@ external impl [T:! IntLike] like T
     as MultipliableWith(like T) where .Result = T;
 ```
 
-> > > > > > > upstream/trunk
-
 ## Future work
 
 ### Dynamic types
