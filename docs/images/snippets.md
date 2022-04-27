@@ -48,7 +48,6 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 ```cpp
 // C++:
 #include <math.h>
-
 #include <iostream>
 #include <span>
 #include <vector>
@@ -66,8 +65,8 @@ void WriteTotalArea(std::span<Circle> circles) {
 }
 
 auto main(int argc, char** argv) -> int {
-  std::vector<Circle> circles = {{1.0}, {2.0}, {3.0}};
-  // C++'s `std::span` supports implicit construction from `std::vector`.
+  std::vector<Circle> circles = {{1.0}, {2.0}};
+  // Implicitly constructors `span` from `vector`.
   WriteTotalArea(circles);
   return 0;
 }
@@ -78,7 +77,6 @@ auto main(int argc, char** argv) -> int {
 ```cpp
 // Carbon:
 package Geometry api;
-
 import Math;
 
 class Circle {
@@ -94,9 +92,9 @@ fn WriteTotalArea(circles: Slice(Circle)) {
 }
 
 fn Main() -> i32 {
-  // A dynamically sized array, similar to `std::vector`.
-  var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0}, {.r = 3.0});
-  // Carbon's `Slice` supports implicit construction from `Array`.
+  // A dynamically sized array, like `std::vector`.
+  var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0});
+  // Implicitly constructs `Slice` from `Array`.
   WriteTotalArea(circles);
   return 0;
 }
@@ -112,11 +110,10 @@ struct Circle {
 
 // Carbon exposing a function for C++:
 package Geometry api;
-
 import Cpp library "circle.h";
 import Math;
 
-fn WriteTotalArea(circles: Slice(Circle)) {
+fn WriteTotalArea(circles: Slice(Cpp.Circle)) {
   var area: f32 = 0;
   for (c: Cpp.Circle in circles) {
     area += Math.Pi * c.r * c.r;
@@ -130,7 +127,7 @@ fn WriteTotalArea(circles: Slice(Circle)) {
 #include "geometry.carbon.h"
 
 auto main(int argc, char** argv) -> int {
-  std::vector<Circle> circles = {{1.0}, {2.0}, {3.0}};
+  std::vector<Circle> circles = {{1.0}, {2.0}};
   // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
   Geometry::WriteTotalArea(circles);
