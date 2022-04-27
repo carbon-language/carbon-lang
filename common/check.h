@@ -24,7 +24,6 @@ namespace Carbon {
 #define CHECK(condition)                                                  \
   (condition) ? (void)0                                                   \
               : RAW_EXITING_STREAM()                                      \
-                    << Carbon::Internal::ExitingStream::AddStackTrace()   \
                     << "CHECK failure at " << __FILE__ << ":" << __LINE__ \
                     << ": " #condition                                    \
                     << Carbon::Internal::ExitingStream::AddSeparator()
@@ -42,8 +41,7 @@ namespace Carbon {
 // For example:
 //   FATAL() << "Unreachable!";
 #define FATAL()                                                              \
-  RAW_EXITING_STREAM() << Carbon::Internal::ExitingStream::AddStackTrace()   \
-                       << "FATAL failure at " << __FILE__ << ":" << __LINE__ \
+  RAW_EXITING_STREAM() << "FATAL failure at " << __FILE__ << ":" << __LINE__ \
                        << ": "
 
 }  // namespace Carbon

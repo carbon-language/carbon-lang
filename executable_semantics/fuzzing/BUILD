@@ -27,6 +27,10 @@ cc_library(
         "//common:check",
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
+        "//executable_semantics/interpreter:exec_program",
+        "//executable_semantics/syntax",
+        "//executable_semantics/syntax:prelude",
+        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -69,6 +73,28 @@ cc_binary(
     ],
 )
 
+filegroup(
+    name = "fuzzer_corpus_files",
+    srcs = glob(["fuzzer_corpus/**"]),
+)
+
+cc_test(
+    name = "fuzzer_util_test",
+    srcs = ["fuzzer_util_test.cpp"],
+    args = [
+        "$(locations fuzzer_corpus_files)",
+    ],
+    data = [
+        ":fuzzer_corpus_files",
+    ],
+    deps = [
+        ":fuzzer_util",
+        "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf_headers",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "proto_to_carbon_test",
     srcs = ["proto_to_carbon_test.cpp"],
@@ -91,21 +117,15 @@ cc_test(
     ],
 )
 
-# Needs `--config=proto-fuzzer` for `bazel build` / `bazel test`.
-cc_fuzz_test(
+# Needs `--config=proto-fuzzer` for `bazel build`.
+cc_binary(
     name = "executable_semantics_fuzzer",
-    size = "small",
+    testonly = 1,
     srcs = ["executable_semantics_fuzzer.cpp"],
-    corpus = glob(["fuzzer_corpus/**"]),
-    tags = ["manual"],
+    features = ["fuzzer"],
     deps = [
         ":fuzzer_util",
-        "//common/fuzzing:carbon_cc_proto",
-        "//executable_semantics/interpreter:exec_program",
-        "//executable_semantics/syntax",
-        "//executable_semantics/syntax:prelude",
         "@com_google_libprotobuf_mutator//:libprotobuf_mutator",
-        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )
