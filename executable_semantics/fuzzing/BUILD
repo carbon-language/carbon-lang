@@ -90,6 +90,7 @@ cc_test(
     deps = [
         ":fuzzer_util",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )

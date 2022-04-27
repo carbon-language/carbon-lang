@@ -64,8 +64,8 @@ cc_test(
         ":expression",
         ":pattern",
         ":statement",
+        "//common:gtest_main",
         "//executable_semantics/common:arena",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -144,8 +144,8 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
+        "//common:gtest_main",
         "//executable_semantics/common:arena",
-        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -188,8 +188,8 @@ cc_test(
         ":expression",
         ":paren_contents",
         ":pattern",
+        "//common:gtest_main",
         "//executable_semantics/common:arena",
-        "@com_google_googletest//:gtest_main",
         "@llvm-project//llvm:Support",
     ],
 )
