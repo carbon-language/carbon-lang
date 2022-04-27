@@ -66,6 +66,7 @@ cc_test(
         ":statement",
         "//common:gtest_main",
         "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -146,6 +147,7 @@ cc_test(
         ":paren_contents",
         "//common:gtest_main",
         "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -190,6 +192,7 @@ cc_test(
         ":pattern",
         "//common:gtest_main",
         "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

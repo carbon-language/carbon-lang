@@ -25,6 +25,7 @@ cc_test(
     deps = [
         ":token_kind",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -94,6 +95,7 @@ cc_test(
         "//common:gtest_main",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -145,6 +147,7 @@ cc_test(
         "//common:gtest_main",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -205,6 +208,7 @@ cc_test(
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

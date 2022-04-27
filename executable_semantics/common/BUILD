@@ -28,6 +28,7 @@ cc_test(
         ":error_builders",
         ":source_location",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

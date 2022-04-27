@@ -19,6 +19,7 @@ cc_test(
     deps = [
         ":check",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -38,6 +39,7 @@ cc_test(
     deps = [
         ":error",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -68,6 +70,7 @@ cc_test(
     deps = [
         ":indirect_value",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -102,6 +105,7 @@ cc_test(
     deps = [
         ":string_helpers",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

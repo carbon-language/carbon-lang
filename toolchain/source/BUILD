@@ -21,6 +21,7 @@ cc_test(
     deps = [
         ":source_buffer",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

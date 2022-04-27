@@ -21,6 +21,7 @@ cc_test(
     deps = [
         ":parse_node_kind",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -73,6 +74,7 @@ cc_test(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -111,5 +113,6 @@ cc_test(
         ":precedence",
         "//common:gtest_main",
         "//toolchain/lexer:token_kind",
+        "@com_google_googletest//:gtest",
     ],
 )
