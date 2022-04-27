@@ -4851,7 +4851,7 @@ fn ProcessVector(v: Vector(i32)) {
 }
 
 // Satisfies requirement that `Vector(i32)` must
-// implement `Iterable` since `i32` is `Equatable`.
+// implement `Equatable` since `i32` is `Equatable`.
 external impl Vector(T:! Equatable) as Equatable { ... }
 ```
 
@@ -4892,8 +4892,8 @@ different assignment.
 An [`observe` declaration](#observe-declarations) can be used to show that two
 types are equal so code can pass type checking without explicitly writing casts,
 without requiring the compiler to do a unbounded search that may not terminate.
-The compiler may need another form of `observe` declaration to see that a type
-implements an interface.
+An `observe` declaration can also be used to show that a type implements an
+interface, in cases where the compiler will not work this out for itself.
 
 ### Observing interface requirements
 
