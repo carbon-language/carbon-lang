@@ -41,10 +41,14 @@ class SemanticsIRFactory {
 
   void Build();
 
+  // Verifies the current node has no children and advances the cursor.
   void MovePastChildlessNode();
-
-  auto NodeUnexpectedError() -> std::string;
-  auto NodeKindWrongError(ParseNodeKind expected) -> std::string;
+  // Returns a string indicating the current node was unexpected, for a CHECK.
+  auto NodeUnexpectedMessage() -> std::string;
+  // Returns a string indicating the current node's kind is wrong, for a CHECK.
+  auto NodeKindWrongMessage(ParseNodeKind expected) -> std::string;
+  // CHECKs that the cursor points at a node of the expected kind.
+  void RequireNodeKind(ParseNodeKind expected);
 
   auto TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
                        size_t& handlers_index) -> bool;
@@ -53,18 +57,19 @@ class SemanticsIRFactory {
   // respective kind and producing errors if unexpected kinds are found.
   // This is used in parsing to help guarantee that subtrees are properly
   // parsed without skipping nodes.
-  void TransformCursorAsOrderedNodes(llvm::ArrayRef<NodeHandler> handlers);
+  void TransformChildrenAsOrderedNodes(llvm::ArrayRef<NodeHandler> handlers);
 
   // Parses the children of the current node as a list, calling item_handler
   // per item and expecting separators.
-  void TransformCursorAsList(ParseNodeKind item_kind,
-                             std::function<void()> item_handler,
-                             ParseNodeKind separator, ParseNodeKind list_end);
+  void TransformChildrenAsList(ParseNodeKind item_kind,
+                               std::function<void()> item_handler,
+                               ParseNodeKind separator, ParseNodeKind list_end);
 
   auto TransformDeclaredName() -> Semantics::DeclaredName;
-  void TransformPatternBinding();
   void TransformFunctionDeclaration(SemanticsIR::Block& block);
   void TransformParameterList();
+  void TransformPattern();
+  void TransformPatternBinding();
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }

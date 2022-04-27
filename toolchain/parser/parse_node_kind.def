@@ -42,7 +42,12 @@ CARBON_PARSE_NODE_KIND(ReturnStatement)
 CARBON_PARSE_NODE_KIND(StatementEnd)
 
 // Expressions.
-CARBON_PARSE_NODE_KIND(Literal)
+CARBON_PARSE_NODE_KIND(IntegerLiteral)
+CARBON_PARSE_NODE_KIND(RealLiteral)
+CARBON_PARSE_NODE_KIND(StringLiteral)
+CARBON_PARSE_NODE_KIND(IntegerTypeLiteral)
+CARBON_PARSE_NODE_KIND(UnsignedIntegerTypeLiteral)
+CARBON_PARSE_NODE_KIND(FloatingPointTypeLiteral)
 CARBON_PARSE_NODE_KIND(TupleLiteral)
 CARBON_PARSE_NODE_KIND(TupleLiteralComma)
 CARBON_PARSE_NODE_KIND(TupleLiteralEnd)

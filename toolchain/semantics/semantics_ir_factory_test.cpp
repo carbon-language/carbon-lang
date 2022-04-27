@@ -29,6 +29,7 @@ class SemanticsIRFactoryTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->has_errors());
+    llvm::errs() << *parse_tree;
     g_semantics_ir = SemanticsIRFactory::Build(*parse_tree);
   }
 
