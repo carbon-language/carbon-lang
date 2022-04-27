@@ -22,6 +22,7 @@ cc_test(
         ":syntax",
         "//common:gtest_main",
         "//executable_semantics/common:arena",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -152,5 +153,6 @@ cc_test(
         ":syntax",
         "//common:gtest_main",
         "//executable_semantics/ast:ast_test_matchers",
+        "@com_google_googletest//:gtest",
     ],
 )
