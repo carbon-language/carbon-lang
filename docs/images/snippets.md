@@ -18,7 +18,7 @@ A sample of quicksort in Carbon.
 ```cpp
 package Sorting api;
 
-fn Partition[T:! Comparable & Movable](s: Span(T))
+fn Partition[T:! Comparable & Movable](s: Slice(T))
      -> i64 {
   var i: i64 = -1;
 
@@ -31,7 +31,7 @@ fn Partition[T:! Comparable & Movable](s: Span(T))
   return i;
 }
 
-fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
+fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
   if (s.Size() <= 1) {
     return;
   }
