@@ -41,20 +41,30 @@ class SemanticsIRFactory {
 
   void Build();
 
+  void MovePastChildlessNode();
+
+  auto NodeUnexpectedError() -> std::string;
+  auto NodeKindWrongError(ParseNodeKind expected) -> std::string;
+
+  auto TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
+                       size_t& handlers_index) -> bool;
+
   // Parses the children of the current node, calling handlers for the
   // respective kind and producing errors if unexpected kinds are found.
   // This is used in parsing to help guarantee that subtrees are properly
   // parsed without skipping nodes.
-  void TransformCursorChildrenOrdered(llvm::ArrayRef<NodeHandler> handlers);
-  auto TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
-                       size_t& handlers_index) -> bool;
+  void TransformCursorAsOrderedNodes(llvm::ArrayRef<NodeHandler> handlers);
+
+  // Parses the children of the current node as a list, calling item_handler
+  // per item and expecting separators.
+  void TransformCursorAsList(ParseNodeKind item_kind,
+                             std::function<void()> item_handler,
+                             ParseNodeKind separator, ParseNodeKind list_end);
 
   auto TransformDeclaredName() -> Semantics::DeclaredName;
   void TransformPatternBinding();
   void TransformFunctionDeclaration(SemanticsIR::Block& block);
   void TransformParameterList();
-
-  void MovePastChildlessNode();
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
