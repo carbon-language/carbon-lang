@@ -1056,12 +1056,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::TypeOfClassType: {
           // This case handles the application of a generic class to
           // a type argument, such as Point(i32).
-          const ClassDeclaration& class_decl =
-              cast<TypeOfClassType>(call.function().static_type())
-                  .class_type()
-                  .declaration();
+          const NominalClassType& class_type =
+              cast<TypeOfClassType>(call.function().static_type()).class_type();
+          const ClassDeclaration& class_decl = class_type.declaration();
           BindingMap generic_args;
-          if (class_decl.type_params().has_value()) {
+          if (class_decl.type_params().has_value() &&
+              class_type.type_args().empty()) {
             if (trace_stream_) {
               **trace_stream_ << "pattern matching type params and args\n";
             }
@@ -1075,6 +1075,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
                                call.source_loc(), std::nullopt, generic_args,
                                trace_stream_));
+          } else if (!class_type.type_args().empty()) {
+            return CompilationError(call.source_loc())
+                   << "attempt to instantiate an already instantiated "
+                   << "generic class: " << *e;
           } else {
             return CompilationError(call.source_loc())
                    << "attempt to instantiate a non-generic class: " << *e;
@@ -1104,10 +1108,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               }
             }
           }
-          Nonnull<NominalClassType*> class_type =
+          Nonnull<NominalClassType*> inst_class_type =
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);
-          call.set_static_type(arena_->New<TypeOfClassType>(class_type));
+          call.set_static_type(arena_->New<TypeOfClassType>(inst_class_type));
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
