@@ -173,11 +173,7 @@ void SemanticsIRFactory::TransformParameterList() {
       ParseNodeKind::ParameterListComma(), ParseNodeKind::ParameterListEnd());
 }
 
-void SemanticsIRFactory::TransformPattern() {
-  auto token = parse_tree().node_token(*cursor_);
-
-  MovePastChildlessNode();
-}
+void SemanticsIRFactory::TransformPattern() { MovePastChildlessNode(); }
 
 void SemanticsIRFactory::TransformPatternBinding() {
   CHECK(parse_tree().node_kind(*cursor_) == ParseNodeKind::PatternBinding());
@@ -185,10 +181,10 @@ void SemanticsIRFactory::TransformPatternBinding() {
   ParseTree::Node node = *cursor_;
   llvm::errs() << "Pattern binding at " << node.index() << "\n";
   llvm::Optional<Semantics::DeclaredName> name;
-  llvm::Optional<Semantics::IntegerTypeLiteral> type;
   TransformChildrenAsOrderedNodes({
-      {.kind = ParseNodeKind::IntegerTypeLiteral(),
-       .handler = [&]() { type = TransformPattern(); }},
+      // TODO: Need to rewrite to handle expressions here.
+      {.kind = ParseNodeKind::Literal(),
+       .handler = [&]() { TransformPattern(); }},
       {.kind = ParseNodeKind::DeclaredName(),
        .handler = [&]() { name = TransformDeclaredName(); }},
   });
