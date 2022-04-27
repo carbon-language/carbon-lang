@@ -31,6 +31,7 @@ cc_test(
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
