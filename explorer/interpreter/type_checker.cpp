@@ -23,6 +23,7 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
 using llvm::isa;
 
 namespace Carbon {
@@ -267,7 +268,9 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
         FindField(destination_fields, source_field.name);
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
-                                 destination_field.value().value)) {
+                                 destination_field.value().value,
+                                 // FIXME
+                                 std::nullopt)) {
       return false;
     }
   }
@@ -295,8 +298,11 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
-    Nonnull<const Value*> source, Nonnull<const Value*> destination) const
-    -> bool {
+    Nonnull<const Value*> source, Nonnull<const Value*> destination,
+    std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool {
+  // Check for an exact match or for an implicit conversion.
+  // FIXME: `impl`s of `ImplicitAs` should be provided to cover these
+  // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
   if (TypeEqual(source, destination)) {
@@ -306,16 +312,23 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType:
-          return FieldTypesImplicitlyConvertible(
+          if (FieldTypesImplicitlyConvertible(
               cast<StructType>(*source).fields(),
-              cast<StructType>(*destination).fields());
+              cast<StructType>(*destination).fields())) {
+            return true;
+          }
+          break;
         case Value::Kind::NominalClassType:
-          return FieldTypesImplicitlyConvertible(
-              cast<StructType>(*source).fields(),
-              FieldTypes(cast<NominalClassType>(*destination)));
+          if (FieldTypesImplicitlyConvertible(
+                  cast<StructType>(*source).fields(),
+                  FieldTypes(cast<NominalClassType>(*destination)))) {
+            return true;
+          }
+          break;
         default:
-          return false;
+          break;
       }
+      break;
     case Value::Kind::TupleValue: {
       const auto& source_tuple = cast<TupleValue>(*source);
       switch (destination->kind()) {
@@ -323,50 +336,186 @@ auto TypeChecker::IsImplicitlyConvertible(
           const auto& destination_tuple = cast<TupleValue>(*destination);
           if (source_tuple.elements().size() !=
               destination_tuple.elements().size()) {
-            return false;
+            break;
           }
+          bool all_ok = true;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
             if (!IsImplicitlyConvertible(source_tuple.elements()[i],
-                                         destination_tuple.elements()[i])) {
-              return false;
+                                         destination_tuple.elements()[i],
+                                         impl_scope)) {
+              all_ok = false;
+              break;
             }
           }
-          return true;
+          if (all_ok) {
+            return true;
+          }
+          break;
         }
         case Value::Kind::StaticArrayType: {
           const auto& destination_array = cast<StaticArrayType>(*destination);
           if (destination_array.size() != source_tuple.elements().size()) {
-            return false;
+            break;
           }
+          bool all_ok = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             if (!IsImplicitlyConvertible(source_element,
-                                         &destination_array.element_type())) {
-              return false;
+                                         &destination_array.element_type(),
+                                         impl_scope)) {
+              all_ok = false;
+              break;
             }
           }
-          return true;
+          if (all_ok) {
+            return true;
+          }
+          break;
         }
         case Value::Kind::TypeType: {
+          bool all_types = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
-            if (!IsImplicitlyConvertible(source_element, destination)) {
-              return false;
+            if (!IsImplicitlyConvertible(source_element, destination,
+                                         impl_scope)) {
+              all_types = false;
+              break;
             }
           }
-          return true;
+          if (all_types) {
+            return true;
+          }
+          break;
         }
         default:
-          return false;
+          break;
       }
+      break;
     }
     case Value::Kind::TypeType:
-      return destination->kind() == Value::Kind::InterfaceType;
+      if (destination->kind() == Value::Kind::InterfaceType) {
+        return true;
+      }
+      break;
     case Value::Kind::InterfaceType:
-      return destination->kind() == Value::Kind::TypeType;
+      if (destination->kind() == Value::Kind::TypeType) {
+        return true;
+      }
+      break;
     case Value::Kind::TypeOfClassType:
-      return destination->kind() == Value::Kind::TypeType;
+      if (destination->kind() == Value::Kind::TypeType) {
+        return true;
+      }
+      break;
     default:
-      return false;
+      break;
   }
+
+  // If we weren't given an impl scope, only look for builtin conversions.
+  if (!impl_scope.has_value()) {
+    return false;
+  }
+
+  // We didn't find a builtin implicit conversion. Try a user-defined one.
+  // The source location doesn't matter, we're discarding the diagnostics.
+  SourceLocation source_loc("", 0);
+  ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
+      source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination});
+  return iface_type.ok() &&
+         (*impl_scope)->Resolve(*iface_type, source, source_loc, *this).ok();
+}
+
+auto TypeChecker::ImplicitlyConvert(const std::string& context,
+                                    const ImplScope& impl_scope,
+                                    Nonnull<Expression*> source,
+                                    Nonnull<const Value*> destination)
+    -> ErrorOr<Nonnull<const Expression*>> {
+  // FIXME: If a builtin conversion works, for now we don't create any
+  // expression to do the conversion and rely on the interpreter to know how to
+  // do it.
+  // FIXME: This doesn't work for cases of combined built-in and user-defined
+  // conversion, such as converting a struct element via an `ImplicitAs` impl.
+  if (IsImplicitlyConvertible(&source->static_type(), destination,
+                              std::nullopt)) {
+    return source;
+  }
+  CARBON_ASSIGN_OR_RETURN(
+      std::optional<Nonnull<const Expression*>> converted,
+      BuildBuiltinMethodCall(
+          impl_scope, source,
+          BuiltinInterfaceName{Builtin::ImplicitAs, destination},
+          BuiltinMethodCall{"Convert"}));
+  if (!converted.value()) {
+    // We couldn't find a matching `impl`.
+    return CompilationError(source->source_loc())
+           << "type error in " << context << ": "
+           << "'" << *source << "' is not implicitly convertible to '"
+           << *destination << "'";
+  }
+  return converted.value();
+}
+
+auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
+                                          BuiltinInterfaceName interface) const
+    -> ErrorOr<Nonnull<const InterfaceType*>> {
+  const int builtin_id = static_cast<int>(interface.builtin);
+  auto BadBuiltin = [&]() -> Error {
+    return CompilationError(source_loc)
+           << "missing or unsupported declaration for builtin `"
+           << kBuiltinNames[builtin_id] << "`";
+  };
+
+  // Find the builtin interface declaration.
+  Nonnull<const InterfaceDeclaration*> iface_decl =
+      dyn_cast_or_null<InterfaceDeclaration>(builtins[builtin_id]);
+  if (!iface_decl || !iface_decl->constant_value()) {
+    return BadBuiltin();
+  }
+
+  // Match the interface arguments up with the parameters and build the
+  // interface type.
+  bool has_parameters = iface_decl->params().has_value();
+  bool has_arguments = !interface.arguments.empty();
+  if (has_parameters != has_arguments) {
+    return BadBuiltin();
+  }
+  BindingMap bindings;
+  if (has_arguments) {
+    TupleValue args(interface.arguments);
+    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
+                      std::nullopt, bindings, trace_stream_)) {
+      return BadBuiltin();
+    }
+  }
+  return arena_->New<InterfaceType>(iface_decl, bindings);
+}
+
+auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
+                                         Nonnull<Expression*> source,
+                                         BuiltinInterfaceName interface,
+                                         BuiltinMethodCall method)
+    -> ErrorOr<Nonnull<const Expression*>> {
+  const SourceLocation source_loc = source->source_loc();
+  const int builtin_id = static_cast<int>(interface.builtin);
+
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
+                          GetBuiltinInterfaceType(source_loc, interface));
+
+  // Build an expression to perform the call `source.(interface.method)(args)`
+  // and type-check it.
+  Nonnull<IdentifierExpression*> iface_expr =
+      arena_->New<IdentifierExpression>(source_loc, kBuiltinNames[builtin_id]);
+  iface_expr->set_value_node(&iface_type->declaration());
+  Nonnull<Expression*> iface_member =
+      arena_->New<FieldAccessExpression>(source_loc, iface_expr, method.name);
+  Nonnull<Expression*> method_access =
+      arena_->New<CompoundFieldAccessExpression>(source_loc, source,
+                                                 iface_member);
+  Nonnull<Expression*> call_args =
+      arena_->New<TupleLiteral>(source_loc, method.arguments);
+  Nonnull<Expression*> call =
+      arena_->New<CallExpression>(source_loc, method_access, call_args);
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(call, impl_scope));
+
+  return {call};
 }
 
 auto TypeChecker::ExpectType(SourceLocation source_loc,
@@ -374,7 +523,7 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
                              Nonnull<const Value*> expected,
                              Nonnull<const Value*> actual) const
     -> ErrorOr<Success> {
-  if (!IsImplicitlyConvertible(actual, expected)) {
+  if (!IsImplicitlyConvertible(actual, expected, /*FIXME*/ std::nullopt)) {
     return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
@@ -2482,6 +2631,13 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
+
+    if (InterfaceDeclaration* interface =
+            dyn_cast<InterfaceDeclaration>(decl)) {
+      if (interface->name() == "ImplicitAs") {
+        builtins[static_cast<int>(Builtin::ImplicitAs)] = interface;
+      }
+    }
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));
   return Success();

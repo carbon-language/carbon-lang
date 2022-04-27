@@ -51,6 +51,42 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
 
+  enum class Builtin {
+    ImplicitAs,
+    Last = ImplicitAs
+  };
+  static constexpr int kNumBuiltins = static_cast<int>(Builtin::Last) + 1;
+  static inline constexpr const char* kBuiltinNames[] = {
+    "ImplicitAs"
+  };
+
+  const Declaration* builtins[kNumBuiltins] = {};
+
+  // The name of a builtin interface, with any arguments.
+  struct BuiltinInterfaceName {
+    Builtin builtin;
+    llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
+  };
+  // The name of a method on a builtin interface, with any arguments.
+  struct BuiltinMethodCall {
+    const std::string &name;
+    llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
+  };
+
+  // Form a builtin method call. Ensures that the type of `source` implements
+  // the interface `interface`, which should be defined in the prelude, and
+  // forms a call to the method `method` on that interface.
+  auto BuildBuiltinMethodCall(const ImplScope& impl_scope,
+                              Nonnull<Expression*> source,
+                              BuiltinInterfaceName interface,
+                              BuiltinMethodCall method)
+      -> ErrorOr<Nonnull<const Expression*>>;
+
+  // Get a type for a builtin interface.
+  auto GetBuiltinInterfaceType(SourceLocation source_loc,
+                               BuiltinInterfaceName interface) const
+      -> ErrorOr<Nonnull<const InterfaceType*>>;
+
  private:
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -199,8 +235,17 @@ class TypeChecker {
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
-  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
-                               Nonnull<const Value*> destination) const -> bool;
+  auto IsImplicitlyConvertible(
+      Nonnull<const Value*> source, Nonnull<const Value*> destination,
+      std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool;
+
+  // Attempt to implicitly convert type-checked expression `source` to the type
+  // `destination`.
+  auto ImplicitlyConvert(const std::string& context,
+                         const ImplScope& impl_scope,
+                         Nonnull<Expression*> source,
+                         Nonnull<const Value*> destination)
+      -> ErrorOr<Nonnull<const Expression*>>;
 
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
