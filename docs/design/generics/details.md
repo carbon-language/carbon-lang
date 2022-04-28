@@ -4917,7 +4917,7 @@ class Optional(T:! Movable) {
 Note that the constraint on `T` is just `Movable`, not
 `Movable & OptionalStorage`, since the `Movable` requirement is
 [sufficient to guarantee](#lookup-resolution-and-specialization) that some
-implementation of `OptionalStorage` exists for `T`. Carbon does not require that
+implementation of `OptionalStorage` exists for `T`. Carbon does not require
 callers of `Optional`, even generic callers, to specify that the argument type
 implements `OptionalStorage`:
 
