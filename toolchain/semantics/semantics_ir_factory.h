@@ -35,23 +35,12 @@ class SemanticsIRFactory {
   };
 
   explicit SemanticsIRFactory(const ParseTree& parse_tree)
-      : semantics_(parse_tree),
-        range_(llvm::reverse(parse_tree.postorder())),
-        cursor_(range_.begin()) {}
+      : semantics_(parse_tree) {}
 
   void Build();
 
-  // Verifies the current node has no children and advances the cursor.
-  void MovePastChildlessNode();
-  // Returns a string indicating the current node was unexpected, for a CHECK.
-  auto NodeUnexpectedMessage() -> std::string;
-  // Returns a string indicating the current node's kind is wrong, for a CHECK.
-  auto NodeKindWrongMessage(ParseNodeKind expected) -> std::string;
-  // CHECKs that the cursor points at a node of the expected kind.
-  void RequireNodeKind(ParseNodeKind expected);
-
-  auto TryHandleCursor(llvm::ArrayRef<NodeHandler> handlers,
-                       size_t& handlers_index) -> bool;
+  // New
+  void RequireNodeEmpty(ParseTree::Node node);
 
   // Parses the children of the current node, calling handlers for the
   // respective kind and producing errors if unexpected kinds are found.
@@ -65,24 +54,17 @@ class SemanticsIRFactory {
                                std::function<void()> item_handler,
                                ParseNodeKind separator, ParseNodeKind list_end);
 
-  auto TransformDeclaredName() -> Semantics::DeclaredName;
-  void TransformFunctionDeclaration(SemanticsIR::Block& block);
-  void TransformParameterList();
-  void TransformPattern();
-  void TransformPatternBinding();
+  auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
+  void TransformFunctionDeclaration(ParseTree::Node node,
+                                    SemanticsIR::Block& block);
+  void TransformParameterList(ParseTree::Node node);
+  void TransformPattern(ParseTree::Node node);
+  void TransformPatternBinding(ParseTree::Node node);
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
 
-  auto GetSubtreeEnd() -> ParseTreeIterator {
-    auto iter = cursor_;
-    iter += parse_tree().node_subtree_size(*cursor_);
-    return iter;
-  }
-
   SemanticsIR semantics_;
-  llvm::iterator_range<ParseTreeIterator> range_;
-  ParseTreeIterator cursor_;
 };
 
 }  // namespace Carbon

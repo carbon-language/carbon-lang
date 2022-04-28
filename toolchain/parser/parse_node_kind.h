@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -59,6 +60,8 @@ class ParseNodeKind {
   // nothing else should be using this.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_; }
+
+  void Print(llvm::raw_ostream& out) const { out << name(); }
 
  private:
   constexpr explicit ParseNodeKind(KindEnum k) : kind_(k) {}

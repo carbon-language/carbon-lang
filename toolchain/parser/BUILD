@@ -11,7 +11,10 @@ cc_library(
     srcs = ["parse_node_kind.cpp"],
     hdrs = ["parse_node_kind.h"],
     textual_hdrs = ["parse_node_kind.def"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(
