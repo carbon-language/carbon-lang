@@ -4877,6 +4877,9 @@ class Foo(T:! Type) {}
 external impl Foo(T:! Type where Foo(T) is Equatable) as Iterable {}
 ```
 
+This might be used to provide an implementation of `Equatable` for types that
+already satisfy the requirement of implementing `Iterable`:
+
 ```
 class Bar {}
 external impl Foo(Bar) as Equatable {}
