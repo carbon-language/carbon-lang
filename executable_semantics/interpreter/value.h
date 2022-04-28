@@ -560,8 +560,8 @@ class NominalClassType : public Value {
   // instantiated runtime type of a generic class.
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
-  // Is this a parameterized class? That is: a class with parameters and no
-  // corresponding arguments.
+  // Returns whether this a parameterized class. That is, a class with
+  // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
     return declaration_->type_params().has_value() && type_args_.empty();
   }

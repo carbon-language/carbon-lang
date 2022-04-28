@@ -295,8 +295,8 @@ class InterfaceDeclaration : public Declaration {
       : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
         name_(std::move(name)),
         params_(std::move(params)),
-        members_(std::move(members)),
-        self_(self) {}
+        self_(self),
+        members_(std::move(members)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceDeclaration(node->kind());
@@ -318,8 +318,8 @@ class InterfaceDeclaration : public Declaration {
  private:
   std::string name_;
   std::optional<Nonnull<TuplePattern*>> params_;
-  std::vector<Nonnull<Declaration*>> members_;
   Nonnull<GenericBinding*> self_;
+  std::vector<Nonnull<Declaration*>> members_;
 };
 
 enum class ImplKind { InternalImpl, ExternalImpl };

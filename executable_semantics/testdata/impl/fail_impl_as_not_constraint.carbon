@@ -7,10 +7,10 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_impl_as_not_constraint.carbon:14: expected constraint after `as`, found value of type i32
 
 package ExecutableSemanticsTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type i32
 external impl i32 as i32 {}
 
 fn Main() -> i32 {

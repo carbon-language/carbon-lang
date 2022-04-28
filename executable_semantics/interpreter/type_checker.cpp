@@ -1816,8 +1816,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     for (Nonnull<Declaration*> m : class_decl->members()) {
       RETURN_IF_ERROR(DeclareDeclaration(m, class_scope));
     }
-
-    // TODO: when/how to bring impls in generic class into scope?
   } else {
     // The declarations of the members may refer to the class, so we
     // must set the constant value of the class and its static type
@@ -1865,6 +1863,9 @@ auto TypeChecker::TypeCheckClassDeclaration(
 auto TypeChecker::DeclareInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
+  if (trace_stream_) {
+    **trace_stream_ << "** declaring interface " << iface_decl->name() << "\n";
+  }
   ImplScope iface_scope;
   iface_scope.AddParent(&enclosing_scope);
 
@@ -1874,7 +1875,6 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     if (trace_stream_) {
       **trace_stream_ << iface_scope;
     }
-    // TODO: when/how to bring impls in a parameterized interface into scope?
   }
 
   Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
@@ -1887,6 +1887,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   for (Nonnull<Declaration*> m : iface_decl->members()) {
     RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope));
   }
+  if (trace_stream_) {
+    **trace_stream_ << "** finished declaring interface " << iface_decl->name()
+                    << "\n";
+  }
   return Success();
 }
 
@@ -1894,7 +1898,7 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "** checking " << *iface_decl << "\n";
+    **trace_stream_ << "** checking interface " << iface_decl->name() << "\n";
   }
   ImplScope iface_scope;
   iface_scope.AddParent(&impl_scope);
@@ -1908,7 +1912,8 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
     RETURN_IF_ERROR(TypeCheckDeclaration(m, iface_scope));
   }
   if (trace_stream_) {
-    **trace_stream_ << "** finished checking " << *iface_decl << "\n";
+    **trace_stream_ << "** finished checking interface " << iface_decl->name()
+                    << "\n";
   }
   return Success();
 }
