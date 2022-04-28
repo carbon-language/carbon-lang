@@ -4834,9 +4834,10 @@ interface Iterable {
 ```
 
 When implementing an interface with an `impl as` requirement, that requirement
-must be satisfied either by an implementation in an imported library or an
-implementation somewhere in the same file. Implementing the requiring interface
-is a promise that the requirement will be implemented. This is like a
+must be satisfied by an implementation in an imported library, an implementation
+somewhere in the same file, or a constraint in the impl declaration.
+Implementing the requiring interface is a promise that the requirement will be
+implemented. This is like a
 [forward declaration of an impl](#declaring-implementations) except that the
 definition can be broader instead of being required to match exactly.
 
@@ -4862,6 +4863,25 @@ implementation itself, as in:
 
 ```
 impl [T:! Type] T as CommonTypeWith(T) { ... }
+```
+
+Here is an example where the requirement of interface `Iterable` that the type
+implements interface `Equatable` is satisfied by a constraint in the `impl`
+declaration:
+
+```
+class Foo(T:! Type) {}
+// This is allowed because we know that an `impl Foo(T) as Equatable`
+// will exist for all types `T` for which this impl is used, even
+// though there's neither an imported impl nor an impl in this file.
+external impl Foo(T:! Type where Foo(T) is Equatable) as Iterable {}
+```
+
+```
+class Bar {}
+external impl Foo(Bar) as Equatable {}
+// Gives `Foo(Bar) is Iterable` using the blanket impl of
+// `Iterable` for `Foo(T)`.
 ```
 
 ### Requirements with `where` constraints
