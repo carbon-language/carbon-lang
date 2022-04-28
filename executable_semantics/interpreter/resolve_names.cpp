@@ -11,6 +11,8 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
+#include "executable_semantics/common/arena.h"
+#include "executable_semantics/interpreter/value.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 
@@ -296,8 +298,8 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
   return Success();
 }
 
-static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
-    -> ErrorOr<Success> {
+static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
+                         Nonnull<Arena*> arena) -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface = cast<InterfaceDeclaration>(declaration);
@@ -356,11 +358,14 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
-      // FIXME: Doesn't seem like `Self` should be equivalent to the
-      // class' name when it has parameters.
-      RETURN_IF_ERROR(class_scope.Add("Self", &class_decl));
       if (class_decl.type_params().has_value()) {
         RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
+        BindingMap generic_args;  // FIXME
+        Nonnull<NominalClassType*> self_type =
+            arena->New<NominalClassType>(&class_decl, generic_args);
+        RETURN_IF_ERROR(class_scope.Add("Self", self_type));
+      } else {
+        RETURN_IF_ERROR(class_scope.Add("Self", &class_decl));
       }
 
       // TODO: Disable unqualified access of members by other members for now.

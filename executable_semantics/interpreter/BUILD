@@ -169,6 +169,7 @@ cc_library(
     srcs = ["resolve_names.cpp"],
     hdrs = ["resolve_names.h"],
     deps = [
+        ":action_and_value",
         "//common:check",
         "//executable_semantics/ast",
         "//executable_semantics/ast:declaration",
