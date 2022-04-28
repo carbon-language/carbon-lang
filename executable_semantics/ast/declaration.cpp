@@ -80,7 +80,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
-      out << "interface" << iface_decl.name();
+      out << "interface " << iface_decl.name();
       break;
     }
     case DeclarationKind::ImplDeclaration: {

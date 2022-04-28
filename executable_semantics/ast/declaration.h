@@ -289,10 +289,12 @@ class InterfaceDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   InterfaceDeclaration(SourceLocation source_loc, std::string name,
+                       std::optional<Nonnull<TuplePattern*>> params,
                        Nonnull<GenericBinding*> self,
                        std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
         name_(std::move(name)),
+        params_(std::move(params)),
         members_(std::move(members)),
         self_(self) {}
 
@@ -301,16 +303,21 @@ class InterfaceDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string& { return name_; }
+  auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
+    return params_;
+  }
+  auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
+  auto self() const -> Nonnull<const GenericBinding*> { return self_; }
+  auto self() -> Nonnull<GenericBinding*> { return self_; }
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto self() const -> Nonnull<const GenericBinding*> { return self_; }
-  auto self() -> Nonnull<GenericBinding*> { return self_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
+  std::optional<Nonnull<TuplePattern*>> params_;
   std::vector<Nonnull<Declaration*>> members_;
   Nonnull<GenericBinding*> self_;
 };

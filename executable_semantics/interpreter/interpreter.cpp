@@ -640,13 +640,34 @@ auto Interpreter::CallFunction(const CallExpression& call,
         switch (phase()) {
           case Phase::RunTime:
             return todo_.FinishAction(arena_->New<NominalClassType>(
-                &class_type.declaration(), generic_args, witnesses));
+                &class_decl, generic_args, witnesses));
           case Phase::CompileTime:
             return todo_.FinishAction(arena_->New<NominalClassType>(
-                &class_type.declaration(), generic_args, call.impls()));
+                &class_decl, generic_args, call.impls()));
         }
       } else {
         FATAL() << "instantiation of non-generic class " << class_type;
+      }
+    }
+    case Value::Kind::InterfaceType: {
+      const InterfaceType& iface_type = cast<InterfaceType>(*fun);
+      const InterfaceDeclaration& iface_decl = iface_type.declaration();
+      RuntimeScope params_scope(&heap_);
+      BindingMap generic_args;
+      if (iface_decl.params().has_value()) {
+        CHECK(PatternMatch(&(*iface_decl.params())->value(), arg,
+                           call.source_loc(), &params_scope, generic_args,
+                           trace_stream_));
+        switch (phase()) {
+          case Phase::RunTime:
+            return todo_.FinishAction(arena_->New<InterfaceType>(
+                &iface_decl, generic_args, witnesses));
+          case Phase::CompileTime:
+            return todo_.FinishAction(arena_->New<InterfaceType>(
+                &iface_decl, generic_args, call.impls()));
+        }
+      } else {
+        FATAL() << "call of unparameterized interface " << iface_type;
       }
     }
     default:

@@ -86,7 +86,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
-    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -105,14 +104,10 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*value);
-      // A NominalClassType is concrete if
-      // 1) it is not a generic class (has no type parameters), or
-      // 2) it is a generic class applied to some type arguments.
-      return !class_type.declaration().type_params().has_value() ||
-             !class_type.type_args().empty();
-    }
+    case Value::Kind::NominalClassType:
+      return !cast<NominalClassType>(*value).IsParameterized();
+    case Value::Kind::InterfaceType:
+      return !cast<InterfaceType>(*value).IsParameterized();
   }
 }
 
@@ -152,7 +147,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
-    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -173,14 +167,10 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*value);
-      // A NominalClassType is concrete if
-      // 1) it is not a generic class (has no type parameters), or
-      // 2) it is a generic class applied to some type arguments.
-      return !class_type.declaration().type_params().has_value() ||
-             !class_type.type_args().empty();
-    }
+    case Value::Kind::NominalClassType:
+      return !cast<NominalClassType>(*value).IsParameterized();
+    case Value::Kind::InterfaceType:
+      return !cast<InterfaceType>(*value).IsParameterized();
   }
 }
 
@@ -303,9 +293,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::InterfaceType:
       return destination->kind() == Value::Kind::TypeType;
     case Value::Kind::TypeOfClassType: {
-      const auto& class_type = cast<TypeOfClassType>(*source).class_type();
-      return ((!class_type.declaration().type_params().has_value()) ||
-              (!class_type.type_args().empty())) &&
+      return !cast<TypeOfClassType>(*source).class_type().IsParameterized() &&
              destination->kind() == Value::Kind::TypeType;
     }
     default:
@@ -839,11 +827,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                       FindMember(access.field(), iface_decl.members());
                   member.has_value()) {
                 const Value& member_type = (*member)->static_type();
-                std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
-                    self_map;
-                self_map[iface_decl.self()] = &var_type;
+                BindingMap binding_map = iface_type.args();
+                binding_map[iface_decl.self()] = &var_type;
                 Nonnull<const Value*> inst_member_type =
-                    Substitute(self_map, &member_type);
+                    Substitute(binding_map, &member_type);
                 access.set_static_type(inst_member_type);
                 CHECK(var_type.binding().impl_binding().has_value());
                 access.set_impl(*var_type.binding().impl_binding());
@@ -877,8 +864,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   FindMember(access.field(), iface_decl.members());
               member.has_value()) {
             const Value& member_type = (*member)->static_type();
+            BindingMap binding_map = iface_type.args();
+            binding_map[iface_decl.self()] = &var_type;
             Nonnull<const Value*> inst_member_type =
-                Substitute({{iface_decl.self(), &var_type}}, &member_type);
+                Substitute(binding_map, &member_type);
             access.set_static_type(inst_member_type);
             CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
@@ -1060,8 +1049,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               cast<TypeOfClassType>(call.function().static_type()).class_type();
           const ClassDeclaration& class_decl = class_type.declaration();
           BindingMap generic_args;
-          if (class_decl.type_params().has_value() &&
-              class_type.type_args().empty()) {
+          if (class_type.IsParameterized()) {
             if (trace_stream_) {
               **trace_stream_ << "pattern matching type params and args\n";
             }
@@ -1112,6 +1100,71 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);
           call.set_static_type(arena_->New<TypeOfClassType>(inst_class_type));
+          call.set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case Value::Kind::TypeOfInterfaceType: {
+          // This case handles the application of a parameterized class to
+          // its arguments, such as OrderedWith(i32).
+          // FIXME: This is very repetitive with the corresponding case for
+          // parameterized classes.
+          const InterfaceType& iface_type =
+              cast<TypeOfInterfaceType>(call.function().static_type())
+                  .interface_type();
+          const InterfaceDeclaration& iface_decl = iface_type.declaration();
+          BindingMap generic_args;
+          if (iface_type.IsParameterized()) {
+            if (trace_stream_) {
+              **trace_stream_ << "pattern matching interface params and args\n";
+            }
+            RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
+                                       &(*iface_decl.params())->static_type(),
+                                       &call.argument().static_type()));
+            ASSIGN_OR_RETURN(
+                Nonnull<const Value*> arg,
+                InterpExp(&call.argument(), arena_, trace_stream_));
+            CHECK(PatternMatch(&(*iface_decl.params())->value(), arg,
+                               call.source_loc(), std::nullopt, generic_args,
+                               trace_stream_));
+          } else if (!iface_type.args().empty()) {
+            return CompilationError(call.source_loc())
+                   << "attempt to provide arguments to parameterized interface "
+                   << "twice: " << *e;
+          } else {
+            return CompilationError(call.source_loc())
+                   << "attempt to provide arguments to non-parameterized "
+                   << "interface: " << *e;
+          }
+          // Find impls for all the impl bindings of the interface.
+          ImplExpMap impls;
+          for (const auto& [binding, val] : generic_args) {
+            if (binding->impl_binding().has_value()) {
+              Nonnull<const ImplBinding*> impl_binding =
+                  *binding->impl_binding();
+              switch (impl_binding->interface()->kind()) {
+                case Value::Kind::InterfaceType: {
+                  ASSIGN_OR_RETURN(
+                      Nonnull<Expression*> impl,
+                      impl_scope.Resolve(impl_binding->interface(),
+                                         generic_args[binding],
+                                         call.source_loc(), *this));
+                  impls.emplace(impl_binding, impl);
+                  break;
+                }
+                case Value::Kind::TypeType:
+                  break;
+                default:
+                  return CompilationError(e->source_loc())
+                         << "unexpected type of deduced parameter "
+                         << *impl_binding->interface();
+              }
+            }
+          }
+          Nonnull<InterfaceType*> inst_iface_type =
+              arena_->New<InterfaceType>(&iface_decl, generic_args, impls);
+          call.set_impls(impls);
+          call.set_static_type(
+              arena_->New<TypeOfInterfaceType>(inst_iface_type));
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1828,6 +1881,19 @@ auto TypeChecker::TypeCheckClassDeclaration(
 auto TypeChecker::DeclareInterfaceDeclaration(
     Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
+  ImplScope iface_scope;
+  iface_scope.AddParent(&enclosing_scope);
+
+  if (iface_decl->params().has_value()) {
+    RETURN_IF_ERROR(TypeCheckPattern(*iface_decl->params(), std::nullopt,
+                                     iface_scope, ValueCategory::Let));
+    AddPatternImpls(*iface_decl->params(), iface_scope);
+    if (trace_stream_) {
+      **trace_stream_ << iface_scope;
+    }
+    // TODO: when/how to bring impls in a parameterized interface into scope?
+  }
+
   Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
   SetConstantValue(iface_decl, iface_type);
   iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
@@ -1857,9 +1923,21 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
   RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
-  ASSIGN_OR_RETURN(Nonnull<const Value*> iface_type,
+  ASSIGN_OR_RETURN(Nonnull<const Value*> written_iface_type,
                    InterpExp(&impl_decl->interface(), arena_, trace_stream_));
-  const auto& iface_decl = cast<InterfaceType>(*iface_type).declaration();
+
+  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
+  if (!iface_type) {
+    return CompilationError(impl_decl->interface().source_loc())
+           << "expected constraint after `as`, found value of type "
+           << *written_iface_type;
+  }
+  if (iface_type->IsParameterized()) {
+    return CompilationError(impl_decl->interface().source_loc())
+           << "missing arguments for parameterized interface";
+  }
+
+  const auto& iface_decl = iface_type->declaration();
   impl_decl->set_interface_type(iface_type);
 
   // Bring the deduced parameters into scope.
@@ -1902,11 +1980,10 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       if (std::optional<Nonnull<const Declaration*>> mem =
               FindMember(*mem_name, impl_decl->members());
           mem.has_value()) {
-        std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>
-            self_map;
-        self_map[iface_decl.self()] = impl_type_value;
+        BindingMap binding_map = iface_type->args();
+        binding_map[iface_decl.self()] = impl_type_value;
         Nonnull<const Value*> iface_mem_type =
-            Substitute(self_map, &m->static_type());
+            Substitute(binding_map, &m->static_type());
         RETURN_IF_ERROR(ExpectType((*mem)->source_loc(),
                                    "member of implementation", iface_mem_type,
                                    &(*mem)->static_type()));
