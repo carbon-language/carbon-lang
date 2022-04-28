@@ -43,10 +43,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(&fun_decl, v);
+            return arena->New<BoundMethodValue>(
+                &fun_decl, v, witness->type_args(), witness->witnesses());
           } else {
             // Class function.
-            return *fun_decl.constant_value();
+            auto fun = cast<FunctionValue>(*fun_decl.constant_value());
+            return arena->New<FunctionValue>(&fun->declaration(),
+                                             witness->type_args(),
+                                             witness->witnesses());
           }
         } else {
           return CompilationError(source_loc)
@@ -89,10 +93,9 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               class_type.witnesses());
         } else {
           // Found a class function
-          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
-              &(*func)->declaration(), class_type.type_args(),
-              class_type.witnesses());
-          return fun;
+          return arena->New<FunctionValue>(&(*func)->declaration(),
+                                           class_type.type_args(),
+                                           class_type.witnesses());
         }
       }
     }
@@ -316,7 +319,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << " impls ";
         llvm::ListSeparator sep;
         for (const auto& [impl_bind, impl] : class_type.impls()) {
-          out << sep << impl;
+          out << sep << *impl;
         }
       }
       if (!class_type.witnesses().empty()) {
@@ -358,9 +361,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       break;
     case Value::Kind::TypeOfClassType:
-      out << "typeof("
-          << cast<TypeOfClassType>(*this).class_type().declaration().name()
-          << ")";
+      out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("

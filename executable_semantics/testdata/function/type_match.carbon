@@ -12,6 +12,6 @@
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
-  var t: (auto, (i32, i32)) = ((1,2),(3,4));
+  var t: (auto, (i32, i32)) = ((1, 2), (3, 4));
   return t[0][0] + t[1][1] - 5;
 }

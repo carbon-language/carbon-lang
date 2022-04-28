@@ -43,11 +43,12 @@ cc_test(
     srcs = ["semantics_ir_factory_test.cpp"],
     deps = [
         ":semantics_ir_factory",
+        "//common:gtest_main",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -14,7 +14,7 @@ package ExecutableSemanticsTest api;
 choice Ints {
   None,
   One(i32),
-  Two(i32,i32)
+  Two(i32, i32)
 }
 
 fn Main() -> i32 {
@@ -44,5 +44,5 @@ fn Main() -> i32 {
 choice MoreInts {
   None(),
   One(i32),
-  Two(i32,i32),
+  Two(i32, i32),
 }

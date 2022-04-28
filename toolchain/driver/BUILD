@@ -27,10 +27,11 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
+        "//common:gtest_main",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
