@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_instantiate_non_generic.carbon:23: attempt to instantiate a non-generic class: Point(i32)
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_instantiate_non_generic.carbon:23: in call, expected a function
 
 package ExecutableSemanticsTest api;
 

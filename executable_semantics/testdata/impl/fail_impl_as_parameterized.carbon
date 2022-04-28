@@ -13,7 +13,7 @@ package ExecutableSemanticsTest api;
 interface Vector(Scalar:! Type) {
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: missing arguments for parameterized interface
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type Vector
 external impl i32 as Vector {}
 
 fn Main() -> i32 {

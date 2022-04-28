@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_two_arg_lists.carbon:15: attempt to instantiate an already instantiated generic class: Point(T)(T)
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_two_arg_lists.carbon:15: in call, expected a function
 
 package ExecutableSemanticsTest api;
 

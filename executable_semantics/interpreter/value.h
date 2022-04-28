@@ -57,6 +57,7 @@ class Value {
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
+    ParameterizedEntityName,
     BindingPlaceholderValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
@@ -65,6 +66,7 @@ class Value {
     TypeOfClassType,
     TypeOfInterfaceType,
     TypeOfChoiceType,
+    TypeOfParameterizedEntityName,
     StaticArrayType,
   };
 
@@ -560,12 +562,6 @@ class NominalClassType : public Value {
   // instantiated runtime type of a generic class.
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
-  // Is this a parameterized class? That is: a class with parameters and no
-  // corresponding arguments.
-  auto IsParameterized() const -> bool {
-    return declaration_->type_params().has_value() && type_args_.empty();
-  }
-
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
@@ -616,10 +612,6 @@ class InterfaceType : public Value {
   // FIXME: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
-
-  auto IsParameterized() const -> bool {
-    return declaration_->params().has_value() && args_.empty();
-  }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
@@ -709,6 +701,29 @@ class VariableType : public Value {
 
  private:
   Nonnull<const GenericBinding*> binding_;
+};
+
+// A name of an entity that has explicit parameters, such as a parameterized
+// class or interface. When arguments for those parameters are provided in a
+// call, the result will be a class type or interface type.
+class ParameterizedEntityName : public Value {
+ public:
+  explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
+                                   Nonnull<const TuplePattern*> params)
+      : Value(Kind::ParameterizedEntityName),
+        declaration_(declaration),
+        params_(params) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ParameterizedEntityName;
+  }
+
+  auto declaration() const -> const Declaration& { return *declaration_; }
+  auto params() const -> const TuplePattern& { return *params_; }
+
+ private:
+  Nonnull<const Declaration*> declaration_;
+  Nonnull<const TuplePattern*> params_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -842,6 +857,25 @@ class TypeOfChoiceType : public Value {
 
  private:
   Nonnull<const ChoiceType*> choice_type_;
+};
+
+// The type of an expression whose value is the name of a parameterized entity.
+// Such an expression can only be used as the operand of a call expression that
+// provides arguments for the parameters.
+class TypeOfParameterizedEntityName : public Value {
+ public:
+  explicit TypeOfParameterizedEntityName(
+      Nonnull<const ParameterizedEntityName*> name)
+      : Value(Kind::TypeOfParameterizedEntityName), name_(name) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfParameterizedEntityName;
+  }
+
+  auto name() const -> const ParameterizedEntityName& { return *name_; }
+
+ private:
+  Nonnull<const ParameterizedEntityName*> name_;
 };
 
 // The type of a statically-sized array.
