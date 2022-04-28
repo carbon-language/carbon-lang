@@ -4899,12 +4899,13 @@ interface, in cases where the compiler will not work this out for itself.
 
 One situation where this occurs is when there is a chain of
 [interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
-Normally, Carbon will only consider the interfaces that are direct requirements
-of the interfaces the type is known to implement. An `observe...is` declaration
-can be used to add an interface that is a direct requirement to the set of
-interfaces whose direct requirements will be considered for that type. This
-allows a developer to provide a proof that there is a sequence of requirements
-that demonstrate that a type implements an interface, as in this example:
+During the 'impl' validation done during type checking, Carbon will only
+consider the interfaces that are direct requirements of the interfaces the type
+is known to implement. An `observe...is` declaration can be used to add an
+interface that is a direct requirement to the set of interfaces whose direct
+requirements will be considered for that type. This allows a developer to
+provide a proof that there is a sequence of requirements that demonstrate that a
+type implements an interface, as in this example:
 
 ```
 interface A { }
@@ -4934,6 +4935,12 @@ fn RequiresD[T:! D](x: T) {
   RequiresA(x);
 }
 ```
+
+Note that `observe` statements do not affect the selection of impls during code
+generation. For coherence, the impl used for a type, interface pair must always
+be the same, independent of context. The [termination rule](#termination-rule)
+governs when compilation may fail when the compiler can't determine the impl to
+select.
 
 ### Observing blanket impls
 
