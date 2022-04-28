@@ -589,6 +589,11 @@ class InterfaceType : public Value {
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {}
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args)
+      : Value(Kind::InterfaceType),
+        declaration_(declaration),
+        args_(args) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
                          const BindingMap& args, const ImplExpMap& impls)
       : Value(Kind::InterfaceType),
         declaration_(declaration),

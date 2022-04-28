@@ -334,6 +334,14 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface " << iface_type.declaration().name();
+      if (!iface_type.args().empty()) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : iface_type.args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
       break;
     }
     case Value::Kind::Witness: {
@@ -456,15 +464,23 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       for (const auto& [ty_var1, ty1] :
            cast<NominalClassType>(*t1).type_args()) {
-        if (!TypeEqual(ty1,
-                       cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+        if (!ValueEqual(ty1,
+                        cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
           return false;
         }
       }
       return true;
     case Value::Kind::InterfaceType:
-      return cast<InterfaceType>(*t1).declaration().name() ==
-             cast<InterfaceType>(*t2).declaration().name();
+      if (cast<InterfaceType>(*t1).declaration().name() !=
+          cast<InterfaceType>(*t2).declaration().name()) {
+        return false;
+      }
+      for (const auto& [ty_var1, ty1] : cast<InterfaceType>(*t1).args()) {
+        if (!ValueEqual(ty1, cast<InterfaceType>(*t2).args().at(ty_var1))) {
+          return false;
+        }
+      }
+      return true;
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {

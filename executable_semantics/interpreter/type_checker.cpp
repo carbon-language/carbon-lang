@@ -526,12 +526,25 @@ auto TypeChecker::Substitute(
       }
       return new_class_type;
     }
+    case Value::Kind::InterfaceType: {
+      const auto& iface_type = cast<InterfaceType>(*type);
+      BindingMap args;
+      for (const auto& [name, value] : iface_type.args()) {
+        args[name] = Substitute(dict, value);
+      }
+      Nonnull<const InterfaceType*> new_iface_type =
+          arena_->New<InterfaceType>(&iface_type.declaration(), args);
+      if (trace_stream_) {
+        **trace_stream_ << "substitution: " << iface_type << " => "
+                        << *new_iface_type << "\n";
+      }
+      return new_iface_type;
+    }
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
-    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
@@ -622,11 +635,12 @@ auto TypeChecker::SatisfyImpls(
     BindingMap& deduced_type_args, ImplExpMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    ASSIGN_OR_RETURN(
-        Nonnull<Expression*> impl,
-        impl_scope.Resolve(impl_binding->interface(),
-                           deduced_type_args[impl_binding->type_var()],
-                           source_loc, *this));
+    Nonnull<const Value*> interface =
+        Substitute(deduced_type_args, impl_binding->interface());
+    ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
+                     impl_scope.Resolve(
+                         interface, deduced_type_args[impl_binding->type_var()],
+                         source_loc, *this));
     impls.emplace(impl_binding, impl);
   }
   return Success();
