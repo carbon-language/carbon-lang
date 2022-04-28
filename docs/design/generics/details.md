@@ -4922,8 +4922,8 @@ callers of `Optional`, even generic callers, to specify that the argument type
 implements `OptionalStorage`:
 
 ```
-// ✅ Allowed: `T` just needs to be `Movable` to form
-//             `Optional(T)`, not `OptionalStorage`.
+// ✅ Allowed: `T` just needs to be `Movable` to form `Optional(T)`.
+//             A `T:! OptionalStorage` constraint is not required.
 fn First[T:! Movable & Eq](v: Vector(T)) -> Optional(T);
 ```
 
