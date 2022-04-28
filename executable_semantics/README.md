@@ -113,6 +113,11 @@ To explain this boilerplate:
 -   `./update_checks.py` -- Updates expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 
+### Updating fuzzer logic after making AST changes
+
+Please refer to
+[Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/executable_semantics/fuzzing/README.md).
+
 ## Experimental feature: Delimited Continuations
 
 Delimited continuations provide a kind of resumable exception with first-class
