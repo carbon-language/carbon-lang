@@ -20,7 +20,8 @@ cc_test(
     deps = [
         ":diagnostic_emitter",
         ":mocks",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -44,7 +45,8 @@ cc_test(
     srcs = ["diagnostic_kind_test.cpp"],
     deps = [
         ":diagnostic_kind",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -76,7 +78,8 @@ cc_test(
         ":diagnostic_emitter",
         ":mocks",
         ":sorting_diagnostic_consumer",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
