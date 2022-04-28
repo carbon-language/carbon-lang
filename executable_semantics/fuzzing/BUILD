@@ -30,6 +30,7 @@ cc_library(
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
         "//executable_semantics/syntax:prelude",
+        "@bazel_tools//tools/cpp/runfiles",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],

@@ -4,12 +4,15 @@
 
 #include "executable_semantics/fuzzing/fuzzer_util.h"
 
+#include <filesystem>
+
 #include "common/check.h"
 #include "common/fuzzing/proto_to_carbon.h"
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/prelude.h"
 #include "llvm/Support/raw_ostream.h"
+#include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
 
@@ -33,6 +36,15 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }
 
+auto GetRunfilesFile(const std::string& path) -> std::string {
+  using bazel::tools::cpp::runfiles::Runfiles;
+  std::string error;
+  std::unique_ptr<Runfiles> runfiles(Runfiles::Create("",  // argv[0],
+                                                      &error));
+  CHECK(runfiles != nullptr);
+  return runfiles->Rlocation(path);
+}
+
 void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
   const std::string source = ProtoToCarbonWithMain(compilation_unit);
 
@@ -43,8 +55,9 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
-  AddPrelude("executable_semantics/data/prelude.carbon", &arena,
-             &ast->declarations);
+  llvm::errs() << "current_dir=" << std::filesystem::current_path() << "\n";
+  AddPrelude(GetRunfilesFile("carbon/executable_semantics/data/prelude.carbon"),
+             &arena, &ast->declarations);
   const ErrorOr<int> result =
       ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
   if (!result.ok()) {
