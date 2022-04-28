@@ -25,10 +25,15 @@ external impl i32 as AddMul {
   }
 }
 
+class Holder(T:! AddMul) {
+  var v: T;
+}
+
 interface Vector(Scalar:! AddMul) {
   fn Zero() -> Self;
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: Scalar) -> Self;
+  fn Hold[me: Self](v: Scalar) -> Holder(Scalar);
 }
 
 class Point {
@@ -44,11 +49,14 @@ class Point {
     fn Scale[me: Point](v: i32) -> Point {
       return {.x = me.x * v, .y = me.y * v};
     }
+    fn Hold[me: Point](v: i32) -> Holder(i32) {
+      return {.v = v};
+    }
   }
 }
 
 fn AddAndScaleGeneric[T:! AddMul, U:! Vector(T)](a: U, s: T) -> U {
-  return a.Add(U.Zero()).Scale(s);
+  return a.Add(U.Zero()).Scale(a.Hold(s).v);
 }
 
 fn Main() -> i32 {
