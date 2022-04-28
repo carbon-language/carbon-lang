@@ -10,78 +10,9 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/parse_subtree_consumer.h"
 
 namespace Carbon {
-
-class SubtreeConsumer {
- public:
-  using ParseTreeIterator = std::reverse_iterator<ParseTree::PostorderIterator>;
-
-  static auto ForParent(const ParseTree& parse_tree,
-                        ParseTree::Node parent_node) -> SubtreeConsumer {
-    auto range = llvm::reverse(parse_tree.postorder(parent_node));
-    // The cursor should be one after the parent.
-    return SubtreeConsumer(parse_tree, ++range.begin(), range.end());
-  }
-
-  static auto ForTree(const ParseTree& parse_tree) -> SubtreeConsumer {
-    auto range = llvm::reverse(parse_tree.postorder());
-    return SubtreeConsumer(parse_tree, range.begin(), range.end());
-  }
-
-  // Prevent copies because we require completion of parsing in the destructor.
-  SubtreeConsumer(const SubtreeConsumer&) = delete;
-  auto operator=(const SubtreeConsumer&) -> SubtreeConsumer& = delete;
-
-  ~SubtreeConsumer() {
-    CHECK(is_done()) << "At index " << (*cursor_).index() << ", unhandled "
-                     << parse_tree_->node_kind(*cursor_);
-  }
-
-  [[nodiscard]] auto RequireConsume(ParseNodeKind node_kind)
-      -> ParseTree::Node {
-    CHECK(!is_done());
-    llvm::Optional<ParseTree::Node> node = TryConsume(node_kind);
-    CHECK(node != llvm::None)
-        << "At index " << (*cursor_).index() << ", expected " << node_kind
-        << ", found " << parse_tree_->node_kind(*cursor_);
-    return *node;
-  }
-
-  [[nodiscard]] auto TryConsume() -> llvm::Optional<ParseTree::Node> {
-    if (is_done()) {
-      return llvm::None;
-    }
-    return GetNodeAndAdvance();
-  }
-
-  [[nodiscard]] auto TryConsume(ParseNodeKind node_kind)
-      -> llvm::Optional<ParseTree::Node> {
-    if (is_done() || parse_tree_->node_kind(*cursor_) != node_kind) {
-      return llvm::None;
-    }
-    return GetNodeAndAdvance();
-  }
-
-  // Returns true if there are no more nodes to consume.
-  auto is_done() -> bool { return cursor_ == subtree_end_; }
-
- private:
-  // Constructs for a subtree.
-  SubtreeConsumer(const ParseTree& parse_tree, ParseTreeIterator cursor,
-                  ParseTreeIterator subtree_end)
-      : parse_tree_(&parse_tree), cursor_(cursor), subtree_end_(subtree_end) {}
-
-  auto GetNodeAndAdvance() -> ParseTree::Node {
-    auto node = *cursor_;
-    cursor_ += parse_tree_->node_subtree_size(node);
-    return node;
-  }
-
-  const ParseTree* parse_tree_;
-  ParseTreeIterator cursor_;
-  ParseTreeIterator subtree_end_;
-};
 
 auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
   SemanticsIRFactory builder(parse_tree);
@@ -90,7 +21,7 @@ auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
 }
 
 void SemanticsIRFactory::Build() {
-  SubtreeConsumer subtree = SubtreeConsumer::ForTree(parse_tree());
+  auto subtree = ParseSubtreeConsumer::ForTree(parse_tree());
   // FileEnd is a placeholder node which can be discarded.
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::FileEnd()));
   while (llvm::Optional<ParseTree::Node> node = subtree.TryConsume()) {
@@ -126,10 +57,10 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
     ParseTree::Node node, SemanticsIR::Block& block) {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::FunctionDeclaration());
 
-  SubtreeConsumer subtree = SubtreeConsumer::ForParent(parse_tree(), node);
-  // TODO
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  // TODO: Parse code.
   (void)subtree.TryConsume(ParseNodeKind::CodeBlock());
-  // TODO
+  // TODO: Parse return type.
   (void)subtree.TryConsume(ParseNodeKind::ReturnType());
   TransformParameterList(
       subtree.RequireConsume(ParseNodeKind::ParameterList()));
@@ -141,7 +72,7 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
 void SemanticsIRFactory::TransformParameterList(ParseTree::Node node) {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
 
-  SubtreeConsumer subtree = SubtreeConsumer::ForParent(parse_tree(), node);
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
 
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::ParameterListEnd()));
   if (auto first_param_node =
@@ -160,13 +91,13 @@ void SemanticsIRFactory::TransformParameterList(ParseTree::Node node) {
 void SemanticsIRFactory::TransformPattern(ParseTree::Node node) {
   RequireNodeEmpty(node);
 
-  // TODO
+  // TODO: Turn this into an expression.
 }
 
 void SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node) {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::PatternBinding());
 
-  SubtreeConsumer subtree = SubtreeConsumer::ForParent(parse_tree(), node);
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   // TODO: Need to rewrite to handle expressions here.
   TransformPattern(subtree.RequireConsume(ParseNodeKind::Literal()));
   TransformDeclaredName(subtree.RequireConsume(ParseNodeKind::DeclaredName()));
