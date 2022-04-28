@@ -4841,6 +4841,8 @@ is a promise that the requirement will be implemented. This is like a
 definition can be broader instead of being required to match exactly.
 
 ```
+// `Iterable` requires `Equatable`, so there must be some
+// impl of `Equatable` for `Vector(i32)` in this file.
 external impl Vector(i32) as Iterable { ... }
 
 fn RequiresEquatable[T:! Equatable](x: T) { ... }
@@ -4850,7 +4852,7 @@ fn ProcessVector(v: Vector(i32)) {
   RequiresEquatable(v);
 }
 
-// Satisfies requirement that `Vector(i32)` must
+// Satisfies the requirement that `Vector(i32)` must
 // implement `Equatable` since `i32` is `Equatable`.
 external impl Vector(T:! Equatable) as Equatable { ... }
 ```
