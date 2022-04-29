@@ -7,24 +7,14 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_bad_parameter_type.carbon:28: type error in call: '(Type)' is not implicitly convertible to '(i32)'
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/impl/fail_impl_as_parameterized.carbon:17: missing arguments for parameterized interface
 
 package ExecutableSemanticsTest api;
 
-class Point(T:! i32) {
-  fn Origin(zero: T) -> Point(T) {
-    return {.x = zero, .y = zero};
-  }
-
-  fn GetX[me: Point(T)]() -> T {
-    return me.x;
-  }
-
-  var x: T;
-  var y: T;
+interface Vector(Scalar:! Type) {
 }
 
+external impl i32 as Vector {}
+
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32).Origin(0);
-  return p.GetX();
 }

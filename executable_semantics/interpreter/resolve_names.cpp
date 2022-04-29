@@ -303,6 +303,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       auto& iface = cast<InterfaceDeclaration>(declaration);
       StaticScope iface_scope;
       iface_scope.AddParent(&enclosing_scope);
+      if (iface.params().has_value()) {
+        RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
+      }
       RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
       for (Nonnull<Declaration*> member : iface.members()) {
         RETURN_IF_ERROR(AddExposedNames(*member, iface_scope));
