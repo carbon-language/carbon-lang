@@ -48,6 +48,7 @@ cc_test(
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

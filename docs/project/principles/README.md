@@ -20,3 +20,11 @@ principle can help achieve consistency across those multiple designs.
 
 Note that these principles seek to establish both the approaches the project
 wants to pursue, as well as those we want to exclude.
+
+-   [Errors are values](error_handling.md)
+-   [Information accumulation](information_accumulation.md)
+-   [Low context-sensitivity](low_context_sensitivity.md)
+-   [Prefer providing only one way to do a given thing](one_way.md)
+-   [Safety strategy](safety_strategy.md)
+-   [One static open extension mechanism](static_open_extension.md)
+-   [Success criteria](success_criteria.md)
