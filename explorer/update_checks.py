@@ -13,7 +13,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Callable, Dict, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Set, Tuple, Union
 
 _BIN = "./bazel-bin/explorer/explorer"
 _TESTDATA = "explorer/testdata"
@@ -47,7 +47,9 @@ def _indentation(line: str) -> str:
     return line[: len(line) - len(stripped)]
 
 
-def _make_check_line(out_line: str) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
+def _make_check_line(
+    out_line: str,
+) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
     """Given a line of output, determine what CHECK line to produce and where
     it should go.
 
@@ -68,9 +70,17 @@ def _make_check_line(out_line: str) -> Tuple[int, Union[str, Callable[[int, Dict
     if maybe_match:
         match = maybe_match
         diagnostic_line_number = int(match.group(2)) - 1
-        def check_line(line_number: int, line_number_remap: Dict[int, int]) -> str:
+
+        def check_line(
+            line_number: int, line_number_remap: Dict[int, int]
+        ) -> str:
             delta = line_number_remap[diagnostic_line_number] - line_number
-            return "// CHECK: %s[[@LINE%+d]]%s\n" % (match.group(1), delta, match.group(3))
+            return "// CHECK: %s[[@LINE%+d]]%s\n" % (
+                match.group(1),
+                delta,
+                match.group(3),
+            )
+
         return (diagnostic_line_number, check_line)
     elif out_line:
         return (-1, "// CHECK: %s\n" % out_line)
@@ -137,7 +147,9 @@ def _update_check_once(test: str) -> bool:
     next_check_line = 0
     result_lines = []
     line_number_remap = {}
-    while next_orig_line < len(orig_lines) or next_check_line < len(check_lines):
+    while next_orig_line < len(orig_lines) or next_check_line < len(
+        check_lines
+    ):
         # Determine whether to produce an input line or a CHECK line next.
         if next_check_line >= len(check_lines):
             # No more CHECK lines to produce.
@@ -150,7 +162,9 @@ def _update_check_once(test: str) -> bool:
             produce_check_line = False
         else:
             # Produce this CHECK line if we've reached its preferred position.
-            produce_check_line = check_lines[next_check_line][0] <= next_orig_line
+            produce_check_line = (
+                check_lines[next_check_line][0] <= next_orig_line
+            )
 
         if produce_check_line:
             indentation = ""
@@ -169,7 +183,11 @@ def _update_check_once(test: str) -> bool:
             next_orig_line += 1
 
     # Generate contents for any lines that depend on line numbers.
-    fixed_result_lines = [indentation + (line if isinstance(line, str) else line(i, line_number_remap)) for i, (indentation, line) in enumerate(result_lines)]
+    fixed_result_lines = [
+        indentation
+        + (line if isinstance(line, str) else line(i, line_number_remap))
+        for i, (indentation, line) in enumerate(result_lines)
+    ]
 
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
