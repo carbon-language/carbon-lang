@@ -13,7 +13,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Callable, Dict, Set, Tuple, Union
+from typing import Callable, Dict, Optional, Set, Tuple, Union
 
 _BIN = "./bazel-bin/explorer/explorer"
 _TESTDATA = "explorer/testdata"
@@ -64,17 +64,18 @@ def _make_check_line(out_line: str) -> Tuple[int, Union[str, Callable[[int, Dict
     a `line_generator` that computes it.
     """
     out_line = out_line.rstrip()
-    match = _LINE_NUMBER_RE.match(out_line)
-    if match:
+    maybe_match = _LINE_NUMBER_RE.match(out_line)
+    if maybe_match:
+        match = maybe_match
         diagnostic_line_number = int(match.group(2)) - 1
         def check_line(line_number: int, line_number_remap: Dict[int, int]) -> str:
             delta = line_number_remap[diagnostic_line_number] - line_number
             return "// CHECK: %s[[@LINE%+d]]%s\n" % (match.group(1), delta, match.group(3))
         return (diagnostic_line_number, check_line)
     elif out_line:
-        return (None, "// CHECK: %s\n" % out_line)
+        return (-1, "// CHECK: %s\n" % out_line)
     else:
-        return (None, "// CHECK-EMPTY:\n")
+        return (-1, "// CHECK-EMPTY:\n")
 
 
 def _update_check_once(test: str) -> bool:
@@ -147,9 +148,6 @@ def _update_check_once(test: str) -> bool:
         elif next_orig_line <= autoupdate_index:
             # Don't put any CHECK lines before the AUTOUPDATE line.
             produce_check_line = False
-        elif check_lines[next_check_line][0] is None:
-            # This CHECK line has no preferred position; put it as early as possible.
-            produce_check_line = True
         else:
             # Produce this CHECK line if we've reached its preferred position.
             produce_check_line = check_lines[next_check_line][0] <= next_orig_line
@@ -157,7 +155,9 @@ def _update_check_once(test: str) -> bool:
         if produce_check_line:
             indentation = ""
             if next_orig_line < len(orig_lines):
-                indentation = re.match(" *", orig_lines[next_orig_line]).group(0)
+                match = re.match(" *", orig_lines[next_orig_line])
+                if match:
+                    indentation = match.group(0)
             result_lines.append((indentation, check_lines[next_check_line][1]))
             next_check_line += 1
         elif orig_lines[next_orig_line].lstrip(" ").startswith("// CHECK"):
@@ -169,11 +169,11 @@ def _update_check_once(test: str) -> bool:
             next_orig_line += 1
 
     # Generate contents for any lines that depend on line numbers.
-    result_lines = [indentation + (line if isinstance(line, str) else line(i, line_number_remap)) for i, (indentation, line) in enumerate(result_lines)]
+    fixed_result_lines = [indentation + (line if isinstance(line, str) else line(i, line_number_remap)) for i, (indentation, line) in enumerate(result_lines)]
 
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
-        f.writelines(result_lines)
+        f.writelines(fixed_result_lines)
 
     return len(orig_lines) != len(result_lines)
 
