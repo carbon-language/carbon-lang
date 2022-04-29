@@ -27,7 +27,8 @@ cc_test(
     deps = [
         ":error_builders",
         ":source_location",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

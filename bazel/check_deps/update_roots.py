@@ -13,38 +13,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import os
-import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 # Change the working directory to the repository root so that the remaining
 # operations reliably operate relative to that root.
-os.chdir(Path(__file__).parent.parent)
-directory = Path.cwd()
-
-# Use the `BAZEL` environment variable if present. If not, then try to use
-# `bazelisk` and then `bazel`.
-bazel = os.environ.get("BAZEL")
-if not bazel:
-    bazel = "bazelisk"
-    if not shutil.which(bazel):
-        bazel = "bazel"
-        if not shutil.which(bazel):
-            sys.exit("Unable to run Bazel")
-
-# Use the `BUILDOZER` environment variable if present. If not, then try to use
-# `buildozer`.
-buildozer = os.environ.get("BUILDOZER")
-if not buildozer:
-    buildozer = "buildozer"
-    if not shutil.which(buildozer):
-        sys.exit("Unable to run Buildozer")
+os.chdir(Path(__file__).parent.parent.parent)
 
 print("Compute non-test C++ root targets...")
-non_test_cc_roots_query = subprocess.run(
+non_test_cc_roots_query = subprocess.check_output(
     [
-        bazel,
+        "./scripts/run_bazel.py",
         "query",
         "--noshow_progress",
         "--noimplicit_deps",
@@ -55,10 +34,8 @@ non_test_cc_roots_query = subprocess.run(
             ' in kind("cc.* rule", deps($non_tests))'
         ),
     ],
-    check=True,
-    stdout=subprocess.PIPE,
     universal_newlines=True,
-).stdout
+)
 ranked_targets = [line.split() for line in non_test_cc_roots_query.splitlines()]
 roots = [target for rank, target in ranked_targets if int(rank) == 0]
 print("Found roots:\n%s" % "\n".join(roots))
@@ -66,7 +43,7 @@ print("Found roots:\n%s" % "\n".join(roots))
 print("Replace non-test C++ roots in the BUILD file...")
 buildozer_run = subprocess.run(
     [
-        buildozer,
+        "./scripts/run_buildozer.py",
         "remove data",
     ]
     + ["add data '%s'" % root for root in roots]

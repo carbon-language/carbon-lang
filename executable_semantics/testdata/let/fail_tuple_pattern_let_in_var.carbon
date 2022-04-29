@@ -12,6 +12,6 @@
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
-  var (var a: auto, b: auto, let c:auto, d: auto) = (1, 2, 3, 4);
+  var (var a: auto, b: auto, let c: auto, d: auto) = (1, 2, 3, 4);
   return 0;
 }

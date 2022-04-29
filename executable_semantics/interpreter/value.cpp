@@ -43,10 +43,14 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(&fun_decl, v);
+            return arena->New<BoundMethodValue>(
+                &fun_decl, v, witness->type_args(), witness->witnesses());
           } else {
             // Class function.
-            return *fun_decl.constant_value();
+            auto fun = cast<FunctionValue>(*fun_decl.constant_value());
+            return arena->New<FunctionValue>(&fun->declaration(),
+                                             witness->type_args(),
+                                             witness->witnesses());
           }
         } else {
           return CompilationError(source_loc)
@@ -89,10 +93,9 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               class_type.witnesses());
         } else {
           // Found a class function
-          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
-              &(*func)->declaration(), class_type.type_args(),
-              class_type.witnesses());
-          return fun;
+          return arena->New<FunctionValue>(&(*func)->declaration(),
+                                           class_type.type_args(),
+                                           class_type.witnesses());
         }
       }
     }
@@ -316,7 +319,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << " impls ";
         llvm::ListSeparator sep;
         for (const auto& [impl_bind, impl] : class_type.impls()) {
-          out << sep << impl;
+          out << sep << *impl;
         }
       }
       if (!class_type.witnesses().empty()) {
@@ -331,6 +334,14 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface " << iface_type.declaration().name();
+      if (!iface_type.args().empty()) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : iface_type.args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
       break;
     }
     case Value::Kind::Witness: {
@@ -358,9 +369,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       break;
     case Value::Kind::TypeOfClassType:
-      out << "typeof("
-          << cast<TypeOfClassType>(*this).class_type().declaration().name()
-          << ")";
+      out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("
@@ -455,15 +464,23 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       for (const auto& [ty_var1, ty1] :
            cast<NominalClassType>(*t1).type_args()) {
-        if (!TypeEqual(ty1,
-                       cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+        if (!ValueEqual(ty1,
+                        cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
           return false;
         }
       }
       return true;
     case Value::Kind::InterfaceType:
-      return cast<InterfaceType>(*t1).declaration().name() ==
-             cast<InterfaceType>(*t2).declaration().name();
+      if (cast<InterfaceType>(*t1).declaration().name() !=
+          cast<InterfaceType>(*t2).declaration().name()) {
+        return false;
+      }
+      for (const auto& [ty_var1, ty1] : cast<InterfaceType>(*t1).args()) {
+        if (!ValueEqual(ty1, cast<InterfaceType>(*t2).args().at(ty_var1))) {
+          return false;
+        }
+      }
+      return true;
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {

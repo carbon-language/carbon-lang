@@ -25,6 +25,7 @@ fn capture() -> __Continuation {
 
 fn Main() -> i32 {
   var k: __Continuation = capture();
-  __run k; // error, lifetime of x is over
+  // error, lifetime of x is over
+  __run k;
   return 0;
 }

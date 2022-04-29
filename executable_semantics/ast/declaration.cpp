@@ -80,7 +80,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
-      out << "interface" << iface_decl.name();
+      out << "interface " << iface_decl.name();
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -209,6 +209,27 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   } else {
     out << ";\n";
   }
+}
+
+auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                             ImplKind kind, Nonnull<Expression*> impl_type,
+                             Nonnull<Expression*> interface,
+                             std::vector<Nonnull<AstNode*>> deduced_params,
+                             std::vector<Nonnull<Declaration*>> members)
+    -> ErrorOr<Nonnull<ImplDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        resolved_params.push_back(&cast<GenericBinding>(*param));
+        break;
+      default:
+        return CompilationError(source_loc)
+               << "illegal AST node in implicit parameter list of impl";
+    }
+  }
+  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, interface,
+                                     resolved_params, members);
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {

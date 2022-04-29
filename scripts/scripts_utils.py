@@ -158,10 +158,9 @@ def locate_bazel() -> str:
     if bazel:
         return bazel
 
-    if shutil.which("bazelisk"):
-        return "bazelisk"
-
-    if shutil.which("bazel"):
-        return "bazel"
+    for cmd in ("bazelisk", "bazel"):
+        target = shutil.which(cmd)
+        if target:
+            return target
 
     exit("Unable to run Bazel")

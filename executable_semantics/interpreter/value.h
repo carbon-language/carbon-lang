@@ -124,6 +124,9 @@ class IntValue : public Value {
   int value_;
 };
 
+using ImplWitnessMap =
+    std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>;
+
 // A function value.
 class FunctionValue : public Value {
  public:
@@ -132,8 +135,7 @@ class FunctionValue : public Value {
 
   explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
                          const BindingMap& type_args,
-                         const std::map<Nonnull<const ImplBinding*>,
-                                        Nonnull<const Witness*>>& wits)
+                         const ImplWitnessMap& wits)
       : Value(Kind::FunctionValue),
         declaration_(declaration),
         type_args_(type_args),
@@ -157,7 +159,7 @@ class FunctionValue : public Value {
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   BindingMap type_args_;
-  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
+  ImplWitnessMap witnesses_;
 };
 
 // A bound method value. It includes the receiver object.
@@ -192,16 +194,13 @@ class BoundMethodValue : public Value {
 
   auto type_args() const -> const BindingMap& { return type_args_; }
 
-  auto witnesses() const
-      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
-    return witnesses_;
-  }
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
   Nonnull<const Value*> receiver_;
   BindingMap type_args_;
-  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
+  ImplWitnessMap witnesses_;
 };
 
 // The value of a location in memory.
@@ -343,7 +342,7 @@ class AlternativeValue : public Value {
   Nonnull<const Value*> argument_;
 };
 
-// A function value.
+// A tuple value.
 class TupleValue : public Value {
  public:
   // An empty tuple, also known as the unit type.
@@ -523,9 +522,9 @@ class NominalClassType : public Value {
   // Construct a class type that represents the result of applying the
   // given generic class to the `type_args` and that records the result of the
   // compile-time search for any required impls.
-  explicit NominalClassType(
-      Nonnull<const ClassDeclaration*> declaration, const BindingMap& type_args,
-      const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& impls)
+  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
+                            const BindingMap& type_args,
+                            const ImplExpMap& impls)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         type_args_(type_args),
@@ -549,22 +548,22 @@ class NominalClassType : public Value {
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of the class's generic parameters to the AST node that
-  // identifies the witness table for the corresponding argument.
-  // Should not be called on 1) a non-generic class, 2) a generic-class
-  // that is not instantiated, or 3) a fully instantiated runtime type
-  // of a generic class.
-  auto impls() const
-      -> const std::map<Nonnull<const ImplBinding*>, ValueNodeView>& {
-    return impls_;
-  }
+  // Maps each of an instantiated generic class's impl bindings to an
+  // expression that constructs the witness table for the corresponding
+  // argument. Should not be called on 1) a non-generic class, 2) a
+  // generic-class that is not instantiated, or 3) a fully
+  // instantiated runtime type of a generic class.
+  auto impls() const -> const ImplExpMap& { return impls_; }
 
-  // Maps each of the class's generic parameters to the witness table
+  // Maps each of the class's impl bindings to the witness table
   // for the corresponding argument. Should only be called on a fully
   // instantiated runtime type of a generic class.
-  auto witnesses() const
-      -> const std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>& {
-    return witnesses_;
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+
+  // Returns whether this a parameterized class. That is, a class with
+  // parameters and no corresponding arguments.
+  auto IsParameterized() const -> bool {
+    return declaration_->type_params().has_value() && type_args_.empty();
   }
 
   // Returns the value of the function named `name` in this class, or
@@ -575,8 +574,8 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   BindingMap type_args_;
-  std::map<Nonnull<const ImplBinding*>, ValueNodeView> impls_;
-  std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses_;
+  ImplExpMap impls_;
+  ImplWitnessMap witnesses_;
 };
 
 // Return the declaration of the member with the given name.
@@ -589,6 +588,21 @@ class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args)
+      : Value(Kind::InterfaceType), declaration_(declaration), args_(args) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args, const ImplExpMap& impls)
+      : Value(Kind::InterfaceType),
+        declaration_(declaration),
+        args_(args),
+        impls_(impls) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args, const ImplWitnessMap& wits)
+      : Value(Kind::InterfaceType),
+        declaration_(declaration),
+        args_(args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::InterfaceType;
@@ -597,25 +611,54 @@ class InterfaceType : public Value {
   auto declaration() const -> const InterfaceDeclaration& {
     return *declaration_;
   }
+  auto args() const -> const BindingMap& { return args_; }
+
+  // FIXME: These aren't used for anything yet.
+  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+
+  auto IsParameterized() const -> bool {
+    return declaration_->params().has_value() && args_.empty();
+  }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
+  BindingMap args_;
+  ImplExpMap impls_;
+  ImplWitnessMap witnesses_;
 };
 
 // The witness table for an impl.
 class Witness : public Value {
  public:
+  // Construct a witness for
+  // 1) a non-generic impl, or
+  // 2) a generic impl that has not yet been applied to type arguments.
   explicit Witness(Nonnull<const ImplDeclaration*> declaration)
       : Value(Kind::Witness), declaration_(declaration) {}
+
+  // Construct an instantiated generic impl.
+  explicit Witness(Nonnull<const ImplDeclaration*> declaration,
+                   const BindingMap& type_args, const ImplWitnessMap& wits)
+      : Value(Kind::Witness),
+        declaration_(declaration),
+        type_args_(type_args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::Witness;
   }
-
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }
+  auto type_args() const -> const BindingMap& { return type_args_; }
+  // Maps each of the impl's impl bindings to the witness table
+  // for the corresponding argument. Should only be called on a fully
+  // instantiated runtime type of a generic class.
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
  private:
   Nonnull<const ImplDeclaration*> declaration_;
+  BindingMap type_args_;
+  ImplWitnessMap witnesses_;
 };
 
 // A choice type.

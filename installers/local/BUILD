@@ -60,6 +60,7 @@ sh_binary(
 cc_binary(
     name = "carbon",
     srcs = ["carbon.cpp"],
+    visibility = ["//bazel/check_deps:__pkg__"],
     deps = [
         "//executable_semantics:main",
         "@llvm-project//llvm:Support",
