@@ -13,7 +13,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Set
+from typing import Callable, Dict, Set, Tuple, Union
 
 _BIN = "./bazel-bin/explorer/explorer"
 _TESTDATA = "explorer/testdata"
@@ -47,6 +47,36 @@ def _indentation(line: str) -> str:
     return line[: len(line) - len(stripped)]
 
 
+def _make_check_line(out_line: str) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
+    """Given a line of output, determine what CHECK line to produce and where
+    it should go.
+
+    Returns a tuple `(desired_line_number, line_or_line_generator)`.
+
+    `desired_line_number` is the index of the line that this line should
+    ideally precede.
+
+    A `line_generator` is a function that takes the actual line number of this
+    line and a mapping from original line numbers to rewritten line numbers and
+    produces the contents of the CHECK line.
+
+    `line_or_line_generator` is either a `str` containing the resulting line or
+    a `line_generator` that computes it.
+    """
+    out_line = out_line.rstrip()
+    match = _LINE_NUMBER_RE.match(out_line)
+    if match:
+        diagnostic_line_number = int(match.group(2)) - 1
+        def check_line(line_number: int, line_number_remap: Dict[int, int]) -> str:
+            delta = line_number_remap[diagnostic_line_number] - line_number
+            return "// CHECK: %s[[@LINE%+d]]%s\n" % (match.group(1), delta, match.group(3))
+        return (diagnostic_line_number, check_line)
+    elif out_line:
+        return (None, "// CHECK: %s\n" % out_line)
+    else:
+        return (None, "// CHECK-EMPTY:\n")
+
+
 def _update_check_once(test: str) -> bool:
     """Updates the CHECK: lines for `test` by running explorer.
 
@@ -56,13 +86,9 @@ def _update_check_once(test: str) -> bool:
         orig_lines = f.readlines()
 
     # Remove old OUT.
-    lines_without_check = [
-        x for x in orig_lines if not x.lstrip(" ").startswith("// CHECK")
-    ]
-    num_orig_check_lines = len(orig_lines) - len(lines_without_check)
     autoupdate_index = None
     noautoupdate_index = None
-    for line_index, line in enumerate(lines_without_check):
+    for line_index, line in enumerate(orig_lines):
         if line.startswith(_AUTOUPDATE_MARKER):
             autoupdate_index = line_index
             autoupdate_cmd = line[len(_AUTOUPDATE_MARKER) :]
@@ -102,59 +128,54 @@ def _update_check_once(test: str) -> bool:
     out = out.replace(test, "{{.*}}/%s" % test)
     out_lines = out.splitlines()
 
-    # Find out where to put each line in the output, and convert the line into
-    # a suitable FileCheck matcher. We need to keep the CHECK lines in order.
-    # We try to place errors immediately before the line they refer to, and put
-    # all other output as early as possible, but not before the AUTOUPDATE
-    # line.
-    numbered_out_lines = []
-    last_output_before_line = autoupdate_index + 1
-    for line in out_lines:
-        line = line.rstrip()
-        match = _LINE_NUMBER_RE.match(line)
-        if match:
-            # Map the line number in the error to where it is in our stripped
-            # list of lines and switch from 1-based indexing to 0-based.
-            orig_line_number = int(match.group(2))
-            line_number = len(
-                [
-                    x
-                    for x in orig_lines[: orig_line_number - 1]
-                    if not x.lstrip(" ").startswith("// CHECK")
-                ]
-            )
-            if line_number < last_output_before_line:
-                line_number = last_output_before_line
-            numbered_out_lines.append(
-                (
-                    line_number,
-                    "// CHECK: %s[[@LINE+1]]%s\n"
-                    % (match.group(1), match.group(3)),
-                )
-            )
-            last_output_before_line = line_number + 1
-        elif line:
-            numbered_out_lines.append(
-                (last_output_before_line, "// CHECK: %s\n" % line)
-            )
+    # Determine what CHECK: lines we want and where to put them.
+    check_lines = [_make_check_line(out_line) for out_line in out_lines]
+
+    # Interleave the original lines and the CHECK: lines.
+    next_orig_line = 0
+    next_check_line = 0
+    result_lines = []
+    line_number_remap = {}
+    while next_orig_line < len(orig_lines) or next_check_line < len(check_lines):
+        # Determine whether to produce an input line or a CHECK line next.
+        if next_check_line >= len(check_lines):
+            # No more CHECK lines to produce.
+            produce_check_line = False
+        elif next_orig_line >= len(orig_lines):
+            # Only CHECK lines remain.
+            produce_check_line = True
+        elif next_orig_line <= autoupdate_index:
+            # Don't put any CHECK lines before the AUTOUPDATE line.
+            produce_check_line = False
+        elif check_lines[next_check_line][0] is None:
+            # This CHECK line has no preferred position; put it as early as possible.
+            produce_check_line = True
         else:
-            numbered_out_lines.append(
-                (last_output_before_line, "// CHECK-EMPTY:\n")
-            )
+            # Produce this CHECK line if we've reached its preferred position.
+            produce_check_line = check_lines[next_check_line][0] <= next_orig_line
+
+        if produce_check_line:
+            indentation = ""
+            if next_orig_line < len(orig_lines):
+                indentation = re.match(" *", orig_lines[next_orig_line]).group(0)
+            result_lines.append((indentation, check_lines[next_check_line][1]))
+            next_check_line += 1
+        elif orig_lines[next_orig_line].lstrip(" ").startswith("// CHECK"):
+            # Drop original CHECK lines.
+            next_orig_line += 1
+        else:
+            line_number_remap[next_orig_line] = len(result_lines)
+            result_lines.append(("", orig_lines[next_orig_line]))
+            next_orig_line += 1
+
+    # Generate contents for any lines that depend on line numbers.
+    result_lines = [indentation + (line if isinstance(line, str) else line(i, line_number_remap)) for i, (indentation, line) in enumerate(result_lines)]
 
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
-        written_lines = 0
-        for (before_line, check_line) in numbered_out_lines:
-            f.writelines(lines_without_check[written_lines:before_line])
-            if before_line < len(lines_without_check):
-                f.write(_indentation(lines_without_check[before_line]))
-            f.write(check_line)
-            written_lines = before_line
-        f.writelines(lines_without_check[written_lines:])
+        f.writelines(result_lines)
 
-    # Compares the number of CHECK: lines originally with the number added.
-    return num_orig_check_lines != len(out_lines)
+    return len(orig_lines) != len(result_lines)
 
 
 def _update_check(test: str) -> None:

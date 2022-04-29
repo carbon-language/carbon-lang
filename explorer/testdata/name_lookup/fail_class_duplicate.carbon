@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 class Foo {
   var x: i32;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:15
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_class_duplicate.carbon:14
   var x: i32;
 }
 

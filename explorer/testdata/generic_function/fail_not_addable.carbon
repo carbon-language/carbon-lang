@@ -11,10 +11,10 @@
 package ExplorerTest api;
 
 fn id[T:! Type](x: T) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+1]]: type error in addition(1)
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+3]]: type error in addition(1)
+  // CHECK: expected: i32
+  // CHECK: actual: T:! Type
   return x + 0;
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
 }
 
 fn Main() -> i32 {

@@ -22,8 +22,8 @@ fn FirstOfTwoPoints[T:! Type](a: Point(T), b: Point(T)) -> Point(T) {
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 0, .y = 1};
   var q: Point(Bool) = {.x = true, .y = false};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+1]]: type error in argument deduction
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+3]]: type error in argument deduction
+  // CHECK: expected: i32
+  // CHECK: actual: Bool
   return FirstOfTwoPoints(p, q).x;
-// CHECK: expected: i32
-// CHECK: actual: Bool
 }
