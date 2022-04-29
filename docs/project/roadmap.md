@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example ports of C++ libraries to Carbon (100% of woff2, 99% of RE2)](#example-ports-of-c-libraries-to-carbon-100-of-woff2-99-of-re2)
         -   [Language design covers the syntax and semantics of the example port code.](#language-design-covers-the-syntax-and-semantics-of-the-example-port-code)
     -   [Demo implementation of core features with working examples](#demo-implementation-of-core-features-with-working-examples)
-    -   [Executable semantic specification for core features with test cases](#executable-semantic-specification-for-core-features-with-test-cases)
+    -   [Carbon explorer specification for core features with test cases](#carbon-explorer-specification-for-core-features-with-test-cases)
 -   [Beyond 2022](#beyond-2022)
     -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
     -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-_ship_-10-language--organization)
@@ -45,7 +45,7 @@ and it should be possible to write non-trivial Carbon programs.
 An initial rough framework for the core standard library functionality should be
 provided, as necessary to support the core language components. A largely
 complete implementation of the core language design should be available in
-carbon-explorer. The toolchain should be able to parse the core language design,
+Carbon explorer. The toolchain should be able to parse the core language design,
 with some support for name lookup and type-checking.
 
 We should have begun writing non-trivial portions of the standard library, such
@@ -120,7 +120,7 @@ overarching value proposition.
 
 We should have a clear understanding of the syntax and semantics used by these
 example ports. We should be able to demonstrate that self-contained portions of
-the ported code work correctly using carbon-explorer.
+the ported code work correctly using Carbon explorer.
 
 ### Demo implementation of core features with working examples
 
@@ -163,13 +163,13 @@ but the long term focus should be on end-to-end user metrics.
 Automatic code formatting could be achieved many ways, but it seems useful to
 ensure the language and implementation both support use cases like formatting.
 
-### Executable semantic specification for core features with test cases
+### Carbon explorer specification for core features with test cases
 
 This should include both a human readable rendering of the formal semantics as
 well as an execution environment to run test cases through those semantics. The
 implementation should cover enough of the core language that example code, such
 as the above ports of woff2 and RE2 and the Carbon standard library, can be
-verified with carbon-explorer.
+verified with Carbon explorer.
 
 ## Beyond 2022
 
