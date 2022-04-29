@@ -7,13 +7,13 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_global_assign.carbon:17: Cannot assign to rvalue 'x'
 
 package ExecutableSemanticsTest api;
 
 let x: i32 = 10;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_global_assign.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
   x = 0;
   return 0;
 }

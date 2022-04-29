@@ -7,11 +7,11 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_nested_binding.carbon:15: The type of a binding pattern cannot contain bindings.
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: The type of a binding pattern cannot contain bindings.
   var x: (T: Type) = 1;
   return 1;
 }

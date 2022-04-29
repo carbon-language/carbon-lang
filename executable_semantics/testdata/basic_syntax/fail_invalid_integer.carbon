@@ -7,10 +7,10 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_integer.carbon:15: Invalid integer literal: 11111111111111111111111111
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_integer.carbon:[[@LINE+1]]: Invalid integer literal: 11111111111111111111111111
   return 11111111111111111111111111;
 }

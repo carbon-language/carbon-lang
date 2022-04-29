@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 from concurrent import futures
 import os
+import re
 import subprocess
 import sys
 from typing import Set
@@ -22,6 +23,8 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 
 # Indicates no autoupdate is requested.
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
+
+_LINE_NUMBER_RE = re.compile(r"(COMPILATION ERROR: [^:]*:)([1-9][0-9]*)(:.*)")
 
 
 def _get_tests() -> Set[str]:
@@ -39,6 +42,11 @@ def _get_tests() -> Set[str]:
     return tests
 
 
+def _indentation(line: str) -> str:
+    stripped = line.lstrip(" ")
+    return line[: len(line) - len(stripped)]
+
+
 def _update_check_once(test: str) -> bool:
     """Updates the CHECK: lines for `test` by running executable_semantics.
 
@@ -49,7 +57,7 @@ def _update_check_once(test: str) -> bool:
 
     # Remove old OUT.
     lines_without_check = [
-        x for x in orig_lines if not x.startswith("// CHECK")
+        x for x in orig_lines if not x.lstrip(" ").startswith("// CHECK")
     ]
     num_orig_check_lines = len(orig_lines) - len(lines_without_check)
     autoupdate_index = None
@@ -94,16 +102,56 @@ def _update_check_once(test: str) -> bool:
     out = out.replace(test, "{{.*}}/%s" % test)
     out_lines = out.splitlines()
 
+    # Find out where to put each line in the output, and convert the line into
+    # a suitable FileCheck matcher. We need to keep the CHECK lines in order.
+    # We try to place errors immediately before the line they refer to, and put
+    # all other output as early as possible, but not before the AUTOUPDATE
+    # line.
+    numbered_out_lines = []
+    last_output_before_line = autoupdate_index + 1
+    for line in out_lines:
+        line = line.rstrip()
+        match = _LINE_NUMBER_RE.match(line)
+        if match:
+            # Map the line number in the error to where it is in our stripped
+            # list of lines and switch from 1-based indexing to 0-based.
+            orig_line_number = int(match.group(2))
+            line_number = len(
+                [
+                    x
+                    for x in orig_lines[: orig_line_number - 1]
+                    if not x.lstrip(" ").startswith("// CHECK")
+                ]
+            )
+            if line_number < last_output_before_line:
+                line_number = last_output_before_line
+            numbered_out_lines.append(
+                (
+                    line_number,
+                    "// CHECK: %s[[@LINE+1]]%s\n"
+                    % (match.group(1), match.group(3)),
+                )
+            )
+            last_output_before_line = line_number + 1
+        elif line:
+            numbered_out_lines.append(
+                (last_output_before_line, "// CHECK: %s\n" % line)
+            )
+        else:
+            numbered_out_lines.append(
+                (last_output_before_line, "// CHECK-EMPTY:\n")
+            )
+
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
-        f.writelines(lines_without_check[: autoupdate_index + 1])
-        for line in out_lines:
-            line = line.rstrip()
-            if line:
-                f.write("// CHECK: %s\n" % line)
-            else:
-                f.write("// CHECK-EMPTY:\n")
-        f.writelines(lines_without_check[autoupdate_index + 1 :])
+        written_lines = 0
+        for (before_line, check_line) in numbered_out_lines:
+            f.writelines(lines_without_check[written_lines:before_line])
+            if before_line < len(lines_without_check):
+                f.write(_indentation(lines_without_check[before_line]))
+            f.write(check_line)
+            written_lines = before_line
+        f.writelines(lines_without_check[written_lines:])
 
     # Compares the number of CHECK: lines originally with the number added.
     return num_orig_check_lines != len(out_lines)

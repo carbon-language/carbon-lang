@@ -7,7 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_impl_missing_member.carbon:26: implementation missing Scale
 
 package ExecutableSemanticsTest api;
 
@@ -23,6 +22,7 @@ class Point {
     fn Add[me: Point](b: Point) -> Point {
       return {.x = me.x + b.x, .y = me.y + b.y};
     }
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_impl_missing_member.carbon:[[@LINE+1]]: implementation missing Scale
   }
 }
 

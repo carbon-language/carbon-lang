@@ -7,7 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_multiple_returns.carbon:18: Only one return is allowed in a function with an `auto` return type.
 
 package ExecutableSemanticsTest api;
 
@@ -15,6 +14,7 @@ fn Add(x: i32, y: i32) -> auto {
   if (x == 0) {
     return x;
   } else if (y == 0) {
+    // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_multiple_returns.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
     return y;
   } else {
     return x + y;

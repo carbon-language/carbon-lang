@@ -7,9 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_argument_deduction.carbon:28: type error in argument deduction
-// CHECK: expected: i32
-// CHECK: actual: Bool
 
 package ExecutableSemanticsTest api;
 
@@ -25,5 +22,8 @@ fn FirstOfTwoPoints[T:! Type](a: Point(T), b: Point(T)) -> Point(T) {
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 0, .y = 1};
   var q: Point(Bool) = {.x = true, .y = false};
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+1]]: type error in argument deduction
   return FirstOfTwoPoints(p, q).x;
+// CHECK: expected: i32
+// CHECK: actual: Bool
 }

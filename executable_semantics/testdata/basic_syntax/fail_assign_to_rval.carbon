@@ -7,11 +7,11 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_assign_to_rval.carbon:15: Cannot assign to rvalue '1'
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_assign_to_rval.carbon:[[@LINE+1]]: Cannot assign to rvalue '1'
   1 = 0;
   return 0;
 }

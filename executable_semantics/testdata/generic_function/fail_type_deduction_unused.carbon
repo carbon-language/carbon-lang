@@ -7,8 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_type_deduction_unused.carbon:20: could not deduce type argument for type parameter T
-// CHECK: in id(0)
 
 package ExecutableSemanticsTest api;
 
@@ -17,5 +15,7 @@ fn id[T:! Type](x: i32) -> i32 {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_type_deduction_unused.carbon:[[@LINE+1]]: could not deduce type argument for type parameter T
   return id(0);
+// CHECK: in id(0)
 }

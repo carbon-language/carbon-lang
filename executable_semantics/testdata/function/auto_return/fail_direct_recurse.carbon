@@ -7,7 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_direct_recurse.carbon:18: Function calls itself, but has a deduced return type
 
 package ExecutableSemanticsTest api;
 
@@ -15,6 +14,7 @@ package ExecutableSemanticsTest api;
 // used.
 fn Recurse(x: i32, do_recurse: Bool) -> auto {
   if (do_recurse) {
+    // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/function/auto_return/fail_direct_recurse.carbon:[[@LINE+1]]: Function calls itself, but has a deduced return type
     Recurse(x, false);
   }
   return x;

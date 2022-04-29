@@ -7,7 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_interface_missing_member.carbon:19: field access, Scale not in Vector
 
 package ExecutableSemanticsTest api;
 
@@ -16,6 +15,7 @@ interface Vector {
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: field access, Scale not in Vector
   return a.Scale(s);
 }
 

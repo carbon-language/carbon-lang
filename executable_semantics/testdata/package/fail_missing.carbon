@@ -7,8 +7,8 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/package/fail_missing.carbon:12: syntax error, unexpected FN, expecting PACKAGE
 
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/package/fail_missing.carbon:[[@LINE+1]]: syntax error, unexpected FN, expecting PACKAGE
 fn Main() -> i32 {
   return 0;
 }

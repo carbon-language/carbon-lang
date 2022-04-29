@@ -7,13 +7,13 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:17: Duplicate name `x` also found at {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:16
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
   match (0) {
     case x: i32 =>
+      // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/executable_semantics/testdata/name_lookup/fail_match_duplicate.carbon:15
       var x: i32 = 0;
   }
   return 0;

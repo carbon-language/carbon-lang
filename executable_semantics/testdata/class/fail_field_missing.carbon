@@ -7,7 +7,6 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:20: type error in name binding: '{.x: i32}' is not implicitly convertible to 'class Point'
 
 package ExecutableSemanticsTest api;
 
@@ -17,6 +16,7 @@ class Point {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/class/fail_field_missing.carbon:[[@LINE+1]]: type error in name binding: '{.x: i32}' is not implicitly convertible to 'class Point'
   var p: Point = {.x = 1};
   return p.x - 1;
 }

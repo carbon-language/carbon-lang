@@ -7,10 +7,10 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_unimplemented_example.carbon:15: Unimplemented
 
 package ExecutableSemanticsTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_unimplemented_example.carbon:[[@LINE+1]]: Unimplemented
   return 1 __unimplemented_example_infix 2;
 }

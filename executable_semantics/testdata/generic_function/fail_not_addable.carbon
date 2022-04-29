@@ -7,14 +7,14 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
 
 package ExecutableSemanticsTest api;
 
 fn id[T:! Type](x: T) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/generic_function/fail_not_addable.carbon:[[@LINE+1]]: type error in addition(1)
   return x + 0;
+// CHECK: expected: i32
+// CHECK: actual: T:! Type
 }
 
 fn Main() -> i32 {

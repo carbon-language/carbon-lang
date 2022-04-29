@@ -7,10 +7,10 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_var_expression.carbon:14: Expected expression for variable type
 
 package ExecutableSemanticsTest api;
 
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/basic_syntax/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
 var a: auto;
 
 fn Main() -> i32 { return 0; }

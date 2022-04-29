@@ -7,11 +7,11 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/return/fail_explicit_with_no_return.carbon:15: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
 package ExecutableSemanticsTest api;
 
 fn F() -> () {
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/return/fail_explicit_with_no_return.carbon:[[@LINE+1]]: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 }
 
 fn Main() -> i32 {

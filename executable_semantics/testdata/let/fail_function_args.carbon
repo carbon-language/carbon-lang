@@ -7,12 +7,12 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_function_args.carbon:16: Cannot assign to rvalue 'y'
 
 package ExecutableSemanticsTest api;
 
 fn f((var x: i32, y: i32)) -> i32 {
   x = 0;
+  // CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'y'
   y = 0;
   return x - 1;
 }
