@@ -25,11 +25,13 @@ cc_library(
     hdrs = ["fuzzer_util.h"],
     deps = [
         "//common:check",
+        "//common:error",
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
         "//executable_semantics/interpreter:exec_program",
         "//executable_semantics/syntax",
         "//executable_semantics/syntax:prelude",
+        "@bazel_tools//tools/cpp/runfiles",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
