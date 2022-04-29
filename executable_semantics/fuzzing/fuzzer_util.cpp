@@ -63,9 +63,10 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
-  AddPrelude(*Internal::GetRunfilesFile(
-                 "carbon/executable_semantics/data/prelude.carbon"),
-             &arena, &ast->declarations);
+  const ErrorOr<std::string> prelude_path = Internal::GetRunfilesFile(
+      "carbon/executable_semantics/data/prelude.carbon");
+  CHECK(prelude_path.ok()) << prelude_path.error().message();
+  AddPrelude(*prelude_path, &arena, &ast->declarations);
   const ErrorOr<int> result =
       ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
   if (!result.ok()) {
