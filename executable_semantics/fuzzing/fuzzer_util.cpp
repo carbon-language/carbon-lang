@@ -11,6 +11,7 @@
 #include "executable_semantics/interpreter/exec_program.h"
 #include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/prelude.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
@@ -39,9 +40,10 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
 auto GetRunfilesFile(const std::string& path) -> std::string {
   using bazel::tools::cpp::runfiles::Runfiles;
   std::string error;
-  std::unique_ptr<Runfiles> runfiles(Runfiles::Create("",  // argv[0],
-                                                      &error));
-  CHECK(runfiles != nullptr);
+  std::unique_ptr<Runfiles> runfiles(Runfiles::Create(
+      llvm::sys::fs::getMainExecutable(nullptr, nullptr),  // argv0,
+      &error));
+  CHECK(runfiles != nullptr) << error;
   return runfiles->Rlocation(path);
 }
 
