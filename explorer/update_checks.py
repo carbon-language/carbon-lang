@@ -42,11 +42,6 @@ def _get_tests() -> Set[str]:
     return tests
 
 
-def _indentation(line: str) -> str:
-    stripped = line.lstrip(" ")
-    return line[: len(line) - len(stripped)]
-
-
 def _make_check_line(
     out_line: str,
 ) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
