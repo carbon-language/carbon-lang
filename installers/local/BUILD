@@ -36,11 +36,11 @@ sh_binary(
         "$(INSTALL_PATH)",
         "--carbon",
         "$(location :carbon)",
-        "$(locations //executable_semantics:standard_libraries)",
+        "$(locations //explorer:standard_libraries)",
     ],
     data = [
         ":carbon",
-        "//executable_semantics:standard_libraries",
+        "//explorer:standard_libraries",
     ],
     toolchains = [":install_path"],
 )
@@ -62,7 +62,7 @@ cc_binary(
     srcs = ["carbon.cpp"],
     visibility = ["//bazel/check_deps:__pkg__"],
     deps = [
-        "//executable_semantics:main",
+        "//explorer:main",
         "@llvm-project//llvm:Support",
     ],
 )
