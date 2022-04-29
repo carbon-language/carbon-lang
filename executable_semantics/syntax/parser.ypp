@@ -909,12 +909,13 @@ declaration:
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
                                            ValueCategory::Let);
     }
-| INTERFACE identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| INTERFACE identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
-      $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, self, $4);
+      $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
+                                            $5);
     }
 | impl_kind IMPL impl_deduced_params expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
