@@ -23,7 +23,8 @@ class SemanticsIRFactory {
 
   void Build();
 
-  // New
+  // Requires that a node have no children, to emphasize why the subtree isn't
+  // otherwise checked.
   void RequireNodeEmpty(ParseTree::Node node);
 
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
