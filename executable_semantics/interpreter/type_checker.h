@@ -64,9 +64,11 @@ class TypeChecker {
   // `expected` is the type that this pattern is expected to have, if the
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
+  //
+  // `impl_scope` is extended with all impls implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
-                        const ImplScope& impl_scope,
+                        ImplScope& impl_scope,
                         ValueCategory enclosing_value_category)
       -> ErrorOr<Success>;
 
@@ -104,8 +106,24 @@ class TypeChecker {
                                 const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
+  // Find all of the ImplBindings in the given pattern. The pattern is required
+  // to have already been type-checked.
+  void CollectImplBindingsInPattern(
+      Nonnull<const Pattern*> p,
+      std::vector<Nonnull<const ImplBinding*>>& impl_bindings);
+
   // Add the impls from the pattern into the given `impl_scope`.
-  void AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
+  void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
+                                  ImplScope& impl_scope);
+
+  // Add the given ImplBinding to the given `impl_scope`.
+  void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                          ImplScope& impl_scope);
+
+  // Add all of the `impl_bindings` into the `scope`.
+  void BringImplsIntoScope(
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+      ImplScope& scope);
 
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
@@ -183,21 +201,6 @@ class TypeChecker {
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,
                   Nonnull<const Value*> type) const -> Nonnull<const Value*>;
-
-  // For each deduced type parameter of a generic that has a
-  // non-trivial type (such as an interface), create an impl binding
-  // to serve as the parameter for passing a witness at runtime for
-  // the required impl.
-  auto CreateImplBindings(
-      llvm::ArrayRef<Nonnull<GenericBinding*>> deduced_parameters,
-      SourceLocation source_loc,
-      std::vector<Nonnull<const ImplBinding*>>& impl_bindings)
-      -> ErrorOr<Success>;
-
-  // Add all of the `impl_bindings` into the `scope`.
-  void BringImplsIntoScope(
-      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-      ImplScope& scope, SourceLocation source_loc);
 
   // Find impls that satisfy all of the `impl_bindings`, but with the
   // type variables in the `impl_bindings` replaced by the argument
