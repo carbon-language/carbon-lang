@@ -36,7 +36,7 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
   EXPECT_GT(file_count, 0);
 }
 
-TEST(FuzzerUtilTest, GetRunfileFile) {
+TEST(FuzzerUtilTest, GetRunfilesFile) {
   EXPECT_THAT(*Internal::GetRunfilesFile(
                   "carbon/explorer/fuzzing/fuzzer_corpus/empty.textproto"),
               testing::EndsWith("/explorer/fuzzing/fuzzer_corpus/"
