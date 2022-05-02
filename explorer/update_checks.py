@@ -97,6 +97,7 @@ class CheckLineWithLineNumber(CheckLine):
         self, *, output_line_number: int, line_number_remap: Dict[int, int]
     ) -> str:
         delta = line_number_remap[self.line_number] - output_line_number
+        # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
         return (
             f"{self.indent}// CHECK: {self.before}[[@LINE{delta:+d}]]"
             + f"{self.after}\n"
