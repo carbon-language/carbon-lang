@@ -207,9 +207,9 @@ def _update_check_once(test: str) -> bool:
 def _update_check(test: str) -> None:
     """Wraps CHECK: updates for test files."""
     # Test output should stabilize quickly. The worst case is that the message
-    # contains a line number. The runs are:
-    # 1. Adds the CHECK, but this changes the target line.
-    # 2. Update the target line.
+    # contains a secondary line number. The runs are:
+    # 1. Adds the CHECK, but this moves the secondary line.
+    # 2. Updates the CHECK for the move.
     # 3. No change.
     if (
         _update_check_once(test)
