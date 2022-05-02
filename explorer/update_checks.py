@@ -177,6 +177,7 @@ def _update_check_once(test: str) -> bool:
     next_orig_line = 0
     next_check_line = 0
     result_lines: List[Line] = []
+    # Mapping from `orig_lines` indexes to `result_lines` indexes.
     line_number_remap: Dict[int, int] = {}
     while next_orig_line < len(orig_lines) or (
         next_check_line < len(check_lines)
