@@ -45,8 +45,7 @@ def _get_tests() -> Set[str]:
 def _make_check_line(
     out_line: str,
 ) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
-    """Given a line of output, determine what CHECK line to produce and where
-    it should go.
+    """Given a line of output, determine what CHECK line to produce and where.
 
     Returns a tuple `(desired_line_number, line_or_line_generator)`.
 
@@ -64,7 +63,7 @@ def _make_check_line(
     maybe_match = _LINE_NUMBER_RE.match(out_line)
     if maybe_match:
         match = maybe_match
-        diagnostic_line_number = int(match.group(2)) - 1
+        diagnostic_line_number = int(match[2]) - 1
 
         def check_line(
             line_number: int, line_number_remap: Dict[int, int]
@@ -78,7 +77,7 @@ def _make_check_line(
 
         return (diagnostic_line_number, check_line)
     elif out_line:
-        return (-1, "// CHECK: %s\n" % out_line)
+        return (-1, f"// CHECK: {out_line}\n")
     else:
         return (-1, "// CHECK-EMPTY:\n")
 
@@ -169,7 +168,7 @@ def _update_check_once(test: str) -> bool:
                     indentation = match.group(0)
             result_lines.append((indentation, check_lines[next_check_line][1]))
             next_check_line += 1
-        elif orig_lines[next_orig_line].lstrip(" ").startswith("// CHECK"):
+        elif re.match(" *// CHECK", orig_lines[next_orig_line]):
             # Drop original CHECK lines.
             next_orig_line += 1
         else:
