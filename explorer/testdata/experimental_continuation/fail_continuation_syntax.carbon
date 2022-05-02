@@ -7,12 +7,12 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_continuation_syntax.carbon:16: syntax error, unexpected identifier, expecting LEFT_CURLY_BRACE
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 0;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_continuation_syntax.carbon:[[@LINE+1]]: syntax error, unexpected identifier, expecting LEFT_CURLY_BRACE
   __continuation k x = 3;
   __run k;
   return x;

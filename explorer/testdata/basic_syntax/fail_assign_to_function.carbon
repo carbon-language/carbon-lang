@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_function.carbon:18: Cannot assign to rvalue 'F'
 
 package ExplorerTest api;
 
@@ -15,6 +14,7 @@ fn F() {}
 fn G() {}
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_function.carbon:[[@LINE+1]]: Cannot assign to rvalue 'F'
   F = G;
   return 0;
 }

@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_no_return.carbon:15: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 
 package ExplorerTest api;
 
 fn NoReturn() -> auto {
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_no_return.carbon:[[@LINE+1]]: control-flow reaches end of function that provides a `->` return type without reaching a return statement
 }
 
 fn Main() {

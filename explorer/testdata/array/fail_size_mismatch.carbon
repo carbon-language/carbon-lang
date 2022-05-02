@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_size_mismatch.carbon:15: type error in name binding: '(i32, i32, i32)' is not implicitly convertible to '[i32; 2]'
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_size_mismatch.carbon:[[@LINE+1]]: type error in name binding: '(i32, i32, i32)' is not implicitly convertible to '[i32; 2]'
   var x: [i32; 2] = (0, 1, 2);
   return x[0];
 }

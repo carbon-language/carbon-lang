@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_generic_class_arg.carbon:24: type error in call: '(Type, Type)' is not implicitly convertible to '(Type)'
 
 package ExplorerTest api;
 
@@ -21,6 +20,7 @@ class Point(T:! Type) {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_generic_class_arg.carbon:[[@LINE+1]]: type error in call: '(Type, Type)' is not implicitly convertible to '(Type)'
   var p: Point(i32) = Point(i32, i32).Create(0, 1);
   return p.x;
 }
