@@ -51,13 +51,18 @@ static auto AddExposedNames(const Declaration& declaration,
       RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
-    case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name() != AnonymousName) {
         RETURN_IF_ERROR(
             enclosing_scope.Add(var.binding().name(), &var.binding()));
       }
       break;
+    }
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable AddExposedNames() on a `Self` declaration.";
+      break;
+    }
   }
   return Success();
 }
@@ -298,9 +303,6 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
   return Success();
 }
 
-// static auto ResolveNames(Declaration& declaration, StaticScope&
-// enclosing_scope,
-//                          Nonnull<Arena*> arena) -> ErrorOr<Success> {
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (declaration.kind()) {
@@ -324,6 +326,21 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       for (Nonnull<GenericBinding*> binding : impl.deduced_parameters()) {
         RETURN_IF_ERROR(ResolveNames(binding->type(), impl_scope));
         RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
+      }
+      // Only add `Self` to the impl_scope if it is not already in the enclosing
+      // scope.
+      if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
+        std::optional<Nonnull<SelfDeclaration*>> self = impl.self();
+        // Self type expression required in cases where `Self` is not already in
+        // scope.
+        if (!self) {
+          return CompilationError(impl.source_loc())
+                 << "impl requires type to be specified outside of a class "
+                    "declaration";
+        }
+        // FIXME: Should this instead be
+        // RETURN_IF_ERROR(AddExposedNames(*self, impl_scope));?
+        RETURN_IF_ERROR(impl_scope.Add("Self", *self));
       }
       RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), impl_scope));
       RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
@@ -408,6 +425,10 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         RETURN_IF_ERROR(ResolveNames(var.initializer(), enclosing_scope));
       }
       break;
+    }
+
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable: resolving names for `Self` declaration";
     }
   }
   return Success();

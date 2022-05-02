@@ -2027,6 +2027,9 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       }
       return Success();
     }
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable TypeChecker `Self` declaration";
+    }
   }
   return Success();
 }
@@ -2080,6 +2083,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                        InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
       break;
+    }
+
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable TypeChecker declare `Self` declaration";
     }
   }
   return Success();

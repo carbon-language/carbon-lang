@@ -73,6 +73,12 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << ";\n";
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      const auto& self = cast<SelfDeclaration>(*this);
+      out << "Self " << self.value_expression();
+      break;
+    }
   }
 }
 
@@ -117,6 +123,12 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "var " << var.binding();
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      const auto& self = cast<SelfDeclaration>(*this);
+      out << "Self " << self.value_expression();
+      break;
+    }
   }
 }
 
@@ -134,6 +146,8 @@ auto GetName(const Declaration& declaration) -> std::optional<std::string> {
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
+    case DeclarationKind::SelfDeclaration:
+      return cast<SelfDeclaration>(declaration).name();
   }
 }
 
@@ -213,6 +227,7 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
 
 auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                              ImplKind kind, Nonnull<Expression*> impl_type,
+                             bool self_type_specified,
                              Nonnull<Expression*> interface,
                              std::vector<Nonnull<AstNode*>> deduced_params,
                              std::vector<Nonnull<Declaration*>> members)
@@ -228,8 +243,12 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                << "illegal AST node in implicit parameter list of impl";
     }
   }
-  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, interface,
-                                     resolved_params, members);
+  std::optional<Nonnull<SelfDeclaration*>> self_decl = std::nullopt;
+  if (self_type_specified) {
+    self_decl = arena->New<SelfDeclaration>(impl_type);
+  }
+  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, self_decl,
+                                     interface, resolved_params, members);
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {

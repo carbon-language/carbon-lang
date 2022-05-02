@@ -13,6 +13,7 @@ abstract class Pattern : AstNode;
   class ExpressionPattern : Pattern;
 abstract class Declaration : AstNode;
   class FunctionDeclaration : Declaration;
+  class SelfDeclaration : Declaration;
   class ClassDeclaration : Declaration;
   class ChoiceDeclaration : Declaration;
   class VariableDeclaration : Declaration;

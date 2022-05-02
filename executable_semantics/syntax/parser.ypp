@@ -98,7 +98,7 @@
 %token <std::string> string_literal
 %type <std::string> designator
 %type <ImplKind> impl_kind
-%type <Nonnull<Expression*>> impl_type
+%type <std::pair<Nonnull<Expression*>, bool>> impl_type
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
@@ -927,6 +927,8 @@ declaration:
     }
 | INTERFACE identifier LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
+      // FIXME: Type of `Self` should be the interface being declared, not
+      // `Type`.
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
@@ -935,7 +937,7 @@ declaration:
 | impl_kind IMPL impl_deduced_params impl_type AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
-          arena, context.source_loc(), $1, $4, $6, $3, $8);
+          arena, context.source_loc(), $1, $4.first, $4.second, $6, $3, $8);
       if (impl.ok()) {
         $$ = *impl;
       } else {
@@ -952,8 +954,12 @@ impl_kind:
 ;
 impl_type:
   // Self
-    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
+    {
+      $$ = {arena->New<IdentifierExpression>(context.source_loc(), "Self"),
+            false};
+    }
 | expression
+    { $$ = {$1, true}; }
 ;
 declaration_list:
   // Empty

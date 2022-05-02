@@ -161,6 +161,32 @@ class FunctionDeclaration : public Declaration {
   std::optional<Nonnull<Block*>> body_;
 };
 
+class SelfDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit SelfDeclaration(Nonnull<Expression*> value_expression)
+      : Declaration(AstNodeKind::SelfDeclaration,
+                    value_expression->source_loc()),
+        value_expression_(value_expression) {}
+  // FIXME: Call set_static_type() and set_constant_value() (from Declaration,
+  // the parent class), possibly during typechecking.
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromSelfDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string { return "Self"; }
+  auto value_expression() const -> const Expression& {
+    return *value_expression_;
+  }
+  auto value_expression() -> const Expression& { return *value_expression_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  Nonnull<Expression*> value_expression_;
+};
+
 class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
@@ -323,7 +349,7 @@ class ImplDeclaration : public Declaration {
 
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
-                     Nonnull<Expression*> interface,
+                     bool self_type_specified, Nonnull<Expression*> interface,
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      std::vector<Nonnull<Declaration*>> members)
       -> ErrorOr<Nonnull<ImplDeclaration*>>;
@@ -331,12 +357,14 @@ class ImplDeclaration : public Declaration {
   // Use `Create` instead.
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,
+                  std::optional<Nonnull<SelfDeclaration*>> self_decl,
                   Nonnull<Expression*> interface,
                   std::vector<Nonnull<GenericBinding*>> deduced_params,
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         kind_(kind),
         impl_type_(impl_type),
+        self_decl_(self_decl),
         interface_(interface),
         deduced_parameters_(std::move(deduced_params)),
         members_(std::move(members)) {}
@@ -374,10 +402,15 @@ class ImplDeclaration : public Declaration {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
+  auto self() const -> std::optional<Nonnull<const SelfDeclaration*>> {
+    return self_decl_;
+  }
+  auto self() -> std::optional<Nonnull<SelfDeclaration*>> { return self_decl_; }
 
  private:
   ImplKind kind_;
-  Nonnull<Expression*> impl_type_;  // TODO: make this optional
+  Nonnull<Expression*> impl_type_;
+  std::optional<Nonnull<SelfDeclaration*>> self_decl_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
