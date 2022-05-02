@@ -25,14 +25,16 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 
-class _FullError(NamedTuple):
+class _LineError(NamedTuple):
+    """An error with a line associated."""
+
     path: str
     line: int
     message: str
 
 
-"""A parsed line, either a CHECK message or a full error."""
-_ParsedLine = Union[str, _FullError]
+"""A parsed output line, either a CHECK message or a _LineError."""
+_ParsedLine = Union[str, _LineError]
 
 
 def _get_tests() -> Set[str]:
@@ -83,7 +85,7 @@ def _parse_out_line(out_line: str) -> _ParsedLine:
     match = re.match(r"(COMPILATION ERROR: [^:]*:)([1-9][0-9]*)(:.*)", out_line)
     if not match:
         return f"// CHECK: {out_line}\n"
-    return _FullError(match[1], int(match[2]) - 1, match[3])
+    return _LineError(match[1], int(match[2]) - 1, match[3])
 
 
 def _convert_to_checks(cluster_content: List[_ParsedLine]) -> List[str]:
@@ -112,7 +114,7 @@ def _cluster_check_lines(
     for out_line in out_lines:
         parsed_line = _parse_out_line(out_line)
         if (
-            isinstance(parsed_line, _FullError)
+            isinstance(parsed_line, _LineError)
             and parsed_line.line != cluster_line
         ):
             assert (
