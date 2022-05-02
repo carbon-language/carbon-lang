@@ -7,7 +7,7 @@
 // RUN: %{not} %{executable_semantics} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{executable_semantics} %s
-// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_external_impl_omit_self.carbon:24: impl requires type to be specified outside of a class declaration
+// CHECK: COMPILATION ERROR: {{.*}}/executable_semantics/testdata/interface/fail_external_impl_omit_self.carbon:31: impl requires type to be specified outside of a class declaration
 
 package ExecutableSemanticsTest api;
 
