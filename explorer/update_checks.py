@@ -14,7 +14,7 @@ import re
 import subprocess
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 _BIN = "./bazel-bin/explorer/explorer"
 _TESTDATA = "explorer/testdata"
@@ -52,7 +52,8 @@ class Line(ABC):
 
 
 class OriginalLine(Line):
-    def __init__(self, text: str) -> None:
+    def __init__(self, line_number: int, text: str) -> None:
+        self.line_number = line_number
         self.text = text
 
     def format(self, **kwargs: Any) -> str:
@@ -119,6 +120,21 @@ def _make_check_line(out_line: str) -> CheckLine:
         return SimpleCheckLine(out_line)
 
 
+def _should_produce_check_line(
+    check_line: CheckLine,
+    orig_line: Optional[OriginalLine],
+    autoupdate_index: int,
+) -> bool:
+    """Determine whether it's time to produce a given CHECK line."""
+    if not orig_line:
+        # If there's no original line, we have no choice.
+        return True
+    if orig_line.line_number <= autoupdate_index:
+        # Don't put any CHECK lines before the AUTOUPDATE line.
+        return False
+    return check_line.print_before_line(orig_line.line_number)
+
+
 def _update_check_once(test: str) -> bool:
     """Updates the CHECK: lines for `test` by running explorer.
 
@@ -170,48 +186,38 @@ def _update_check_once(test: str) -> bool:
     out = CheckLine.escape(out).replace(test, "{{.*}}/%s" % test)
     out_lines = out.splitlines()
 
-    # Determine what CHECK: lines we want and where to put them.
-    check_lines = [_make_check_line(out_line) for out_line in out_lines]
+    orig_line_iter = (
+        OriginalLine(i, line) for i, line in enumerate(orig_lines)
+    )
+    check_line_iter = (_make_check_line(out_line) for out_line in out_lines)
+    next_orig_line: Optional[OriginalLine] = next(orig_line_iter, None)
+    next_check_line: Optional[CheckLine] = next(check_line_iter, None)
 
-    # Interleave the original lines and the CHECK: lines.
-    next_orig_line = 0
-    next_check_line = 0
+    # Interleave the original lines and the CHECK: lines into a list of
+    # `result_lines`.
     result_lines: List[Line] = []
     # Mapping from `orig_lines` indexes to `result_lines` indexes.
     line_number_remap: Dict[int, int] = {}
-    while next_orig_line < len(orig_lines) or (
-        next_check_line < len(check_lines)
-    ):
-        # Determine whether to produce an input line or a CHECK line next.
-        if next_check_line >= len(check_lines):
-            # No more CHECK lines to produce.
-            produce_check_line = False
-        elif next_orig_line >= len(orig_lines):
-            # Only CHECK lines remain.
-            produce_check_line = True
-        elif next_orig_line <= autoupdate_index:
-            # Don't put any CHECK lines before the AUTOUPDATE line.
-            produce_check_line = False
-        else:
-            # Produce this CHECK line if we've reached its preferred position.
-            produce_check_line = check_lines[next_check_line].print_before_line(
-                next_orig_line
-            )
-
-        if produce_check_line:
+    while next_orig_line or next_check_line:
+        if next_check_line and _should_produce_check_line(
+            next_check_line, next_orig_line, autoupdate_index
+        ):
             # Indent the CHECK: line to match the next original line.
-            if next_orig_line < len(orig_lines):
-                match = re.match(" *", orig_lines[next_orig_line])
+            if next_orig_line:
+                match = re.match(" *", next_orig_line.text)
                 if match:
-                    check_lines[next_check_line].indent = match[0]
-            result_lines.append(check_lines[next_check_line])
-            next_check_line += 1
+                    next_check_line.indent = match[0]
+            result_lines.append(next_check_line)
+            next_check_line = next(check_line_iter, None)
         else:
+            assert next_orig_line, "no lines left"
             # Include this original line if it isn't a CHECK: line.
-            if not re.match(" *// CHECK", orig_lines[next_orig_line]):
-                line_number_remap[next_orig_line] = len(result_lines)
-                result_lines.append(OriginalLine(orig_lines[next_orig_line]))
-            next_orig_line += 1
+            if not re.match(" *// CHECK", next_orig_line.text):
+                line_number_remap[next_orig_line.line_number] = len(
+                    result_lines
+                )
+                result_lines.append(next_orig_line)
+            next_orig_line = next(orig_line_iter, None)
 
     # Generate contents for any lines that depend on line numbers.
     formatted_result_lines = [
