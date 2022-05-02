@@ -57,11 +57,11 @@ repos:
         entry: scripts/run_buildifier.py
         language: python
         files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
-      - id: executable-semantics-format-grammar
-        name: Format the executable_semantics grammar file
-        entry: executable_semantics/syntax/format_grammar.py
+      - id: explorer-format-grammar
+        name: Format the explorer grammar file
+        entry: explorer/syntax/format_grammar.py
         language: python
-        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
+        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
       - id: clang-format
