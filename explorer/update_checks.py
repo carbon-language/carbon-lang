@@ -13,7 +13,8 @@ import os
 import re
 import subprocess
 import sys
-from typing import Callable, Dict, Set, Tuple, Union
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Set
 
 _BIN = "./bazel-bin/explorer/explorer"
 _TESTDATA = "explorer/testdata"
@@ -42,44 +43,80 @@ def _get_tests() -> Set[str]:
     return tests
 
 
-def _make_check_line(
-    out_line: str,
-) -> Tuple[int, Union[str, Callable[[int, Dict[int, int]], str]]]:
-    """Given a line of output, determine what CHECK line to produce and where.
+class Line(ABC):
+    @abstractmethod
+    def format(
+        self, *, output_line_number: int, line_number_remap: Dict[int, int]
+    ) -> str:
+        raise NotImplementedError
 
-    Returns a tuple `(desired_line_number, line_or_line_generator)`.
 
-    `desired_line_number` is the index of the line that this line should
-    ideally precede.
+class OriginalLine(Line):
+    def __init__(self, text: str) -> None:
+        self.text = text
 
-    A `line_generator` is a function that takes the actual line number of this
-    line and a mapping from original line numbers to rewritten line numbers and
-    produces the contents of the CHECK line.
+    def format(self, **kwargs: Any) -> str:
+        return self.text
 
-    `line_or_line_generator` is either a `str` containing the resulting line or
-    a `line_generator` that computes it.
-    """
+
+class CheckLine(Line):
+    def __init__(self) -> None:
+        self.indent = ""
+
+    @staticmethod
+    def escape(s: str) -> str:
+        """Escape any FileCheck special characters in `s`."""
+        return s.replace("{{", "{{[{][{]}}").replace("[[", "{{[[][[]}}")
+
+    def print_before_line(self, line: int) -> bool:
+        """Determine if we'd prefer to print this CHECK before line `line`."""
+        return True
+
+
+class SimpleCheckLine(CheckLine):
+    def __init__(self, expected: str) -> None:
+        super().__init__()
+        self.expected = expected
+
+    def format(self, **kwargs: Any) -> str:
+        if self.expected:
+            return f"{self.indent}// CHECK: {self.expected}\n"
+        else:
+            return f"{self.indent}// CHECK-EMPTY\n"
+
+
+class CheckLineWithLineNumber(CheckLine):
+    def __init__(self, before: str, line_number: int, after: str) -> None:
+        super().__init__()
+        self.before = before
+        self.line_number = line_number
+        self.after = after
+
+    def format(
+        self, *, output_line_number: int, line_number_remap: Dict[int, int]
+    ) -> str:
+        delta = line_number_remap[self.line_number] - output_line_number
+        return (
+            f"{self.indent}// CHECK: {self.before}[[@LINE{delta:+d}]]"
+            + f"{self.after}\n"
+        )
+
+    def print_before_line(self, line: int) -> bool:
+        return line >= self.line_number
+
+
+def _make_check_line(out_line: str) -> CheckLine:
+    """Given a line of output, determine what CHECK line to produce."""
     out_line = out_line.rstrip()
     maybe_match = _LINE_NUMBER_RE.match(out_line)
     if maybe_match:
         match = maybe_match
         diagnostic_line_number = int(match[2]) - 1
-
-        def check_line(
-            line_number: int, line_number_remap: Dict[int, int]
-        ) -> str:
-            delta = line_number_remap[diagnostic_line_number] - line_number
-            return "// CHECK: %s[[@LINE%+d]]%s\n" % (
-                match.group(1),
-                delta,
-                match.group(3),
-            )
-
-        return (diagnostic_line_number, check_line)
-    elif out_line:
-        return (-1, f"// CHECK: {out_line}\n")
+        return CheckLineWithLineNumber(
+            match[1], diagnostic_line_number, match[3]
+        )
     else:
-        return (-1, "// CHECK-EMPTY:\n")
+        return SimpleCheckLine(out_line)
 
 
 def _update_check_once(test: str) -> bool:
@@ -130,7 +167,7 @@ def _update_check_once(test: str) -> bool:
     # when used.
     # TODO: Maybe revisit and see if lit can be convinced to give a
     # root-relative path.
-    out = out.replace(test, "{{.*}}/%s" % test)
+    out = CheckLine.escape(out).replace(test, "{{.*}}/%s" % test)
     out_lines = out.splitlines()
 
     # Determine what CHECK: lines we want and where to put them.
@@ -139,10 +176,10 @@ def _update_check_once(test: str) -> bool:
     # Interleave the original lines and the CHECK: lines.
     next_orig_line = 0
     next_check_line = 0
-    result_lines = []
-    line_number_remap = {}
-    while next_orig_line < len(orig_lines) or next_check_line < len(
-        check_lines
+    result_lines: List[Line] = []
+    line_number_remap: Dict[int, int] = {}
+    while next_orig_line < len(orig_lines) or (
+        next_check_line < len(check_lines)
     ):
         # Determine whether to produce an input line or a CHECK line next.
         if next_check_line >= len(check_lines):
@@ -156,47 +193,48 @@ def _update_check_once(test: str) -> bool:
             produce_check_line = False
         else:
             # Produce this CHECK line if we've reached its preferred position.
-            produce_check_line = (
-                check_lines[next_check_line][0] <= next_orig_line
+            produce_check_line = check_lines[next_check_line].print_before_line(
+                next_orig_line
             )
 
         if produce_check_line:
-            indentation = ""
+            # Indent the CHECK: line to match the next original line.
             if next_orig_line < len(orig_lines):
                 match = re.match(" *", orig_lines[next_orig_line])
                 if match:
-                    indentation = match.group(0)
-            result_lines.append((indentation, check_lines[next_check_line][1]))
+                    check_lines[next_check_line].indent = match[0]
+            result_lines.append(check_lines[next_check_line])
             next_check_line += 1
-        elif re.match(" *// CHECK", orig_lines[next_orig_line]):
-            # Drop original CHECK lines.
-            next_orig_line += 1
         else:
-            line_number_remap[next_orig_line] = len(result_lines)
-            result_lines.append(("", orig_lines[next_orig_line]))
+            # Include this original line if it isn't a CHECK: line.
+            if not re.match(" *// CHECK", orig_lines[next_orig_line]):
+                line_number_remap[next_orig_line] = len(result_lines)
+                result_lines.append(OriginalLine(orig_lines[next_orig_line]))
             next_orig_line += 1
 
     # Generate contents for any lines that depend on line numbers.
-    fixed_result_lines = [
-        indentation
-        + (line if isinstance(line, str) else line(i, line_number_remap))
-        for i, (indentation, line) in enumerate(result_lines)
+    formatted_result_lines = [
+        line.format(output_line_number=i, line_number_remap=line_number_remap)
+        for i, line in enumerate(result_lines)
     ]
 
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
-        f.writelines(fixed_result_lines)
+        f.writelines(formatted_result_lines)
 
-    return len(orig_lines) != len(result_lines)
+    return formatted_result_lines != orig_lines
 
 
 def _update_check(test: str) -> None:
     """Wraps CHECK: updates for test files."""
-    if _update_check_once(test):
-        # If the number of output lines changes, run again because output can be
-        # line-specific. However, output should stabilize quickly.
-        if _update_check_once(test):
-            raise ValueError("The output of %s kept changing" % test)
+    # If the number of output lines changes, run again because output can be
+    # line-specific. However, output should stabilize quickly.
+    if (
+        _update_check_once(test)
+        and _update_check_once(test)
+        and _update_check_once(test)
+    ):
+        raise ValueError("The output of %s kept changing" % test)
     print(".", end="", flush=True)
 
 
