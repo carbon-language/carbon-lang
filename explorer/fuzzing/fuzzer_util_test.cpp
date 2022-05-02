@@ -36,6 +36,19 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
   EXPECT_GT(file_count, 0);
 }
 
+TEST(FuzzerUtilTest, GetRunfilesFile) {
+  EXPECT_THAT(*Internal::GetRunfilesFile(
+                  "carbon/explorer/fuzzing/fuzzer_corpus/empty.textproto"),
+              testing::EndsWith("/explorer/fuzzing/fuzzer_corpus/"
+                                "empty.textproto"));
+  EXPECT_THAT(Internal::GetRunfilesFile(
+                  "explorer/fuzzing/fuzzer_corpus/empty.textproto")
+                  .error()
+                  .message(),
+              testing::EndsWith("fuzzer_util_test.runfiles/explorer/fuzzing/"
+                                "fuzzer_corpus/empty.textproto doesn't exist"));
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
 
