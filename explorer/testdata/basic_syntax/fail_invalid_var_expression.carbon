@@ -7,10 +7,10 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:14: Expected expression for variable type
 
 package ExplorerTest api;
 
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
 var a: auto;
 
 fn Main() -> i32 { return 0; }

@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_direct_recurse.carbon:18: Function calls itself, but has a deduced return type
 
 package ExplorerTest api;
 
@@ -15,6 +14,7 @@ package ExplorerTest api;
 // used.
 fn Recurse(x: i32, do_recurse: Bool) -> auto {
   if (do_recurse) {
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/auto_return/fail_direct_recurse.carbon:[[@LINE+1]]: Function calls itself, but has a deduced return type
     Recurse(x, false);
   }
   return x;

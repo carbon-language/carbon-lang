@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:23: attempt to instantiate a non-generic class: Point(i32)
 
 package ExplorerTest api;
 
@@ -20,6 +19,7 @@ class Point {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+1]]: attempt to instantiate a non-generic class: Point(i32)
   var p: Point(i32) = Point.Origin();
   return 0;
 }

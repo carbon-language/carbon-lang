@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:28: GetX is not a class function
 
 package ExplorerTest api;
 
@@ -25,5 +24,6 @@ class Point {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: GetX is not a class function
   return Point.GetX();
 }
