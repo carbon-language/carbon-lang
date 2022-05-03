@@ -13,7 +13,7 @@ load("@mypy_integration//:mypy.bzl", "mypy_test")
 filegroup(
     name = "non_test_cc_rules",
     data = [
-        "//executable_semantics",
+        "//explorer",
         "//installers/local:carbon",
         "//migrate_cpp/cpp_refactoring",
         "//toolchain/diagnostics:null_diagnostics",
