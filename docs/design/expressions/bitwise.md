@@ -132,11 +132,11 @@ to a division by a power of two, rounding downwards.
 The second operand of a bit-shift is required to be between zero (inclusive) and
 the bit-width of the first operand (exclusive); it is a programming error if the
 second operand is not within that range. In a hardened build, the result will
-either be a trap or a correct shift by an unspecified number of bits, which
-might still be wider than the first operand, resulting in 0 or -1. In a
+have well defined behavior of either stopping program execution immediately or a shift of an unspecified number of bits, which if wider than the first operand will result in `0` or `-1`. In a
 performance build, the optimizer may assume that this programming error does not
 occur.
 
+TODO: Need to unify the developer and hardened build behavior for these programming errors with those of arithmetic overflow, likely documenting the requirements in a common place and linking to it from here.
 ## Integer constants
 
 These operations can also be applied to a pair of integer constants, or to an
