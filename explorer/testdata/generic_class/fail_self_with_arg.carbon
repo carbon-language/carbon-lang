@@ -13,12 +13,12 @@ package ExplorerTest api;
 
 class Point(T:! Type) {
 
-  // Should fail: wrote `Self(T)` instead of `Self`.
+  // Error: wrote `Self(T)` instead of `Self`.
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }
 
-  // Should fail: wrote `Self(T)` instead of `Self`.
+  // Error: wrote `Self(T)` instead of `Self`.
   fn GetX[me: Self(T)]() -> T {
     return me.x;
   }

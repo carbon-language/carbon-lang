@@ -831,7 +831,8 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 | NAMED identifier named_impl_params EQUAL
-    // TODO: Add support for Return name for impl
+    // TODO: Add support for named impls. For now, the named syntax is
+    // accepted, but the name is ignored.
     { $$ = $3; }
 ;
 receiver:
@@ -962,10 +963,10 @@ impl_type:
   // Self
     {
       $$ = {arena->New<IdentifierExpression>(context.source_loc(), "Self"),
-            false};
+            /* self_type_specified= */ false};
     }
 | expression
-    { $$ = {$1, true}; }
+    { $$ = {$1, /* self_type_specified= */ true}; }
 ;
 declaration_list:
   // Empty

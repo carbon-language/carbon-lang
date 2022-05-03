@@ -7,17 +7,16 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:18: Expected a type, but got class Point
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:20: Expected a type, but got class Point
 
 package ExplorerTest api;
 
 class Point(T:! Type) {
-  // Should error, wrote `Point` instead of `Point(T)`.
-  fn Origin(zero: T) -> Point {
+  fn Origin(zero: T) -> Point(T) {
     return {.x = zero, .y = zero};
   }
 
-  // Should error, wrote `Point` instead of `Point(T)`.
+  // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
   fn GetX[me: Point]() -> T {
     return me.x;
   }

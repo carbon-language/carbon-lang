@@ -16,6 +16,7 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
+  // Allowed: `Self` here means `Point`.
   fn GetX[me: Self]() -> i32 {
     return me.x;
   }

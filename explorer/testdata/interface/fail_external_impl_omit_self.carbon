@@ -7,7 +7,7 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:31: impl requires type to be specified outside of a class declaration
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:32: impl requires type to be specified outside of a class declaration
 
 package ExplorerTest api;
 
@@ -21,6 +21,7 @@ class Point {
   var y: i32;
 }
 
+// Error: need to specify type implementing `Vector` for
 external impl as Vector {
   fn Add[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};

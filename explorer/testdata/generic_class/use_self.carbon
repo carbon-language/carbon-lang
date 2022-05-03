@@ -12,6 +12,7 @@
 package ExplorerTest api;
 
 class Point(T:! Type) {
+  // Allowed: `Self` means `Point(T)` here.
   fn Origin(zero: T) -> Self {
     return {.x = zero, .y = zero};
   }
