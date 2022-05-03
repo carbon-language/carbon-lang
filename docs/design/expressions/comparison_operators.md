@@ -17,7 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Built-in comparisons and implicit conversions](#built-in-comparisons-and-implicit-conversions)
         -   [Consistency with implicit conversions](#consistency-with-implicit-conversions)
         -   [Comparisons with constants](#comparisons-with-constants)
-    -   [Overloading](#overloading)
+    -   [Extensibility](#extensibility)
+        -   [Equality](#equality)
+        -   [Ordering](#ordering)
+        -   [Compatibility of equality and ordering](#compatibility-of-equality-and-ordering)
+        -   [Custom result types](#custom-result-types)
     -   [Default implementations for basic types](#default-implementations-for-basic-types)
 -   [Open questions](#open-questions)
 -   [Alternatives considered](#alternatives-considered)
@@ -42,6 +46,15 @@ standard mathematical meaning:
 Comparison operators all return a `bool`; they evaluate to `true` when the
 indicated comparison is true. All comparison operators are infix binary
 operators.
+
+These operators have predefined meanings for some of Carbon's
+[built-in types](#built-in-comparisons-and-implicit-conversions), as well as for
+simple ["data" types](#default-implementations-for-basic-types) like structs and
+tuples.
+
+User-defined types can define the meaning of these operations by
+[implementing an interface](#extensibility) provided as part of the Carbon
+standard library.
 
 ## Details
 
@@ -222,29 +235,245 @@ literal that cannot be represented in `i32`. Such comparisons would always be
 tautological. This decision should be revisited if it proves problematic in
 practice, for example in templated code where the literal is sometimes in range.
 
-### Overloading
+### Extensibility
 
-Separate interfaces will be provided to permit overloading equality and
-relational comparisons. The exact design of those interfaces is left to a future
-proposal. As non-binding design guidance for such a proposal:
+User-defined types can extend the behavior of the comparison operators by
+implementing interfaces. In this section, various properties are specified that
+such implementations "should" satisfy. These properties are not enforced in
+general, but the standard library might detect violations of some of them in
+some circumstances. These properties may be assumed by generic code, resulting
+in unexpected behavior if they are violated.
 
--   The interface for equality comparisons should primarily provide the ability
-    to override the behavior of `==`. The `!=` operator can optionally also be
-    overridden, with a default implementation that returns `not (a == b)`. This
-    conversation was marked as resolved by chandlerc Show conversation
-    Overriding `!=` separately from `==` is expected to be used to support
-    floating-point NaN comparisons and for C++ interoperability.
+#### Equality
 
--   The interface for relational comparisons should primarily provide the
-    ability to specify a three-way comparison operator. The individual
-    relational comparison operators can optionally be overridden separately,
-    with a default implementation in terms of the three-way comparison operator.
-    This facility is expected to be used primarily to support C++
-    interoperability.
+Comparison operators can be provided for user-defined types by implementing the
+`EqWith` and `OrderedWith` interfaces.
 
--   Overloaded comparison operators may wish to produce a type other than
-    `bool`, for uses such as a vector comparison producing a vector of `bool`
-    values. We should decide whether we wish to support such uses.
+The `EqWith` interface is used to define the semantics of the `==` and `!=`
+operators for a given pair of types:
+
+```
+interface EqWith(U:! Type) {
+  fn Equal[me: Self](u: U) -> bool;
+  default fn NotEqual[me: Self](u: U) -> bool {
+    return not (me == u);
+  }
+}
+constraint Eq {
+  extends EqWith(Self);
+}
+```
+
+Given `x: T` and `y: U`:
+
+-   The expression `x == y` calls `x.(EqWith(U).Equal)(y)`.
+-   The expression `x != y` calls `x.(EqWith(U).NotEqual)(y)`.
+
+```
+class Path {
+  private var drive: String;
+  private var path: String;
+  private fn CanonicalPath[me: Self]() -> String;
+
+  external impl as Eq {
+    fn Equal[me: Self](other: Self) -> bool {
+      return (me.drive, me.CanonicalPath()) ==
+             (other.drive, other.CanonicalPath());
+    }
+  }
+}
+```
+
+The `EqWith` overload is selected without considering possible implicit
+conversions. To permit implicit conversions in the operands of an `==` overload,
+the
+[`like` operator](/docs/design/generics/details.md#like-operator-for-implicit-conversions)
+can be used:
+
+```
+class MyInt {
+  var value: i32;
+  fn Value[me: Self]() -> i32 { return me.value; }
+}
+external impl i32 as ImplicitAs(MyInt);
+external impl like MyInt as EqWith(like MyInt) {
+  fn Equal[me: Self](other: Self) -> bool {
+    return me.Value() == other.Value();
+  }
+}
+fn CompareBothWays(a: MyInt, b: i32, c: MyInt) -> bool {
+  // OK, calls above implementation three times.
+  return a == a and a != b and b == c;
+}
+```
+
+The behavior of `NotEqual` can be overridden separately from the behavior of
+`Equal` to support cases like floating-point NaN values, where two values can
+compare neither equal nor not-equal, and thus both functions would return
+`false`. However, an implementation of `EqWith` should _not_ allow both `Equal`
+and `NotEqual` to return `true` for the same pair of values. Additionally, these
+operations should have no observable side-effects.
+
+```
+external impl like MyFloat as EqWith(like MyFloat) {
+  fn Equal[me: MyFloat](other: MyFloat) -> bool {
+    if (me.IsNaN() or other.IsNaN()) {
+      return false;
+    }
+    return me.Representation() == other.Representation();
+  }
+  fn NotEqual[me: MyFloat](other: MyFloat) -> bool {
+    if (me.IsNaN() or other.IsNaN()) {
+      return false;
+    }
+    return me.Representation() != other.Representation();
+  }
+}
+```
+
+Heterogeneous comparisons must be defined both ways around:
+
+```
+external impl like MyInt as EqWith(like MyFloat);
+external impl like MyFloat as EqWith(like MyInt);
+```
+
+**TODO:** Add an adapter to the standard library to make it easy to define the
+reverse comparison.
+
+#### Ordering
+
+The `OrderedWith` interface is used to define the semantics of the `<`, `<=`,
+`>`, and `>=` operators for a given pair of types.
+
+```
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater,
+  Incomparable
+}
+interface OrderedWith(U:! Type) {
+  fn Compare[me: Self](u: U) -> Ordering;
+  default fn Less[me: Self](u: U) -> bool {
+    return me.Compare(u) == Ordering.Less;
+  }
+  default fn LessOrEquivalent[me: Self](u: U) -> bool {
+    let c: Ordering = me.Compare(u);
+    return c == Ordering.Less or c == Ordering.Equivalent;
+  }
+  default fn Greater[me: Self](u: U) -> bool {
+    return me.Compare(u) == Ordering.Greater;
+  }
+  default fn GreaterOrEquivalent[me: Self](u: U) -> bool {
+    let c: Ordering = me.Compare(u);
+    return c == Ordering.Greater or c == Ordering.Equivalent;
+  }
+}
+constraint Ordered {
+  extends OrderedWith(Self);
+}
+
+// Ordering.Less < Ordering.Equivalent < Ordering.Greater.
+// Ordering.Incomparable is incomparable with all three.
+external impl Ordering as Ordered;
+```
+
+**TODO:** Revise the above when we have a concrete design for enumerated types.
+
+Given `x: T` and `y: U`:
+
+-   The expression `x < y` calls `x.(OrderedWith(U).Less)(y)`.
+-   The expression `x <= y` calls `x.(OrderedWith(U).LessOrEquivalent)(y)`.
+-   The expression `x > y` calls `x.(OrderedWith(U).Greater)(y)`.
+-   The expression `x >= y` calls `x.(OrderedWith(U).GreaterOrEquivalent)(y)`.
+
+For example:
+
+```
+class MyWidget {
+  var width: i32;
+  var height: i32;
+
+  fn Size[me: Self]() -> i32 { return me.width * me.height; }
+
+  // Widgets are normally ordered by size.
+  external impl as Ordered {
+    fn Compare[me: Self](other: Self) -> Ordering {
+      return me.Size().(Ordered.Compare)(other.Size());
+    }
+  }
+}
+fn F(a: MyWidget, b: MyWidget) -> bool {
+  return a <= b;
+}
+```
+
+As for `EqWith`, the
+[`like` operator](/docs/design/generics/details.md#like-operator-for-implicit-conversions)
+can be used to permit implicit conversions when invoking a comparison, and
+heterogeneous comparisons must be defined both ways around:
+
+```
+fn ReverseOrdering(o: Ordering) -> Ordering {
+  return Ordering.Equivalent.(Ordered.Compare)(o);
+}
+external impl like MyInt as OrderedWith(like MyFloat);
+external impl like MyFloat as OrderedWith(like MyInt) {
+  fn Compare[me: Self](other: Self) -> Ordering {
+    return Reverse(other.(OrderedWith(Self).Compare)(me));
+  }
+}
+```
+
+The default implementations of `Less`, `LessOrEquivalent`, `Greater`, and
+`GreaterOrEquivalent` can be overridden if a more efficient version can be
+implemented. The behaviors of such overrides should follow those of the above
+default implementations, and the members of an `OrderedWith` implementation
+should have no observable side-effects.
+
+`OrderedWith` implementations should be _transitive_. That is, given `V:! Type`,
+`U:! OrderedWith(V)`, `T:! OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
+`c: V`, then:
+
+-   If `a <= b` and `b <= c` then `a <= c`, and moreover if either `a < b` or
+    `b < c` then `a < c`.
+-   If `a >= b` and `b >= c` then `a >= c`, and moreover if either `a > b` or
+    `b > c` then `a > c`.
+-   If `a` and `b` are equivalent, then `a.Compare(c) == b.Compare(c)`.
+    Similarly, if `b` and `c` are equivalent, then
+    `a.Compare(b) == a.Compare(c)`.
+
+`OrderedWith` implementations should also be _consistent under reversal_. That
+is, given types `T` and `U` where `T is OrderedWith(U)` and
+`U is OrderedWith(T)`, and values `a: T` and `b: U`:
+
+-   If `a.(OrderedWith.Compare)(b)` is `Ordering.Greater`, then
+    `b.(OrderedWith.Compare)(a)` is `Ordering.Less`, and the other way around.
+-   Otherwise, `a.(OrderedWith.Compare)(b)` returns the same value as
+    `b.(OrderedWith.Compare)(a)`.
+
+There is no expectation that an `Ordered` implementation be a total order, a
+weak order, or a partial order, and in particular the implementation for
+floating-point types is none of these because NaN values do not compare less
+than or equivalent to themselves.
+
+**TODO:** The standard library should provide a way to specify that an ordering
+is a weak, partial, or total ordering, and a way to request such an ordering in
+a generic.
+
+#### Compatibility of equality and ordering
+
+There is no requirement that a pair of types that implements `OrderedWith` also
+implements `EqWith`. If a pair of types does implement both, however, the
+equality relation provided by `x.(EqWith.Equal)(y)` should be a refinement of
+the equivalence relation provided by
+`x.(OrderedWith.Compare)(y) == Ordering.Equivalent`.
+
+#### Custom result types
+
+**TODO:** Support a lower-level extensibility mechanism that allows a result
+type other than `bool`.
 
 ### Default implementations for basic types
 
@@ -253,11 +482,26 @@ relational comparisons are also defined for all "data" types:
 
 -   [Tuples](../tuples.md)
 -   [Struct types](../classes.md#struct-types)
--   [Classes implementing an interface that identifies them as data classes.](../classes.md#interfaces-implemented-for-data-classes)
+-   [Classes implementing an interface that identifies them as data classes](../classes.md#interfaces-implemented-for-data-classes)
 
 Relational comparisons for these types provide a lexicographical ordering. In
 each case, the comparison is only available if it is supported by all element
 types.
+
+Because implicit conversions between data classes can reorder fields, the
+implementations for data classes do not permit implicit conversions on their
+arguments in general. Instead:
+
+-   Equality comparisons are permitted between any two data classes that have
+    the same _unordered set_ of field names, if each corresponding pair of
+    fields has an `EqWith` implementation. Fields are compared in the order they
+    appear in the left-hand operand.
+-   Relational comparisons are permitted between any two data classes that have
+    the same _ordered sequence_ of field names, if each corresponding pair of
+    fields has an `OrderedWith` implementation. Fields are compared in order.
+
+Comparisons between tuples permit implicit conversions for either operand, but
+not both.
 
 ## Open questions
 
@@ -272,10 +516,13 @@ in general. That decision is left to a future proposal.
 -   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
 -   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
 -   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
+-   [Rename `OrderedWith` to `ComparableWith`](/proposals/p1178.md#use-comparablewith-instead-of-orderedwith)
 
 ## References
 
 -   Proposal
     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+-   Proposal
+    [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
