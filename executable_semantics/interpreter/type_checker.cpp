@@ -1784,7 +1784,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     for (Nonnull<Pattern*> field : (*type_params)->fields()) {
       CHECK(field->kind() == PatternKind::GenericBinding);
       auto& binding = cast<GenericBinding>(*field);
-      // binding.symbolic_identity() filled in during `TypeCheckPattern(...)`
+      // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
       // above.
       generic_args[&binding] = *binding.symbolic_identity();
     }
