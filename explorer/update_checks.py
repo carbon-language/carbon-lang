@@ -25,7 +25,8 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 # Indicates no autoupdate is requested.
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
-_LINE_NUMBER_RE = re.compile(r"(COMPILATION ERROR: [^:]*:)([1-9][0-9]*)(:.*)")
+# A regexp matching lines that contain line number references.
+_LINE_NUMBER_RE = r"(COMPILATION ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
 
 
 def _get_tests() -> Set[str]:
@@ -44,6 +45,8 @@ def _get_tests() -> Set[str]:
 
 
 class Line(ABC):
+    """A line that may appear in the resulting test file."""
+
     @abstractmethod
     def format(
         self, *, output_line_number: int, line_number_remap: Dict[int, int]
@@ -52,6 +55,8 @@ class Line(ABC):
 
 
 class OriginalLine(Line):
+    """A line that was copied from the original test file."""
+
     def __init__(self, line_number: int, text: str) -> None:
         self.line_number = line_number
         self.text = text
@@ -61,6 +66,8 @@ class OriginalLine(Line):
 
 
 class CheckLine(Line):
+    """A `// CHECK:` line generated from the test output."""
+
     def __init__(self) -> None:
         self.indent = ""
 
@@ -75,6 +82,8 @@ class CheckLine(Line):
 
 
 class SimpleCheckLine(CheckLine):
+    """A `// CHECK:` line that checks for an exact string."""
+
     def __init__(self, expected: str) -> None:
         super().__init__()
         self.expected = expected
@@ -87,6 +96,13 @@ class SimpleCheckLine(CheckLine):
 
 
 class CheckLineWithLineNumber(CheckLine):
+    """A `// CHECK:` line where the expected output includes a line number.
+
+    Such result lines need to be fixed up after we've figured out which lines
+    to include in the resulting test file and in what order, because their
+    contents depend on where an original input line appears in the output.
+    """
+
     def __init__(self, before: str, line_number: int, after: str) -> None:
         super().__init__()
         self.before = before
@@ -110,9 +126,9 @@ class CheckLineWithLineNumber(CheckLine):
 def _make_check_line(out_line: str) -> CheckLine:
     """Given a line of output, determine what CHECK line to produce."""
     out_line = out_line.rstrip()
-    maybe_match = _LINE_NUMBER_RE.match(out_line)
-    if maybe_match:
-        match = maybe_match
+    match = re.match(_LINE_NUMBER_RE, out_line)
+    if match:
+        # Convert from 1-based line numbers to 0-based indexes.
         diagnostic_line_number = int(match[2]) - 1
         return CheckLineWithLineNumber(
             match[1], diagnostic_line_number, match[3]
@@ -187,10 +203,10 @@ def _update_check_once(test: str) -> bool:
     out = CheckLine.escape(out).replace(test, "{{.*}}/%s" % test)
     out_lines = out.splitlines()
 
-    orig_line_iter = (
+    orig_line_iter = iter(
         OriginalLine(i, line) for i, line in enumerate(orig_lines)
     )
-    check_line_iter = (_make_check_line(out_line) for out_line in out_lines)
+    check_line_iter = iter(_make_check_line(out_line) for out_line in out_lines)
     next_orig_line: Optional[OriginalLine] = next(orig_line_iter, None)
     next_check_line: Optional[CheckLine] = next(check_line_iter, None)
 
@@ -226,11 +242,14 @@ def _update_check_once(test: str) -> bool:
         for i, line in enumerate(result_lines)
     ]
 
+    # If nothing's changed, we're done.
+    if formatted_result_lines == orig_lines:
+        return False
+
     # Interleave the new CHECK: lines with the tested content.
     with open(test, "w") as f:
         f.writelines(formatted_result_lines)
-
-    return formatted_result_lines != orig_lines
+    return True
 
 
 def _update_check(test: str) -> None:
