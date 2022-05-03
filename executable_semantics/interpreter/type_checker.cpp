@@ -1762,13 +1762,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
-  std::optional<Nonnull<TuplePattern*>> type_params = class_decl->type_params();
-  if (type_params.has_value()) {
+  if (class_decl->type_params().has_value()) {
+    Nonnull<TuplePattern*> type_params = *class_decl->type_params();
     ImplScope class_scope;
     class_scope.AddParent(&enclosing_scope);
-    RETURN_IF_ERROR(TypeCheckPattern(*type_params, std::nullopt, class_scope,
+    RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt, class_scope,
                                      ValueCategory::Let));
-    AddPatternImpls(*type_params, class_scope);
+    AddPatternImpls(type_params, class_scope);
     if (trace_stream_) {
       **trace_stream_ << class_scope;
     }
@@ -1778,17 +1778,18 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     SetConstantValue(class_decl, class_type);
     class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
-    // For class declaration MyType(T:! Type, U:! AnInterface), `Self` should
-    // have the value `MyType(T, U)`.
+    // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
+    // should have the value `MyType(T, U)`.
     BindingMap generic_args;
-    for (Nonnull<Pattern*> field : (*type_params)->fields()) {
+    for (Nonnull<Pattern*> field : type_params->fields()) {
       CHECK(field->kind() == PatternKind::GenericBinding);
       auto& binding = cast<GenericBinding>(*field);
       // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
       // above.
       generic_args[&binding] = *binding.symbolic_identity();
     }
-    // std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+    // `self_type` is like `class_type` but with the type parameters bound to
+    // their symbolic identity.
     Nonnull<NominalClassType*> self_type =
         arena_->New<NominalClassType>(class_decl, generic_args);
     SetConstantValue(self, self_type);
@@ -1809,6 +1810,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         arena_->New<TypeOfClassType>(class_type);
     SetConstantValue(class_decl, class_type);
     class_decl->set_static_type(static_type);
+    // For the class declaration `class MyType`, `Self` should have the same
+    // value as `MyType`.
     SetConstantValue(self, class_type);
     self->set_static_type(static_type);
 

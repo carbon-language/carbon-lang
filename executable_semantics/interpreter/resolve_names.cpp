@@ -11,8 +11,6 @@
 #include "executable_semantics/ast/pattern.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/ast/static_scope.h"
-#include "executable_semantics/common/arena.h"
-#include "executable_semantics/interpreter/value.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 

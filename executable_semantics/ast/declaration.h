@@ -167,8 +167,6 @@ class SelfDeclaration : public Declaration {
 
   explicit SelfDeclaration(SourceLocation source_loc)
       : Declaration(AstNodeKind::SelfDeclaration, source_loc) {}
-  // FIXME: Call set_static_type() and set_constant_value() (from Declaration,
-  // the parent class), possibly during typechecking.
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSelfDeclaration(node->kind());
