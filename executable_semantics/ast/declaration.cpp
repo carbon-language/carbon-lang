@@ -75,8 +75,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     }
 
     case DeclarationKind::SelfDeclaration: {
-      const auto& self = cast<SelfDeclaration>(*this);
-      out << "Self " << self.value_expression();
+      out << "Self";
       break;
     }
   }
@@ -125,8 +124,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
     }
 
     case DeclarationKind::SelfDeclaration: {
-      const auto& self = cast<SelfDeclaration>(*this);
-      out << "Self " << self.value_expression();
+      out << "Self";
       break;
     }
   }
@@ -245,7 +243,7 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
   }
   std::optional<Nonnull<SelfDeclaration*>> self_decl = std::nullopt;
   if (self_type_specified) {
-    self_decl = arena->New<SelfDeclaration>(impl_type);
+    self_decl = arena->New<SelfDeclaration>(impl_type->source_loc());
   }
   return arena->New<ImplDeclaration>(source_loc, kind, impl_type, self_decl,
                                      interface, resolved_params, members);

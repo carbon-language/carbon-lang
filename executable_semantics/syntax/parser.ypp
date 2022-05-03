@@ -907,7 +907,11 @@ declaration:
   function_declaration
     { $$ = $1; }
 | CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $3, $5); }
+    {
+      $$ = arena->New<ClassDeclaration>(
+          context.source_loc(), $2,
+          arena->New<SelfDeclaration>(context.source_loc()), $3, $5);
+    }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
 | VAR variable_declaration SEMICOLON

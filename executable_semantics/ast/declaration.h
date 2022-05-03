@@ -165,10 +165,8 @@ class SelfDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  explicit SelfDeclaration(Nonnull<Expression*> value_expression)
-      : Declaration(AstNodeKind::SelfDeclaration,
-                    value_expression->source_loc()),
-        value_expression_(value_expression) {}
+  explicit SelfDeclaration(SourceLocation source_loc)
+      : Declaration(AstNodeKind::SelfDeclaration, source_loc) {}
   // FIXME: Call set_static_type() and set_constant_value() (from Declaration,
   // the parent class), possibly during typechecking.
 
@@ -177,14 +175,7 @@ class SelfDeclaration : public Declaration {
   }
 
   auto name() const -> const std::string { return "Self"; }
-  auto value_expression() const -> const Expression& {
-    return *value_expression_;
-  }
-  auto value_expression() -> const Expression& { return *value_expression_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
-
- private:
-  Nonnull<Expression*> value_expression_;
 };
 
 class ClassDeclaration : public Declaration {
@@ -192,10 +183,12 @@ class ClassDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
+                   Nonnull<SelfDeclaration*> self_decl,
                    std::optional<Nonnull<TuplePattern*>> type_params,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
+        self_decl_(self_decl),
         type_params_(type_params),
         members_(std::move(members)) {}
 
@@ -210,6 +203,8 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
+  auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
+  auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
@@ -219,6 +214,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
+  Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<Declaration*>> members_;
 };

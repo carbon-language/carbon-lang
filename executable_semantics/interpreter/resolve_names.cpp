@@ -378,15 +378,11 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
+      // FIXME: Should this instead be
+      // RETURN_IF_ERROR(AddExposedNames(class_decl.self(), class_scope));?
+      RETURN_IF_ERROR(class_scope.Add("Self", class_decl.self()));
       if (class_decl.type_params().has_value()) {
         RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
-        // FIXME:
-        // FIXME: BindingMap generic_args;  // FIXME
-        // FIXME: Nonnull<NominalClassType*> self_type =
-        // FIXME:     arena->New<NominalClassType>(&class_decl, generic_args);
-        // FIXME: RETURN_IF_ERROR(class_scope.Add("Self", self_type));
-      } else {
-        RETURN_IF_ERROR(class_scope.Add("Self", &class_decl));
       }
 
       // TODO: Disable unqualified access of members by other members for now.

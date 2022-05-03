@@ -1761,6 +1761,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   if (trace_stream_) {
     **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
+  Nonnull<SelfDeclaration*> self = class_decl->self();
   if (class_decl->type_params().has_value()) {
     ImplScope class_scope;
     class_scope.AddParent(&enclosing_scope);
@@ -1776,6 +1777,14 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     SetConstantValue(class_decl, class_type);
     class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
 
+    // FIXME: WRONG!
+    BindingMap generic_args;
+    // std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>;
+    Nonnull<NominalClassType*> self_type =
+        arena_->New<NominalClassType>(class_decl, generic_args);
+    SetConstantValue(self, self_type);
+    self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+
     for (Nonnull<Declaration*> m : class_decl->members()) {
       RETURN_IF_ERROR(DeclareDeclaration(m, class_scope));
     }
@@ -1787,8 +1796,12 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // before we start processing the members.
     Nonnull<NominalClassType*> class_type =
         arena_->New<NominalClassType>(class_decl);
+    Nonnull<TypeOfClassType*> static_type =
+        arena_->New<TypeOfClassType>(class_type);
     SetConstantValue(class_decl, class_type);
-    class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
+    class_decl->set_static_type(static_type);
+    SetConstantValue(self, class_type);
+    self->set_static_type(static_type);
 
     for (Nonnull<Declaration*> m : class_decl->members()) {
       RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
@@ -1887,15 +1900,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   std::optional<Nonnull<SelfDeclaration*>> self = impl_decl->self();
   if (self) {
     (*self)->set_constant_value(impl_type_value);
-    // FIXME: (*self)->set_static_type(impl_type_value->static_type());
-    if (impl_type_value->kind() == Value::Kind::NominalClassType) {
-      const NominalClassType& class_type =
-          cast<NominalClassType>(*impl_type_value);
-      (*self)->set_static_type(arena_->New<TypeOfClassType>(&class_type));
-    } else {
-      // FIXME
-      (*self)->set_static_type(arena_->New<TypeType>());
-    }
+    (*self)->set_static_type(&impl_decl->impl_type()->static_type());
   }
   // Bring this impl into the enclosing scope.
   auto impl_id =
