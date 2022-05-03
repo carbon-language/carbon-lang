@@ -7,10 +7,10 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/not_compare_precedence.carbon:15: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
 
 package ExplorerTest api;
 
 fn CompareBools(a: Bool, b: Bool) -> Bool {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/not_compare_precedence.carbon:[[@LINE+1]]: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
   return not a == b;
 }

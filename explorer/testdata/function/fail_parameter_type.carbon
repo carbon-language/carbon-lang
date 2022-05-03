@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type.carbon:15: Expected a type, but got 42
 
 package ExplorerTest api;
 
 // 42 cannot be used as the type of a parameter.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type.carbon:[[@LINE+1]]: Expected a type, but got 42
 fn f(x: 42) -> i32 {
   return x - 1;
 }

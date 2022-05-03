@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_use_before_declare.carbon:15: could not resolve 'x'
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_use_before_declare.carbon:[[@LINE+1]]: could not resolve 'x'
   x = 0;
   var x: i32 = 0;
   return 0;
