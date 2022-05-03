@@ -115,7 +115,7 @@ To explain this boilerplate:
 ### Updating fuzzer logic after making AST changes
 
 Please refer to
-[Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/executable_semantics/fuzzing/README.md).
+[Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/README.md).
 
 ## Experimental feature: Delimited Continuations
 
