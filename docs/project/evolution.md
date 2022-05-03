@@ -455,11 +455,9 @@ need to make the best decision for Carbon.
 It's fine that some people have a specific belief of which decision would be
 best; however, framing their contributions to the discussion as surfacing the
 information that underpins that belief will make the discussion more
-constructive, welcoming, and effective. Overall, everyone should strive to
-minimize their use of [rhetoric](https://en.wikipedia.org/wiki/Rhetoric) or
-other
-[persuasive methods](https://en.wikipedia.org/wiki/Persuasion#List_of_methods)
-to the extent they can.
+constructive, welcoming, and effective. Overall, everyone should strive to focus
+on data-based arguments to the extent they can, minimizing their use of appeals
+to emotion or excessive rhetoric.
 
 None of this should preclude gathering information like polls of opinion among
 groups, or signaling agreement. Where community members stand and how many agree

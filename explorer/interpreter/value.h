@@ -560,6 +560,12 @@ class NominalClassType : public Value {
   // instantiated runtime type of a generic class.
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
+  // Returns whether this a parameterized class. That is, a class with
+  // parameters and no corresponding arguments.
+  auto IsParameterized() const -> bool {
+    return declaration_->type_params().has_value() && type_args_.empty();
+  }
+
   // Returns the value of the function named `name` in this class, or
   // nullopt if there is no such function.
   auto FindFunction(const std::string& name) const
@@ -582,6 +588,21 @@ class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args)
+      : Value(Kind::InterfaceType), declaration_(declaration), args_(args) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args, const ImplExpMap& impls)
+      : Value(Kind::InterfaceType),
+        declaration_(declaration),
+        args_(args),
+        impls_(impls) {}
+  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
+                         const BindingMap& args, const ImplWitnessMap& wits)
+      : Value(Kind::InterfaceType),
+        declaration_(declaration),
+        args_(args),
+        witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::InterfaceType;
@@ -590,9 +611,21 @@ class InterfaceType : public Value {
   auto declaration() const -> const InterfaceDeclaration& {
     return *declaration_;
   }
+  auto args() const -> const BindingMap& { return args_; }
+
+  // FIXME: These aren't used for anything yet.
+  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
+
+  auto IsParameterized() const -> bool {
+    return declaration_->params().has_value() && args_.empty();
+  }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
+  BindingMap args_;
+  ImplExpMap impls_;
+  ImplWitnessMap witnesses_;
 };
 
 // The witness table for an impl.
