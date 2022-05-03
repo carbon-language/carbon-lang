@@ -1884,6 +1884,19 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
                    InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
+  std::optional<Nonnull<SelfDeclaration*>> self = impl_decl->self();
+  if (self) {
+    (*self)->set_constant_value(impl_type_value);
+    // FIXME: (*self)->set_static_type(impl_type_value->static_type());
+    if (impl_type_value->kind() == Value::Kind::NominalClassType) {
+      const NominalClassType& class_type =
+          cast<NominalClassType>(*impl_type_value);
+      (*self)->set_static_type(arena_->New<TypeOfClassType>(&class_type));
+    } else {
+      // FIXME
+      (*self)->set_static_type(arena_->New<TypeType>());
+    }
+  }
   // Bring this impl into the enclosing scope.
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");

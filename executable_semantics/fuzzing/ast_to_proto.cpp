@@ -547,6 +547,10 @@ static auto DeclarationToProto(const Declaration& declaration)
       }
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Doesn't make sense";
+    }
   }
   return declaration_proto;
 }
