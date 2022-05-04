@@ -50,7 +50,7 @@ auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
   RequireNodeEmpty(node);
 
-  return Semantics::DeclaredName(parse_tree().GetNodeText(node), node);
+  return Semantics::DeclaredName(node, parse_tree().GetNodeText(node));
 }
 
 void SemanticsIRFactory::TransformFunctionDeclaration(
@@ -61,46 +61,62 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
   // TODO: Parse code.
   (void)subtree.TryConsume(ParseNodeKind::CodeBlock());
   // TODO: Parse return type.
-  (void)subtree.TryConsume(ParseNodeKind::ReturnType());
-  TransformParameterList(
+  llvm::Optional<Semantics::Expression> return_expr;
+  auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType());
+  if (return_type_node) {
+    return_expr = TransformReturnType(*return_type_node);
+  }
+  auto params = TransformParameterList(
       subtree.RequireConsume(ParseNodeKind::ParameterList()));
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
-  semantics_.AddFunction(block, Semantics::Function(node, name));
+  semantics_.AddFunction(block, Semantics::Function(node, name, params));
 }
 
-void SemanticsIRFactory::TransformParameterList(ParseTree::Node node) {
+auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
+    -> llvm::SmallVector<Semantics::PatternBinding, 0> {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
 
+  llvm::SmallVector<Semantics::PatternBinding, 0> params;
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::ParameterListEnd()));
   if (auto first_param_node =
           subtree.TryConsume(ParseNodeKind::PatternBinding())) {
-    TransformPatternBinding(*first_param_node);
+    params.push_back(TransformPatternBinding(*first_param_node));
 
     while (auto comma_node =
                subtree.TryConsume(ParseNodeKind::ParameterListComma())) {
       RequireNodeEmpty(*comma_node);
-      TransformPatternBinding(
-          subtree.RequireConsume(ParseNodeKind::PatternBinding()));
+      params.push_back(TransformPatternBinding(
+          subtree.RequireConsume(ParseNodeKind::PatternBinding())));
     }
   }
+  return params;
 }
 
-void SemanticsIRFactory::TransformPattern(ParseTree::Node node) {
+auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
+    -> Semantics::Literal {
+  CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
   RequireNodeEmpty(node);
 
-  // TODO: Turn this into an expression.
+  // TODO: This is still purpose-specific, and will need to handle more kinds of
+  // expressions.
+  return Semantics::Literal(node);
 }
 
-void SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node) {
+auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
+    -> Semantics::PatternBinding {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::PatternBinding());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
-  // TODO: Need to rewrite to handle expressions here.
-  TransformPattern(subtree.RequireConsume(ParseNodeKind::Literal()));
-  TransformDeclaredName(subtree.RequireConsume(ParseNodeKind::DeclaredName()));
+  // TODO: This is still purpose-specific, and will need to handle more kinds of
+  // expressions.
+  auto type =
+      TransformExpression(subtree.RequireConsume(ParseNodeKind::Literal()));
+  auto name = TransformDeclaredName(
+      subtree.RequireConsume(ParseNodeKind::DeclaredName()));
+  return Semantics::PatternBinding(node, name, type);
 }
 
 }  // namespace Carbon

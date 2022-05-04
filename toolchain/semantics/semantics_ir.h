@@ -8,7 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/function.h"
+#include "toolchain/semantics/nodes/function.h"
 
 namespace Carbon {
 

@@ -6,7 +6,10 @@
 #define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/declared_name.h"
+#include "toolchain/semantics/nodes/declared_name.h"
+#include "toolchain/semantics/nodes/function.h"
+#include "toolchain/semantics/nodes/literal.h"
+#include "toolchain/semantics/nodes/pattern_binding.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
@@ -30,9 +33,11 @@ class SemanticsIRFactory {
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
   void TransformFunctionDeclaration(ParseTree::Node node,
                                     SemanticsIR::Block& block);
-  void TransformParameterList(ParseTree::Node node);
-  void TransformPattern(ParseTree::Node node);
-  void TransformPatternBinding(ParseTree::Node node);
+  auto TransformParameterList(ParseTree::Node node)
+      -> llvm::SmallVector<Semantics::PatternBinding, 0>;
+  auto TransformExpression(ParseTree::Node node) -> Semantics::Literal;
+  auto TransformPatternBinding(ParseTree::Node node)
+      -> Semantics::PatternBinding;
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }

@@ -7,12 +7,15 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "nodes",
     hdrs = [
-        "declared_name.h",
-        "function.h",
+        "nodes/declared_name.h",
+        "nodes/function.h",
+        "nodes/literal.h",
+        "nodes/pattern_binding.h",
     ],
     deps = [
         "//common:ostream",
         "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
     ],
 )
 

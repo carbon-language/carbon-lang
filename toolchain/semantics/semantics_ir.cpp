@@ -7,7 +7,6 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/semantics/declared_name.h"
 
 namespace Carbon {
 

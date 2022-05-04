@@ -9,13 +9,19 @@
 
 namespace Carbon {
 
+// Consumes a subtree from the parser, returning only its direct children.
+//
+// This traverses in reverse postorder because the parent of a subtree needs to
+// be seen before its children.
 class ParseSubtreeConsumer {
  public:
   using ParseTreeIterator = std::reverse_iterator<ParseTree::PostorderIterator>;
 
+  // Returns a subtree consumer for a particular node in the tree.
   static auto ForParent(const ParseTree& parse_tree,
                         ParseTree::Node parent_node) -> ParseSubtreeConsumer;
 
+  // Returns a subtree consumer for the root of the tree.
   static auto ForTree(const ParseTree& parse_tree) -> ParseSubtreeConsumer;
 
   // Prevent copies because we require completion of parsing in the destructor.
@@ -24,10 +30,14 @@ class ParseSubtreeConsumer {
 
   ~ParseSubtreeConsumer();
 
+  // Requires the next node be of the given kind, and returns it.
+  // CHECK-fails on unexpected states.
   [[nodiscard]] auto RequireConsume(ParseNodeKind node_kind) -> ParseTree::Node;
 
+  // Returns the next node if one exists.
   [[nodiscard]] auto TryConsume() -> llvm::Optional<ParseTree::Node>;
 
+  // Returns the next node if it's of the given kind.
   [[nodiscard]] auto TryConsume(ParseNodeKind node_kind)
       -> llvm::Optional<ParseTree::Node>;
 
@@ -40,6 +50,7 @@ class ParseSubtreeConsumer {
                        ParseTreeIterator subtree_end)
       : parse_tree_(&parse_tree), cursor_(cursor), subtree_end_(subtree_end) {}
 
+  // Advances to the next sibling, returning the current node.
   auto GetNodeAndAdvance() -> ParseTree::Node;
 
   const ParseTree* parse_tree_;
