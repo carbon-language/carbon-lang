@@ -335,7 +335,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         // Self type expression required in cases where `Self` is not already in
         // scope.
         if (!self) {
-          return CompilationError(impl.source_loc())
+          return CompilationError(impl.impl_type()->source_loc())
                  << "impl requires type to be specified outside of a class "
                     "declaration";
         }

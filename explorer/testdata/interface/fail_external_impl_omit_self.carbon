@@ -21,6 +21,7 @@ class Point {
 }
 
 // Error: need to specify type implementing `Vector` for
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: impl requires type to be specified outside of a class declaration
 external impl as Vector {
   fn Add[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};
@@ -28,7 +29,6 @@ external impl as Vector {
   fn Scale[me: Point](v: i32) -> Point {
     return {.x = me.x * v, .y = me.y * v};
   }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: impl requires type to be specified outside of a class declaration
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
