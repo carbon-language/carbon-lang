@@ -437,7 +437,10 @@ themselves, and instead ask the author make those changes (possibly with
 suggestions) just like other parts of the code review. It's important that the
 commit message is one the author is comfortable with when merged.
 
-When suggested edits have been merged into a pull request, GitHub will append a `Co-authored-by:` line to its default proposed commit message for each reviewer who suggested edits that were applied. These lines should be retained and appended to the message from the initial comment.
+When suggested edits have been merged into a pull request, GitHub will append a
+`Co-authored-by:` line to its default proposed commit message for each reviewer
+who suggested edits that were applied. These lines should be retained and
+appended to the message from the initial comment.
 
 ## Resolving an impasse or conflict
 
