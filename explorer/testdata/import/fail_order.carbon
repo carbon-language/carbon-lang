@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/import/fail_order.carbon:18: syntax error, unexpected IMPORT, expecting END_OF_FILE
 
 package ExplorerTest api;
 
@@ -15,4 +14,5 @@ fn Main() -> i32 {
   return 0;
 }
 
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/import/fail_order.carbon:[[@LINE+1]]: syntax error, unexpected IMPORT, expecting END_OF_FILE
 import ExplorerTest library "Nonexistent";

@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:28: type error in member of implementation: 'fn (i32) -> i32' is not implicitly convertible to 'fn (i32) -> class Point'
 
 package ExplorerTest api;
 
@@ -25,6 +24,7 @@ class Point {
     }
     fn Scale[me: Point](v: i32) -> i32 {
       return 0;
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+1]]: type error in member of implementation: 'fn (i32) -> i32' is not implicitly convertible to 'fn (i32) -> class Point'
     }
   }
 }

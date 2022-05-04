@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_invalid_escape.carbon:15: Invalid escaping in string: "str\e"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_invalid_escape.carbon:[[@LINE+1]]: Invalid escaping in string: "str\e"
   Print("str\e");
   return 0;
 }

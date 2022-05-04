@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_hex_lower.carbon:15: Invalid escaping in string: "str\xaa"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_hex_lower.carbon:[[@LINE+1]]: Invalid escaping in string: "str\xaa"
   Print("str\xaa");
   return 0;
 }

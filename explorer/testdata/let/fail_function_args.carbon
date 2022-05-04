@@ -7,12 +7,12 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:16: Cannot assign to rvalue 'y'
 
 package ExplorerTest api;
 
 fn f((var x: i32, y: i32)) -> i32 {
   x = 0;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'y'
   y = 0;
   return x - 1;
 }

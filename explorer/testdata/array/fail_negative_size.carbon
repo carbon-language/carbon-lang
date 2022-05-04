@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_negative_size.carbon:15: Array size cannot be negative
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_negative_size.carbon:[[@LINE+1]]: Array size cannot be negative
   var x: [i32; -1] = ();
   return x[0];
 }
