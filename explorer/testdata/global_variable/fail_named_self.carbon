@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:15: syntax error, unexpected SELF, expecting identifier
 
 package ExplorerTest api;
 
 // Error: global variable may not be named with keyword `Self`.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
 var Self: i32 = 0;
 
 fn Main() -> i32 {

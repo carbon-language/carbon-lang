@@ -7,13 +7,13 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:17: attempt to instantiate an already instantiated generic class: Self(T)
 
 package ExplorerTest api;
 
 class Point(T:! Type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: attempt to instantiate an already instantiated generic class: Self(T)
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }

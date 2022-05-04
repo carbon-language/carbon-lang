@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:32: impl requires type to be specified outside of a class declaration
 
 package ExplorerTest api;
 
@@ -29,6 +28,7 @@ external impl as Vector {
   fn Scale[me: Point](v: i32) -> Point {
     return {.x = me.x * v, .y = me.y * v};
   }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: impl requires type to be specified outside of a class declaration
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {

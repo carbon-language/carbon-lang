@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:20: Expected a type, but got class Point
 
 package ExplorerTest api;
 
@@ -17,6 +16,7 @@ class Point(T:! Type) {
   }
 
   // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got class Point
   fn GetX[me: Point]() -> T {
     return me.x;
   }

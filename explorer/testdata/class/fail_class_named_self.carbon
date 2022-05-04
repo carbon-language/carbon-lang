@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:15: syntax error, unexpected SELF, expecting identifier
 
 package ExplorerTest api;
 
 // Error: Can't use keyword `Self` as the name of a class.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
 class Self {
   var x: i32;
   var y: i32;
