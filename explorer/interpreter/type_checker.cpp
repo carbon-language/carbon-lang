@@ -1986,6 +1986,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   std::optional<Nonnull<SelfDeclaration*>> self = impl_decl->self();
   if (self) {
     (*self)->set_constant_value(impl_type_value);
+    // Static type set in call to `TypeCheckExp(...)` above.
     (*self)->set_static_type(&impl_decl->impl_type()->static_type());
   }
   // Bring this impl into the enclosing scope.
