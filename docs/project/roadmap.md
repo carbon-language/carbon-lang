@@ -163,7 +163,7 @@ but the long term focus should be on end-to-end user metrics.
 Automatic code formatting could be achieved many ways, but it seems useful to
 ensure the language and implementation both support use cases like formatting.
 
-### Carbon explorer specification for core features with test cases
+### Carbon explorer implementation of core features with test cases
 
 This should include both a human readable rendering of the formal semantics as
 well as an execution environment to run test cases through those semantics. The
