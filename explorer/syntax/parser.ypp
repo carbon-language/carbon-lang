@@ -142,6 +142,7 @@
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
+%type <std::vector<Nonnull<AstNode*>>> named_impl_params
 %type <std::vector<Nonnull<AstNode*>>> impl_deduced_params
 %type <std::vector<Nonnull<AstNode*>>> deduced_param_list
 %type <Nonnull<Pattern*>> pattern
@@ -212,6 +213,7 @@
   LIBRARY
   MATCH
   MINUS
+  NAMED
   NOT
   OR
   PACKAGE
@@ -817,10 +819,20 @@ deduced_params:
 | LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $2; }
 ;
+named_impl_params:
+  // Empty
+    { $$ = std::vector<Nonnull<AstNode*>>(); }
+| LEFT_PARENTHESIS deduced_param_list RIGHT_PARENTHESIS
+    { $$ = $2; }
+;
 impl_deduced_params:
   // Empty
     { $$ = std::vector<Nonnull<AstNode*>>(); }
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
+    { $$ = $3; }
+| NAMED identifier named_impl_params EQUAL
+    // TODO: Add support for named impls. For now, the named syntax is
+    // accepted, but the name is ignored.
     { $$ = $3; }
 ;
 receiver:

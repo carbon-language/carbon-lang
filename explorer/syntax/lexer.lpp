@@ -72,6 +72,7 @@ LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MINUS                "-"
+NAMED                "named"
 NOT                  "not"
 OR                   "or"
 PACKAGE              "package"
@@ -176,6 +177,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {LIBRARY}             { return SIMPLE_TOKEN(LIBRARY);             }
 {MATCH}               { return SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return SIMPLE_TOKEN(MINUS);               }
+{NAMED}               { return SIMPLE_TOKEN(NAMED);               }
 {NOT}                 { return SIMPLE_TOKEN(NOT);                 }
 {OR}                  { return SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return SIMPLE_TOKEN(PACKAGE);             }
