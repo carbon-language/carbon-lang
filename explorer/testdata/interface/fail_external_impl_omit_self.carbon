@@ -20,7 +20,7 @@ class Point {
   var y: i32;
 }
 
-// Error: need to specify type implementing `Vector` for
+// Error: need to specify which type implementing `Vector` for.
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: impl requires type to be specified outside of a class declaration
 external impl as Vector {
   fn Add[me: Point](b: Point) -> Point {
