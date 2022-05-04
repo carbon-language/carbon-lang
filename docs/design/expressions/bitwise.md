@@ -131,15 +131,23 @@ to a division by a power of two, rounding downwards.
 
 The second operand of a bit-shift is required to be between zero (inclusive) and
 the bit-width of the first operand (exclusive); it is a programming error if the
-second operand is not within that range. In a hardened build, the result will
-have well defined behavior of either stopping program execution immediately or a
-shift of an unspecified number of bits, which if wider than the first operand
-will result in `0` or `-1`. In a performance build, the optimizer may assume
-that this programming error does not occur.
+second operand is not within that range.
 
-TODO: Need to unify the developer and hardened build behavior for these
-programming errors with those of arithmetic overflow, likely documenting the
-requirements in a common place and linking to it from here.
+-   In a development build, they will be caught immediately when they happen at
+    runtime.
+-   In a performance build, the optimizer may assume that this programming error
+    does not occur.
+-   In a hardened build, the result will have well the defined behavior of
+    either aborting the program or performing a shift of an unspecified number
+    of bits, which if wider than the first operand will result in `0` or `-1`.
+    In the case where the program is aborted, the program might not in all cases
+    be aborted immediately -- for example, multiple checks might be combined
+    into one -- but no control flow or memory access that depends on the value
+    will be performed.
+
+**TODO:** Unify the description of these programming errors with those of
+arithmetic overflow, document the behavior in a common place and link to it from
+here.
 
 ## Integer constants
 
@@ -266,6 +274,7 @@ to give the semantics described above.
 -   [Use different symbols for bitwise operators](/proposals/p1191.md#use-different-symbols-for-bitwise-operators)
 -   [Provide different operators for arithmetic and logical shifts](/proposals/p1191.md#provide-different-operators-for-arithmetic-and-logical-shifts)
 -   [Provide rotate operators](/proposals/p1191.md#provide-rotate-operators)
+-   [Guarantee the behavior of large shifts](/proposals/p1191.md#guarantee-behavior-of-large-shifts)
 -   [Support shifting a constant by a variable](/proposals/p1191.md#support-shifting-a-constant-by-a-variable)
 
 ## References
