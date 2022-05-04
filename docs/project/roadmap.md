@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example ports of C++ libraries to Carbon (100% of woff2, 99% of RE2)](#example-ports-of-c-libraries-to-carbon-100-of-woff2-99-of-re2)
         -   [Language design covers the syntax and semantics of the example port code.](#language-design-covers-the-syntax-and-semantics-of-the-example-port-code)
     -   [Demo implementation of core features with working examples](#demo-implementation-of-core-features-with-working-examples)
-    -   [Carbon explorer specification for core features with test cases](#carbon-explorer-specification-for-core-features-with-test-cases)
+    -   [Carbon explorer implementation of core features with test cases](#carbon-explorer-implementation-of-core-features-with-test-cases)
 -   [Beyond 2022](#beyond-2022)
     -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
     -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-_ship_-10-language--organization)
