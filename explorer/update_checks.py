@@ -92,7 +92,7 @@ class SimpleCheckLine(CheckLine):
         if self.expected:
             return f"{self.indent}// CHECK: {self.expected}\n"
         else:
-            return f"{self.indent}// CHECK-EMPTY\n"
+            return f"{self.indent}// CHECK-EMPTY:\n"
 
 
 class CheckLineWithLineNumber(CheckLine):

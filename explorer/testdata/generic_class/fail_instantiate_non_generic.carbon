@@ -19,7 +19,10 @@ class Point {
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+1]]: attempt to instantiate a non-generic class: Point(i32)
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+4]]: in call, expected a function
+  // CHECK: Point(i32)
+  // CHECK: not an operator of type typeof(class Point)
+  // CHECK-EMPTY:
   var p: Point(i32) = Point.Origin();
   return 0;
 }

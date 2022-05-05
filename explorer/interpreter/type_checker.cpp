@@ -79,6 +79,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -86,6 +87,8 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -93,6 +96,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
       return true;
@@ -104,10 +108,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType:
-      return !cast<NominalClassType>(*value).IsParameterized();
-    case Value::Kind::InterfaceType:
-      return !cast<InterfaceType>(*value).IsParameterized();
   }
 }
 
@@ -140,6 +140,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -147,6 +148,8 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -154,6 +157,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
@@ -167,10 +171,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType:
-      return !cast<NominalClassType>(*value).IsParameterized();
-    case Value::Kind::InterfaceType:
-      return !cast<InterfaceType>(*value).IsParameterized();
   }
 }
 
@@ -292,10 +292,8 @@ auto TypeChecker::IsImplicitlyConvertible(
       return destination->kind() == Value::Kind::InterfaceType;
     case Value::Kind::InterfaceType:
       return destination->kind() == Value::Kind::TypeType;
-    case Value::Kind::TypeOfClassType: {
-      return !cast<TypeOfClassType>(*source).class_type().IsParameterized() &&
-             destination->kind() == Value::Kind::TypeType;
-    }
+    case Value::Kind::TypeOfClassType:
+      return destination->kind() == Value::Kind::TypeType;
     default:
       return false;
   }
@@ -452,9 +450,11 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
       return ExpectType(source_loc, "argument deduction", param_type, arg_type);
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -551,9 +551,11 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -1056,36 +1058,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
-        case Value::Kind::TypeOfClassType: {
-          // This case handles the application of a generic class to
-          // a type argument, such as Point(i32).
-          const NominalClassType& class_type =
-              cast<TypeOfClassType>(call.function().static_type()).class_type();
-          const ClassDeclaration& class_decl = class_type.declaration();
+        case Value::Kind::TypeOfParameterizedEntityName: {
+          // This case handles the application of a parameterized class or
+          // interface to a set of arguments, such as Point(i32) or
+          // AddWith(i32).
+          const ParameterizedEntityName& param_name =
+              cast<TypeOfParameterizedEntityName>(call.function().static_type())
+                  .name();
           BindingMap generic_args;
-          if (class_type.IsParameterized()) {
-            if (trace_stream_) {
-              **trace_stream_ << "pattern matching type params and args\n";
-            }
-            RETURN_IF_ERROR(
-                ExpectType(call.source_loc(), "call",
-                           &(*class_decl.type_params())->static_type(),
-                           &call.argument().static_type()));
-            ASSIGN_OR_RETURN(
-                Nonnull<const Value*> arg,
-                InterpExp(&call.argument(), arena_, trace_stream_));
-            CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
-                               call.source_loc(), std::nullopt, generic_args,
-                               trace_stream_));
-          } else if (!class_type.type_args().empty()) {
-            return CompilationError(call.source_loc())
-                   << "attempt to instantiate an already instantiated "
-                   << "generic class: " << *e;
-          } else {
-            return CompilationError(call.source_loc())
-                   << "attempt to instantiate a non-generic class: " << *e;
+          if (trace_stream_) {
+            **trace_stream_ << "pattern matching type params and args\n";
           }
-          // Find impls for all the impl bindings of the class.
+          RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
+                                     &param_name.params().static_type(),
+                                     &call.argument().static_type()));
+          ASSIGN_OR_RETURN(Nonnull<const Value*> arg,
+                           InterpExp(&call.argument(), arena_, trace_stream_));
+          CHECK(PatternMatch(&param_name.params().value(), arg,
+                             call.source_loc(), std::nullopt, generic_args,
+                             trace_stream_));
+          // Find impls for all the impl bindings.
           ImplExpMap impls;
           for (const auto& [binding, val] : generic_args) {
             if (binding->impl_binding().has_value()) {
@@ -1098,64 +1090,30 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               impls.emplace(impl_binding, impl);
             }
           }
-          Nonnull<NominalClassType*> inst_class_type =
-              arena_->New<NominalClassType>(&class_decl, generic_args, impls);
           call.set_impls(impls);
-          call.set_static_type(arena_->New<TypeOfClassType>(inst_class_type));
           call.set_value_category(ValueCategory::Let);
-          return Success();
-        }
-        case Value::Kind::TypeOfInterfaceType: {
-          // This case handles the application of a parameterized class to
-          // its arguments, such as OrderedWith(i32).
-          // FIXME: This is very repetitive with the corresponding case for
-          // parameterized classes.
-          const InterfaceType& iface_type =
-              cast<TypeOfInterfaceType>(call.function().static_type())
-                  .interface_type();
-          const InterfaceDeclaration& iface_decl = iface_type.declaration();
-          BindingMap generic_args;
-          if (iface_type.IsParameterized()) {
-            if (trace_stream_) {
-              **trace_stream_ << "pattern matching interface params and args\n";
+
+          const Declaration& decl = param_name.declaration();
+          switch (decl.kind()) {
+            case DeclarationKind::ClassDeclaration: {
+              Nonnull<NominalClassType*> inst_class_type =
+                  arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
+                                                generic_args, impls);
+              call.set_static_type(
+                  arena_->New<TypeOfClassType>(inst_class_type));
+              break;
             }
-            RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
-                                       &(*iface_decl.params())->static_type(),
-                                       &call.argument().static_type()));
-            ASSIGN_OR_RETURN(
-                Nonnull<const Value*> arg,
-                InterpExp(&call.argument(), arena_, trace_stream_));
-            CHECK(PatternMatch(&(*iface_decl.params())->value(), arg,
-                               call.source_loc(), std::nullopt, generic_args,
-                               trace_stream_));
-          } else if (!iface_type.args().empty()) {
-            return CompilationError(call.source_loc())
-                   << "attempt to provide arguments to parameterized interface "
-                   << "twice: " << *e;
-          } else {
-            return CompilationError(call.source_loc())
-                   << "attempt to provide arguments to non-parameterized "
-                   << "interface: " << *e;
-          }
-          // Find impls for all the impl bindings of the interface.
-          ImplExpMap impls;
-          for (const auto& [binding, val] : generic_args) {
-            if (binding->impl_binding().has_value()) {
-              Nonnull<const ImplBinding*> impl_binding =
-                  *binding->impl_binding();
-              ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
-                               impl_scope.Resolve(impl_binding->interface(),
-                                                  generic_args[binding],
-                                                  call.source_loc(), *this));
-              impls.emplace(impl_binding, impl);
+            case DeclarationKind::InterfaceDeclaration: {
+              Nonnull<InterfaceType*> inst_iface_type =
+                  arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
+                                             generic_args, impls);
+              call.set_static_type(
+                  arena_->New<TypeOfInterfaceType>(inst_iface_type));
+              break;
             }
+            default:
+              FATAL() << "unknown type of ParameterizedEntityName for " << decl;
           }
-          Nonnull<InterfaceType*> inst_iface_type =
-              arena_->New<InterfaceType>(&iface_decl, generic_args, impls);
-          call.set_impls(impls);
-          call.set_static_type(
-              arena_->New<TypeOfInterfaceType>(inst_iface_type));
-          call.set_value_category(ValueCategory::Let);
           return Success();
         }
         default: {
@@ -1810,10 +1768,12 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       **trace_stream_ << class_scope;
     }
 
-    Nonnull<NominalClassType*> class_type =
-        arena_->New<NominalClassType>(class_decl);
-    SetConstantValue(class_decl, class_type);
-    class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
+    Nonnull<ParameterizedEntityName*> param_name =
+        arena_->New<ParameterizedEntityName>(class_decl,
+                                             *class_decl->type_params());
+    SetConstantValue(class_decl, param_name);
+    class_decl->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(param_name));
 
     // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
     // should have the value `MyType(T, U)`.
@@ -1904,11 +1864,17 @@ auto TypeChecker::DeclareInterfaceDeclaration(
     if (trace_stream_) {
       **trace_stream_ << iface_scope;
     }
-  }
 
-  Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
-  SetConstantValue(iface_decl, iface_type);
-  iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
+    Nonnull<ParameterizedEntityName*> param_name =
+        arena_->New<ParameterizedEntityName>(iface_decl, *iface_decl->params());
+    SetConstantValue(iface_decl, param_name);
+    iface_decl->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(param_name));
+  } else {
+    Nonnull<InterfaceType*> iface_type = arena_->New<InterfaceType>(iface_decl);
+    SetConstantValue(iface_decl, iface_type);
+    iface_decl->set_static_type(arena_->New<TypeOfInterfaceType>(iface_type));
+  }
 
   // Process the Self parameter.
   RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
@@ -1988,10 +1954,6 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     return CompilationError(impl_decl->interface().source_loc())
            << "expected constraint after `as`, found value of type "
            << *written_iface_type;
-  }
-  if (iface_type->IsParameterized()) {
-    return CompilationError(impl_decl->interface().source_loc())
-           << "missing arguments for parameterized interface";
   }
 
   const auto& iface_decl = iface_type->declaration();
