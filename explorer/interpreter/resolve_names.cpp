@@ -107,6 +107,12 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
                        enclosing_scope));
       break;
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(expression);
+      RETURN_IF_ERROR(ResolveNames(access.object(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(access.path(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
       RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));

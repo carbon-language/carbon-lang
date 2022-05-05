@@ -335,6 +335,25 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+      if (act.pos() == 0) {
+        //    { {e.(f) :: C, E, F} :: S, H}
+        // -> { e :: [].(f) :: C, E, F} :: S, H}
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      } else {
+        //    { v :: [].(f) :: C, E, F} :: S, H}
+        // -> { { &v.(f) :: C, E, F} :: S, H }
+        CHECK(!isa<InterfaceType>(access.member().base_type()))
+            << "unexpected lvalue interface member";
+        ASSIGN_OR_RETURN(Nonnull<const Value*> val,
+                         Convert(act.results()[0], &access.member().base_type(),
+                                 exp.source_loc()));
+        Address object = cast<LValue>(*val).address();
+        Address field = object.SubobjectAddress(access.member().name());
+        return todo_.FinishAction(arena_->New<LValue>(field));
+      }
+    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
@@ -492,7 +511,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
+    case Value::Kind::MemberName:
       // TODO: add `CHECK(TypeEqual(type, value->dynamic_type()))`, once we
       // have Value::dynamic_type.
       return value;
@@ -777,10 +798,48 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                          access.source_loc()));
           witness = cast<Witness>(witness_value);
         }
-        FieldPath::Component field(access.field(), witness);
-        ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                         act.results()[0]->GetField(arena_, FieldPath(field),
-                                                    exp.source_loc()));
+        if (const auto* member_name_type =
+                dyn_cast<TypeOfMemberName>(&access.static_type())) {
+          CHECK(phase() == Phase::CompileTime)
+              << "should not form MemberNames at runtime";
+          Nonnull<const Value*> member_of = act.results()[0];
+          if (witness.has_value()) {
+            member_of = witness.value();
+          }
+          auto* member_name = arena_->New<MemberName>(
+              member_of, access.field(), &member_name_type->declaration());
+          return todo_.FinishAction(member_name);
+        } else {
+          FieldPath::Component field(access.field(), witness);
+          ASSIGN_OR_RETURN(Nonnull<const Value*> member,
+                           act.results()[0]->GetField(arena_, FieldPath(field),
+                                                      exp.source_loc()));
+          return todo_.FinishAction(member);
+        }
+      }
+    }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&access.object()));
+      } else if (act.pos() == 1 && access.impl().has_value()) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(access.impl().value()));
+      } else {
+        // FIXME: `type.(interface_member)` should produce a `MemberName`.
+        Nonnull<const Value*> object = act.results()[0];
+        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+        if (access.impl().has_value()) {
+          witness = cast<Witness>(act.results()[1]);
+        } else {
+          ASSIGN_OR_RETURN(object, Convert(object, &access.member().base_type(),
+                                           exp.source_loc()));
+        }
+        FieldPath::Component field(access.member().name(), witness);
+        ASSIGN_OR_RETURN(
+            Nonnull<const Value*> member,
+            object->GetField(arena_, FieldPath(field), exp.source_loc()));
         return todo_.FinishAction(member);
       }
     }

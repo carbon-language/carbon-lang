@@ -58,6 +58,7 @@ class Value {
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
     ParameterizedEntityName,
+    MemberName,
     BindingPlaceholderValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
@@ -67,6 +68,7 @@ class Value {
     TypeOfInterfaceType,
     TypeOfChoiceType,
     TypeOfParameterizedEntityName,
+    TypeOfMemberName,
     StaticArrayType,
   };
 
@@ -737,6 +739,36 @@ class ParameterizedEntityName : public Value {
   Nonnull<const TuplePattern*> params_;
 };
 
+// The name of a member of a class or interface.
+//
+// These values are used to represent the second operand of a compound member
+// access expression: `x.(A.B)`.
+class MemberName : public Value {
+ public:
+  MemberName(Nonnull<const Value*> base_type, std::string name,
+             Nonnull<const Declaration*> declaration)
+      : Value(Kind::MemberName),
+        base_type_(base_type),
+        name_(std::move(name)),
+        declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::MemberName;
+  }
+
+  // The type of which `name` is a member.
+  auto base_type() const -> const Value& { return *base_type_; }
+  // The name of the member.
+  auto name() const -> const std::string& { return name_; }
+  // The declaration of the member.
+  auto declaration() const -> const Declaration& { return *declaration_; }
+
+ private:
+  Nonnull<const Value*> base_type_;
+  std::string name_;
+  Nonnull<const Declaration*> declaration_;
+};
+
 // A first-class continuation representation of a fragment of the stack.
 // A continuation value behaves like a pointer to the underlying stack
 // fragment, which is exposed by `Stack()`.
@@ -887,6 +919,25 @@ class TypeOfParameterizedEntityName : public Value {
 
  private:
   Nonnull<const ParameterizedEntityName*> name_;
+};
+
+// The type of a member name expression.
+//
+// Such expressions can appear only as the target of an `alias` declaration or
+// as the member name in a compound member access.
+class TypeOfMemberName : public Value {
+ public:
+  TypeOfMemberName(Nonnull<const Declaration*> declaration)
+      : Value(Kind::TypeOfMemberName), declaration_(declaration) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfMemberName;
+  }
+
+  auto declaration() const -> const Declaration& { return *declaration_; }
+
+ private:
+  Nonnull<const Declaration*> declaration_;
 };
 
 // The type of a statically-sized array.

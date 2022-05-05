@@ -353,6 +353,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ParameterizedEntityName:
       out << *GetName(cast<ParameterizedEntityName>(*this).declaration());
       break;
+    case Value::Kind::MemberName: {
+      const auto& member_name = cast<MemberName>(*this);
+      out << member_name.base_type() << "." << member_name.name();
+      break;
+    }
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -389,6 +394,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TypeOfParameterizedEntityName:
       out << "typeof(" << cast<TypeOfParameterizedEntityName>(*this).name()
           << ")";
+      break;
+    case Value::Kind::TypeOfMemberName:
+      out << "<member name>";
       break;
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
@@ -508,6 +516,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
+    case Value::Kind::TypeOfMemberName:
       return true;
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
@@ -545,6 +554,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
       FATAL() << "TypeEqual used to compare non-type values\n"
               << *t1 << "\n"
               << *t2;
@@ -643,6 +653,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
@@ -652,6 +663,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
+    case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
       FATAL() << "ValueEqual does not support this kind of value: " << *v1;
