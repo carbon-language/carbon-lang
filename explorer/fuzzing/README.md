@@ -71,7 +71,7 @@ To incorporate AST changes into fuzzing logic:
 1. Modify
    [proto_to_carbon.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/proto_to_carbon.cpp)
    which handles printing of a Carbon proto instance as a Carbon source string.
-   For example, and code to print newly introduced proto fields.
+   For example, add code to print newly introduced proto fields.
 
 1. Make sure `proto_to_carbon_test` passes after the changes.
 
