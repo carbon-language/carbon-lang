@@ -4994,10 +4994,10 @@ fn RequiresD[T:! D](x: T) {
 ```
 
 Note that `observe` statements do not affect the selection of impls during code
-generation. For coherence, the impl used for a (type, interface) pair must always
-be the same, independent of context. The [termination rule](#termination-rule)
-governs when compilation may fail when the compiler can't determine the impl to
-select.
+generation. For coherence, the impl used for a (type, interface) pair must
+always be the same, independent of context. The
+[termination rule](#termination-rule) governs when compilation may fail when the
+compiler can't determine the impl to select.
 
 ### Observing blanket impls
 
