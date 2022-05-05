@@ -508,8 +508,7 @@ class StructType : public Value {
 // TODO: Consider splitting this class into several classes.
 class NominalClassType : public Value {
  public:
-  // Construct a non-generic class type or a generic class type that has
-  // not yet been applied to type arguments.
+  // Construct a non-generic class type.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
       : Value(Kind::NominalClassType), declaration_(declaration) {
     CHECK(!declaration->type_params().has_value())
