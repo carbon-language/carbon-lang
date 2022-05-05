@@ -36,6 +36,9 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     "@com_google_libprotobuf_mutator": lambda x: re.sub(
         "^(.*:)", "libprotobuf_mutator/", x
     ),
+    # @bazel_tools//tools/cpp/runfiles:runfiles.h ->
+    #   tools/cpp/runfiles/runfiles.h
+    "@bazel_tools": lambda x: re.sub(":", "/", x),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in

@@ -106,6 +106,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Operator overloading](#operator-overloading)
     -   [Binary operators](#binary-operators)
     -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
+-   [Parameterized types](#parameterized-types)
+    -   [Specialization](#specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -118,7 +120,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic associated types](#generic-associated-types)
         -   [Higher-ranked types](#higher-ranked-types)
     -   [Field requirements](#field-requirements)
-    -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
@@ -5154,6 +5155,169 @@ external impl [T:! IntLike] like T
     as MultipliableWith(like T) where .Result = T;
 ```
 
+## Parameterized types
+
+Types may have generic parameters. Those parameters may be used to specify types
+in the declarations of its members, such as data fields, member functions, and
+even interfaces being implemented. For example, a container type might be
+parameterized by the type of its elements:
+
+```
+class HashMap(
+    KeyType:! Hashable & EqualityComparable & Movable,
+    ValueType:! Movable) {
+  // `Self` is `HashMap(KeyType, ValueType)`.
+
+  // Parameters may be used in function signatures.
+  fn Insert[addr me: Self*](k: KeyType, v: ValueType);
+
+  // Parameters may be used in field types.
+  private var buckets: Vector((KeyType, ValueType));
+
+  // Parameters may be used in interfaces implemented.
+  impl as Container where .ElementType = (KeyType, ValueType);
+  impl as ComparableWith(HashMap(KeyType, ValueType));
+}
+```
+
+Note that, unlike functions, every parameter to a type must either be generic or
+template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+
+Two types are the same if they have the same name and the same arguments.
+Carbon's [manual type equality](#manual-type-equality) approach means that the
+compiler may not always be able to tell when two type expressions are equal
+without help from the user, in the form of
+[`observe` declarations](#observe-declarations). This means Carbon will not in
+general be able to determine when types are unequal.
+
+Unlike an [interface's parameters](#parameterized-interfaces), a type's
+parameters may be [deduced](terminology.md#deduced-parameter), as in:
+
+```
+fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
+    (haystack: HashMap(KeyType, ValueType), needle: KeyType)
+    -> bool { ... }
+fn MyMapContains(s: String) {
+  var map: HashMap(String, i32) = (("foo", 3), ("bar", 5));
+  // ✅ Deduces `KeyType` = `String` from the types of both arguments.
+  // Deduces `ValueType` = `i32` from the type of the first argument.
+  return ContainsKey(map, s);
+}
+```
+
+Note that restrictions on the type's parameters from the type's declaration can
+be [implied constraints](#implied-constraints) on the function's parameters.
+
+### Specialization
+
+[Specialization](terminology.md#generic-specialization) is used to improve
+performance in specific cases when a general strategy would be inefficient. For
+example, you might use
+[binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) for
+containers that support random access and keep their contents in sorted order
+but [linear search](https://en.wikipedia.org/wiki/Linear_search) in other cases.
+Types, like functions, may not be specialized directly in Carbon. This effect
+can be achieved, however, through delegation.
+
+For example, imagine we have a parameterized class `Optional(T)` that has a
+default storage strategy that works for all `T`, but for some types we have a
+more efficient approach. For pointers we can use a
+[null value](https://en.wikipedia.org/wiki/Null_pointer) to represent "no
+pointer", and for booleans we can support `True`, `False`, and `None` in a
+single byte. Clients of the optional library may want to add additional
+specializations for their own types. We make an interface that represents "the
+storage of `Optional(T)` for type `T`," written here as `OptionalStorage`:
+
+```
+interface OptionalStorage {
+  let Storage:! Type;
+  fn MakeNone() -> Storage;
+  fn Make(x: Self) -> Storage;
+  fn IsNone(x: Storage) -> bool;
+  fn Unwrap(x: Storage) -> Self;
+}
+```
+
+The default implementation of this interface is provided by a
+[blanket implementation](#blanket-impls):
+
+```
+// Default blanket implementation
+impl [T:! Movable] T as OptionalStorage
+    where .Storage = (bool, T) {
+  ...
+}
+```
+
+This implementation can then be
+[specialized](#lookup-resolution-and-specialization) for more specific type
+patterns:
+
+```
+// Specialization for pointers, using nullptr == None
+final external impl [T:! Type] T* as OptionalStorage
+    where .Storage = Array(Byte, sizeof(T*)) {
+  ...
+}
+// Specialization for type `bool`.
+final external impl bool as OptionalStorage
+    where .Storage = Byte {
+  ...
+}
+```
+
+Further, libraries can implement `OptionalStorage` for their own types, assuming
+the interface is not marked `private`. Then the implementation of `Optional(T)`
+can delegate to `OptionalStorage` for anything that can vary with `T`:
+
+```
+class Optional(T:! Movable) {
+  fn None() -> Self {
+    return {.storage = T.(OptionalStorage.MakeNone)()};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = T.(OptionalStorage.Make)(x)};
+  }
+  ...
+  private var storage: T.(OptionalStorage.Storage);
+}
+```
+
+Note that the constraint on `T` is just `Movable`, not
+`Movable & OptionalStorage`, since the `Movable` requirement is
+[sufficient to guarantee](#lookup-resolution-and-specialization) that some
+implementation of `OptionalStorage` exists for `T`. Carbon does not require
+callers of `Optional`, even generic callers, to specify that the argument type
+implements `OptionalStorage`:
+
+```
+// ✅ Allowed: `T` just needs to be `Movable` to form `Optional(T)`.
+//             A `T:! OptionalStorage` constraint is not required.
+fn First[T:! Movable & Eq](v: Vector(T)) -> Optional(T);
+```
+
+Adding `OptionalStorage` to the constraints on the parameter to `Optional` would
+obscure what types can be used as arguments. `OptionalStorage` is an
+implementation detail of `Optional` and need not appear in its public API.
+
+In this example, a `let` is used to avoid repeating `OptionalStorage` in the
+definition of `Optional`, since it has no name conflicts with the members of
+`Movable`:
+
+```
+class Optional(T:! Movable) {
+  private let U:! Movable & OptionalStorage = T;
+  fn None() -> Self {
+    return {.storage = U.MakeNone()};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = u.Make(x)};
+  }
+  ...
+  private var storage: U.Storage;
+}
+```
+
 ## Future work
 
 ### Dynamic types
@@ -5230,11 +5394,6 @@ implementing type has a particular field. This would be to match the
 expressivity of inheritance, which can express "all subtypes start with this
 list of fields."
 
-### Generic type specialization
-
-See [generic specialization](terminology.md#generic-specialization) for a
-description of what this might involve.
-
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
@@ -5273,3 +5432,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
+-   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
