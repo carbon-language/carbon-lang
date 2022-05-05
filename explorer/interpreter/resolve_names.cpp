@@ -58,7 +58,8 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::SelfDeclaration: {
-      FATAL() << "Unreachable AddExposedNames() on a `Self` declaration.";
+      auto& self = cast<SelfDeclaration>(declaration);
+      RETURN_IF_ERROR(enclosing_scope.Add("Self", &self));
       break;
     }
   }
@@ -335,9 +336,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       // before resolving names in the interface, so you can write something
       // like `impl VeryLongTypeName as AddWith(Self)`
       if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
-        // FIXME: Should this instead be
-        // RETURN_IF_ERROR(AddExposedNames(impl.self(), impl_scope));?
-        RETURN_IF_ERROR(impl_scope.Add("Self", impl.self()));
+        RETURN_IF_ERROR(AddExposedNames(*impl.self(), impl_scope));
       }
       RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
@@ -374,9 +373,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
-      // FIXME: Should this instead be
-      // RETURN_IF_ERROR(AddExposedNames(class_decl.self(), class_scope));?
-      RETURN_IF_ERROR(class_scope.Add("Self", class_decl.self()));
+      RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       if (class_decl.type_params().has_value()) {
         RETURN_IF_ERROR(ResolveNames(**class_decl.type_params(), class_scope));
       }

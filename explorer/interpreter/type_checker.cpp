@@ -1819,6 +1819,10 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // should have the value `MyType(T, U)`.
     BindingMap generic_args;
     for (Nonnull<Pattern*> field : type_params->fields()) {
+      // TODO(#1229): Nothing is currently enforcing that the deduced parameter
+      // list only contains generic bindings. We need to decide if Carbon should
+      // allow expressions like:
+      //     class B((T:! Type, U:! Type), V:! Type) {}
       CHECK(field->kind() == PatternKind::GenericBinding);
       auto& binding = cast<GenericBinding>(*field);
       // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
