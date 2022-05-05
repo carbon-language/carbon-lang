@@ -1949,24 +1949,6 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_stream_) {
     **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
-  RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
-  ASSIGN_OR_RETURN(Nonnull<const Value*> written_iface_type,
-                   InterpExp(&impl_decl->interface(), arena_, trace_stream_));
-
-  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
-  if (!iface_type) {
-    return CompilationError(impl_decl->interface().source_loc())
-           << "expected constraint after `as`, found value of type "
-           << *written_iface_type;
-  }
-  if (iface_type->IsParameterized()) {
-    return CompilationError(impl_decl->interface().source_loc())
-           << "missing arguments for parameterized interface";
-  }
-
-  const auto& iface_decl = iface_type->declaration();
-  impl_decl->set_interface_type(iface_type);
-
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -1984,12 +1966,32 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
                    InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
 
-  // Set type for `Self`, whether or not it `Self` resolves to it or the
-  // `Self` from an enclosing scope.
+  // Set `Self` to `impl_type`. We do this whether or not it `Self` resolves to
+  // it or the `Self` from an enclosing scope. This needs to be done before
+  // processing the interface, in case the interface expression uses `Self`.
   Nonnull<SelfDeclaration*> self = impl_decl->self();
   self->set_constant_value(impl_type_value);
   // Static type set in call to `TypeCheckExp(...)` above.
   self->set_static_type(&impl_decl->impl_type()->static_type());
+
+  // Check and interpret the interface.
+  RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
+  ASSIGN_OR_RETURN(Nonnull<const Value*> written_iface_type,
+                   InterpExp(&impl_decl->interface(), arena_, trace_stream_));
+
+  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
+  if (!iface_type) {
+    return CompilationError(impl_decl->interface().source_loc())
+           << "expected constraint after `as`, found value of type "
+           << *written_iface_type;
+  }
+  if (iface_type->IsParameterized()) {
+    return CompilationError(impl_decl->interface().source_loc())
+           << "missing arguments for parameterized interface";
+  }
+
+  const auto& iface_decl = iface_type->declaration();
+  impl_decl->set_interface_type(iface_type);
 
   // Bring this impl into the enclosing scope.
   auto impl_id =

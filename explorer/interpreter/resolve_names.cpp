@@ -339,7 +339,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         // RETURN_IF_ERROR(AddExposedNames(impl.self(), impl_scope));?
         RETURN_IF_ERROR(impl_scope.Add("Self", impl.self()));
       }
-      RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
+      RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
         RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));
       }
