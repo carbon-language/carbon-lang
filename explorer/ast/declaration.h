@@ -350,7 +350,7 @@ class ImplDeclaration : public Declaration {
 
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
-                     bool self_type_specified, Nonnull<Expression*> interface,
+                     Nonnull<Expression*> interface,
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      std::vector<Nonnull<Declaration*>> members)
       -> ErrorOr<Nonnull<ImplDeclaration*>>;
@@ -358,7 +358,7 @@ class ImplDeclaration : public Declaration {
   // Use `Create` instead.
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,
-                  std::optional<Nonnull<SelfDeclaration*>> self_decl,
+                  Nonnull<SelfDeclaration*> self_decl,
                   Nonnull<Expression*> interface,
                   std::vector<Nonnull<GenericBinding*>> deduced_params,
                   std::vector<Nonnull<Declaration*>> members)
@@ -403,15 +403,13 @@ class ImplDeclaration : public Declaration {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
-  auto self() const -> std::optional<Nonnull<const SelfDeclaration*>> {
-    return self_decl_;
-  }
-  auto self() -> std::optional<Nonnull<SelfDeclaration*>> { return self_decl_; }
+  auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
+  auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
  private:
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;
-  std::optional<Nonnull<SelfDeclaration*>> self_decl_;
+  Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;

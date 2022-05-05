@@ -98,7 +98,7 @@
 %token <std::string> string_literal
 %type <std::string> designator
 %type <ImplKind> impl_kind
-%type <std::pair<Nonnull<Expression*>, bool>> impl_type
+%type <Nonnull<Expression*>> impl_type
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
@@ -932,7 +932,7 @@ declaration:
 | impl_kind IMPL impl_deduced_params impl_type AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
-          arena, context.source_loc(), $1, $4.first, $4.second, $6, $3, $8);
+          arena, context.source_loc(), $1, $4, $6, $3, $8);
       if (impl.ok()) {
         $$ = *impl;
       } else {
@@ -949,12 +949,8 @@ impl_kind:
 ;
 impl_type:
   // Self
-    {
-      $$ = {arena->New<IdentifierExpression>(context.source_loc(), "Self"),
-            /* self_type_specified= */ false};
-    }
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | expression
-    { $$ = {$1, /* self_type_specified= */ true}; }
 ;
 declaration_list:
   // Empty

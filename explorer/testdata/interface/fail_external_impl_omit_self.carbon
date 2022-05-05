@@ -21,7 +21,7 @@ class Point {
 }
 
 // Error: need to specify which type implementing `Vector` for.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: impl requires type to be specified outside of a class declaration
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: could not resolve 'Self'
 external impl as Vector {
   fn Add[me: Point](b: Point) -> Point {
     return {.x = me.x + b.x, .y = me.y + b.y};

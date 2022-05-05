@@ -328,22 +328,17 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         RETURN_IF_ERROR(ResolveNames(binding->type(), impl_scope));
         RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
       }
-      // Only add `Self` to the impl_scope if it is not already in the enclosing
-      // scope.
-      if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
-        std::optional<Nonnull<SelfDeclaration*>> self = impl.self();
-        // Self type expression required in cases where `Self` is not already in
-        // scope.
-        if (!self) {
-          return CompilationError(impl.impl_type()->source_loc())
-                 << "impl requires type to be specified outside of a class "
-                    "declaration";
-        }
-        // FIXME: Should this instead be
-        // RETURN_IF_ERROR(AddExposedNames(*self, impl_scope));?
-        RETURN_IF_ERROR(impl_scope.Add("Self", *self));
-      }
       RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), impl_scope));
+      // Only add `Self` to the impl_scope if it is not already in the enclosing
+      // scope. Add `Self` after we resolve names for the impl_type, so you
+      // can't write something like `impl Vector(Self) as ...`. Add `Self`
+      // before resolving names in the interface, so you can write something
+      // like `impl VeryLongTypeName as AddWith(Self)`
+      if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
+        // FIXME: Should this instead be
+        // RETURN_IF_ERROR(AddExposedNames(impl.self(), impl_scope));?
+        RETURN_IF_ERROR(impl_scope.Add("Self", impl.self()));
+      }
       RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
         RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));

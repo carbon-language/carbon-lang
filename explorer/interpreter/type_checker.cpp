@@ -1983,12 +1983,14 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
                    InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
-  std::optional<Nonnull<SelfDeclaration*>> self = impl_decl->self();
-  if (self) {
-    (*self)->set_constant_value(impl_type_value);
-    // Static type set in call to `TypeCheckExp(...)` above.
-    (*self)->set_static_type(&impl_decl->impl_type()->static_type());
-  }
+
+  // Set type for `Self`, whether or not it `Self` resolves to it or the
+  // `Self` from an enclosing scope.
+  Nonnull<SelfDeclaration*> self = impl_decl->self();
+  self->set_constant_value(impl_type_value);
+  // Static type set in call to `TypeCheckExp(...)` above.
+  self->set_static_type(&impl_decl->impl_type()->static_type());
+
   // Bring this impl into the enclosing scope.
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");

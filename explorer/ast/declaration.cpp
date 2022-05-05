@@ -225,7 +225,6 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
 
 auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                              ImplKind kind, Nonnull<Expression*> impl_type,
-                             bool self_type_specified,
                              Nonnull<Expression*> interface,
                              std::vector<Nonnull<AstNode*>> deduced_params,
                              std::vector<Nonnull<Declaration*>> members)
@@ -241,10 +240,8 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                << "illegal AST node in implicit parameter list of impl";
     }
   }
-  std::optional<Nonnull<SelfDeclaration*>> self_decl = std::nullopt;
-  if (self_type_specified) {
-    self_decl = arena->New<SelfDeclaration>(impl_type->source_loc());
-  }
+  Nonnull<SelfDeclaration*> self_decl =
+      arena->New<SelfDeclaration>(impl_type->source_loc());
   return arena->New<ImplDeclaration>(source_loc, kind, impl_type, self_decl,
                                      interface, resolved_params, members);
 }
