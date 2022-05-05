@@ -103,6 +103,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+    -   [Requirements with `where` constraints](#requirements-with-where-constraints)
+-   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
+    -   [Observing interface requirements](#observing-interface-requirements)
+    -   [Observing blanket impls](#observing-blanket-impls)
 -   [Operator overloading](#operator-overloading)
     -   [Binary operators](#binary-operators)
     -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
@@ -1190,6 +1195,9 @@ def DoHashAndEquals[T:! Hashable](x: T) {
 
 **Comparison with other languages:**
 [This feature is called "Supertraits" in Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-supertraits-to-require-one-traits-functionality-within-another-trait).
+
+**Note:** The design for this feature is continued in
+[a later section](#interface-requiring-other-interfaces-revisited).
 
 ### Interface extension
 
@@ -3753,12 +3761,6 @@ types, possibly with different implementations.
 
 In general, `X(T).F` can only mean one thing, regardless of `T`.
 
-**Concern:** The conditional conformance feature makes the question "is this
-interface implemented for this type" undecidable in general.
-[This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
-The acyclic restriction may eliminate this issue, otherwise we will likely need
-some heuristic like a limit on how many steps of recursion are allowed.
-
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
 but bans cases where there could be ambiguity from overlap.
@@ -4812,6 +4814,238 @@ There are a few reasons for this feature:
 
 Note that this applies to associated entities, not interface parameters.
 
+## Interface requiring other interfaces revisited
+
+Recall that an
+[interface can require another interface be implemented for the type](#interface-requiring-other-interfaces),
+as in:
+
+```
+interface Iterable {
+  impl as Equatable;
+  // ...
+}
+```
+
+This states that the type implementing the interface `Iterable`, which in this
+context is called `Self`, must also implement the interface `Equatable`. As is
+done with [conditional conformance](#conditional-conformance), we allow another
+type to be specified between `impl` and `as` to say some type other than `Self`
+must implement an interface. For example,
+
+```
+interface IntLike {
+  impl i32 as As(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `IntLike`, then `i32` must implement `As(Self)`.
+Similarly,
+
+```
+interface CommonTypeWith(T:! Type) {
+  impl T as CommonTypeWith(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
+`CommonTypeWith(Self)`.
+
+The previous description of `impl as` in an interface definition matches the
+behavior of using a default of `Self` when the type between `impl` and `as` is
+omitted. So the previous definition of `interface Iterable` is equivalent to:
+
+```
+interface Iterable {
+  // ...
+  impl Self as Equatable;
+  // Equivalent to: impl as Equatable;
+}
+```
+
+When implementing an interface with an `impl as` requirement, that requirement
+must be satisfied by an implementation in an imported library, an implementation
+somewhere in the same file, or a constraint in the impl declaration.
+Implementing the requiring interface is a promise that the requirement will be
+implemented. This is like a
+[forward declaration of an impl](#declaring-implementations) except that the
+definition can be broader instead of being required to match exactly.
+
+```
+// `Iterable` requires `Equatable`, so there must be some
+// impl of `Equatable` for `Vector(i32)` in this file.
+external impl Vector(i32) as Iterable { ... }
+
+fn RequiresEquatable[T:! Equatable](x: T) { ... }
+fn ProcessVector(v: Vector(i32)) {
+  // ✅ Allowed since `Vector(i32)` is known to
+  // implement `Equatable`.
+  RequiresEquatable(v);
+}
+
+// Satisfies the requirement that `Vector(i32)` must
+// implement `Equatable` since `i32` is `Equatable`.
+external impl Vector(T:! Equatable) as Equatable { ... }
+```
+
+In some cases, the interface's requirement can be trivially satisfied by the
+implementation itself, as in:
+
+```
+impl [T:! Type] T as CommonTypeWith(T) { ... }
+```
+
+Here is an example where the requirement of interface `Iterable` that the type
+implements interface `Equatable` is satisfied by a constraint in the `impl`
+declaration:
+
+```
+class Foo(T:! Type) {}
+// This is allowed because we know that an `impl Foo(T) as Equatable`
+// will exist for all types `T` for which this impl is used, even
+// though there's neither an imported impl nor an impl in this file.
+external impl Foo(T:! Type where Foo(T) is Equatable) as Iterable {}
+```
+
+This might be used to provide an implementation of `Equatable` for types that
+already satisfy the requirement of implementing `Iterable`:
+
+```
+class Bar {}
+external impl Foo(Bar) as Equatable {}
+// Gives `Foo(Bar) is Iterable` using the blanket impl of
+// `Iterable` for `Foo(T)`.
+```
+
+### Requirements with `where` constraints
+
+An interface implementation requirement with a `where` clause is harder to
+satisfy. Consider an interface `B` that has a requirement that interface `A` is
+also implemented.
+
+```
+interface A(T:! Type) {
+  let Result:! Type;
+}
+interface B(T:! Type) {
+  impl as A(T) where .Result == i32;
+}
+```
+
+An implementation of `B` for a set of types can only be valid if there is a
+visible implementation of `A` with the same `T` parameter for those types with
+the `.Result` associated type set to `i32`. That is
+[not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
+though, unless the implementation of `A` can't be specialized, either because it
+is [marked `final`](#final-impls) or is not
+[parameterized](#parameterized-impls). Implementations in other libraries can't
+make `A` be implemented for fewer types, but can cause `.Result` to have a
+different assignment.
+
+## Observing a type implements an interface
+
+An [`observe` declaration](#observe-declarations) can be used to show that two
+types are equal so code can pass type checking without explicitly writing casts,
+without requiring the compiler to do a unbounded search that may not terminate.
+An `observe` declaration can also be used to show that a type implements an
+interface, in cases where the compiler will not work this out for itself.
+
+### Observing interface requirements
+
+One situation where this occurs is when there is a chain of
+[interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
+During the `impl` validation done during type checking, Carbon will only
+consider the interfaces that are direct requirements of the interfaces the type
+is known to implement. An `observe...is` declaration can be used to add an
+interface that is a direct requirement to the set of interfaces whose direct
+requirements will be considered for that type. This allows a developer to
+provide a proof that there is a sequence of requirements that demonstrate that a
+type implements an interface, as in this example:
+
+```
+interface A { }
+interface B { impl as A; }
+interface C { impl as B; }
+interface D { impl as C; }
+
+fn RequiresA[T:! A](x: T);
+fn RequiresC[T:! C](x: T);
+fn RequiresD[T:! D](x: T) {
+  // ✅ Allowed: `D` directly requires `C` to be implemented.
+  RequiresC(x);
+
+  // ❌ Illegal: No direct connection between `D` and `A`.
+  // RequiresA(x);
+
+  // `T` is `D` and `D` directly requires `C` to be
+  // implemented.
+  observe T is C;
+
+  // `T` is `C` and `C` directly requires `B` to be
+  // implemented.
+  observe T is B;
+
+  // ✅ Allowed: `T` is `B` and `B` directly requires
+  //             `A` to be implemented.
+  RequiresA(x);
+}
+```
+
+Note that `observe` statements do not affect the selection of impls during code
+generation. For coherence, the impl used for a (type, interface) pair must
+always be the same, independent of context. The
+[termination rule](#termination-rule) governs when compilation may fail when the
+compiler can't determine the impl to select.
+
+### Observing blanket impls
+
+An `observe...is` declaration can also be used to observe that a type implements
+an interface because there is a [blanket impl](#blanket-impls) in terms of
+requirements a type is already known to satisfy. Without an `observe`
+declaration, Carbon will only use blanket impls that are directly satisfied.
+
+```
+interface A { }
+interface B { }
+interface C { }
+interface D { }
+
+impl [T:! A] T as B { }
+impl [T:! B] T as C { }
+impl [T:! C] T as D { }
+
+fn RequiresD(T:! D)(x: T);
+fn RequiresB(T:! B)(x: T);
+
+fn RequiresA(T:! A)(x: T) {
+  // ✅ Allowed: There is a blanket implementation
+  //             of `B` for types implementing `A`.
+  RequiresB(x);
+
+  // ❌ Illegal: No implementation of `D` for type
+  //             `T` implementing `A`
+  // RequiresD(x);
+
+  // There is a blanket implementation of `B` for
+  // types implementing `A`.
+  observe T is B;
+
+  // There is a blanket implementation of `C` for
+  // types implementing `B`.
+  observe T is C;
+
+  // ✅ Allowed: There is a blanket implementation
+  //             of `D` for types implementing `C`.
+  RequiresD(x);
+}
+```
+
+In the case of an error, a quality Carbon implementation will do a deeper search
+for chains of requirements and blanket impls and suggest `observe` declarations
+that would make the code compile if any solution is found.
+
 ## Operator overloading
 
 Operations are overloaded for a type by implementing an interface specific to
@@ -5431,5 +5665,6 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+-   [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
 -   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
