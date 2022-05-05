@@ -16,7 +16,7 @@ class Point(T:! Type) {
   }
 
   // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got class Point
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got Point
   fn GetX[me: Point]() -> T {
     return me.x;
   }

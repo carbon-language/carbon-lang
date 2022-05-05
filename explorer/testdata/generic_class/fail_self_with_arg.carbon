@@ -13,7 +13,10 @@ package ExplorerTest api;
 class Point(T:! Type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: attempt to instantiate an already instantiated generic class: Self(T)
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+4]]: in call, expected a function
+  // CHECK: Self(T)
+  // CHECK: not an operator of type typeof(class Point(T = T:! Type))
+  // CHECK-EMPTY:
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }
