@@ -102,6 +102,7 @@ repos:
           - --warn-unused-ignores
           - --warn-return-any
           - --pretty
+        # This should match the requirements added in the WORKSPACE pip_install.
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
