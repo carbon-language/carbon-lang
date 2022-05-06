@@ -1179,7 +1179,7 @@ Breaking apart the template use in `Stack`:
 
 > References:
 >
-> -   <!-- [Bitwise and shift operators](expressions/bitwise.md#extensibility) -->
+> -   [Bitwise and shift operators](expressions/bitwise.md#extensibility)
 > -   Proposal
 >     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 
