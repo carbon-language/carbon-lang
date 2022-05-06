@@ -549,7 +549,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     }
 
     case DeclarationKind::SelfDeclaration: {
-      FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+      CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
     }
   }
   return declaration_proto;

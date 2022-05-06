@@ -23,7 +23,7 @@ class [[nodiscard]] Error {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine message) : message_(message.str()) {
-    CHECK(!message_.empty()) << "Errors must have a message.";
+    CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
   Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
@@ -63,39 +63,39 @@ class [[nodiscard]] ErrorOr {
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
   auto error() const& -> const Error& {
-    CHECK(!ok());
+    CARBON_CHECK(!ok());
     return std::get<Error>(val_);
   }
   auto error() && -> Error {
-    CHECK(!ok());
+    CARBON_CHECK(!ok());
     return std::get<Error>(std::move(val_));
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator*() -> T& {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator*() const -> const T& {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator->() -> T* {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return &std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator->() const -> const T* {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return &std::get<T>(val_);
   }
 
@@ -135,28 +135,29 @@ class ErrorBuilder {
 }  // namespace Carbon
 
 // Macro hackery to get a unique variable name.
-#define MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
-#define MAKE_UNIQUE_NAME(a, b, c) MAKE_UNIQUE_NAME_IMPL(a, b, c)
+#define CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
+#define CARBON_MAKE_UNIQUE_NAME(a, b, c) CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c)
 
-#define RETURN_IF_ERROR_IMPL(unique_name, expr)                           \
+#define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)                    \
   if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
       !(unique_name).ok()) {                                              \
     return std::move(unique_name).error();                                \
   }
 
-#define RETURN_IF_ERROR(expr) \
-  RETURN_IF_ERROR_IMPL(       \
-      MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+#define CARBON_RETURN_IF_ERROR(expr) \
+  CARBON_RETURN_IF_ERROR_IMPL(       \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
 
-#define ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)                 \
+#define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)          \
   auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
   if (!(unique_name).ok()) {                                          \
     return std::move(unique_name).error();                            \
   }                                                                   \
   var = std::move(*(unique_name)); /* NOLINT(bugprone-macro-parentheses) */
 
-#define ASSIGN_OR_RETURN(var, expr) \
-  ASSIGN_OR_RETURN_IMPL(            \
-      MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), var, expr)
+#define CARBON_ASSIGN_OR_RETURN(var, expr)                                 \
+  CARBON_ASSIGN_OR_RETURN_IMPL(                                            \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), \
+      var, expr)
 
 #endif  // COMMON_ERROR_H_
