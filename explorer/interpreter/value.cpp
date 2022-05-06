@@ -58,7 +58,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         }
       }
       default:
-        FATAL() << "expected Witness, not " << *witness;
+        CARBON_FATAL() << "expected Witness, not " << *witness;
     }
   }
   switch (v->kind()) {
@@ -121,7 +121,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                        class_type.witnesses());
     }
     default:
-      FATAL() << "field access not allowed for value " << *v;
+      CARBON_FATAL() << "field access not allowed for value " << *v;
   }
 }
 
@@ -130,7 +130,7 @@ auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    ASSIGN_OR_RETURN(value, GetMember(arena, value, field, source_loc));
+    CARBON_ASSIGN_OR_RETURN(value, GetMember(arena, value, field, source_loc));
   }
   return value;
 }
@@ -155,9 +155,9 @@ static auto SetFieldImpl(
         return RuntimeError(source_loc)
                << "field " << (*path_begin).name() << " not in " << *value;
       }
-      ASSIGN_OR_RETURN(it->value,
-                       SetFieldImpl(arena, it->value, path_begin + 1, path_end,
-                                    field_value, source_loc));
+      CARBON_ASSIGN_OR_RETURN(
+          it->value, SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                                  field_value, source_loc));
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
@@ -173,13 +173,13 @@ static auto SetFieldImpl(
         return RuntimeError(source_loc) << "index " << (*path_begin).name()
                                         << " out of range in " << *value;
       }
-      ASSIGN_OR_RETURN(elements[index],
-                       SetFieldImpl(arena, elements[index], path_begin + 1,
-                                    path_end, field_value, source_loc));
+      CARBON_ASSIGN_OR_RETURN(
+          elements[index], SetFieldImpl(arena, elements[index], path_begin + 1,
+                                        path_end, field_value, source_loc));
       return arena->New<TupleValue>(elements);
     }
     default:
-      FATAL() << "field access not allowed for value " << *value;
+      CARBON_FATAL() << "field access not allowed for value " << *value;
   }
 }
 
@@ -393,13 +393,13 @@ void Value::Print(llvm::raw_ostream& out) const {
 }
 
 ContinuationValue::StackFragment::~StackFragment() {
-  CHECK(reversed_todo_.empty())
+  CARBON_CHECK(reversed_todo_.empty())
       << "All StackFragments must be empty before the Carbon program ends.";
 }
 
 void ContinuationValue::StackFragment::StoreReversed(
     std::vector<std::unique_ptr<Action>> reversed_todo) {
-  CHECK(reversed_todo_.empty());
+  CARBON_CHECK(reversed_todo_.empty());
   reversed_todo_ = std::move(reversed_todo);
 }
 
@@ -533,14 +533,14 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::LValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::ContinuationValue:
-      FATAL() << "TypeEqual used to compare non-type values\n"
-              << *t1 << "\n"
-              << *t2;
+      CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
+                     << *t1 << "\n"
+                     << *t2;
     case Value::Kind::Witness:
-      FATAL() << "TypeEqual: unexpected Witness";
+      CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
-      FATAL() << "TypeEqual: unexpected AutoType";
+      CARBON_FATAL() << "TypeEqual: unexpected AutoType";
       break;
   }
 }
@@ -592,9 +592,10 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructValue: {
       const auto& struct_v1 = cast<StructValue>(*v1);
       const auto& struct_v2 = cast<StructValue>(*v2);
-      CHECK(struct_v1.elements().size() == struct_v2.elements().size());
+      CARBON_CHECK(struct_v1.elements().size() == struct_v2.elements().size());
       for (size_t i = 0; i < struct_v1.elements().size(); ++i) {
-        CHECK(struct_v1.elements()[i].name == struct_v2.elements()[i].name);
+        CARBON_CHECK(struct_v1.elements()[i].name ==
+                     struct_v2.elements()[i].name);
         if (!ValueEqual(struct_v1.elements()[i].value,
                         struct_v2.elements()[i].value)) {
           return false;
@@ -632,7 +633,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::LValue:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
-      FATAL() << "ValueEqual does not support this kind of value: " << *v1;
+      CARBON_FATAL() << "ValueEqual does not support this kind of value: "
+                     << *v1;
   }
 }
 

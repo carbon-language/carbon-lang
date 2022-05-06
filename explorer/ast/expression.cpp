@@ -130,7 +130,8 @@ void Expression::Print(llvm::raw_ostream& out) const {
               << *op.arguments()[1];
           break;
         default:
-          FATAL() << "Unexpected argument count: " << op.arguments().size();
+          CARBON_FATAL() << "Unexpected argument count: "
+                         << op.arguments().size();
       }
       out << ")";
       break;

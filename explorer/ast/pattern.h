@@ -52,14 +52,14 @@ class Pattern : public AstNode {
 
   // The static type of this pattern. Cannot be called before typechecking.
   auto static_type() const -> const Value& {
-    CHECK(static_type_.has_value());
+    CARBON_CHECK(static_type_.has_value());
     return **static_type_;
   }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -165,7 +165,7 @@ class BindingPattern : public Pattern {
   // Sets the value category of the variable being bound. Can only be called
   // once during typechecking
   void set_value_category(ValueCategory vc) {
-    CHECK(!value_category_.has_value());
+    CARBON_CHECK(!value_category_.has_value());
     value_category_ = vc;
   }
 
@@ -233,7 +233,7 @@ class GenericBinding : public Pattern {
     return symbolic_identity_;
   }
   void set_symbolic_identity(Nonnull<const Value*> value) {
-    CHECK(!symbolic_identity_.has_value());
+    CARBON_CHECK(!symbolic_identity_.has_value());
     symbolic_identity_ = value;
   }
 
@@ -243,7 +243,7 @@ class GenericBinding : public Pattern {
   }
   // Set the impl binding.
   void set_impl_binding(Nonnull<const ImplBinding*> binding) {
-    CHECK(!impl_binding_.has_value());
+    CARBON_CHECK(!impl_binding_.has_value());
     impl_binding_ = binding;
   }
 
@@ -283,8 +283,8 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> ErrorOr<Nonnull<AlternativePattern*>> {
-    ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
-                     RequireFieldAccess(alternative));
+    CARBON_ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
+                            RequireFieldAccess(alternative));
     return arena->New<AlternativePattern>(source_loc,
                                           &field_access->aggregate(),
                                           field_access->field(), arguments);

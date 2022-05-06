@@ -151,7 +151,7 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
       out << "-> auto";
       return;
     case ReturnKind::Expression:
-      CHECK(type_expression_.has_value());
+      CARBON_CHECK(type_expression_.has_value());
       out << "-> " << **type_expression_;
       return;
   }

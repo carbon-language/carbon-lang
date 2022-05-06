@@ -261,7 +261,7 @@ class StructValue : public Value {
  public:
   explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
-    CHECK(!elements_.empty())
+    CARBON_CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
   }
 

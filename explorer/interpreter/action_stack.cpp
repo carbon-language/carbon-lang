@@ -33,7 +33,7 @@ void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
 
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
-  CHECK(todo_.IsEmpty());
+  CARBON_CHECK(todo_.IsEmpty());
   todo_.Push(std::move(action));
 }
 
@@ -92,7 +92,7 @@ void ActionStack::MergeScope(RuntimeScope scope) {
     globals_->Merge(std::move(scope));
     return;
   }
-  FATAL() << "No current scope";
+  CARBON_FATAL() << "No current scope";
 }
 
 void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
@@ -118,9 +118,9 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
-      FATAL() << "This kind of action must produce a result: " << *act;
+      CARBON_FATAL() << "This kind of action must produce a result: " << *act;
     case Action::Kind::ScopeAction:
-      FATAL() << "ScopeAction at top of stack";
+      CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
       PopScopes();
@@ -134,9 +134,9 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
   switch (act->kind()) {
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
-      FATAL() << "This kind of Action cannot produce results: " << *act;
+      CARBON_FATAL() << "This kind of Action cannot produce results: " << *act;
     case Action::Kind::ScopeAction:
-      FATAL() << "ScopeAction at top of stack";
+      CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::ExpressionAction:
     case Action::Kind::LValAction:
     case Action::Kind::PatternAction:
@@ -184,7 +184,7 @@ auto ActionStack::UnwindTo(Nonnull<const Statement*> ast_node)
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
     -> ErrorOr<Success> {
-  RETURN_IF_ERROR(UnwindTo(ast_node));
+  CARBON_RETURN_IF_ERROR(UnwindTo(ast_node));
   todo_.Pop();
   PopScopes();
   return Success();
@@ -192,7 +192,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node)
 
 auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
                              Nonnull<const Value*> result) -> ErrorOr<Success> {
-  RETURN_IF_ERROR(UnwindPast(ast_node));
+  CARBON_RETURN_IF_ERROR(UnwindPast(ast_node));
   SetResult(result);
   return Success();
 }

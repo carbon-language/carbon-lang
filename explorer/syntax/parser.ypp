@@ -298,8 +298,8 @@ primary_expression:
 | sized_type_literal
     {
       int val;
-      CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
-      CHECK($1[0] == 'i' && val == 32)
+      CARBON_CHECK(llvm::to_integer(llvm::StringRef($1).substr(1), val));
+      CARBON_CHECK($1[0] == 'i' && val == 32)
           << "Only i32 is supported for now: " << $1;
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }

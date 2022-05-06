@@ -281,7 +281,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {string_literal} {
   llvm::StringRef str(yytext);
-  CHECK(str.consume_front("\"") && str.consume_back("\""));
+  CARBON_CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
     return context.RecordSyntaxError(

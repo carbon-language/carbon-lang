@@ -33,7 +33,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   fprintf(stderr, "text: %s\n", token->text().str().c_str());
 
   // Check multiline flag was computed correctly.
-  CHECK(token->is_multi_line() == token->text().contains('\n'));
+  CARBON_CHECK(token->is_multi_line() == token->text().contains('\n'));
 
   volatile auto value =
       token->ComputeValue(NullDiagnosticEmitter<const char*>());
