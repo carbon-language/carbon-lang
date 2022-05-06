@@ -73,6 +73,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << ";\n";
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      out << "Self";
+      break;
+    }
   }
 }
 
@@ -117,6 +122,11 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "var " << var.binding();
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      out << "Self";
+      break;
+    }
   }
 }
 
@@ -134,6 +144,8 @@ auto GetName(const Declaration& declaration) -> std::optional<std::string> {
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
+    case DeclarationKind::SelfDeclaration:
+      return cast<SelfDeclaration>(declaration).name();
   }
 }
 
@@ -228,8 +240,10 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                << "illegal AST node in implicit parameter list of impl";
     }
   }
-  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, interface,
-                                     resolved_params, members);
+  Nonnull<SelfDeclaration*> self_decl =
+      arena->New<SelfDeclaration>(impl_type->source_loc());
+  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, self_decl,
+                                     interface, resolved_params, members);
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {

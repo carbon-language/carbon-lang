@@ -1757,11 +1757,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   if (trace_stream_) {
     **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
+  Nonnull<SelfDeclaration*> self = class_decl->self();
   if (class_decl->type_params().has_value()) {
+    Nonnull<TuplePattern*> type_params = *class_decl->type_params();
     ImplScope class_scope;
     class_scope.AddParent(&enclosing_scope);
-    RETURN_IF_ERROR(TypeCheckPattern(*class_decl->type_params(), std::nullopt,
-                                     class_scope, ValueCategory::Let));
+    RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt, class_scope,
+                                     ValueCategory::Let));
     if (trace_stream_) {
       **trace_stream_ << class_scope;
     }
@@ -1773,6 +1775,27 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     class_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
 
+    // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
+    // should have the value `MyType(T, U)`.
+    BindingMap generic_args;
+    for (Nonnull<Pattern*> field : type_params->fields()) {
+      // TODO(#1229): Nothing is currently enforcing that the deduced parameter
+      // list only contains generic bindings. We need to decide if Carbon should
+      // allow expressions like:
+      //     class B((T:! Type, U:! Type), V:! Type) {}
+      CHECK(field->kind() == PatternKind::GenericBinding);
+      auto& binding = cast<GenericBinding>(*field);
+      // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
+      // above.
+      generic_args[&binding] = *binding.symbolic_identity();
+    }
+    // `self_type` is like `class_type` but with the type parameters bound to
+    // their symbolic identity.
+    Nonnull<NominalClassType*> self_type =
+        arena_->New<NominalClassType>(class_decl, generic_args);
+    SetConstantValue(self, self_type);
+    self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+
     for (Nonnull<Declaration*> m : class_decl->members()) {
       RETURN_IF_ERROR(DeclareDeclaration(m, class_scope));
     }
@@ -1782,8 +1805,14 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // before we start processing the members.
     Nonnull<NominalClassType*> class_type =
         arena_->New<NominalClassType>(class_decl);
+    Nonnull<TypeOfClassType*> static_type =
+        arena_->New<TypeOfClassType>(class_type);
     SetConstantValue(class_decl, class_type);
-    class_decl->set_static_type(arena_->New<TypeOfClassType>(class_type));
+    class_decl->set_static_type(static_type);
+    // For the class declaration `class MyType`, `Self` should have the same
+    // value as `MyType`.
+    SetConstantValue(self, class_type);
+    self->set_static_type(static_type);
 
     for (Nonnull<Declaration*> m : class_decl->members()) {
       RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
@@ -1890,20 +1919,6 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_stream_) {
     **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
-  RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
-  ASSIGN_OR_RETURN(Nonnull<const Value*> written_iface_type,
-                   InterpExp(&impl_decl->interface(), arena_, trace_stream_));
-
-  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
-  if (!iface_type) {
-    return CompilationError(impl_decl->interface().source_loc())
-           << "expected constraint after `as`, found value of type "
-           << *written_iface_type;
-  }
-
-  const auto& iface_decl = iface_type->declaration();
-  impl_decl->set_interface_type(iface_type);
-
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -1920,6 +1935,30 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
   ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
                    InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
+
+  // Set `Self` to `impl_type`. We do this whether or not it `Self` resolves to
+  // it or the `Self` from an enclosing scope. This needs to be done before
+  // processing the interface, in case the interface expression uses `Self`.
+  Nonnull<SelfDeclaration*> self = impl_decl->self();
+  self->set_constant_value(impl_type_value);
+  // Static type set in call to `TypeCheckExp(...)` above.
+  self->set_static_type(&impl_decl->impl_type()->static_type());
+
+  // Check and interpret the interface.
+  RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), enclosing_scope));
+  ASSIGN_OR_RETURN(Nonnull<const Value*> written_iface_type,
+                   InterpExp(&impl_decl->interface(), arena_, trace_stream_));
+
+  const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
+  if (!iface_type) {
+    return CompilationError(impl_decl->interface().source_loc())
+           << "expected constraint after `as`, found value of type "
+           << *written_iface_type;
+  }
+
+  const auto& iface_decl = iface_type->declaration();
+  impl_decl->set_interface_type(iface_type);
+
   // Bring this impl into the enclosing scope.
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
@@ -2061,6 +2100,9 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       }
       return Success();
     }
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable TypeChecker `Self` declaration";
+    }
   }
   return Success();
 }
@@ -2114,6 +2156,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                        InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
       break;
+    }
+
+    case DeclarationKind::SelfDeclaration: {
+      FATAL() << "Unreachable TypeChecker declare `Self` declaration";
     }
   }
   return Success();
