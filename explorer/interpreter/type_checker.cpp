@@ -712,8 +712,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::TupleLiteral: {
       std::vector<Nonnull<const Value*>> arg_types;
-      for (auto& arg : cast<TupleLiteral>(*e).fields()) {
+      for (auto* arg : cast<TupleLiteral>(*e).fields()) {
         RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+        RETURN_IF_ERROR(
+            ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
@@ -724,6 +726,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       std::vector<NamedValue> arg_types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
         RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+        RETURN_IF_ERROR(ExpectIsConcreteType(arg.expression().source_loc(),
+                                             &arg.expression().static_type()));
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));

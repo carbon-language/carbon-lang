@@ -392,11 +392,16 @@ void Value::Print(llvm::raw_ostream& out) const {
           << ")";
       break;
     case Value::Kind::TypeOfParameterizedEntityName:
-      out << "typeof(" << cast<TypeOfParameterizedEntityName>(*this).name()
-          << ")";
+      out << "<parameterized entity `"
+          << cast<TypeOfParameterizedEntityName>(*this).name() << "`>";
       break;
     case Value::Kind::TypeOfMemberName:
-      out << "<member name>";
+      out << "<member name";
+      if (std::optional<std::string> name =
+              GetName(cast<TypeOfMemberName>(*this).declaration())) {
+        out << " `" << name.value() << "`";
+      }
+      out << ">";
       break;
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
