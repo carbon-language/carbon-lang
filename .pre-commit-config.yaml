@@ -106,7 +106,7 @@ repos:
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
-        # Note, should probably fix gen_rtti.
+        # TODO: should probably fix gen_rtti.
         exclude: |
           (?x)^(
               explorer/gen_rtti\.py|
