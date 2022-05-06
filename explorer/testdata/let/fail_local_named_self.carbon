@@ -10,19 +10,9 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-  var x: i32;
-  var y: i32;
-}
-
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+4]]: in call, expected a function
-  // CHECK: Point(i32)
-  // CHECK: not an operator of type typeof(class Point)
-  // CHECK-EMPTY:
-  var p: Point(i32) = Point.Origin();
+  // Error: Can't use keyword `Self` as the name of a local.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_local_named_self.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting EQUAL
+  let Self: auto = 10;
   return 0;
 }

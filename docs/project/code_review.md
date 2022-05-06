@@ -27,6 +27,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [What should be covered by a review?](#what-should-be-covered-by-a-review)
     -   [Writing review comments](#writing-review-comments)
     -   [Approving the change](#approving-the-change)
+-   [Merging pull requests](#merging-pull-requests)
+    -   [Merge commit descriptions](#merge-commit-descriptions)
 -   [Resolving an impasse or conflict](#resolving-an-impasse-or-conflict)
 -   [Escalation](#escalation)
 
@@ -409,6 +411,36 @@ or suggested edits, you should give an LGTM with those comments addressed. The
 author can always come back to you if they have questions, and we can always
 revert changes if the resolution for some reason diverges wildly from your
 expectations.
+
+## Merging pull requests
+
+Pull requests are ready to be merged when reviewers have indicated they're happy
+(for example, "LGTM" or "Looks good to me") or have approved the pull request.
+While all merges require at least one approval, a reviewer might approve before
+others are finished reviewing; all reviewers should be given time to comment to
+ensure there's a consensus.
+
+Either the author or reviewer may merge and resolve conflicts. The author may
+indicate they want to merge by informing the reviewer and adding the
+`DO NOT MERGE` label. The reviewer is encouraged to coordinate with the author
+about merge timing if there are concerns about breaks. In either case, the
+developer doing the merge is expected to be available to help address
+post-commit issues, whether through a fix-forward or a rollback.
+
+### Merge commit descriptions
+
+When squashing and merging, GitHub tries to generate a description, but it's
+recommended to use the first comment on the pull request review for the squashed
+commit description. Authors should keep it up-to-date so that reviewers can
+merge when the change is ready. Reviewers shouldn't edit or rewrite this message
+themselves, and instead ask the author make those changes (possibly with
+suggestions) just like other parts of the code review. It's important that the
+commit message is one the author is comfortable with when merged.
+
+When suggested edits have been merged into a pull request, GitHub will append a
+`Co-authored-by:` line to its default proposed commit message for each reviewer
+who suggested edits that were applied. These lines should be retained and
+appended to the message from the initial comment.
 
 ## Resolving an impasse or conflict
 

@@ -350,6 +350,9 @@ void Value::Print(llvm::raw_ostream& out) const {
           << witness.declaration().interface();
       break;
     }
+    case Value::Kind::ParameterizedEntityName:
+      out << *GetName(cast<ParameterizedEntityName>(*this).declaration());
+      break;
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -381,6 +384,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::TypeOfChoiceType:
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
+          << ")";
+      break;
+    case Value::Kind::TypeOfParameterizedEntityName:
+      out << "typeof(" << cast<TypeOfParameterizedEntityName>(*this).name()
           << ")";
       break;
     case Value::Kind::StaticArrayType: {
@@ -514,6 +521,10 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
+    case Value::Kind::TypeOfParameterizedEntityName: {
+      return ValueEqual(&cast<TypeOfParameterizedEntityName>(*t1).name(),
+                        &cast<TypeOfParameterizedEntityName>(*t2).name());
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -533,6 +544,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::LValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::ContinuationValue:
+    case Value::Kind::ParameterizedEntityName:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -605,6 +617,15 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     }
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
+    case Value::Kind::ParameterizedEntityName: {
+      std::optional<std::string> name1 =
+          GetName(cast<ParameterizedEntityName>(v1)->declaration());
+      std::optional<std::string> name2 =
+          GetName(cast<ParameterizedEntityName>(v2)->declaration());
+      CARBON_CHECK(name1.has_value() && name2.has_value())
+          << "parameterized name refers to unnamed declaration";
+      return *name1 == *name2;
+    }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -622,6 +643,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:

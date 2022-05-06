@@ -98,6 +98,7 @@
 %token <std::string> string_literal
 %type <std::string> designator
 %type <ImplKind> impl_kind
+%type <Nonnull<Expression*>> impl_type
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
@@ -221,6 +222,7 @@
   RIGHT_PARENTHESIS
   RIGHT_SQUARE_BRACKET
   RUN
+  SELF
   SEMICOLON
   SLASH
   STRING
@@ -303,6 +305,9 @@ primary_expression:
           << "Only i32 is supported for now: " << $1;
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
+| SELF
+    // FIXME: Should we create a new TypeLiteral for `Self`?
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | STRING
     { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
 | BOOL
@@ -891,7 +896,11 @@ declaration:
   function_declaration
     { $$ = $1; }
 | CLASS identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
-    { $$ = arena->New<ClassDeclaration>(context.source_loc(), $2, $3, $5); }
+    {
+      $$ = arena->New<ClassDeclaration>(
+          context.source_loc(), $2,
+          arena->New<SelfDeclaration>(context.source_loc()), $3, $5);
+    }
 | CHOICE identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $4); }
 | VAR variable_declaration SEMICOLON
@@ -911,13 +920,16 @@ declaration:
     }
 | INTERFACE identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
+      // TODO: Type of `Self` should be the interface being declared, not
+      // `Type`.
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
+      // FIXME: Should this be switched to use a `SelfDeclaration` instead?
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
                                             $5);
     }
-| impl_kind IMPL impl_deduced_params expression AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| impl_kind IMPL impl_deduced_params impl_type AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
           arena, context.source_loc(), $1, $4, $6, $3, $8);
@@ -934,6 +946,11 @@ impl_kind:
     { $$ = Carbon::ImplKind::InternalImpl; }
 | EXTERNAL
     { $$ = Carbon::ImplKind::ExternalImpl; }
+;
+impl_type:
+  // Self
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
+| expression
 ;
 declaration_list:
   // Empty

@@ -11,10 +11,19 @@
 package ExplorerTest api;
 
 class Point(T:! Type) {
-  // The return type should be Point(T). Point by itself is not a type.
-  fn Create(x: T, y: T) -> Point {
-    return {.x = x, .y = y};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_return_type_is_type.carbon:[[@LINE+1]]: Expected a type, but got Point
+
+  // Error: wrote `Self(T)` instead of `Self`.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+4]]: in call, expected a function
+  // CHECK: Self(T)
+  // CHECK: not an operator of type typeof(class Point(T = T:! Type))
+  // CHECK-EMPTY:
+  fn Origin(zero: T) -> Self(T) {
+    return {.x = zero, .y = zero};
+  }
+
+  // Error: wrote `Self(T)` instead of `Self`.
+  fn GetX[me: Self(T)]() -> T {
+    return me.x;
   }
 
   var x: T;
@@ -22,6 +31,6 @@ class Point(T:! Type) {
 }
 
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32).Create(0, 1);
-  return p.x;
+  var p: Point(i32) = Point(i32).Origin(0);
+  return p.GetX();
 }

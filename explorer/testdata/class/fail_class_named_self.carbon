@@ -10,19 +10,14 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
+// Error: Can't use keyword `Self` as the name of a class.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+class Self {
   var x: i32;
   var y: i32;
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+4]]: in call, expected a function
-  // CHECK: Point(i32)
-  // CHECK: not an operator of type typeof(class Point)
-  // CHECK-EMPTY:
-  var p: Point(i32) = Point.Origin();
-  return 0;
+  var p: Self = {.x = 1, .y = 2};
+  return p.y - p.x - 1;
 }

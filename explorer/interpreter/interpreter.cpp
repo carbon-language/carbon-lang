@@ -482,6 +482,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
@@ -493,6 +494,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       // TODO: add `CARBON_CHECK(TypeEqual(type, value->dynamic_type()))`, once
       // we have Value::dynamic_type.
@@ -637,42 +639,37 @@ auto Interpreter::CallFunction(const CallExpression& call,
       return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
                          std::move(method_scope));
     }
-    case Value::Kind::NominalClassType: {
-      const NominalClassType& class_type = cast<NominalClassType>(*fun);
-      const ClassDeclaration& class_decl = class_type.declaration();
-      RuntimeScope type_params_scope(&heap_);
-      BindingMap generic_args;
-      CARBON_CHECK(class_decl.type_params().has_value())
-          << "instantiation of non-generic class " << class_type;
-      CARBON_CHECK(PatternMatch(&(*class_decl.type_params())->value(), arg,
-                                call.source_loc(), &type_params_scope,
-                                generic_args, trace_stream_));
-      switch (phase()) {
-        case Phase::RunTime:
-          return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, generic_args, witnesses));
-        case Phase::CompileTime:
-          return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, generic_args, call.impls()));
-      }
-    }
-    case Value::Kind::InterfaceType: {
-      const InterfaceType& iface_type = cast<InterfaceType>(*fun);
-      const InterfaceDeclaration& iface_decl = iface_type.declaration();
+    case Value::Kind::ParameterizedEntityName: {
+      const auto& name = cast<ParameterizedEntityName>(*fun);
+      const Declaration& decl = name.declaration();
       RuntimeScope params_scope(&heap_);
       BindingMap generic_args;
-      CARBON_CHECK(iface_decl.params().has_value())
-          << "call of unparameterized interface " << iface_type;
-      CARBON_CHECK(PatternMatch(&(*iface_decl.params())->value(), arg,
-                                call.source_loc(), &params_scope, generic_args,
-                                trace_stream_));
-      switch (phase()) {
-        case Phase::RunTime:
-          return todo_.FinishAction(
-              arena_->New<InterfaceType>(&iface_decl, generic_args, witnesses));
-        case Phase::CompileTime:
-          return todo_.FinishAction(arena_->New<InterfaceType>(
-              &iface_decl, generic_args, call.impls()));
+      CARBON_CHECK(PatternMatch(&name.params().value(), arg, call.source_loc(),
+                                &params_scope, generic_args, trace_stream_));
+      switch (decl.kind()) {
+        case DeclarationKind::ClassDeclaration: {
+          switch (phase()) {
+            case Phase::RunTime:
+              return todo_.FinishAction(arena_->New<NominalClassType>(
+                  &cast<ClassDeclaration>(decl), generic_args, witnesses));
+            case Phase::CompileTime:
+              return todo_.FinishAction(arena_->New<NominalClassType>(
+                  &cast<ClassDeclaration>(decl), generic_args, call.impls()));
+          }
+        }
+        case DeclarationKind::InterfaceDeclaration: {
+          switch (phase()) {
+            case Phase::RunTime:
+              return todo_.FinishAction(arena_->New<InterfaceType>(
+                  &cast<InterfaceDeclaration>(decl), generic_args, witnesses));
+            case Phase::CompileTime:
+              return todo_.FinishAction(
+                  arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
+                                             generic_args, call.impls()));
+          }
+        }
+        default:
+          CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
     }
     default:
@@ -1298,6 +1295,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::SelfDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

@@ -10,19 +10,22 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
+class Point(T:! Type) {
+  fn Origin(zero: T) -> Point(T) {
+    return {.x = zero, .y = zero};
   }
-  var x: i32;
-  var y: i32;
+
+  // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: Expected a type, but got Point
+  fn GetX[me: Point]() -> T {
+    return me.x;
+  }
+
+  var x: T;
+  var y: T;
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+4]]: in call, expected a function
-  // CHECK: Point(i32)
-  // CHECK: not an operator of type typeof(class Point)
-  // CHECK-EMPTY:
-  var p: Point(i32) = Point.Origin();
-  return 0;
+  var p: Point(i32) = Point(i32).Origin(0);
+  return p.GetX();
 }

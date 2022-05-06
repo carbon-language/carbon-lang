@@ -11,7 +11,10 @@
 package ExplorerTest api;
 
 class Point(T:! Type) {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+1]]: attempt to instantiate an already instantiated generic class: Point(T)(T)
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+4]]: in call, expected a function
+  // CHECK: Point(T)(T)
+  // CHECK: not an operator of type typeof(class Point(T = T:! Type))
+  // CHECK-EMPTY:
   fn Origin(zero: T) -> Point(T)(T) {
     return {.x = zero, .y = zero};
   }

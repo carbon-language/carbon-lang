@@ -51,13 +51,19 @@ static auto AddExposedNames(const Declaration& declaration,
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
-    case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(declaration);
       if (var.binding().name() != AnonymousName) {
         CARBON_RETURN_IF_ERROR(
             enclosing_scope.Add(var.binding().name(), &var.binding()));
       }
       break;
+    }
+    case DeclarationKind::SelfDeclaration: {
+      auto& self = cast<SelfDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add("Self", &self));
+      break;
+    }
   }
   return Success();
 }
@@ -340,7 +346,15 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
         CARBON_RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
       }
       CARBON_RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), enclosing_scope));
+      // Only add `Self` to the impl_scope if it is not already in the enclosing
+      // scope. Add `Self` after we resolve names for the impl_type, so you
+      // can't write something like `impl Vector(Self) as ...`. Add `Self`
+      // before resolving names in the interface, so you can write something
+      // like `impl VeryLongTypeName as AddWith(Self)`
+      if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
+        CARBON_RETURN_IF_ERROR(AddExposedNames(*impl.self(), impl_scope));
+      }
+      CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
       for (Nonnull<Declaration*> member : impl.members()) {
         CARBON_RETURN_IF_ERROR(AddExposedNames(*member, impl_scope));
       }
@@ -377,6 +391,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
       StaticScope class_scope;
       class_scope.AddParent(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(class_scope.Add(class_decl.name(), &class_decl));
+      CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       if (class_decl.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.type_params(), class_scope));
@@ -419,6 +434,10 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
             ResolveNames(var.initializer(), enclosing_scope));
       }
       break;
+    }
+
+    case DeclarationKind::SelfDeclaration: {
+      CARBON_FATAL() << "Unreachable: resolving names for `Self` declaration";
     }
   }
   return Success();

@@ -10,19 +10,10 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-  var x: i32;
-  var y: i32;
-}
+// Error: global variable may not be named with keyword `Self`.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+var Self: i32 = 0;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_instantiate_non_generic.carbon:[[@LINE+4]]: in call, expected a function
-  // CHECK: Point(i32)
-  // CHECK: not an operator of type typeof(class Point)
-  // CHECK-EMPTY:
-  var p: Point(i32) = Point.Origin();
-  return 0;
+  return Self;
 }

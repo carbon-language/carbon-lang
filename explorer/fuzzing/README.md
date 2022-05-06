@@ -34,6 +34,47 @@ execute the code using `explorer` implementation.
 buffer format. `explorer_fuzzer` uses text proto format with `Carbon` proto
 message definition in `common/fuzzing/carbon.proto`.
 
+## Incorporating AST changes into the fuzzer
+
+Fuzzer AST representation in
+[carbon.proto](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/carbon.proto)
+needs to be updated when changes are made to the AST, like adding a new AST node
+classes or changing relevant data members of existing nodes.
+
+There are two unit tests which normally should not require direct changes, as
+both tests work off of Carbon test files in
+[testdata](https://github.com/carbon-language/carbon-lang/tree/trunk/explorer/testdata).
+
+-   [ast_to_proto_test.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/ast_to_proto_test.cpp)
+    is a 'smoke' test which verifies that each field of Carbon proto is
+    populated at least once after converting all of test Carbon files and
+    merging the results into a single protocol buffer.
+
+-   [proto_to_carbon_test.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/proto_to_carbon_test.cpp)
+    uses a 'roundtrip' approach, by converting each parseable Carbon file to a
+    proto representation, then back to Carbon source, parsing this source into a
+    second instance of an AST, and comparing the second AST with the original
+    AST using `AST::Dump()` method. The goal of the test is to ensure that
+    `carbon.proto` is able to represent ASTs correctly without information loss.
+
+To incorporate AST changes into fuzzing logic:
+
+1. Add appropriate AST information to
+   [carbon.proto](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/carbon.proto).
+   Use existing similar cases as examples.
+
+1. Add logic to populate the proto to
+   [ast_to_proto.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/ast_to_proto.cpp).
+
+1. Make sure `ast_to_proto_test` passes with the new changes.
+
+1. Modify
+   [proto_to_carbon.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/proto_to_carbon.cpp)
+   which handles printing of a Carbon proto instance as a Carbon source string.
+   For example, add code to print newly introduced proto fields.
+
+1. Make sure `proto_to_carbon_test` passes after the changes.
+
 ## Running the fuzzer
 
 The fuzzer can be run in 'unit test' mode, where the fuzzer executes on each

@@ -55,7 +55,7 @@ class TypeChecker {
   // and ensuring they follow Carbon's typing rules.
   //
   // `values` maps variable names to their compile-time values. It is not
-  //    directly used in this function but is passed to InterExp.
+  //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
