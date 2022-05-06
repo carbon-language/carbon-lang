@@ -82,6 +82,7 @@ RIGHT_CURLY_BRACE    "}"
 RIGHT_PARENTHESIS    ")"
 RIGHT_SQUARE_BRACKET "]"
 RUN                  "__run"
+SELF                 "Self"
 SEMICOLON            ";"
 SLASH                "/"
 STRING               "String"
@@ -182,6 +183,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {PLUS}                { return SIMPLE_TOKEN(PLUS);                }
 {RETURN}              { return SIMPLE_TOKEN(RETURN);              }
 {RUN}                 { return SIMPLE_TOKEN(RUN);                 }
+{SELF}                { return SIMPLE_TOKEN(SELF);                }
 {SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return SIMPLE_TOKEN(SLASH);               }
 {STRING}              { return SIMPLE_TOKEN(STRING);              }
