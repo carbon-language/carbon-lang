@@ -131,8 +131,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
       matches = false;
     }
 
-    CHECK(!expected.string_contents ||
-          expected.kind == TokenKind::StringLiteral());
+    CARBON_CHECK(!expected.string_contents ||
+                 expected.kind == TokenKind::StringLiteral());
     if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {

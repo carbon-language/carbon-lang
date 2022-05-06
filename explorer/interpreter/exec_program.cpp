@@ -35,15 +35,15 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream) {
     **trace_stream << "********** resolving names **********\n";
   }
-  RETURN_IF_ERROR(ResolveNames(ast));
+  CARBON_RETURN_IF_ERROR(ResolveNames(ast));
   if (trace_stream) {
     **trace_stream << "********** resolving control flow **********\n";
   }
-  RETURN_IF_ERROR(ResolveControlFlow(ast));
+  CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
   if (trace_stream) {
     **trace_stream << "********** type checking **********\n";
   }
-  RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
+  CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
   if (trace_stream) {
     **trace_stream << "\n";
     **trace_stream << "********** type checking complete **********\n";

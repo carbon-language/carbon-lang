@@ -65,7 +65,7 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
   }
   const ErrorOr<std::string> prelude_path =
       Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon");
-  CHECK(prelude_path.ok()) << prelude_path.error().message();
+  CARBON_CHECK(prelude_path.ok()) << prelude_path.error().message();
   AddPrelude(*prelude_path, &arena, &ast->declarations);
   const ErrorOr<int> result =
       ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);

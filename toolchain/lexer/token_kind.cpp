@@ -56,7 +56,7 @@ auto TokenKind::GetClosingSymbol() const -> TokenKind {
 #include "toolchain/lexer/token_registry.def"
   };
   auto result = Table[static_cast<int>(kind_value_)];
-  CHECK(result != Error()) << "Only opening symbols are valid!";
+  CARBON_CHECK(result != Error()) << "Only opening symbols are valid!";
   return result;
 }
 
@@ -78,7 +78,7 @@ auto TokenKind::GetOpeningSymbol() const -> TokenKind {
 #include "toolchain/lexer/token_registry.def"
   };
   auto result = Table[static_cast<int>(kind_value_)];
-  CHECK(result != Error()) << "Only closing symbols are valid!";
+  CARBON_CHECK(result != Error()) << "Only closing symbols are valid!";
   return result;
 }
 

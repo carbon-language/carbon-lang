@@ -70,11 +70,13 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   }
 
   Arena arena;
-  ASSIGN_OR_RETURN(AST ast, Parse(&arena, input_file_name, parser_debug));
+  CARBON_ASSIGN_OR_RETURN(AST ast,
+                          Parse(&arena, input_file_name, parser_debug));
   AddPrelude(prelude_file_name, &arena, &ast.declarations);
 
   // Typecheck and run the parsed program.
-  ASSIGN_OR_RETURN(int return_code, ExecProgram(&arena, ast, trace_stream));
+  CARBON_ASSIGN_OR_RETURN(int return_code,
+                          ExecProgram(&arena, ast, trace_stream));
   // Print the return code to stdout even when we aren't tracing.
   (trace_stream ? **trace_stream : llvm::outs())
       << "result: " << return_code << "\n";
