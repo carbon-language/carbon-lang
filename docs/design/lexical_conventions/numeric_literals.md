@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Details](#details)
     -   [Integer literals](#integer-literals)
-    -   [Real number literals](#real-number-literals)
+    -   [Real-number literals](#real-number-literals)
     -   [Digit separators](#digit-separators)
 -   [Divergence from other languages](#divergence-from-other-languages)
 -   [Alternatives considered](#alternatives-considered)
@@ -29,13 +29,13 @@ The following syntaxes are supported:
     -   `12345` (decimal)
     -   `0x1FE` (hexadecimal)
     -   `0b1010` (binary)
--   Real number literals
+-   Real-number literals
     -   `123.456` (digits on both sides of the `.`)
     -   `123.456e789` (optional `+` or `-` after the `e`)
     -   `0x1.2p123` (optional `+` or `-` after the `p`)
 -   Digit separators (`_`) may be used, but only in conventional locations
 
-Note that real number literals always contain a `.` with digits on both sides,
+Note that real-number literals always contain a `.` with digits on both sides,
 and integer literals never contain a `.`.
 
 Literals are case-sensitive. Unlike in C++, literals do not have a suffix to
@@ -65,7 +65,7 @@ the literal is `0`, the `0` begins a base specifier, or the next character is a
 decimal point (see below). No support is provided for octal literals, and any C
 or C++ octal literal (other than `0`) is invalid in Carbon.
 
-### Real number literals
+### Real-number literals
 
 Real numbers are written as a decimal or hexadecimal integer followed by a
 period (`.`) followed by a sequence of one or more decimal or hexadecimal
@@ -81,23 +81,23 @@ is `p`, and the effect is to multiply the given value by
 2<sup>&plusmn;_N_</sup>. The exponent suffix is optional for both decimal and
 hexadecimal real numbers.
 
-Note that a decimal integer followed by `e` is not a real number literal. For
+Note that a decimal integer followed by `e` is not a real-number literal. For
 example, `3e10` is not a valid literal.
 
-When a real number literal is interpreted as a value of a real number type, its
+When a real-number literal is interpreted as a value of a real-number type, its
 value is the representable real number closest to the value of the literal. In
 the case of a tie, the nearest value whose mantissa is even is selected.
 
 The decimal real number syntax allows for any decimal fraction to be expressed
 -- that is, any number of the form _a_ x 10<sup>-_b_</sup>, where _a_ is an
 integer and _b_ is a non-negative integer. Because the decimal fractions are
-dense in the reals and the set of values of the real number type is assumed to
-be discrete, every value of the real number type can be expressed as a real
+dense in the reals and the set of values of the real-number type is assumed to
+be discrete, every value of the real-number type can be expressed as a real
 number literal. However, for certain applications, directly expressing the
-intended real number representation may be more convenient than producing a
+intended real-number representation may be more convenient than producing a
 decimal equivalent that is known to convert to the intended value. Hexadecimal
-real number literals are provided in order to permit values of binary floating
-or fixed point real number types to be expressed directly.
+real-number literals are provided in order to permit values of binary floating
+or fixed point real-number types to be expressed directly.
 
 ### Digit separators
 
@@ -108,7 +108,7 @@ respective condition:
     starting from the right. For example, `2_147_483_648`.
 -   For hexadecimal integers, the digit separators shall occur every four digits
     starting from the right. For example, `0x7FFF_FFFF`.
--   For real number literals, digit separators can appear in the decimal and
+-   For real-number literals, digit separators can appear in the decimal and
     hexadecimal integer portions (prior to the period and after the optional `e`
     or mandatory `p`) as described in the previous bullets. For example,
     `2_147.483648e12_345` or `0x1_00CA.FEF00Dp+24`
