@@ -55,11 +55,17 @@ standard library.
 ## Precedence and associativity
 
 ```mermaid
-graph TD
-    negation["-x"] --> multiplicative & modulo
-    multiplicative>"x * y<br> x / y"] --> additive
-    additive>"x + y<br> x - y"]
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+graph BT
+    negation["-x"]
+    multiplication>"x * y<br>
+                    x / y"]
+    addition>"x + y<br>
+              x - y"]
     modulo["x % y"]
+
+    multiplication & modulo --> negation
+    addition --> multiplication
 ```
 
 <small>[Instructions for reading this diagram.](README.md#precedence)</small>
@@ -153,8 +159,12 @@ programming errors:
     will be aborted, or the arithmetic will evaluate to a mathematically
     incorrect result, such as a two's complement result or zero. The program
     might not in all cases be aborted immediately -- for example, multiple
-    overflow checks might be combined into one, and if the result of an
-    arithmetic operation is never observed, the abort may not happen at all.
+    overflow checks might be combined into one -- but no control flow or memory
+    access that depends on the value will be performed.
+
+**TODO:** Unify the description of these programming errors with those of
+bit-shift domain errors, document the behavior in a common place and link to it
+from here.
 
 **TODO:** In a hardened build, should we prefer to trap on overflow, give a
 two's complement result, or produce zero? Using zero may defeat some classes of
