@@ -9,7 +9,7 @@ namespace Carbon {
 auto operator<<(llvm::raw_ostream& out, DiagnosticKind kind)
     -> llvm::raw_ostream& {
   static constexpr llvm::StringLiteral Names[] = {
-#define DIAGNOSTIC_KIND(DiagnosticName) #DiagnosticName,
+#define CARBON_DIAGNOSTIC_KIND(DiagnosticName) #DiagnosticName,
 #include "toolchain/diagnostics/diagnostic_registry.def"
   };
   out << Names[static_cast<int>(kind)];

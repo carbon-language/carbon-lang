@@ -265,7 +265,7 @@ class StructValue : public Value {
  public:
   explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
-    CHECK(!elements_.empty())
+    CARBON_CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
   }
 
@@ -513,7 +513,7 @@ class NominalClassType : public Value {
   // Construct a non-generic class type.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
       : Value(Kind::NominalClassType), declaration_(declaration) {
-    CHECK(!declaration->type_params().has_value())
+    CARBON_CHECK(!declaration->type_params().has_value())
         << "missing arguments for parameterized class type";
   }
 
@@ -594,7 +594,7 @@ class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
       : Value(Kind::InterfaceType), declaration_(declaration) {
-    CHECK(!declaration->params().has_value())
+    CARBON_CHECK(!declaration->params().has_value())
         << "missing arguments for parameterized interface type";
   }
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
@@ -753,7 +753,7 @@ class MemberName : public Value {
         interface_(interface),
         name_(std::move(name)),
         declaration_(declaration) {
-    CHECK(base_type || interface)
+    CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
   }
 

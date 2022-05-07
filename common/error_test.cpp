@@ -51,8 +51,8 @@ TEST(ErrorTest, IndirectErrorOrSuccess) {
 
 TEST(ErrorTest, ReturnIfErrorNoError) {
   auto result = []() -> ErrorOr<Success> {
-    RETURN_IF_ERROR(ErrorOr<Success>(Success()));
-    RETURN_IF_ERROR(ErrorOr<Success>(Success()));
+    CARBON_RETURN_IF_ERROR(ErrorOr<Success>(Success()));
+    CARBON_RETURN_IF_ERROR(ErrorOr<Success>(Success()));
     return Success();
   }();
   EXPECT_TRUE(result.ok());
@@ -60,8 +60,8 @@ TEST(ErrorTest, ReturnIfErrorNoError) {
 
 TEST(ErrorTest, ReturnIfErrorHasError) {
   auto result = []() -> ErrorOr<Success> {
-    RETURN_IF_ERROR(ErrorOr<Success>(Success()));
-    RETURN_IF_ERROR(ErrorOr<Success>(Error("error")));
+    CARBON_RETURN_IF_ERROR(ErrorOr<Success>(Success()));
+    CARBON_RETURN_IF_ERROR(ErrorOr<Success>(Error("error")));
     return Success();
   }();
   ASSERT_FALSE(result.ok());
@@ -70,10 +70,10 @@ TEST(ErrorTest, ReturnIfErrorHasError) {
 
 TEST(ErrorTest, AssignOrReturnNoError) {
   auto result = []() -> ErrorOr<int> {
-    ASSIGN_OR_RETURN(int a, ErrorOr<int>(1));
-    ASSIGN_OR_RETURN(const int b, ErrorOr<int>(2));
+    CARBON_ASSIGN_OR_RETURN(int a, ErrorOr<int>(1));
+    CARBON_ASSIGN_OR_RETURN(const int b, ErrorOr<int>(2));
     int c = 0;
-    ASSIGN_OR_RETURN(c, ErrorOr<int>(3));
+    CARBON_ASSIGN_OR_RETURN(c, ErrorOr<int>(3));
     return a + b + c;
   }();
   ASSERT_TRUE(result.ok());
@@ -82,7 +82,7 @@ TEST(ErrorTest, AssignOrReturnNoError) {
 
 TEST(ErrorTest, AssignOrReturnHasDirectError) {
   auto result = []() -> ErrorOr<int> {
-    RETURN_IF_ERROR(ErrorOr<int>(Error("error")));
+    CARBON_RETURN_IF_ERROR(ErrorOr<int>(Error("error")));
     return 0;
   }();
   ASSERT_FALSE(result.ok());
@@ -90,7 +90,7 @@ TEST(ErrorTest, AssignOrReturnHasDirectError) {
 
 TEST(ErrorTest, AssignOrReturnHasErrorInExpected) {
   auto result = []() -> ErrorOr<int> {
-    ASSIGN_OR_RETURN(int a, ErrorOr<int>(Error("error")));
+    CARBON_ASSIGN_OR_RETURN(int a, ErrorOr<int>(Error("error")));
     return a;
   }();
   ASSERT_FALSE(result.ok());

@@ -78,7 +78,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
         IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
-      CHECK(!seen_plus_minus) << "should only consume one + or -";
+      CARBON_CHECK(!seen_plus_minus) << "should only consume one + or -";
       seen_plus_minus = true;
       continue;
     }
@@ -336,7 +336,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 // correctly positioned.
 auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, Radix radix, int num_digit_separators) -> void {
-  DCHECK(std::count(text.begin(), text.end(), '_') == num_digit_separators)
+  CARBON_DCHECK(std::count(text.begin(), text.end(), '_') ==
+                num_digit_separators)
       << "given wrong number of digit separators: " << num_digit_separators;
 
   if (radix == Radix::Binary) {
