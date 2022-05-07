@@ -65,8 +65,6 @@ class FieldPath {
   auto operator=(const FieldPath&) -> FieldPath& = default;
   auto operator=(FieldPath&&) -> FieldPath& = default;
 
-  auto components() const -> llvm::ArrayRef<Component> { return components_; }
-
   // Returns whether *this is empty.
   auto IsEmpty() const -> bool { return components_.empty(); }
 
