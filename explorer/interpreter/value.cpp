@@ -355,7 +355,21 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::MemberName: {
       const auto& member_name = cast<MemberName>(*this);
-      out << member_name.base_type() << "." << member_name.name();
+      if (member_name.base_type().has_value()) {
+        out << *member_name.base_type().value();
+      }
+      if (member_name.base_type().has_value() &&
+          member_name.interface().has_value()) {
+        out << "(";
+      }
+      if (member_name.interface().has_value()) {
+        out << *member_name.interface().value();
+      }
+      out << "." << member_name.name();
+      if (member_name.base_type().has_value() &&
+          member_name.interface().has_value()) {
+        out << ")";
+      }
       break;
     }
     case Value::Kind::ChoiceType:

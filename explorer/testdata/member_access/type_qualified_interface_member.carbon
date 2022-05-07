@@ -10,14 +10,12 @@
 // CHECK: result: 42
 
 package Foo api;
-interface A {
-  fn F() -> i32;
+interface HasDefault {
+  fn Default() -> Self;
 }
-class X {
-  impl as A {
-    fn F() -> i32 { return 42; }
-  }
+impl i32 as HasDefault {
+  fn Default() -> i32 { return 42; }
 }
 fn Main() -> i32 {
-  return X.(A.F)();
+  return i32.(HasDefault.Default)();
 }

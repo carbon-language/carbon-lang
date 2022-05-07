@@ -1017,46 +1017,40 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
       bool has_instance = true;
-      if (auto *iface_type = dyn_cast<InterfaceType>(&member_name.base_type())) {
-        // Compound member access naming an interface member performs impl
-        // selection.
-        Nonnull<const Value*> implementing_type = &access.object().static_type();
-        if (IsTypeOfType(implementing_type)) {
-          ASSIGN_OR_RETURN(implementing_type,
+      std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
+      if (!base_type.has_value()) {
+        if (IsTypeOfType(&access.object().static_type())) {
+          ASSIGN_OR_RETURN(base_type,
                            InterpExp(&access.object(), arena_, trace_stream_));
           has_instance = false;
+        } else {
+          base_type = &access.object().static_type();
         }
-        CHECK(!member_name.impl().has_value())
-            << "an interface can't implement another interface";
-        ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
-                         impl_scope.Resolve(iface_type, implementing_type,
-                                            e->source_loc(), *this));
-        access.set_impl(impl);
       } else {
-        // In all other cases, we require the type of the first operand to be
-        // convertible to the type within which the member was named.
         RETURN_IF_ERROR(ExpectType(e->source_loc(), "compound member access",
-                                   &member_name.base_type(),
-                                   &access.object().static_type()));
-        if (access.member().impl().has_value()) {
-          access.set_impl(CreateImplReference(access.member().impl().value()));
-        }
+                                   *base_type, &access.object().static_type()));
+      }
+
+      // Perform impl selection if necessary.
+      if (std::optional<Nonnull<const Value*>> iface =
+              member_name.interface()) {
+        ASSIGN_OR_RETURN(
+            Nonnull<Expression*> impl,
+            impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
+        access.set_impl(impl);
       }
 
       auto SubstituteIntoMemberType = [&]() {
         Nonnull<const Value*> member_type =
             &member_name.declaration().static_type();
-        Nonnull<const Value*> member_of_type =
-            member_name.impl() ? member_name.impl().value()->interface()
-                               : &member_name.base_type();
-        if (auto* class_type = dyn_cast<NominalClassType>(member_of_type)) {
-          return Substitute(class_type->type_args(), member_type);
-        }
-        if (auto* iface_type = dyn_cast<InterfaceType>(member_of_type)) {
+        if (member_name.interface()) {
+          Nonnull<const InterfaceType*> iface_type = *member_name.interface();
           BindingMap binding_map = iface_type->args();
-          binding_map[iface_type->declaration().self()] =
-              &access.object().static_type();
+          binding_map[iface_type->declaration().self()] = *base_type;
           return Substitute(binding_map, member_type);
+        }
+        if (auto* class_type = dyn_cast<NominalClassType>(base_type.value())) {
+          return Substitute(class_type->type_args(), member_type);
         }
         return member_type;
       };
@@ -1069,15 +1063,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           }
           break;
-        case DeclarationKind::FunctionDeclaration:
-          if (has_instance ||
-              !cast<FunctionDeclaration>(member_name.declaration())
-                   .is_method()) {
+        case DeclarationKind::FunctionDeclaration: {
+          bool is_method =
+              cast<FunctionDeclaration>(member_name.declaration()).is_method();
+          if (has_instance || !is_method) {
+            if (has_instance && !is_method &&
+                member_name.base_type().has_value()) {
+              // This violates the non-vacuous member access rule: we didn't
+              // use the first opreand for anything.
+              return CompilationError(e->source_loc())
+                << "object provided in qualified access of non-method function";
+            }
             access.set_static_type(SubstituteIntoMemberType());
             access.set_value_category(ValueCategory::Let);
             return Success();
           }
           break;
+        }
         default:
           FATAL() << "member " << member_name << " is not a field or method";
           break;

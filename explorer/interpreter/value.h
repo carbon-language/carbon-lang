@@ -745,25 +745,29 @@ class ParameterizedEntityName : public Value {
 // access expression: `x.(A.B)`.
 class MemberName : public Value {
  public:
-  MemberName(Nonnull<const Value*> base_type,
-             std::optional<Nonnull<const ImplBinding*>> impl, std::string name,
-             Nonnull<const Declaration*> declaration)
+  MemberName(std::optional<Nonnull<const Value*>> base_type,
+             std::optional<Nonnull<const InterfaceType*>> interface,
+             std::string name, Nonnull<const Declaration*> declaration)
       : Value(Kind::MemberName),
         base_type_(base_type),
-        impl_(impl),
+        interface_(interface),
         name_(std::move(name)),
-        declaration_(declaration) {}
+        declaration_(declaration) {
+    CHECK(base_type || interface)
+        << "member name must be in a type, an interface, or both";
+  }
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::MemberName;
   }
 
-  // The type of which `name` is a member.
-  auto base_type() const -> const Value& { return *base_type_; }
-  // If `name` is a member of an interface, and `base_type` is a type
-  // implememting that interface, the corresponding `impl` binding.
-  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
-    return impl_;
+  // The type for which `name` is a member or a member of an `impl`.
+  auto base_type() const -> std::optional<Nonnull<const Value*>> {
+    return base_type_;
+  }
+  // The interface for which `name` is a member, if any.
+  auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
+    return interface_;
   }
   // The name of the member.
   auto name() const -> const std::string& { return name_; }
@@ -771,8 +775,8 @@ class MemberName : public Value {
   auto declaration() const -> const Declaration& { return *declaration_; }
 
  private:
-  Nonnull<const Value*> base_type_;
-  std::optional<Nonnull<const ImplBinding*>> impl_;
+  std::optional<Nonnull<const Value*>> base_type_;
+  std::optional<Nonnull<const InterfaceType*>> interface_;
   std::string name_;
   Nonnull<const Declaration*> declaration_;
 };

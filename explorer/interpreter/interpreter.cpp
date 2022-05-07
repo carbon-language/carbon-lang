@@ -344,12 +344,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       } else {
         //    { v :: [].(f) :: C, E, F} :: S, H}
         // -> { { &v.(f) :: C, E, F} :: S, H }
-        CHECK(!isa<InterfaceType>(access.member().base_type()))
+        CHECK(!access.member().interface().has_value())
             << "unexpected lvalue interface member";
-        CHECK(!access.impl().has_value())
-            << "unexpected lvalue impl member";
         ASSIGN_OR_RETURN(Nonnull<const Value*> val,
-                         Convert(act.results()[0], &access.member().base_type(),
+                         Convert(act.results()[0], *access.member().base_type(),
                                  exp.source_loc()));
         Address object = cast<LValue>(*val).address();
         Address field = object.SubobjectAddress(access.member().name());
@@ -793,9 +791,20 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          auto* member_name = arena_->New<MemberName>(
-              act.results()[0], access.impl(), access.field(),
-              &member_name_type->declaration());
+          std::optional<const InterfaceType*> iface_result = std::nullopt;
+          std::optional<const Value*> type_result = std::nullopt;
+          if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
+            iface_result = iface_type;
+          } else {
+            type_result = act.results()[0];
+            if (access.impl().has_value()) {
+              iface_result =
+                  cast<InterfaceType>(access.impl().value()->interface());
+            }
+          }
+          MemberName* member_name =
+              arena_->New<MemberName>(type_result, iface_result, access.field(),
+                                      &member_name_type->declaration());
           return todo_.FinishAction(member_name);
         } else {
           std::optional<Nonnull<const Witness*>> witness = std::nullopt;
@@ -823,33 +832,37 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
       } else if (act.pos() == 1 && access.impl().has_value()) {
-        #if 0
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(access.impl().value()));
+      } else {
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
+          CHECK(!access.member().base_type().has_value())
+              << "compound member access forming a member name should be "
+                 "performing impl lookup";
           auto* member_name = arena_->New<MemberName>(
-              act.results()[0], std::nullopt, access.member().name(),
-              &access.member().declaration());
+              act.results()[0], access.member().interface(),
+              access.member().name(), &access.member().declaration());
           return todo_.FinishAction(member_name);
-        }
-        #endif
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(access.impl().value()));
-      } else {
-        Nonnull<const Value*> object = act.results()[0];
-        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
-        if (access.impl().has_value()) {
-          witness = cast<Witness>(act.results()[1]);
         } else {
-          ASSIGN_OR_RETURN(object, Convert(object, &access.member().base_type(),
-                                           exp.source_loc()));
+          Nonnull<const Value*> object = act.results()[0];
+          std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+          if (access.impl().has_value()) {
+            witness = cast<Witness>(act.results()[1]);
+          } else {
+            CHECK(access.member().base_type().has_value())
+              << "compound access should have base type or impl";
+            ASSIGN_OR_RETURN(object, Convert(object, *access.member().base_type(),
+                                             exp.source_loc()));
+          }
+          FieldPath::Component field(access.member().name(), witness);
+          ASSIGN_OR_RETURN(
+              Nonnull<const Value*> member,
+              object->GetField(arena_, FieldPath(field), exp.source_loc()));
+          return todo_.FinishAction(member);
         }
-        FieldPath::Component field(access.member().name(), witness);
-        ASSIGN_OR_RETURN(
-            Nonnull<const Value*> member,
-            object->GetField(arena_, FieldPath(field), exp.source_loc()));
-        return todo_.FinishAction(member);
       }
     }
     case ExpressionKind::IdentifierExpression: {
