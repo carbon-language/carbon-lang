@@ -1072,7 +1072,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               // This violates the non-vacuous member access rule: we didn't
               // use the first opreand for anything.
               return CompilationError(e->source_loc())
-                << "object provided in qualified access of non-method function";
+                     << "object provided in qualified access of non-method "
+                        "function";
             }
             access.set_static_type(SubstituteIntoMemberType());
             access.set_value_category(ValueCategory::Let);
