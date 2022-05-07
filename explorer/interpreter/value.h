@@ -745,10 +745,12 @@ class ParameterizedEntityName : public Value {
 // access expression: `x.(A.B)`.
 class MemberName : public Value {
  public:
-  MemberName(Nonnull<const Value*> base_type, std::string name,
+  MemberName(Nonnull<const Value*> base_type,
+             std::optional<Nonnull<const ImplBinding*>> impl, std::string name,
              Nonnull<const Declaration*> declaration)
       : Value(Kind::MemberName),
         base_type_(base_type),
+        impl_(impl),
         name_(std::move(name)),
         declaration_(declaration) {}
 
@@ -758,6 +760,11 @@ class MemberName : public Value {
 
   // The type of which `name` is a member.
   auto base_type() const -> const Value& { return *base_type_; }
+  // If `name` is a member of an interface, and `base_type` is a type
+  // implememting that interface, the corresponding `impl` binding.
+  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+    return impl_;
+  }
   // The name of the member.
   auto name() const -> const std::string& { return name_; }
   // The declaration of the member.
@@ -765,6 +772,7 @@ class MemberName : public Value {
 
  private:
   Nonnull<const Value*> base_type_;
+  std::optional<Nonnull<const ImplBinding*>> impl_;
   std::string name_;
   Nonnull<const Declaration*> declaration_;
 };
@@ -922,6 +930,10 @@ class TypeOfParameterizedEntityName : public Value {
 };
 
 // The type of a member name expression.
+//
+// This is used for member names that don't denote a specific object or value
+// until used on the right-hand side of a `.`, such as an instance method or
+// field name, or any member function in an interface.
 //
 // Such expressions can appear only as the target of an `alias` declaration or
 // as the member name in a compound member access.

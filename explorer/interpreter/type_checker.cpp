@@ -61,6 +61,57 @@ static auto ExpectPointerType(SourceLocation source_loc,
   return Success();
 }
 
+// Returns whether the value is a type whose values are themselves known to be
+// types.
+static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      // These are values, not types.
+      return false;
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::TupleValue:
+      // These are types whose values are not types.
+      return false;
+    case Value::Kind::AutoType:
+    case Value::Kind::VariableType:
+      // A value of one of these types could be a type, but isn't known to be.
+      return false;
+    case Value::Kind::TypeType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+      // A value of one of these types is itself always a type.
+      return true;
+  }
+}
+
 // Returns whether the value is a valid result from a type expression,
 // as opposed to a non-type value.
 static auto IsType(Nonnull<const Value*> value) -> bool {
@@ -932,6 +983,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
+            // FIXME: Consider setting the static type of all interface member
+            // declarations and instance member declarations to be member name
+            // types, rather than special-casing member accesses that name
+            // them.
             access.set_static_type(arena_->New<TypeOfMemberName>(*member));
             access.set_value_category(ValueCategory::Let);
             return Success();
@@ -961,13 +1016,20 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        InterpExp(&access.path(), arena_, trace_stream_));
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
-      if (isa<InterfaceType>(member_name.base_type())) {
+      bool has_instance = true;
+      if (auto *iface_type = dyn_cast<InterfaceType>(&member_name.base_type())) {
         // Compound member access naming an interface member performs impl
         // selection.
-        // FIXME: Handle the case where the first operand is a type.
+        Nonnull<const Value*> implementing_type = &access.object().static_type();
+        if (IsTypeOfType(implementing_type)) {
+          ASSIGN_OR_RETURN(implementing_type,
+                           InterpExp(&access.object(), arena_, trace_stream_));
+          has_instance = false;
+        }
+        CHECK(!member_name.impl().has_value())
+            << "an interface can't implement another interface";
         ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
-                         impl_scope.Resolve(&member_name.base_type(),
-                                            &access.object().static_type(),
+                         impl_scope.Resolve(iface_type, implementing_type,
                                             e->source_loc(), *this));
         access.set_impl(impl);
       } else {
@@ -976,33 +1038,54 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         RETURN_IF_ERROR(ExpectType(e->source_loc(), "compound member access",
                                    &member_name.base_type(),
                                    &access.object().static_type()));
+        if (access.member().impl().has_value()) {
+          access.set_impl(CreateImplReference(access.member().impl().value()));
+        }
       }
 
-      Nonnull<const Value*> member_type =
-          &member_name.declaration().static_type();
-      if (auto* class_type =
-              dyn_cast<NominalClassType>(&member_name.base_type())) {
-        member_type = Substitute(class_type->type_args(), member_type);
-      } else if (auto* iface_type =
-                     dyn_cast<InterfaceType>(&member_name.base_type())) {
-        BindingMap binding_map = iface_type->args();
-        binding_map[iface_type->declaration().self()] =
-            &access.object().static_type();
-        member_type = Substitute(binding_map, member_type);
-      }
-      access.set_static_type(member_type);
+      auto SubstituteIntoMemberType = [&]() {
+        Nonnull<const Value*> member_type =
+            &member_name.declaration().static_type();
+        Nonnull<const Value*> member_of_type =
+            member_name.impl() ? member_name.impl().value()->interface()
+                               : &member_name.base_type();
+        if (auto* class_type = dyn_cast<NominalClassType>(member_of_type)) {
+          return Substitute(class_type->type_args(), member_type);
+        }
+        if (auto* iface_type = dyn_cast<InterfaceType>(member_of_type)) {
+          BindingMap binding_map = iface_type->args();
+          binding_map[iface_type->declaration().self()] =
+              &access.object().static_type();
+          return Substitute(binding_map, member_type);
+        }
+        return member_type;
+      };
 
       switch (member_name.declaration().kind()) {
         case DeclarationKind::VariableDeclaration:
-          access.set_value_category(access.object().value_category());
+          if (has_instance) {
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(access.object().value_category());
+            return Success();
+          }
           break;
         case DeclarationKind::FunctionDeclaration:
-          access.set_value_category(ValueCategory::Let);
+          if (has_instance ||
+              !cast<FunctionDeclaration>(member_name.declaration())
+                   .is_method()) {
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(ValueCategory::Let);
+            return Success();
+          }
           break;
         default:
           FATAL() << "member " << member_name << " is not a field or method";
           break;
       }
+
+      access.set_static_type(
+          arena_->New<TypeOfMemberName>(&member_name.declaration()));
+      access.set_value_category(ValueCategory::Let);
       return Success();
     }
     case ExpressionKind::IdentifierExpression: {
@@ -1373,14 +1456,20 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                                     ImplScope& impl_scope) {
-  CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+auto TypeChecker::CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+    -> Nonnull<Expression*> {
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
   impl_id->set_value_node(impl_binding);
+  return impl_id;
+}
+
+void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                     ImplScope& impl_scope) {
+  CHECK(impl_binding->type_var()->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
-                 *impl_binding->type_var()->symbolic_identity(), impl_id);
+                 *impl_binding->type_var()->symbolic_identity(),
+                 CreateImplReference(impl_binding));
 }
 
 auto TypeChecker::TypeCheckPattern(

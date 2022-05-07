@@ -346,6 +346,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         // -> { { &v.(f) :: C, E, F} :: S, H }
         CHECK(!isa<InterfaceType>(access.member().base_type()))
             << "unexpected lvalue interface member";
+        CHECK(!access.impl().has_value())
+            << "unexpected lvalue impl member";
         ASSIGN_OR_RETURN(Nonnull<const Value*> val,
                          Convert(act.results()[0], &access.member().base_type(),
                                  exp.source_loc()));
@@ -787,29 +789,26 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
-        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
-        if (access.impl().has_value()) {
-          ASSIGN_OR_RETURN(
-              auto witness_addr,
-              todo_.ValueOfNode(*access.impl(), access.source_loc()));
-          ASSIGN_OR_RETURN(
-              Nonnull<const Value*> witness_value,
-              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                         access.source_loc()));
-          witness = cast<Witness>(witness_value);
-        }
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          Nonnull<const Value*> member_of = act.results()[0];
-          if (witness.has_value()) {
-            member_of = witness.value();
-          }
           auto* member_name = arena_->New<MemberName>(
-              member_of, access.field(), &member_name_type->declaration());
+              act.results()[0], access.impl(), access.field(),
+              &member_name_type->declaration());
           return todo_.FinishAction(member_name);
         } else {
+          std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+          if (access.impl().has_value()) {
+            ASSIGN_OR_RETURN(
+                auto witness_addr,
+                todo_.ValueOfNode(*access.impl(), access.source_loc()));
+            ASSIGN_OR_RETURN(
+                Nonnull<const Value*> witness_value,
+                heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                           access.source_loc()));
+            witness = cast<Witness>(witness_value);
+          }
           FieldPath::Component field(access.field(), witness);
           ASSIGN_OR_RETURN(Nonnull<const Value*> member,
                            act.results()[0]->GetField(arena_, FieldPath(field),
@@ -824,10 +823,20 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
       } else if (act.pos() == 1 && access.impl().has_value()) {
+        #if 0
+        if (const auto* member_name_type =
+                dyn_cast<TypeOfMemberName>(&access.static_type())) {
+          CHECK(phase() == Phase::CompileTime)
+              << "should not form MemberNames at runtime";
+          auto* member_name = arena_->New<MemberName>(
+              act.results()[0], std::nullopt, access.member().name(),
+              &access.member().declaration());
+          return todo_.FinishAction(member_name);
+        }
+        #endif
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
-        // FIXME: `type.(interface_member)` should produce a `MemberName`.
         Nonnull<const Value*> object = act.results()[0];
         std::optional<Nonnull<const Witness*>> witness = std::nullopt;
         if (access.impl().has_value()) {
