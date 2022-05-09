@@ -85,6 +85,35 @@ repos:
     rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
       - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.950'
+    hooks:
+      - id: mypy
+        args:
+          - --disallow-untyped-decorators
+          - --warn-unused-configs
+          - --disallow-subclassing-any
+          - --disallow-untyped-calls
+          - --disallow-untyped-defs
+          - --disallow-incomplete-defs
+          - --check-untyped-defs
+          - --no-implicit-optional
+          - --warn-redundant-casts
+          - --warn-unused-ignores
+          - --warn-return-any
+          - --pretty
+        # This should match the requirements added in the WORKSPACE pip_install.
+        additional_dependencies:
+          - gql >= 2.0.0, < 3.0.0
+          - PyGitHub
+        # TODO: should probably fix gen_rtti.
+        exclude: |
+          (?x)^(
+              explorer/gen_rtti\.py|
+              proposals/.*|
+              .*/lit\.cfg\.py|
+              .*_test\.py
+          )$
   - repo: https://github.com/codespell-project/codespell
     rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
     hooks:
