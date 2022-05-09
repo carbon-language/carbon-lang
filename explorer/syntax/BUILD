@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@mypy_integration//:mypy.bzl", "mypy_test")
-
 package(default_visibility = [
     "//explorer:__pkg__",
     "//explorer/fuzzing:__pkg__",
@@ -137,12 +135,6 @@ py_test(
     name = "format_grammar_test",
     srcs = ["format_grammar_test.py"],
     deps = ["format_grammar_lib"],
-)
-
-mypy_test(
-    name = "format_grammar_mypy_test",
-    include_imports = True,
-    deps = [":format_grammar_lib"],
 )
 
 cc_test(
