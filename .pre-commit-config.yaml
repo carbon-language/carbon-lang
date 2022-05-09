@@ -106,9 +106,14 @@ repos:
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
+        # Exclusions are:
+        # - p#### scripts because they're not tested or maintained.
+        # - lit.cfg.py because it has multiple copies, breaking mypy.
+        # - Unit tests because they sometimes violate typing, such as by
+        #   assigning a mock to a function.
         exclude: |
           (?x)^(
-              proposals/.*|
+              proposals/(?!scripts/).*|
               .*/lit\.cfg\.py|
               .*_test\.py
           )$
