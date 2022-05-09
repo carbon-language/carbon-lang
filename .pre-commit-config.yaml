@@ -107,9 +107,10 @@ repos:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
         # TODO: should probably fix gen_rtti.
-        # Proposal-related scripts are excluded; nobody's ensuring they run.
-        # lit.cfg.py is excluded because it's repeated, which breaks mypy.
-        # Tests are excluded because they sometimes violate typing, such as by
+        # Exclusions are:
+        # - Proposal-specific scripts because they're not tested or maintained.
+        # - lit.cfg.py because it has multiple copies, breaking mypy.
+        # - Unit tests because they sometimes violate typing, such as by
         #   assigning a mock to a function.
         exclude: |
           (?x)^(
