@@ -108,7 +108,7 @@ repos:
           - PyGitHub
         # TODO: should probably fix gen_rtti.
         # Exclusions are:
-        # - Proposal-specific scripts because they're not tested or maintained.
+        # - p#### scripts because they're not tested or maintained.
         # - lit.cfg.py because it has multiple copies, breaking mypy.
         # - Unit tests because they sometimes violate typing, such as by
         #   assigning a mock to a function.
