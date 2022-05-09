@@ -14,21 +14,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [A note on example code](#a-note-on-example-code)
 -   [Hello, Carbon](#hello-carbon)
 -   [Code and comments](#code-and-comments)
+-   [Build modes](#build-modes)
 -   [Types](#types)
--   [Primitive types](#primitive-types)
-    -   [`bool`](#bool)
-    -   [Integer types](#integer-types)
-        -   [Integer literals](#integer-literals)
-    -   [Floating-point types](#floating-point-types)
-        -   [Floating-point literals](#floating-point-literals)
-    -   [String type](#string-type)
-        -   [String literals](#string-literals)
--   [Composite types](#composite-types)
-    -   [Tuples](#tuples)
-    -   [Struct types](#struct-types)
-        -   [Struct literals](#struct-literals)
-    -   [Pointer types](#pointer-types)
-    -   [Arrays and slices](#arrays-and-slices)
+    -   [Primitive types](#primitive-types)
+        -   [`bool`](#bool)
+        -   [Integer types](#integer-types)
+            -   [Integer literals](#integer-literals)
+        -   [Floating-point types](#floating-point-types)
+            -   [Floating-point literals](#floating-point-literals)
+        -   [String types](#string-types)
+            -   [String literals](#string-literals)
+    -   [Composite types](#composite-types)
+        -   [Tuples](#tuples)
+        -   [Struct types](#struct-types)
+            -   [Struct literals](#struct-literals)
+        -   [Pointer types](#pointer-types)
+        -   [Arrays and slices](#arrays-and-slices)
 -   [Functions](#functions)
     -   [Blocks and statements](#blocks-and-statements)
     -   [Expressions](#expressions)
@@ -158,23 +159,35 @@ required to be the only non-whitespace on the line.
 // Compute an approximation of π
 ```
 
+## Build modes
+
+The behavior of Carbon programs depends on the _build mode_:
+
+-   In a _development build_, the priority is diagnosing problems and fast build
+    time.
+-   In a _performance build_, the priority is fastest execution time and lowest
+    memory usage.
+-   In a _hardened build_, the first priority is safety and second is
+    performance.
+
 ## Types
 
 Carbon's core types are broken down into three categories:
 
--   [Primitive types](#primitive-types)
--   [Composite types](#composite-types)
+-   Primitive types
+-   Composite types
 -   [User-defined types](#user-defined-types)
 
-The first two are intrinsic and directly built in the language. The last aspect
-of types allows for defining new types.
+The first two are intrinsic and directly built in the language and are discussed
+in this section. The last category of types allows for defining new types, and
+is described [later](#user-defined-types).
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values.
 However, in simple cases this doesn't make much difference.
 
-## Primitive types
+### Primitive types
 
 > References: [Primitive types](primitive_types.md)
 
@@ -185,31 +198,58 @@ available through the [prelude package](#name-lookup-for-common-types).
 
 Primitive types fall into the following categories:
 
--   A boolean type `bool`
--   Signed and unsigned integer types.
--   IEEE-754 floating-point types.
--   String types.
+-   the boolean type `bool`,
+-   signed and unsigned integer types,
+-   IEEE-754 floating-point types, and
+-   string types.
 
-### `bool`
+#### `bool`
 
 The type `bool` is a boolean type with two possible values: `true` and `false`.
+[Comparison expressions](#expressions) produce `bool` values. The condition
+arguments in [control-flow statements](#control-flow), like [`if`](#if-and-else)
+and [`while`](#while), and
+[`if`-`then`-`else` conditional expressions](#expressions) take `bool` values.
 
-### Integer types
+#### Integer types
 
 > References:
 >
+> -   Question-for-leads issue
+>     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
-> **TODO:**
+The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
+convenience and brevity, the common power-of-two sizes may be written with an
+`i` followed by the size: `i8`, `i16`, `i32`, `i64`, `i128`, or `i256`.
+Signed-integer
+[overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
+programming error:
 
-Signed integer types: `i8`, `i16`, `i32`, `i64`, `i128`, `i256`, and
-`Carbon.Int(N)`. Overflow in either direction is an error.
+-   In a development build, overflow will be caught immediately when it happens
+    at runtime.
+-   In a performance build, the optimizer can assume that such conditions don't
+    occur. As a consequence, if they do, the behavior of the program is not
+    defined.
+-   In a hardened build, overflow does not result in undefined behavior.
+    Instead, either the program will be aborted, or the arithmetic will evaluate
+    to a mathematically incorrect result, such as a two's complement result or
+    zero.
 
-Unsigned integer types: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
-`Carbon.Unsigned(N)`. Overflow wraps.
+The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
+`Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
+advise that they are not used except when those semantics are desired. These
+types are intended for [hashing](https://en.wikipedia.org/wiki/Hash_function),
+[cryptography](https://en.wikipedia.org/wiki/Cryptography), and
+[PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
+Values which can never be negative, like sizes, but for which wrapping does not
+make sense
+[should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
 
-#### Integer literals
+##### Integer literals
 
 > References:
 >
@@ -221,28 +261,35 @@ Unsigned integer types: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 
-> **TODO:**
+Integers may be written in decimal, hexadecimal, or binary:
 
-Decimal, hexadecimal, and binary integer literals and decimal and hexadecimal
-floating-point literals are supported, with `_` as a digit separator. For
-example, `42`, `0b1011_1101` and `0x1.EEFp+5`. Numeric literals are
-case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase, whereas
-hexadecimal digits must be uppercase. A digit is required on both sides of a
-period.
+-   `12345` (decimal)
+-   `0x1FE` (hexadecimal)
+-   `0b1010` (binary)
 
-### Floating-point types
+Underscores `_` may be as a digit separator, but only in conventional locations.
+Numeric literals are case-sensitive: `0x`, `0b` must be lowercase, whereas
+hexadecimal digits must be uppercase. Integer literals never contain a `.`.
+
+Unlike in C++, literals do not have a suffix to indicate their type. Instead,
+numeric literals have a type derived from their value, and can be implicitly
+converted to any type that can represent that value.
+
+#### Floating-point types
 
 > References:
 >
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
-> **TODO:**
+Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
+rounding mode, and do not set any floating-point exception state. They are named
+with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
+[`BFloat16`](primitive_types.md#bfloat16) is also provided.
 
-Floating point type with semantics based on IEEE-754: `f16`, `f32`, `f64`, and
-`f128`. [`BFloat16`](primitive_types.md#bfloat16) is also provided.
-
-#### Floating-point literals
+##### Floating-point literals
 
 > References:
 >
@@ -256,17 +303,27 @@ Floating point type with semantics based on IEEE-754: `f16`, `f32`, `f64`, and
 > -   Proposal
 >     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 
-> **TODO:**
+Decimal and hexadecimal real-number literals are supported:
 
-### String type
+-   `123.456` (digits on both sides of the `.`)
+-   `123.456e789` (optional `+` or `-` after the `e`)
+-   `0x1.Ap123` (optional `+` or `-` after the `p`)
 
-> **TODO:**
+Real-number literals always have a period (`.`) and a digit on each side of the
+period. When a real-number literal is interpreted as a value of a floating-point
+type, its value is the representable real number closest to the value of the
+literal. In the case of a tie, the nearest value whose mantissa is even is
+selected.
+
+#### String types
+
+There are two string types:
 
 -   `String` - a byte sequence treated as containing UTF-8 encoded text.
 -   `StringView` - a read-only reference to a byte sequence treated as
     containing UTF-8 encoded text.
 
-#### String literals
+##### String literals
 
 > References:
 >
@@ -274,11 +331,36 @@ Floating point type with semantics based on IEEE-754: `f16`, `f32`, `f64`, and
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
-> **TODO:**
+String literals may be written on a single line using a double quotation mark
+(`"`) at the beginning and end of the string, as in `"example"`.
 
-## Composite types
+Multi-line string literals, called _block string literals_, begin and end with
+three double quotation marks (`"""`), and may have a file type indicator after
+the first `"""`.
 
-### Tuples
+```carbon
+// Block string literal:
+var block: String = """
+    The winds grow high; so do your stomachs, lords.
+    How irksome is this music to my heart!
+    When such strings jar, what hope of harmony?
+    I pray, my lords, let me compound this strife.
+        -- History of Henry VI, Part II, Act II, Scene 1, W. Shakespeare
+    """;
+```
+
+The indentation of a block string literal's terminating line is removed from all
+preceding lines.
+
+Strings may contain
+[escape sequences](lexical_conventions/string_literals.md#escape-sequences)
+introduced with a backslash (`\`).
+[Raw string literals](lexical_conventions/string_literals.md#raw-string-literals)
+are available for representing strings with `\`s and `"`s.
+
+### Composite types
+
+#### Tuples
 
 > References: [Tuples](tuples.md)
 
@@ -326,7 +408,7 @@ fn RemoveLast(x: (i32, i32, i32)) -> (i32, i32) {
 }
 ```
 
-### Struct types
+#### Struct types
 
 > References:
 >
@@ -340,7 +422,7 @@ fn RemoveLast(x: (i32, i32, i32)) -> (i32, i32) {
 
 _structural data class_, also known as a _struct type_ or _struct_
 
-#### Struct literals
+##### Struct literals
 
 > References: [Struct literals](classes.md#literals)
 
@@ -348,11 +430,11 @@ _structural data class_, also known as a _struct type_ or _struct_
 
 _structural data class literal_, also known as a _struct literal_
 
-### Pointer types
+#### Pointer types
 
 > **TODO:**
 
-### Arrays and slices
+#### Arrays and slices
 
 > **TODO:**
 
