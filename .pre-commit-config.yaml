@@ -110,8 +110,7 @@ repos:
         exclude: |
           (?x)^(
               explorer/gen_rtti\.py|
-              proposals/.*|
-              .*/lit\.cfg\.py|
+              proposals/(?!scripts/).*|
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
