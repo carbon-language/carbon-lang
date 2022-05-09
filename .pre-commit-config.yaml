@@ -89,19 +89,9 @@ repos:
     rev: 'v0.950'
     hooks:
       - id: mypy
+        # Use setup.cfg to match the command line.
         args:
-          - --disallow-untyped-decorators
-          - --warn-unused-configs
-          - --disallow-subclassing-any
-          - --disallow-untyped-calls
-          - --disallow-untyped-defs
-          - --disallow-incomplete-defs
-          - --check-untyped-defs
-          - --no-implicit-optional
-          - --warn-redundant-casts
-          - --warn-unused-ignores
-          - --warn-return-any
-          - --pretty
+          - --config-file=setup.cfg
         # This should match the requirements added in the WORKSPACE pip_install.
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
