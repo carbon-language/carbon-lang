@@ -38,7 +38,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
                         Nonnull<const Value*> type, SourceLocation source_loc,
                         const TypeChecker& type_checker) const
     -> ErrorOr<Nonnull<Expression*>> {
-  ASSIGN_OR_RETURN(
+  CARBON_ASSIGN_OR_RETURN(
       std::optional<Nonnull<Expression*>> result,
       TryResolve(iface_type, type, source_loc, *this, type_checker));
   if (!result.has_value()) {
@@ -54,13 +54,13 @@ auto ImplScope::TryResolve(Nonnull<const Value*> iface_type,
                            const ImplScope& original_scope,
                            const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<Nonnull<Expression*>>> {
-  ASSIGN_OR_RETURN(
+  CARBON_ASSIGN_OR_RETURN(
       std::optional<Nonnull<Expression*>> result,
       ResolveHere(iface_type, type, source_loc, original_scope, type_checker));
   for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> parent_result,
-                     parent->TryResolve(iface_type, type, source_loc,
-                                        original_scope, type_checker));
+    CARBON_ASSIGN_OR_RETURN(std::optional<Nonnull<Expression*>> parent_result,
+                            parent->TryResolve(iface_type, type, source_loc,
+                                               original_scope, type_checker));
     if (parent_result.has_value()) {
       if (result.has_value()) {
         return CompilationError(source_loc) << "ambiguous implementations of "
@@ -80,7 +80,7 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
                             const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<Nonnull<Expression*>>> {
   if (iface_type->kind() != Value::Kind::InterfaceType) {
-    FATAL() << "expected an interface, not " << *iface_type;
+    CARBON_FATAL() << "expected an interface, not " << *iface_type;
   }
   const auto& iface = cast<InterfaceType>(*iface_type);
   std::optional<Nonnull<Expression*>> result = std::nullopt;

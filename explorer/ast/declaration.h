@@ -59,7 +59,7 @@ class Declaration : public AstNode {
   // Sets the static type of the declared entity. Can only be called once,
   // during typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -71,7 +71,7 @@ class Declaration : public AstNode {
   // Sets the value returned by constant_value(). Can only be called once,
   // during typechecking.
   void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
+    CARBON_CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
 

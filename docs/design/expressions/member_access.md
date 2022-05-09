@@ -647,7 +647,7 @@ var n: i32 = 1 + X.Y;
 
 -   [Separate syntax for static versus dynamic access, such as `::` versus `.`](/proposals/p0989.md#separate-syntax-for-static-versus-dynamic-access)
 -   [Use a different lookup rule for names in templates](/proposals/p0989.md#use-a-different-lookup-rule-in-templates)
--   [Meaning of `Type.Interface](/proposals/p0989.md#meaning-of-typeinterface)
+-   [Meaning of `Type.Interface`](/proposals/p0989.md#meaning-of-typeinterface)
 
 ## References
 
