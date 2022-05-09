@@ -107,10 +107,12 @@ repos:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
         # TODO: should probably fix gen_rtti.
+        # lit.cfg is excluded because it's repeated, which breaks mypy.
         exclude: |
           (?x)^(
               explorer/gen_rtti\.py|
               proposals/(?!scripts/).*|
+              .*/lit\.cfg\.py|
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
