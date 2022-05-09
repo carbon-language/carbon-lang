@@ -107,7 +107,7 @@ repos:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
         # TODO: should probably fix gen_rtti.
-        # lit.cfg is excluded because it's repeated, which breaks mypy.
+        # lit.cfg.py is excluded because it's repeated, which breaks mypy.
         exclude: |
           (?x)^(
               explorer/gen_rtti\.py|
