@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/array/fail_index.carbon:16: index 2 out of range in (0, 1)
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: [i32; 2] = (0, 1);
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/array/fail_index.carbon:[[@LINE+1]]: index 2 out of range in (0, 1)
   return x[2];
 }

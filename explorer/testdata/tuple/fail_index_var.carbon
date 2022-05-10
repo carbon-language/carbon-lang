@@ -7,12 +7,12 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/tuple/fail_index_var.carbon:17: could not find `index: i32`
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: auto = (0, 1);
   var index: i32 = 0;
+  // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/tuple/fail_index_var.carbon:[[@LINE+1]]: could not find `index: i32`
   return x[index];
 }
