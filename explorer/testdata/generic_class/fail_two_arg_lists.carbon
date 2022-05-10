@@ -11,10 +11,7 @@
 package ExplorerTest api;
 
 class Point(T:! Type) {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+4]]: in call, expected a function
-  // CHECK: Point(T)(T)
-  // CHECK: not an operator of type typeof(class Point(T = T:! Type))
-  // CHECK-EMPTY:
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+1]]: in call `Point(T)(T)`, expected callee to be a function, found `typeof(class Point(T = T:! Type))`
   fn Origin(zero: T) -> Point(T)(T) {
     return {.x = zero, .y = zero};
   }
