@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: db7346d375eda68a0174f2c057dd97f2fbffe030 # frozen: v4.2.0
+    rev: 8fe62d14e0b4d7d845a7022c5c2c3ae41bdd3f26 # frozen: v4.1.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
