@@ -812,9 +812,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                   cast<InterfaceType>(access.impl().value()->interface());
             }
           }
-          MemberName* member_name =
-              arena_->New<MemberName>(type_result, iface_result, access.field(),
-                                      &member_name_type->declaration());
+          MemberName* member_name = arena_->New<MemberName>(
+              type_result, iface_result, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           std::optional<Nonnull<const Witness*>> witness = std::nullopt;
@@ -849,9 +848,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         CARBON_CHECK(!access.member().base_type().has_value())
             << "compound member access forming a member name should be "
                "performing impl lookup";
-        auto* member_name = arena_->New<MemberName>(
-            act.results()[0], access.member().interface(),
-            access.member().name(), &access.member().declaration());
+        auto* member_name = arena_->New<MemberName>(act.results()[0],
+                                                    access.member().interface(),
+                                                    access.member().member());
         return todo_.FinishAction(member_name);
       } else if (act.pos() == 1 && access.impl().has_value()) {
         return todo_.Spawn(

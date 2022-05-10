@@ -410,12 +410,8 @@ void Value::Print(llvm::raw_ostream& out) const {
           << cast<TypeOfParameterizedEntityName>(*this).name() << "`>";
       break;
     case Value::Kind::TypeOfMemberName:
-      out << "<member name";
-      if (std::optional<std::string> name =
-              GetName(cast<TypeOfMemberName>(*this).declaration())) {
-        out << " `" << name.value() << "`";
-      }
-      out << ">";
+      out << "<member name `" << cast<TypeOfMemberName>(*this).member().name()
+          << "`>";
       break;
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
@@ -535,7 +531,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
-    case Value::Kind::TypeOfMemberName:
       return true;
     case Value::Kind::VariableType:
       return &cast<VariableType>(*t1).binding() ==
@@ -549,10 +544,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
-    case Value::Kind::TypeOfParameterizedEntityName: {
-      return ValueEqual(&cast<TypeOfParameterizedEntityName>(*t1).name(),
-                        &cast<TypeOfParameterizedEntityName>(*t2).name());
-    }
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -574,6 +565,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -731,6 +724,22 @@ auto FindMember(const std::string& name,
     }
   }
   return std::nullopt;
+}
+
+auto Member::name() const -> std::string {
+  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+    return GetName(*decl).value();
+  } else {
+    return member_.get<const NamedValue*>()->name;
+  }
+}
+
+auto Member::type() const -> const Value& {
+  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+    return decl->static_type();
+  } else {
+    return *member_.get<const NamedValue*>()->value;
+  }
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {

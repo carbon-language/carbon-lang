@@ -17,6 +17,7 @@
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/field_path.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -739,6 +740,32 @@ class ParameterizedEntityName : public Value {
   Nonnull<const TuplePattern*> params_;
 };
 
+// A member of a type.
+//
+// This is either a declared member of a class, interface, or similar, or a
+// member of a struct with no declaration.
+class Member {
+ public:
+  explicit Member(const Declaration* declaration) : member_(declaration) {}
+  explicit Member(const NamedValue* struct_member) : member_(struct_member) {}
+
+  // The name of the member.
+  auto name() const -> std::string;
+  // The declared type of the member, which might include type variables.
+  auto type() const -> const Value&;
+  // A declaration of the member, if any exists.
+  auto declaration() const -> std::optional<Nonnull<const Declaration*>> {
+    if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+      return decl;
+    }
+    return std::nullopt;
+  }
+
+ private:
+  llvm::PointerUnion<Nonnull<const Declaration*>, Nonnull<const NamedValue*>>
+      member_;
+};
+
 // The name of a member of a class or interface.
 //
 // These values are used to represent the second operand of a compound member
@@ -747,12 +774,11 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             std::string name, Nonnull<const Declaration*> declaration)
+             Member member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
-        name_(std::move(name)),
-        declaration_(declaration) {
+        member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
   }
@@ -769,16 +795,15 @@ class MemberName : public Value {
   auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
     return interface_;
   }
+  // The member.
+  auto member() const -> Member { return member_; }
   // The name of the member.
-  auto name() const -> const std::string& { return name_; }
-  // The declaration of the member.
-  auto declaration() const -> const Declaration& { return *declaration_; }
+  auto name() const -> std::string { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  std::string name_;
-  Nonnull<const Declaration*> declaration_;
+  Member member_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -943,17 +968,17 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  TypeOfMemberName(Nonnull<const Declaration*> declaration)
-      : Value(Kind::TypeOfMemberName), declaration_(declaration) {}
+  TypeOfMemberName(Member member)
+      : Value(Kind::TypeOfMemberName), member_(member) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
   }
 
-  auto declaration() const -> const Declaration& { return *declaration_; }
+  auto member() const -> Member { return member_; }
 
  private:
-  Nonnull<const Declaration*> declaration_;
+  Member member_;
 };
 
 // The type of a statically-sized array.
