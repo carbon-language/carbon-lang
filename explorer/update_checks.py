@@ -26,7 +26,7 @@ _AUTOUPDATE_MARKER = "// AUTOUPDATE: "
 _NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
 # A regexp matching lines that contain line number references.
-_LINE_NUMBER_RE = r"(COMPILATION ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
+_LINE_NUMBER_RE = r"((?:COMPILATION|RUNTIME) ERROR: [^:]*:)([1-9][0-9]*)(:.*)"
 
 
 def _get_tests() -> Set[str]:
