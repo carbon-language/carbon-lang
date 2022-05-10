@@ -63,6 +63,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Naming conventions](#naming-conventions)
     -   [Aliases](#aliases)
     -   [Name lookup](#name-lookup)
+    -   [Name visibility](#name-visibility)
         -   [Name lookup for common types](#name-lookup-for-common-types)
 -   [Generics](#generics)
     -   [Interfaces and implementations](#interfaces-and-implementations)
@@ -279,6 +280,8 @@ converted to any type that can represent that value.
 
 > References:
 >
+> -   Question-for-leads issue
+>     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 > -   Proposal
@@ -364,12 +367,9 @@ are available for representing strings with `\`s and `"`s.
 
 > References: [Tuples](tuples.md)
 
-> **TODO:**
-
-The primary composite type involves simple aggregation of other types as a
-tuple. In formal type theory, tuples are product types.
-
-An example use of tuples is to return multiple values from a function:
+A tuple is a simple aggregation of types. In formal type theory, tuples are
+product types. An example use of tuples is to return multiple values from a
+function:
 
 ```carbon
 fn DoubleBoth(x: i32, y: i32) -> (i32, i32) {
@@ -386,7 +386,8 @@ Both of these are expressions using the tuple syntax
 `(<expression>, <expression>)`. The only difference is the type of the tuple
 expression: one is a tuple of types, the other a tuple of values.
 
-Element access uses subscript syntax:
+The components of a tuple are accessed positionally, so element access uses
+subscript syntax:
 
 ```carbon
 fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
@@ -394,19 +395,10 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
-Tuples also support multiple indices and slicing to restructure tuple elements:
-
-```carbon
-// This reverses the tuple using multiple indices.
-fn Reverse(x: (i32, i32, i32)) -> (i32, i32, i32) {
-  return x[2, 1, 0];
-}
-
-// This slices the tuple by extracting elements [0, 2).
-fn RemoveLast(x: (i32, i32, i32)) -> (i32, i32) {
-  return x[0 .. 2];
-}
-```
+Tuple types are _structural_, which means two tuple types are equal if they have
+the same components. This is in contrast to _nominal_ types that have a name
+that identifies a specific declaration. Two nominal types are equal if their
+names resolve to the same declaration.
 
 #### Struct types
 
@@ -417,10 +409,14 @@ fn RemoveLast(x: (i32, i32, i32)) -> (i32, i32) {
 >     [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+> -   Proposal
+>     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+
+The other structural type is called a _structural data class_, also known as a
+_struct type_ or _struct_. In contrast to a tuple, a struct's members are
+identified by name instead of position.
 
 > **TODO:**
-
-_structural data class_, also known as a _struct type_ or _struct_
 
 ##### Struct literals
 
@@ -447,6 +443,8 @@ _structural data class literal_, also known as a _struct literal_
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
 >     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
+> -   Question-for-leads issue
+>     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 
 Functions are the core unit of behavior. For example, this declares a function
 that adds two 64-bit integers:
@@ -970,7 +968,13 @@ two methods `Distance` and `Offset`:
 
 #### Access control
 
-> References: [Access control](classes.md#access-control)
+> References:
+>
+> -   [Access control for class members](classes.md#access-control)
+> -   Question-for-leads issue
+>     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Question-for-leads issue
+>     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
 
 > **TODO:**
 
@@ -1008,6 +1012,8 @@ FIXME: Rename to "Choice types"
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 > -   Proposal
 >     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
+> -   Question-for-leads issue
+>     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
 -   **Files** are grouped into libraries, which are in turn grouped into
     packages.
@@ -1072,8 +1078,12 @@ Our naming conventions are:
 
 ### Aliases
 
-> References: [Aliases](aliases.md)
+> References:
 >
+> -   [Aliases](aliases.md)
+> -   Question-for-leads issue
+>     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+
 > **TODO:** References need to be evolved.
 
 Carbon provides a facility to declare a new name as an alias for a value. This
@@ -1102,11 +1112,28 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 Unqualified name lookup will always find a file-local result, including aliases.
 
+### Name visibility
+
+> References:
+>
+> -   FIXME: Name visibility and access control at file scope
+> -   Question-for-leads issue
+>     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Proposal
+>     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
+
+> **TODO:**
+
 #### Name lookup for common types
 
 FIXME: should this be renamed to "The prelude"?
 
 > References: [Name lookup](name_lookup.md)
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Question-for-leads issue
+>     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
 >
 > **TODO:** References need to be evolved.
 
