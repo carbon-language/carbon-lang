@@ -63,8 +63,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Naming conventions](#naming-conventions)
     -   [Aliases](#aliases)
     -   [Name lookup](#name-lookup)
-    -   [Name visibility](#name-visibility)
         -   [Name lookup for common types](#name-lookup-for-common-types)
+    -   [Name visibility](#name-visibility)
 -   [Generics](#generics)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Checked and template parameters](#checked-and-template-parameters)
@@ -1112,18 +1112,6 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 Unqualified name lookup will always find a file-local result, including aliases.
 
-### Name visibility
-
-> References:
->
-> -   FIXME: Name visibility and access control at file scope
-> -   Question-for-leads issue
->     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
-> -   Proposal
->     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
-
-> **TODO:**
-
 #### Name lookup for common types
 
 FIXME: should this be renamed to "The prelude"?
@@ -1140,6 +1128,18 @@ FIXME: should this be renamed to "The prelude"?
 Common types that we expect to be used universally will be provided for every
 file, including `i32` and `Bool`. These will likely be defined in a special
 "prelude" package.
+
+### Name visibility
+
+> References:
+>
+> -   FIXME: Name visibility and access control at file scope
+> -   Question-for-leads issue
+>     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Proposal
+>     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
+
+> **TODO:**
 
 ## Generics
 
