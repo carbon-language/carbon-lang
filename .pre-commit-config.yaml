@@ -34,11 +34,11 @@ repos:
       - id: markdown-toc
   - repo: local
     hooks:
-      - id: executable-semantics-format-grammar
-        name: Format the executable_semantics grammar file
-        entry: executable_semantics/syntax/format_grammar.py
+      - id: explorer-format-grammar
+        name: Format the explorer grammar file
+        entry: explorer/syntax/format_grammar.py
         language: python
-        files: ^executable_semantics/syntax/(lexer.lpp|parser.ypp)$
+        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
       - id: fix-cc-deps
         name: Fix missing C++ deps
