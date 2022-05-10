@@ -14,8 +14,8 @@ import os
 from typing import Dict, Generator, Optional, Tuple
 
 # https://pypi.org/project/gql/
-import gql
-import gql.transport.requests
+import gql  # type: ignore
+import gql.transport.requests  # type: ignore
 
 _ENV_TOKEN = "GITHUB_ACCESS_TOKEN"
 
@@ -52,7 +52,7 @@ class Client(object):
             url="https://api.github.com/graphql",
             headers={"Authorization": "bearer %s" % parsed_args.access_token},
         )
-        self._client = gql.Client(transport=transport)  # type: ignore
+        self._client = gql.Client(transport=transport)
 
     def execute(self, query: str) -> Dict:
         """Runs a query."""
