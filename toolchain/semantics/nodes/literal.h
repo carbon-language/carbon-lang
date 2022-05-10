@@ -15,8 +15,6 @@ class Literal {
  public:
   explicit Literal(ParseTree::Node node) : node_(node) {}
 
-  void Print(llvm::raw_ostream& out) const { out << "literal"; }
-
   auto node() const -> ParseTree::Node { return node_; }
 
  private:

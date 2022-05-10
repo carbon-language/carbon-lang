@@ -8,6 +8,7 @@ cc_library(
     name = "nodes",
     hdrs = [
         "nodes/declared_name.h",
+        "nodes/expression.h",
         "nodes/function.h",
         "nodes/literal.h",
         "nodes/pattern_binding.h",
@@ -61,10 +62,13 @@ cc_library(
 cc_library(
     name = "semantics_ir_test_helpers",
     testonly = 1,
+    srcs = ["semantics_ir_test_helpers.cpp"],
     hdrs = ["semantics_ir_test_helpers.h"],
     deps = [
+        ":nodes",
         ":semantics_ir",
         "//common:check",
+        "//common:ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

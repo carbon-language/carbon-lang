@@ -14,6 +14,14 @@
 
 namespace Carbon {
 
+// The ParseTree is walked in reverse post order, meaning a lot of nodes are
+// added in reverse. This fixes that ordering to be the easier to understand
+// code ordering.
+template <typename T>
+static void FixReverseOrdering(T& container) {
+  std::reverse(container.begin(), container.end());
+}
+
 auto SemanticsIRFactory::Build(const ParseTree& parse_tree) -> SemanticsIR {
   SemanticsIRFactory builder(parse_tree);
   builder.Build();
@@ -35,6 +43,7 @@ void SemanticsIRFactory::Build() {
                 << node_kind.name();
     }
   }
+  FixReverseOrdering(semantics_.root_block_.nodes_);
 }
 
 void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
@@ -50,7 +59,7 @@ auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
   RequireNodeEmpty(node);
 
-  return Semantics::DeclaredName(node, parse_tree().GetNodeText(node));
+  return Semantics::DeclaredName(node);
 }
 
 void SemanticsIRFactory::TransformFunctionDeclaration(
@@ -60,7 +69,6 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   // TODO: Parse code.
   (void)subtree.TryConsume(ParseNodeKind::CodeBlock());
-  // TODO: Parse return type.
   llvm::Optional<Semantics::Expression> return_expr;
   auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType());
   if (return_type_node) {
@@ -70,7 +78,8 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
       subtree.RequireConsume(ParseNodeKind::ParameterList()));
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
-  semantics_.AddFunction(block, Semantics::Function(node, name, params));
+  semantics_.AddFunction(block,
+                         Semantics::Function(node, name, params, return_expr));
 }
 
 auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
@@ -92,17 +101,18 @@ auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
           subtree.RequireConsume(ParseNodeKind::PatternBinding())));
     }
   }
+  FixReverseOrdering(params);
   return params;
 }
 
 auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
-    -> Semantics::Literal {
+    -> Semantics::Expression {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
   RequireNodeEmpty(node);
 
   // TODO: This is still purpose-specific, and will need to handle more kinds of
   // expressions.
-  return Semantics::Literal(node);
+  return Semantics::Expression(node, Semantics::Literal(node));
 }
 
 auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
@@ -117,6 +127,14 @@ auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
   return Semantics::PatternBinding(node, name, type);
+}
+
+auto SemanticsIRFactory::TransformReturnType(ParseTree::Node node)
+    -> Semantics::Expression {
+  CHECK(parse_tree().node_kind(node) == ParseNodeKind::ReturnType());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  return TransformExpression(subtree.RequireConsume());
 }
 
 }  // namespace Carbon

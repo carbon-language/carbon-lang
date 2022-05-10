@@ -13,17 +13,12 @@ namespace Carbon::Semantics {
 // Semantic information for a name.
 class DeclaredName {
  public:
-  DeclaredName(ParseTree::Node node, llvm::StringRef str)
-      : node_(node), str_(str) {}
-
-  void Print(llvm::raw_ostream& out) const { out << str_; }
+  DeclaredName(ParseTree::Node node) : node_(node) {}
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto str() const -> llvm::StringRef { return str_; }
 
  private:
   ParseTree::Node node_;
-  llvm::StringRef str_;
 };
 
 }  // namespace Carbon::Semantics

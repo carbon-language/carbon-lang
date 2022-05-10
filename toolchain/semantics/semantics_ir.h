@@ -9,8 +9,13 @@
 #include "llvm/ADT/StringMap.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/function.h"
+#include "toolchain/semantics/nodes/pattern_binding.h"
 
 namespace Carbon {
+
+namespace Testing {
+class SemanticsIRSingleton;
+}  // namespace Testing
 
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
@@ -22,6 +27,7 @@ class SemanticsIR {
 
    private:
     friend class SemanticsIR;
+    friend class Testing::SemanticsIRSingleton;
 
     // The kind of token. These correspond to the lists on SemanticsIR which
     // will be indexed into.
@@ -54,6 +60,7 @@ class SemanticsIR {
 
    private:
     friend class SemanticsIR;
+    friend class SemanticsIRFactory;
 
     llvm::SmallVector<Node> nodes_;
     llvm::StringMap<Node> name_lookup_;
@@ -66,16 +73,26 @@ class SemanticsIR {
     return functions_[node.index_];
   }
 
+  void Print(llvm::raw_ostream& out, Node node) const;
+
   auto root_block() const -> const Block& { return root_block_; }
 
  private:
   friend class SemanticsIRFactory;
+  friend class Testing::SemanticsIRSingleton;
 
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
   // Creates a function and adds it to the enclosing block.
   void AddFunction(Block& block, Semantics::Function function);
+
+  void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
+  void Print(llvm::raw_ostream& out, Semantics::DeclaredName name) const;
+  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
+  void Print(llvm::raw_ostream& out, Semantics::Function function) const;
+  void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
+  void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
 
   // Indexed by Token::Function.
   llvm::SmallVector<Semantics::Function, 0> functions_;

@@ -30,6 +30,10 @@ class ParseSubtreeConsumer {
 
   ~ParseSubtreeConsumer();
 
+  // Returns the next node.
+  // CHECK-fails on unexpected states.
+  [[nodiscard]] auto RequireConsume() -> ParseTree::Node;
+
   // Requires the next node be of the given kind, and returns it.
   // CHECK-fails on unexpected states.
   [[nodiscard]] auto RequireConsume(ParseNodeKind node_kind) -> ParseTree::Node;

@@ -18,7 +18,9 @@ namespace {
 
 using ::testing::_;
 using ::testing::ElementsAre;
+using ::testing::Eq;
 using ::testing::IsEmpty;
+using ::testing::Optional;
 using ::testing::UnorderedElementsAre;
 
 class SemanticsIRFactoryTest : public ::testing::Test {
@@ -29,11 +31,18 @@ class SemanticsIRFactoryTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->has_errors());
-    llvm::errs() << *parse_tree;
-    g_semantics_ir = SemanticsIRFactory::Build(*parse_tree);
+    SemanticsIRSingleton::set_semantics(SemanticsIRFactory::Build(*parse_tree));
   }
 
-  ~SemanticsIRFactoryTest() override { g_semantics_ir = llvm::None; }
+  ~SemanticsIRFactoryTest() override { SemanticsIRSingleton::clear(); }
+
+  void ExpectRootBlock(
+      ::testing::Matcher<llvm::ArrayRef<SemanticsIR::Node>> nodes,
+      ::testing::Matcher<llvm::StringMap<SemanticsIR::Node>> name_lookup) {
+    EXPECT_THAT(SemanticsIRSingleton::semantics().root_block().nodes(), nodes);
+    EXPECT_THAT(SemanticsIRSingleton::semantics().root_block().name_lookup(),
+                name_lookup);
+  }
 
   llvm::Optional<SourceBuffer> source_buffer;
   llvm::Optional<TokenizedBuffer> tokenized_buffer;
@@ -45,7 +54,7 @@ TEST_F(SemanticsIRFactoryTest, SimpleProgram) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build(R"(// package FactoryTest api;
 
-           fn Add(x: i32, y: i32) {
+           fn Add(x: i32, y: i32) -> i32 {
              return x + y;
            }
 
@@ -55,21 +64,49 @@ TEST_F(SemanticsIRFactoryTest, SimpleProgram) {
              return x;
            }
           )");
+  ExpectRootBlock(
+      ElementsAre(
+          Function(
+              Eq("Add"),
+              ElementsAre(PatternBinding(Eq("x"), ExpressionLiteral("i32")),
+                          PatternBinding(Eq("y"), ExpressionLiteral("i32"))),
+              Optional(ExpressionLiteral("i32"))),
+          Function(Eq("Main"), IsEmpty(), Optional(ExpressionLiteral("i32")))),
+      UnorderedElementsAre(MappedNode("Add", FunctionName("Add")),
+                           MappedNode("Main", FunctionName("Main"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, Empty) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("");
-  EXPECT_THAT(g_semantics_ir->root_block(), Block(IsEmpty(), IsEmpty()));
+  ExpectRootBlock(IsEmpty(), IsEmpty());
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() {}");
-  EXPECT_THAT(
-      g_semantics_ir->root_block(),
-      Block(ElementsAre(FunctionName("Foo")),
-            UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo")))));
+  ExpectRootBlock(ElementsAre(Function(Eq("Foo"), IsEmpty(), Eq(llvm::None))),
+                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
+}
+
+TEST_F(SemanticsIRFactoryTest, FunctioParams) {
+  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
+  Build("fn Foo(x: i32, y: i64) {}");
+  ExpectRootBlock(
+      ElementsAre(Function(
+          Eq("Foo"),
+          ElementsAre(PatternBinding(Eq("x"), ExpressionLiteral("i32")),
+                      PatternBinding(Eq("y"), ExpressionLiteral("i64"))),
+          Eq(llvm::None))),
+      UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
+}
+
+TEST_F(SemanticsIRFactoryTest, FunctionReturnType) {
+  EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
+  Build("fn Foo() -> i32 {}");
+  ExpectRootBlock(ElementsAre(Function(Eq("Foo"), IsEmpty(),
+                                       Optional(ExpressionLiteral("i32")))),
+                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
@@ -77,10 +114,8 @@ TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
   Build(R"(fn Foo() {}
            fn Foo() {}
           )");
-  EXPECT_THAT(
-      g_semantics_ir->root_block(),
-      Block(ElementsAre(FunctionName("Foo"), FunctionName("Foo")),
-            UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo")))));
+  ExpectRootBlock(ElementsAre(FunctionName("Foo"), FunctionName("Foo")),
+                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionOrder) {
@@ -88,19 +123,16 @@ TEST_F(SemanticsIRFactoryTest, FunctionOrder) {
   Build(R"(fn Foo() {}
            fn Bar() {}
           )");
-  EXPECT_THAT(
-      g_semantics_ir->root_block(),
-      Block(ElementsAre(FunctionName("Bar"), FunctionName("Foo")),
-            UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo")),
-                                 MappedNode("Bar", FunctionName("Bar")))));
+  ExpectRootBlock(ElementsAre(FunctionName("Foo"), FunctionName("Bar")),
+                  UnorderedElementsAre(MappedNode("Bar", FunctionName("Bar")),
+                                       MappedNode("Foo", FunctionName("Foo"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionBody) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() { var x: i32 = 0; }");
-  EXPECT_THAT(g_semantics_ir->root_block(),
-              Block(ElementsAre(FunctionName("Foo")),
-                    ElementsAre(MappedNode("Foo", FunctionName("Foo")))));
+  ExpectRootBlock(ElementsAre(FunctionName("Foo")),
+                  ElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
 }  // namespace

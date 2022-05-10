@@ -17,14 +17,19 @@ namespace Carbon::Semantics {
 class Function {
  public:
   explicit Function(ParseTree::Node node, DeclaredName name,
-                    llvm::SmallVector<PatternBinding, 0> params)
-      : node_(node), name_(name), params_(std::move(params)) {}
-
-  void Print(llvm::raw_ostream& out) const { out << "fn " << name_ << "()"; }
+                    llvm::SmallVector<PatternBinding, 0> params,
+                    llvm::Optional<Semantics::Expression> return_expr)
+      : node_(node),
+        name_(name),
+        params_(std::move(params)),
+        return_expr_(return_expr) {}
 
   auto node() const -> ParseTree::Node { return node_; }
   auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> llvm::ArrayRef<PatternBinding> { return params_; }
+  auto return_expr() const -> llvm::Optional<Semantics::Expression> {
+    return return_expr_;
+  }
 
   // TODO:
   auto body() const -> ParseTree::Node { return {}; }
@@ -38,6 +43,9 @@ class Function {
 
   // Regular function parameters.
   llvm::SmallVector<PatternBinding, 0> params_;
+
+  // The return expression.
+  llvm::Optional<Semantics::Expression> return_expr_;
 };
 
 }  // namespace Carbon::Semantics

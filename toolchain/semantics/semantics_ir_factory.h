@@ -7,6 +7,7 @@
 
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/declared_name.h"
+#include "toolchain/semantics/nodes/expression.h"
 #include "toolchain/semantics/nodes/function.h"
 #include "toolchain/semantics/nodes/literal.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
@@ -35,9 +36,10 @@ class SemanticsIRFactory {
                                     SemanticsIR::Block& block);
   auto TransformParameterList(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::PatternBinding, 0>;
-  auto TransformExpression(ParseTree::Node node) -> Semantics::Literal;
+  auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
   auto TransformPatternBinding(ParseTree::Node node)
       -> Semantics::PatternBinding;
+  auto TransformReturnType(ParseTree::Node node) -> Semantics::Expression;
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }
