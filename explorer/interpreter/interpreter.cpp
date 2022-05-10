@@ -340,12 +340,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::CompoundFieldAccessExpression: {
       const auto& access = cast<CompoundFieldAccessExpression>(exp);
       if (act.pos() == 0) {
-        //    { {e.(f) :: C, E, F} :: S, H}
-        // -> { e :: [].(f) :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
-        //    { v :: [].(f) :: C, E, F} :: S, H}
-        // -> { { &v.(f) :: C, E, F} :: S, H }
         CARBON_CHECK(!access.member().interface().has_value())
             << "unexpected lvalue interface member";
         CARBON_ASSIGN_OR_RETURN(
@@ -790,19 +786,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(exp);
       if (act.pos() == 0) {
-        //    { { e.f :: C, E, F} :: S, H}
-        // -> { { e :: [].f :: C, E, F} :: S, H}
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.aggregate()));
       } else {
-        //    { { v :: [].f :: C, E, F} :: S, H}
-        // -> { { v_f :: C, E, F} : S, H}
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
+          // The result is a member name, such as in `Type.field_name`. Form a
+          // suitable member name value.
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          std::optional<const InterfaceType*> iface_result = std::nullopt;
-          std::optional<const Value*> type_result = std::nullopt;
+          std::optional<const InterfaceType*> iface_result;
+          std::optional<const Value*> type_result;
           if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
             iface_result = iface_type;
           } else {
@@ -816,7 +810,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               type_result, iface_result, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
-          std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+          // The result is the value of the named field, such as in
+          // `value.field_name`. Extract the value within the given object.
+          std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
             CARBON_ASSIGN_OR_RETURN(
                 auto witness_addr,
@@ -839,10 +835,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::CompoundFieldAccessExpression: {
       const auto& access = cast<CompoundFieldAccessExpression>(exp);
       if (act.pos() == 0) {
+        // First phase: evaluate the first operand.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
       } else if (const auto* member_name_type =
                      dyn_cast<TypeOfMemberName>(&access.static_type())) {
+        // If we're forming a member name, we must be in the outer evaluation
+        // in `Type.(Interface.method)`. Produce the given method with its
+        // `type` field set.
         CARBON_CHECK(phase() == Phase::CompileTime)
             << "should not form MemberNames at runtime";
         CARBON_CHECK(!access.member().base_type().has_value())
@@ -853,11 +853,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                                                     access.member().member());
         return todo_.FinishAction(member_name);
       } else if (act.pos() == 1 && access.impl().has_value()) {
+        // Second phase: if we're accessing an interface member, evaluate the
+        // `impl` expression to find the corresponding witness.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
+        // Third phase: access the object to find the named member.
         Nonnull<const Value*> object = act.results()[0];
-        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
+        std::optional<Nonnull<const Witness*>> witness;
         if (access.impl().has_value()) {
           witness = cast<Witness>(act.results()[1]);
         } else {

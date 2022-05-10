@@ -16,7 +16,7 @@ class X {
   }
 }
 fn F[T:! A](a: T) -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access_via_type_param.carbon:[[@LINE+1]]: expected member name in compound member access, found fn () -> i32
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access_via_type_param.carbon:[[@LINE+1]]: expected unbound member name in compound member access, found fn () -> i32
   return a.(T.F)();
 }
 fn Main() -> i32 {

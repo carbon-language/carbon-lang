@@ -1044,24 +1044,36 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {
         return CompilationError(e->source_loc())
-               << "expected member name in compound member access, found "
+               << "expected unbound member name in compound member access, "
+                  "found "
                << access.path().static_type();
       }
+
+      // Evaluate the member name expression to determine which member we're
+      // accessing.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
                               InterpExp(&access.path(), arena_, trace_stream_));
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
+
       bool has_instance = true;
       std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
       if (!base_type.has_value()) {
         if (IsTypeOfType(&access.object().static_type())) {
+          // This is `Type.(member_name)`, where `member_name` doesn't specify
+          // a type. This access doesn't perform instance binding.
           CARBON_ASSIGN_OR_RETURN(
               base_type, InterpExp(&access.object(), arena_, trace_stream_));
           has_instance = false;
         } else {
+          // This is `value.(member_name)`, where `member_name` doesn't specify
+          // a type. The member will be found in the type of `value`, or in a
+          // corresponding `impl` if `member_name` is an interface member.
           base_type = &access.object().static_type();
         }
       } else {
+        // This is `value.(member_name)`, where `member_name` specifies a type.
+        // `value` is implicitly converted to that type.
         CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(),
                                           "compound member access", *base_type,
                                           &access.object().static_type()));
@@ -1104,14 +1116,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case DeclarationKind::FunctionDeclaration: {
           bool is_method = cast<FunctionDeclaration>(*decl.value()).is_method();
           if (has_instance || !is_method) {
-            if (has_instance && !is_method &&
-                member_name.base_type().has_value()) {
-              // This violates the non-vacuous member access rule: we didn't
-              // use the first opreand for anything.
-              return CompilationError(e->source_loc())
-                     << "object provided in qualified access of non-method "
-                        "function";
-            }
+            // This should not be possible: the name of a static member
+            // function should have function type not member name type.
+            CARBON_CHECK(!has_instance || is_method ||
+                         !member_name.base_type().has_value())
+                << "vacuous compound member access";
             access.set_static_type(SubstituteIntoMemberType());
             access.set_value_category(ValueCategory::Let);
             return Success();

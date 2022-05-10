@@ -17,6 +17,6 @@ class X {
 }
 fn Main() -> i32 {
   var a: X = {};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected member name in compound member access, found fn () -> i32
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected unbound member name in compound member access, found fn () -> i32
   return a.(X.(A.F))();
 }
