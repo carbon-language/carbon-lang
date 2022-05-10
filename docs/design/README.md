@@ -26,8 +26,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [String literals](#string-literals)
     -   [Composite types](#composite-types)
         -   [Tuples](#tuples)
+            -   [Structural and nominal types](#structural-and-nominal-types)
         -   [Struct types](#struct-types)
-            -   [Struct literals](#struct-literals)
         -   [Pointer types](#pointer-types)
         -   [Arrays and slices](#arrays-and-slices)
 -   [Functions](#functions)
@@ -395,6 +395,8 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
+##### Structural and nominal types
+
 Tuple types are _structural_, which means two tuple types are equal if they have
 the same components. This is in contrast to _nominal_ types that have a name
 that identifies a specific declaration. Two nominal types are equal if their
@@ -412,19 +414,19 @@ names resolve to the same declaration.
 > -   Proposal
 >     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
 
-The other structural type is called a _structural data class_, also known as a
-_struct type_ or _struct_. In contrast to a tuple, a struct's members are
-identified by name instead of position.
+The other [structural type](#structural-and-nominal-types) is called a
+_structural data class_, also known as a _struct type_ or _struct_. In contrast
+to a tuple, a struct's members are identified by name instead of position.
 
-> **TODO:**
+Both struct types and values are written inside curly braces (`{`...`}`). In
+both cases, they have a comma-separated list of members that start with a period
+(`.`) followed by the field name.
 
-##### Struct literals
-
-> References: [Struct literals](classes.md#literals)
-
-> **TODO:**
-
-_structural data class literal_, also known as a _struct literal_
+-   In a struct type, the field name is followed by a colon (`:`) and the type,
+    as in: `{.name: String, .count: i32}`.
+-   In a struct value, called a _structural data class literal_ or a _struct
+    literal_, the field name is followed by an equal sign (`=`) and the value,
+    as in `{.key = "Joe", .count = 3}`.
 
 #### Pointer types
 
@@ -868,7 +870,9 @@ order.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
 class types, but they are commonly referred to as "structs" and "classes"
-respectively when that is not confusing.
+respectively when that is not confusing. Like structs, classes refer to their
+members by name. Unlike structs, classes are
+[nominal types](#structural-and-nominal-types).
 
 #### Assignment, copying
 
@@ -877,7 +881,7 @@ respectively when that is not confusing.
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
-You may use a [struct literal](#struct-literals), to assign or initialize a
+You may use a [struct literal](#struct-types), to assign or initialize a
 variable with a class type.
 
 ```carbon
