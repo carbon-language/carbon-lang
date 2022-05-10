@@ -47,8 +47,6 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
-      auto& choice = cast<ChoiceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -424,6 +422,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
                  << "` in choice type";
         }
       }
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
