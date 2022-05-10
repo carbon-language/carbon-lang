@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import subprocess
 
-import scripts_utils  # type: ignore
+import scripts_utils
 
 _MESSAGE = """\
 Dependencies on @llvm-project//llvm:gtest are forbidden, but a dependency path

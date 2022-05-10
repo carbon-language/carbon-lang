@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "bazelbuild.vscode-bazel",
+    "bierner.github-markdown-preview",
     "daohong-emilio.yash",
     "esbenp.prettier-vscode",
     "llvm-vs-code-extensions.vscode-clangd",
