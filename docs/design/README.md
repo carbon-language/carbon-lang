@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [String literals](#string-literals)
     -   [Composite types](#composite-types)
         -   [Tuples](#tuples)
-            -   [Structural and nominal types](#structural-and-nominal-types)
+        -   [Structural and nominal types](#structural-and-nominal-types)
         -   [Struct types](#struct-types)
         -   [Pointer types](#pointer-types)
         -   [Arrays and slices](#arrays-and-slices)
@@ -395,7 +395,7 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
-##### Structural and nominal types
+#### Structural and nominal types
 
 Tuple types are _structural_, which means two tuple types are equal if they have
 the same components. This is in contrast to _nominal_ types that have a name
@@ -430,7 +430,26 @@ both cases, they have a comma-separated list of members that start with a period
 
 #### Pointer types
 
-> **TODO:**
+> References:
+>
+> -   Question-for-leads issue
+>     [#520: should we use whitespace-sensitive operator fixity?](https://github.com/carbon-language/carbon-lang/issues/520)
+> -   Question-for-leads issue
+>     [#523: what syntax should we use for pointer types?](https://github.com/carbon-language/carbon-lang/issues/523)
+
+The type of pointers-to-values-of-type-`T` is written `T*`. Carbon pointers do
+not support
+[pointer arithmetic](<https://en.wikipedia.org/wiki/Pointer_(computer_programming)>),
+the only pointer [operations](#expressions) are:
+
+-   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
+    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
+-   Address-of: given an
+    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
+    `x`, `&x` returns a pointer to `x`.
+
+In Carbon, one use of pointers is to pass `&x` into a function that will modify
+`x`.
 
 #### Arrays and slices
 
