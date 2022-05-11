@@ -562,7 +562,7 @@ auto TypeChecker::Substitute(
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
-      return arena_->New<FunctionType>(llvm::None, param, ret, llvm::None,
+      return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
                                        llvm::None);
     }
     case Value::Kind::PointerType: {
@@ -855,7 +855,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.field();
           }
           access.set_static_type(arena_->New<FunctionType>(
-              llvm::None, *parameter_types, &aggregate_type, llvm::None,
+              *parameter_types, llvm::None, &aggregate_type, llvm::None,
               llvm::None));
           access.set_value_category(ValueCategory::Let);
           return Success();
@@ -1088,18 +1088,57 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
 
-          BindingMap deduced_type_args;
-          CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-              e->source_loc(), "call", fun_t.generic_bindings(),
-              deduced_type_args, &fun_t.parameters(),
-              &call.argument().static_type(),
-              /*allow_implicit_conversion=*/true));
-          call.set_deduced_args(deduced_type_args);
-          for (Nonnull<const GenericBinding*> deduced_param : fun_t.deduced()) {
+          const auto& param_tuple = cast<TupleValue>(fun_t.parameters());
+          const auto& arg_tuple = cast<TupleLiteral>(call.argument());
+          llvm::ArrayRef<FunctionType::GenericParameter> generic_params =
+              fun_t.generic_parameters();
+          if (param_tuple.elements().size() != arg_tuple.fields().size()) {
+            return CompilationError(call.source_loc())
+                   << "wrong number of arguments in function call, expected "
+                   << param_tuple.elements().size() << " but got "
+                   << arg_tuple.fields().size();
+          }
+
+          // Bindings for deduced parameters and generic parameters.
+          BindingMap generic_bindings;
+
+          // Deduce and/or convert each argument to the corresponding
+          // parameter.
+          for (size_t i = 0; i < param_tuple.elements().size(); ++i) {
+            const Value* param = param_tuple.elements()[i];
+            const Expression* arg = arg_tuple.fields()[i];
+            CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+                arg->source_loc(), "call", fun_t.deduced_bindings(),
+                generic_bindings, param, &arg->static_type(),
+                /*allow_implicit_conversion=*/true));
+            // If the parameter is a `:!` binding, evaluate and collect its
+            // value for use in later parameters and in the function body.
+            if (!generic_params.empty() && generic_params.front().index == i) {
+              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
+                                      InterpExp(arg, arena_, trace_stream_));
+              if (trace_stream_) {
+                **trace_stream_ << "evaluated generic parameter "
+                                << *generic_params.front().binding << " as "
+                                << *arg_value << "\n";
+              }
+              bool newly_added =
+                  generic_bindings
+                      .insert({generic_params.front().binding, arg_value})
+                      .second;
+              CARBON_CHECK(newly_added)
+                  << "generic parameter should not be deduced";
+              generic_params = generic_params.drop_front();
+            }
+          }
+          CARBON_CHECK(generic_params.empty())
+              << "did not find all generic parameters in parameter list";
+          call.set_deduced_args(generic_bindings);
+          for (Nonnull<const GenericBinding*> deduced_param :
+               fun_t.deduced_bindings()) {
             // TODO: change the following to a CHECK once the real checking
             // has been added to the type checking of function signatures.
-            if (auto it = deduced_type_args.find(deduced_param);
-                it == deduced_type_args.end()) {
+            if (auto it = generic_bindings.find(deduced_param);
+                it == generic_bindings.end()) {
               return CompilationError(e->source_loc())
                      << "could not deduce type argument for type parameter "
                      << deduced_param->name() << "\n"
@@ -1108,13 +1147,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
 
           Nonnull<const Value*> return_type =
-              Substitute(deduced_type_args, &fun_t.return_type());
+              Substitute(generic_bindings, &fun_t.return_type());
 
           // Find impls for all the impl bindings of the function.
           ImplExpMap impls;
           CARBON_RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(), impl_scope,
-                                              e->source_loc(),
-                                              deduced_type_args, impls));
+                                              e->source_loc(), generic_bindings,
+                                              impls));
           call.set_impls(impls);
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
@@ -1722,27 +1761,38 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   ImplScope function_scope;
   function_scope.AddParent(&enclosing_scope);
-  std::vector<Nonnull<const GenericBinding*>> generic_bindings;
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         deduced, std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(deduced, generic_bindings);
+    CollectGenericBindingsInPattern(deduced, deduced_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->me_pattern(), std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(&f->me_pattern(), generic_bindings);
+    CollectGenericBindingsInPattern(&f->me_pattern(), deduced_bindings);
     CollectImplBindingsInPattern(&f->me_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
                                           function_scope, ValueCategory::Let));
-  CollectGenericBindingsInPattern(&f->param_pattern(), generic_bindings);
   CollectImplBindingsInPattern(&f->param_pattern(), impl_bindings);
+
+  // Keep track of any generic parameters and nested generic bindings in the
+  // parameter pattern.
+  std::vector<FunctionType::GenericParameter> generic_parameters;
+  for (size_t i = 0; i != f->param_pattern().fields().size(); ++i) {
+    const Pattern* param_pattern = f->param_pattern().fields()[i];
+    if (auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
+      generic_parameters.push_back({i, binding});
+    } else {
+      CollectGenericBindingsInPattern(param_pattern, deduced_bindings);
+    }
+  }
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
@@ -1776,8 +1826,8 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   CARBON_RETURN_IF_ERROR(
       ExpectIsConcreteType(f->source_loc(), &f->return_term().static_type()));
   f->set_static_type(arena_->New<FunctionType>(
-      f->deduced_parameters(), &f->param_pattern().static_type(),
-      &f->return_term().static_type(), generic_bindings, impl_bindings));
+      &f->param_pattern().static_type(), generic_parameters,
+      &f->return_term().static_type(), deduced_bindings, impl_bindings));
   SetConstantValue(f, arena_->New<FunctionValue>(f));
 
   if (f->name() == "Main") {

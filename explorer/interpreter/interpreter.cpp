@@ -580,26 +580,31 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
+      RuntimeScope binding_scope(&heap_);
+      // Bring the class type arguments into scope.
+      for (const auto& [bind, val] : fun_val.type_args()) {
+        binding_scope.Initialize(bind, val);
+      }
+      // Bring the deduced type arguments into scope.
+      for (const auto& [bind, val] : call.deduced_args()) {
+        binding_scope.Initialize(bind, val);
+      }
+      // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : witnesses) {
+        binding_scope.Initialize(impl_bind, witness);
+      }
+      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
+        binding_scope.Initialize(impl_bind, witness);
+      }
+      // Enter the binding scope to make any deduced arguments visible before
+      // we resolve the parameter type.
+      todo_.CurrentAction().StartScope(std::move(binding_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
           Convert(arg, &function.param_pattern().static_type(),
                   call.source_loc()));
+
       RuntimeScope function_scope(&heap_);
-      // Bring the class type arguments into scope.
-      for (const auto& [bind, val] : fun_val.type_args()) {
-        function_scope.Initialize(bind, val);
-      }
-      // Bring the deduced type arguments into scope.
-      for (const auto& [bind, val] : call.deduced_args()) {
-        function_scope.Initialize(bind, val);
-      }
-      // Bring the impl witness tables into scope.
-      for (const auto& [impl_bind, witness] : witnesses) {
-        function_scope.Initialize(impl_bind, witness);
-      }
-      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
-        function_scope.Initialize(impl_bind, witness);
-      }
       BindingMap generic_args;
       CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
                                 converted_args, call.source_loc(),
@@ -921,7 +926,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
-            llvm::None, act.results()[0], act.results()[1], llvm::None,
+            act.results()[0], llvm::None, act.results()[1], llvm::None,
             llvm::None));
       }
     }
