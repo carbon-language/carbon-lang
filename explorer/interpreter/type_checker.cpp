@@ -400,7 +400,7 @@ auto TypeChecker::ArgumentDeduction(
       auto diagnose_missing_field = [&](const StructType& struct_type,
                                         const NamedValue& field,
                                         bool missing_from_source) -> Error {
-        static const char* SourceOrDestination[2] = {"source", "destination"};
+        static const char* source_or_destination[2] = {"source", "destination"};
         return CompilationError(source_loc)
                << "mismatch in field names, "
                << source_or_destination[missing_from_source ? 1 : 0]
@@ -436,7 +436,7 @@ auto TypeChecker::ArgumentDeduction(
       if (param_struct.fields().size() != arg_struct.fields().size()) {
         CARBON_CHECK(allow_implicit_conversion)
             << "should have caught this earlier";
-        for (NamedValue arg_field : arg_struct.fields()) {
+        for (const NamedValue& arg_field : arg_struct.fields()) {
           if (!FindField(param_struct.fields(), arg_field.name).has_value()) {
             return diagnose_missing_field(param_struct, arg_field, false);
           }
