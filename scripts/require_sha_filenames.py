@@ -19,15 +19,18 @@ import sys
 
 def main() -> None:
     has_errors = False
-    bad_files = []
     for arg in sys.argv[1:]:
         path = Path(arg)
         with path.open("rb") as f:
-            want = hashlib.sha1(f.read()).hexdigest()
-        if path.name != want:
-            want_path = path.parent.joinpath(want)
-            bad_files.append((path, want_path))
-            print(f"mv {path} {want_path}", file=sys.stderr)
+            content = f.read()
+            if len(content) == 0:
+                want = "empty"
+            else:
+                want = hashlib.sha1(content).hexdigest()
+        want_path = path.parent.joinpath(want).with_suffix(path.suffix)
+        if path != want_path:
+            print(f"Renaming {path} to {want_path}", file=sys.stderr)
+            path.rename(want_path)
             has_errors = True
     if has_errors:
         sys.exit(1)
