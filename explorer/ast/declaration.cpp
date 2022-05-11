@@ -10,6 +10,7 @@
 namespace Carbon {
 
 using llvm::cast;
+using llvm::dyn_cast;
 
 Declaration::~Declaration() = default;
 
@@ -198,9 +199,9 @@ auto FunctionDeclaration::Create(
                << "illegal AST node in implicit parameter list";
     }
   }
-  return arena->New<FunctionDeclaration>(source_loc, name, resolved_params,
-                                         me_pattern, param_pattern, return_term,
-                                         body);
+  return arena->New<FunctionDeclaration>(source_loc, name,
+                                         std::move(resolved_params), me_pattern,
+                                         param_pattern, return_term, body);
 }
 
 void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

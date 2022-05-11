@@ -921,8 +921,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
-            std::vector<Nonnull<const GenericBinding*>>(), act.results()[0],
-            act.results()[1], std::vector<Nonnull<const ImplBinding*>>()));
+            llvm::None, act.results()[0], act.results()[1], llvm::None,
+            llvm::None));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {

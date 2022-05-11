@@ -17,6 +17,7 @@
 #include "explorer/ast/value_category.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 
 namespace Carbon {
 
@@ -88,11 +89,11 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
-class BindingPattern;
-
-// Returns all `BindingPattern`s in the AST subtree rooted at `pattern`.
-auto GetBindings(const Pattern& pattern)
-    -> std::vector<Nonnull<const BindingPattern*>>;
+// Call the given `visitor` on all patterns nested within the given pattern.
+// Aborts and returns `false` if `visitor` returns `false`, otherwise returns
+// `true`.
+bool VisitPattern(const Pattern& pattern,
+                  llvm::function_ref<bool(const Pattern&)> visitor);
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
