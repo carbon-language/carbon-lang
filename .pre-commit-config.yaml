@@ -23,10 +23,12 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: '^(.*/fuzzer_corpus/.*)$'
       - id: mixed-line-ending
         args: ['--fix=lf']
+        exclude: '^(.*/fuzzer_corpus/.*)$'
       - id: trailing-whitespace
-        exclude: '^(.*/testdata/.*\.golden)$'
+        exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:
@@ -81,6 +83,11 @@ repos:
         language: python
         files: ^.*/BUILD$
         pass_filenames: false
+      - id: require-sha-filenames
+        name: Require SHA filenames
+        entry: scripts/require_sha_filenames.py
+        language: python
+        files: ^.*/fuzzer_corpus/.*$
   - repo: https://github.com/PyCQA/flake8
     rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
@@ -139,6 +146,7 @@ repos:
               third_party/.*|
               .*\.def|
               .*\.svg|
+              .*/fuzzer_corpus/.*|
               .*/testdata/.*\.golden
           )$
       - id: check-links
@@ -149,5 +157,4 @@ exclude: |
   (?x)^(
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|
-      .*/fuzzer_corpus/.*
   )$
