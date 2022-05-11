@@ -1131,9 +1131,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         default: {
           return CompilationError(e->source_loc())
-                 << "in call, expected a function\n"
-                 << *e << "\nnot an operator of type "
-                 << call.function().static_type() << "\n";
+                 << "in call `" << *e
+                 << "`, expected callee to be a function, found `"
+                 << call.function().static_type() << "`";
         }
       }
       break;
