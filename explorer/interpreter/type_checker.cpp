@@ -185,6 +185,7 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
   }
 }
 
+// Returns the named field, or None if not found.
 static auto FindField(llvm::ArrayRef<NamedValue> fields,
                       const std::string& field_name)
     -> std::optional<NamedValue> {
@@ -397,9 +398,9 @@ auto TypeChecker::ArgumentDeduction(
       const auto& param_struct = cast<StructType>(*param_type);
       const auto& arg_struct = cast<StructType>(*arg_type);
       auto diagnose_missing_field = [&](const StructType& struct_type,
-                                        NamedValue field,
+                                        const NamedValue& field,
                                         bool missing_from_source) -> Error {
-        const char* source_or_destination[2] = {"source", "destination"};
+        static const char* SourceOrDestination[2] = {"source", "destination"};
         return CompilationError(source_loc)
                << "mismatch in field names, "
                << source_or_destination[missing_from_source ? 1 : 0]
