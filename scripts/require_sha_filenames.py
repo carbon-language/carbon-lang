@@ -36,7 +36,7 @@ def main() -> None:
             path.rename(want_path)
             has_errors = True
     if has_errors:
-        sys.exit(1)
+        exit(1)
 
 
 if __name__ == "__main__":
