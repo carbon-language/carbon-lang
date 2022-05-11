@@ -15,11 +15,9 @@ rules_python_version = "0.8.1"
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
-    sha256 = "cd6730ed53a002c56ce4e2f396ba3b3be262fd7cb68339f0377a45e8227fe332",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/%s/rules_python-%s.tar.gz" % (
-        rules_python_version,
-        rules_python_version,
-    ),
+    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
+    strip_prefix = "rules_python-%s" % rules_python_version,
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/%s.tar.gz" % rules_python_version,
 )
 
 load("@rules_python//python:pip.bzl", "pip_install")
