@@ -152,21 +152,19 @@ exact form this ends up taking.
 
 ## Language goals and priorities
 
-We believe Carbon must support:
+We are designing Carbon to support:
 
-1.  Performance-critical software.
-2.  Software and language evolution.
-3.  Code that is easy to read, understand, and write.
-4.  Practical safety and testing mechanisms.
-5.  Fast and scalable development.
-6.  Modern OS platforms, hardware architectures, and environments.
-7.  Interoperability with and migration from existing C++ code.
+-   Performance-critical software
+-   Software and language evolution
+-   Code that is easy to read, understand, and write
+-   Practical safety and testing mechanisms
+-   Fast and scalable development
+-   Modern OS platforms, hardware architectures, and environments
+-   Interoperability with and migration from existing C++ code
 
-While many languages share subsets of these goals, what distinguishes Carbon is
-their combination. For the Carbon project, they are prioritized in the above
-order to help make clear what tradeoffs we intend to make. However, each and
-every goal remains critically important: **Carbon _must_ have excellent C++
-interoperability and migration to be successful.**
+Many languages share subsets of these goals, but what distinguishes Carbon is
+their combination. Where it is necessary to make tradeoffs between these goals,
+we intend to roughly prioritize them in this order.
 
 ### Goals in detail
 
