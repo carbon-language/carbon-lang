@@ -57,19 +57,24 @@ repos:
         entry: scripts/run_buildifier.py
         language: python
         files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
-      - id: explorer-format-grammar
-        name: Format the explorer grammar file
-        entry: explorer/syntax/format_grammar.py
+      - id: check-header-guards
+        name: Check header guards
+        entry: scripts/check_header_guards.py
         language: python
-        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
-        pass_filenames: false
-        additional_dependencies: ['clang-format==13.0.1']
+        files: '^.*\.h$'
       - id: clang-format
         name: clang-format
         entry: clang-format
         types_or: [c++, proto]
         language: python
         args: ['-i']
+        additional_dependencies: ['clang-format==13.0.1']
+      - id: explorer-format-grammar
+        name: Format the explorer grammar file
+        entry: explorer/syntax/format_grammar.py
+        language: python
+        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
+        pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
 
   # Run linters last, as formatters and other checks may fix issues.
