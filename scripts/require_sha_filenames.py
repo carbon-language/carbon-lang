@@ -4,6 +4,9 @@
 
 We name fuzzer corpus files for their SHA1. The choice of SHA1 is for
 consistency with git.
+
+This maintains the current extension for .textproto, but at some point we might
+want to specify the extension by path.
 """
 
 __copyright__ = """
