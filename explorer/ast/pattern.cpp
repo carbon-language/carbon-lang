@@ -93,24 +93,24 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
-bool VisitPattern(const Pattern& pattern,
-                  llvm::function_ref<bool(const Pattern&)> visitor) {
+bool VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor) {
   if (!visitor(pattern)) {
     return false;
   }
   switch (pattern.kind()) {
     case PatternKind::TuplePattern:
       for (const Pattern* field : cast<TuplePattern>(pattern).fields()) {
-        if (!VisitPattern(*field, visitor)) {
+        if (!VisitNestedPatterns(*field, visitor)) {
           return false;
         }
       }
       return true;
     case PatternKind::AlternativePattern:
-      return VisitPattern(cast<AlternativePattern>(pattern).arguments(),
-                          visitor);
+      return VisitNestedPatterns(cast<AlternativePattern>(pattern).arguments(),
+                                 visitor);
     case PatternKind::VarPattern:
-      return VisitPattern(cast<VarPattern>(pattern).pattern(), visitor);
+      return VisitNestedPatterns(cast<VarPattern>(pattern).pattern(), visitor);
     case PatternKind::BindingPattern:
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:

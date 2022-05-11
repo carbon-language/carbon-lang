@@ -188,7 +188,7 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields) const;
+      llvm::ArrayRef<NamedValue> destination_fields) const -> bool;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.

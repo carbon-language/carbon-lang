@@ -89,11 +89,11 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
-// Call the given `visitor` on all patterns nested within the given pattern.
-// Aborts and returns `false` if `visitor` returns `false`, otherwise returns
-// `true`.
-bool VisitPattern(const Pattern& pattern,
-                  llvm::function_ref<bool(const Pattern&)> visitor);
+// Call the given `visitor` on all patterns nested within the given pattern,
+// including `pattern` itself. Aborts and returns `false` if `visitor` returns
+// `false`, otherwise returns `true`.
+bool VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor);
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {

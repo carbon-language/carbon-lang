@@ -10,7 +10,6 @@
 namespace Carbon {
 
 using llvm::cast;
-using llvm::dyn_cast;
 
 Declaration::~Declaration() = default;
 

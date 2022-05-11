@@ -185,19 +185,30 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
   }
 }
 
+static auto FindField(llvm::ArrayRef<NamedValue> fields,
+                      const std::string& field_name)
+    -> std::optional<NamedValue> {
+  auto it = std::find_if(
+      fields.begin(), fields.end(),
+      [&](const NamedValue& field) { return field.name == field_name; });
+  if (it == fields.end()) {
+    return std::nullopt;
+  }
+  return *it;
+}
+
 auto TypeChecker::FieldTypesImplicitlyConvertible(
     llvm::ArrayRef<NamedValue> source_fields,
-    llvm::ArrayRef<NamedValue> destination_fields) const {
+    llvm::ArrayRef<NamedValue> destination_fields) const -> bool {
   if (source_fields.size() != destination_fields.size()) {
     return false;
   }
   for (const auto& source_field : source_fields) {
-    auto it = std::find_if(destination_fields.begin(), destination_fields.end(),
-                           [&](const NamedValue& field) {
-                             return field.name == source_field.name;
-                           });
-    if (it == destination_fields.end() ||
-        !IsImplicitlyConvertible(source_field.value, it->value)) {
+    std::optional<NamedValue> destination_field =
+        FindField(destination_fields, source_field.name);
+    if (!destination_field.has_value() ||
+        !IsImplicitlyConvertible(source_field.value,
+                                 destination_field.value().value)) {
       return false;
     }
   }
@@ -320,6 +331,30 @@ auto TypeChecker::ArgumentDeduction(
     BindingMap& deduced, Nonnull<const Value*> param_type,
     Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
     -> ErrorOr<Success> {
+  if (trace_stream_) {
+    **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
+                    << "\n";
+  }
+  // Handle the case where we can't perform deduction, either because the
+  // parameter is a primitive type or because the parameter and argument have
+  // different forms. In this case, we require an implicit conversion to exist,
+  // or for an exact type match if implicit conversions are not permitted.
+  auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
+    if (!IsConcreteType(param_type)) {
+      // Parameter type contains a nested `auto` and argument type isn't the
+      // same kind of type.
+      // FIXME: This seems like something we should be able to accept.
+      return CompilationError(source_loc) << "type error in " << context << "\n"
+                                          << "expected: " << *param_type << "\n"
+                                          << "actual: " << *arg_type;
+    }
+    const Value* subst_param_type = Substitute(deduced, param_type);
+    return allow_implicit_conversion
+               ? ExpectType(source_loc, context, subst_param_type, arg_type)
+               : ExpectExactType(source_loc, context, subst_param_type,
+                                 arg_type);
+  };
+
   switch (param_type->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param_type);
@@ -332,13 +367,13 @@ auto TypeChecker::ArgumentDeduction(
               source_loc, "repeated argument deduction", it->second, arg_type));
         }
       } else {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       return Success();
     }
     case Value::Kind::TupleValue: {
       if (arg_type->kind() != Value::Kind::TupleValue) {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       const auto& param_tup = cast<TupleValue>(*param_type);
       const auto& arg_tup = cast<TupleValue>(*arg_type);
@@ -357,50 +392,62 @@ auto TypeChecker::ArgumentDeduction(
     }
     case Value::Kind::StructType: {
       if (arg_type->kind() != Value::Kind::StructType) {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       const auto& param_struct = cast<StructType>(*param_type);
       const auto& arg_struct = cast<StructType>(*arg_type);
-      if (param_struct.fields().size() != arg_struct.fields().size()) {
+      auto diagnose_missing_field = [&](const StructType& struct_type,
+                                        NamedValue field,
+                                        bool missing_from_source) -> Error {
+        const char* source_or_destination[2] = {"source", "destination"};
         return CompilationError(source_loc)
-               << "mismatch in struct field counts, expected "
-               << param_struct.fields().size() << " but got "
-               << arg_struct.fields().size();
-      }
+               << "mismatch in field names, "
+               << source_or_destination[missing_from_source ? 1 : 0]
+               << " field `" << field.name << "` not in "
+               << source_or_destination[missing_from_source ? 0 : 1]
+               << " type `" << struct_type << "`";
+      };
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         NamedValue param_field = param_struct.fields()[i];
         NamedValue arg_field;
         if (allow_implicit_conversion) {
-          if (auto it = std::find_if(arg_struct.fields().begin(),
-                                     arg_struct.fields().end(),
-                                     [&](const NamedValue& field) {
-                                       return field.name == param_field.name;
-                                     })) {
-            arg_field = *it;
+          if (std::optional<NamedValue> maybe_arg_field =
+                  FindField(arg_struct.fields(), param_field.name)) {
+            arg_field = *maybe_arg_field;
           } else {
-            return CompilationError(source_loc)
-                   << "mismatch in field names, `" << param_field.name
-                   << "` not in `" << arg_struct << "`";
+            return diagnose_missing_field(arg_struct, param_field, true);
           }
         } else {
+          if (i >= arg_struct.fields().size()) {
+            return diagnose_missing_field(arg_struct, param_field, true);
+          }
           arg_field = arg_struct.fields()[i];
           if (param_field.name != arg_field.name) {
             return CompilationError(source_loc)
-                   << "mismatch in field names, `"
-                   << param_struct.fields()[i].name << "` != `"
-                   << arg_struct.fields()[i].name << "`";
+                   << "mismatch in field names, `" << param_field.name
+                   << "` != `" << arg_field.name << "`";
           }
         }
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, context, type_params, deduced,
-            param_struct.fields()[i].value, arg_struct.fields()[i].value,
-            allow_implicit_conversion));
+            source_loc, context, type_params, deduced, param_field.value,
+            arg_field.value, allow_implicit_conversion));
+      }
+      if (param_struct.fields().size() != arg_struct.fields().size()) {
+        CARBON_CHECK(allow_implicit_conversion)
+            << "should have caught this earlier";
+        for (NamedValue arg_field : arg_struct.fields()) {
+          if (!FindField(param_struct.fields(), arg_field.name).has_value()) {
+            return diagnose_missing_field(param_struct, arg_field, false);
+          }
+        }
+        CARBON_FATAL() << "field count mismatch but no missing field; "
+                       << "duplicate field name?";
       }
       return Success();
     }
     case Value::Kind::FunctionType: {
       if (arg_type->kind() != Value::Kind::FunctionType) {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       const auto& param_fn = cast<FunctionType>(*param_type);
       const auto& arg_fn = cast<FunctionType>(*arg_type);
@@ -415,7 +462,7 @@ auto TypeChecker::ArgumentDeduction(
     }
     case Value::Kind::PointerType: {
       if (arg_type->kind() != Value::Kind::PointerType) {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       return ArgumentDeduction(source_loc, context, type_params, deduced,
                                &cast<PointerType>(*param_type).type(),
@@ -431,12 +478,12 @@ auto TypeChecker::ArgumentDeduction(
       if (arg_type->kind() != Value::Kind::NominalClassType) {
         // FIXME: We could determine the parameters of the class from field
         // types in a struct argument.
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       const auto& arg_class_type = cast<NominalClassType>(*arg_type);
       if (param_class_type.declaration().name() !=
           arg_class_type.declaration().name()) {
-        goto non_deduced_type;
+        return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_class_type.type_args()) {
         CARBON_RETURN_IF_ERROR(
@@ -460,22 +507,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
-    non_deduced_type : {
-      if (!IsConcreteType(param_type)) {
-        // Parameter type contains a nested `auto` and argument type isn't the
-        // same kind of type.
-        // FIXME: This seems like something we should be able to accept.
-        return CompilationError(source_loc)
-               << "type error in " << context << "\n"
-               << "expected: " << *param_type << "\n"
-               << "actual: " << *arg_type;
-      }
-      const Value* subst_param_type = Substitute(deduced, param_type);
-      return allow_implicit_conversion
-                 ? ExpectType(source_loc, context, subst_param_type, arg_type)
-                 : ExpectExactType(source_loc, context, subst_param_type,
-                                   arg_type);
-    }
+      return handle_non_deduced_type();
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
@@ -1258,7 +1290,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 void TypeChecker::CollectGenericBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const GenericBinding*>>& generic_bindings) {
-  VisitPattern(*p, [&](const Pattern& pattern) {
+  VisitNestedPatterns(*p, [&](const Pattern& pattern) {
     if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
       generic_bindings.push_back(binding);
     }
@@ -1269,7 +1301,7 @@ void TypeChecker::CollectGenericBindingsInPattern(
 void TypeChecker::CollectImplBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const ImplBinding*>>& impl_bindings) {
-  VisitPattern(*p, [&](const Pattern& pattern) {
+  VisitNestedPatterns(*p, [&](const Pattern& pattern) {
     if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
       if (binding->impl_binding().has_value()) {
         impl_bindings.push_back(binding->impl_binding().value());
@@ -1324,7 +1356,7 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      if (!VisitPattern(binding.type(), [](const Pattern& pattern) {
+      if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
             return !isa<BindingPattern>(pattern);
           })) {
         return CompilationError(binding.type().source_loc())
