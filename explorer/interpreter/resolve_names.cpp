@@ -47,8 +47,8 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
-      auto& choice = cast<ChoiceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
+      // Choice name is added to the scope after the choice's alternatives.
+      // See https://github.com/carbon-language/carbon-lang/issues/1248.
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -424,6 +424,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
                  << "` in choice type";
         }
       }
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
