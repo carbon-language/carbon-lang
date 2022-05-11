@@ -31,6 +31,7 @@ class SemanticsIRFactory {
   // otherwise checked.
   void RequireNodeEmpty(ParseTree::Node node);
 
+  auto TransformCodeBlock(ParseTree::Node node) -> void;
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
   void TransformFunctionDeclaration(ParseTree::Node node,
                                     SemanticsIR::Block& block);

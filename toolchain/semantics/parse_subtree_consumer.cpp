@@ -28,18 +28,18 @@ ParseSubtreeConsumer::~ParseSubtreeConsumer() {
 }
 
 auto ParseSubtreeConsumer::RequireConsume() -> ParseTree::Node {
-  CHECK(!is_done());
+  CHECK(!is_done()) << "Done with subtree, expected more";
   return GetNodeAndAdvance();
 }
 
 auto ParseSubtreeConsumer::RequireConsume(ParseNodeKind node_kind)
     -> ParseTree::Node {
   CHECK(!is_done()) << "Done with subtree, expected " << node_kind;
-  llvm::Optional<ParseTree::Node> node = TryConsume(node_kind);
-  CHECK(node != llvm::None)
-      << "At index " << (*cursor_).index() << ", expected " << node_kind
-      << ", found " << parse_tree_->node_kind(*cursor_);
-  return *node;
+  auto node = GetNodeAndAdvance();
+  CHECK(node_kind == parse_tree_->node_kind(node))
+      << "At index " << node.index() << ", expected " << node_kind << ", found "
+      << parse_tree_->node_kind(node);
+  return node;
 }
 
 auto ParseSubtreeConsumer::TryConsume() -> llvm::Optional<ParseTree::Node> {
@@ -51,7 +51,7 @@ auto ParseSubtreeConsumer::TryConsume() -> llvm::Optional<ParseTree::Node> {
 
 auto ParseSubtreeConsumer::TryConsume(ParseNodeKind node_kind)
     -> llvm::Optional<ParseTree::Node> {
-  if (is_done() || parse_tree_->node_kind(*cursor_) != node_kind) {
+  if (is_done() || node_kind != parse_tree_->node_kind(*cursor_)) {
     return llvm::None;
   }
   return GetNodeAndAdvance();

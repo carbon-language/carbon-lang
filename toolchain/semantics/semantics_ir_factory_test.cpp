@@ -89,7 +89,7 @@ TEST_F(SemanticsIRFactoryTest, FunctionBasic) {
                   UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
-TEST_F(SemanticsIRFactoryTest, FunctioParams) {
+TEST_F(SemanticsIRFactoryTest, FunctionParams) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo(x: i32, y: i64) {}");
   ExpectRootBlock(

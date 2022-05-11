@@ -33,14 +33,12 @@ void SemanticsIRFactory::Build() {
   // FileEnd is a placeholder node which can be discarded.
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::FileEnd()));
   while (llvm::Optional<ParseTree::Node> node = subtree.TryConsume()) {
-    const auto node_kind = parse_tree().node_kind(*node);
-    switch (node_kind) {
+    switch (auto node_kind = parse_tree().node_kind(*node)) {
       case ParseNodeKind::FunctionDeclaration():
         TransformFunctionDeclaration(*node, semantics_.root_block_);
         break;
       default:
-        FATAL() << "At index " << node->index() << ", unexpected "
-                << node_kind.name();
+        FATAL() << "At index " << node->index() << ", unexpected " << node_kind;
     }
   }
   FixReverseOrdering(semantics_.root_block_.nodes_);
@@ -54,6 +52,30 @@ void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
                            << subtree_size;
 }
 
+auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node) -> void {
+  CHECK(parse_tree().node_kind(node) == ParseNodeKind::CodeBlock());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::CodeBlockEnd()));
+
+  while (llvm::Optional<ParseTree::Node> child = subtree.TryConsume()) {
+    switch (auto child_kind = parse_tree().node_kind(*child)) {
+      case ParseNodeKind::ExpressionStatement():
+        // TODO
+        break;
+      case ParseNodeKind::ReturnStatement():
+        // TODO
+        break;
+      case ParseNodeKind::VariableDeclaration():
+        // TODO
+        break;
+      default:
+        FATAL() << "At index " << child->index() << ", unexpected "
+                << child_kind;
+    }
+  }
+}
+
 auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
     -> Semantics::DeclaredName {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
@@ -62,16 +84,25 @@ auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
   return Semantics::DeclaredName(node);
 }
 
+auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
+    -> Semantics::Expression {
+  CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
+  RequireNodeEmpty(node);
+
+  // TODO: This is still purpose-specific, and will need to handle more kinds of
+  // expressions.
+  return Semantics::Expression(node, Semantics::Literal(node));
+}
+
 void SemanticsIRFactory::TransformFunctionDeclaration(
     ParseTree::Node node, SemanticsIR::Block& block) {
   CHECK(parse_tree().node_kind(node) == ParseNodeKind::FunctionDeclaration());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
-  // TODO: Parse code.
-  (void)subtree.TryConsume(ParseNodeKind::CodeBlock());
+  // TODO: Use result.
+  TransformCodeBlock(subtree.RequireConsume(ParseNodeKind::CodeBlock()));
   llvm::Optional<Semantics::Expression> return_expr;
-  auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType());
-  if (return_type_node) {
+  if (auto return_type_node = subtree.TryConsume(ParseNodeKind::ReturnType())) {
     return_expr = TransformReturnType(*return_type_node);
   }
   auto params = TransformParameterList(
@@ -103,16 +134,6 @@ auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
   }
   FixReverseOrdering(params);
   return params;
-}
-
-auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
-    -> Semantics::Expression {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
-  RequireNodeEmpty(node);
-
-  // TODO: This is still purpose-specific, and will need to handle more kinds of
-  // expressions.
-  return Semantics::Expression(node, Semantics::Literal(node));
 }
 
 auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
