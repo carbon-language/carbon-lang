@@ -92,8 +92,9 @@ class Pattern : public AstNode {
 // Call the given `visitor` on all patterns nested within the given pattern,
 // including `pattern` itself. Aborts and returns `false` if `visitor` returns
 // `false`, otherwise returns `true`.
-bool VisitNestedPatterns(const Pattern& pattern,
-                         llvm::function_ref<bool(const Pattern&)> visitor);
+auto VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor)
+    -> bool;
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {

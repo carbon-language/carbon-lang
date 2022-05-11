@@ -93,8 +93,9 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
-bool VisitNestedPatterns(const Pattern& pattern,
-                         llvm::function_ref<bool(const Pattern&)> visitor) {
+auto VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor)
+    -> bool {
   if (!visitor(pattern)) {
     return false;
   }
