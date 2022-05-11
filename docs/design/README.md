@@ -453,7 +453,27 @@ In Carbon, one use of pointers is to pass `&x` into a function that will modify
 
 #### Arrays and slices
 
-> **TODO:**
+The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
+an implicit conversion from tuples to arrays of the same length as long as every
+component of the tuple may be implicitly converted to the destination element
+type. In cases where the size of the array may be deduced, it may be omitted, as
+in:
+
+```carbon
+var i: i32 = 1;
+// `[i32;]` equivalent to `[i32; 3]` here.
+var a: [i32;] = (i, i, i);
+```
+
+Elements of an array may be accessed using square brackets (`[`...`]`), as in
+`a[i]`:
+
+```carbon
+a[i] = 2;
+Console.Print(a[0]);
+```
+
+> **TODO:** Slices
 
 ## Functions
 
