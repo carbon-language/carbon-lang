@@ -42,11 +42,6 @@ repos:
         language: python
         files: ^.*/(BUILD|[^/]+\.(h|cpp))$
         pass_filenames: false
-      - id: require-sha-filenames
-        name: Require SHA filenames
-        entry: scripts/require_sha_filenames.py
-        language: python
-        files: ^.*/fuzzer_corpus/.*$
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
@@ -78,6 +73,11 @@ repos:
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
+      - id: require-sha-filenames
+        name: Require SHA filenames
+        entry: scripts/require_sha_filenames.py
+        language: python
+        files: ^.*/fuzzer_corpus/.*$
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
