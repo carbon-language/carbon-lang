@@ -47,6 +47,8 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
+      // Choice name is added to the scope after the choice's alternatives.
+      // See https://github.com/carbon-language/carbon-lang/issues/1248.
       break;
     }
     case DeclarationKind::VariableDeclaration: {
