@@ -73,6 +73,10 @@ repos:
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
+
+  # This may rename files, so it's deliberately between formatters and linters.
+  - repo: local
+    hooks:
       - id: check-sha-filenames
         name: Check fuzzer SHA filenames
         entry: scripts/check_sha_filenames.py
