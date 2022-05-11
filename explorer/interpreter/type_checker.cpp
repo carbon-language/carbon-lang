@@ -400,13 +400,14 @@ auto TypeChecker::ArgumentDeduction(
       auto diagnose_missing_field = [&](const StructType& struct_type,
                                         const NamedValue& field,
                                         bool missing_from_source) -> Error {
-        static const char* source_or_destination[2] = {"source", "destination"};
+        static constexpr const char* SourceOrDestination[2] = {"source",
+                                                               "destination"};
         return CompilationError(source_loc)
                << "mismatch in field names, "
-               << source_or_destination[missing_from_source ? 1 : 0]
-               << " field `" << field.name << "` not in "
-               << source_or_destination[missing_from_source ? 0 : 1]
-               << " type `" << struct_type << "`";
+               << SourceOrDestination[missing_from_source ? 1 : 0] << " field `"
+               << field.name << "` not in "
+               << SourceOrDestination[missing_from_source ? 0 : 1] << " type `"
+               << struct_type << "`";
       };
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
         NamedValue param_field = param_struct.fields()[i];
