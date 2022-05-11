@@ -23,10 +23,10 @@ def main() -> None:
         path = Path(arg)
         with path.open("rb") as f:
             content = f.read()
-            if len(content) == 0:
-                want = "empty"
-            else:
-                want = hashlib.sha1(content).hexdigest()
+        if len(content) == 0:
+            want = "empty"
+        else:
+            want = hashlib.sha1(content).hexdigest()
         want_path = path.parent.joinpath(want).with_suffix(path.suffix)
         if path != want_path:
             print(f"Renaming {path} to {want_path}", file=sys.stderr)
