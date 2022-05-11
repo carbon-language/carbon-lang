@@ -73,9 +73,9 @@ repos:
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
-      - id: require-sha-filenames
-        name: Require SHA filenames
-        entry: scripts/require_sha_filenames.py
+      - id: check-sha-filenames
+        name: Check fuzzer SHA filenames
+        entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
 
