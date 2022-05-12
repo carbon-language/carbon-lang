@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_DRIVER_DRIVER_H_
-#define TOOLCHAIN_DRIVER_DRIVER_H_
+#ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
+#define CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 
 #include <cstdint>
 
@@ -81,4 +81,4 @@ class Driver {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_DRIVER_DRIVER_H_
+#endif  // CARBON_TOOLCHAIN_DRIVER_DRIVER_H_

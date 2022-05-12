@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_
-#define EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_
+#ifndef CARBON_EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_
+#define CARBON_EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_
 
 #include <variant>
 
@@ -62,4 +62,4 @@ class ParseAndLexContext {
 // Declares yylex for the parser's sake.
 YY_DECL;
 
-#endif  // EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_
+#endif  // CARBON_EXPLORER_SYNTAX_PARSE_AND_LEX_CONTEXT_H_

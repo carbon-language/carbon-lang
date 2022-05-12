@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_ACTION_H_
-#define EXPLORER_INTERPRETER_ACTION_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_ACTION_H_
+#define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
 #include <map>
 #include <vector>
@@ -251,4 +251,4 @@ class ScopeAction : public Action {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_ACTION_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_ACTION_H_
