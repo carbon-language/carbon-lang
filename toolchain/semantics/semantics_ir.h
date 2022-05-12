@@ -66,13 +66,6 @@ class SemanticsIR {
     llvm::StringMap<Node> name_lookup_;
   };
 
-  auto GetFunction(Node node) const -> llvm::Optional<Semantics::Function> {
-    if (node.kind_ != Node::Kind::Function) {
-      return llvm::None;
-    }
-    return functions_[node.index_];
-  }
-
   void Print(llvm::raw_ostream& out, Node node) const;
 
   auto root_block() const -> const Block& { return root_block_; }
