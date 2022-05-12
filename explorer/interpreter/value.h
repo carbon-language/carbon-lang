@@ -968,7 +968,7 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  TypeOfMemberName(Member member)
+  explicit TypeOfMemberName(Member member)
       : Value(Kind::TypeOfMemberName), member_(member) {}
 
   static auto classof(const Value* value) -> bool {
