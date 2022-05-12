@@ -635,19 +635,61 @@ which means it has storage and an address, and so can be modified.
 
 ### `let`
 
-> **TODO:**
+To bind a name to a value without associating a specific storage location, use
+`let` instead of `var`.
+
+```carbon
+fn DoSomething() -> i64 {
+  let x: i64 = 42;
+  return x + 2;
+}
+```
+
+The `let` binds `x` to the _value_ `42`. `x` is an r-value, so it can not be
+modified, for example by being the left side of an assignment statement.
+
+Function parameters are passed by value, and so act like they were defined in a
+`let` implicitly. **FIXME:** Is this just the default, or can you write `var` in
+a function signature to give parameters dedicated storage so they may be
+modified?
 
 ### `auto`
 
 > References:
 >
 > -   [Type inference](type_inference.md)
+> -   [Function return clause](functions.md#return-clause)
 > -   Proposal
 >     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
 > -   Proposal
 >     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
 
-> **TODO:**
+The keyword `auto` may be used in place of the type in a `var` or `let`
+statement in a function body. In this case, the type is the static type of the
+initializer expression.
+
+```
+var x: i64 = 2;
+// The type of `y` is inferred to be `i64`.
+let y: auto = x + 3;
+// The type of `z` is inferred to be `bool`.
+var z: auto = (y > 1);
+```
+
+It may also be used as the return type in a function definition. In this case,
+the body of the function must have exactly one `return` statement, and the type
+of the function is set to the static type of the expression argument of that
+`return`.
+
+```
+// Return type is inferred to be `bool`, the type of `a > 0`.
+fn Positive(a: i64) -> auto {
+  return a > 0;
+}
+```
+
+Note that `auto` is not allowed in a function declaration without a function
+body.
 
 ### Pattern matching
 
