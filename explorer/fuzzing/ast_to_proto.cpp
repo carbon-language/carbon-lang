@@ -478,9 +478,13 @@ static auto DeclarationToProto(const Declaration& declaration)
             *function_proto->mutable_me_pattern() = AddrBindingPatternToProto(
                 cast<AddrBindingPattern>(function.me_pattern()));
             break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() = BindingPatternToProto(
+                cast<BindingPattern>(function.me_pattern()));
+            break;
           default:
-            *function_proto->mutable_me_pattern() =
-                BindingPatternToProto(function.me_pattern());
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrBindingPattern or BindingPattern
             break;
         }
       }
