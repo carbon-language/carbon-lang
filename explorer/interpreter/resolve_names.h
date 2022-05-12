@@ -17,4 +17,4 @@ auto ResolveNames(AST& ast) -> ErrorOr<Success>;
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
+#endif  // EXPLORER_INTERPRETER_RESOLVE_NAMES_H_
