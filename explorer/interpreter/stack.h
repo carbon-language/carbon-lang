@@ -72,4 +72,4 @@ struct Stack {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_CONS_LIST_H_
+#endif  // EXPLORER_INTERPRETER_STACK_H_
