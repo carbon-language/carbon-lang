@@ -2,19 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 1
 
 package ExplorerTest api;
-
-fn f(x: i32, y: i32) -> i32 { return x + y; }
-
+class A(T:! Type) {
+  var v: T;
+}
+fn F(T:! Type, x: T) -> T {
+  var v: A(T) = {.v = x};
+  return v.v;
+}
 fn Main() -> i32 {
-  var xy: (i32, i32) = (1, 2);
-  // should fail to type-check
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_call_with_tuple.carbon:[[@LINE+1]]: mismatch in tuple sizes, expected 2 but got 1
-  return f(xy);
+  return F(i32, 1);
 }
