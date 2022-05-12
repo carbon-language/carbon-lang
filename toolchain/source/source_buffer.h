@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SOURCE_SOURCEBUFFER_H_
-#define TOOLCHAIN_SOURCE_SOURCEBUFFER_H_
+#ifndef TOOLCHAIN_SOURCE_SOURCE_BUFFER_H_
+#define TOOLCHAIN_SOURCE_SOURCE_BUFFER_H_
 
 #include <string>
 #include <utility>
@@ -74,4 +74,4 @@ class SourceBuffer {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_SOURCE_SOURCEBUFFER_H_
+#endif  // TOOLCHAIN_SOURCE_SOURCE_BUFFER_H_
