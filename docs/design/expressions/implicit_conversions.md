@@ -140,6 +140,21 @@ except:
     have singleton types; see issue
     [#508](https://github.com/carbon-language/carbon-lang/issues/508).
 
+In addition to the above rules, a negative integer constant `k` can be
+implicitly converted to the type `uN` if the value `k` + 2<sup>N</sup> can be
+exactly represented, and converts to that value. Note that this conversion
+violates the "semantics-preserving" test. For example, `(-1 as u8) as i32`
+produces the value `255` whereas `-1 as i32` produces the value `-1`. However,
+this conversion is important in order to allow bitwise operations with masks, so
+we allow it:
+
+```
+// We allow ^0 == -1 to convert to `u32` to represent an all-ones value.
+var a: u32 = ^0;
+// ^4 == -5 is negative, but we want to allow it to convert to u32 here.
+var b: u32 = a & ^4;
+```
+
 ### Same type
 
 The following conversion is available for every type `T`:
@@ -214,6 +229,7 @@ types.
 -   [Provide no implicit conversions](/proposals/p0820.md#no-conversions)
 -   [Provide no extensibility](/proposals/p0820.md#no-extensibility)
 -   [Apply implicit conversions transitively](/proposals/p0820.md#transitivity)
+-   [Do not allow negative constants to convert to unsigned types](/proposals/p1191.md#converting-complements-to-unsigned-types)
 
 ## References
 

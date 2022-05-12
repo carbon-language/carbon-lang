@@ -28,7 +28,7 @@ void SemanticsIR::Print(llvm::raw_ostream& out, Node node) const {
       Print(out, functions_[node.index_]);
       return;
     case Node::Kind::Invalid:
-      FATAL() << "Invalid node type";
+      CARBON_FATAL() << "Invalid node type";
   }
 }
 

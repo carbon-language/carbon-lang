@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:15: field access, unexpected T:! Type of non-interface type Type in a.x
 
 package ExplorerTest api;
 
 fn BadFieldAccess[T:! Type](a: T) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: field access, unexpected T:! Type of non-interface type Type in a.x
   return a.x;
 }
 

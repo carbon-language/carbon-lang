@@ -7,13 +7,13 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:17: type error in addition(1)
-// CHECK: expected: i32
-// CHECK: actual: T:! Type
 
 package ExplorerTest api;
 
 fn id[T:! Type](x: T) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_addable.carbon:[[@LINE+3]]: type error in addition(1)
+  // CHECK: expected: i32
+  // CHECK: actual: T:! Type
   return x + 0;
 }
 

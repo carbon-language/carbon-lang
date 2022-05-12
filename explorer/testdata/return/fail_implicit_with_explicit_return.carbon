@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/return/fail_implicit_with_explicit_return.carbon:15: return (); should not provide a return value, to match the function's signature.
 
 package ExplorerTest api;
 
 fn F() {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/return/fail_implicit_with_explicit_return.carbon:[[@LINE+1]]: return (); should not provide a return value, to match the function's signature.
   return ();
 }
 

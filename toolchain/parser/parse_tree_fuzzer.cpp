@@ -42,7 +42,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // In the absence of parse errors, we should have exactly as many nodes as
   // tokens.
-  CHECK(tree.size() == tokens.size()) << "Unexpected number of tree nodes!";
+  CARBON_CHECK(tree.size() == tokens.size())
+      << "Unexpected number of tree nodes!";
 
   return 0;
 }

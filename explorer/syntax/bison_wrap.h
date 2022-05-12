@@ -30,7 +30,7 @@ class BisonWrap {
   // Deliberately releases the contained value. Errors if not initialized.
   // Called directly in parser.ypp when releasing pairs.
   auto Release() -> T {
-    CHECK(val_.has_value());
+    CARBON_CHECK(val_.has_value());
     T ret = std::move(*val_);
     val_.reset();
     return ret;

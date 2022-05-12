@@ -56,7 +56,8 @@ static auto WriteFile(std::string_view s, std::string_view file_name)
 static auto TextProtoToCarbon(std::string_view input_file_name,
                               std::string_view output_file_name)
     -> ErrorOr<Success> {
-  ASSIGN_OR_RETURN(const std::string input_contents, ReadFile(input_file_name));
+  CARBON_ASSIGN_OR_RETURN(const std::string input_contents,
+                          ReadFile(input_file_name));
   Fuzzing::Carbon carbon_proto;
   if (!google::protobuf::TextFormat::ParseFromString(input_contents,
                                                      &carbon_proto)) {

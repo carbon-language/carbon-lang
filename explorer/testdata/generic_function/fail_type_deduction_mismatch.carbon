@@ -7,9 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_deduction_mismatch.carbon:21: type error in argument deduction
-// CHECK: expected: i32
-// CHECK: actual: Bool
 
 package ExplorerTest api;
 
@@ -18,5 +15,8 @@ fn fst[T:! Type](x: T, y: T) -> T {
 }
 
 fn Main() -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_deduction_mismatch.carbon:[[@LINE+3]]: type error in repeated argument deduction
+  // CHECK: expected: i32
+  // CHECK: actual: Bool
   return fst(0, true);
 }

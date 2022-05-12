@@ -7,11 +7,11 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:15: attempt to instantiate an already instantiated generic class: Point(T)(T)
 
 package ExplorerTest api;
 
 class Point(T:! Type) {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_two_arg_lists.carbon:[[@LINE+1]]: in call `Point(T)(T)`, expected callee to be a function, found `typeof(class Point(T = T:! Type))`
   fn Origin(zero: T) -> Point(T)(T) {
     return {.x = zero, .y = zero};
   }

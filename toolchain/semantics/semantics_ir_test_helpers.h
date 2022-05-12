@@ -26,7 +26,7 @@ class SemanticsIRSingleton {
  public:
   static auto GetFunction(SemanticsIR::Node node)
       -> llvm::Optional<Semantics::Function> {
-    CHECK(semantics_ != llvm::None);
+    CARBON_CHECK(semantics_ != llvm::None);
     if (node.kind_ != SemanticsIR::Node::Kind::Function) {
       return llvm::None;
     }
@@ -34,22 +34,23 @@ class SemanticsIRSingleton {
   }
 
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
-    CHECK(semantics_ != llvm::None);
+    CARBON_CHECK(semantics_ != llvm::None);
     return semantics_->parse_tree_->GetNodeText(node);
   }
 
   static void Print(llvm::raw_ostream& out, SemanticsIR::Node node) {
-    CHECK(semantics_ != llvm::None);
+    CARBON_CHECK(semantics_ != llvm::None);
     semantics_->Print(out, node);
   }
 
   static auto semantics() -> const SemanticsIR& {
-    CHECK(semantics_ != llvm::None);
+    CARBON_CHECK(semantics_ != llvm::None);
     return *semantics_;
   }
 
   static void set_semantics(SemanticsIR semantics) {
-    CHECK(semantics_ == llvm::None) << "Call clear() before setting again.";
+    CARBON_CHECK(semantics_ == llvm::None)
+        << "Call clear() before setting again.";
     semantics_ = std::move(semantics);
   }
 

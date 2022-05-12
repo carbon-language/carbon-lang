@@ -208,7 +208,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  CHECK(!content.empty()) << "should have escaped closing delimiter";
+  CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
@@ -343,7 +343,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        CHECK(contents.front() != ' ')
+        CARBON_CHECK(contents.front() != ' ')
             << "should not have stopped at a plain space";
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||

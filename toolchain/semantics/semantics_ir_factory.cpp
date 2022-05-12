@@ -38,7 +38,8 @@ void SemanticsIRFactory::Build() {
         TransformFunctionDeclaration(*node, semantics_.root_block_);
         break;
       default:
-        FATAL() << "At index " << node->index() << ", unexpected " << node_kind;
+        CARBON_FATAL() << "At index " << node->index() << ", unexpected "
+                       << node_kind;
     }
   }
   FixReverseOrdering(semantics_.root_block_.nodes_);
@@ -46,14 +47,14 @@ void SemanticsIRFactory::Build() {
 
 void SemanticsIRFactory::RequireNodeEmpty(ParseTree::Node node) {
   auto subtree_size = parse_tree().node_subtree_size(node);
-  CHECK(subtree_size == 1) << "At index " << node.index() << ", expected "
-                           << parse_tree().node_kind(node)
-                           << "would have subtree_size of 1, but was "
-                           << subtree_size;
+  CARBON_CHECK(subtree_size == 1)
+      << "At index " << node.index() << ", expected "
+      << parse_tree().node_kind(node)
+      << "would have subtree_size of 1, but was " << subtree_size;
 }
 
 auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node) -> void {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::CodeBlock());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::CodeBlock());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::CodeBlockEnd()));
@@ -70,15 +71,15 @@ auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node) -> void {
         // TODO
         break;
       default:
-        FATAL() << "At index " << child->index() << ", unexpected "
-                << child_kind;
+        CARBON_FATAL() << "At index " << child->index() << ", unexpected "
+                       << child_kind;
     }
   }
 }
 
 auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
     -> Semantics::DeclaredName {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::DeclaredName());
   RequireNodeEmpty(node);
 
   return Semantics::DeclaredName(node);
@@ -86,7 +87,7 @@ auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
 
 auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
     -> Semantics::Expression {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
   RequireNodeEmpty(node);
 
   // TODO: This is still purpose-specific, and will need to handle more kinds of
@@ -96,7 +97,8 @@ auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
 
 void SemanticsIRFactory::TransformFunctionDeclaration(
     ParseTree::Node node, SemanticsIR::Block& block) {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::FunctionDeclaration());
+  CARBON_CHECK(parse_tree().node_kind(node) ==
+               ParseNodeKind::FunctionDeclaration());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   // TODO: Use result.
@@ -115,7 +117,7 @@ void SemanticsIRFactory::TransformFunctionDeclaration(
 
 auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
     -> llvm::SmallVector<Semantics::PatternBinding, 0> {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
 
@@ -138,7 +140,7 @@ auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
 
 auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
     -> Semantics::PatternBinding {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::PatternBinding());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::PatternBinding());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   // TODO: This is still purpose-specific, and will need to handle more kinds of
@@ -152,7 +154,7 @@ auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
 
 auto SemanticsIRFactory::TransformReturnType(ParseTree::Node node)
     -> Semantics::Expression {
-  CHECK(parse_tree().node_kind(node) == ParseNodeKind::ReturnType());
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ReturnType());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   return TransformExpression(subtree.RequireConsume());

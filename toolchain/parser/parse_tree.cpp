@@ -37,7 +37,7 @@ auto ParseTree::postorder() const -> llvm::iterator_range<PostorderIterator> {
 
 auto ParseTree::postorder(Node n) const
     -> llvm::iterator_range<PostorderIterator> {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
   int end_index = n.index_ + 1;
@@ -48,7 +48,7 @@ auto ParseTree::postorder(Node n) const
 
 auto ParseTree::children(Node n) const
     -> llvm::iterator_range<SiblingIterator> {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   int end_index = n.index_ - node_impls_[n.index_].subtree_size;
   return {SiblingIterator(*this, Node(n.index_ - 1)),
           SiblingIterator(*this, Node(end_index))};
@@ -61,27 +61,27 @@ auto ParseTree::roots() const -> llvm::iterator_range<SiblingIterator> {
 }
 
 auto ParseTree::node_has_error(Node n) const -> bool {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   return node_impls_[n.index_].has_error;
 }
 
 auto ParseTree::node_kind(Node n) const -> ParseNodeKind {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   return node_impls_[n.index_].kind;
 }
 
 auto ParseTree::node_token(Node n) const -> TokenizedBuffer::Token {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   return node_impls_[n.index_].token;
 }
 
 auto ParseTree::node_subtree_size(Node n) const -> int32_t {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   return node_impls_[n.index_].subtree_size;
 }
 
 auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
-  CHECK(n.is_valid());
+  CARBON_CHECK(n.is_valid());
   return tokens_->GetTokenText(node_impls_[n.index_].token);
 }
 
@@ -131,12 +131,12 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     }
 
     // This node is finished, so close it up.
-    CHECK(n_impl.subtree_size == 1)
+    CARBON_CHECK(n_impl.subtree_size == 1)
         << "Subtree size must always be a positive integer!";
     output << "}";
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
-    CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
+    CARBON_CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
     for (int close_children_count : llvm::seq(0, depth - next_depth)) {
       (void)close_children_count;
       output << "]}";

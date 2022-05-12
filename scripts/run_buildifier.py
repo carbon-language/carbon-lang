@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import os
 import sys
 
-import scripts_utils  # type: ignore
+import scripts_utils
 
 
 def main() -> None:

@@ -57,6 +57,7 @@ class Value {
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
+    ParameterizedEntityName,
     BindingPlaceholderValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
@@ -65,6 +66,7 @@ class Value {
     TypeOfClassType,
     TypeOfInterfaceType,
     TypeOfChoiceType,
+    TypeOfParameterizedEntityName,
     StaticArrayType,
   };
 
@@ -261,7 +263,7 @@ class StructValue : public Value {
  public:
   explicit StructValue(std::vector<NamedValue> elements)
       : Value(Kind::StructValue), elements_(std::move(elements)) {
-    CHECK(!elements_.empty())
+    CARBON_CHECK(!elements_.empty())
         << "`{}` is represented as a StructType, not a StructValue.";
   }
 
@@ -423,25 +425,44 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
-               Nonnull<const Value*> parameters,
+  // An explicit function parameter that is a `:!` binding:
+  //
+  //     fn MakeEmptyVector(T:! Type) -> Vector(T);
+  struct GenericParameter {
+    size_t index;
+    Nonnull<const GenericBinding*> binding;
+  };
+
+  FunctionType(Nonnull<const Value*> parameters,
+               llvm::ArrayRef<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
                llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
-        deduced_(deduced),
         parameters_(parameters),
+        generic_parameters_(generic_parameters),
         return_type_(return_type),
+        deduced_bindings_(deduced_bindings),
         impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
   }
 
-  auto deduced() const -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
-    return deduced_;
-  }
+  // The type of the function parameter tuple.
   auto parameters() const -> const Value& { return *parameters_; }
+  // Parameters that use a generic `:!` binding at the top level.
+  auto generic_parameters() const -> llvm::ArrayRef<GenericParameter> {
+    return generic_parameters_;
+  }
+  // The function return type.
   auto return_type() const -> const Value& { return *return_type_; }
+  // All generic bindings in this function's signature that should be deduced
+  // in a call. This excludes any generic parameters.
+  auto deduced_bindings() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_bindings_;
+  }
   // The bindings for the witness tables (impls) required by the
   // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
@@ -449,9 +470,10 @@ class FunctionType : public Value {
   }
 
  private:
-  std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
+  std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
@@ -506,10 +528,12 @@ class StructType : public Value {
 // TODO: Consider splitting this class into several classes.
 class NominalClassType : public Value {
  public:
-  // Construct a non-generic class type or a generic class type that has
-  // not yet been applied to type arguments.
+  // Construct a non-generic class type.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType), declaration_(declaration) {}
+      : Value(Kind::NominalClassType), declaration_(declaration) {
+    CARBON_CHECK(!declaration->type_params().has_value())
+        << "missing arguments for parameterized class type";
+  }
 
   // Construct a class type that represents the result of applying the
   // given generic class to the `type_args`.
@@ -587,7 +611,10 @@ auto FindMember(const std::string& name,
 class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
-      : Value(Kind::InterfaceType), declaration_(declaration) {}
+      : Value(Kind::InterfaceType), declaration_(declaration) {
+    CARBON_CHECK(!declaration->params().has_value())
+        << "missing arguments for parameterized interface type";
+  }
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
                          const BindingMap& args)
       : Value(Kind::InterfaceType), declaration_(declaration), args_(args) {}
@@ -616,10 +643,6 @@ class InterfaceType : public Value {
   // FIXME: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
-
-  auto IsParameterized() const -> bool {
-    return declaration_->params().has_value() && args_.empty();
-  }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
@@ -709,6 +732,29 @@ class VariableType : public Value {
 
  private:
   Nonnull<const GenericBinding*> binding_;
+};
+
+// A name of an entity that has explicit parameters, such as a parameterized
+// class or interface. When arguments for those parameters are provided in a
+// call, the result will be a class type or interface type.
+class ParameterizedEntityName : public Value {
+ public:
+  explicit ParameterizedEntityName(Nonnull<const Declaration*> declaration,
+                                   Nonnull<const TuplePattern*> params)
+      : Value(Kind::ParameterizedEntityName),
+        declaration_(declaration),
+        params_(params) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ParameterizedEntityName;
+  }
+
+  auto declaration() const -> const Declaration& { return *declaration_; }
+  auto params() const -> const TuplePattern& { return *params_; }
+
+ private:
+  Nonnull<const Declaration*> declaration_;
+  Nonnull<const TuplePattern*> params_;
 };
 
 // A first-class continuation representation of a fragment of the stack.
@@ -842,6 +888,25 @@ class TypeOfChoiceType : public Value {
 
  private:
   Nonnull<const ChoiceType*> choice_type_;
+};
+
+// The type of an expression whose value is the name of a parameterized entity.
+// Such an expression can only be used as the operand of a call expression that
+// provides arguments for the parameters.
+class TypeOfParameterizedEntityName : public Value {
+ public:
+  explicit TypeOfParameterizedEntityName(
+      Nonnull<const ParameterizedEntityName*> name)
+      : Value(Kind::TypeOfParameterizedEntityName), name_(name) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfParameterizedEntityName;
+  }
+
+  auto name() const -> const ParameterizedEntityName& { return *name_; }
+
+ private:
+  Nonnull<const ParameterizedEntityName*> name_;
 };
 
 // The type of a statically-sized array.

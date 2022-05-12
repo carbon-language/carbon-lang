@@ -62,7 +62,7 @@ class ImplBinding : public AstNode {
   // Sets the static type of the impl. Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }

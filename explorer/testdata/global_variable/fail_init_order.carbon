@@ -7,13 +7,13 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_order.carbon:17: could not find `y: i32`
 
 package ExplorerTest api;
 
 // Test that a global variable may not depend on a later global.
 // Error expected.
 
+// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_order.carbon:[[@LINE+1]]: could not find `y: i32`
 var x: i32 = y;
 
 var y: i32 = 0;

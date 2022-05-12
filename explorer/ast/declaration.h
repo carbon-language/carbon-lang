@@ -59,7 +59,7 @@ class Declaration : public AstNode {
   // Sets the static type of the declared entity. Can only be called once,
   // during typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -71,7 +71,7 @@ class Declaration : public AstNode {
   // Sets the value returned by constant_value(). Can only be called once,
   // during typechecking.
   void set_constant_value(Nonnull<const Value*> value) {
-    CHECK(!constant_value_.has_value());
+    CARBON_CHECK(!constant_value_.has_value());
     constant_value_ = value;
   }
 
@@ -161,15 +161,32 @@ class FunctionDeclaration : public Declaration {
   std::optional<Nonnull<Block*>> body_;
 };
 
+class SelfDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit SelfDeclaration(SourceLocation source_loc)
+      : Declaration(AstNodeKind::SelfDeclaration, source_loc) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromSelfDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string { return "Self"; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+};
+
 class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
   ClassDeclaration(SourceLocation source_loc, std::string name,
+                   Nonnull<SelfDeclaration*> self_decl,
                    std::optional<Nonnull<TuplePattern*>> type_params,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
+        self_decl_(self_decl),
         type_params_(type_params),
         members_(std::move(members)) {}
 
@@ -184,6 +201,8 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
+  auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
+  auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
@@ -193,6 +212,7 @@ class ClassDeclaration : public Declaration {
 
  private:
   std::string name_;
+  Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<Declaration*>> members_;
 };
@@ -338,12 +358,14 @@ class ImplDeclaration : public Declaration {
   // Use `Create` instead.
   ImplDeclaration(SourceLocation source_loc, ImplKind kind,
                   Nonnull<Expression*> impl_type,
+                  Nonnull<SelfDeclaration*> self_decl,
                   Nonnull<Expression*> interface,
                   std::vector<Nonnull<GenericBinding*>> deduced_params,
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         kind_(kind),
         impl_type_(impl_type),
+        self_decl_(self_decl),
         interface_(interface),
         deduced_parameters_(std::move(deduced_params)),
         members_(std::move(members)) {}
@@ -381,10 +403,13 @@ class ImplDeclaration : public Declaration {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
+  auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
+  auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
  private:
   ImplKind kind_;
-  Nonnull<Expression*> impl_type_;  // TODO: make this optional
+  Nonnull<Expression*> impl_type_;
+  Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const Value*>> interface_type_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;

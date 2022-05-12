@@ -9,7 +9,10 @@
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon {
 
@@ -20,6 +23,23 @@ fn Main() -> i32 {
   return 0;
 }
 )";
+
+auto Internal::GetRunfilesFile(const std::string& file)
+    -> ErrorOr<std::string> {
+  using bazel::tools::cpp::runfiles::Runfiles;
+  std::string error;
+  // `Runfiles::Create()` fails if passed an empty `argv0`.
+  std::unique_ptr<Runfiles> runfiles(Runfiles::Create(
+      /*argv0=*/llvm::sys::fs::getMainExecutable(nullptr, nullptr), &error));
+  if (runfiles == nullptr) {
+    return Error(error);
+  }
+  std::string full_path = runfiles->Rlocation(file);
+  if (!llvm::sys::fs::exists(full_path)) {
+    return ErrorBuilder() << full_path << " doesn't exist";
+  }
+  return full_path;
+}
 
 auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
     -> std::string {
@@ -43,7 +63,10 @@ void ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit) {
     llvm::errs() << "Parsing failed: " << ast.error().message() << "\n";
     return;
   }
-  AddPrelude("explorer/data/prelude.carbon", &arena, &ast->declarations);
+  const ErrorOr<std::string> prelude_path =
+      Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon");
+  CARBON_CHECK(prelude_path.ok()) << prelude_path.error().message();
+  AddPrelude(*prelude_path, &arena, &ast->declarations);
   const ErrorOr<int> result =
       ExecProgram(&arena, *ast, /*trace_stream=*/std::nullopt);
   if (!result.ok()) {

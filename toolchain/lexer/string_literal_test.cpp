@@ -21,7 +21,7 @@ class StringLiteralTest : public ::testing::Test {
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
-    CHECK(result);
+    CARBON_CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
   }

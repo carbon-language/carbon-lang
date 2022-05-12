@@ -29,7 +29,7 @@ class SingleTokenDiagnosticTranslator
       : token_(token) {}
 
   auto GetLocation(const char* pos) -> DiagnosticLocation override {
-    CHECK(StringRefContainsPointer(token_, pos))
+    CARBON_CHECK(StringRefContainsPointer(token_, pos))
         << "invalid diagnostic location";
     llvm::StringRef prefix = token_.take_front(pos - token_.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');

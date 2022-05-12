@@ -23,20 +23,20 @@ auto ParseSubtreeConsumer::ForTree(const ParseTree& parse_tree)
 }
 
 ParseSubtreeConsumer::~ParseSubtreeConsumer() {
-  CHECK(is_done()) << "At index " << (*cursor_).index() << ", unhandled "
-                   << parse_tree_->node_kind(*cursor_);
+  CARBON_CHECK(is_done()) << "At index " << (*cursor_).index() << ", unhandled "
+                          << parse_tree_->node_kind(*cursor_);
 }
 
 auto ParseSubtreeConsumer::RequireConsume() -> ParseTree::Node {
-  CHECK(!is_done()) << "Done with subtree, expected more";
+  CARBON_CHECK(!is_done()) << "Done with subtree, expected more";
   return GetNodeAndAdvance();
 }
 
 auto ParseSubtreeConsumer::RequireConsume(ParseNodeKind node_kind)
     -> ParseTree::Node {
-  CHECK(!is_done()) << "Done with subtree, expected " << node_kind;
+  CARBON_CHECK(!is_done()) << "Done with subtree, expected " << node_kind;
   auto node = GetNodeAndAdvance();
-  CHECK(node_kind == parse_tree_->node_kind(node))
+  CARBON_CHECK(node_kind == parse_tree_->node_kind(node))
       << "At index " << node.index() << ", expected " << node_kind << ", found "
       << parse_tree_->node_kind(node);
   return node;

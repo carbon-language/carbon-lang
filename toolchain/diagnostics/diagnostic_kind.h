@@ -19,7 +19,7 @@ namespace Carbon {
 // long-term, and we also see value to keeping diagnostic format strings close
 // to the consuming code.
 enum class DiagnosticKind : int32_t {
-#define DIAGNOSTIC_KIND(DiagnosticName) DiagnosticName,
+#define CARBON_DIAGNOSTIC_KIND(DiagnosticName) DiagnosticName,
 #include "toolchain/diagnostics/diagnostic_registry.def"
 };
 

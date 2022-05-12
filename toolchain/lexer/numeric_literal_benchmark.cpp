@@ -13,19 +13,19 @@ namespace {
 
 static void BM_Lex_Float(benchmark::State& state) {
   for (auto _ : state) {
-    CHECK(LexedNumericLiteral::Lex("0.000001"));
+    CARBON_CHECK(LexedNumericLiteral::Lex("0.000001"));
   }
 }
 
 static void BM_Lex_Integer(benchmark::State& state) {
   for (auto _ : state) {
-    CHECK(LexedNumericLiteral::Lex("1_234_567_890"));
+    CARBON_CHECK(LexedNumericLiteral::Lex("1_234_567_890"));
   }
 }
 
 static void BM_ComputeValue_Float(benchmark::State& state) {
   auto val = LexedNumericLiteral::Lex("0.000001");
-  CHECK(val);
+  CARBON_CHECK(val);
   auto emitter = NullDiagnosticEmitter<const char*>();
   for (auto _ : state) {
     val->ComputeValue(emitter);
@@ -35,7 +35,7 @@ static void BM_ComputeValue_Float(benchmark::State& state) {
 static void BM_ComputeValue_Integer(benchmark::State& state) {
   auto val = LexedNumericLiteral::Lex("1_234_567_890");
   auto emitter = NullDiagnosticEmitter<const char*>();
-  CHECK(val);
+  CARBON_CHECK(val);
   for (auto _ : state) {
     val->ComputeValue(emitter);
   }
