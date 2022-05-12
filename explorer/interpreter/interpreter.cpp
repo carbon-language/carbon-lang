@@ -834,47 +834,51 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::CompoundFieldAccessExpression: {
       const auto& access = cast<CompoundFieldAccessExpression>(exp);
+      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
-        // First phase: evaluate the first operand.
+        // First, evaluate the first operand.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
-      } else if (const auto* member_name_type =
-                     dyn_cast<TypeOfMemberName>(&access.static_type())) {
-        // If we're forming a member name, we must be in the outer evaluation
-        // in `Type.(Interface.method)`. Produce the given method with its
-        // `type` field set.
-        CARBON_CHECK(phase() == Phase::CompileTime)
-            << "should not form MemberNames at runtime";
-        CARBON_CHECK(!access.member().base_type().has_value())
-            << "compound member access forming a member name should be "
-               "performing impl lookup";
-        auto* member_name = arena_->New<MemberName>(act.results()[0],
-                                                    access.member().interface(),
-                                                    access.member().member());
-        return todo_.FinishAction(member_name);
-      } else if (act.pos() == 1 && access.impl().has_value()) {
-        // Second phase: if we're accessing an interface member, evaluate the
-        // `impl` expression to find the corresponding witness.
+      } else if (act.pos() == 1 && access.impl().has_value() &&
+                 !forming_member_name) {
+        // Next, if we're accessing an interface member, evaluate the `impl`
+        // expression to find the corresponding witness.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
-        // Third phase: access the object to find the named member.
-        Nonnull<const Value*> object = act.results()[0];
-        std::optional<Nonnull<const Witness*>> witness;
-        if (access.impl().has_value()) {
-          witness = cast<Witness>(act.results()[1]);
+        // Finally, produce the result.
+        if (forming_member_name) {
+          // If we're forming a member name, we must be in the outer evaluation
+          // in `Type.(Interface.method)`. Produce the same method name with
+          // its `type` field set.
+          CARBON_CHECK(phase() == Phase::CompileTime)
+              << "should not form MemberNames at runtime";
+          CARBON_CHECK(!access.member().base_type().has_value())
+              << "compound member access forming a member name should be "
+                 "performing impl lookup";
+          auto* member_name = arena_->New<MemberName>(
+              act.results()[0], access.member().interface(),
+              access.member().member());
+          return todo_.FinishAction(member_name);
         } else {
-          CARBON_CHECK(access.member().base_type().has_value())
-              << "compound access should have base type or impl";
+          // Access the object to find the named member.
+          Nonnull<const Value*> object = act.results()[0];
+          std::optional<Nonnull<const Witness*>> witness;
+          if (access.impl().has_value()) {
+            witness = cast<Witness>(act.results()[1]);
+          } else {
+            CARBON_CHECK(access.member().base_type().has_value())
+                << "compound access should have base type or impl";
+            CARBON_ASSIGN_OR_RETURN(
+                object, Convert(object, *access.member().base_type(),
+                                exp.source_loc()));
+          }
+          FieldPath::Component field(access.member().name(), witness);
           CARBON_ASSIGN_OR_RETURN(
-              object,
-              Convert(object, *access.member().base_type(), exp.source_loc()));
+              Nonnull<const Value*> member,
+              object->GetField(arena_, FieldPath(field), exp.source_loc()));
+          return todo_.FinishAction(member);
         }
-        FieldPath::Component field(access.member().name(), witness);
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> member,
-            object->GetField(arena_, FieldPath(field), exp.source_loc()));
-        return todo_.FinishAction(member);
       }
     }
     case ExpressionKind::IdentifierExpression: {

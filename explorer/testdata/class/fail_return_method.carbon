@@ -16,7 +16,7 @@ class C {
 }
 
 fn ReturnF() -> auto { return C.F; }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_return_method.carbon:[[@LINE+1]]: Expected a type, but got <member name `G`>
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_return_method.carbon:[[@LINE+1]]: Expected a type, but got member name G
 fn ReturnG() -> auto { return C.G; }
 
 fn Main() -> i32 {

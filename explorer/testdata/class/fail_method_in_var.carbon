@@ -17,7 +17,7 @@ class C {
 
 fn Main() -> i32 {
   var f: auto = C.F;
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: Expected a type, but got <member name `G`>
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: Expected a type, but got member name G
   var g: auto = C.G;
 
   return 0;

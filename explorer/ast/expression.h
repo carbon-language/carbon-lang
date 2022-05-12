@@ -182,6 +182,19 @@ class FieldAccessExpression : public Expression {
   std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 
+// A compound member access expression of the form `object.(path)`.
+//
+// `path` is required to have `TypeOfMemberName` type, and describes the member
+// being accessed, which might be:
+//
+// -   An instance member of a type: `object.(Type.member)`, or
+// -   A non-instance member of an interface: `Type.(Interface.member)` or
+//     `object.(Interface.member)`, or
+// -   An instance member of an interface: `object.(Interface.member)` or
+//     `object.(Type.(Interface.member))`.
+//
+// Note that the `path` is evaluated during type-checking, not at runtime, so
+// the corresponding `member` is determined statically.
 class CompoundFieldAccessExpression : public Expression {
  public:
   explicit CompoundFieldAccessExpression(SourceLocation source_loc,

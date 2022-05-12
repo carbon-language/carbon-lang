@@ -406,13 +406,13 @@ void Value::Print(llvm::raw_ostream& out) const {
           << ")";
       break;
     case Value::Kind::TypeOfParameterizedEntityName:
-      out << "<parameterized entity `"
-          << cast<TypeOfParameterizedEntityName>(*this).name() << "`>";
+      out << "parameterized entity name "
+          << cast<TypeOfParameterizedEntityName>(*this).name();
       break;
-    case Value::Kind::TypeOfMemberName:
-      out << "<member name `" << cast<TypeOfMemberName>(*this).member().name()
-          << "`>";
+    case Value::Kind::TypeOfMemberName: {
+      out << "member name " << cast<TypeOfMemberName>(*this).member().name();
       break;
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
       out << "[" << array_type.element_type() << "; " << array_type.size()

@@ -1044,8 +1044,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {
         return CompilationError(e->source_loc())
-               << "expected unbound member name in compound member access, "
-                  "found "
+               << "expected name of instance member or interface member in "
+                  "compound member access, found "
                << access.path().static_type();
       }
 

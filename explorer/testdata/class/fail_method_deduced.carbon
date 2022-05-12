@@ -19,7 +19,7 @@ fn H[T:! Type](x: T) {}
 
 fn Main() -> i32 {
   H(C.F);
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_deduced.carbon:[[@LINE+1]]: Expected a type, but got <member name `G`>
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_deduced.carbon:[[@LINE+1]]: Expected a type, but got member name G
   H(C.G);
   return 0;
 }
