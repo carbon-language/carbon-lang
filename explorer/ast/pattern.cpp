@@ -9,7 +9,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/arena.h"
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -54,10 +54,10 @@ void Pattern::Print(llvm::raw_ostream& out) const {
       out << cast<ExpressionPattern>(*this).expression();
       break;
     case PatternKind::VarPattern:
-      out << "var " << cast<VarPattern>(*this).pattern();
+      out << "var" << cast<VarPattern>(*this).pattern();
       break;
     case PatternKind::AddrBindingPattern:
-      out << "addr " << cast<AddrBindingPattern>(*this).binding();
+      out << "addr" << cast<AddrBindingPattern>(*this).binding();
       break;
   }
 }
@@ -160,7 +160,7 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
     -> ErrorOr<Nonnull<FieldAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
-    return FATAL_PROGRAM_ERROR(alternative->source_loc())
+    return ProgramError(alternative->source_loc())
            << "Alternative pattern must have the form of a field access.";
   }
   return &cast<FieldAccessExpression>(*alternative);

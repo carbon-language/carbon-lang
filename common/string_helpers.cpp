@@ -80,7 +80,7 @@ auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
             break;
           }
           case 'u':
-            FATAL() << "\\u is not yet supported in string literals";
+            CARBON_FATAL() << "\\u is not yet supported in string literals";
           case '\n':
             if (!is_block_string) {
               return std::nullopt;

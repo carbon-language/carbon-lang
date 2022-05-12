@@ -4,7 +4,7 @@
 //
 // RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:21: undefined behavior: access to dead value 1
@@ -25,6 +25,7 @@ fn capture() -> __Continuation {
 
 fn Main() -> i32 {
   var k: __Continuation = capture();
-  __run k; // error, lifetime of x is over
+  // error, lifetime of x is over
+  __run k;
   return 0;
 }

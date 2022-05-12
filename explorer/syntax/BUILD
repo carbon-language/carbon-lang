@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@mypy_integration//:mypy.bzl", "mypy_test")
-
 package(default_visibility = [
     "//explorer:__pkg__",
     "//explorer/fuzzing:__pkg__",
@@ -20,8 +18,9 @@ cc_test(
     srcs = ["parse_test.cpp"],
     deps = [
         ":syntax",
+        "//common:gtest_main",
         "//explorer/common:arena",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -34,6 +33,20 @@ cc_library(
         ":syntax",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "prelude",
+    srcs = ["prelude.cpp"],
+    hdrs = ["prelude.h"],
+    data = ["//explorer:standard_libraries"],
+    deps = [
+        ":syntax",
+        "//common:error",
+        "//explorer/ast:declaration",
+        "//explorer/common:arena",
+        "//explorer/common:nonnull",
     ],
 )
 
@@ -71,7 +84,7 @@ cc_library(
         "//explorer/ast:pattern",
         "//explorer/ast:value_category",
         "//explorer/common:arena",
-        "//explorer/common:error",
+        "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
@@ -124,19 +137,14 @@ py_test(
     deps = ["format_grammar_lib"],
 )
 
-mypy_test(
-    name = "format_grammar_mypy_test",
-    include_imports = True,
-    deps = [":format_grammar_lib"],
-)
-
 cc_test(
     name = "unimplemented_example_test",
     srcs = ["unimplemented_example_test.cpp"],
     deps = [
         ":parse_test_matchers",
         ":syntax",
+        "//common:gtest_main",
         "//explorer/ast:ast_test_matchers",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

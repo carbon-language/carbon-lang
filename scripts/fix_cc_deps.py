@@ -19,7 +19,7 @@ import subprocess
 from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
-import scripts_utils  # type: ignore
+import scripts_utils
 
 
 # Maps external repository names to a method translating bazel labels to file
@@ -31,6 +31,14 @@ EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
     # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
     #   google/protobuf/descriptor.h
     "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
+    # @com_google_libprotobuf_mutator//:src/libfuzzer/libfuzzer_macro.h ->
+    #   libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h
+    "@com_google_libprotobuf_mutator": lambda x: re.sub(
+        "^(.*:)", "libprotobuf_mutator/", x
+    ),
+    # @bazel_tools//tools/cpp/runfiles:runfiles.h ->
+    #   tools/cpp/runfiles/runfiles.h
+    "@bazel_tools": lambda x: re.sub(":", "/", x),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in

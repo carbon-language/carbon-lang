@@ -52,18 +52,18 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
 
 void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
-  CHECK(!value_node.constant_value().has_value());
-  CHECK(value->kind() != Value::Kind::LValue);
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
       {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
-  CHECK(success) << "Duplicate definition of " << value_node.base();
+  CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
-  CHECK(heap_ == other.heap_);
+  CARBON_CHECK(heap_ == other.heap_);
   locals_.merge(other.locals_);
-  CHECK(other.locals_.empty())
+  CARBON_CHECK(other.locals_.empty())
       << "Duplicate definition of " << other.locals_.size()
       << " names, including " << other.locals_.begin()->first.base();
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
@@ -83,10 +83,10 @@ auto RuntimeScope::Get(ValueNodeView value_node) const
 
 auto RuntimeScope::Capture(
     const std::vector<Nonnull<const RuntimeScope*>>& scopes) -> RuntimeScope {
-  CHECK(!scopes.empty());
+  CARBON_CHECK(!scopes.empty());
   RuntimeScope result(scopes.front()->heap_);
   for (Nonnull<const RuntimeScope*> scope : scopes) {
-    CHECK(scope->heap_ == result.heap_);
+    CARBON_CHECK(scope->heap_ == result.heap_);
     for (const auto& entry : scope->locals_) {
       // Intentionally disregards duplicates later in the vector.
       result.locals_.insert(entry);

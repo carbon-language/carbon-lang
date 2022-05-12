@@ -22,7 +22,7 @@ cc_library(
         "ast_rtti.h",
     ],
     deps = [
-        ":source_location",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -64,8 +64,9 @@ cc_test(
         ":expression",
         ":pattern",
         ":statement",
+        "//common:gtest_main",
         "//explorer/common:arena",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -77,11 +78,11 @@ cc_library(
     deps = [
         ":ast_node",
         ":pattern",
-        ":source_location",
         ":value_category",
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -97,12 +98,12 @@ cc_library(
         ":impl_binding",
         ":pattern",
         ":return_term",
-        ":source_location",
         ":statement",
         ":static_scope",
         ":value_category",
         "//common:ostream",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -112,10 +113,10 @@ cc_library(
     hdrs = ["return_term.h"],
     deps = [
         ":expression",
-        ":source_location",
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -127,13 +128,13 @@ cc_library(
     deps = [
         ":ast_node",
         ":paren_contents",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:indirect_value",
         "//common:ostream",
         "//explorer/common:arena",
-        "//explorer/common:error",
+        "//explorer/common:error_builders",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -144,8 +145,9 @@ cc_test(
     deps = [
         ":expression",
         ":paren_contents",
+        "//common:gtest_main",
         "//explorer/common:arena",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -159,8 +161,8 @@ cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
     deps = [
-        ":source_location",
-        "//explorer/common:error",
+        "//explorer/common:error_builders",
+        "//explorer/common:source_location",
     ],
 )
 
@@ -171,12 +173,12 @@ cc_library(
     deps = [
         ":ast_node",
         ":expression",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:ostream",
         "//explorer/common:arena",
-        "//explorer/common:error",
+        "//explorer/common:error_builders",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -188,8 +190,9 @@ cc_test(
         ":expression",
         ":paren_contents",
         ":pattern",
+        "//common:gtest_main",
         "//explorer/common:arena",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -200,22 +203,13 @@ cc_library(
     hdrs = ["static_scope.h"],
     deps = [
         ":ast_node",
-        ":source_location",
         ":value_category",
         "//common:check",
         "//common:error",
-        "//explorer/common:error",
+        "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "source_location",
-    hdrs = ["source_location.h"],
-    deps = [
-        "//common:ostream",
-        "//explorer/common:nonnull",
     ],
 )
 
@@ -228,12 +222,12 @@ cc_library(
         ":expression",
         ":pattern",
         ":return_term",
-        ":source_location",
         ":static_scope",
         ":value_category",
         "//common:check",
         "//common:ostream",
         "//explorer/common:arena",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )

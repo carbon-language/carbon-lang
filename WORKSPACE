@@ -31,53 +31,6 @@ pip_install(
 )
 
 ###############################################################################
-# Python mypy rules
-###############################################################################
-
-# NOTE: https://github.com/bazelbuild/bazel/issues/4948 tracks bazel supporting
-# typing directly. If it's added, we will probably want to switch.
-
-# Add mypy
-mypy_integration_version = "e5f8071f33eca637cd90bf70cb45f749e63bf2ca"
-
-# TODO: Can switch back to the official repo when it includes:
-# https://github.com/thundergolfer/bazel-mypy-integration/pull/43
-#http_archive(
-#    name = "mypy_integration",
-#    sha256 = "621df076709dc72809add1f5fe187b213fee5f9b92e39eb33851ab13487bd67d",
-#    strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
-#    urls = [
-#        "https://github.com/thundergolfer/bazel-mypy-integration/archive/refs/tags/%s.tar.gz" % mypy_integration_version,
-#    ],
-#)
-
-http_archive(
-    name = "mypy_integration",
-    sha256 = "481ec6f0953a84a36b8103286f04c4cd274ae689060099085c02ac187d007592",
-    strip_prefix = "bazel-mypy-integration-%s" % mypy_integration_version,
-    urls = [
-        "https://github.com/jonmeow/bazel-mypy-integration/archive/%s.zip" % mypy_integration_version,
-    ],
-)
-
-load(
-    "@mypy_integration//repositories:repositories.bzl",
-    mypy_integration_repositories = "repositories",
-)
-
-mypy_integration_repositories()
-
-load("@mypy_integration//:config.bzl", "mypy_configuration")
-
-mypy_configuration("//bazel/mypy:mypy.ini")
-
-load("@mypy_integration//repositories:deps.bzl", mypy_integration_deps = "deps")
-
-mypy_integration_deps(
-    mypy_requirements_file = "//bazel/mypy:version.txt",
-)
-
-###############################################################################
 # C++ rules
 ###############################################################################
 
@@ -247,6 +200,20 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 
 rules_proto_toolchains()
+
+###############################################################################
+# libprotobuf_mutator - for structured fuzzer testing.
+###############################################################################
+
+libprotobuf_mutator_version = "1.0"
+
+http_archive(
+    name = "com_google_libprotobuf_mutator",
+    build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
+    sha256 = "792f250fb546bde8590e72d64311ea00a70c175fd77df6bb5e02328fa15fe28e",
+    strip_prefix = "libprotobuf-mutator-%s" % libprotobuf_mutator_version,
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/v%s.tar.gz" % libprotobuf_mutator_version],
+)
 
 ###############################################################################
 # Example conversion repositories

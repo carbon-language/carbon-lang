@@ -4,10 +4,9 @@
 //
 // RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:26: type error in argument deduction
 
 package ExplorerTest api;
 
@@ -23,5 +22,8 @@ fn FirstOfTwoPoints[T:! Type](a: Point(T), b: Point(T)) -> Point(T) {
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 0, .y = 1};
   var q: Point(Bool) = {.x = true, .y = false};
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_argument_deduction.carbon:[[@LINE+3]]: type error in argument deduction
+  // CHECK: expected: i32
+  // CHECK: actual: Bool
   return FirstOfTwoPoints(p, q).x;
 }

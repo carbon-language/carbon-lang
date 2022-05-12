@@ -4,7 +4,7 @@
 
 #include "explorer/ast/static_scope.h"
 
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
@@ -13,7 +13,7 @@ auto StaticScope::Add(std::string name, ValueNodeView entity)
     -> ErrorOr<Success> {
   auto [it, success] = declared_names_.insert({name, entity});
   if (!success && it->second != entity) {
-    return FATAL_COMPILATION_ERROR(entity.base().source_loc())
+    return CompilationError(entity.base().source_loc())
            << "Duplicate name `" << name << "` also found at "
            << it->second.base().source_loc();
   }
@@ -23,11 +23,10 @@ auto StaticScope::Add(std::string name, ValueNodeView entity)
 auto StaticScope::Resolve(const std::string& name,
                           SourceLocation source_loc) const
     -> ErrorOr<ValueNodeView> {
-  ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
-                   TryResolve(name, source_loc));
+  CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
+                          TryResolve(name, source_loc));
   if (!result) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "could not resolve '" << name << "'";
+    return CompilationError(source_loc) << "could not resolve '" << name << "'";
   }
   return *result;
 }
@@ -41,11 +40,11 @@ auto StaticScope::TryResolve(const std::string& name,
   }
   std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    ASSIGN_OR_RETURN(std::optional<ValueNodeView> parent_result,
-                     parent->TryResolve(name, source_loc));
+    CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> parent_result,
+                            parent->TryResolve(name, source_loc));
     if (parent_result.has_value() && result.has_value() &&
         *parent_result != *result) {
-      return FATAL_COMPILATION_ERROR(source_loc)
+      return CompilationError(source_loc)
              << "'" << name << "' is ambiguous between "
              << result->base().source_loc() << " and "
              << parent_result->base().source_loc();

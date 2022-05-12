@@ -19,14 +19,13 @@ class Value;
 class Expression;
 class ImplBinding;
 
-// The run-time counterpart of a `GenericBinding`.
-//
-// Once a generic binding has been declared, it can be used
-// in two different ways: as a compile-time constant with a
-// symbolic value (such as a `VariableType`), or as a run-time
-// variable with a concrete value that is stored on the stack.
-// An `ImplBinding` is used in contexts where the second
-// interpretation is intended.
+// `ImplBinding` plays the role of the parameter for passing witness
+// tables to a generic. However, unlike regular parameters
+// (`BindingPattern`) there is no explicit syntax that corresponds to
+// an `ImplBinding`, so they are not created during parsing. Instances
+// of `ImplBinding` are created during type checking, when processing
+// a type parameter (a `GenericBinding`), or an `is` requirement in
+// a `where` clause.
 class ImplBinding : public AstNode {
  public:
   using ImplementsCarbonValueNode = void;
@@ -63,7 +62,7 @@ class ImplBinding : public AstNode {
   // Sets the static type of the impl. Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }

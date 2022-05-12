@@ -11,8 +11,8 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/source_location.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 
 namespace Carbon {
 
@@ -66,7 +66,7 @@ class ReturnTerm {
   // Sets the value of static_type(). Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -80,7 +80,7 @@ class ReturnTerm {
 
   explicit ReturnTerm(ReturnKind kind, SourceLocation source_loc)
       : kind_(kind), source_loc_(source_loc) {
-    CHECK(kind != ReturnKind::Expression);
+    CARBON_CHECK(kind != ReturnKind::Expression);
   }
 
   explicit ReturnTerm(Nonnull<Expression*> type_expression)

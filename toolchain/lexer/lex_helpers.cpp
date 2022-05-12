@@ -8,23 +8,6 @@
 
 namespace Carbon {
 
-namespace {
-struct TooManyDigits : DiagnosticBase<TooManyDigits> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-
-  auto Format() -> std::string {
-    return llvm::formatv(
-               "Found a sequence of {0} digits, which is greater than the "
-               "limit of {1}.",
-               count, limit)
-        .str();
-  }
-
-  size_t count;
-  size_t limit;
-};
-}  // namespace
-
 auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
                    llvm::StringRef text) -> bool {
   // llvm::getAsInteger is used for parsing, but it's quadratic and visibly slow
@@ -37,8 +20,12 @@ auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
   // is far above the threshold for normal integers.
   constexpr size_t DigitLimit = 1000;
   if (text.size() > DigitLimit) {
-    emitter.EmitError<TooManyDigits>(
-        text.begin(), {.count = text.size(), .limit = DigitLimit});
+    CARBON_DIAGNOSTIC(
+        TooManyDigits, Error,
+        "Found a sequence of {0} digits, which is greater than the "
+        "limit of {1}.",
+        size_t, size_t);
+    emitter.Emit(text.begin(), TooManyDigits, text.size(), DigitLimit);
     return false;
   }
   return true;

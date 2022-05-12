@@ -8,7 +8,7 @@
 
 #include "common/check.h"
 #include "explorer/common/arena.h"
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -43,18 +43,22 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(&fun_decl, v);
+            return arena->New<BoundMethodValue>(
+                &fun_decl, v, witness->type_args(), witness->witnesses());
           } else {
             // Class function.
-            return *fun_decl.constant_value();
+            auto fun = cast<FunctionValue>(*fun_decl.constant_value());
+            return arena->New<FunctionValue>(&fun->declaration(),
+                                             witness->type_args(),
+                                             witness->witnesses());
           }
         } else {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationError(source_loc)
                  << "member " << f << " not in " << *witness;
         }
       }
       default:
-        FATAL() << "expected Witness, not " << *witness;
+        CARBON_FATAL() << "expected Witness, not " << *witness;
     }
   }
   switch (v->kind()) {
@@ -62,8 +66,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const Value*>> field =
           cast<StructValue>(*v).FindField(f);
       if (field == std::nullopt) {
-        return FATAL_RUNTIME_ERROR(source_loc)
-               << "member " << f << " not in " << *v;
+        return RuntimeError(source_loc) << "member " << f << " not in " << *v;
       }
       return *field;
     }
@@ -80,9 +83,8 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         std::optional<Nonnull<const FunctionValue*>> func =
             class_type.FindFunction(f);
         if (func == std::nullopt) {
-          return FATAL_RUNTIME_ERROR(source_loc)
-                 << "member " << f << " not in " << *v << " or its "
-                 << class_type;
+          return RuntimeError(source_loc) << "member " << f << " not in " << *v
+                                          << " or its " << class_type;
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
@@ -91,17 +93,16 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                               class_type.witnesses());
         } else {
           // Found a class function
-          Nonnull<const FunctionValue*> fun = arena->New<FunctionValue>(
-              &(*func)->declaration(), class_type.type_args(),
-              class_type.witnesses());
-          return fun;
+          return arena->New<FunctionValue>(&(*func)->declaration(),
+                                           class_type.type_args(),
+                                           class_type.witnesses());
         }
       }
     }
     case Value::Kind::ChoiceType: {
       const auto& choice = cast<ChoiceType>(*v);
       if (!choice.FindAlternative(f)) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeError(source_loc)
                << "alternative " << f << " not in " << *v;
       }
       return arena->New<AlternativeConstructorValue>(f, choice.name());
@@ -112,7 +113,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       std::optional<Nonnull<const FunctionValue*>> fun =
           class_type.FindFunction(f);
       if (fun == std::nullopt) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeError(source_loc)
                << "class function " << f << " not in " << *v;
       }
       return arena->New<FunctionValue>(&(*fun)->declaration(),
@@ -120,7 +121,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                                        class_type.witnesses());
     }
     default:
-      FATAL() << "field access not allowed for value " << *v;
+      CARBON_FATAL() << "field access not allowed for value " << *v;
   }
 }
 
@@ -130,8 +131,8 @@ auto Value::GetField(Nonnull<Arena*> arena, const FieldPath& path,
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    ASSIGN_OR_RETURN(value,
-                     GetMember(arena, value, field, source_loc, me_value));
+    CARBON_ASSIGN_OR_RETURN(
+        value, GetMember(arena, value, field, source_loc, me_value));
   }
   return value;
 }
@@ -153,12 +154,12 @@ static auto SetFieldImpl(
                                return element.name == (*path_begin).name();
                              });
       if (it == elements.end()) {
-        return FATAL_RUNTIME_ERROR(source_loc)
+        return RuntimeError(source_loc)
                << "field " << (*path_begin).name() << " not in " << *value;
       }
-      ASSIGN_OR_RETURN(it->value,
-                       SetFieldImpl(arena, it->value, path_begin + 1, path_end,
-                                    field_value, source_loc));
+      CARBON_ASSIGN_OR_RETURN(
+          it->value, SetFieldImpl(arena, it->value, path_begin + 1, path_end,
+                                  field_value, source_loc));
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
@@ -171,17 +172,16 @@ static auto SetFieldImpl(
       // TODO(geoffromer): update FieldPath to hold integers as well as strings.
       int index = std::stoi((*path_begin).name());
       if (index < 0 || static_cast<size_t>(index) >= elements.size()) {
-        return FATAL_RUNTIME_ERROR(source_loc)
-               << "index " << (*path_begin).name() << " out of range in "
-               << *value;
+        return RuntimeError(source_loc) << "index " << (*path_begin).name()
+                                        << " out of range in " << *value;
       }
-      ASSIGN_OR_RETURN(elements[index],
-                       SetFieldImpl(arena, elements[index], path_begin + 1,
-                                    path_end, field_value, source_loc));
+      CARBON_ASSIGN_OR_RETURN(
+          elements[index], SetFieldImpl(arena, elements[index], path_begin + 1,
+                                        path_end, field_value, source_loc));
       return arena->New<TupleValue>(elements);
     }
     default:
-      FATAL() << "field access not allowed for value " << *value;
+      CARBON_FATAL() << "field access not allowed for value " << *value;
   }
 }
 
@@ -326,7 +326,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << " impls ";
         llvm::ListSeparator sep;
         for (const auto& [impl_bind, impl] : class_type.impls()) {
-          out << sep << impl;
+          out << sep << *impl;
         }
       }
       if (!class_type.witnesses().empty()) {
@@ -341,6 +341,14 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
       out << "interface " << iface_type.declaration().name();
+      if (!iface_type.args().empty()) {
+        out << "(";
+        llvm::ListSeparator sep;
+        for (const auto& [bind, val] : iface_type.args()) {
+          out << sep << bind->name() << " = " << *val;
+        }
+        out << ")";
+      }
       break;
     }
     case Value::Kind::Witness: {
@@ -349,6 +357,9 @@ void Value::Print(llvm::raw_ostream& out) const {
           << witness.declaration().interface();
       break;
     }
+    case Value::Kind::ParameterizedEntityName:
+      out << *GetName(cast<ParameterizedEntityName>(*this).declaration());
+      break;
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -368,9 +379,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "\"";
       break;
     case Value::Kind::TypeOfClassType:
-      out << "typeof("
-          << cast<TypeOfClassType>(*this).class_type().declaration().name()
-          << ")";
+      out << "typeof(" << cast<TypeOfClassType>(*this).class_type() << ")";
       break;
     case Value::Kind::TypeOfInterfaceType:
       out << "typeof("
@@ -384,6 +393,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
       break;
+    case Value::Kind::TypeOfParameterizedEntityName:
+      out << "typeof(" << cast<TypeOfParameterizedEntityName>(*this).name()
+          << ")";
+      break;
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
       out << "[" << array_type.element_type() << "; " << array_type.size()
@@ -394,13 +407,13 @@ void Value::Print(llvm::raw_ostream& out) const {
 }
 
 ContinuationValue::StackFragment::~StackFragment() {
-  CHECK(reversed_todo_.empty())
+  CARBON_CHECK(reversed_todo_.empty())
       << "All StackFragments must be empty before the Carbon program ends.";
 }
 
 void ContinuationValue::StackFragment::StoreReversed(
     std::vector<std::unique_ptr<Action>> reversed_todo) {
-  CHECK(reversed_todo_.empty());
+  CARBON_CHECK(reversed_todo_.empty());
   reversed_todo_ = std::move(reversed_todo);
 }
 
@@ -465,15 +478,23 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       for (const auto& [ty_var1, ty1] :
            cast<NominalClassType>(*t1).type_args()) {
-        if (!TypeEqual(ty1,
-                       cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+        if (!ValueEqual(ty1,
+                        cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
           return false;
         }
       }
       return true;
     case Value::Kind::InterfaceType:
-      return cast<InterfaceType>(*t1).declaration().name() ==
-             cast<InterfaceType>(*t2).declaration().name();
+      if (cast<InterfaceType>(*t1).declaration().name() !=
+          cast<InterfaceType>(*t2).declaration().name()) {
+        return false;
+      }
+      for (const auto& [ty_var1, ty1] : cast<InterfaceType>(*t1).args()) {
+        if (!ValueEqual(ty1, cast<InterfaceType>(*t2).args().at(ty_var1))) {
+          return false;
+        }
+      }
+      return true;
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
@@ -507,6 +528,10 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
+    case Value::Kind::TypeOfParameterizedEntityName: {
+      return ValueEqual(&cast<TypeOfParameterizedEntityName>(*t1).name(),
+                        &cast<TypeOfParameterizedEntityName>(*t2).name());
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -527,14 +552,15 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
-      FATAL() << "TypeEqual used to compare non-type values\n"
-              << *t1 << "\n"
-              << *t2;
+    case Value::Kind::ParameterizedEntityName:
+      CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
+                     << *t1 << "\n"
+                     << *t2;
     case Value::Kind::Witness:
-      FATAL() << "TypeEqual: unexpected Witness";
+      CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
-      FATAL() << "TypeEqual: unexpected AutoType";
+      CARBON_FATAL() << "TypeEqual: unexpected AutoType";
       break;
   }
 }
@@ -586,9 +612,10 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructValue: {
       const auto& struct_v1 = cast<StructValue>(*v1);
       const auto& struct_v2 = cast<StructValue>(*v2);
-      CHECK(struct_v1.elements().size() == struct_v2.elements().size());
+      CARBON_CHECK(struct_v1.elements().size() == struct_v2.elements().size());
       for (size_t i = 0; i < struct_v1.elements().size(); ++i) {
-        CHECK(struct_v1.elements()[i].name == struct_v2.elements()[i].name);
+        CARBON_CHECK(struct_v1.elements()[i].name ==
+                     struct_v2.elements()[i].name);
         if (!ValueEqual(struct_v1.elements()[i].value,
                         struct_v2.elements()[i].value)) {
           return false;
@@ -598,6 +625,15 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     }
     case Value::Kind::StringValue:
       return cast<StringValue>(*v1).value() == cast<StringValue>(*v2).value();
+    case Value::Kind::ParameterizedEntityName: {
+      std::optional<std::string> name1 =
+          GetName(cast<ParameterizedEntityName>(v1)->declaration());
+      std::optional<std::string> name2 =
+          GetName(cast<ParameterizedEntityName>(v2)->declaration());
+      CARBON_CHECK(name1.has_value() && name2.has_value())
+          << "parameterized name refers to unnamed declaration";
+      return *name1 == *name2;
+    }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
@@ -615,6 +651,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
@@ -627,7 +664,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::LValue:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
-      FATAL() << "ValueEqual does not support this kind of value: " << *v1;
+      CARBON_FATAL() << "ValueEqual does not support this kind of value: "
+                     << *v1;
   }
 }
 

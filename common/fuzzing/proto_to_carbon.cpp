@@ -88,7 +88,7 @@ static auto PrimitiveOperatorToCarbon(
     const Fuzzing::PrimitiveOperatorExpression& primitive_operator,
     llvm::raw_ostream& out) -> void {
   const Fuzzing::Expression& arg0 =
-      primitive_operator.arguments().size() > 0
+      !primitive_operator.arguments().empty()
           ? primitive_operator.arguments(0)
           : Fuzzing::Expression::default_instance();
   const Fuzzing::Expression& arg1 =
@@ -536,7 +536,7 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       break;
     }
 
-    case Fuzzing::Statement::kAwait:
+    case Fuzzing::Statement::kAwaitStatement:
       out << "__await;";
       break;
 

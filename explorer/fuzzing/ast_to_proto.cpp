@@ -80,6 +80,10 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
+    case ExpressionKind::InstantiateImpl: {
+      // UNDER CONSTRUCTION
+      break;
+    }
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(expression);
       auto* call_proto = expression_proto.mutable_call();
@@ -174,18 +178,12 @@ static auto ExpressionToProto(const Expression& expression)
     case ExpressionKind::IfExpression: {
       const auto& if_expression = cast<IfExpression>(expression);
       auto* if_proto = expression_proto.mutable_if_expression();
-      if (if_expression.condition()) {
-        *if_proto->mutable_condition() =
-            ExpressionToProto(*if_expression.condition());
-      }
-      if (if_expression.then_expression()) {
-        *if_proto->mutable_then_expression() =
-            ExpressionToProto(*if_expression.then_expression());
-      }
-      if (if_expression.else_expression()) {
-        *if_proto->mutable_else_expression() =
-            ExpressionToProto(*if_expression.else_expression());
-      }
+      *if_proto->mutable_condition() =
+          ExpressionToProto(if_expression.condition());
+      *if_proto->mutable_then_expression() =
+          ExpressionToProto(if_expression.then_expression());
+      *if_proto->mutable_else_expression() =
+          ExpressionToProto(if_expression.else_expression());
       break;
     }
 
@@ -430,7 +428,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
 
     case StatementKind::Await:
       // Initializes with the default value; there's nothing to set.
-      statement_proto.mutable_await();
+      statement_proto.mutable_await_statement();
       break;
 
     case StatementKind::Break:
@@ -565,6 +563,10 @@ static auto DeclarationToProto(const Declaration& declaration)
         *impl_proto->add_members() = DeclarationToProto(*member);
       }
       break;
+    }
+
+    case DeclarationKind::SelfDeclaration: {
+      CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
     }
   }
   return declaration_proto;

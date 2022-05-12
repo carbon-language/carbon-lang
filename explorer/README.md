@@ -52,9 +52,10 @@ of this writing, all of `explorer` uses a single `Arena` object, we may
 introduce multiple `Arena`s for different lifetime groups in the future.
 
 For simplicity, `explorer` generally treats all errors as fatal. Errors caused
-by bugs in the user-provided Carbon code should be reported with the macros in
-[`error.h`](common/error.h). Errors caused by bugs in `explorer` itself should
-be reported with [`CHECK` or `FATAL`](../common/check.h).
+by bugs in the user-provided Carbon code should be reported with the error
+builders in [`error_builders.h`](common/error_builders.h). Errors caused by bugs
+in `explorer` itself should be reported with
+[`CHECK` or `FATAL`](../common/check.h).
 
 ## Example Programs (Regression Tests)
 
@@ -110,6 +111,11 @@ To explain this boilerplate:
 
 -   `./update_checks.py` -- Updates expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+
+### Updating fuzzer logic after making AST changes
+
+Please refer to
+[Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/README.md).
 
 ## Experimental feature: Delimited Continuations
 

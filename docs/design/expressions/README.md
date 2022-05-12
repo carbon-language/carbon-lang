@@ -65,6 +65,12 @@ graph BT
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
     negation["-x"]
+    click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
+
+    complement["^x"]
+    click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+
+    unary((" "))
 
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
@@ -80,6 +86,17 @@ graph BT
     modulo["x % y"]
     click modulo "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
+    bitwise_and>"x & y"]
+    bitwise_or>"x | y"]
+    bitwise_xor>"x ^ y"]
+    click bitwise_and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+    click bitwise_or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+    click bitwise_xor "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+
+    shift["x << y<br>
+           x >> y"]
+    click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+
     comparison["x == y<br>
                 x != y<br>
                 x < y<br>
@@ -91,11 +108,15 @@ graph BT
     not["not x"]
     click not "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
+    logicalOperand((" "))
+
     and>"x and y"]
     click and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
 
     or>"x or y"]
     click or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/logical_operators.md"
+
+    logicalExpression((" "))
 
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
@@ -104,18 +125,23 @@ graph BT
 
     memberAccess --> parens & braces & unqualifiedName
     negation --> memberAccess
+    complement --> memberAccess
+    unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -----> memberAccess
-    multiplication & modulo & as --> negation
+    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
-    comparison --> modulo & addition & as
-    and & or --> comparison & not
-    if & expressionEnd --> and & or
+    comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
+    logicalOperand --> comparison & not
+    and & or --> logicalOperand
+    logicalExpression --> and & or
+    if & expressionEnd --> logicalExpression
 ```
 
 The diagram's attributes are:
 
--   Each node represents a precedence group.
+-   Each non-empty node represents a precedence group. Empty circles are used to
+    simplify the graph, and do not represent a precedence group.
 
 -   When an expression is composed from different precedence groups, the
     interpretation is determined by the precedence edges:
@@ -221,11 +247,17 @@ Most expressions are modeled as operators:
 | Category   | Operator                        | Syntax    | Function                                                              |
 | ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
 | Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
+| Bitwise    | [`^`](bitwise.md) (unary)       | `^x`      | The bitwise complement of `x`.                                        |
 | Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
 | Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
 | Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |
 | Arithmetic | [`/`](arithmetic.md)            | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
 | Arithmetic | [`%`](arithmetic.md)            | `x % y`   | `x` modulo `y`.                                                       |
+| Bitwise    | [`&`](bitwise.md)               | `x & y`   | The bitwise AND of `x` and `y`.                                       |
+| Bitwise    | [`\|`](bitwise.md)              | `x \| y`  | The bitwise OR of `x` and `y`.                                        |
+| Bitwise    | [`^`](bitwise.md) (binary)      | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
+| Bitwise    | [`<<`](bitwise.md)              | `x << y`  | `x` bit-shifted left `y` places.                                      |
+| Bitwise    | [`>>`](bitwise.md)              | `x >> y`  | `x` bit-shifted right `y` places.                                     |
 | Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
 | Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
 | Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |

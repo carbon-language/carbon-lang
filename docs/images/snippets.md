@@ -6,29 +6,38 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Images
+
+Images are managed in
+[Google Drive](https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688).
+
 ## Quicksort
 
 A sample of quicksort in Carbon.
 
 ```cpp
-fn Partition[T:! Comparable & Movable](s: Span(T))
-     -> i32 {
-  var i: i32 = -1;
+package Sorting api;
 
-  for (j: i32 in s.Indices()) {
-    if (s[j] <= s.Last()) {
+fn Partition[T:! Comparable & Movable](s: Slice(T))
+     -> i64 {
+  var i: i64 = -1;
+
+  for (e: T in s) {
+    if (e <= s.Last()) {
       ++i;
-      Swap(&s[i], &s[j]);
+      Swap(&s[i], &e);
     }
   }
   return i;
 }
 
-fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
-  if (s.Length() <= 1) { return; }
-  let p: i32 = Partition(s);
-  QuickSort(s.Sub(0, p - 1));
-  QuickSort(s.Sub(p + 1));
+fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
+  if (s.Size() <= 1) {
+    return;
+  }
+  let p: i64 = Partition(s);
+  QuickSort(s[:p - 1]));
+  QuickSort(s[p + 1:]));
 }
 ```
 
@@ -37,46 +46,91 @@ fn QuickSort[T:! Comparable & Movable](s: Span(T)) {
 ### C++
 
 ```cpp
-#include <vector>
+// C++:
+#include <math.h>
 #include <iostream>
-// C++
-void PrintWithTotal(const std::vector<uint64_t>& v) {
-  uint64_t sum = 0;
-  for (uint64_t e : v) {
-    sum += e;
-    cout << e << "\n";
+#include <span>
+#include <vector>
+
+struct Circle {
+  float r;
+};
+
+void WriteTotalArea(std::span<Circle> circles) {
+  float area = 0;
+  for (const Circle& c : circles) {
+    area += M_PI * c.r * c.r;
   }
-  cout << "Total: " <<  sum << "\n";
+  std::cout << "Total area: " << area << "\n";
+}
+
+auto main(int argc, char** argv) -> int {
+  std::vector<Circle> circles = {{1.0}, {2.0}};
+  // Implicitly constructors `span` from `vector`.
+  WriteTotalArea(circles);
+  return 0;
 }
 ```
 
 ### Carbon
 
 ```cpp
-import Console;
-// Carbon
-void PrintWithTotal(v: Vector(u64)) {
-  var sum: u64 = 0;
-  for (e: u64 in v) {
-    sum += e;
-    Console.Print(e, "\n");
+// Carbon:
+package Geometry api;
+import Math;
+
+class Circle {
+  var r: f32;
+}
+
+fn WriteTotalArea(circles: Slice(Circle)) {
+  var area: f32 = 0;
+  for (c: Circle in circles) {
+    area += Math.Pi * c.r * c.r;
   }
-  Console.Print("Total: ", sum, "\n")
+  Console.WriteLine("Total area: {0}", area);
+}
+
+fn Main() -> i32 {
+  // A dynamically sized array, like `std::vector`.
+  var circles: Array(Circle) = ({.r = 1.0}, {.r = 2.0});
+  // Implicitly constructs `Slice` from `Array`.
+  WriteTotalArea(circles);
+  return 0;
 }
 ```
 
 ### Mixed
 
 ```cpp
-import Console;
-import Cpp <vector>;
-// Carbon and C++ interop
-void PrintWithTotal(v: Cpp.std.vector(Cpp.uint64_t)) {
-  var sum: u64 = 0;
-  for (e: Cpp.uint64_t in v) {
-    sum += e;
-    Console.Print(e, "\n");
+// C++ code used in both Carbon and C++:
+struct Circle {
+  float r;
+};
+
+// Carbon exposing a function for C++:
+package Geometry api;
+import Cpp library "circle.h";
+import Math;
+
+fn WriteTotalArea(circles: Slice(Cpp.Circle)) {
+  var area: f32 = 0;
+  for (c: Cpp.Circle in circles) {
+    area += Math.Pi * c.r * c.r;
   }
-  Console.Print("Total: ", sum, "\n");
+  Console.WriteLine("Total area: {0}", area);
+}
+
+// C++ calling Carbon:
+#include <vector>
+#include "circle.h"
+#include "geometry.carbon.h"
+
+auto main(int argc, char** argv) -> int {
+  std::vector<Circle> circles = {{1.0}, {2.0}};
+  // Carbon's `Slice` supports implicit construction from `std::vector`,
+  // similar to `std::span`.
+  Geometry::WriteTotalArea(circles);
+  return 0;
 }
 ```

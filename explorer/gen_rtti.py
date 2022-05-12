@@ -57,6 +57,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import enum
 import re
 import sys
+from typing import Dict, List, Optional, Tuple
 
 
 class Class:
@@ -82,50 +83,55 @@ class Class:
         indexed by their IDs.
     """
 
-    Kind = enum.Enum("Kind", "ROOT ABSTRACT CONCRETE")
+    class Kind(enum.Enum):
+        ROOT = enum.auto()
+        ABSTRACT = enum.auto()
+        CONCRETE = enum.auto()
 
-    def __init__(self, name, kind, parent):
+    def __init__(
+        self, name: str, kind: Kind, parent: Optional["Class"]
+    ) -> None:
         self.name = name
         self.kind = kind
 
         assert (parent is None) == (kind == Class.Kind.ROOT)
-        if parent is None:
-            self.ancestors = []
-        else:
+        self.ancestors: List[Class] = []
+        if parent is not None:
             self.ancestors = parent.ancestors + [parent]
 
-        if self.kind == Class.Kind.ROOT:
-            self.leaves = []
-            self.id_range = None
-        elif self.kind == Class.Kind.ABSTRACT:
-            self.id_range = None
+        if self.kind == Class.Kind.CONCRETE:
+            self.id: Optional[int] = None
         else:
-            self.id = None
+            self.id_range: Optional[Tuple[int, int]] = None
+            if self.kind == Class.Kind.ROOT:
+                self.leaves: List[Class] = []
 
         if self.kind != Class.Kind.CONCRETE:
-            self._children = []
+            self._children: List[Class] = []
 
         if parent:
             parent._children.append(self)
 
-    def Parent(self):
+    def Parent(self) -> "Class":
         """Returns this Class's parent."""
         return self.ancestors[-1]
 
-    def Root(self):
+    def Root(self) -> "Class":
         """Returns the root Class of this hierarchy."""
         if self.kind == Class.Kind.ROOT:
             return self
         else:
             return self.ancestors[0]
 
-    def _RegisterLeaf(self, leaf):
+    def _RegisterLeaf(self, leaf: "Class") -> None:
         """Records that `leaf` is derived from self.
 
         Also recursively updates the parent of self. leaf.id must already be
         populated, and leaves must be registered in order of ID. This operation
-        is idempotent."""
+        is idempotent.
+        """
         already_visited = False
+        assert leaf.id is not None
         if self.kind == Class.Kind.ROOT:
             if leaf.id == len(self.leaves):
                 self.leaves.append(leaf)
@@ -151,7 +157,7 @@ class Class:
             if self.kind != Class.Kind.ROOT:
                 self.Parent()._RegisterLeaf(leaf)
 
-    def Finalize(self):
+    def Finalize(self) -> None:
         """Populates additional attributes for `self` and derived Classes.
 
         Each Class can only be finalized once, after which no additional Classes
@@ -173,12 +179,12 @@ _LINE_PATTERN = r"""(?P<prefix> \w*) \s*
                  ;$"""
 
 
-def main():
+def main() -> None:
     input_filename = sys.argv[1]
     with open(input_filename) as file:
         lines = file.readlines()
 
-    classes = dict()
+    classes: Dict[str, Class] = {}
     for line_num, line in enumerate(lines, 1):
         if line.startswith("#") or line.strip() == "":
             continue
@@ -220,17 +226,16 @@ def main():
         if node.kind == Class.Kind.ROOT:
             node.Finalize()
 
-    print(f"// Generated from {input_filename} by" + " explorer/gen_rtti.py\n")
-    guard_macro = (
-        input_filename.upper().translate(str.maketrans({"/": "_", ".": "_"}))
-        + "_"
-    )
+    print(f"// Generated from {input_filename} by explorer/gen_rtti.py\n")
+    trans_table = str.maketrans({"/": "_", ".": "_"})
+    guard_macro = input_filename.upper().translate(trans_table) + "_"
     print(f"#ifndef {guard_macro}")
     print(f"#define {guard_macro}")
     print("\nnamespace Carbon {\n")
 
     for node in classes.values():
         if node.kind != Class.Kind.CONCRETE:
+            assert node.id_range is not None
             ids = range(node.id_range[0], node.id_range[1])
             print(f"enum class {node.name}Kind {{")
             for id in ids:
@@ -243,6 +248,7 @@ def main():
                 + " kind) {"
             )
             if node.kind == Class.Kind.ABSTRACT:
+                assert node.id_range is not None
                 if node.id_range[0] == node.id_range[1]:
                     print("  return false;")
                 else:

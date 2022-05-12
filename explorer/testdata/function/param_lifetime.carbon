@@ -4,7 +4,7 @@
 //
 // RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --trace %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
@@ -20,7 +20,8 @@ fn f(x: i32) -> i32 {
 }
 
 fn Main() -> i32 {
-  var a: i32 = 0; var b: i32 = 1;
+  var a: i32 = 0;
+  var b: i32 = 1;
   f(a);
   b = a;
   return b;

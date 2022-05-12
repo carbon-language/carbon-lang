@@ -7,7 +7,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 
@@ -39,14 +39,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
   switch (statement->kind()) {
     case StatementKind::Return: {
       if (!function.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "return is not within a function body";
       }
       const ReturnTerm& function_return =
           (*function)->declaration->return_term();
       if (function_return.is_auto()) {
         if ((*function)->saw_return_in_auto) {
-          return FATAL_COMPILATION_ERROR(statement->source_loc())
+          return CompilationError(statement->source_loc())
                  << "Only one return is allowed in a function with an `auto` "
                     "return type.";
         }
@@ -55,7 +55,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       auto& ret = cast<Return>(*statement);
       ret.set_function((*function)->declaration);
       if (ret.is_omitted_expression() != function_return.is_omitted()) {
-        return FATAL_COMPILATION_ERROR(ret.source_loc())
+        return CompilationError(ret.source_loc())
                << ret << " should"
                << (function_return.is_omitted() ? " not" : "")
                << " provide a return value, to match the function's signature.";
@@ -64,24 +64,24 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
     }
     case StatementKind::Break:
       if (!loop.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "break is not within a loop body";
       }
       cast<Break>(*statement).set_loop(*loop);
       return Success();
     case StatementKind::Continue:
       if (!loop.has_value()) {
-        return FATAL_COMPILATION_ERROR(statement->source_loc())
+        return CompilationError(statement->source_loc())
                << "continue is not within a loop body";
       }
       cast<Continue>(*statement).set_loop(*loop);
       return Success();
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*statement);
-      RETURN_IF_ERROR(
+      CARBON_RETURN_IF_ERROR(
           ResolveControlFlow(&if_stmt.then_block(), loop, function));
       if (if_stmt.else_block().has_value()) {
-        RETURN_IF_ERROR(
+        CARBON_RETURN_IF_ERROR(
             ResolveControlFlow(*if_stmt.else_block(), loop, function));
       }
       return Success();
@@ -89,25 +89,26 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
     case StatementKind::Block: {
       auto& block = cast<Block>(*statement);
       for (auto* block_statement : block.statements()) {
-        RETURN_IF_ERROR(ResolveControlFlow(block_statement, loop, function));
+        CARBON_RETURN_IF_ERROR(
+            ResolveControlFlow(block_statement, loop, function));
       }
       return Success();
     }
     case StatementKind::While:
-      RETURN_IF_ERROR(ResolveControlFlow(&cast<While>(*statement).body(),
-                                         statement, function));
+      CARBON_RETURN_IF_ERROR(ResolveControlFlow(&cast<While>(*statement).body(),
+                                                statement, function));
       return Success();
     case StatementKind::Match: {
       auto& match = cast<Match>(*statement);
       for (Match::Clause& clause : match.clauses()) {
-        RETURN_IF_ERROR(
+        CARBON_RETURN_IF_ERROR(
             ResolveControlFlow(&clause.statement(), loop, function));
       }
       return Success();
     }
     case StatementKind::Continuation:
-      RETURN_IF_ERROR(ResolveControlFlow(&cast<Continuation>(*statement).body(),
-                                         std::nullopt, std::nullopt));
+      CARBON_RETURN_IF_ERROR(ResolveControlFlow(
+          &cast<Continuation>(*statement).body(), std::nullopt, std::nullopt));
       return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
@@ -124,7 +125,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       auto& function = cast<FunctionDeclaration>(*declaration);
       if (function.body().has_value()) {
         FunctionData data = {.declaration = &function};
-        RETURN_IF_ERROR(
+        CARBON_RETURN_IF_ERROR(
             ResolveControlFlow(*function.body(), std::nullopt, &data));
       }
       break;
@@ -132,26 +133,27 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : class_decl.members()) {
-        RETURN_IF_ERROR(ResolveControlFlow(member));
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
     }
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
-        RETURN_IF_ERROR(ResolveControlFlow(member));
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : impl_decl.members()) {
-        RETURN_IF_ERROR(ResolveControlFlow(member));
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
       break;
     }
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::SelfDeclaration:
       // do nothing
       break;
   }
@@ -160,7 +162,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
 
 auto ResolveControlFlow(AST& ast) -> ErrorOr<Success> {
   for (auto declaration : ast.declarations) {
-    RETURN_IF_ERROR(ResolveControlFlow(declaration));
+    CARBON_RETURN_IF_ERROR(ResolveControlFlow(declaration));
   }
   return Success();
 }

@@ -2,18 +2,26 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_context.carbon:17: Cannot assign to rvalue 'c'
+// CHECK: result: 0
 
 package ExplorerTest api;
 
+class Point {
+  // Allowed: `Self` here means `Point`.
+  fn Origin() -> Self {
+    return {.x = 0, .y = 0};
+  }
+
+  var x: i32;
+  var y: i32;
+}
+
 fn Main() -> i32 {
-  let (var a: auto, b: auto, c:auto, d: auto) = (1, 2, 3, 4);
-  a = 0;
-  c = 0; // should fail
-  return 0;
+  var p: Point = Point.Origin();
+  return p.x;
 }

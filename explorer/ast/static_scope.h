@@ -14,9 +14,9 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/ast_node.h"
-#include "explorer/ast/source_location.h"
 #include "explorer/ast/value_category.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {

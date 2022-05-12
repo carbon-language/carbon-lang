@@ -8,7 +8,7 @@
 #include <optional>
 
 #include "explorer/common/arena.h"
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
@@ -26,8 +26,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    return FATAL_COMPILATION_ERROR(source_loc)
-           << "Unknown intrinsic '" << name << "'";
+    return CompilationError(source_loc) << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }
@@ -131,7 +130,8 @@ void Expression::Print(llvm::raw_ostream& out) const {
               << *op.arguments()[1];
           break;
         default:
-          FATAL() << "Unexpected argument count: " << op.arguments().size();
+          CARBON_FATAL() << "Unexpected argument count: "
+                         << op.arguments().size();
       }
       out << ")";
       break;
@@ -161,9 +161,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(*this);
-      out << "if " << *if_expr.condition() << " then "
-          << *if_expr.then_expression() << " else "
-          << *if_expr.else_expression();
+      out << "if " << if_expr.condition() << " then "
+          << if_expr.then_expression() << " else " << if_expr.else_expression();
+      break;
+    }
+    case ExpressionKind::InstantiateImpl: {
+      const auto& inst_impl = cast<InstantiateImpl>(*this);
+      out << "instantiate " << *inst_impl.generic_impl();
       break;
     }
     case ExpressionKind::UnimplementedExpression: {
@@ -239,6 +243,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
+    case ExpressionKind::InstantiateImpl:
       out << "...";
       break;
   }

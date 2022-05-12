@@ -73,6 +73,11 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << ";\n";
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      out << "Self";
+      break;
+    }
   }
 }
 
@@ -80,7 +85,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
-      out << "interface" << iface_decl.name();
+      out << "interface " << iface_decl.name();
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -117,6 +122,11 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "var " << var.binding();
       break;
     }
+
+    case DeclarationKind::SelfDeclaration: {
+      out << "Self";
+      break;
+    }
   }
 }
 
@@ -134,6 +144,8 @@ auto GetName(const Declaration& declaration) -> std::optional<std::string> {
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::ImplDeclaration:
       return std::nullopt;
+    case DeclarationKind::SelfDeclaration:
+      return cast<SelfDeclaration>(declaration).name();
   }
 }
 
@@ -151,7 +163,7 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
       out << "-> auto";
       return;
     case ReturnKind::Expression:
-      CHECK(type_expression_.has_value());
+      CARBON_CHECK(type_expression_.has_value());
       out << "-> " << **type_expression_;
       return;
   }
@@ -176,7 +188,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
       case AstNodeKind::BindingPattern: {
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(*param);
         if (me_pattern.has_value() || bp->name() != "me") {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
         me_pattern = bp;
@@ -186,14 +198,14 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
         Nonnull<AddrBindingPattern*> abp = &cast<AddrBindingPattern>(*param);
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(abp->binding());
         if (me_pattern.has_value() || bp->name() != "me") {
-          return FATAL_COMPILATION_ERROR(source_loc)
+          return CompilationError(source_loc)
                  << "illegal binding pattern in implicit parameter list";
         }
         me_pattern = abp;
         break;
       }
       default:
-        return FATAL_COMPILATION_ERROR(source_loc)
+        return CompilationError(source_loc)
                << "illegal AST node in implicit parameter list";
     }
   }
@@ -220,6 +232,29 @@ void FunctionDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   } else {
     out << ";\n";
   }
+}
+
+auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                             ImplKind kind, Nonnull<Expression*> impl_type,
+                             Nonnull<Expression*> interface,
+                             std::vector<Nonnull<AstNode*>> deduced_params,
+                             std::vector<Nonnull<Declaration*>> members)
+    -> ErrorOr<Nonnull<ImplDeclaration*>> {
+  std::vector<Nonnull<GenericBinding*>> resolved_params;
+  for (Nonnull<AstNode*> param : deduced_params) {
+    switch (param->kind()) {
+      case AstNodeKind::GenericBinding:
+        resolved_params.push_back(&cast<GenericBinding>(*param));
+        break;
+      default:
+        return CompilationError(source_loc)
+               << "illegal AST node in implicit parameter list of impl";
+    }
+  }
+  Nonnull<SelfDeclaration*> self_decl =
+      arena->New<SelfDeclaration>(impl_type->source_loc());
+  return arena->New<ImplDeclaration>(source_loc, kind, impl_type, self_decl,
+                                     interface, resolved_params, members);
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {

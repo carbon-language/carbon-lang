@@ -17,46 +17,38 @@ class MockDiagnosticConsumer : public DiagnosticConsumer {
               (override));
 };
 
-// Matcher `DiagnosticAt` matches the location of a diagnostic.
-MATCHER_P2(DiagnosticAt, line, column, "") {
+MATCHER_P(IsDiagnosticMessage, matcher, "") {
   const Diagnostic& diag = arg;
-  const Diagnostic::Location& loc = diag.location;
-  if (loc.line_number != line) {
-    *result_listener << "\nExpected diagnostic on line " << line
-                     << " but diagnostic is on line " << loc.line_number << ".";
-    return false;
-  }
-  if (loc.column_number != column) {
-    *result_listener << "\nExpected diagnostic on column " << column
-                     << " but diagnostic is on column " << loc.column_number
-                     << ".";
-    return false;
-  }
-  return true;
+  return testing::ExplainMatchResult(matcher, diag.format_fn(diag),
+                                     result_listener);
 }
 
-inline auto DiagnosticLevel(Diagnostic::Level level) -> auto {
-  return testing::Field(&Diagnostic::level, level);
-}
-
-template <typename Matcher>
-auto DiagnosticMessage(Matcher&& inner_matcher) -> auto {
-  return testing::Field(&Diagnostic::message,
-                        std::forward<Matcher&&>(inner_matcher));
-}
-
-template <typename Matcher>
-auto DiagnosticShortName(Matcher&& inner_matcher) -> auto {
-  return testing::Field(&Diagnostic::short_name,
-                        std::forward<Matcher&&>(inner_matcher));
+inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
+                         testing::Matcher<DiagnosticLevel> level,
+                         testing::Matcher<int> line_number,
+                         testing::Matcher<int> column_number,
+                         testing::Matcher<std::string> message) {
+  return testing::AllOf(
+      testing::Field("kind", &Diagnostic::kind, kind),
+      testing::Field("level", &Diagnostic::level, level),
+      testing::Field(
+          &Diagnostic::location,
+          testing::AllOf(
+              testing::Field("line_number", &DiagnosticLocation::line_number,
+                             line_number),
+              testing::Field("column_number",
+                             &DiagnosticLocation::column_number,
+                             column_number))),
+      IsDiagnosticMessage(message));
 }
 
 }  // namespace Carbon::Testing
 
 namespace Carbon {
 
-// Printing helper for tests.
+// Printing helpers for tests.
 void PrintTo(const Diagnostic& diagnostic, std::ostream* os);
+void PrintTo(DiagnosticLevel level, std::ostream* os);
 
 }  // namespace Carbon
 

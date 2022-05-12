@@ -61,6 +61,7 @@ EXTERNAL             "external"
 FALSE                "false"
 FN                   "fn"
 FN_TYPE              "__Fn"
+FORALL               "forall"
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -82,6 +83,7 @@ RIGHT_CURLY_BRACE    "}"
 RIGHT_PARENTHESIS    ")"
 RIGHT_SQUARE_BRACKET "]"
 RUN                  "__run"
+SELF                 "Self"
 SEMICOLON            ";"
 SLASH                "/"
 STRING               "String"
@@ -164,6 +166,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {FALSE}               { return SIMPLE_TOKEN(FALSE);               }
 {FN_TYPE}             { return SIMPLE_TOKEN(FN_TYPE);             }
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
+{FORALL}              { return SIMPLE_TOKEN(FORALL);              }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
@@ -182,6 +185,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {PLUS}                { return SIMPLE_TOKEN(PLUS);                }
 {RETURN}              { return SIMPLE_TOKEN(RETURN);              }
 {RUN}                 { return SIMPLE_TOKEN(RUN);                 }
+{SELF}                { return SIMPLE_TOKEN(SELF);                }
 {SEMICOLON}           { return SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return SIMPLE_TOKEN(SLASH);               }
 {STRING}              { return SIMPLE_TOKEN(STRING);              }
@@ -281,7 +285,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {string_literal} {
   llvm::StringRef str(yytext);
-  CHECK(str.consume_front("\"") && str.consume_back("\""));
+  CARBON_CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
     return context.RecordSyntaxError(

@@ -8,18 +8,15 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import subprocess
+import os
 import sys
 
-import scripts_utils  # type: ignore
+import scripts_utils
 
 
 def main() -> None:
-    files = sys.argv[1:]
-    if not files:
-        return
     buildifier = scripts_utils.get_release(scripts_utils.Release.BUILDIFIER)
-    subprocess.check_call([buildifier] + files)
+    os.execv(buildifier, [buildifier] + sys.argv[1:])
 
 
 if __name__ == "__main__":

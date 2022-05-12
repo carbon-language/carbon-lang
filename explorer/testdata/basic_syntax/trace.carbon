@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} --trace %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 //
 // A lot of output is elided: this is only checking for a few things for simple
-// sanity checking on --trace output.
+// sanity checking on --parser_debug --trace_file=- output.
 //
 // NOAUTOUPDATE
 // CHECK: ********** source program **********

@@ -61,6 +61,7 @@ The following words are interpreted as keywords:
 -   `is`
 -   `let`
 -   `library`
+-   `like`
 -   `match`
 -   `namespace`
 -   `not`

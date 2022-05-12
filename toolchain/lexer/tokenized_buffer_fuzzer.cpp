@@ -39,11 +39,11 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   // token stream.
   for (TokenizedBuffer::Token token : buffer.tokens()) {
     int line_number = buffer.GetLineNumber(token);
-    CHECK(line_number > 0) << "Invalid line number!";
-    CHECK(line_number < INT_MAX) << "Invalid line number!";
+    CARBON_CHECK(line_number > 0) << "Invalid line number!";
+    CARBON_CHECK(line_number < INT_MAX) << "Invalid line number!";
     int column_number = buffer.GetColumnNumber(token);
-    CHECK(column_number > 0) << "Invalid line number!";
-    CHECK(column_number < INT_MAX) << "Invalid line number!";
+    CARBON_CHECK(column_number > 0) << "Invalid line number!";
+    CARBON_CHECK(column_number < INT_MAX) << "Invalid line number!";
   }
 
   return 0;

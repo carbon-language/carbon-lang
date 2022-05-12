@@ -13,6 +13,7 @@ cc_library(
     textual_hdrs = ["token_registry.def"],
     deps = [
         "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -23,7 +24,8 @@ cc_test(
     srcs = ["token_kind_test.cpp"],
     deps = [
         ":token_kind",
-        "@com_google_googletest//:gtest_main",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -90,9 +92,10 @@ cc_test(
         ":numeric_literal",
         ":test_helpers",
         "//common:check",
+        "//common:gtest_main",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -141,9 +144,10 @@ cc_test(
         ":string_literal",
         ":test_helpers",
         "//common:check",
+        "//common:gtest_main",
         "//common:ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -200,10 +204,11 @@ cc_test(
     deps = [
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
+        "//common:gtest_main",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

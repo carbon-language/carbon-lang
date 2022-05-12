@@ -4,15 +4,15 @@
 //
 // RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_local_assign.carbon:16: Cannot assign to rvalue 'x'
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
   let x: auto = 10;
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_local_assign.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
   x = 0;
   return 0;
 }

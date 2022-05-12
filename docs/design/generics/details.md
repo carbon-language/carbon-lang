@@ -61,7 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
     -   [Implied constraints](#implied-constraints)
         -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
-    -   [Open question: referencing names in the interface being defined](#open-question-referencing-names-in-the-interface-being-defined)
+    -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
         -   [`observe` declarations](#observe-declarations)
 -   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
@@ -73,6 +73,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
+    -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
 -   [Parameterized impls](#parameterized-impls)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
@@ -92,9 +93,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`final` impls](#final-impls)
         -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
     -   [Comparison to Rust](#comparison-to-rust)
+-   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
+    -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
+    -   [Declaring implementations](#declaring-implementations)
+    -   [Matching and agreeing](#matching-and-agreeing)
+    -   [Declaration examples](#declaration-examples)
+    -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
+    -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
 -   [Interface members with definitions](#interface-members-with-definitions)
     -   [Interface defaults](#interface-defaults)
     -   [`final` members](#final-members)
+-   [Interface requiring other interfaces revisited](#interface-requiring-other-interfaces-revisited)
+    -   [Requirements with `where` constraints](#requirements-with-where-constraints)
+-   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
+    -   [Observing interface requirements](#observing-interface-requirements)
+    -   [Observing blanket impls](#observing-blanket-impls)
+-   [Operator overloading](#operator-overloading)
+    -   [Binary operators](#binary-operators)
+    -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
+-   [Parameterized types](#parameterized-types)
+    -   [Specialization](#specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
         -   [Runtime type parameters](#runtime-type-parameters)
@@ -102,17 +120,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Abstract return types](#abstract-return-types)
     -   [Evolution](#evolution)
     -   [Testing](#testing)
-    -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types and higher-ranked types](#generic-associated-types-and-higher-ranked-types)
         -   [Generic associated types](#generic-associated-types)
         -   [Higher-ranked types](#higher-ranked-types)
     -   [Field requirements](#field-requirements)
-    -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
     -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
-    -   [Separate declaration and definition of impl](#separate-declaration-and-definition-of-impl)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -1180,6 +1195,9 @@ def DoHashAndEquals[T:! Hashable](x: T) {
 
 **Comparison with other languages:**
 [This feature is called "Supertraits" in Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-supertraits-to-require-one-traits-functionality-within-another-trait).
+
+**Note:** The design for this feature is continued in
+[a later section](#interface-requiring-other-interfaces-revisited).
 
 ### Interface extension
 
@@ -2944,10 +2962,10 @@ fn NumDistinct[T:! Type where HashSet(.Self) is Type]
 This has the same advantages over repeating the constraints on `HashSet`
 arguments in the type of `T` as the general implied constraints above.
 
-### Open question: referencing names in the interface being defined
+### Referencing names in the interface being defined
 
-Should the constraint in a `where` clause be required to only reference earlier
-names from this scope, as in this example?
+The constraint in a `where` clause is required to only reference earlier names
+from this scope, as in this example:
 
 ```
 interface Graph {
@@ -2955,22 +2973,6 @@ interface Graph {
   let V: Vert where .E == E and .Self == E.V;
 }
 ```
-
-The downside is that if you could reference later names, there is a more
-pleasingly symmetric formulation of those same constraints:
-
-```
-interface Graph {
-  let E: Edge where .V == V;
-  let V: Vert where .E == E;
-}
-```
-
-**TODO:** Revisit this question once issue
-[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472)
-and proposal
-[#875: Principle: information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
-are resolved.
 
 ### Manual type equality
 
@@ -3406,7 +3408,7 @@ Knowing a type is sized is a precondition to declaring variables of that type,
 taking values of that type as parameters, returning values of that type, and
 defining arrays of that type. Users will not typically need to express the
 `Sized` constraint explicitly, though, since it will usually be a dependency of
-some other constraint the type will need such as `Movable`.
+some other constraint the type will need such as `Movable` or `Concrete`.
 
 **Note:** The compiler will determine which types are "sized", this is not
 something types will implement explicitly like ordinary interfaces.
@@ -3486,13 +3488,43 @@ fn SortByAddress[T:! Type](v: Vector(T*)*) { ... }
 In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
-**Note:** To achieve this goal, the user will not even be allowed to destroy a
-value of type `T` in this case.
-
 **Open question:** Should `TypeId` be
 [implemented externally](terminology.md#external-impl) for types to avoid name
 pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
+
+### Destructor constraints
+
+There are four type-of-types related to
+[the destructors of types](/docs/design/classes.md#destructors):
+
+-   `Concrete` types may be local or member variables.
+-   `Deletable` types may be safely deallocated by pointer using the `Delete`
+    method on the `Allocator` used to allocate it.
+-   `Destructible` types have a destructor and may be deallocated by pointer
+    using the `UnsafeDelete` method on the correct `Allocator`, but it may be
+    unsafe. The concerning case is deleting a pointer to a derived class through
+    a pointer to its base class without a virtual destructor.
+-   `TrivialDestructor` types have empty destructors. This type-of-type may be
+    used with [specialization](#lookup-resolution-and-specialization) to unlock
+    specific optimizations.
+
+**Note:** The names `Deletable` and `Destructible` are
+[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
+conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
+
+The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
+`Destructible`. Combinations of them may be formed using
+[the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
+a generic function that both instantiates and deletes values of a type `T` would
+require `T` implement `Concrete & Deletable`.
+
+Types are forbidden from explicitly implementing these type-of-types directly.
+Instead they use
+[`destructor` declarations in their class definition](/docs/design/classes.md#destructors)
+and the compiler uses them to determine which of these type-of-types are
+implemented.
 
 ## Generic `let`
 
@@ -3729,12 +3761,6 @@ types, possibly with different implementations.
 
 In general, `X(T).F` can only mean one thing, regardless of `T`.
 
-**Concern:** The conditional conformance feature makes the question "is this
-interface implemented for this type" undecidable in general.
-[This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
-The acyclic restriction may eliminate this issue, otherwise we will likely need
-some heuristic like a limit on how many steps of recursion are allowed.
-
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
 but bans cases where there could be ambiguity from overlap.
@@ -3935,7 +3961,8 @@ Since at most one library can define impls with a given type structure, all
 impls with a given type structure must be in the same library. Furthermore by
 the [impl declaration access rules](#access), they will be defined in the API
 file for the library if they could match any query from outside the library. If
-there is more than one impl with that type structure, they must be written
+there is more than one impl with that type structure, they must be
+[defined](#implementing-interfaces) or [declared](#declaring-implementations)
 together in a prioritization block. Once a type structure is selected for a
 query, the first impl in the prioritization block that matches is selected.
 
@@ -4284,12 +4311,329 @@ differences between the Carbon and Rust plans:
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
 
+## Forward declarations and cyclic references
+
+Interfaces, named constraints, and their implementations may be forward declared
+and then later defined. This is needed to allow cyclic references, for example
+when declaring the edges and nodes of a graph. It is also a tool that may be
+used to make code more readable.
+
+The [interface](#interfaces), [named constraint](#named-constraints), and
+[implementation](#implementing-interfaces) sections describe the syntax for
+their _definition_, which consists of a declaration followed by a body contained
+in curly braces `{` ... `}`. A _forward declaration_ is a declaration followed
+by a semicolon `;`. A forward declaration is a promise that the entity being
+declared will be defined later. Between the first declaration of an entity,
+which may be in a forward declaration or the first part of a definition, and the
+end of the definition the interface or implementation is called _incomplete_.
+There are additional restrictions on how the name of an incomplete entity may be
+used.
+
+### Declaring interfaces and named constraints
+
+The declaration for an interface or named constraint consists of:
+
+-   an optional access-control keyword like `private`,
+-   the keyword introducer `interface`, `constraint`, or `template constraint`,
+-   the name of the interface or constraint, and
+-   the parameter list, if any.
+
+The name of an interface or constraint can not be used until its first
+declaration is complete. In particular, it is illegal to use the name of the
+interface in its parameter list. There is a
+[workaround](#interfaces-with-parameters-constrained-by-the-same-interface) for
+the use cases when this would come up.
+
+An expression forming a constraint, such as `C & D`, is incomplete if any of the
+interfaces or constraints used in the expression are incomplete. A constraint
+expression using a [`where` clause](#where-constraints), like `C where ...`, is
+invalid if `C` is incomplete, since there is no way to look up member names of
+`C` that appear after `where`.
+
+An interface or named constraint may be forward declared subject to these rules:
+
+-   The definition must be in the same file as the declaration.
+-   Only the first declaration may have an access-control keyword.
+-   An incomplete interface or named constraint may be used as constraints in
+    declarations of types, functions, interfaces, or named constraints. This
+    includes an `impl as` or `extends` declaration inside an interface or named
+    constraint, but excludes specifying the values for associated constants
+    because that would involve name lookup into the incomplete constraint.
+-   An attempt to define the body of a generic function using an incomplete
+    interface or named constraint is illegal.
+-   An attempt to call a generic function using an incomplete interface or named
+    constraint in its signature is illegal.
+-   Any name lookup into an incomplete interface or named constraint is an
+    error. For example, it is illegal to attempt to access a member of an
+    interface using `MyInterface.MemberName` or constrain a member using a
+    `where` clause.
+
+### Declaring implementations
+
+The declaration of an interface implementation consists of:
+
+-   optional modifier keywords `final`, `external`,
+-   the keyword introducer `impl`,
+-   an optional deduced parameter list in square brackets `[`...`]`,
+-   a type, including an optional parameter pattern,
+-   the keyword `as`, and
+-   a [type-of-type](#type-of-types), including an optional
+    [parameter pattern](#parameterized-interfaces) and
+    [`where` clause](#where-constraints) assigning
+    [associated constants](#associated-constants) and
+    [associated types](#associated-types).
+
+An implementation of an interface for a type may be forward declared subject to
+these rules:
+
+-   The definition must be in the same library as the declaration. They must
+    either be in the same file, or the declaration can be in the API file and
+    the definition in an impl file. **Future work:** Carbon may require the
+    definition of [parameterized impls](#parameterized-impls) to be in the API
+    file, to support separate compilation.
+-   If there is both a forward declaration and a definition, only the first
+    declaration must specify the assignment of associated constants with a
+    `where` clause. Later declarations may omit the `where` clause by writing
+    `where _` instead.
+-   You may forward declare an implementation of a defined interface but not an
+    incomplete interface. This allows the assignment of associated constants in
+    the `impl` declaration to be verified. An impl forward declaration may be
+    for any declared type, whether it is incomplete or defined. Note that this
+    does not apply to `impl as` declarations in an interface or named constraint
+    definition, as those are considered interface requirements not forward
+    declarations.
+-   Every internal implementation must be declared (or defined) inside the scope
+    of the class definition. It may also be declared before the class definition
+    or defined afterwards. Note that the class itself is incomplete in the scope
+    of the class definition, but member function bodies defined inline are
+    processed
+    [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
+-   For [coherence](goals.md#coherence), we require that any impl that matches
+    an [impl lookup](#impl-lookup) query in the same file, must be declared
+    before the query. This can be done with a definition or a forward
+    declaration.
+
+### Matching and agreeing
+
+Carbon needs to determine if two declarations match in order to say which
+definition a forward declaration corresponds to and to verify that nothing is
+defined twice. Declarations that match must also agree, meaning they are
+consistent with each other.
+
+Interface and named constraint declarations match if their names are the same
+after name and alias resolution. To agree:
+
+-   The introducer keyword or keywords much be the same.
+-   The types and order of parameters in the parameter list, if any, must match.
+    The parameter names may be omitted, but if they are included in both
+    declarations, they must match.
+-   Types agree if they correspond to the same expression tree, after name and
+    alias resolution and canonicalization of parentheses. Note that no other
+    evaluation of type expressions is performed.
+
+Interface implementation declarations match if the type and interface
+expressions match:
+
+-   If the type part is omitted, it is rewritten to `Self` in the context of the
+    declaration.
+-   `Self` is rewritted to its meaning in the scope it is used. In a class
+    scope, this should match the type name and optional parameter expression
+    after `class`. So in `class MyClass extends MyBase { ... }`, `Self` is
+    rewritten to `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is
+    rewritten to `Vector(T:! Movable)`.
+-   Types match if they have the same name after name and alias resolution and
+    the same parameters, or are the same type parameter.
+-   Interfaces match if they have the same name after name and alias resolution
+    and the same parameters. Note that a named constraint that is equivalent to
+    an interface, as in `constraint Equivalent { extends MyInterface; }`, is not
+    considered to match.
+
+For implementations to agree:
+
+-   The presence of modifier keywords such as `external` before `impl` must
+    match between a forward declaration and definition.
+-   If either declaration includes a `where` clause, they must both include one.
+    If neither uses `where _`, they must match in that they produce the
+    associated constants with the same values considered separately.
+
+### Declaration examples
+
+```
+// Forward declaration of interfaces
+interface Interface1;
+interface Interface2;
+interface Interface3;
+interface Interface4;
+interface Interface5;
+interface Interface6;
+
+// Forward declaration of class type
+class MyClass;
+
+// ❌ Illegal: Can't declare implementation of incomplete
+//             interface.
+// external impl MyClass as Interface1;
+
+// Definition of interfaces that were previously declared
+interface Interface1 {
+  let T1:! Type;
+}
+interface Interface2 {
+  let T2:! Type;
+}
+interface Interface3 {
+  let T3:! Type;
+}
+interface Interface4 {
+  let T4:! Type;
+}
+
+// Forward declaration of external implementations
+external impl MyClass as Interface1 where .T1 = i32;
+external impl MyClass as Interface2 where .T2 = bool;
+
+// Forward declaration of an internal implementation
+impl MyClass as Interface3 where .T3 = f32;
+impl MyClass as Interface4 where .T4 = String;
+
+interface Interface5 {
+  let T5:! Type;
+}
+interface Interface6 {
+  let T6:! Type;
+}
+
+// Definition of the previously declared class type
+class MyClass {
+  // Definition of previously declared external impl.
+  // Note: no need to repeat assignments to associated
+  // constants.
+  external impl as Interface1 where _ { }
+
+  // Definition of previously declared internal impl.
+  // Note: allowed even though `MyClass` is incomplete.
+  // Note: allowed but not required to repeat `where`
+  // clause.
+  impl as Interface3 where .T3 = f32 { }
+
+  // Redeclaration of previously declared internal impl.
+  // Every internal implementation must be declared in
+  // the class definition.
+  impl as Interface4 where _;
+
+  // Forward declaration of external implementation.
+  external impl MyClass as Interface5 where .T5 = u64;
+
+  // Forward declaration of internal implementation.
+  impl MyClass as Interface6 where .T6 = u8;
+}
+
+// It would be legal to move the following definitions
+// from the API file to the implementation file for
+// this library.
+
+// Definition of previously declared external impls.
+external impl MyClass as Interface2 where _ { }
+external impl MyClass as Interface5 where _ { }
+
+// Definition of previously declared internal impls.
+impl MyClass as Interface4 where _ { }
+impl MyClass as Interface6 where _ { }
+```
+
+### Example of declaring interfaces with cyclic references
+
+In this example, `Node` has an `EdgeType` associated type that is constrained to
+implement `Edge`, and `Edge` has a `NodeType` associated type that is
+constrained to implement `Node`. Furthermore, the `NodeType` of an `EdgeType` is
+the original type, and the other way around. This is accomplished by naming and
+then forward declaring the constraints that can't be stated directly:
+
+```
+// Forward declare interfaces used in
+// parameter lists of constraints.
+interface Edge;
+interface Node;
+
+// Forward declare named constraints used in
+// interface definitions.
+private constraint EdgeFor(N:! Node);
+private constraint NodeFor(E:! Edge);
+
+// Define interfaces using named constraints.
+interface Edge {
+  let NodeType:! NodeFor(Self);
+  fn Head[me: Self]() -> NodeType;
+}
+interface Node {
+  let EdgeType:! EdgeFor(Self);
+  fn Edges[me: Self]() -> Vector(EdgeType);
+}
+
+// Now that the interfaces are defined, can
+// refer to members of the interface, so it is
+// now legal to define the named constraints.
+constraint EdgeFor(N:! Node) {
+  extends Edge where .NodeType == N;
+}
+constraint NodeFor(E:! Edge) {
+  extends Node where .EdgeType == E;
+}
+```
+
+### Interfaces with parameters constrained by the same interface
+
+To work around
+[the restriction about not being able to name an interface in its parameter list](#declaring-interfaces-and-named-constraints),
+instead include that requirement in the body of the interface.
+
+```
+// Want to require that `T` satisfies `CommonType(Self)`,
+// but that can't be done in the parameter list.
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // Instead add the requirement inside the definition.
+  impl T as CommonType(Self);
+}
+```
+
+Note however that `CommonType` is still incomplete inside its definition, so no
+constraints on members of `CommonType` are allowed.
+
+```
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // ❌ Illegal: `CommonType` is incomplete
+  impl T as CommonType(Self) where .Result == Result;
+}
+```
+
+Instead, a forward-declared named constraint can be used in place of the
+constraint that can only be defined later. This is
+[the same strategy used to work around cyclic references](#example-of-declaring-interfaces-with-cyclic-references).
+
+```
+private constraint CommonTypeResult(T:! Type, R:! Type);
+
+interface CommonType(T:! Type) {
+  let Result:! Type;
+  // ✅ Allowed: `CommonTypeResult` is incomplete, but
+  //             no members are accessed.
+  impl T as CommonTypeResult(Self, Result);
+}
+
+constraint CommonTypeResult(T:! Type, R:! Type) {
+  extends CommonType(T) where .Result == R;
+}
+```
+
 ## Interface members with definitions
 
 Interfaces may provide definitions for members, such as a function body for an
 associated function or method or a value for an associated constant. If these
-definitions may be overridden in implementations, they are called "defaults."
-Otherwise they are called "final members."
+definitions may be overridden in implementations, they are called "defaults" and
+prefixed with the `default` keyword. Otherwise they are called "final members"
+and prefixed with the `final` keyword.
 
 ### Interface defaults
 
@@ -4301,9 +4645,25 @@ interface Vector {
   fn Add[me: Self](b: Self) -> Self;
   fn Scale[me: Self](v: f64) -> Self;
   // Default definition of `Invert` calls `Scale`.
-  fn Invert[me: Self]() -> Self {
+  default fn Invert[me: Self]() -> Self {
     return me.Scale(-1.0);
   }
+}
+```
+
+A default function or method may also be defined out of line, later in the same
+file as the interface definition:
+
+```
+interface Vector {
+  fn Add[me: Self](b: Self) -> Self;
+  fn Scale[me: Self](v: f64) -> Self;
+  default fn Invert[me: Self]() -> Self;
+}
+// `Vector` is considered complete at this point,
+// even though `Vector.Invert` is still incomplete.
+fn Vector.Invert[me: Self]() -> Self {
+  return me.Scale(-1.0);
 }
 ```
 
@@ -4322,7 +4682,7 @@ types, and interface parameters, using the `= <default value>` syntax.
 
 ```
 interface Add(Right:! Type = Self) {
-  let Result:! Type = Self;
+  default let Result:! Type = Self;
   fn DoAdd[me: Self](right: Right) -> Result;
 }
 
@@ -4352,7 +4712,7 @@ More generally, default expressions may reference other associated types or
 ```
 interface Iterator {
   let Element:! Type;
-  let Pointer:! Type = Element*;
+  default let Pointer:! Type = Element*;
 }
 ```
 
@@ -4361,11 +4721,11 @@ interface.
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
+  fn TotalLess[me: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
-  impl PartialOrder {
-    fn PartialLess[me: Self](right: Self) -> Bool {
+  impl as PartialOrder {
+    fn PartialLess[me: Self](right: Self) -> bool {
       return me.TotalLess(right);
     }
   }
@@ -4377,12 +4737,12 @@ instead:
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
-  impl PartialOrder;
+  fn TotalLess[me: Self](right: Self) -> bool;
+  impl as PartialOrder;
 }
 
 external impl [T:! TotalOrder] T as PartialOrder {
-  fn PartialLess[me: Self](right: Self) -> Bool {
+  fn PartialLess[me: Self](right: Self) -> bool {
     return me.TotalLess(right);
   }
 }
@@ -4406,18 +4766,18 @@ overridden in impls.
 
 ```
 interface TotalOrder {
-  fn TotalLess[me: Self](right: Self) -> Bool;
-  final fn TotalGreater[me: Self](right: Self) -> Bool {
+  fn TotalLess[me: Self](right: Self) -> bool;
+  final fn TotalGreater[me: Self](right: Self) -> bool {
     return right.TotalLess(me);
   }
 }
 
 class String {
   impl as TotalOrder {
-    fn TotalLess[me: Self](right: Self) -> Bool { ... }
+    fn TotalLess[me: Self](right: Self) -> bool { ... }
     // ❌ Illegal: May not provide definition of final
     //             method `TotalGreater`.
-    fn TotalGreater[me: Self](right: Self) -> Bool { ... }
+    fn TotalGreater[me: Self](right: Self) -> bool { ... }
   }
 }
 
@@ -4430,6 +4790,20 @@ interface Add(T:! Type = Self) {
 }
 ```
 
+Final members may also be defined out-of-line:
+
+```
+interface TotalOrder {
+  fn TotalLess[me: Self](right: Self) -> bool;
+  final fn TotalGreater[me: Self](right: Self) -> bool;
+}
+// `TotalOrder` is considered complete at this point, even
+// though `TotalOrder.TotalGreater` is not yet defined.
+fn TotalOrder.TotalGreater[me: Self](right: Self) -> bool {
+ return right.TotalLess(me);
+}
+```
+
 There are a few reasons for this feature:
 
 -   When overriding would be inappropriate.
@@ -4439,6 +4813,744 @@ There are a few reasons for this feature:
     [`DynPtr`](#dynamic-types).
 
 Note that this applies to associated entities, not interface parameters.
+
+## Interface requiring other interfaces revisited
+
+Recall that an
+[interface can require another interface be implemented for the type](#interface-requiring-other-interfaces),
+as in:
+
+```
+interface Iterable {
+  impl as Equatable;
+  // ...
+}
+```
+
+This states that the type implementing the interface `Iterable`, which in this
+context is called `Self`, must also implement the interface `Equatable`. As is
+done with [conditional conformance](#conditional-conformance), we allow another
+type to be specified between `impl` and `as` to say some type other than `Self`
+must implement an interface. For example,
+
+```
+interface IntLike {
+  impl i32 as As(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `IntLike`, then `i32` must implement `As(Self)`.
+Similarly,
+
+```
+interface CommonTypeWith(T:! Type) {
+  impl T as CommonTypeWith(Self);
+  // ...
+}
+```
+
+says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
+`CommonTypeWith(Self)`.
+
+The previous description of `impl as` in an interface definition matches the
+behavior of using a default of `Self` when the type between `impl` and `as` is
+omitted. So the previous definition of `interface Iterable` is equivalent to:
+
+```
+interface Iterable {
+  // ...
+  impl Self as Equatable;
+  // Equivalent to: impl as Equatable;
+}
+```
+
+When implementing an interface with an `impl as` requirement, that requirement
+must be satisfied by an implementation in an imported library, an implementation
+somewhere in the same file, or a constraint in the impl declaration.
+Implementing the requiring interface is a promise that the requirement will be
+implemented. This is like a
+[forward declaration of an impl](#declaring-implementations) except that the
+definition can be broader instead of being required to match exactly.
+
+```
+// `Iterable` requires `Equatable`, so there must be some
+// impl of `Equatable` for `Vector(i32)` in this file.
+external impl Vector(i32) as Iterable { ... }
+
+fn RequiresEquatable[T:! Equatable](x: T) { ... }
+fn ProcessVector(v: Vector(i32)) {
+  // ✅ Allowed since `Vector(i32)` is known to
+  // implement `Equatable`.
+  RequiresEquatable(v);
+}
+
+// Satisfies the requirement that `Vector(i32)` must
+// implement `Equatable` since `i32` is `Equatable`.
+external impl Vector(T:! Equatable) as Equatable { ... }
+```
+
+In some cases, the interface's requirement can be trivially satisfied by the
+implementation itself, as in:
+
+```
+impl [T:! Type] T as CommonTypeWith(T) { ... }
+```
+
+Here is an example where the requirement of interface `Iterable` that the type
+implements interface `Equatable` is satisfied by a constraint in the `impl`
+declaration:
+
+```
+class Foo(T:! Type) {}
+// This is allowed because we know that an `impl Foo(T) as Equatable`
+// will exist for all types `T` for which this impl is used, even
+// though there's neither an imported impl nor an impl in this file.
+external impl Foo(T:! Type where Foo(T) is Equatable) as Iterable {}
+```
+
+This might be used to provide an implementation of `Equatable` for types that
+already satisfy the requirement of implementing `Iterable`:
+
+```
+class Bar {}
+external impl Foo(Bar) as Equatable {}
+// Gives `Foo(Bar) is Iterable` using the blanket impl of
+// `Iterable` for `Foo(T)`.
+```
+
+### Requirements with `where` constraints
+
+An interface implementation requirement with a `where` clause is harder to
+satisfy. Consider an interface `B` that has a requirement that interface `A` is
+also implemented.
+
+```
+interface A(T:! Type) {
+  let Result:! Type;
+}
+interface B(T:! Type) {
+  impl as A(T) where .Result == i32;
+}
+```
+
+An implementation of `B` for a set of types can only be valid if there is a
+visible implementation of `A` with the same `T` parameter for those types with
+the `.Result` associated type set to `i32`. That is
+[not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
+though, unless the implementation of `A` can't be specialized, either because it
+is [marked `final`](#final-impls) or is not
+[parameterized](#parameterized-impls). Implementations in other libraries can't
+make `A` be implemented for fewer types, but can cause `.Result` to have a
+different assignment.
+
+## Observing a type implements an interface
+
+An [`observe` declaration](#observe-declarations) can be used to show that two
+types are equal so code can pass type checking without explicitly writing casts,
+without requiring the compiler to do a unbounded search that may not terminate.
+An `observe` declaration can also be used to show that a type implements an
+interface, in cases where the compiler will not work this out for itself.
+
+### Observing interface requirements
+
+One situation where this occurs is when there is a chain of
+[interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
+During the `impl` validation done during type checking, Carbon will only
+consider the interfaces that are direct requirements of the interfaces the type
+is known to implement. An `observe...is` declaration can be used to add an
+interface that is a direct requirement to the set of interfaces whose direct
+requirements will be considered for that type. This allows a developer to
+provide a proof that there is a sequence of requirements that demonstrate that a
+type implements an interface, as in this example:
+
+```
+interface A { }
+interface B { impl as A; }
+interface C { impl as B; }
+interface D { impl as C; }
+
+fn RequiresA[T:! A](x: T);
+fn RequiresC[T:! C](x: T);
+fn RequiresD[T:! D](x: T) {
+  // ✅ Allowed: `D` directly requires `C` to be implemented.
+  RequiresC(x);
+
+  // ❌ Illegal: No direct connection between `D` and `A`.
+  // RequiresA(x);
+
+  // `T` is `D` and `D` directly requires `C` to be
+  // implemented.
+  observe T is C;
+
+  // `T` is `C` and `C` directly requires `B` to be
+  // implemented.
+  observe T is B;
+
+  // ✅ Allowed: `T` is `B` and `B` directly requires
+  //             `A` to be implemented.
+  RequiresA(x);
+}
+```
+
+Note that `observe` statements do not affect the selection of impls during code
+generation. For coherence, the impl used for a (type, interface) pair must
+always be the same, independent of context. The
+[termination rule](#termination-rule) governs when compilation may fail when the
+compiler can't determine the impl to select.
+
+### Observing blanket impls
+
+An `observe...is` declaration can also be used to observe that a type implements
+an interface because there is a [blanket impl](#blanket-impls) in terms of
+requirements a type is already known to satisfy. Without an `observe`
+declaration, Carbon will only use blanket impls that are directly satisfied.
+
+```
+interface A { }
+interface B { }
+interface C { }
+interface D { }
+
+impl [T:! A] T as B { }
+impl [T:! B] T as C { }
+impl [T:! C] T as D { }
+
+fn RequiresD(T:! D)(x: T);
+fn RequiresB(T:! B)(x: T);
+
+fn RequiresA(T:! A)(x: T) {
+  // ✅ Allowed: There is a blanket implementation
+  //             of `B` for types implementing `A`.
+  RequiresB(x);
+
+  // ❌ Illegal: No implementation of `D` for type
+  //             `T` implementing `A`
+  // RequiresD(x);
+
+  // There is a blanket implementation of `B` for
+  // types implementing `A`.
+  observe T is B;
+
+  // There is a blanket implementation of `C` for
+  // types implementing `B`.
+  observe T is C;
+
+  // ✅ Allowed: There is a blanket implementation
+  //             of `D` for types implementing `C`.
+  RequiresD(x);
+}
+```
+
+In the case of an error, a quality Carbon implementation will do a deeper search
+for chains of requirements and blanket impls and suggest `observe` declarations
+that would make the code compile if any solution is found.
+
+## Operator overloading
+
+Operations are overloaded for a type by implementing an interface specific to
+that interface for that type. For example, types implement the `Negatable`
+interface to overload the unary `-` operator:
+
+```
+// Unary `-`.
+interface Negatable {
+  let Result:! Type = Self;
+  fn Negate[me: Self]() -> Result;
+}
+```
+
+Expressions using operators are rewritten into calls to these interface methods.
+For example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
+
+The interfaces and rewrites used for a given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+[Question-for-leads issue #1058](https://github.com/carbon-language/carbon-lang/issues/1058)
+defines the naming scheme for these interfaces.
+
+### Binary operators
+
+Binary operators will have an interface that is
+[parameterized](#parameterized-interfaces) based on the second operand. For
+example, to say a type may be converted to another type using an `as`
+expression, implement the
+[`As` interface](/docs/design/expressions/as_expressions.md#extensibility):
+
+```
+interface As(Dest:! Type) {
+  fn Convert[me: Self]() -> Dest;
+}
+```
+
+The expression `x as U` is rewritten to `x.(As(U).Convert)()`. Note that the
+parameterization of the interface means it can be implemented multiple times to
+support multiple operand types.
+
+Unlike `as`, for most binary operators the interface's argument will be the
+_type_ of the right-hand operand instead of its _value_. Consider an interface
+for a binary operator like `*`:
+
+```
+// Binary `*`.
+interface MultipliableWith(U:! Type) {
+  let Result:! Type = Self;
+  fn Multiply[me: Self](other: U) -> Result;
+}
+```
+
+A use of binary `*` in source code will be rewritten to use this interface:
+
+```
+var left: Meters = ...;
+var right: f64 = ...;
+var result: auto = left * right;
+// Equivalent to:
+var equivalent: left.(MultipliableWith(f64).Result)
+    = left.(MultipliableWith(f64).Multiply)(right);
+```
+
+Note that if the types of the two operands are different, then swapping the
+order of the operands will result in a different implementation being selected.
+It is up to the developer to make those consistent when that is appropriate. The
+standard library will provide [adapters](#adapting-types) for defining the
+second implementation from the first, as in:
+
+```
+interface ComparableWith(RHS:! Type) {
+  fn Compare[me: Self](right: RHS) -> CompareResult;
+}
+
+adapter ReverseComparison
+    (T:! Type, U:! ComparableWith(RHS)) for T {
+  impl as ComparableWith(U) {
+    fn Compare[me: Self](right: RHS) -> CompareResult {
+      return ReverseCompareResult(right.Compare(me));
+    }
+  }
+}
+
+external impl SongByTitle as ComparableWith(SongTitle);
+external impl SongTitle as ComparableWith(SongByTitle)
+    = ReverseComparison(SongTitle, SongByTitle);
+```
+
+In some cases the reverse operation may not be defined. For example, a library
+might support subtracting a vector from a point, but not the other way around.
+
+Further note that even if the reverse implementation exists,
+[the impl prioritization rule](#prioritization-rule) might not pick it. For
+example, if we have two types that support comparison with anything implementing
+an interface that the other implements:
+
+```
+interface IntLike {
+  fn AsInt[me: Self]() -> i64;
+}
+
+class EvenInt { ... }
+external impl EvenInt as IntLike;
+external impl EvenInt as ComparableWith(EvenInt);
+// Allow `EvenInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] EvenInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(EvenInt);
+
+class PositiveInt { ... }
+external impl PositiveInt as IntLike;
+external impl PositiveInt as ComparableWith(PositiveInt);
+// Allow `PositiveInt` to be compared with anything that
+// implements `IntLike`, in either order.
+external impl [T:! IntLike] PositiveInt as ComparableWith(T);
+external impl [T:! IntLike] T as ComparableWith(PositiveInt);
+```
+
+Then it will favor selecting the implementation based on the type of the
+left-hand operand:
+
+```
+var even: EvenInt = ...;
+var positive: PositiveInt = ...;
+// Uses `EvenInt as ComparableWith(T)` impl
+if (even < positive) { ... }
+// Uses `PositiveInt as ComparableWith(T)` impl
+if (positive > even) { ... }
+```
+
+### `like` operator for implicit conversions
+
+Because the type of the operands is directly used to select the implementation
+to use, there are no automatic implicit conversions, unlike with function or
+method calls. Given both a method and an interface implementation for
+multiplying by a value of type `f64`:
+
+```
+class Meters {
+  fn Scale[me: Self](s: f64) -> Self;
+}
+// "Implementation One"
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+the method will work with any argument that can be implicitly converted to `f64`
+but the operator overload will only work with values that have the specific type
+of `f64`:
+
+```
+var height: Meters = ...;
+var scale: f32 = 1.25;
+// ✅ Allowed: `scale` implicitly converted
+//             from `f32` to `f64`.
+var allowed: Meters = height.Scale(scale);
+// ❌ Illegal: `Meters` doesn't implement
+//             `MultipliableWith(f32)`.
+var illegal: Meters = height * scale;
+```
+
+The workaround is to define a parameterized implementation that performs the
+conversion. The implementation is for types that implement the
+[`ImplicitAs` interface](/docs/design/expressions/implicit_conversions.md#extensibility).
+
+```
+// "Implementation Two"
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters {
+  fn Multiply[me: Self](other: T) -> Result {
+    // Carbon will implicitly convert `other` from type
+    // `T` to `f64` to perform this call.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
+  }
+}
+// ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
+//             with `T == f32` since `f32 is ImplicitAs(f64)`.
+var now_allowed: Meters = height * scale;
+```
+
+Observe that the [prioritization rule](#prioritization-rule) will still prefer
+the unparameterized impl when there is an exact match.
+
+To reduce the boilerplate needed to support these implicit conversions when
+defining operator overloads, Carbon has the `like` operator. This operator can
+only be used in the type or type-of-type part of an `impl` declaration, as part
+of a forward declaration or definition, in a place of a type.
+
+```
+// Notice `f64` has been replaced by `like f64`
+// compared to "implementation one" above.
+external impl Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+This `impl` definition actually defines two implementations. The first is the
+same as this definition with `like f64` replaced by `f64`, giving something
+equivalent to "implementation one". The second implementation replaces the
+`like f64` with a parameter that ranges over types that can be implicitly
+converted to `f64`, equivalent to "implementation two".
+
+In general, each `like` adds one additional impl. There is always the impl with
+all of the `like` expressions replaced by their arguments with the definition
+supplied in the source code. In addition, for each `like` expression, there is
+an impl with it replaced by a new parameter. These additional impls will
+delegate to the main impl, which will trigger implicit conversions according to
+[Carbon's ordinary implicit conversion rules](/docs/design/expressions/implicit_conversions.md).
+In this example, there are two uses of `like`, producing three implementations
+
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    return me.Scale(other);
+  }
+}
+```
+
+is equivalent to "implementation one", "implementation two", and:
+
+```
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters {
+  fn Multiply[me: Self](other: f64) -> Result {
+    // Will implicitly convert `me` to `Meters` in order to
+    // match the signature of this `Multiply` method.
+    return me.(Meters.(MultipliableWith(f64).Multiply))(other);
+  }
+}
+```
+
+`like` may be used in forward declarations in a way analogous to impl
+definitions.
+
+```
+external impl like Meters as MultipliableWith(like f64)
+    where .Result = Meters;
+}
+```
+
+is equivalent to:
+
+```
+// All `like`s removed. Same as the declaration part of
+// "implementation one", without the body of the definition.
+external impl Meters as MultipliableWith(f64)
+    where .Result = Meters;
+
+// First `like` replaced with a wildcard.
+external impl [T:! ImplicitAs(Meters)]
+    T as MultipliableWith(f64) where .Result = Meters;
+
+// Second `like` replaced with a wildcard. Same as the
+// declaration part of "implementation two", without the
+// body of the definition.
+external impl [T:! ImplicitAs(f64)]
+    Meters as MultipliableWith(T) where .Result = Meters;
+```
+
+In addition, the generated impl definition for a `like` is implicitly injected
+at the end of the (unique) source file in which the impl is first declared. That
+is, it is injected in the API file if the impl is declared in an API file, and
+in the sole impl file declaring the impl otherwise. This means an `impl`
+declaration using `like` in an API file also makes the parameterized definition
+
+If one `impl` declaration uses `like`, other declarations must use `like` in the
+same way to match.
+
+The `like` operator may be nested, as in:
+
+```
+external impl like Vector(like String) as Printable;
+```
+
+Which will generate implementations with declarations:
+
+```
+external impl Vector(String) as Printable;
+external impl [T:! ImplicitAs(Vector(String))] T as Printable;
+external impl [T:! ImplicitAs(String)] Vector(T) as Printable;
+```
+
+The generated implementations must be legal or the `like` is illegal. For
+example, it must be legal to define those impls in this library by the
+[orphan rule](#orphan-rule). In addition, the generated `impl` definitions must
+only require implicit conversions that are guaranteed to exist. For example,
+there existing an implicit conversion from `T` to `String` does not imply that
+there is one from `Vector(T)` to `Vector(String)`, so the following use of
+`like` is illegal:
+
+```
+// ❌ Illegal: Can't convert a value with type
+//             `Vector(T:! ImplicitAs(String))`
+//             to `Vector(String)` for `me`
+//             parameter of `Printable.Print`.
+external impl Vector(like String) as Printable;
+```
+
+Since the additional implementation definitions are generated eagerly, these
+errors will be reported in the file with the first declaration.
+
+The argument to `like` must either not mention any type parameters, or those
+parameters must be able to be determined due to being repeated outside of the
+`like` expression.
+
+```
+// ✅ Allowed: no parameters
+external impl like Meters as Printable;
+
+// ❌ Illegal: No other way to determine `T`
+external impl [T:! IntLike] like T as Printable;
+
+// ❌ Illegal: `T` being used in a `where` clause
+//             is insufficient.
+external impl [T:! IntLike] like T
+    as MultipliableWith(i64) where .Result = T;
+
+// ❌ Illegal: `like` can't be used in a `where`
+//             clause.
+external impl Meters as MultipliableWith(f64)
+    where .Result = like Meters;
+
+// ✅ Allowed: `T` can be determined by another
+//             part of the query.
+external impl [T:! IntLike] like T
+    as MultipliableWith(T) where .Result = T;
+external impl [T:! IntLike] T
+    as MultipliableWith(like T) where .Result = T;
+
+// ✅ Allowed: Only one `like` used at a time, so this
+//             is equivalent to the above two examples.
+external impl [T:! IntLike] like T
+    as MultipliableWith(like T) where .Result = T;
+```
+
+## Parameterized types
+
+Types may have generic parameters. Those parameters may be used to specify types
+in the declarations of its members, such as data fields, member functions, and
+even interfaces being implemented. For example, a container type might be
+parameterized by the type of its elements:
+
+```
+class HashMap(
+    KeyType:! Hashable & EqualityComparable & Movable,
+    ValueType:! Movable) {
+  // `Self` is `HashMap(KeyType, ValueType)`.
+
+  // Parameters may be used in function signatures.
+  fn Insert[addr me: Self*](k: KeyType, v: ValueType);
+
+  // Parameters may be used in field types.
+  private var buckets: Vector((KeyType, ValueType));
+
+  // Parameters may be used in interfaces implemented.
+  impl as Container where .ElementType = (KeyType, ValueType);
+  impl as ComparableWith(HashMap(KeyType, ValueType));
+}
+```
+
+Note that, unlike functions, every parameter to a type must either be generic or
+template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+
+Two types are the same if they have the same name and the same arguments.
+Carbon's [manual type equality](#manual-type-equality) approach means that the
+compiler may not always be able to tell when two type expressions are equal
+without help from the user, in the form of
+[`observe` declarations](#observe-declarations). This means Carbon will not in
+general be able to determine when types are unequal.
+
+Unlike an [interface's parameters](#parameterized-interfaces), a type's
+parameters may be [deduced](terminology.md#deduced-parameter), as in:
+
+```
+fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
+    (haystack: HashMap(KeyType, ValueType), needle: KeyType)
+    -> bool { ... }
+fn MyMapContains(s: String) {
+  var map: HashMap(String, i32) = (("foo", 3), ("bar", 5));
+  // ✅ Deduces `KeyType` = `String` from the types of both arguments.
+  // Deduces `ValueType` = `i32` from the type of the first argument.
+  return ContainsKey(map, s);
+}
+```
+
+Note that restrictions on the type's parameters from the type's declaration can
+be [implied constraints](#implied-constraints) on the function's parameters.
+
+### Specialization
+
+[Specialization](terminology.md#generic-specialization) is used to improve
+performance in specific cases when a general strategy would be inefficient. For
+example, you might use
+[binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) for
+containers that support random access and keep their contents in sorted order
+but [linear search](https://en.wikipedia.org/wiki/Linear_search) in other cases.
+Types, like functions, may not be specialized directly in Carbon. This effect
+can be achieved, however, through delegation.
+
+For example, imagine we have a parameterized class `Optional(T)` that has a
+default storage strategy that works for all `T`, but for some types we have a
+more efficient approach. For pointers we can use a
+[null value](https://en.wikipedia.org/wiki/Null_pointer) to represent "no
+pointer", and for booleans we can support `True`, `False`, and `None` in a
+single byte. Clients of the optional library may want to add additional
+specializations for their own types. We make an interface that represents "the
+storage of `Optional(T)` for type `T`," written here as `OptionalStorage`:
+
+```
+interface OptionalStorage {
+  let Storage:! Type;
+  fn MakeNone() -> Storage;
+  fn Make(x: Self) -> Storage;
+  fn IsNone(x: Storage) -> bool;
+  fn Unwrap(x: Storage) -> Self;
+}
+```
+
+The default implementation of this interface is provided by a
+[blanket implementation](#blanket-impls):
+
+```
+// Default blanket implementation
+impl [T:! Movable] T as OptionalStorage
+    where .Storage = (bool, T) {
+  ...
+}
+```
+
+This implementation can then be
+[specialized](#lookup-resolution-and-specialization) for more specific type
+patterns:
+
+```
+// Specialization for pointers, using nullptr == None
+final external impl [T:! Type] T* as OptionalStorage
+    where .Storage = Array(Byte, sizeof(T*)) {
+  ...
+}
+// Specialization for type `bool`.
+final external impl bool as OptionalStorage
+    where .Storage = Byte {
+  ...
+}
+```
+
+Further, libraries can implement `OptionalStorage` for their own types, assuming
+the interface is not marked `private`. Then the implementation of `Optional(T)`
+can delegate to `OptionalStorage` for anything that can vary with `T`:
+
+```
+class Optional(T:! Movable) {
+  fn None() -> Self {
+    return {.storage = T.(OptionalStorage.MakeNone)()};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = T.(OptionalStorage.Make)(x)};
+  }
+  ...
+  private var storage: T.(OptionalStorage.Storage);
+}
+```
+
+Note that the constraint on `T` is just `Movable`, not
+`Movable & OptionalStorage`, since the `Movable` requirement is
+[sufficient to guarantee](#lookup-resolution-and-specialization) that some
+implementation of `OptionalStorage` exists for `T`. Carbon does not require
+callers of `Optional`, even generic callers, to specify that the argument type
+implements `OptionalStorage`:
+
+```
+// ✅ Allowed: `T` just needs to be `Movable` to form `Optional(T)`.
+//             A `T:! OptionalStorage` constraint is not required.
+fn First[T:! Movable & Eq](v: Vector(T)) -> Optional(T);
+```
+
+Adding `OptionalStorage` to the constraints on the parameter to `Optional` would
+obscure what types can be used as arguments. `OptionalStorage` is an
+implementation detail of `Optional` and need not appear in its public API.
+
+In this example, a `let` is used to avoid repeating `OptionalStorage` in the
+definition of `Optional`, since it has no name conflicts with the members of
+`Movable`:
+
+```
+class Optional(T:! Movable) {
+  private let U:! Movable & OptionalStorage = T;
+  fn None() -> Self {
+    return {.storage = U.MakeNone()};
+  }
+  fn Some(x: T) -> Self {
+    return {.storage = u.Make(x)};
+  }
+  ...
+  private var storage: U.Storage;
+}
+```
 
 ## Future work
 
@@ -4489,11 +5601,6 @@ supported and made safe.
 The idea is that you would write tests alongside an interface that validate the
 expected behavior of any type implementing that interface.
 
-### Operator overloading
-
-We will need a story for defining how an operation is overloaded for a type by
-implementing an interface for that type.
-
 ### Impls with state
 
 A feature we might consider where an `impl` itself can have state.
@@ -4521,11 +5628,6 @@ implementing type has a particular field. This would be to match the
 expressivity of inheritance, which can express "all subtypes start with this
 list of fields."
 
-### Generic type specialization
-
-See [generic specialization](terminology.md#generic-specialization) for a
-description of what this might involve.
-
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
@@ -4551,14 +5653,6 @@ between multiple generic integer parameters. For example, if `J < K` and
 secondary syntactic concern about how to write this kind of constraint on a
 parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 
-### Separate declaration and definition of impl
-
-There is a desire to support a short declaration that a type implements an
-interface without giving a full definition of that implementation for API files.
-Everything needed for type checking is provided in the interface definition,
-except for the assignments to associated constants and types, and so those must
-be included in the declaration as well.
-
 ## References
 
 -   [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
@@ -4569,4 +5663,8 @@ be included in the declaration as well.
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
--   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+-   [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
+-   [#1144: Generic details 11: operator overloading](https://github.com/carbon-language/carbon-lang/pull/1144)
+-   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)

@@ -23,7 +23,7 @@ class [[nodiscard]] Error {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine message) : message_(message.str()) {
-    CHECK(!message_.empty()) << "Errors must have a message.";
+    CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
   Error(Error&& other) noexcept : message_(std::move(other.message_)) {}
@@ -63,39 +63,39 @@ class [[nodiscard]] ErrorOr {
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
   auto error() const& -> const Error& {
-    CHECK(!ok());
+    CARBON_CHECK(!ok());
     return std::get<Error>(val_);
   }
   auto error() && -> Error {
-    CHECK(!ok());
+    CARBON_CHECK(!ok());
     return std::get<Error>(std::move(val_));
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator*() -> T& {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator*() const -> const T& {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator->() -> T* {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return &std::get<T>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
   auto operator->() const -> const T* {
-    CHECK(ok());
+    CARBON_CHECK(ok());
     return &std::get<T>(val_);
   }
 
@@ -104,6 +104,60 @@ class [[nodiscard]] ErrorOr {
   std::variant<Error, T> val_;
 };
 
+// A helper class for accumulating error message and converting to
+// `Error` and `ErrorOr<T>`.
+class ErrorBuilder {
+ public:
+  ErrorBuilder() : out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+
+  // Accumulates string message.
+  template <typename T>
+  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+    *out_ << message;
+    return *this;
+  }
+
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
+  operator Error() { return Error(message_); }
+
+  template <typename T>
+  // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
+  operator ErrorOr<T>() {
+    return Error(message_);
+  }
+
+ private:
+  std::string message_;
+  // Use a pointer to allow move construction.
+  std::unique_ptr<llvm::raw_string_ostream> out_;
+};
+
 }  // namespace Carbon
+
+// Macro hackery to get a unique variable name.
+#define CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
+#define CARBON_MAKE_UNIQUE_NAME(a, b, c) CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c)
+
+#define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)                    \
+  if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
+      !(unique_name).ok()) {                                              \
+    return std::move(unique_name).error();                                \
+  }
+
+#define CARBON_RETURN_IF_ERROR(expr) \
+  CARBON_RETURN_IF_ERROR_IMPL(       \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+
+#define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)          \
+  auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
+  if (!(unique_name).ok()) {                                          \
+    return std::move(unique_name).error();                            \
+  }                                                                   \
+  var = std::move(*(unique_name)); /* NOLINT(bugprone-macro-parentheses) */
+
+#define CARBON_ASSIGN_OR_RETURN(var, expr)                                 \
+  CARBON_ASSIGN_OR_RETURN_IMPL(                                            \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), \
+      var, expr)
 
 #endif  // COMMON_ERROR_H_

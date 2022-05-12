@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iterator>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -98,6 +99,9 @@ class TokenKind {
   // nothing else should be using this.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind_value_; }
+
+  // Prints the TokenKind, typically for diagnostics.
+  void Print(llvm::raw_ostream& out) const { out << GetFixedSpelling(); }
 
  private:
   constexpr explicit TokenKind(KindEnum kind_value) : kind_value_(kind_value) {}

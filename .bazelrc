@@ -56,6 +56,9 @@ build:asan --features=asan
 # Configuration for enabling LibFuzzer (along with ASan).
 build:fuzzer --features=fuzzer
 
+# Proto fuzzer specific configuration.
+build:proto-fuzzer --features=proto-fuzzer
+
 # Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
 # in the users environment.
 build --test_env=ASAN_SYMBOLIZER_PATH

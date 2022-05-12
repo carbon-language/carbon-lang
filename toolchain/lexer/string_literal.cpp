@@ -17,73 +17,6 @@ namespace Carbon {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
-struct ContentBeforeStringTerminator
-    : DiagnosticBase<ContentBeforeStringTerminator> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Only whitespace is permitted before the closing `\"\"\"` of a "
-      "multi-line string.";
-};
-
-struct UnicodeEscapeTooLarge : DiagnosticBase<UnicodeEscapeTooLarge> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Code point specified by `\\u{...}` escape is greater than 0x10FFFF.";
-};
-
-struct UnicodeEscapeSurrogate : DiagnosticBase<UnicodeEscapeSurrogate> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Code point specified by `\\u{...}` escape is a surrogate character.";
-};
-
-struct UnicodeEscapeMissingBracedDigits
-    : DiagnosticBase<UnicodeEscapeMissingBracedDigits> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Escape sequence `\\u` must be followed by a braced sequence of "
-      "uppercase hexadecimal digits, for example `\\u{70AD}`.";
-};
-
-struct HexadecimalEscapeMissingDigits
-    : DiagnosticBase<HexadecimalEscapeMissingDigits> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Escape sequence `\\x` must be followed by two "
-      "uppercase hexadecimal digits, for example `\\x0F`.";
-};
-
-struct DecimalEscapeSequence : DiagnosticBase<DecimalEscapeSequence> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead of "
-      "`\\0` if the next character is a digit.";
-};
-
-struct UnknownEscapeSequence : DiagnosticBase<UnknownEscapeSequence> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
-
-  auto Format() -> std::string { return llvm::formatv(Message, first).str(); }
-
-  char first;
-};
-
-struct MismatchedIndentInString : DiagnosticBase<MismatchedIndentInString> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Indentation does not match that of the closing \"\"\" in multi-line "
-      "string literal.";
-};
-
-struct InvalidHorizontalWhitespaceInString
-    : DiagnosticBase<InvalidHorizontalWhitespaceInString> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
-  static constexpr llvm::StringLiteral Message =
-      "Whitespace other than plain space must be expressed with an escape "
-      "sequence in a string literal.";
-};
-
 static constexpr char MultiLineIndicator[] = R"(""")";
 
 // Return the number of opening characters of a multi-line string literal,
@@ -218,7 +151,11 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
   // The last line is not permitted to contain any content after its
   // indentation.
   if (indent.end() != content.end()) {
-    emitter.EmitError<ContentBeforeStringTerminator>(indent.end());
+    CARBON_DIAGNOSTIC(
+        ContentBeforeStringTerminator, Error,
+        "Only whitespace is permitted before the closing `\"\"\"` of a "
+        "multi-line string.");
+    emitter.Emit(indent.end(), ContentBeforeStringTerminator);
   }
 
   return indent;
@@ -233,12 +170,18 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
     return false;
   }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
-    emitter.EmitError<UnicodeEscapeTooLarge>(digits.begin());
+    CARBON_DIAGNOSTIC(UnicodeEscapeTooLarge, Error,
+                      "Code point specified by `\\u{{...}}` escape is greater "
+                      "than 0x10FFFF.");
+    emitter.Emit(digits.begin(), UnicodeEscapeTooLarge);
     return false;
   }
 
   if (code_point >= 0xD800 && code_point < 0xE000) {
-    emitter.EmitError<UnicodeEscapeSurrogate>(digits.begin());
+    CARBON_DIAGNOSTIC(UnicodeEscapeSurrogate, Error,
+                      "Code point specified by `\\u{{...}}` escape is a "
+                      "surrogate character.");
+    emitter.Emit(digits.begin(), UnicodeEscapeSurrogate);
     return false;
   }
 
@@ -265,7 +208,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> void {
-  CHECK(!content.empty()) << "should have escaped closing delimiter";
+  CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
@@ -291,7 +234,11 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
     case '0':
       result += '\0';
       if (!content.empty() && IsDecimalDigit(content.front())) {
-        emitter.EmitError<DecimalEscapeSequence>(content.begin());
+        CARBON_DIAGNOSTIC(
+            DecimalEscapeSequence, Error,
+            "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
+            "of `\\0` if the next character is a digit.");
+        emitter.Emit(content.begin(), DecimalEscapeSequence);
         return;
       }
       return;
@@ -303,7 +250,10 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
         content = content.drop_front(2);
         return;
       }
-      emitter.EmitError<HexadecimalEscapeMissingDigits>(content.begin());
+      CARBON_DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
+                        "Escape sequence `\\x` must be followed by two "
+                        "uppercase hexadecimal digits, for example `\\x0F`.");
+      emitter.Emit(content.begin(), HexadecimalEscapeMissingDigits);
       break;
     case 'u': {
       llvm::StringRef remaining = content;
@@ -318,12 +268,17 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
           return;
         }
       }
-      emitter.EmitError<UnicodeEscapeMissingBracedDigits>(content.begin());
+      CARBON_DIAGNOSTIC(
+          UnicodeEscapeMissingBracedDigits, Error,
+          "Escape sequence `\\u` must be followed by a braced sequence of "
+          "uppercase hexadecimal digits, for example `\\u{{70AD}}`.");
+      emitter.Emit(content.begin(), UnicodeEscapeMissingBracedDigits);
       break;
     }
     default:
-      emitter.EmitError<UnknownEscapeSequence>(content.begin() - 1,
-                                               {.first = first});
+      CARBON_DIAGNOSTIC(UnknownEscapeSequence, Error,
+                        "Unrecognized escape sequence `{0}`.", char);
+      emitter.Emit(content.begin() - 1, UnknownEscapeSequence, first);
       break;
   }
 
@@ -352,7 +307,11 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       const char* line_start = contents.begin();
       contents = contents.drop_while(IsHorizontalWhitespace);
       if (!contents.startswith("\n")) {
-        emitter.EmitError<MismatchedIndentInString>(line_start);
+        CARBON_DIAGNOSTIC(
+            MismatchedIndentInString, Error,
+            "Indentation does not match that of the closing \"\"\" in "
+            "multi-line string literal.");
+        emitter.Emit(line_start, MismatchedIndentInString);
       }
     }
 
@@ -384,15 +343,18 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
-        CHECK(contents.front() != ' ')
+        CARBON_CHECK(contents.front() != ' ')
             << "should not have stopped at a plain space";
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
           // TODO: Include the source range of the whitespace up to
           // `contents.begin() + after_space` in the diagnostic.
-          emitter.EmitError<InvalidHorizontalWhitespaceInString>(
-              contents.begin());
+          CARBON_DIAGNOSTIC(
+              InvalidHorizontalWhitespaceInString, Error,
+              "Whitespace other than plain space must be expressed with an "
+              "escape sequence in a string literal.");
+          emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
           result += contents.substr(0, after_space);
         }

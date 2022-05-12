@@ -29,7 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import scripts_utils  # type: ignore
+import scripts_utils
 
 scripts_utils.chdir_repo_root()
 directory = Path.cwd()

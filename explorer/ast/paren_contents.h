@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "explorer/ast/source_location.h"
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
+#include "explorer/common/source_location.h"
 
 namespace Carbon {
 

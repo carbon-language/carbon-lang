@@ -6,6 +6,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains code from third-party projects used by Carbon. Code
-under this directory has some "upstream" that is not Carbon itself. In some
-cases, they may be under their own open source license.
+The `/third_party` directory is for any code that doesn't follow Carbon's normal
+contribution rules, and thus requires special care. The intent is that code
+_not_ under `/third_party` should not require special contribution rules.
+
+Examples of code belonging under `/third_party` include:
+
+-   Code not licensed under the standard
+    [Apache-2.0 WITH LLVM-exception license](/LICENSE).
+-   Code which is maintained externally or imported from another repository.
+-   Code which is not fully under
+    [Carbon's CLA](/CONTRIBUTING.md#contributor-license-agreements-clas).

@@ -4,7 +4,7 @@
 //
 // RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --trace %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 // CHECK: result: 0
@@ -14,5 +14,6 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var t2: {.x: i32, .y: i32} = {.x = 2, .y = 5};
   t2.y = 3;
-  return t2.y - t2.x - 1; // 3 - 2 - 1
+  // 3 - 2 - 1
+  return t2.y - t2.x - 1;
 }

@@ -55,11 +55,17 @@ standard library.
 ## Precedence and associativity
 
 ```mermaid
-graph TD
-    negation["-x"] --> multiplicative & modulo
-    multiplicative>"x * y<br> x / y"] --> additive
-    additive>"x + y<br> x - y"]
+%%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
+graph BT
+    negation["-x"]
+    multiplication>"x * y<br>
+                    x / y"]
+    addition>"x + y<br>
+              x - y"]
     modulo["x % y"]
+
+    multiplication & modulo --> negation
+    addition --> multiplication
 ```
 
 <small>[Instructions for reading this diagram.](README.md#precedence)</small>
@@ -153,8 +159,12 @@ programming errors:
     will be aborted, or the arithmetic will evaluate to a mathematically
     incorrect result, such as a two's complement result or zero. The program
     might not in all cases be aborted immediately -- for example, multiple
-    overflow checks might be combined into one, and if the result of an
-    arithmetic operation is never observed, the abort may not happen at all.
+    overflow checks might be combined into one -- but no control flow or memory
+    access that depends on the value will be performed.
+
+**TODO:** Unify the description of these programming errors with those of
+bit-shift domain errors, document the behavior in a common place and link to it
+from here.
 
 **TODO:** In a hardened build, should we prefer to trap on overflow, give a
 two's complement result, or produce zero? Using zero may defeat some classes of
@@ -182,77 +192,75 @@ following family of interfaces:
 
 ```
 // Unary `-`.
-interface Negatable {
+interface Negate {
   let Result:! Type = Self;
-  fn Negate[me: Self]() -> Result;
+  fn Op[me: Self]() -> Result;
 }
 ```
 
 ```
 // Binary `+`.
-interface AddableWith(U:! Type) {
+interface AddWith(U:! Type) {
   let Result:! Type = Self;
-  fn Add[me: Self](other: U) -> Result;
+  fn Op[me: Self](other: U) -> Result;
 }
-constraint Addable {
-  extends AddableWith(Self) where .Result = Self;
+constraint Add {
+  extends AddWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `-`.
-interface SubtractableWith(U:! Type) {
+interface SubWith(U:! Type) {
   let Result:! Type = Self;
-  fn Subtract[me: Self](other: U) -> Result;
+  fn Op[me: Self](other: U) -> Result;
 }
-constraint Subtractable {
-  extends SubtractableWith(Self) where .Result = Self;
+constraint Sub {
+  extends SubWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `*`.
-interface MultipliableWith(U:! Type) {
+interface MulWith(U:! Type) {
   let Result:! Type = Self;
-  fn Multiply[me: Self](other: U) -> Result;
+  fn Op[me: Self](other: U) -> Result;
 }
-constraint Multipliable {
-  extends MultipliableWith(Self) where .Result = Self;
+constraint Mul {
+  extends MulWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `/`.
-interface DividableWith(U:! Type) {
+interface DivWith(U:! Type) {
   let Result:! Type = Self;
-  fn Divide[me: Self](other: U) -> Result;
+  fn Op[me: Self](other: U) -> Result;
 }
-constraint Dividable {
-  extends DividableWith(Self) where .Result = Self;
+constraint Div {
+  extends DivWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `%`.
-interface ModuloWith(U:! Type) {
+interface ModWith(U:! Type) {
   let Result:! Type = Self;
-  fn Mod[me: Self](other: U) -> Result;
+  fn Op[me: Self](other: U) -> Result;
 }
-constraint Modulo {
-  extends ModuloWith(Self) where .Result = Self;
+constraint Mod {
+  extends ModWith(Self) where .Result = Self;
 }
 ```
 
 Given `x: T` and `y: U`:
 
--   The expression `-x` is rewritten to `x.(Negatable.Negate)()`.
--   The expression `x + y` is rewritten to `x.(AddableWith(U).Add)(y)`.
--   The expression `x - y` is rewritten to
-    `x.(SubtractableWith(U).Subtract)(y)`.
--   The expression `x * y` is rewritten to
-    `x.(MultipliableWith(U).Multiply)(y)`.
--   The expression `x / y` is rewritten to `x.(DividableWith(U).Divide)(y)`.
--   The expression `x % y` is rewritten to `x.(ModuloWith(U).Mod)(y)`.
+-   The expression `-x` is rewritten to `x.(Negate.Op)()`.
+-   The expression `x + y` is rewritten to `x.(AddWith(U).Op)(y)`.
+-   The expression `x - y` is rewritten to `x.(SubWith(U).Op)(y)`.
+-   The expression `x * y` is rewritten to `x.(MulWith(U).Op)(y)`.
+-   The expression `x / y` is rewritten to `x.(DivWith(U).Op)(y)`.
+-   The expression `x % y` is rewritten to `x.(ModWith(U).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -278,4 +286,6 @@ to give the semantics described above.
 ## References
 
 -   Proposal
-    [#1083: arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083).
+    [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
+-   Proposal
+    [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)

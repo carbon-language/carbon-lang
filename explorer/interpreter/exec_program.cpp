@@ -17,11 +17,13 @@
 
 namespace Carbon {
 
-auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int> {
-  if (trace) {
-    llvm::outs() << "********** source program **********\n";
+auto ExecProgram(Nonnull<Arena*> arena, AST ast,
+                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+    -> ErrorOr<int> {
+  if (trace_stream) {
+    **trace_stream << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
-      llvm::outs() << *decl;
+      **trace_stream << *decl;
     }
   }
   SourceLocation source_loc("<Main()>", 0);
@@ -30,29 +32,27 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast, bool trace) -> ErrorOr<int> {
       arena->New<TupleLiteral>(source_loc));
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
-  if (trace) {
-    llvm::outs() << "********** resolving names **********\n";
+  if (trace_stream) {
+    **trace_stream << "********** resolving names **********\n";
   }
-  RETURN_IF_ERROR(ResolveNames(ast));
-  if (trace) {
-    llvm::outs() << "********** resolving control flow **********\n";
+  CARBON_RETURN_IF_ERROR(ResolveNames(ast));
+  if (trace_stream) {
+    **trace_stream << "********** resolving control flow **********\n";
   }
-  RETURN_IF_ERROR(ResolveControlFlow(ast));
-  if (trace) {
-    llvm::outs() << "********** type checking **********\n";
+  CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
+  if (trace_stream) {
+    **trace_stream << "********** type checking **********\n";
   }
-  RETURN_IF_ERROR(TypeChecker(arena, trace).TypeCheck(ast));
-  if (trace) {
-    llvm::outs() << "\n";
-    llvm::outs() << "********** type checking complete **********\n";
+  CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
+  if (trace_stream) {
+    **trace_stream << "\n";
+    **trace_stream << "********** type checking complete **********\n";
     for (const auto decl : ast.declarations) {
-      llvm::outs() << *decl;
+      **trace_stream << *decl;
     }
-    llvm::outs() << "********** starting execution **********\n";
+    **trace_stream << "********** starting execution **********\n";
   }
-  ASSIGN_OR_RETURN(const int result, InterpProgram(ast, arena, trace));
-  llvm::outs() << "result: " << result << "\n";
-  return result;
+  return InterpProgram(ast, arena, trace_stream);
 }
 
 }  // namespace Carbon

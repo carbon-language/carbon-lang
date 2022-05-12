@@ -4,7 +4,7 @@
 
 #include "explorer/interpreter/heap.h"
 
-#include "explorer/common/error.h"
+#include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -23,24 +23,24 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
 
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   Nonnull<const Value*> value = values_[a.allocation_.index_];
   return value->GetField(arena_, a.field_path_, source_loc, value);
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
-  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
-  ASSIGN_OR_RETURN(values_[a.allocation_.index_],
-                   values_[a.allocation_.index_]->SetField(
-                       arena_, a.field_path_, v, source_loc));
+  CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
+                          values_[a.allocation_.index_]->SetField(
+                              arena_, a.field_path_, v, source_loc));
   return Success();
 }
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (!alive_[allocation.index_]) {
-    return FATAL_RUNTIME_ERROR(source_loc)
+    return RuntimeError(source_loc)
            << "undefined behavior: access to dead value "
            << *values_[allocation.index_];
   }
@@ -51,8 +51,8 @@ void Heap::Deallocate(AllocationId allocation) {
   if (alive_[allocation.index_]) {
     alive_[allocation.index_] = false;
   } else {
-    FATAL() << "deallocating an already dead value: "
-            << *values_[allocation.index_];
+    CARBON_FATAL() << "deallocating an already dead value: "
+                   << *values_[allocation.index_];
   }
 }
 

@@ -4,10 +4,9 @@
 //
 // RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:19: field access, Scale not in Vector
 
 package ExplorerTest api;
 
@@ -16,6 +15,7 @@ interface Vector {
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: field access, Scale not in Vector
   return a.Scale(s);
 }
 
@@ -24,7 +24,7 @@ class Point {
   var y: i32;
   impl Point as Vector {
     fn Add[me: Point](b: Point) -> Point {
-        return {.x = me.x + b.x, .y = me.y + b.y};
+      return {.x = me.x + b.x, .y = me.y + b.y};
     }
   }
 }

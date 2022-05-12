@@ -20,8 +20,9 @@ namespace Carbon {
 
 class TypeChecker {
  public:
-  explicit TypeChecker(Nonnull<Arena*> arena, bool trace)
-      : arena_(arena), trace_(trace) {}
+  explicit TypeChecker(Nonnull<Arena*> arena,
+                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+      : arena_(arena), trace_stream_(trace_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
   // on the individual nodes.
@@ -29,22 +30,32 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
- private:
   // Perform type argument deduction, matching the parameter type `param`
   // against the argument type `arg`. Whenever there is an VariableType
   // in the parameter type, it is deduced to be the corresponding type
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
-  auto ArgumentDeduction(SourceLocation source_loc, BindingMap& deduced,
-                         Nonnull<const Value*> param_type,
-                         Nonnull<const Value*> arg_type) -> ErrorOr<Success>;
+  auto ArgumentDeduction(
+      SourceLocation source_loc,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
+      BindingMap& deduced, Nonnull<const Value*> param_type,
+      Nonnull<const Value*> arg_type) const -> ErrorOr<Success>;
 
+  // If `impl` can be an implementation of interface `iface` for the
+  // given `type`, then return an expression that will produce the witness
+  // for this `impl` (at runtime). Otherwise return std::nullopt.
+  auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
+                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
+                 SourceLocation source_loc) const
+      -> std::optional<Nonnull<Expression*>>;
+
+ private:
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
   // `values` maps variable names to their compile-time values. It is not
-  //    directly used in this function but is passed to InterExp.
+  //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
@@ -53,9 +64,11 @@ class TypeChecker {
   // `expected` is the type that this pattern is expected to have, if the
   // surrounding context gives us that information. Otherwise, it is
   // nullopt.
+  //
+  // `impl_scope` is extended with all impls implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
-                        const ImplScope& impl_scope,
+                        ImplScope& impl_scope,
                         ValueCategory enclosing_value_category)
       -> ErrorOr<Success>;
 
@@ -93,8 +106,24 @@ class TypeChecker {
                                 const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
+  // Find all of the ImplBindings in the given pattern. The pattern is required
+  // to have already been type-checked.
+  void CollectImplBindingsInPattern(
+      Nonnull<const Pattern*> p,
+      std::vector<Nonnull<const ImplBinding*>>& impl_bindings);
+
   // Add the impls from the pattern into the given `impl_scope`.
-  void AddPatternImpls(Nonnull<Pattern*> p, ImplScope& impl_scope);
+  void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
+                                  ImplScope& impl_scope);
+
+  // Add the given ImplBinding to the given `impl_scope`.
+  void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                          ImplScope& impl_scope);
+
+  // Add all of the `impl_bindings` into the `scope`.
+  void BringImplsIntoScope(
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+      ImplScope& scope);
 
   // Checks the statements and (runtime) expressions within the
   // declaration, such as the body of a function.
@@ -133,13 +162,18 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
+  // Verifies that *value represents the result of a type expression,
+  // as opposed to a non-type value.
+  auto ExpectIsType(SourceLocation source_loc, Nonnull<const Value*> value)
+      -> ErrorOr<Success>;
+
   // Verifies that *value represents a concrete type, as opposed to a
   // type pattern or a non-type value.
   auto ExpectIsConcreteType(SourceLocation source_loc,
                             Nonnull<const Value*> value) -> ErrorOr<Success>;
 
   // Returns the field names of the class together with their types.
-  auto FieldTypes(const NominalClassType& class_type)
+  auto FieldTypes(const NominalClassType& class_type) const
       -> std::vector<NamedValue>;
 
   // Returns true if source_fields and destination_fields contain the same set
@@ -148,22 +182,34 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields);
+      llvm::ArrayRef<NamedValue> destination_fields) const;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
   auto IsImplicitlyConvertible(Nonnull<const Value*> source,
-                               Nonnull<const Value*> destination) -> bool;
+                               Nonnull<const Value*> destination) const -> bool;
 
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual)
-      -> ErrorOr<Success>;
+                  Nonnull<const Value*> expected,
+                  Nonnull<const Value*> actual) const -> ErrorOr<Success>;
 
+  // Construct a type that is the same as `type` except that occurrences
+  // of type variables (aka. `GenericBinding`) are replaced by their
+  // corresponding type in `dict`.
   auto Substitute(const std::map<Nonnull<const GenericBinding*>,
                                  Nonnull<const Value*>>& dict,
-                  Nonnull<const Value*> type) -> Nonnull<const Value*>;
+                  Nonnull<const Value*> type) const -> Nonnull<const Value*>;
+
+  // Find impls that satisfy all of the `impl_bindings`, but with the
+  // type variables in the `impl_bindings` replaced by the argument
+  // type in `deduced_type_args`.  The results are placed in the
+  // `impls` map.
+  auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+                    const ImplScope& impl_scope, SourceLocation source_loc,
+                    BindingMap& deduced_type_args, ImplExpMap& impls) const
+      -> ErrorOr<Success>;
 
   // Sets value_node.constant_value() to `value`. Can be called multiple
   // times on the same value_node, so long as it is always called with
@@ -176,7 +222,7 @@ class TypeChecker {
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
 
-  bool trace_;
+  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
 };
 
 }  // namespace Carbon

@@ -50,21 +50,21 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
         -   [Assignment with inheritance](#assignment-with-inheritance)
+    -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
         -   [Protected access](#protected-access)
         -   [Friends](#friends)
         -   [Test friendship](#test-friendship)
         -   [Access control for construction](#access-control-for-construction)
+    -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
     -   [Struct literal shortcut](#struct-literal-shortcut)
     -   [Optional named parameters](#optional-named-parameters)
         -   [Field defaults for struct types](#field-defaults-for-struct-types)
         -   [Destructuring in pattern matching](#destructuring-in-pattern-matching)
         -   [Discussion](#discussion)
-    -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance-1)
-        -   [Destructors](#destructors)
         -   [C++ abstract base classes interoperating with object-safe interfaces](#c-abstract-base-classes-interoperating-with-object-safe-interfaces)
         -   [Overloaded methods](#overloaded-methods)
         -   [Interop with C++ inheritance](#interop-with-c-inheritance)
@@ -74,6 +74,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -1267,7 +1268,7 @@ The partial facet for a base class type like `MyBaseType` is written
     `MyDerivedClass` extends `MyBaseClass`. The type `partial MyBaseClass`
     specifically means "exactly this and no more." This means we don't need to
     look at the hidden vptr slot, and we can instantiate it even if it doesn't
-    have a virtual destructor.
+    have a virtual [destructor](#destructors).
 -   The keyword `partial` may only be applied to a base class. For final
     classes, there is no need for a second type.
 
@@ -1407,6 +1408,176 @@ implement it for final types. However, following the
 [maxim that Carbon should "focus on encouraging appropriate usage of features rather than restricting misuse"](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write),
 we allow users to also implement assignment on extensible classes, even though
 it can lead to [slicing](https://en.wikipedia.org/wiki/Object_slicing).
+
+### Destructors
+
+Every non-abstract type is _destructible_, meaning has a defined destructor
+function called when the lifetime of a value of that type ends, such as when a
+variable goes out of scope. The destructor for a class may be customized using
+the `destructor` keyword:
+
+```carbon
+class MyClass {
+  destructor [me: Self] { ... }
+}
+```
+
+or:
+
+```carbon
+class MyClass {
+  // Can modify `me` in the body.
+  destructor [addr me: Self*] { ... }
+}
+```
+
+If a class has no `destructor` declaration, it gets the default destructor,
+which is equivalent to `destructor [me: Self] { }`.
+
+The destructor for a class is run before the destructors of its data members.
+The data members are destroyed in reverse order of declaration. Derived classes
+are destroyed before their base classes, so the order of operations is:
+
+-   derived class' destructor runs,
+-   the data members of the derived class are destroyed, in reverse order of
+    declaration,
+-   the immediate base class' destructor runs,
+-   the data members of the immediate base class are destroyed, in reverse order
+    of declaration,
+-   and so on.
+
+Destructors may be declared in class scope and then defined out-of-line:
+
+```carbon
+class MyClass {
+  destructor [addr me: Self*];
+}
+destructor MyClass [addr me: Self*] { ... }
+```
+
+It is illegal to delete an instance of a derived class through a pointer to one
+of its base classes unless it has a
+[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
+An abstract or base class' destructor may be declared virtual using the
+`virtual` introducer, in which case any derived class destructor declaration
+must be `impl`:
+
+```carbon
+base class MyBaseClass {
+  virtual destructor [addr me: Self*] { ... }
+}
+
+class MyDerivedClass extends MyBaseClass {
+  impl destructor [addr me: Self*] { ... }
+}
+```
+
+The properties of a type, whether type is abstract, base, or final, and whether
+the destructor is virtual or non-virtual, determines which
+[type-of-types](/docs/design/generics/terminology.md#type-of-type) it satisfies.
+
+-   Non-abstract classes are `Concrete`. This means you can create local and
+    member variables of this type. `Concrete` types have destructors that are
+    called when the local variable goes out of scope or the containing object of
+    the member variable is destroyed.
+-   Final classes and classes with a virtual destructor are `Deletable`. These
+    may be safely deleted through a pointer.
+-   Classes that are `Concrete`, `Deletable`, or both are `Destructible`. These
+    are types that may be deleted through a pointer, but it might not be safe.
+    The concerning situation is when you have a pointer to a base class without
+    a virtual destructor. It is unsafe to delete that pointer when it is
+    actually pointing to a derived class.
+
+**Note:** The names `Deletable` and `Destructible` are
+[**placeholders**](/proposals/p1154.md#type-of-type-naming) since they do not
+conform to the decision on
+[question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
+
+| Class    | Destructor  | `Concrete` | `Deletable` | `Destructible` |
+| -------- | ----------- | ---------- | ----------- | -------------- |
+| abstract | non-virtual | no         | no          | no             |
+| abstract | virtual     | no         | yes         | yes            |
+| base     | non-virtual | yes        | no          | yes            |
+| base     | virtual     | yes        | yes         | yes            |
+| final    | any         | yes        | yes         | yes            |
+
+The compiler automatically determines which of these
+[type-of-types](/docs/design/generics/terminology.md#type-of-type) a given type
+satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
+`Destructible` directly. For more about these constraints, see
+["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
+
+A pointer to `Deletable` types may be passed to the `Delete` method of the
+`Allocator` [interface](/docs/design/generics/terminology.md#interface). To
+deallocate a pointer to a base class without a virtual destructor, which may
+only be done when it is not actually pointing to a value with a derived type,
+call the `UnsafeDelete` method instead. Note that you may not call
+`UnsafeDelete` on abstract types without virtual destructors, it requires
+`Destructible`.
+
+```
+interface Allocator {
+  // ...
+  fn Delete[T:! Deletable, addr me: Self*](p: T*);
+  fn UnsafeDelete[T:! Destructible, addr me: Self*](p: T*);
+}
+```
+
+To pass a pointer to a base class without a virtual destructor to a generic
+function expecting a `Deletable` type, use the `UnsafeAllowDelete`
+[type adapter](/docs/design/generics/details.md#adapting-types).
+
+```
+adapter UnsafeAllowDelete(T:! Concrete) extends T {
+  impl as Deletable {}
+}
+
+// Example usage:
+fn RequiresDeletable[T:! Deletable](p: T*);
+var x: MyExtensible;
+RequiresDeletable(&x as UnsafeAllowDelete(MyExtensible)*);
+```
+
+If a virtual method is transitively called from inside a destructor, the
+implementation from the current class is used, not any overrides from derived
+classes. It will abort the execution of the program if that method is abstract
+and not implemented in the current class.
+
+**Future work:** Allow or require destructors to be declared as taking
+`partial Self` in order to prove no use of virtual methods.
+
+Types satisfy the
+[`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
+type-of-type if:
+
+-   the class declaration does not define a destructor or the class defines the
+    destructor with an empty body `{ }`,
+-   all data members implement `TrivialDestructor`, and
+-   all base classes implement `TrivialDestructor`.
+
+For example, a [struct type](#struct-types) implements `TrivialDestructor` if
+all its members do.
+
+`TrivialDestructor` implies that their destructor does nothing, which may be
+used to generate optimized specializations.
+
+There is no provision for handling failure in a destructor. All operations that
+could potentially fail must be performed before the destructor is called.
+Unhandled failure during a destructor call will abort the program.
+
+**Future work:** Allow or require destructors to be declared as taking
+`[var me: Self]`.
+
+**Alternatives considered:**
+
+-   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
+-   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
+-   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
+-   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+-   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
+-   [Don't distinguish safe and unsafe delete operations](/proposals/p1154.md#dont-distinguish-safe-and-unsafe-delete-operations)
+-   [Don't allow unsafe delete](/proposals/p1154.md#dont-allow-unsafe-delete)
+-   [Allow final destructors](/proposals/p1154.md#allow-final-destructors)
 
 ### Access control
 
@@ -1548,6 +1719,17 @@ if it has access to (write) all of its fields.
 even when it only has public fields. This will be resolved in question-for-leads
 issue [#803](https://github.com/carbon-language/carbon-lang/issues/803).
 
+### Operator overloading
+
+Developers may define how standard Carbon operators, such as `+` and `/`, apply
+to custom types by implementing the
+[interface](generics/terminology.md#interface) that corresponds to that operator
+for the types of the operands. See the
+["operator overloading" section](generics/details.md#operator-overloading) of
+the [generics design](generics/overview.md). The specific interface used for a
+given operator may be found in the
+[expressions design](/docs/design/expressions/README.md).
+
 ## Future work
 
 This includes features that need to be designed, questions to answer, and a
@@ -1636,64 +1818,7 @@ Some discussion on this topic has occurred in:
     [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
 -   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
 
-### Operator overloading
-
-This includes destructors, copy and move operations, as well as other Carbon
-operators such as `+` and `/`. We expect types to implement these operations by
-implementing corresponding interfaces, see
-[the generics overview](generics/overview.md).
-
 ### Inheritance
-
-#### Destructors
-
-We need a syntax for declaring destructors. Provisionally we are considering
-allowing a couple of variations:
-
-```carbon
-class MyClass {
-  destructor [me: Self] { ... }
-}
-```
-
-or:
-
-```carbon
-class MyClass {
-  destructor [addr me: Self*] { ... }
-}
-```
-
-Destructors may be declared `virtual`, or `impl` in the case that a base class
-declares it `virtual`.
-
-```carbon
-base class MyBaseClass {
-  virtual destructor [addr me: Self*] { ... }
-}
-
-class MyDerivedClass {
-  impl destructor [addr me: Self*] { ... }
-}
-```
-
-Destructors may be declared out-of-line:
-
-```carbon
-class MyClass {
-  destructor [addr me: Self*];
-}
-destructor MyClass [addr me: Self*] { ... }
-```
-
-It isn't safe to delete an instance of a base class through a pointer unless it
-has a
-[virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
-
-An alternative is the Rust approach is there is some interface that is only
-implemented for types with non-trivial destructors. It allows metaprogramming to
-distinguish whether the type needs clean up. Rust allows you to declare `Self`
-as being moved into the destructor, which nicely captures the semantics.
 
 #### C++ abstract base classes interoperating with object-safe interfaces
 
@@ -1923,3 +2048,12 @@ comparable to `{.x = 3.14, .y = 2}`. The trick is how to declare the criteria
 that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
+
+## References
+
+-   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+-   [#561: Basic classes: use cases, struct literals, struct types, and future wor](https://github.com/carbon-language/carbon-lang/pull/561)
+-   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+-   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+-   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+-   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)

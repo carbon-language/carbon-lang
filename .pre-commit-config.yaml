@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 8fe62d14e0b4d7d845a7022c5c2c3ae41bdd3f26 # frozen: v4.1.0
+    rev: db7346d375eda68a0174f2c057dd97f2fbffe030 # frozen: v4.2.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -34,12 +34,6 @@ repos:
       - id: markdown-toc
   - repo: local
     hooks:
-      - id: explorer-format-grammar
-        name: Format the explorer grammar file
-        entry: explorer/syntax/format_grammar.py
-        language: python
-        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
-        pass_filenames: false
       - id: fix-cc-deps
         name: Fix missing C++ deps
         entry: scripts/fix_cc_deps.py
@@ -49,15 +43,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: fc0be6eb1e2a96091e6f64009ee5e9081bf8b6c6 # frozen: 22.1.0
+    rev: ae2c0758c9e61a385df9700dc9c231bf54887041 # frozen: 22.3.0
     hooks:
       - id: black
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 1fc50313b6e8c2580c4736af57575e0b7de1501c # frozen: v13.0.0
-    hooks:
-      - id: clang-format
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: ea782651a7e32f40a3d13b76c79d5a2474ee8723 # frozen: v2.5.1
+    rev: 5e374fda194d7f7ce9eebbd582b2a5594838c85b # frozen: v2.6.2
     hooks:
       - id: prettier
   - repo: local
@@ -67,6 +57,20 @@ repos:
         entry: scripts/run_buildifier.py
         language: python
         files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
+      - id: explorer-format-grammar
+        name: Format the explorer grammar file
+        entry: explorer/syntax/format_grammar.py
+        language: python
+        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
+        pass_filenames: false
+        additional_dependencies: ['clang-format==13.0.1']
+      - id: clang-format
+        name: clang-format
+        entry: clang-format
+        types_or: [c++, proto]
+        language: python
+        args: ['-i']
+        additional_dependencies: ['clang-format==13.0.1']
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
@@ -81,6 +85,28 @@ repos:
     rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d # frozen: 4.0.1
     hooks:
       - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'a04404bdf52c2cbc9c5bd705454b89bd83b84383' # frozen: v0.950
+    hooks:
+      - id: mypy
+        # Use setup.cfg to match the command line.
+        args:
+          - --config-file=setup.cfg
+        # This should match the requirements added in the WORKSPACE pip_install.
+        additional_dependencies:
+          - gql >= 2.0.0, < 3.0.0
+          - PyGitHub
+        # Exclusions are:
+        # - p#### scripts because they're not tested or maintained.
+        # - lit.cfg.py because it has multiple copies, breaking mypy.
+        # - Unit tests because they sometimes violate typing, such as by
+        #   assigning a mock to a function.
+        exclude: |
+          (?x)^(
+              proposals/(?!scripts/).*|
+              .*/lit\.cfg\.py|
+              .*_test\.py
+          )$
   - repo: https://github.com/codespell-project/codespell
     rev: 01da43d753cdff4ea7dff952b4f5317450af31e3 # frozen: v2.1.0
     hooks:
@@ -110,18 +136,12 @@ repos:
           (?x)^(
               .bazelversion|
               compile_flags.txt|
-              third_party/examples/.*/compile_flags.carbon.txt|
+              third_party/.*|
               .*\.def|
               .*\.svg|
               .*/testdata/.*\.golden
           )$
       - id: check-links
-        name: Check links in non-proposal files
-        exclude: ^proposals/.*$
-      - id: check-links
-        name: Check links in proposal files
-        args: ['--anchors-only']
-        files: ^proposals/.*$
 
 # Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.

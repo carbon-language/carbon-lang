@@ -6,7 +6,7 @@
 #define EXPLORER_AST_AST_NODE_H_
 
 #include "explorer/ast/ast_rtti.h"
-#include "explorer/ast/source_location.h"
+#include "explorer/common/source_location.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {

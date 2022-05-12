@@ -5,6 +5,8 @@
 #ifndef COMMON_CHECK_INTERNAL_H_
 #define COMMON_CHECK_INTERNAL_H_
 
+#include <unistd.h>
+
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
@@ -23,18 +25,17 @@ class ExitingStream {
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
 
+  ExitingStream() {
+    // Start all messages with a stack trace.
+    llvm::errs() << "Stack trace:\n";
+    llvm::sys::PrintStackTrace(llvm::errs());
+  }
+
   [[noreturn]] ~ExitingStream() {
     llvm_unreachable(
         "Exiting streams should only be constructed by check.h macros that "
         "ensure the special operator| exits the program prior to their "
         "destruction!");
-  }
-
-  // Indicates that the program is exiting due to a bug in the program, rather
-  // than, e.g., invalid input.
-  auto TreatAsBug() -> ExitingStream& {
-    treat_as_bug_ = true;
-    return *this;
   }
 
   // If the bool cast occurs, it's because the condition is false. This supports
@@ -52,7 +53,7 @@ class ExitingStream {
     return *this;
   }
 
-  auto operator<<(AddSeparator /*discarded*/) -> ExitingStream& {
+  auto operator<<(AddSeparator /*add_separator*/) -> ExitingStream& {
     separator_ = true;
     return *this;
   }
@@ -60,22 +61,19 @@ class ExitingStream {
   // Low-precedence binary operator overload used in check.h macros to flush the
   // output and exit the program. We do this in a binary operator rather than
   // the destructor to ensure good debug info and backtraces for errors.
-  [[noreturn]] friend auto operator|(Helper /*discarded*/, ExitingStream& rhs) {
+  [[noreturn]] friend auto operator|(Helper /*helper*/,
+                                     ExitingStream& /*rhs*/) {
     // Finish with a newline.
     llvm::errs() << "\n";
-    if (rhs.treat_as_bug_) {
-      std::abort();
-    } else {
-      std::exit(-1);
-    }
+    // We assume LLVM's exit handling is installed, which will stack trace on
+    // std::abort(). We print a stack trace on construction, so this avoids that
+    // stack trace on exit.
+    _exit(1);
   }
 
  private:
   // Whether a separator should be printed if << is used again.
   bool separator_ = false;
-
-  // Whether the program is exiting due to a bug.
-  bool treat_as_bug_ = false;
 };
 
 }  // namespace Carbon::Internal

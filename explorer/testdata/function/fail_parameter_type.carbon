@@ -4,14 +4,18 @@
 //
 // RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --trace %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_tuple_pattern_let_context_nested.carbon:15: syntax error, unexpected LET
 
 package ExplorerTest api;
 
+// 42 cannot be used as the type of a parameter.
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type.carbon:[[@LINE+1]]: Expected a type, but got 42
+fn f(x: 42) -> i32 {
+  return x - 1;
+}
+
 fn Main() -> i32 {
-  let (var a: auto, b: auto, c:auto, var (d: auto, let e:auto)) = (1, 2, 3, (4, 5));
-  return 0;
+  return f(1);
 }
