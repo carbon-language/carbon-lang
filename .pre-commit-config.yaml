@@ -58,7 +58,12 @@ repos:
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
         language: python
-        files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
+        files: |
+          (?x)^(
+            .*BUILD.*|
+            .*WORKSPACE.*|
+            .*\.bzl
+          )$'
       - id: clang-format
         name: clang-format
         entry: clang-format
