@@ -1,0 +1,14 @@
+import("//llvm/utils/unittest/unittest.gni")
+
+unittest("TextAPITests") {
+  deps = [
+    "//llvm/lib/Testing/Support",
+    "//llvm/lib/TextAPI",
+  ]
+  sources = [
+    "TextStubV1Tests.cpp",
+    "TextStubV2Tests.cpp",
+    "TextStubV3Tests.cpp",
+    "TextStubV4Tests.cpp",
+  ]
+}

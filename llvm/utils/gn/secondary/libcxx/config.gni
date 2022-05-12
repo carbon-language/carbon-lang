@@ -1,0 +1,7 @@
+declare_args() {
+  # libc++ ABI version. Either 1 (default) or 2 (unstable).
+  libcxx_abi_version = 1
+
+  # libc++ inline ABI namespace. Defaults to __n, where n is the ABI version.
+  libcxx_abi_namespace = ""
+}
