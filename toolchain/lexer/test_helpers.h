@@ -53,4 +53,4 @@ class SingleTokenDiagnosticTranslator
 
 }  // namespace Carbon::Testing
 
-#endif  // TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
+#endif  // TOOLCHAIN_LEXER_TEST_HELPERS_H_
