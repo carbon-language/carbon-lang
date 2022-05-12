@@ -10,11 +10,10 @@
 
 package ExplorerTest api;
 
-fn f(x: i32, y: i32) -> i32 { return x + y; }
+fn Bad[T:! Type](x: {.a: i32, .b: T}) {}
 
 fn Main() -> i32 {
-  var xy: (i32, i32) = (1, 2);
-  // should fail to type-check
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_call_with_tuple.carbon:[[@LINE+1]]: mismatch in tuple sizes, expected 2 but got 1
-  return f(xy);
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_implicit_conversion_extra_field.carbon:[[@LINE+1]]: mismatch in field names, source field `c` not in destination type `{.a: i32, .b: T:! Type}`
+  Bad({.b = 5, .a = 7, .c = 2});
+  return 0;
 }
