@@ -10,16 +10,14 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Python rules
 ###############################################################################
 
-rules_python_version = "0.5.0"
+rules_python_version = "0.8.1"
 
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
-    sha256 = "cd6730ed53a002c56ce4e2f396ba3b3be262fd7cb68339f0377a45e8227fe332",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/%s/rules_python-%s.tar.gz" % (
-        rules_python_version,
-        rules_python_version,
-    ),
+    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
+    strip_prefix = "rules_python-%s" % rules_python_version,
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/%s.tar.gz" % rules_python_version,
 )
 
 load("@rules_python//python:pip.bzl", "pip_install")
@@ -50,9 +48,9 @@ abseil_version = "20211102.0"
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "a4567ff02faca671b95e31d315bab18b42b6c6f1a60e91c6ea84e5a2142112c2",
+    sha256 = "dcf71b9cba8dc0ca9940c4b316a0c796be8fab42b070bb6b7cab62b48f0e66c4",
     strip_prefix = "abseil-cpp-%s" % abseil_version,
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/%s.zip" % abseil_version],
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/%s.tar.gz" % abseil_version],
 )
 
 ###############################################################################
@@ -64,22 +62,22 @@ googletest_version = "4c5650f68866e3c2e60361d5c4c95c6f335fb64b"
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "238ee428a2cde2f07c6925e9e2d237dc5aad52532c6ba584cb260d46d7b78455",
+    sha256 = "770e61fa13d51320736c2881ff6279212e4eab8a9100709fff8c44759f61d126",
     strip_prefix = "googletest-%s" % googletest_version,
-    urls = ["https://github.com/google/googletest/archive/%s.zip" % googletest_version],
+    urls = ["https://github.com/google/googletest/archive/%s.tar.gz" % googletest_version],
 )
 
 ###############################################################################
 # Google Benchmark libraries
 ###############################################################################
 
-benchmark_version = "1.6.0"
+benchmark_version = "1.6.1"
 
 http_archive(
     name = "com_github_google_benchmark",
-    sha256 = "3da225763533aa179af8438e994842be5ca72e4a7fed4d7976dc66c8c4502f58",
+    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
     strip_prefix = "benchmark-%s" % benchmark_version,
-    urls = ["https://github.com/google/benchmark/archive/refs/tags/v%s.zip" % benchmark_version],
+    urls = ["https://github.com/google/benchmark/archive/refs/tags/v%s.tar.gz" % benchmark_version],
 )
 
 ###############################################################################
@@ -117,15 +115,13 @@ llvm_zlib_system(name = "zlib")
 # Flex/Bison rules
 ###############################################################################
 
-# TODO: Can switch to a normal release version when it includes:
-# https://github.com/jmillikin/rules_m4/commit/b504241407916d1d6d72c66a766daacf9603cf8b
-rules_m4_version = "b504241407916d1d6d72c66a766daacf9603cf8b"
+rules_m4_version = "0.2.1"
 
 http_archive(
     name = "rules_m4",
-    sha256 = "e6003c5f45746a2ad01335a8526044591f2b6c5c68852cee1bcd28adc2cf452b",
+    sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
     strip_prefix = "rules_m4-%s" % rules_m4_version,
-    urls = ["https://github.com/jmillikin/rules_m4/archive/%s.zip" %
+    urls = ["https://github.com/jmillikin/rules_m4/archive/v%s.tar.gz" %
             rules_m4_version],
 )
 
@@ -141,9 +137,9 @@ rules_flex_version = "1f1d9c306c2b4b8be2cb899a3364b84302124e77"
 
 http_archive(
     name = "rules_flex",
-    sha256 = "ad1c3a1a9bdd6254df857f84f3ab4c052df6e21ce4af5d32710f2feff2abf4dd",
+    sha256 = "a4e99a0a241c8a5aa238e81724ea3529722522c3702fd3aa674add5eb9807002",
     strip_prefix = "rules_flex-%s" % rules_flex_version,
-    urls = ["https://github.com/jmillikin/rules_flex/archive/%s.zip" %
+    urls = ["https://github.com/jmillikin/rules_flex/archive/%s.tar.gz" %
             rules_flex_version],
 )
 
@@ -159,9 +155,9 @@ rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
 
 http_archive(
     name = "rules_bison",
-    sha256 = "d662d200f4e2a868f6873d666402fa4d413f07ba1a433591c5f60ac601157fb9",
+    sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
     strip_prefix = "rules_bison-%s" % rules_bison_version,
-    urls = ["https://github.com/jmillikin/rules_bison/archive/%s.zip" %
+    urls = ["https://github.com/jmillikin/rules_bison/archive/%s.tar.gz" %
             rules_bison_version],
 )
 
@@ -184,11 +180,11 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_cc/releases/download/%s/rules_cc-%s.tar.gz" % (rules_cc_version, rules_cc_version)],
 )
 
-rules_proto_version = "4.0.0-3.19.2"
+rules_proto_version = "4.0.0-3.20.0"
 
 http_archive(
     name = "rules_proto",
-    sha256 = "c22cfcb3f22a0ae2e684801ea8dfed070ba5bed25e73f73580564f250475e72d",
+    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
     strip_prefix = "rules_proto-%s" % rules_proto_version,
     urls = [
         "https://github.com/bazelbuild/rules_proto/archive/refs/tags/%s.tar.gz" % rules_proto_version,
