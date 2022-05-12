@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`auto`](#auto)
     -   [Pattern matching](#pattern-matching)
         -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
+    -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
         -   [Loops](#loops)
@@ -496,7 +497,7 @@ fn Add(a: i64, b: i64) -> i64;
 
 Breaking this apart:
 
--   `fn` is the keyword used to indicate a function.
+-   `fn` is the keyword used to introduce a function.
 -   Its name is `Add`.
 -   It accepts two `i64` parameters, `a` and `b`.
 -   It returns an `i64` result.
@@ -560,20 +561,29 @@ literal number like `42`: an expression that computes the integer value 42.
 
 Some common expressions in Carbon include:
 
--   Literals: `42`, `3.1419`, `"Hello World!"`
--   Operators:
+-   Literals:
 
-    -   Increment and decrement: `++i`, `--j`
-        -   These do not return any result.
-    -   Unary negation: `-x`
-    -   Arithmetic: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
-    -   Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `^7`
-    -   Bit shift: `1 << 3`, `8 >> 1`
-    -   Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
-    -   Logical: `a and b`, `c or d`, `not e`
-    -   Conditional: `if c then t else f`
+    -   [boolean](#bool): `true`, `false`
+    -   [integer](#integer-literals): `42`, `-7`
+    -   [real-number](#floating-point-literals): `3.1419`, `6.022e+23`
+    -   [string](#string-literals): `"Hello World!"`
+    -   [tuple](#tuples): `(1, 2, 3)`
+    -   [struct](#struct-types): `{.word = "the", .count = 56}`
 
--   Parenthesized expressions: `(7 + 8) * (3 - 1)`
+-   [Operators](expressions#operators):
+
+    -   [Arithmetic](expressions/arithmetic.md): `-x`, `1 + 2`, `3 - 4`,
+        `2 * 5`, `6 / 3`, `5 % 3`
+    -   [Bitwise](expressions/bitwise.md): `2 & 3`, `2 | 4`, `3 ^ 1`, `^7`
+    -   [Bit shift](expressions/bitwise.md): `1 << 3`, `8 >> 1`
+    -   [Comparison](expressions/comparison_operators.md): `2 == 2`, `3 != 4`,
+        `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
+    -   [Conversion](expressions/as_expressions.md): `2 as i32`
+    -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
+        `not e`
+
+-   [Conditional](expressions/if.md): `if c then t else f`
+-   Parenthesized: `(7 + 8) * (3 - 1)`
 
 ### Variables
 
@@ -589,14 +599,16 @@ Some common expressions in Carbon include:
 > -   Proposal
 >     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
 
-Blocks introduce nested scopes and can contain local variable declarations that
-work similarly to function parameters.
+Blocks introduce nested scopes and can contain variable declarations that are
+local to that block, similarly to function parameters.
 
 For example:
 
 ```carbon
-fn DoSomething() {
+fn DoSomething() -> i64 {
   var x: i64 = 42;
+  x = x + 2;
+  return x;
 }
 ```
 
@@ -606,6 +618,10 @@ Breaking this apart:
 -   Its name is `x`.
 -   Its type is `i64`.
 -   It is initialized with the value `42`.
+
+Unlike function parameters, `x` is an
+[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
+which means it has storage and an address, and so can be modified.
 
 ### `let`
 
@@ -662,6 +678,21 @@ To break this apart:
 
 -   The `i32` returned by `Bar()` matches and is bound to `p`, then returned.
 -   The `(f32, f32)` returned by `Bar()` matches and is discarded by `_: auto`.
+
+### Assignment statements
+
+> **TODO:**
+
+[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
+
+-   Assignment: `x = y`. `x` is assigned the value of `y`.
+-   Increment and decrement: `++i`, `--j`. `i` is set to `i + 1`, `j` is set to
+    `j - 1`.
+-   Compound assignment: `x += y`, `x -= y`, `x *= y`, `x /= y`, `x &= y`,
+    `x |= y`, `x ^= y`, `x <<= y`, `x >>= y`. `x += y` is equivalent to
+    `x = x + y`.
+
+> **TODO:** Destructuring assignment
 
 ### Control flow
 
