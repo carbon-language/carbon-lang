@@ -31,6 +31,13 @@
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+// When glibc is in use, detect mallinfo2 to address mallinfo deprecation
+// warnings.
+#if !defined(HAVE_MALLINFO2) && defined(__GLIBC_PREREQ)
+#if __GLIBC_PREREQ(2, 33)
+#define HAVE_MALLINFO2
+#endif  // __GLIBC_PREREQ(2, 33)
+#endif  // !defined(HAVE_MALLINFO2) && defined(__GLIBC_PREREQ)
 #if defined(HAVE_MALLINFO) || defined(HAVE_MALLINFO2)
 #include <malloc.h>
 #endif
