@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-"""Checks for missing or incorrect header guards.
-"""
+"""Checks for missing or incorrect header guards."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
