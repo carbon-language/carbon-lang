@@ -1656,7 +1656,6 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
-      return Success();
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
