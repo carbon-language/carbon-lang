@@ -428,11 +428,13 @@ class FunctionType : public Value {
   FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const GenericBinding*>> generic_bindings,
                llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
         deduced_(deduced),
         parameters_(parameters),
         return_type_(return_type),
+        generic_bindings_(generic_bindings),
         impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
@@ -444,6 +446,11 @@ class FunctionType : public Value {
   }
   auto parameters() const -> const Value& { return *parameters_; }
   auto return_type() const -> const Value& { return *return_type_; }
+  // All generic bindings in this function's signature.
+  auto generic_bindings() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return generic_bindings_;
+  }
   // The bindings for the witness tables (impls) required by the
   // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
@@ -454,6 +461,7 @@ class FunctionType : public Value {
   std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const GenericBinding*>> generic_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
