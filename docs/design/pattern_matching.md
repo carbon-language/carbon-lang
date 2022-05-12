@@ -38,22 +38,22 @@ overload resolution.
 ### Pattern match control flow
 
 The most powerful form and easiest to explain form of pattern matching is a
-dedicated control flow construct that subsumes the `switch` of C and C++ into
+dedicated control flow construct that subsumes the `switch` of C and C++ i32o
 something much more powerful, `match`. This is not a novel construct, and is
 widely used in existing languages (Swift and Rust among others) and is currently
 under active investigation for C++. Carbon's `match` can be used as follows:
 
 ```
-fn Bar() -> (Int, (Float, Float));
-fn Foo() -> Float {
+fn Bar() -> (i32, (f32, f32));
+fn Foo() -> f32 {
   match (Bar()) {
-    case (42, (Float x, Float y)) => {
+    case (42, (x: f32, y: f32)) => {
       return x - y;
     }
-    case (Int p, (Float x, Float _)) if (p < 13) => {
+    case (p: i32, (x: f32, _: f32)) if (p < 13) => {
       return p * x;
     }
-    case (Int p, auto _) if (p > 3) => {
+    case (p: i32, _: auto) if (p > 3) => {
       return p * Pi;
     }
     default => {
@@ -70,35 +70,35 @@ value, and execute that block. If none match, then it executes the default
 block.
 
 Each `case` contains a pattern. The first part is a value pattern
-(`(Int p, auto _)` for example) followed by an optional boolean predicate
-introduced by the `if` keyword. The value pattern has to match, and then the
-predicate has to evaluate to true for the overall pattern to match. Value
-patterns can be composed of the following:
+(`(p: i32, _: auto)` for example) optionally followed by an `if` and boolean
+predicate. The value pattern has to match, and then the predicate has to
+evaluate to `true` for the overall pattern to match. Value patterns can be
+composed of the following:
 
 -   An expression (`42` for example), whose value must be equal to match.
--   An optional type (`Int` for example), followed by a `:` and either an
-    identifier to bind to the value or the special identifier `_` to discard the
-    value once matched.
--   A destructuring pattern containing a sequence of value patterns
-    (`(Float x, Float y)`) which match against tuples and tuple like values by
+-   An identifier to bind the value to, followed by a colon (`:`) and a type
+    (`i32` for example). An underscore (`_`) may be used instead of the
+    identifier to discard the value once matched.
+-   A tuple destructuring pattern containing a tuple of value patterns
+    (`(x: f32, y: f32)`) which match against tuples and tuple-like values by
     recursively matching on their elements.
 -   An unwrapping pattern containing a nested value pattern which matches
     against a variant or variant-like value by unwrapping it.
 
 In order to match a value, whatever is specified in the pattern must match.
-Using `auto` for a type will always match, making `auto _` the wildcard pattern.
+Using `auto` for a type will always match, making `_: auto` the wildcard
+pattern.
 
 ### Pattern matching in local variables
 
 Value patterns may be used when declaring local variables to conveniently
 destructure them and do other type manipulations. However, the patterns must
-match at compile time which is why the boolean predicate cannot be used
-directly.
+match at compile time, so they can't use an `if` clause.
 
 ```
-fn Bar() -> (Int, (Float, Float));
-fn Foo() -> Int {
-  var (Int p, auto _) = Bar();
+fn Bar() -> (i32, (f32, f32));
+fn Foo() -> i32 {
+  var (p: i32, _: auto) = Bar();
   return p;
 }
 ```
