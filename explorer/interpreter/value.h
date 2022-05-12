@@ -428,25 +428,44 @@ class TypeType : public Value {
 // A function type.
 class FunctionType : public Value {
  public:
-  FunctionType(llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
-               Nonnull<const Value*> parameters,
+  // An explicit function parameter that is a `:!` binding:
+  //
+  //     fn MakeEmptyVector(T:! Type) -> Vector(T);
+  struct GenericParameter {
+    size_t index;
+    Nonnull<const GenericBinding*> binding;
+  };
+
+  FunctionType(Nonnull<const Value*> parameters,
+               llvm::ArrayRef<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
+               llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
                llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
-        deduced_(deduced),
         parameters_(parameters),
+        generic_parameters_(generic_parameters),
         return_type_(return_type),
+        deduced_bindings_(deduced_bindings),
         impl_bindings_(impl_bindings) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
   }
 
-  auto deduced() const -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
-    return deduced_;
-  }
+  // The type of the function parameter tuple.
   auto parameters() const -> const Value& { return *parameters_; }
+  // Parameters that use a generic `:!` binding at the top level.
+  auto generic_parameters() const -> llvm::ArrayRef<GenericParameter> {
+    return generic_parameters_;
+  }
+  // The function return type.
   auto return_type() const -> const Value& { return *return_type_; }
+  // All generic bindings in this function's signature that should be deduced
+  // in a call. This excludes any generic parameters.
+  auto deduced_bindings() const
+      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+    return deduced_bindings_;
+  }
   // The bindings for the witness tables (impls) required by the
   // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
@@ -454,9 +473,10 @@ class FunctionType : public Value {
   }
 
  private:
-  std::vector<Nonnull<const GenericBinding*>> deduced_;
   Nonnull<const Value*> parameters_;
+  std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 

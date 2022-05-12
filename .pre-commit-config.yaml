@@ -23,10 +23,12 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: '^(.*/fuzzer_corpus/.*)$'
       - id: mixed-line-ending
         args: ['--fix=lf']
+        exclude: '^(.*/fuzzer_corpus/.*)$'
       - id: trailing-whitespace
-        exclude: '^(.*/testdata/.*\.golden)$'
+        exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden)$'
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:
@@ -56,14 +58,12 @@ repos:
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
         language: python
-        files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
-      - id: explorer-format-grammar
-        name: Format the explorer grammar file
-        entry: explorer/syntax/format_grammar.py
-        language: python
-        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
-        pass_filenames: false
-        additional_dependencies: ['clang-format==13.0.1']
+        files: |
+          (?x)^(
+            .*BUILD.*|
+            .*WORKSPACE.*|
+            .*\.bzl
+          )$'
       - id: clang-format
         name: clang-format
         entry: clang-format
@@ -71,6 +71,22 @@ repos:
         language: python
         args: ['-i']
         additional_dependencies: ['clang-format==13.0.1']
+      - id: explorer-format-grammar
+        name: Format the explorer grammar file
+        entry: explorer/syntax/format_grammar.py
+        language: python
+        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
+        pass_filenames: false
+        additional_dependencies: ['clang-format==13.0.1']
+
+  # This may rename files, so it's deliberately between formatters and linters.
+  - repo: local
+    hooks:
+      - id: check-sha-filenames
+        name: Check fuzzer SHA filenames
+        entry: scripts/check_sha_filenames.py
+        language: python
+        files: ^.*/fuzzer_corpus/.*$
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
@@ -139,6 +155,7 @@ repos:
               third_party/.*|
               .*\.def|
               .*\.svg|
+              .*/fuzzer_corpus/.*|
               .*/testdata/.*\.golden
           )$
       - id: check-links
@@ -149,5 +166,4 @@ exclude: |
   (?x)^(
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|
-      .*/fuzzer_corpus/.*
   )$

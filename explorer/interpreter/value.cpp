@@ -280,10 +280,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced().empty()) {
+      if (!fn_type.deduced_bindings().empty()) {
         out << "[";
         unsigned int i = 0;
-        for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {
+        for (Nonnull<const GenericBinding*> deduced :
+             fn_type.deduced_bindings()) {
           if (i != 0) {
             out << ", ";
           }
