@@ -1140,11 +1140,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.parameter(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> param_type,
           InterpExp(&fn.parameter(), arena_, trace_stream_));
       CARBON_RETURN_IF_ERROR(
           ExpectIsConcreteType(fn.parameter().source_loc(), param_type));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.return_type(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> ret_type,
           InterpExp(&fn.return_type(), arena_, trace_stream_));
@@ -2184,10 +2186,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
         return CompilationError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
-      Expression& type =
-          cast<ExpressionPattern>(var.binding().type()).expression();
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
           &var.binding(), std::nullopt, enclosing_scope, var.value_category()));
+      Expression& type =
+          cast<ExpressionPattern>(var.binding().type()).expression();
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
