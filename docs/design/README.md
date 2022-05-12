@@ -515,21 +515,25 @@ defines what this function does would follow.
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
-The body or definition of a function is provided by a block of code containing
-statements. The body of a function is also a new, nested scope inside the
-function's scope, meaning that parameter names are available.
+The body or definition of a function is provided by a block of code in curly
+braces (`{`...`}`) containing statements. The body of a function is also a new
+scope nested inside the function's scope. Nested here means that parameter names
+from the function's scope are available in addition to any names introduced in
+the function body.
 
 Statements within a block are terminated by a semicolon. Each statement can,
-among other things, be an expression.
+among other things, be an expression. Some
+[control-flow statements](#control-flow) have their own blocks of code. These
+are nested within the enclosing scope.
 
-For example, here is a function definition using a block of statements, one of
-which is nested:
+For example, here is a function definition with a block of statements defining
+the body of the function, and a nested block as part of a `while` statement:
 
 ```carbon
 fn Foo() {
   Bar();
-  {
-    Baz();
+  while (Baz()) {
+    Quux();
   }
 }
 ```
@@ -570,6 +574,8 @@ Some common expressions in Carbon include:
     -   [tuple](#tuples): `(1, 2, 3)`
     -   [struct](#struct-types): `{.word = "the", .count = 56}`
 
+-   [Names](#names) and [member access](expressions/member_access.md)
+
 -   [Operators](expressions#operators):
 
     -   [Arithmetic](expressions/arithmetic.md): `-x`, `1 + 2`, `3 - 4`,
@@ -584,6 +590,10 @@ Some common expressions in Carbon include:
 
 -   [Conditional](expressions/if.md): `if c then t else f`
 -   Parenthesized: `(7 + 8) * (3 - 1)`
+
+When an expression appears in a context in which an expression of a specific
+type is expected, [implicit conversions](expressions/implicit_conversions.md)
+are applied to convert the expression to the target type.
 
 ### Variables
 
@@ -704,8 +714,12 @@ To break this apart:
 > -   Proposal
 >     [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
 
-Blocks of statements are generally executed sequentially. However, statements
-are the primary place where this flow of execution can be controlled.
+Blocks of statements are generally executed sequentially. Control-flow
+statements give additional control over the flow of execution and which
+statements are executed.
+
+Some control-flow statements have include [block](#blocks-and-statements)
+arguments. Those blocks will always be within curly braces `{`...`}`.
 
 #### `if` and `else`
 
@@ -715,15 +729,26 @@ are the primary place where this flow of execution can be controlled.
 > -   Proposal
 >     [#285: if/else](https://github.com/carbon-language/carbon-lang/pull/285)
 
-`if` and `else` provide conditional execution of statements. For example:
+`if` and `else` provide conditional execution of statements. It consists of:
+
+-   An `if` introducer followed by a condition in parenthesis. If the condition
+    evaluates to `true`, the block following the condition is executed,
+    otherwise it is skipped.
+-   This may be followed by zero or more `else if` clauses, whose conditions are
+    evaluated if all prior conditions evaluate to `false`, with a block that is
+    executed if that evaluation is to `true`.
+-   A final optional `else` clause, with a block that is executed if all
+    conditions evaluate to `false`.
+
+For example:
 
 ```carbon
 if (fruit.IsYellow()) {
-  Print("Banana!");
+  Console.Print("Banana!");
 } else if (fruit.IsOrange()) {
-  Print("Orange!");
+  Console.Print("Orange!");
 } else {
-  Print("Vegetable!");
+  Console.Print("Vegetable!");
 }
 ```
 
@@ -752,10 +777,10 @@ example, this prints `0`, `1`, `2`, then `Done!`:
 ```carbon
 var x: i32 = 0;
 while (x < 3) {
-  Print(x);
+  Console.Print(x);
   ++x;
 }
-Print("Done!");
+Console.Print("Done!");
 ```
 
 ##### `for`
@@ -771,7 +796,7 @@ example, this prints all names in `names`:
 
 ```carbon
 for (var name: String in names) {
-  Print(name);
+  Console.Print(name);
 }
 ```
 
@@ -788,7 +813,7 @@ manual step is hit (if no manual step is hit, all steps are processed):
 ```carbon
 for (var step: Step in steps) {
   if (step.IsManual()) {
-    Print("Reached manual step!");
+    Console.Print("Reached manual step!");
     break;
   }
   step.Process();
@@ -811,7 +836,7 @@ while (!f.EOF()) {
   if (line.IsEmpty()) {
     continue;
   }
-  Print(line);
+  Console.Print(line);
 }
 ```
 
