@@ -1,6 +1,0 @@
-; RUN: llvm-objdump -h %p/Inputs/no-sections.elf-x86-64 \
-; RUN:              | FileCheck %s
-
-; CHECK: Sections:
-; CHECK: Idx Name          Size      VMA              Type
-; CHECK-NOT: {{.}}

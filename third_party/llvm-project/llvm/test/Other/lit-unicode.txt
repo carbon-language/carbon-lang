@@ -1,5 +1,0 @@
-FIXME: See if we can fix this in lit by using Unicode strings.
-REQUIRES: shell
-
-RUN: echo "ようこそ" | FileCheck %s
-CHECK: {{^}}ようこそ{{$}}
