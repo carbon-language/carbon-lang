@@ -2169,6 +2169,72 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
   return Success();
 }
 
+static bool IsValidAliasTarget(Nonnull<const Value*> type) {
+  switch (type->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::TupleValue:
+    case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
+    // case Value::Kind::MemberName:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+      CARBON_FATAL() << "type of alias target is not a type";
+
+    case Value::Kind::AutoType:
+    case Value::Kind::VariableType:
+      CARBON_FATAL() << "pattern type in alias target";
+
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
+      return false;
+
+    case Value::Kind::FunctionType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::TypeType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
+      // case Value::Kind::TypeOfMemberName:
+      return true;
+  }
+}
+
+auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
+                                          const ImplScope& enclosing_scope)
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(&alias->target(), enclosing_scope));
+
+  if (!IsValidAliasTarget(&alias->target().static_type())) {
+    return CompilationError(alias->source_loc())
+           << "invalid target for alias declaration";
+  }
+
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
+                          InterpExp(&alias->target(), arena_, trace_stream_));
+
+  SetConstantValue(alias, target);
+  alias->set_static_type(&alias->target().static_type());
+  return Success();
+}
+
 auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   for (Nonnull<Declaration*> declaration : ast.declarations) {
@@ -2232,6 +2298,9 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
+    case DeclarationKind::AliasDeclaration: {
+      return Success();
+    }
   }
   return Success();
 }
@@ -2293,6 +2362,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker declare `Self` declaration";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      auto& alias = cast<AliasDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, enclosing_scope));
+      break;
     }
   }
   return Success();

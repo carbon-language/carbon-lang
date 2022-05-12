@@ -551,6 +551,14 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
     }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(declaration);
+      auto* alias_proto = declaration_proto.mutable_alias();
+      alias_proto->set_name(alias.name());
+      *alias_proto->mutable_target() = ExpressionToProto(alias.target());
+      break;
+    }
   }
   return declaration_proto;
 }

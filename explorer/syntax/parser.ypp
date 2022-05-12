@@ -106,6 +106,7 @@
 %type <bool> api_or_impl
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
+%type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<If*>> if_statement
@@ -173,6 +174,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  ALIAS
   AMPERSAND
   AND
   API
@@ -859,6 +861,9 @@ variable_declaration: identifier COLON pattern
                                       std::nullopt);
     }
 ;
+alias_declaration: ALIAS identifier EQUAL expression SEMICOLON
+    { $$ = arena->New<AliasDeclaration>(context.source_loc(), $2, $4); }
+;
 alternative:
   identifier tuple
     { $$ = arena->New<AlternativeSignature>(context.source_loc(), $1, $2); }
@@ -940,6 +945,8 @@ declaration:
         YYERROR;
       }
     }
+| alias_declaration
+    { $$ = $1; }
 ;
 impl_kind:
   // Internal

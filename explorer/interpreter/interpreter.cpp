@@ -1301,6 +1301,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
+    case DeclarationKind::AliasDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

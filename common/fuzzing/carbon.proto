@@ -326,6 +326,11 @@ message ImplDeclaration {
   repeated Declaration members = 4;
 }
 
+message AliasDeclaration {
+  optional string name = 1;
+  optional Expression target = 2;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -334,6 +339,7 @@ message Declaration {
     VariableDeclaration variable = 4;
     InterfaceDeclaration interface = 5;
     ImplDeclaration impl = 6;
+    AliasDeclaration alias = 7;
   }
 }
 
