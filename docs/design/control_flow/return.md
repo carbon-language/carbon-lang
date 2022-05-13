@@ -30,14 +30,14 @@ If the function returns a value to the caller, that value is provided by an
 expression in the return statement. For example:
 
 ```carbon
-fn Sum(a: Int, b: Int) -> Int {
+fn Sum(a: i32, b: i32) -> i32 {
   return a + b;
 }
 ```
 
 When a return type is specified, a function must _always_ `return` before
 control flow can reach the end of the function body. In other words,
-`fn DoNothing() -> Int {}` would be invalid because execution will reach the end
+`fn DoNothing() -> i32 {}` would be invalid because execution will reach the end
 of the function body without returning a value.
 
 ### Returning empty tuples
@@ -93,7 +93,7 @@ Returning expressions is not allowed while a `returned var` is in scope. For
 example:
 
 ```carbon
-fn MakeCircle(radius: Int) -> Circle {
+fn MakeCircle(radius: i32) -> Circle {
   returned var c: Circle;
   c.radius = radius;
   // `return c` would be invalid because `returned` is in use.
@@ -106,7 +106,7 @@ If control flow exits the scope of a `returned` variable in any way other than
 `return` may again be used with expressions. For example:
 
 ```carbon
-fn MakePointInArea(Area area, Int preferred_x, Int preferred_y) -> Point {
+fn MakePointInArea(area: Area, preferred_x: i32, preferred_y: i32) -> Point {
   if (preferred_x >= 0 && preferred_y >= 0) {
     returned var p: Point = { .x = preferred_x, .y = preferred_y };
     if (area.Contains(p)) {
@@ -148,7 +148,7 @@ declared by the caller. For example, here the `returned var vector` in
 copy:
 
 ```carbon
-fn CreateVector(x: Int, y: Int) -> Vector {
+fn CreateVector(x: i32, y: i32) -> Vector {
   returned var vector: Vector;
   vector.x = x;
   vector.y = y;

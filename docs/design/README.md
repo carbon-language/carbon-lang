@@ -813,13 +813,13 @@ This code will:
 
 #### Loops
 
-> References: [Control flow](control_flow/loops.md)
+> References: [Loops](control_flow/loops.md)
 
 ##### `while`
 
 > References:
 >
-> -   [Control flow](control_flow/loops.md#while)
+> -   [`while` loops](control_flow/loops.md#while)
 > -   Proposal
 >     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
 
@@ -839,7 +839,7 @@ Console.Print("Done!");
 
 > References:
 >
-> -   [Control flow](control_flow/loops.md#for)
+> -   [`for` loops](control_flow/loops.md#for)
 > -   Proposal
 >     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
@@ -852,15 +852,16 @@ for (var name: String in names) {
 }
 ```
 
-`PrintNames()` prints each `String` in the `names` `List` in iteration order.
+This prints each `String` value in `names`.
 
 ##### `break`
 
-> References: [Control flow](control_flow/loops.md#break)
+> References: [`break`](control_flow/loops.md#break)
 
 The `break` statement immediately ends a `while` or `for` loop. Execution will
-resume at the end of the loop's scope. For example, this processes steps until a
-manual step is hit (if no manual step is hit, all steps are processed):
+continue starting from the end of the loop's scope. For example, this processes
+steps until a manual step is hit (if no manual step is hit, all steps are
+processed):
 
 ```carbon
 for (var step: Step in steps) {
@@ -874,7 +875,7 @@ for (var step: Step in steps) {
 
 ##### `continue`
 
-> References: [Control flow](control_flow/loops.md#continue)
+> References: [`continue`](control_flow/loops.md#continue)
 
 The `continue` statement immediately goes to the next loop of a `while` or
 `for`. In a `while`, execution continues with the `while` expression. For
@@ -896,7 +897,7 @@ while (!f.EOF()) {
 
 > References:
 >
-> -   [Control flow](control_flow/return.md)
+> -   [`return`](control_flow/return.md)
 > -   [`return` statements](functions.md#return-statements)
 > -   Proposal
 >     [#415: return](https://github.com/carbon-language/carbon-lang/pull/415)
@@ -904,33 +905,76 @@ while (!f.EOF()) {
 >     [#538: return with no argument](https://github.com/carbon-language/carbon-lang/pull/538)
 
 The `return` statement ends the flow of execution within a function, returning
-execution to the caller. If the function returns a value to the caller, that
-value is provided by an expression in the return statement. For example:
+execution to the caller.
 
 ```carbon
-fn Sum(a: i32, b: i32) -> i32 {
-  return a + b;
+// Prints the integers 1 .. `n` and then
+// returns to the caller.
+fn PrintFirstN(n: i32) {
+  var i: i32 = 0;
+  while (true) {
+    i += 1;
+    if (i > n) {
+      // None of the rest of the function is
+      // executed after a `return`.
+      return;
+    }
+    Console.Print(i);
+  }
 }
+```
+
+If the function returns a value to the caller, that value is provided by an
+expression in the return statement. For example:
+
+```carbon
+fn Sign(i: i32) -> i32 {
+  if (i > 0) {
+    return 1;
+  }
+  if (i < 0) {
+    return -1;
+  }
+  return 0;
+}
+
+Assert(Sign(-3) == -1);
 ```
 
 ##### `returned var`
 
 > References:
 >
-> -   [Control flow](control_flow/return.md#returned-var)
+> -   [`returned var`](control_flow/return.md#returned-var)
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
 
-> **TODO:**
+To avoid a copy when returning a variable, add a `returned` prefix to the
+variable's declaration and use `return var` instead of returning an expression,
+as in:
+
+```carbon
+fn MakeCircle(radius: i32) -> Circle {
+  returned var c: Circle;
+  c.radius = radius;
+  // `return c` would be invalid because `returned` is in use.
+  return var;
+}
+```
+
+This is instead of
+[the "named return value optimization" of C++](https://en.wikipedia.org/wiki/Copy_elision#Return_value_optimization).
 
 #### `match`
 
 > References: [Pattern matching](pattern_matching.md)
->
-> **TODO:** References need to be evolved.
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other languages, such as Swift.
+constructs in other languages, such as Swift. The `match` is followed by an
+expression, whose value is matched against `case` declarations in order. The
+code for the first matching `case` is executed. An optional `default` code block
+may be placed after the `case` declaratoins, it will be executed if none of the
+`case` declarations match.
 
 An example `match` is:
 
@@ -938,7 +982,7 @@ An example `match` is:
 fn Bar() -> (i32, (f32, f32));
 
 fn Foo() -> f32 {
-  match (Bar()...) {
+  match (Bar()) {
     case (42, (x: f32, y: f32)) => {
       return x - y;
     }
@@ -955,31 +999,16 @@ fn Foo() -> f32 {
 }
 ```
 
-Breaking apart this `match`:
+A `case` pattern can contain
+[binding and destructuring patterns](#pattern-matching). In addition, it can
+contain patterns that may or may not match based on the runtime value of the
+`match` expression:
 
--   It accepts a value that will be inspected; in this case, the result of the
-    call to `Bar()`.
-    -   It then will find the _first_ `case` that matches this value, and
-        execute that block.
-    -   If none match, then it executes the default block.
--   Each `case` pattern contains a value pattern, such as `(p: i32, _: auto)`,
-    followed by an optional boolean predicate introduced by the `if` keyword.
-    -   The value pattern must first match, and then the predicate must also
-        evaluate to true for the overall `case` pattern to match.
-    -   Using `auto` for a type will always match.
-
-Value patterns may be composed of the following:
-
--   An expression, such as `42`, whose value must be equal to match.
--   An identifier to bind the value, followed by a `:` and followed by a type,
-    such as `i32`.
-    -   The special identifier `_` may be used to discard the value once
-        matched.
--   A destructuring pattern containing a sequence of value patterns, such as
-    `(x: f32, y: f32)`, which match against tuples and tuple-like values by
-    recursively matching on their elements.
--   An unwrapping pattern containing a nested value pattern which matches
-    against a variant or variant-like value by unwrapping it.
+-   A _value pattern_ is an expression, such as `42`, whose value must be equal
+    to match.
+-   An _if pattern_, consisting of an `if` and a boolean predicate at the end of
+    the pattern like `if (p < 13)`, matches if the predicate evaluates to
+    `true`.
 
 ## User-defined types
 
