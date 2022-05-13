@@ -15,30 +15,30 @@
 
 namespace Carbon::Testing {
 
-// A singleton for g_semanticsir, used by the helpers.
+// A singleton for g_semanticsir, used by the test helpers.
 //
-// This is done this way mainly so that PrintTo(Semantics::Declaration) has a
-// SemanticsIR to refer back to; PrintTo must be static.
+// This is done this way so that calls like PrintTo(Semantics::Declaration) have
+// a SemanticsIR to refer back to; PrintTo must be static.
 class SemanticsIRForTest {
  public:
-  // TODO: This and similar gets may belong on SemanticsIR long-term, but are
-  // here for now while usage fills out.
-  static auto GetFunction(Semantics::Declaration decl)
-      -> llvm::Optional<Semantics::Function> {
+  template <typename NodeT>
+  static auto GetDeclaration(Semantics::Declaration decl)
+      -> llvm::Optional<NodeT> {
     CARBON_CHECK(g_semantics != llvm::None);
-    if (decl.kind() != Semantics::DeclarationKind::Function) {
+    if (decl.kind() != NodeT::MetaNodeKind) {
       return llvm::None;
     }
-    return g_semantics->declarations_.Get<Semantics::Function>(decl);
+    return g_semantics->declarations_.Get<NodeT>(decl);
   }
 
-  static auto GetLiteral(Semantics::Expression expr)
-      -> llvm::Optional<Semantics::Literal> {
+  template <typename NodeT>
+  static auto GetExpression(Semantics::Expression expr)
+      -> llvm::Optional<NodeT> {
     CARBON_CHECK(g_semantics != llvm::None);
-    if (expr.kind() != Semantics::ExpressionKind::Literal) {
+    if (expr.kind() != NodeT::MetaNodeKind) {
       return llvm::None;
     }
-    return g_semantics->expressions_.Get<Semantics::Literal>(expr);
+    return g_semantics->expressions_.Get<NodeT>(expr);
   }
 
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
@@ -92,17 +92,19 @@ MATCHER_P(ExpressionLiteral, text_matcher,
           llvm::formatv("Expression literal {0}",
                         ::testing::PrintToString(text_matcher))) {
   const Semantics::Expression& expr = arg;
-  return ExplainMatchResult(text_matcher,
-                            SemanticsIRForTest::GetNodeText(
-                                SemanticsIRForTest::GetLiteral(expr)->node()),
-                            result_listener);
+  return ExplainMatchResult(
+      text_matcher,
+      SemanticsIRForTest::GetNodeText(
+          SemanticsIRForTest::GetExpression<Semantics::Literal>(expr)->node()),
+      result_listener);
 }
 
 MATCHER_P(FunctionName, name_matcher,
           llvm::formatv("Function named {0}",
                         ::testing::PrintToString(name_matcher))) {
   const Semantics::Declaration& decl = arg;
-  if (auto function = SemanticsIRForTest::GetFunction(decl)) {
+  if (auto function =
+          SemanticsIRForTest::GetDeclaration<Semantics::Function>(decl)) {
     return ExplainMatchResult(
         name_matcher, SemanticsIRForTest::GetNodeText(function->name().node()),
         result_listener);
@@ -116,7 +118,8 @@ MATCHER_P(FunctionParams, param_matcher,
           llvm::formatv("Function parameters {0}",
                         ::testing::PrintToString(param_matcher))) {
   const Semantics::Declaration& decl = arg;
-  if (auto function = SemanticsIRForTest::GetFunction(decl)) {
+  if (auto function =
+          SemanticsIRForTest::GetDeclaration<Semantics::Function>(decl)) {
     return ExplainMatchResult(param_matcher, function->params(),
                               result_listener);
   } else {
@@ -129,7 +132,8 @@ MATCHER_P(FunctionReturnExpr, expression_matcher,
           llvm::formatv("Function return expr {0}",
                         ::testing::PrintToString(expression_matcher))) {
   const Semantics::Declaration& decl = arg;
-  if (auto function = SemanticsIRForTest::GetFunction(decl)) {
+  if (auto function =
+          SemanticsIRForTest::GetDeclaration<Semantics::Function>(decl)) {
     return ExplainMatchResult(expression_matcher, function->return_expr(),
                               result_listener);
   } else {
@@ -142,7 +146,8 @@ MATCHER_P(FunctionBody, body_matcher,
           llvm::formatv("Function body {0}",
                         ::testing::PrintToString(body_matcher))) {
   const Semantics::Declaration& decl = arg;
-  if (auto function = SemanticsIRForTest::GetFunction(decl)) {
+  if (auto function =
+          SemanticsIRForTest::GetDeclaration<Semantics::Function>(decl)) {
     return ExplainMatchResult(body_matcher, function->body(), result_listener);
   } else {
     *result_listener << "node is not a function";

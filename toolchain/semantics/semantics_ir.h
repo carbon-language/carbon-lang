@@ -45,12 +45,6 @@ class SemanticsIR {
   void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
   void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
 
-  template <typename DeclarationT>
-  auto declarations() -> llvm::SmallVector<DeclarationT, 0>& {
-    return std::get<static_cast<size_t>(DeclarationT::MyDeclarationKind)>(
-        declarations_);
-  }
-
   Semantics::DeclarationStore declarations_;
   Semantics::ExpressionStore expressions_;
   Semantics::StatementStore statements_;
