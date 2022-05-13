@@ -41,6 +41,15 @@ class SemanticsIRForTest {
     return g_semantics->expressions_.Get<NodeT>(expr);
   }
 
+  template <typename NodeT>
+  static auto GetStatement(Semantics::Statement expr) -> llvm::Optional<NodeT> {
+    CARBON_CHECK(g_semantics != llvm::None);
+    if (expr.kind() != NodeT::MetaNodeKind) {
+      return llvm::None;
+    }
+    return g_semantics->statements_.Get<NodeT>(expr);
+  }
+
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
     CARBON_CHECK(g_semantics != llvm::None);
     return g_semantics->parse_tree_->GetNodeText(node);
@@ -49,6 +58,18 @@ class SemanticsIRForTest {
   static void Print(llvm::raw_ostream& out, Semantics::Declaration decl) {
     CARBON_CHECK(g_semantics != llvm::None);
     g_semantics->Print(out, decl);
+  }
+
+  static void Print(llvm::raw_ostream& out, Semantics::Expression expr) {
+    CARBON_CHECK(g_semantics != llvm::None);
+    out << "TODO(expr)";
+    // g_semantics->Print(out, expr);
+  }
+
+  static void Print(llvm::raw_ostream& out, Semantics::Statement stmt) {
+    CARBON_CHECK(g_semantics != llvm::None);
+    out << "TODO(stmt)";
+    // g_semantics->Print(out, stmt);
   }
 
   static auto semantics() -> const SemanticsIR& {
@@ -78,6 +99,9 @@ inline auto MappedNode(::testing::Matcher<std::string> key,
           "value", &llvm::StringMapEntry<Semantics::Declaration>::getValue,
           value));
 }
+
+// Avoids gtest confusion of how to print llvm::None.
+MATCHER(IsNone, "is llvm::None") { return arg == llvm::None; }
 
 MATCHER_P(DeclaredName, name_matcher,
           llvm::formatv("DeclaredName {0}",
@@ -160,10 +184,12 @@ inline auto Function(
     ::testing::Matcher<llvm::ArrayRef<Semantics::PatternBinding>>
         params_matcher,
     ::testing::Matcher<llvm::Optional<Semantics::Expression>>
-        return_type_matcher) -> ::testing::Matcher<Semantics::Declaration> {
-  return ::testing::AllOf(FunctionName(name_matcher),
-                          FunctionParams(params_matcher),
-                          FunctionReturnExpr(return_type_matcher));
+        return_type_matcher,
+    ::testing::Matcher<Semantics::StatementBlock> body_matcher)
+    -> ::testing::Matcher<Semantics::Declaration> {
+  return ::testing::AllOf(
+      FunctionName(name_matcher), FunctionParams(params_matcher),
+      FunctionReturnExpr(return_type_matcher), FunctionBody(body_matcher));
 }
 
 inline auto PatternBinding(
@@ -177,21 +203,43 @@ inline auto PatternBinding(
                           type_matcher));
 }
 
+MATCHER_P(Return, expr_matcher,
+          llvm::formatv("Return {0}", ::testing::PrintToString(expr_matcher))) {
+  const Semantics::Statement& stmt = arg;
+  if (auto ret = SemanticsIRForTest::GetStatement<Semantics::Return>(stmt)) {
+    return ExplainMatchResult(expr_matcher, ret->expression(), result_listener);
+  } else {
+    *result_listener << "node is not a function";
+    return result_listener;
+  }
+}
+
+inline auto StatementBlock(
+    ::testing::Matcher<llvm::ArrayRef<Semantics::Statement>> nodes_matcher,
+    ::testing::Matcher<llvm::StringMap<Semantics::Statement>>
+        name_lookup_matcher) -> ::testing::Matcher<Semantics::StatementBlock> {
+  return ::testing::AllOf(
+      ::testing::Property("nodes", &Semantics::StatementBlock::nodes,
+                          nodes_matcher),
+      ::testing::Property("name_lookup",
+                          &Semantics::StatementBlock::name_lookup,
+                          name_lookup_matcher));
+}
+
 }  // namespace Carbon::Testing
 
-namespace Carbon {
+namespace Carbon::Semantics {
 
-// Prints a Node for gmock. Needs to be in the matching namespace.
-inline void PrintTo(const Semantics::Declaration& decl, std::ostream* out) {
+// Prints a Declaration for gmock.
+inline void PrintTo(const Declaration& decl, std::ostream* out) {
   llvm::raw_os_ostream wrapped_out(*out);
   Testing::SemanticsIRForTest::Print(wrapped_out, decl);
 }
 
-// Prints a Block for gmock. Needs to be in the matching namespace.
-inline void PrintTo(const Semantics::DeclarationBlock& block,
-                    std::ostream* out) {
+// Prints a DeclarationBlock for gmock.
+inline void PrintTo(const DeclarationBlock& block, std::ostream* out) {
   llvm::raw_os_ostream wrapped_out(*out);
-  wrapped_out << "Block{";
+  wrapped_out << "DeclarationBlock{";
   llvm::ListSeparator sep;
   for (const auto& entry : block.name_lookup()) {
     wrapped_out << llvm::StringRef(sep) << "`" << entry.getKey() << "`: `";
@@ -201,16 +249,50 @@ inline void PrintTo(const Semantics::DeclarationBlock& block,
   wrapped_out << "}";
 }
 
-}  // namespace Carbon
+// Prints an Expression for gmock.
+inline void PrintTo(const Expression& expr, std::ostream* out) {
+  llvm::raw_os_ostream wrapped_out(*out);
+  Testing::SemanticsIRForTest::Print(wrapped_out, expr);
+}
+
+// Prints a Statement for gmock.
+inline void PrintTo(const Statement& decl, std::ostream* out) {
+  llvm::raw_os_ostream wrapped_out(*out);
+  Testing::SemanticsIRForTest::Print(wrapped_out, decl);
+}
+
+// Prints a StatementBlock for gmock.
+inline void PrintTo(const StatementBlock& block, std::ostream* out) {
+  llvm::raw_os_ostream wrapped_out(*out);
+  wrapped_out << "StatementBlock{";
+  llvm::ListSeparator sep;
+  for (const auto& node : block.nodes()) {
+    wrapped_out << "`";
+    Testing::SemanticsIRForTest::Print(wrapped_out, node);
+    wrapped_out << "`";
+  }
+  wrapped_out << "}";
+}
+
+}  // namespace Carbon::Semantics
 
 namespace llvm {
 
-// Prints a StringMapEntry for gmock. Needs to be in the matching namespace.
+// Prints a StringMapEntry for gmock.
 inline void PrintTo(
     const llvm::StringMapEntry<Carbon::Semantics::Declaration>& entry,
     std::ostream* out) {
   *out << "StringMapEntry(" << entry.getKey() << ", ";
-  Carbon::PrintTo(entry.getValue(), out);
+  Carbon::Semantics::PrintTo(entry.getValue(), out);
+  *out << ")";
+}
+
+// Prints a StringMapEntry for gmock.
+inline void PrintTo(
+    const llvm::StringMapEntry<Carbon::Semantics::Statement>& entry,
+    std::ostream* out) {
+  *out << "StringMapEntry(" << entry.getKey() << ", ";
+  Carbon::Semantics::PrintTo(entry.getValue(), out);
   *out << ")";
 }
 

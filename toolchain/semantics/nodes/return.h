@@ -20,7 +20,7 @@ class Return {
       : node_(node), expr_(expr) {}
 
   auto node() const -> ParseTree::Node { return node_; }
-  auto expr() const -> const llvm::Optional<Expression>& { return expr_; }
+  auto expression() const -> const llvm::Optional<Expression>& { return expr_; }
 
  private:
   ParseTree::Node node_;

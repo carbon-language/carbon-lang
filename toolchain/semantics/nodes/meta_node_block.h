@@ -21,8 +21,8 @@ namespace Carbon::Semantics {
 template <typename MetaNodeT>
 struct MetaNodeBlock {
  public:
-  auto nodes() const -> llvm::ArrayRef<Declaration> { return nodes_; }
-  auto name_lookup() const -> const llvm::StringMap<Declaration>& {
+  auto nodes() const -> llvm::ArrayRef<MetaNodeT> { return nodes_; }
+  auto name_lookup() const -> const llvm::StringMap<MetaNodeT>& {
     return name_lookup_;
   }
 
