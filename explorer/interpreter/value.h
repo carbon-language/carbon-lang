@@ -996,6 +996,8 @@ class TypeOfMemberName : public Value {
     return value->kind() == Kind::TypeOfMemberName;
   }
 
+  // TODO: consider removing this or moving it elsewhere in the AST,
+  // since it's arguably part of the expression value rather than its type.
   auto member() const -> Member { return member_; }
 
  private:
