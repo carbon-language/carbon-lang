@@ -52,10 +52,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Classes](#classes)
         -   [Assignment, copying](#assignment-copying)
         -   [Member access](#member-access)
+        -   [Class function](#class-function)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
+        -   [Other members](#other-members)
     -   [Variants](#variants)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -1037,12 +1039,11 @@ class Widget {
 
 Breaking apart `Widget`:
 
--   `Widget` has three `i32` members: `x`, `y`, and `z`.
--   `Widget` has one `String` member: `payload`.
--   Given an instance `dial`, a member can be referenced with `dial.paylod`.
+-   `Widget` has three `i32` field: `x`, `y`, and `z`.
+-   `Widget` has one `String` field: `payload`.
+-   Given an instance `dial`, a field can be referenced with `dial.paylod`.
 
-The order of the member declarations determines the members' memory-layout
-order.
+The order of the field declarations determines the fields' memory-layout order.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
 class types, but they are commonly referred to as "structs" and "classes"
@@ -1058,7 +1059,8 @@ members by name. Unlike structs, classes are
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
 You may use a [struct literal](#struct-types), to assign or initialize a
-variable with a class type.
+variable with a class type in any scope that has [access](#access-control) to
+all of its fields, as in:
 
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
@@ -1084,6 +1086,33 @@ notation:
 Assert(sprocket.x == thingy.x);
 ```
 
+Every class has a member named `Self` equal to the class type.
+
+#### Class function
+
+Classes may also contain functions as members of the type. This is commonly used
+to define a function that creates instances. Carbon does not have separate
+[constructors](<https://en.wikipedia.org/wiki/Constructor_(object-oriented_programming)>)
+like C++ does.
+
+```carbon
+class Point {
+  // Class function that instantiates `Point`.
+  // `Self` in class scope means the class currently being defined.
+  fn Origin() -> Self {
+    return {.x = 0, .y = 0};
+  }
+  var x: i32;
+  var y: i32;
+}
+```
+
+Note that if the definition of a function is provided inside the class scope,
+the body is treated as if it was defined immediately after the outermost class
+definition. This means that members such as the fields will be considered
+defined even if their definitions are later in the source than the class
+function.
+
 #### Methods
 
 > References:
@@ -1096,17 +1125,20 @@ Class type definitions can include methods:
 
 ```carbon
 class Point {
+  // Method defined inline
   fn Distance[me: Self](x2: i32, y2: i32) -> f32 {
     var dx: i32 = x2 - me.x;
     var dy: i32 = y2 - me.y;
     return Math.Sqrt(dx * dx - dy * dy);
   }
+  // Mutating method
   fn Offset[addr me: Self*](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
+// Out-of-line definition of method declared inline.
 fn Point.Offset[addr me: Self*](dx: i32, dy: i32) {
   me->x += dx;
   me->y += dy;
@@ -1121,7 +1153,7 @@ Assert(origin.Distance(3, 4) == 0.0);
 This defines a `Point` class type with two integer data members `x` and `y` and
 two methods `Distance` and `Offset`:
 
--   Methods are defined as functions with a `me` parameter inside square
+-   Methods are defined as class functions with a `me` parameter inside square
     brackets `[`...`]` before the regular explicit parameter list in parens
     `(`...`)`.
 -   Methods are called using using the member syntax, `origin.Distance(`...`)`
@@ -1143,6 +1175,87 @@ two methods `Distance` and `Offset`:
 >     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+
+Classes by default are
+[_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
+which means they may not be extended. A class may be declared as allowing
+extension using either the `base class` or `abstract class` introducer instead
+of `class`. An `abstract class` is a base class that may not itself be
+instantiated.
+
+```carbon
+base class MyBaseClass { ... }
+```
+
+Either kind of base class maybe _extended_ to get a _derived class_. Derived
+classes are final unless they are themselved declared `base` or `abstract`.
+Classes may only extend a single class. Carbon only supports single inheritance,
+and will use mixins instead of multiple inheritance.
+
+```carbon
+base class MiddleDerived extends MyBaseClass { ... }
+class FinalDerived extends MiddleDerived { ... }
+// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+```
+
+A base class may define
+[virtual methods](https://en.wikipedia.org/wiki/Virtual_function). These are
+methods whose implementation may be overridden in a derived class. By default
+methods are _non-virtual_, the declaration of a virtual methods must be prefixed
+by one of these three keywords:
+
+-   A method marked `virtual` has a definition in this class but not in any
+    base.
+-   A method marked `abstract` does not have have a definition in this class,
+    but must have a definition in any non-`abstract` derived class.
+-   A method marked `impl` has a definition in this class, overriding any
+    definition in a base class.
+
+A pointer to a derived class may be cast to a pointer to one of its base
+classes. Calling a virtual method through a pointer to a base class will use the
+overridden definition provided in the derived class.
+
+For purposes of construction, a derived class acts like its first field is
+called `base` with the type of its immediate base class.
+
+```carbon
+class MyDerivedType extends MyBaseType {
+  fn Create() -> MyDerivedType {
+    return {.base = MyBaseType.Create(), .derived_field = 7};
+  }
+  var derived_field: i32;
+}
+```
+
+Abstract classes can't be instantiated, so instead they should define class
+functions returning `partial Self`. Those functions should be marked
+[`protected`](#access-control) so they may only be used by derived classes.
+
+```carbon
+abstract class AbstractClass {
+  protected fn Create() -> partial Self {
+    return {.field_1 = 3, .field_2 = 9};
+  }
+  // ...
+  var field_1: i32;
+  var field_2: i32;
+}
+// ❌ Error: can't instantiate abstract class
+var abc: AbstractClass = ...;
+
+class DerivedFromAbstract extends AbstractClass {
+  fn Create() -> Self {
+    // AbstractClass.Create() returns a
+    // `partial AbstractClass` that can be used as
+    // the `.base` member when constructing a value
+    // of a derived class
+    return {.base = AbstractClass.Create(),
+            .derived_field = 42 };
+  }
+
+  var derived_field: i32;
+}
+```
 
 > **TODO:**
 
@@ -1167,6 +1280,10 @@ two methods `Distance` and `Offset`:
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
 > **TODO:**
+
+#### Other members
+
+> **TODO:** `let`, `alias`, class functions, nested classes
 
 ### Variants
 
