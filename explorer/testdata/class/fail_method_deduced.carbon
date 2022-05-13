@@ -10,20 +10,16 @@
 
 package ExplorerTest api;
 
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  fn GetX[me: Point]() -> i32 {
-    return me.x;
-  }
-
-  var x: i32;
-  var y: i32;
+class C {
+  fn F() {}
+  fn G[me: Self]() {}
 }
 
+fn H[T:! Type](x: T) {}
+
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: in call `Point.GetX()`, expected callee to be a function, found `member name GetX`
-  return Point.GetX();
+  H(C.F);
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_deduced.carbon:[[@LINE+1]]: Expected a type, but got member name G
+  H(C.G);
+  return 0;
 }

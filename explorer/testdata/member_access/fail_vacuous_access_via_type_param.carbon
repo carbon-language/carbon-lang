@@ -8,22 +8,18 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 
-package ExplorerTest api;
-
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
+package Foo api;
+interface A { fn F() -> i32; }
+class X {
+  impl as A {
+    fn F() -> i32 { return 1; }
   }
-
-  fn GetX[me: Point]() -> i32 {
-    return me.x;
-  }
-
-  var x: i32;
-  var y: i32;
 }
-
+fn F[T:! A](a: T) -> i32 {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access_via_type_param.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
+  return a.(T.F)();
+}
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: in call `Point.GetX()`, expected callee to be a function, found `member name GetX`
-  return Point.GetX();
+  var a: X = {};
+  return F(a);
 }

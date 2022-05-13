@@ -24,6 +24,7 @@
 namespace Carbon {
 
 class Value;
+class MemberName;
 class VariableType;
 class ImplBinding;
 
@@ -179,6 +180,69 @@ class FieldAccessExpression : public Expression {
   Nonnull<Expression*> aggregate_;
   std::string field_;
   std::optional<Nonnull<const ImplBinding*>> impl_;
+};
+
+// A compound member access expression of the form `object.(path)`.
+//
+// `path` is required to have `TypeOfMemberName` type, and describes the member
+// being accessed, which is one of:
+//
+// -   An instance member of a type: `object.(Type.member)`.
+// -   A non-instance member of an interface: `Type.(Interface.member)` or
+//     `object.(Interface.member)`.
+// -   An instance member of an interface: `object.(Interface.member)` or
+//     `object.(Type.(Interface.member))`.
+//
+// Note that the `path` is evaluated during type-checking, not at runtime, so
+// the corresponding `member` is determined statically.
+class CompoundFieldAccessExpression : public Expression {
+ public:
+  explicit CompoundFieldAccessExpression(SourceLocation source_loc,
+                                         Nonnull<Expression*> object,
+                                         Nonnull<Expression*> path)
+      : Expression(AstNodeKind::CompoundFieldAccessExpression, source_loc),
+        object_(object),
+        path_(path) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromCompoundFieldAccessExpression(node->kind());
+  }
+
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+  auto path() const -> const Expression& { return *path_; }
+  auto path() -> Expression& { return *path_; }
+
+  // Returns the `MemberName` value that evaluation of the path produced.
+  // Should not be called before typechecking.
+  auto member() const -> const MemberName& {
+    CARBON_CHECK(member_.has_value());
+    return **member_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_member(Nonnull<const MemberName*> member) {
+    CARBON_CHECK(!member_.has_value());
+    member_ = member;
+  }
+
+  // Returns the expression to use to compute the witness table, if this
+  // expression names an interface member.
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
+    return impl_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const Expression*> impl) {
+    CARBON_CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
+ private:
+  Nonnull<Expression*> object_;
+  Nonnull<Expression*> path_;
+  std::optional<Nonnull<const MemberName*>> member_;
+  std::optional<Nonnull<const Expression*>> impl_;
 };
 
 class IndexExpression : public Expression {

@@ -8,22 +8,12 @@
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
 
-package ExplorerTest api;
-
-class Point {
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  fn GetX[me: Point]() -> i32 {
-    return me.x;
-  }
-
-  var x: i32;
-  var y: i32;
-}
-
+package Foo api;
+fn F[me: i32]() {}
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: in call `Point.GetX()`, expected callee to be a function, found `member name GetX`
-  return Point.GetX();
+  // TODO: It's unclear whether this is valid per the current rules. See
+  // https://github.com/carbon-language/carbon-lang/pull/1122
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_qualified_non_member.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> ()
+  42.(F)();
+  return 0;
 }
