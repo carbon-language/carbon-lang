@@ -185,11 +185,11 @@ class FieldAccessExpression : public Expression {
 // A compound member access expression of the form `object.(path)`.
 //
 // `path` is required to have `TypeOfMemberName` type, and describes the member
-// being accessed, which might be:
+// being accessed, which is one of:
 //
-// -   An instance member of a type: `object.(Type.member)`, or
+// -   An instance member of a type: `object.(Type.member)`.
 // -   A non-instance member of an interface: `Type.(Interface.member)` or
-//     `object.(Interface.member)`, or
+//     `object.(Interface.member)`.
 // -   An instance member of an interface: `object.(Interface.member)` or
 //     `object.(Type.(Interface.member))`.
 //
