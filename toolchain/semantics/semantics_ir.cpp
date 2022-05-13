@@ -10,38 +10,11 @@
 
 namespace Carbon {
 
-auto SemanticsIR::StoreExpressionStatement(Semantics::Expression expr)
-    -> Semantics::Statement {
-  int32_t index = expression_statements_.size();
-  expression_statements_.push_back(expr);
-  return Semantics::Statement(Semantics::StatementKind::Expression, index);
-}
-
-auto SemanticsIR::StoreFunction(Semantics::Function function)
-    -> Semantics::Declaration {
-  int32_t index = functions_.size();
-  functions_.push_back(function);
-  return Semantics::Declaration(Semantics::DeclarationKind::Function, index);
-}
-
-auto SemanticsIR::StoreLiteral(Semantics::Literal lit)
-    -> Semantics::Expression {
-  int32_t index = literals_.size();
-  literals_.push_back(lit);
-  return Semantics::Expression(Semantics::ExpressionKind::Literal, index);
-}
-
-auto SemanticsIR::StoreReturn(Semantics::Return ret) -> Semantics::Statement {
-  int32_t index = returns_.size();
-  returns_.push_back(ret);
-  return Semantics::Statement(Semantics::StatementKind::Return, index);
-}
-
 void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Declaration decl) const {
-  switch (decl.kind_) {
+  switch (decl.kind()) {
     case Semantics::DeclarationKind::Function:
-      Print(out, functions_[decl.index_]);
+      Print(out, declarations_.Get<Semantics::Function>(decl));
       return;
     case Semantics::DeclarationKind::Invalid:
       CARBON_FATAL() << "Invalid declaration type";
@@ -59,9 +32,9 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 
 void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Expression expr) const {
-  switch (expr.kind_) {
+  switch (expr.kind()) {
     case Semantics::ExpressionKind::Literal:
-      Print(out, literals_[expr.index_]);
+      Print(out, expressions_.Get<Semantics::Literal>(expr));
       return;
     case Semantics::ExpressionKind::Invalid:
       CARBON_FATAL() << "Invalid expression type";

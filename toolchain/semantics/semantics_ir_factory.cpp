@@ -10,6 +10,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/nodes/expression_statement.h"
 #include "toolchain/semantics/parse_subtree_consumer.h"
 
 namespace Carbon {
@@ -97,7 +98,7 @@ auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
   // expressions.
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
   RequireNodeEmpty(node);
-  return semantics_.StoreLiteral(Semantics::Literal(node));
+  return semantics_.expressions_.Store(Semantics::Literal(node));
 }
 
 auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
@@ -107,8 +108,8 @@ auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::StatementEnd()));
-  return semantics_.StoreExpressionStatement(
-      TransformExpression(subtree.RequireConsume()));
+  return semantics_.statements_.Store(Semantics::ExpressionStatement(
+      TransformExpression(subtree.RequireConsume())));
 }
 
 auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
@@ -127,7 +128,7 @@ auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
       subtree.RequireConsume(ParseNodeKind::ParameterList()));
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
-  auto decl = semantics_.StoreFunction(
+  auto decl = semantics_.declarations_.Store(
       Semantics::Function(node, name, params, return_expr, body));
   return std::make_tuple(parse_tree().GetNodeText(name.node()), decl);
 }
@@ -180,11 +181,11 @@ auto SemanticsIRFactory::TransformReturnStatement(ParseTree::Node node)
   auto expr = subtree.TryConsume();
   if (expr) {
     // return expr;
-    return semantics_.StoreReturn(
+    return semantics_.statements_.Store(
         Semantics::Return(node, TransformExpression(*expr)));
   } else {
     // return;
-    return semantics_.StoreReturn(Semantics::Return(node, llvm::None));
+    return semantics_.statements_.Store(Semantics::Return(node, llvm::None));
   }
 }
 

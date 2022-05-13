@@ -7,12 +7,15 @@
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/nodes/meta_node.h"
 
 namespace Carbon::Semantics {
 
 // Represents all kinds of literals: `1`, `i32`, etc.
 class Literal {
  public:
+  static constexpr ExpressionKind MetaNodeKind = ExpressionKind::Literal;
+
   explicit Literal(ParseTree::Node node) : node_(node) {}
 
   auto node() const -> ParseTree::Node { return node_; }

@@ -14,6 +14,8 @@ namespace Carbon::Semantics {
 // Represents `return [expr];`
 class Return {
  public:
+  static constexpr StatementKind MetaNodeKind = StatementKind::Return;
+
   Return(ParseTree::Node node, llvm::Optional<Expression> expr)
       : node_(node), expr_(expr) {}
 

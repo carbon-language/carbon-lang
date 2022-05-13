@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_NODES_META_NODE_BLOCK_H_
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "toolchain/semantics/nodes/meta_node.h"
 

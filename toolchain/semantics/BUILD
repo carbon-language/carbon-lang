@@ -8,6 +8,7 @@ cc_library(
     name = "nodes",
     hdrs = [
         "nodes/declared_name.h",
+        "nodes/expression_statement.h",
         "nodes/function.h",
         "nodes/literal.h",
         "nodes/meta_node.h",
@@ -16,6 +17,7 @@ cc_library(
         "nodes/return.h",
     ],
     deps = [
+        "//common:check",
         "//common:ostream",
         "//toolchain/parser:parse_tree",
         "@llvm-project//llvm:Support",

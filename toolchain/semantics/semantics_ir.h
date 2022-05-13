@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/nodes/expression_statement.h"
 #include "toolchain/semantics/nodes/function.h"
 #include "toolchain/semantics/nodes/literal.h"
 #include "toolchain/semantics/nodes/meta_node_block.h"
@@ -36,17 +37,6 @@ class SemanticsIR {
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
 
-  // Saves the Expression and returns a reference Statement. Non-statement
-  // expressions don't need to be tracked this way.
-  auto StoreExpressionStatement(Semantics::Expression expr)
-      -> Semantics::Statement;
-  // Saves the Function and returns a reference Declaration.
-  auto StoreFunction(Semantics::Function function) -> Semantics::Declaration;
-  // Saves the Literal and returns a reference Expression.
-  auto StoreLiteral(Semantics::Literal lit) -> Semantics::Expression;
-  // Saves the Return and returns a reference Statement.
-  auto StoreReturn(Semantics::Return ret) -> Semantics::Statement;
-
   // Helpers for debug printing.
   void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
   void Print(llvm::raw_ostream& out, Semantics::DeclaredName name) const;
@@ -55,15 +45,15 @@ class SemanticsIR {
   void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
   void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
 
-  // Lists for Semantics::DeclarationKind.
-  llvm::SmallVector<Semantics::Function, 0> functions_;
+  template <typename DeclarationT>
+  auto declarations() -> llvm::SmallVector<DeclarationT, 0>& {
+    return std::get<static_cast<size_t>(DeclarationT::MyDeclarationKind)>(
+        declarations_);
+  }
 
-  // Lists for Semantics::ExpressionKind.
-  llvm::SmallVector<Semantics::Literal, 0> literals_;
-
-  // Lists for Semantics::StatementKind.
-  llvm::SmallVector<Semantics::Expression, 0> expression_statements_;
-  llvm::SmallVector<Semantics::Return, 0> returns_;
+  Semantics::DeclarationStore declarations_;
+  Semantics::ExpressionStore expressions_;
+  Semantics::StatementStore statements_;
 
   // The file-level block.
   Semantics::DeclarationBlock root_block_;

@@ -26,19 +26,19 @@ class SemanticsIRForTest {
   static auto GetFunction(Semantics::Declaration decl)
       -> llvm::Optional<Semantics::Function> {
     CARBON_CHECK(g_semantics != llvm::None);
-    if (decl.kind_ != Semantics::DeclarationKind::Function) {
+    if (decl.kind() != Semantics::DeclarationKind::Function) {
       return llvm::None;
     }
-    return g_semantics->functions_[decl.index_];
+    return g_semantics->declarations_.Get<Semantics::Function>(decl);
   }
 
   static auto GetLiteral(Semantics::Expression expr)
       -> llvm::Optional<Semantics::Literal> {
     CARBON_CHECK(g_semantics != llvm::None);
-    if (expr.kind_ != Semantics::ExpressionKind::Literal) {
+    if (expr.kind() != Semantics::ExpressionKind::Literal) {
       return llvm::None;
     }
-    return g_semantics->literals_[expr.index_];
+    return g_semantics->expressions_.Get<Semantics::Literal>(expr);
   }
 
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {

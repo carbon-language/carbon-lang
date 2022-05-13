@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/declared_name.h"
+#include "toolchain/semantics/nodes/meta_node.h"
 #include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 
@@ -17,10 +18,12 @@ namespace Carbon::Semantics {
 // Represents `fn name(params...) [-> return_expr] body`.
 class Function {
  public:
-  explicit Function(ParseTree::Node node, DeclaredName name,
-                    llvm::SmallVector<PatternBinding, 0> params,
-                    llvm::Optional<Semantics::Expression> return_expr,
-                    StatementBlock body)
+  static constexpr DeclarationKind MetaNodeKind = DeclarationKind::Function;
+
+  Function(ParseTree::Node node, DeclaredName name,
+           llvm::SmallVector<PatternBinding, 0> params,
+           llvm::Optional<Semantics::Expression> return_expr,
+           StatementBlock body)
       : node_(node),
         name_(name),
         params_(std::move(params)),
