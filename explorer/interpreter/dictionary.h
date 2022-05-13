@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_DICTIONARY_H_
-#define EXPLORER_INTERPRETER_DICTIONARY_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_DICTIONARY_H_
+#define CARBON_EXPLORER_INTERPRETER_DICTIONARY_H_
 
 #include <iterator>
 #include <optional>
@@ -101,4 +101,4 @@ class Dictionary {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_DICTIONARY_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_DICTIONARY_H_

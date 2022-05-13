@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_
-#define TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -38,4 +38,4 @@ inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocationT>& {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_NULL_DIAGNOSTICS_H_

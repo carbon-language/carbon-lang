@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
-#define MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
+#ifndef CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
+#define CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -63,4 +63,4 @@ class MatcherTestBase : public ::testing::Test {
 
 }  // namespace Carbon::Testing
 
-#endif  // MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_
+#endif  // CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_TEST_BASE_H_

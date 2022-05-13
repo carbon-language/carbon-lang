@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_STACK_H_
-#define EXPLORER_INTERPRETER_STACK_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_STACK_H_
+#define CARBON_EXPLORER_INTERPRETER_STACK_H_
 
 #include <cstddef>
 #include <iterator>
@@ -72,4 +72,4 @@ struct Stack {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_STACK_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_STACK_H_
