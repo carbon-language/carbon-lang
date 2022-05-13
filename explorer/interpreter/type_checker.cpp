@@ -2169,7 +2169,7 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
   return Success();
 }
 
-static bool IsValidAliasTarget(Nonnull<const Value*> type) {
+static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
   switch (type->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
@@ -2222,7 +2222,7 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
     -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(TypeCheckExp(&alias->target(), enclosing_scope));
 
-  if (!IsValidAliasTarget(&alias->target().static_type())) {
+  if (!IsValidTypeForAliasTarget(&alias->target().static_type())) {
     return CompilationError(alias->source_loc())
            << "invalid target for alias declaration";
   }
