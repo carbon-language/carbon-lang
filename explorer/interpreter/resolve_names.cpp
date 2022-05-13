@@ -297,13 +297,13 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       break;
     }
     case StatementKind::Continuation: {
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
-                                          continuation_scope));
+      auto& continuation = cast<Continuation>(statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(continuation.body(), continuation_scope));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(continuation.name(), &continuation));
       break;
     }
     case StatementKind::Run:
