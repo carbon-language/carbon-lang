@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_CHECK_H_
-#define COMMON_CHECK_H_
+#ifndef CARBON_COMMON_CHECK_H_
+#define CARBON_COMMON_CHECK_H_
 
 #include "common/check_internal.h"
 
@@ -47,4 +47,4 @@ namespace Carbon {
 
 }  // namespace Carbon
 
-#endif  // COMMON_CHECK_H_
+#endif  // CARBON_COMMON_CHECK_H_

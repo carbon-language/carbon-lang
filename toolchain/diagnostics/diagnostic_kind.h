@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
-#define TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
 
 #include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
@@ -34,4 +34,4 @@ inline auto operator<<(std::ostream& out, DiagnosticKind kind)
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_

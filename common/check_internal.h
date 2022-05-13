@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_CHECK_INTERNAL_H_
-#define COMMON_CHECK_INTERNAL_H_
+#ifndef CARBON_COMMON_CHECK_INTERNAL_H_
+#define CARBON_COMMON_CHECK_INTERNAL_H_
 
 #include <unistd.h>
 
@@ -78,4 +78,4 @@ class ExitingStream {
 
 }  // namespace Carbon::Internal
 
-#endif  // COMMON_CHECK_INTERNAL_H_
+#endif  // CARBON_COMMON_CHECK_INTERNAL_H_

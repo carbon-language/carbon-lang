@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_SYNTAX_PARSE_H_
-#define EXPLORER_SYNTAX_PARSE_H_
+#ifndef CARBON_EXPLORER_SYNTAX_PARSE_H_
+#define CARBON_EXPLORER_SYNTAX_PARSE_H_
 
 #include <string>
 #include <variant>
@@ -27,4 +27,4 @@ auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_SYNTAX_PARSE_H_
+#endif  // CARBON_EXPLORER_SYNTAX_PARSE_H_

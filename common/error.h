@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_ERROR_H_
-#define COMMON_ERROR_H_
+#ifndef CARBON_COMMON_ERROR_H_
+#define CARBON_COMMON_ERROR_H_
 
 #include <string>
 
@@ -160,4 +160,4 @@ class ErrorBuilder {
       CARBON_MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), \
       var, expr)
 
-#endif  // COMMON_ERROR_H_
+#endif  // CARBON_COMMON_ERROR_H_

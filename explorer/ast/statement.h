@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_STATEMENT_H_
-#define EXPLORER_AST_STATEMENT_H_
+#ifndef CARBON_EXPLORER_AST_STATEMENT_H_
+#define CARBON_EXPLORER_AST_STATEMENT_H_
 
 #include <utility>
 #include <vector>
@@ -395,4 +395,4 @@ class Await : public Statement {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_STATEMENT_H_
+#endif  // CARBON_EXPLORER_AST_STATEMENT_H_

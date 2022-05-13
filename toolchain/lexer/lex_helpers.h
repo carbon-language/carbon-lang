@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_LEXER_LEX_HELPERS_H_
-#define TOOLCHAIN_LEXER_LEX_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_LEXER_LEX_HELPERS_H_
+#define CARBON_TOOLCHAIN_LEXER_LEX_HELPERS_H_
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -16,4 +16,4 @@ auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_LEXER_LEX_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_LEXER_LEX_HELPERS_H_

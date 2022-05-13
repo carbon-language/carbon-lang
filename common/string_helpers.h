@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_STRING_HELPERS_H_
-#define COMMON_STRING_HELPERS_H_
+#ifndef CARBON_COMMON_STRING_HELPERS_H_
+#define CARBON_COMMON_STRING_HELPERS_H_
 
 #include <optional>
 #include <string>
@@ -32,4 +32,4 @@ auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 
 }  // namespace Carbon
 
-#endif  // COMMON_STRING_HELPERS_H_
+#endif  // CARBON_COMMON_STRING_HELPERS_H_

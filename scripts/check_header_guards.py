@@ -56,7 +56,8 @@ def check_path(path: Path) -> bool:
     with path.open() as f:
         lines = f.readlines()
 
-    guard = str(path).upper().replace("/", "_").replace(".", "_") + "_"
+    guard_path = str(path).upper().replace("/", "_").replace(".", "_")
+    guard = f"CARBON_{guard_path}_"
     ifndef = find_guard(lines, "#ifndef ([A-Z_]+_H_)", False)
     define = find_guard(lines, "#define ([A-Z_]+_H_)", False)
     endif = find_guard(lines, "#endif(?:  // ([A-Z_]+_H_))?", True)

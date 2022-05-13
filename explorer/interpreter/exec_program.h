@@ -6,8 +6,8 @@
 // statement. The intent is to minimize the amount of C++ in the .ypp file, to
 // improve ease of maintenance.
 
-#ifndef EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
-#define EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
+#define CARBON_EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
 
 #include "explorer/ast/ast.h"
 #include "llvm/Support/raw_ostream.h"
@@ -21,4 +21,4 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
