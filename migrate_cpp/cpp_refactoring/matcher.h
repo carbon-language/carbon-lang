@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
-#define MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
+#ifndef CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
+#define CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
@@ -92,4 +92,4 @@ class MatcherFactoryBase : public MatcherFactory {
 
 }  // namespace Carbon
 
-#endif  // MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_
+#endif  // CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_H_

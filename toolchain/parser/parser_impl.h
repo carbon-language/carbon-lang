@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSER_IMPL_H_
-#define TOOLCHAIN_PARSER_PARSER_IMPL_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSER_IMPL_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSER_IMPL_H_
 
 #include "llvm/ADT/Optional.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -286,4 +286,4 @@ class ParseTree::Parser {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSER_IMPL_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSER_IMPL_H_

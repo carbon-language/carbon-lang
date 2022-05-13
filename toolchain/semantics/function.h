@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_FUNCTION_H_
-#define TOOLCHAIN_SEMANTICS_FUNCTION_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_FUNCTION_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_FUNCTION_H_
 
 #include "toolchain/parser/parse_tree.h"
 
@@ -28,4 +28,4 @@ class Function {
 
 }  // namespace Carbon::Semantics
 
-#endif  // TOOLCHAIN_SEMANTICS_FUNCTION_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_FUNCTION_H_

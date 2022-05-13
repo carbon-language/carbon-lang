@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_METAPROGRAMMING_H_
-#define COMMON_METAPROGRAMMING_H_
+#ifndef CARBON_COMMON_METAPROGRAMMING_H_
+#define CARBON_COMMON_METAPROGRAMMING_H_
 
 #include <type_traits>
 
@@ -31,4 +31,4 @@ constexpr auto Requires(F /* f */) -> bool {
 
 }  // namespace Carbon
 
-#endif  // COMMON_METAPROGRAMMING_H_
+#endif  // CARBON_COMMON_METAPROGRAMMING_H_

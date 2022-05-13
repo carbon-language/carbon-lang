@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
-#define TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
+#ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
+#define CARBON_TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
 
 #include <gmock/gmock.h>
 
@@ -52,4 +52,4 @@ void PrintTo(DiagnosticLevel level, std::ostream* os);
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_DIAGNOSTICS_MOCKS_H_
+#endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_MOCKS_H_

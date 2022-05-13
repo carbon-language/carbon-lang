@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_IMPL_SCOPE_H_
-#define EXPLORER_INTERPRETER_IMPL_SCOPE_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
+#define CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 
 #include "explorer/ast/declaration.h"
 
@@ -110,4 +110,4 @@ class ImplScope {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_IMPL_SCOPE_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
