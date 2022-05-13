@@ -789,7 +789,8 @@ class Member {
 // The name of a member of a class or interface.
 //
 // These values are used to represent the second operand of a compound member
-// access expression: `x.(A.B)`.
+// access expression: `x.(A.B)`, and can also be the value of an alias
+// declaration, but cannot be used in most other contexts.
 class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
