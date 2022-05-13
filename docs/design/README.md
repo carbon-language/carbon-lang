@@ -37,7 +37,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`let`](#let)
     -   [`auto`](#auto)
     -   [Pattern matching](#pattern-matching)
-        -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
     -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
@@ -48,7 +47,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [`continue`](#continue)
         -   [`return`](#return)
             -   [`returned var`](#returned-var)
-        -   [`match` control flow](#match-control-flow)
+        -   [`match`](#match)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment, copying](#assignment-copying)
@@ -274,8 +273,9 @@ Numeric literals are case-sensitive: `0x`, `0b` must be lowercase, whereas
 hexadecimal digits must be uppercase. Integer literals never contain a `.`.
 
 Unlike in C++, literals do not have a suffix to indicate their type. Instead,
-numeric literals have a type derived from their value, and can be implicitly
-converted to any type that can represent that value.
+numeric literals have a type derived from their value, and can be
+[implicitly converted](expressions/implicit_conversions.md) to any type that can
+represent that value.
 
 #### Floating-point types
 
@@ -455,10 +455,10 @@ In Carbon, one use of pointers is to pass `&x` into a function that will modify
 #### Arrays and slices
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
-an implicit conversion from tuples to arrays of the same length as long as every
-component of the tuple may be implicitly converted to the destination element
-type. In cases where the size of the array may be deduced, it may be omitted, as
-in:
+an [implicit conversion](expressions/implicit_conversions.md) from tuples to
+arrays of the same length as long as every component of the tuple may be
+implicitly converted to the destination element type. In cases where the size of
+the array may be deduced, it may be omitted, as in:
 
 ```carbon
 var i: i32 = 1;
@@ -698,53 +698,62 @@ body.
 > -   [Pattern matching](pattern_matching.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
->
-> **TODO:** References need to be evolved.
 
-The most prominent mechanism to manipulate and work with types in Carbon is
-pattern matching. This may seem like a deviation from C++, but in fact this is
-largely about building a clear, coherent model for a fundamental part of C++:
-overload resolution.
+Patterns are used in a variety of Carbon language constructs, including
+[function parameters](#functions), [variable declarations](#variables), and
+[`let` declarations](#let).
 
-#### Pattern matching in local variables
+The most common pattern is a _binding pattern_, consisting of a new name, a
+colon (`:`), and a type. It can only match values that may be
+[implicitly converted](expressions/implicit_conversions.md) to that type. An `_`
+may be used instead of the name to ignore the value.
 
-> References: [Pattern matching](pattern_matching.md)
->
-> **TODO:** References need to be evolved.
-
-Value patterns may be used when declaring local variables to conveniently
-destructure them and do other type manipulations. However, the patterns must
-match at compile time, so a boolean predicate cannot be used directly.
-
+There are also _destructuring patterns_, such as _tuple destructuring_. A tuple
+destructuring pattern looks like a tuple of patterns. It may only be used to
+match tuple values whose components match the component patterns of the tuple.
 An example use is:
 
 ```carbon
+// `Bar()` returns a tuple consisting of an
+// `i32` value and 2-tuple of `f32` values.
 fn Bar() -> (i32, (f32, f32));
-fn Foo() -> i32 {
-  var (p: i32, _: auto) = Bar();
+
+fn Foo() -> i64 {
+  // Pattern in `var` declaration:
+  var (p: i64, _: auto) = Bar();
   return p;
 }
 ```
 
-To break this apart:
+The pattern used in the `var` declaration destructures the tuple value returned
+by `Bar()`. The first component pattern, `p: i64`, corresponds to the first
+component of the value returned by `Bar()`, which has type `i32`. This is
+allowed since there is an implicit conversion from `i32` to `i64`. The result of
+this conversion is assigned to the name `p`. The second component pattern,
+`_: auto`, matches the second component of the value returned by `Bar()`, which
+has type `(f32, f32)`. The [`auto`](#auto) matches any type and the `_` means
+the value is discarded.
 
--   The `i32` returned by `Bar()` matches and is bound to `p`, then returned.
--   The `(f32, f32)` returned by `Bar()` matches and is discarded by `_: auto`.
+Additional kinds of patterns are allowed in [`match` statements](#match).
 
 ### Assignment statements
 
-> **TODO:**
-
+Assignment statements mutate the value of the
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
+described on the left-hand side of the assignment.
 
--   Assignment: `x = y`. `x` is assigned the value of `y`.
--   Increment and decrement: `++i`, `--j`. `i` is set to `i + 1`, `j` is set to
-    `j - 1`.
--   Compound assignment: `x += y`, `x -= y`, `x *= y`, `x /= y`, `x &= y`,
-    `x |= y`, `x ^= y`, `x <<= y`, `x >>= y`. `x += y` is equivalent to
-    `x = x + y`.
+-   Assignment: `x = y;`. `x` is assigned the value of `y`.
+-   Destructuring assignment: `(x, y) = z;`. `z` must be a tuple with the same
+    number of compents as the left-hand side. `x` is assigned the value of
+    `z[0]` and `y` is assigned the value of `z[1]`.
+-   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
+    to `j - 1`.
+-   Compound assignment: `x += y;`, `x -= y;`, `x *= y;`, `x /= y;`, `x &= y;`,
+    `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
+    `x = x @ y;` for each operator `@`.
 
-> **TODO:** Destructuring assignment
+Unlike C++, these assignments are statements, not operators, and don't return a
+value.
 
 ### Control flow
 
@@ -760,8 +769,9 @@ Blocks of statements are generally executed sequentially. Control-flow
 statements give additional control over the flow of execution and which
 statements are executed.
 
-Some control-flow statements have include [block](#blocks-and-statements)
-arguments. Those blocks will always be within curly braces `{`...`}`.
+Some control-flow statements include [block](#blocks-and-statements) arguments.
+Those blocks will always be within curly braces `{`...`}`, unlike C++ which also
+allows an individual statement without curly braces.
 
 #### `if` and `else`
 
@@ -913,7 +923,7 @@ fn Sum(a: i32, b: i32) -> i32 {
 
 > **TODO:**
 
-#### `match` control flow
+#### `match`
 
 > References: [Pattern matching](pattern_matching.md)
 >
