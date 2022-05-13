@@ -81,7 +81,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(*this);
-      out << "alias " << alias.name() << " = " << alias.target() << ";\n";
+      PrintID(out);
+      out << " = " << alias.target() << ";\n";
       break;
     }
   }
