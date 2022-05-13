@@ -10,7 +10,7 @@
 
 namespace Carbon::Semantics {
 
-// Semantic information for a name.
+// Represents a name.
 class DeclaredName {
  public:
   DeclaredName(ParseTree::Node node) : node_(node) {}

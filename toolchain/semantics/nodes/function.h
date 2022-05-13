@@ -9,20 +9,23 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/declared_name.h"
+#include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 
 namespace Carbon::Semantics {
 
-// Semantic information for a function.
+// Represents `fn name(params...) [-> return_expr] body`.
 class Function {
  public:
   explicit Function(ParseTree::Node node, DeclaredName name,
                     llvm::SmallVector<PatternBinding, 0> params,
-                    llvm::Optional<Semantics::Expression> return_expr)
+                    llvm::Optional<Semantics::Expression> return_expr,
+                    StatementBlock body)
       : node_(node),
         name_(name),
         params_(std::move(params)),
-        return_expr_(return_expr) {}
+        return_expr_(return_expr),
+        body_(std::move(body)) {}
 
   auto node() const -> ParseTree::Node { return node_; }
   auto name() const -> const DeclaredName& { return name_; }
@@ -31,8 +34,7 @@ class Function {
     return return_expr_;
   }
 
-  // TODO:
-  auto body() const -> ParseTree::Node { return {}; }
+  auto body() const -> const StatementBlock& { return body_; }
 
  private:
   // The FunctionDeclaration node.
@@ -46,6 +48,8 @@ class Function {
 
   // The return expression.
   llvm::Optional<Semantics::Expression> return_expr_;
+
+  StatementBlock body_;
 };
 
 }  // namespace Carbon::Semantics

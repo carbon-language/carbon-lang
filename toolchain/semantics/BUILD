@@ -8,7 +8,6 @@ cc_library(
     name = "nodes",
     hdrs = [
         "nodes/declared_name.h",
-        "nodes/expression.h",
         "nodes/function.h",
         "nodes/literal.h",
         "nodes/meta_node.h",

@@ -8,11 +8,11 @@
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/declared_name.h"
-#include "toolchain/semantics/nodes/expression.h"
+#include "toolchain/semantics/nodes/meta_node.h"
 
 namespace Carbon::Semantics {
 
-// Semantic information for a literal.
+// Represents `name: type`.
 class PatternBinding {
  public:
   explicit PatternBinding(ParseTree::Node node, DeclaredName name,

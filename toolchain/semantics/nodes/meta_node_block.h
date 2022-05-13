@@ -29,9 +29,10 @@ struct MetaNodeBlock {
   friend class Carbon::SemanticsIR;
   friend class Carbon::SemanticsIRFactory;
 
-  // TODO: Switch to a simple constructor instead of incremental adds?
+  // TODO: Switch to direct construction instead of incremental adds?
   void add_node(MetaNodeT node) { nodes_.push_back(node); }
-  void add_named_node(llvm::StringRef name, MetaNodeT node) {
+  void add_named_node(std::tuple<llvm::StringRef, MetaNodeT> named_node) {
+    auto& [name, node] = named_node;
     add_node(node);
     name_lookup_[name] = node;
   }
@@ -41,7 +42,7 @@ struct MetaNodeBlock {
 };
 
 using DeclarationBlock = MetaNodeBlock<Declaration>;
-using StatementBlock = MetaNodeBlock<Declaration>;
+using StatementBlock = MetaNodeBlock<Statement>;
 
 }  // namespace Carbon::Semantics
 

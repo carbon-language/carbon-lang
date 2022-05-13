@@ -6,11 +6,6 @@
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/nodes/declared_name.h"
-#include "toolchain/semantics/nodes/expression.h"
-#include "toolchain/semantics/nodes/function.h"
-#include "toolchain/semantics/nodes/literal.h"
-#include "toolchain/semantics/nodes/pattern_binding.h"
 #include "toolchain/semantics/semantics_ir.h"
 
 namespace Carbon {
@@ -31,13 +26,17 @@ class SemanticsIRFactory {
   // otherwise checked.
   void RequireNodeEmpty(ParseTree::Node node);
 
-  auto TransformCodeBlock(ParseTree::Node node) -> void;
+  // Each of these takes a parse tree node and does a transformation based on
+  // its type. These functions are per ParseNodeKind.
+  auto TransformCodeBlock(ParseTree::Node node) -> Semantics::StatementBlock;
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
-  void TransformFunctionDeclaration(ParseTree::Node node,
-                                    Semantics::DeclarationBlock& block);
+  auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
+  auto TransformExpressionStatement(ParseTree::Node node)
+      -> Semantics::Statement;
+  auto TransformFunctionDeclaration(ParseTree::Node node)
+      -> std::tuple<llvm::StringRef, Semantics::Declaration>;
   auto TransformParameterList(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::PatternBinding, 0>;
-  auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
   auto TransformPatternBinding(ParseTree::Node node)
       -> Semantics::PatternBinding;
   auto TransformReturnType(ParseTree::Node node) -> Semantics::Expression;

@@ -10,7 +10,7 @@
 
 namespace Carbon::Semantics {
 
-// Semantic information for a literal.
+// Represents all kinds of literals: `1`, `i32`, etc.
 class Literal {
  public:
   explicit Literal(ParseTree::Node node) : node_(node) {}

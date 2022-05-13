@@ -10,16 +10,28 @@
 
 namespace Carbon {
 
-void SemanticsIR::AddFunction(Semantics::DeclarationBlock& block,
-                              Semantics::Function function) {
-  int32_t index = functions_.size();
-  functions_.push_back(function);
-  block.add_named_node(
-      parse_tree_->GetNodeText(function.name().node()),
-      Semantics::Declaration(Semantics::DeclarationKind::Function, index));
+auto SemanticsIR::StoreExpressionStatement(Semantics::Expression expr)
+    -> Semantics::Statement {
+  int32_t index = expression_statements_.size();
+  expression_statements_.push_back(expr);
+  return Semantics::Statement(Semantics::StatementKind::Expression, index);
 }
 
-auto SemanticsIR::AddReturn(Semantics::Return ret) -> Semantics::Statement {
+auto SemanticsIR::StoreFunction(Semantics::Function function)
+    -> Semantics::Declaration {
+  int32_t index = functions_.size();
+  functions_.push_back(function);
+  return Semantics::Declaration(Semantics::DeclarationKind::Function, index);
+}
+
+auto SemanticsIR::StoreLiteral(Semantics::Literal lit)
+    -> Semantics::Expression {
+  int32_t index = literals_.size();
+  literals_.push_back(lit);
+  return Semantics::Expression(Semantics::ExpressionKind::Literal, index);
+}
+
+auto SemanticsIR::StoreReturn(Semantics::Return ret) -> Semantics::Statement {
   int32_t index = returns_.size();
   returns_.push_back(ret);
   return Semantics::Statement(Semantics::StatementKind::Return, index);
@@ -32,7 +44,7 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
       Print(out, functions_[decl.index_]);
       return;
     case Semantics::DeclarationKind::Invalid:
-      CARBON_FATAL() << "Invalid node type";
+      CARBON_FATAL() << "Invalid declaration type";
   }
 }
 
@@ -47,7 +59,13 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 
 void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Expression expr) const {
-  Print(out, expr.literal());
+  switch (expr.kind_) {
+    case Semantics::ExpressionKind::Literal:
+      Print(out, literals_[expr.index_]);
+      return;
+    case Semantics::ExpressionKind::Invalid:
+      CARBON_FATAL() << "Invalid expression type";
+  }
 }
 
 void SemanticsIR::Print(llvm::raw_ostream& out,

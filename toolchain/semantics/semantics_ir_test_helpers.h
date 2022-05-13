@@ -12,7 +12,6 @@
 #include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/semantics/nodes/declared_name.h"
-#include "toolchain/semantics/nodes/expression.h"
 #include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -25,6 +24,8 @@ namespace Carbon::Testing {
 // SemanticsIR to refer back to; PrintTo must be static.
 class SemanticsIRSingleton {
  public:
+  // TODO: This and similar gets may belong on SemanticsIR long-term, but are
+  // here for now while usage fills out.
   static auto GetFunction(Semantics::Declaration decl)
       -> llvm::Optional<Semantics::Function> {
     CARBON_CHECK(semantics_ != llvm::None);
@@ -32,6 +33,15 @@ class SemanticsIRSingleton {
       return llvm::None;
     }
     return semantics_->functions_[decl.index_];
+  }
+
+  static auto GetLiteral(Semantics::Expression expr)
+      -> llvm::Optional<Semantics::Literal> {
+    CARBON_CHECK(semantics_ != llvm::None);
+    if (expr.kind_ != Semantics::ExpressionKind::Literal) {
+      return llvm::None;
+    }
+    return semantics_->literals_[expr.index_];
   }
 
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
@@ -85,9 +95,10 @@ MATCHER_P(ExpressionLiteral, text_matcher,
           llvm::formatv("Expression literal {0}",
                         ::testing::PrintToString(text_matcher))) {
   const Semantics::Expression& expr = arg;
-  return ExplainMatchResult(
-      text_matcher, SemanticsIRSingleton::GetNodeText(expr.literal().node()),
-      result_listener);
+  return ExplainMatchResult(text_matcher,
+                            SemanticsIRSingleton::GetNodeText(
+                                SemanticsIRSingleton::GetLiteral(expr)->node()),
+                            result_listener);
 }
 
 MATCHER_P(FunctionName, name_matcher,

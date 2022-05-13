@@ -50,8 +50,15 @@ enum class DeclarationKind {
 };
 using Declaration = MetaNode<DeclarationKind>;
 
+enum class ExpressionKind {
+  Invalid,
+  Literal,
+};
+using Expression = MetaNode<ExpressionKind>;
+
 enum class StatementKind {
   Invalid,
+  Expression,
   Return,
 };
 using Statement = MetaNode<StatementKind>;

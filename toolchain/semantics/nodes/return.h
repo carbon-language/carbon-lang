@@ -7,11 +7,11 @@
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/nodes/expression.h"
+#include "toolchain/semantics/nodes/meta_node.h"
 
 namespace Carbon::Semantics {
 
-// Semantic information for a literal.
+// Represents `return [expr];`
 class Return {
  public:
   explicit Return(ParseTree::Node node, llvm::Optional<Expression> expr)
