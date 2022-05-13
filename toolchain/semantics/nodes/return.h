@@ -14,7 +14,7 @@ namespace Carbon::Semantics {
 // Represents `return [expr];`
 class Return {
  public:
-  explicit Return(ParseTree::Node node, llvm::Optional<Expression> expr)
+  Return(ParseTree::Node node, llvm::Optional<Expression> expr)
       : node_(node), expr_(expr) {}
 
   auto node() const -> ParseTree::Node { return node_; }

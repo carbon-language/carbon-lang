@@ -15,8 +15,7 @@ namespace Carbon::Semantics {
 // Represents `name: type`.
 class PatternBinding {
  public:
-  explicit PatternBinding(ParseTree::Node node, DeclaredName name,
-                          Expression type)
+  PatternBinding(ParseTree::Node node, DeclaredName name, Expression type)
       : node_(node), name_(name), type_(type) {}
 
   auto node() const -> ParseTree::Node { return node_; }

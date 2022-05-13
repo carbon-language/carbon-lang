@@ -31,16 +31,16 @@ class SemanticsIRFactoryTest : public ::testing::Test {
     EXPECT_FALSE(tokenized_buffer->has_errors());
     parse_tree = ParseTree::Parse(*tokenized_buffer, consumer);
     EXPECT_FALSE(parse_tree->has_errors());
-    SemanticsIRSingleton::set_semantics(SemanticsIRFactory::Build(*parse_tree));
+    SemanticsIRForTest::set_semantics(SemanticsIRFactory::Build(*parse_tree));
   }
 
-  ~SemanticsIRFactoryTest() override { SemanticsIRSingleton::clear(); }
+  ~SemanticsIRFactoryTest() override { SemanticsIRForTest::clear(); }
 
   void ExpectRootBlock(
       ::testing::Matcher<llvm::ArrayRef<Semantics::Declaration>> decls,
       ::testing::Matcher<llvm::StringMap<Semantics::Declaration>> name_lookup) {
-    EXPECT_THAT(SemanticsIRSingleton::semantics().root_block().nodes(), decls);
-    EXPECT_THAT(SemanticsIRSingleton::semantics().root_block().name_lookup(),
+    EXPECT_THAT(SemanticsIRForTest::semantics().root_block().nodes(), decls);
+    EXPECT_THAT(SemanticsIRForTest::semantics().root_block().name_lookup(),
                 name_lookup);
   }
 

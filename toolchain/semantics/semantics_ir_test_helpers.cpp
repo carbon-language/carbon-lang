@@ -6,6 +6,6 @@
 
 namespace Carbon::Testing {
 
-llvm::Optional<SemanticsIR> SemanticsIRSingleton::semantics_;
+llvm::Optional<SemanticsIR> SemanticsIRForTest::g_semantics;
 
 }  // namespace Carbon::Testing

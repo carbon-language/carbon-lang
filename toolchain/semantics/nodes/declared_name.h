@@ -13,7 +13,7 @@ namespace Carbon::Semantics {
 // Represents a name.
 class DeclaredName {
  public:
-  DeclaredName(ParseTree::Node node) : node_(node) {}
+  explicit DeclaredName(ParseTree::Node node) : node_(node) {}
 
   auto node() const -> ParseTree::Node { return node_; }
 

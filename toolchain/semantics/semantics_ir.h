@@ -14,7 +14,7 @@
 #include "toolchain/semantics/nodes/return.h"
 
 namespace Carbon::Testing {
-class SemanticsIRSingleton;
+class SemanticsIRForTest;
 }  // namespace Carbon::Testing
 
 namespace Carbon {
@@ -31,7 +31,7 @@ class SemanticsIR {
 
  private:
   friend class SemanticsIRFactory;
-  friend class Testing::SemanticsIRSingleton;
+  friend class Testing::SemanticsIRForTest;
 
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}

@@ -12,7 +12,7 @@ class SemanticsIR;
 }  // namespace Carbon
 
 namespace Carbon::Testing {
-class SemanticsIRSingleton;
+class SemanticsIRForTest;
 }  // namespace Carbon::Testing
 
 namespace Carbon::Semantics {
@@ -29,7 +29,7 @@ class MetaNode {
 
  private:
   friend class Carbon::SemanticsIR;
-  friend class Carbon::Testing::SemanticsIRSingleton;
+  friend class Carbon::Testing::SemanticsIRForTest;
 
   MetaNode(KindT kind, int32_t index) : kind_(kind), index_(index) {
     // TODO: kind_ and index_ are currently unused, this suppresses the
