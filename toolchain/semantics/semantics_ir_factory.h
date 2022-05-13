@@ -34,13 +34,14 @@ class SemanticsIRFactory {
   auto TransformCodeBlock(ParseTree::Node node) -> void;
   auto TransformDeclaredName(ParseTree::Node node) -> Semantics::DeclaredName;
   void TransformFunctionDeclaration(ParseTree::Node node,
-                                    SemanticsIR::Block& block);
+                                    Semantics::DeclarationBlock& block);
   auto TransformParameterList(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::PatternBinding, 0>;
   auto TransformExpression(ParseTree::Node node) -> Semantics::Expression;
   auto TransformPatternBinding(ParseTree::Node node)
       -> Semantics::PatternBinding;
   auto TransformReturnType(ParseTree::Node node) -> Semantics::Expression;
+  auto TransformReturnStatement(ParseTree::Node node) -> Semantics::Statement;
 
   // Convenience accessor.
   auto parse_tree() -> const ParseTree& { return *semantics_.parse_tree_; }

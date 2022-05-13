@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_
-#define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest-matchers.h>
@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/semantics/nodes/declared_name.h"
 #include "toolchain/semantics/nodes/expression.h"
+#include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
 #include "toolchain/semantics/semantics_ir.h"
 
@@ -20,17 +21,17 @@ namespace Carbon::Testing {
 
 // A singleton for semantics_ir, used by the helpers.
 //
-// This is done this way mainly so that PrintTo(SemanticsIR::Node) has a
+// This is done this way mainly so that PrintTo(Semantics::Declaration) has a
 // SemanticsIR to refer back to; PrintTo must be static.
 class SemanticsIRSingleton {
  public:
-  static auto GetFunction(SemanticsIR::Node node)
+  static auto GetFunction(Semantics::Declaration decl)
       -> llvm::Optional<Semantics::Function> {
     CARBON_CHECK(semantics_ != llvm::None);
-    if (node.kind_ != SemanticsIR::Node::Kind::Function) {
+    if (decl.kind_ != Semantics::DeclarationKind::Function) {
       return llvm::None;
     }
-    return semantics_->functions_[node.index_];
+    return semantics_->functions_[decl.index_];
   }
 
   static auto GetNodeText(ParseTree::Node node) -> llvm::StringRef {
@@ -38,9 +39,9 @@ class SemanticsIRSingleton {
     return semantics_->parse_tree_->GetNodeText(node);
   }
 
-  static void Print(llvm::raw_ostream& out, SemanticsIR::Node node) {
+  static void Print(llvm::raw_ostream& out, Semantics::Declaration decl) {
     CARBON_CHECK(semantics_ != llvm::None);
-    semantics_->Print(out, node);
+    semantics_->Print(out, decl);
   }
 
   static auto semantics() -> const SemanticsIR& {
@@ -61,21 +62,22 @@ class SemanticsIRSingleton {
 };
 
 inline auto MappedNode(::testing::Matcher<std::string> key,
-                       ::testing::Matcher<SemanticsIR::Node> value)
-    -> ::testing::Matcher<llvm::StringMapEntry<SemanticsIR::Node>> {
+                       ::testing::Matcher<Semantics::Declaration> value)
+    -> ::testing::Matcher<llvm::StringMapEntry<Semantics::Declaration>> {
   return ::testing::AllOf(
       ::testing::Property(
-          "key", &llvm::StringMapEntry<SemanticsIR::Node>::getKey, key),
+          "key", &llvm::StringMapEntry<Semantics::Declaration>::getKey, key),
       ::testing::Property(
-          "value", &llvm::StringMapEntry<SemanticsIR::Node>::getValue, value));
+          "value", &llvm::StringMapEntry<Semantics::Declaration>::getValue,
+          value));
 }
 
 MATCHER_P(DeclaredName, name_matcher,
           llvm::formatv("DeclaredName {0}",
                         ::testing::PrintToString(name_matcher))) {
-  const Semantics::DeclaredName& node = arg;
+  const Semantics::DeclaredName& name = arg;
   return ExplainMatchResult(name_matcher,
-                            SemanticsIRSingleton::GetNodeText(node.node()),
+                            SemanticsIRSingleton::GetNodeText(name.node()),
                             result_listener);
 }
 
@@ -91,8 +93,8 @@ MATCHER_P(ExpressionLiteral, text_matcher,
 MATCHER_P(FunctionName, name_matcher,
           llvm::formatv("Function named {0}",
                         ::testing::PrintToString(name_matcher))) {
-  const SemanticsIR::Node& node = arg;
-  if (auto function = SemanticsIRSingleton::GetFunction(node)) {
+  const Semantics::Declaration& decl = arg;
+  if (auto function = SemanticsIRSingleton::GetFunction(decl)) {
     return ExplainMatchResult(
         name_matcher,
         SemanticsIRSingleton::GetNodeText(function->name().node()),
@@ -106,8 +108,8 @@ MATCHER_P(FunctionName, name_matcher,
 MATCHER_P(FunctionParams, param_matcher,
           llvm::formatv("Function parameters {0}",
                         ::testing::PrintToString(param_matcher))) {
-  const SemanticsIR::Node& node = arg;
-  if (auto function = SemanticsIRSingleton::GetFunction(node)) {
+  const Semantics::Declaration& decl = arg;
+  if (auto function = SemanticsIRSingleton::GetFunction(decl)) {
     return ExplainMatchResult(param_matcher, function->params(),
                               result_listener);
   } else {
@@ -119,8 +121,8 @@ MATCHER_P(FunctionParams, param_matcher,
 MATCHER_P(FunctionReturnExpr, expression_matcher,
           llvm::formatv("Function return expr {0}",
                         ::testing::PrintToString(expression_matcher))) {
-  const SemanticsIR::Node& node = arg;
-  if (auto function = SemanticsIRSingleton::GetFunction(node)) {
+  const Semantics::Declaration& decl = arg;
+  if (auto function = SemanticsIRSingleton::GetFunction(decl)) {
     return ExplainMatchResult(expression_matcher, function->return_expr(),
                               result_listener);
   } else {
@@ -132,8 +134,8 @@ MATCHER_P(FunctionReturnExpr, expression_matcher,
 MATCHER_P(FunctionBody, body_matcher,
           llvm::formatv("Function body {0}",
                         ::testing::PrintToString(body_matcher))) {
-  const SemanticsIR::Node& node = arg;
-  if (auto function = SemanticsIRSingleton::GetFunction(node)) {
+  const Semantics::Declaration& decl = arg;
+  if (auto function = SemanticsIRSingleton::GetFunction(decl)) {
     return ExplainMatchResult(body_matcher, function->body(), result_listener);
   } else {
     *result_listener << "node is not a function";
@@ -146,7 +148,7 @@ inline auto Function(
     ::testing::Matcher<llvm::ArrayRef<Semantics::PatternBinding>>
         params_matcher,
     ::testing::Matcher<llvm::Optional<Semantics::Expression>>
-        return_type_matcher) -> ::testing::Matcher<SemanticsIR::Node> {
+        return_type_matcher) -> ::testing::Matcher<Semantics::Declaration> {
   return ::testing::AllOf(FunctionName(name_matcher),
                           FunctionParams(params_matcher),
                           FunctionReturnExpr(return_type_matcher));
@@ -168,13 +170,14 @@ inline auto PatternBinding(
 namespace Carbon {
 
 // Prints a Node for gmock. Needs to be in the matching namespace.
-inline void PrintTo(const SemanticsIR::Node& node, std::ostream* out) {
+inline void PrintTo(const Semantics::Declaration& decl, std::ostream* out) {
   llvm::raw_os_ostream wrapped_out(*out);
-  Testing::SemanticsIRSingleton::Print(wrapped_out, node);
+  Testing::SemanticsIRSingleton::Print(wrapped_out, decl);
 }
 
 // Prints a Block for gmock. Needs to be in the matching namespace.
-inline void PrintTo(const SemanticsIR::Block& block, std::ostream* out) {
+inline void PrintTo(const Semantics::DeclarationBlock& block,
+                    std::ostream* out) {
   llvm::raw_os_ostream wrapped_out(*out);
   wrapped_out << "Block{";
   llvm::ListSeparator sep;
@@ -192,7 +195,7 @@ namespace llvm {
 
 // Prints a StringMapEntry for gmock. Needs to be in the matching namespace.
 inline void PrintTo(
-    const llvm::StringMapEntry<Carbon::SemanticsIR::Node>& entry,
+    const llvm::StringMapEntry<Carbon::Semantics::Declaration>& entry,
     std::ostream* out) {
   *out << "StringMapEntry(" << entry.getKey() << ", ";
   Carbon::PrintTo(entry.getValue(), out);
@@ -201,4 +204,4 @@ inline void PrintTo(
 
 }  // namespace llvm
 
-#endif  // TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_TEST_HELPERS_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_
-#define TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
@@ -12,6 +12,7 @@
 namespace Carbon::Semantics {
 
 // Semantic information for an expression.
+// TODO: This should probably be a MetaNode.
 class Expression {
  public:
   explicit Expression(ParseTree::Node node, Literal literal)
@@ -27,4 +28,4 @@ class Expression {
 
 }  // namespace Carbon::Semantics
 
-#endif  // TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_EXPRESSION_H_

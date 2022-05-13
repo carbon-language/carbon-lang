@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
-#define TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
 
 #include "toolchain/parser/parse_tree.h"
 
@@ -64,4 +64,4 @@ class ParseSubtreeConsumer {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_PARSE_SUBTREE_CONSUMER_H_

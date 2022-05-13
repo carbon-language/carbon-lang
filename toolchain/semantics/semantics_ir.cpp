@@ -10,24 +10,28 @@
 
 namespace Carbon {
 
-void SemanticsIR::Block::Add(llvm::StringRef name, Node named_entity) {
-  nodes_.push_back(named_entity);
-  name_lookup_.insert({name, named_entity});
-}
-
-void SemanticsIR::AddFunction(Block& block, Semantics::Function function) {
+void SemanticsIR::AddFunction(Semantics::DeclarationBlock& block,
+                              Semantics::Function function) {
   int32_t index = functions_.size();
   functions_.push_back(function);
-  block.Add(parse_tree_->GetNodeText(function.name().node()),
-            Node(Node::Kind::Function, index));
+  block.add_named_node(
+      parse_tree_->GetNodeText(function.name().node()),
+      Semantics::Declaration(Semantics::DeclarationKind::Function, index));
 }
 
-void SemanticsIR::Print(llvm::raw_ostream& out, Node node) const {
-  switch (node.kind_) {
-    case Node::Kind::Function:
-      Print(out, functions_[node.index_]);
+auto SemanticsIR::AddReturn(Semantics::Return ret) -> Semantics::Statement {
+  int32_t index = returns_.size();
+  returns_.push_back(ret);
+  return Semantics::Statement(Semantics::StatementKind::Return, index);
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::Declaration decl) const {
+  switch (decl.kind_) {
+    case Semantics::DeclarationKind::Function:
+      Print(out, functions_[decl.index_]);
       return;
-    case Node::Kind::Invalid:
+    case Semantics::DeclarationKind::Invalid:
       CARBON_FATAL() << "Invalid node type";
   }
 }

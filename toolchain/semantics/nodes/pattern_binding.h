@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_
-#define TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
@@ -31,4 +31,4 @@ class PatternBinding {
 
 }  // namespace Carbon::Semantics
 
-#endif  // TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_PATTERN_BINDING_H_

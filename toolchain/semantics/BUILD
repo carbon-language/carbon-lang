@@ -11,7 +11,10 @@ cc_library(
         "nodes/expression.h",
         "nodes/function.h",
         "nodes/literal.h",
+        "nodes/meta_node.h",
+        "nodes/meta_node_block.h",
         "nodes/pattern_binding.h",
+        "nodes/return.h",
     ],
     deps = [
         "//common:ostream",

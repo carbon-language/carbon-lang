@@ -2,25 +2,29 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_LITERAL_H_
-#define CARBON_TOOLCHAIN_SEMANTICS_NODES_LITERAL_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_H_
 
 #include "common/ostream.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/nodes/expression.h"
 
 namespace Carbon::Semantics {
 
 // Semantic information for a literal.
-class Literal {
+class Return {
  public:
-  explicit Literal(ParseTree::Node node) : node_(node) {}
+  explicit Return(ParseTree::Node node, llvm::Optional<Expression> expr)
+      : node_(node), expr_(expr) {}
 
   auto node() const -> ParseTree::Node { return node_; }
+  auto expr() const -> const llvm::Optional<Expression>& { return expr_; }
 
  private:
   ParseTree::Node node_;
+  llvm::Optional<Expression> expr_;
 };
 
 }  // namespace Carbon::Semantics
 
-#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_LITERAL_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_NODES_RETURN_H_

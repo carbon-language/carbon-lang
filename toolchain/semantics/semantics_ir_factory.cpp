@@ -59,13 +59,14 @@ auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node) -> void {
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
   RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::CodeBlockEnd()));
 
+  llvm::SmallVector<Semantics::Statement> statements;
   while (llvm::Optional<ParseTree::Node> child = subtree.TryConsume()) {
     switch (auto child_kind = parse_tree().node_kind(*child)) {
       case ParseNodeKind::ExpressionStatement():
         // TODO
         break;
       case ParseNodeKind::ReturnStatement():
-        // TODO
+        statements.push_back(TransformReturnStatement(*child));
         break;
       case ParseNodeKind::VariableDeclaration():
         // TODO
@@ -75,6 +76,7 @@ auto SemanticsIRFactory::TransformCodeBlock(ParseTree::Node node) -> void {
                        << child_kind;
     }
   }
+  FixReverseOrdering(statements);
 }
 
 auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
@@ -96,7 +98,7 @@ auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
 }
 
 void SemanticsIRFactory::TransformFunctionDeclaration(
-    ParseTree::Node node, SemanticsIR::Block& block) {
+    ParseTree::Node node, Semantics::DeclarationBlock& block) {
   CARBON_CHECK(parse_tree().node_kind(node) ==
                ParseNodeKind::FunctionDeclaration());
 
@@ -150,6 +152,25 @@ auto SemanticsIRFactory::TransformPatternBinding(ParseTree::Node node)
   auto name = TransformDeclaredName(
       subtree.RequireConsume(ParseNodeKind::DeclaredName()));
   return Semantics::PatternBinding(node, name, type);
+}
+
+auto SemanticsIRFactory::TransformReturnStatement(ParseTree::Node node)
+    -> Semantics::Statement {
+  CARBON_CHECK(parse_tree().node_kind(node) ==
+               ParseNodeKind::ReturnStatement());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::StatementEnd()));
+
+  auto expr = subtree.TryConsume();
+  if (expr) {
+    // return expr;
+    return semantics_.AddReturn(
+        Semantics::Return(node, TransformExpression(*expr)));
+  } else {
+    // return;
+    return semantics_.AddReturn(Semantics::Return(node, llvm::None));
+  }
 }
 
 auto SemanticsIRFactory::TransformReturnType(ParseTree::Node node)
