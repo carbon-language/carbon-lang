@@ -128,6 +128,10 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
+        exclude: |
+          (?x)^(
+              .*/testdata/.*
+          )$
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:
