@@ -52,7 +52,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Classes](#classes)
         -   [Assignment, copying](#assignment-copying)
         -   [Member access](#member-access)
-        -   [Class function](#class-function)
+        -   [Class functions and factory functions](#class-functions-and-factory-functions)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
@@ -1088,7 +1088,7 @@ Assert(sprocket.x == thingy.x);
 
 Every class has a member named `Self` equal to the class type.
 
-#### Class function
+#### Class functions and factory functions
 
 Classes may also contain functions as members of the type. This is commonly used
 to define a function that creates instances. Carbon does not have separate
@@ -1112,6 +1112,21 @@ the body is treated as if it was defined immediately after the outermost class
 definition. This means that members such as the fields will be considered
 defined even if their definitions are later in the source than the class
 function.
+
+The [`returned var` feature](#returned-var) can be used if the address of the
+instance being created is needed in a factory function, as in:
+
+```carbon
+class Registered {
+  fn Create() -> Self {
+    returned var result: Self = {...};
+    StoreMyPointerSomewhere(&result);
+    return var;
+  }
+}
+```
+
+This approach can also be used for types that can't be copied or moved.
 
 #### Methods
 
@@ -1248,7 +1263,7 @@ class DerivedFromAbstract extends AbstractClass {
     // AbstractClass.Create() returns a
     // `partial AbstractClass` that can be used as
     // the `.base` member when constructing a value
-    // of a derived class
+    // of a derived class.
     return {.base = AbstractClass.Create(),
             .derived_field = 42 };
   }
@@ -1256,8 +1271,6 @@ class DerivedFromAbstract extends AbstractClass {
   var derived_field: i32;
 }
 ```
-
-> **TODO:**
 
 #### Access control
 
