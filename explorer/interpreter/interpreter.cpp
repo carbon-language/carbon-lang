@@ -494,7 +494,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
-    case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::Witness:
@@ -547,6 +546,19 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           CARBON_FATAL() << "Can't convert value " << *value << " to type "
                          << *destination_type;
       }
+    }
+    case Value::Kind::StructType: {
+      // The value `{}` has kind `StructType` not `StructValue`. This value can
+      // be converted to an empty class type.
+      if (auto* destination_class_type =
+              dyn_cast<NominalClassType>(destination_type)) {
+        CARBON_CHECK(cast<StructType>(*value).fields().empty())
+            << "only an empty struct type value converts to class type";
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_dest,
+                                InstantiateType(destination_type, source_loc));
+        return arena_->New<NominalClassValue>(inst_dest, value);
+      }
+      return value;
     }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
