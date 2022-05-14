@@ -79,10 +79,17 @@ repos:
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
 
-  # This may rename files, so it's deliberately between formatters and linters.
   - repo: local
     hooks:
+      - id: check-header-guards
+        # This should run after clang-format, which may reformat a guard.
+        name: Check header guards
+        entry: scripts/check_header_guards.py
+        language: python
+        files: '^.*\.h$'
       - id: check-sha-filenames
+        # This may rename files, so it's deliberately between formatters and
+        # linters.
         name: Check fuzzer SHA filenames
         entry: scripts/check_sha_filenames.py
         language: python

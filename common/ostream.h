@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_OSTREAM_H_
-#define COMMON_OSTREAM_H_
+#ifndef CARBON_COMMON_OSTREAM_H_
+#define CARBON_COMMON_OSTREAM_H_
 
 #include <ostream>
 
@@ -93,4 +93,4 @@ auto operator<<(S& standard_out, const T& value) -> S& {
 
 }  // namespace llvm
 
-#endif  // COMMON_OSTREAM_H_
+#endif  // CARBON_COMMON_OSTREAM_H_

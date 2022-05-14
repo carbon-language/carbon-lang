@@ -111,6 +111,18 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& field_access =
+          cast<CompoundFieldAccessExpression>(expression);
+      auto* field_access_proto =
+          expression_proto.mutable_compound_field_access();
+      *field_access_proto->mutable_object() =
+          ExpressionToProto(field_access.object());
+      *field_access_proto->mutable_path() =
+          ExpressionToProto(field_access.path());
+      break;
+    }
+
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(expression);
       auto* index_proto = expression_proto.mutable_index();

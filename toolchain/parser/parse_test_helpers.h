@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
-#define TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 
@@ -343,4 +343,4 @@ auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
 }  // namespace Testing
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_

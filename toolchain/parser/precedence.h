@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PRECEDENCE_H_
-#define TOOLCHAIN_PARSER_PRECEDENCE_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PRECEDENCE_H_
+#define CARBON_TOOLCHAIN_PARSER_PRECEDENCE_H_
 
 #include "llvm/ADT/Optional.h"
 #include "toolchain/lexer/token_kind.h"
@@ -97,4 +97,4 @@ struct PrecedenceGroup::Trailing {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PRECEDENCE_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PRECEDENCE_H_

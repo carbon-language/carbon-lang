@@ -328,6 +328,11 @@ postfix_expression:
   primary_expression
 | postfix_expression designator
     { $$ = arena->New<FieldAccessExpression>(context.source_loc(), $1, $2); }
+| postfix_expression PERIOD LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
+    {
+      $$ = arena->New<CompoundFieldAccessExpression>(context.source_loc(), $1,
+                                                     $4);
+    }
 | postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }
 | intrinsic_identifier tuple

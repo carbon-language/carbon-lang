@@ -61,6 +61,57 @@ static auto ExpectPointerType(SourceLocation source_loc,
   return Success();
 }
 
+// Returns whether the value is a type whose values are themselves known to be
+// types.
+static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      // These are values, not types.
+      return false;
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::TupleValue:
+      // These are types whose values are not types.
+      return false;
+    case Value::Kind::AutoType:
+    case Value::Kind::VariableType:
+      // A value of one of these types could be a type, but isn't known to be.
+      return false;
+    case Value::Kind::TypeType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+      // A value of one of these types is itself always a type.
+      return true;
+  }
+}
+
 // Returns whether the value is a valid result from a type expression,
 // as opposed to a non-type value.
 static auto IsType(Nonnull<const Value*> value) -> bool {
@@ -80,6 +131,12 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+      return false;
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      // Names aren't first-class values, and their types aren't first-class
+      // types.
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -96,7 +153,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
       return true;
@@ -141,6 +197,9 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -157,7 +216,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
@@ -509,10 +567,12 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       return handle_non_deduced_type();
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -562,6 +622,8 @@ auto TypeChecker::Substitute(
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
+      // FIXME: Only remove the bindings that are in `dict`; we may still need
+      // to do deduction.
       return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
                                        llvm::None);
     }
@@ -609,10 +671,12 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -760,8 +824,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::TupleLiteral: {
       std::vector<Nonnull<const Value*>> arg_types;
-      for (auto& arg : cast<TupleLiteral>(*e).fields()) {
+      for (auto* arg : cast<TupleLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+        CARBON_RETURN_IF_ERROR(
+            ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
@@ -772,6 +838,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       std::vector<NamedValue> arg_types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
+            arg.expression().source_loc(), &arg.expression().static_type()));
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
@@ -816,6 +884,35 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
                  << access.field();
+        }
+        case Value::Kind::TypeType: {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.aggregate(), arena_, trace_stream_));
+          if (const auto* struct_type = dyn_cast<StructType>(type)) {
+            for (const auto& field : struct_type->fields()) {
+              if (access.field() == field.name) {
+                access.set_static_type(
+                    arena_->New<TypeOfMemberName>(Member(&field)));
+                access.set_value_category(ValueCategory::Let);
+                return Success();
+              }
+            }
+            return CompilationError(access.source_loc())
+                   << "struct " << *struct_type
+                   << " does not have a field named " << access.field();
+          }
+          // FIXME: We should handle all types here, not only structs. For
+          // example:
+          //   fn Main() -> i32 {
+          //     class Class { var n: i32; };
+          //     let T:! Type = Class;
+          //     let x: T = {.n = 0};
+          //     return x.(T.n);
+          //   }
+          // is valid, and the type of `T` here is `Type`, not `typeof(Class)`.
+          return CompilationError(access.source_loc())
+                 << "unsupported member access into type " << *type;
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(aggregate_type);
@@ -881,11 +978,29 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
-            return CompilationError(access.source_loc())
-                   << access.field() << " is not a class function";
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
+            return Success();
           } else {
             return CompilationError(access.source_loc())
-                   << class_type << " does not have a class function named "
+                   << class_type << " does not have a member named "
+                   << access.field();
+          }
+        }
+        case Value::Kind::TypeOfInterfaceType: {
+          const InterfaceType& iface_type =
+              cast<TypeOfInterfaceType>(aggregate_type).interface_type();
+          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
+                  access.field(), iface_type.declaration().members());
+              member.has_value()) {
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
+            return Success();
+          } else {
+            return CompilationError(access.source_loc())
+                   << iface_type << " does not have a member named "
                    << access.field();
           }
         }
@@ -940,14 +1055,33 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), iface_decl.members());
               member.has_value()) {
-            const Value& member_type = (*member)->static_type();
-            BindingMap binding_map = iface_type.args();
-            binding_map[iface_decl.self()] = &var_type;
-            Nonnull<const Value*> inst_member_type =
-                Substitute(binding_map, &member_type);
-            access.set_static_type(inst_member_type);
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
+
+            switch ((*member)->kind()) {
+              case DeclarationKind::FunctionDeclaration: {
+                const auto& func = cast<FunctionDeclaration>(*member);
+                if (func->is_method()) {
+                  break;
+                }
+                const Value& member_type = (*member)->static_type();
+                BindingMap binding_map = iface_type.args();
+                binding_map[iface_decl.self()] = &var_type;
+                Nonnull<const Value*> inst_member_type =
+                    Substitute(binding_map, &member_type);
+                access.set_static_type(inst_member_type);
+                return Success();
+              }
+              default:
+                break;
+            }
+            // FIXME: Consider setting the static type of all interface member
+            // declarations and instance member declarations to be member name
+            // types, rather than special-casing member accesses that name
+            // them.
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
             return Success();
           } else {
             return CompilationError(e->source_loc())
@@ -961,6 +1095,106 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "field access, unexpected " << aggregate_type << " in "
                  << *e;
       }
+    }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
+      if (!isa<TypeOfMemberName>(access.path().static_type())) {
+        return CompilationError(e->source_loc())
+               << "expected name of instance member or interface member in "
+                  "compound member access, found "
+               << access.path().static_type();
+      }
+
+      // Evaluate the member name expression to determine which member we're
+      // accessing.
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
+                              InterpExp(&access.path(), arena_, trace_stream_));
+      const auto& member_name = cast<MemberName>(*member_name_value);
+      access.set_member(&member_name);
+
+      bool has_instance = true;
+      std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
+      if (!base_type.has_value()) {
+        if (IsTypeOfType(&access.object().static_type())) {
+          // This is `Type.(member_name)`, where `member_name` doesn't specify
+          // a type. This access doesn't perform instance binding.
+          CARBON_ASSIGN_OR_RETURN(
+              base_type, InterpExp(&access.object(), arena_, trace_stream_));
+          has_instance = false;
+        } else {
+          // This is `value.(member_name)`, where `member_name` doesn't specify
+          // a type. The member will be found in the type of `value`, or in a
+          // corresponding `impl` if `member_name` is an interface member.
+          base_type = &access.object().static_type();
+        }
+      } else {
+        // This is `value.(member_name)`, where `member_name` specifies a type.
+        // `value` is implicitly converted to that type.
+        CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(),
+                                          "compound member access", *base_type,
+                                          &access.object().static_type()));
+      }
+
+      // Perform impl selection if necessary.
+      if (std::optional<Nonnull<const Value*>> iface =
+              member_name.interface()) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> impl,
+            impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
+        access.set_impl(impl);
+      }
+
+      auto SubstituteIntoMemberType = [&]() {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        if (member_name.interface()) {
+          Nonnull<const InterfaceType*> iface_type = *member_name.interface();
+          BindingMap binding_map = iface_type->args();
+          binding_map[iface_type->declaration().self()] = *base_type;
+          return Substitute(binding_map, member_type);
+        }
+        if (auto* class_type = dyn_cast<NominalClassType>(base_type.value())) {
+          return Substitute(class_type->type_args(), member_type);
+        }
+        return member_type;
+      };
+
+      switch (std::optional<Nonnull<const Declaration*>> decl =
+                  member_name.member().declaration();
+              decl ? decl.value()->kind()
+                   : DeclarationKind::VariableDeclaration) {
+        case DeclarationKind::VariableDeclaration:
+          if (has_instance) {
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(access.object().value_category());
+            return Success();
+          }
+          break;
+        case DeclarationKind::FunctionDeclaration: {
+          bool is_method = cast<FunctionDeclaration>(*decl.value()).is_method();
+          if (has_instance || !is_method) {
+            // This should not be possible: the name of a static member
+            // function should have function type not member name type.
+            CARBON_CHECK(!has_instance || is_method ||
+                         !member_name.base_type().has_value())
+                << "vacuous compound member access";
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          break;
+        }
+        default:
+          CARBON_FATAL() << "member " << member_name
+                         << " is not a field or method";
+          break;
+      }
+
+      access.set_static_type(
+          arena_->New<TypeOfMemberName>(member_name.member()));
+      access.set_value_category(ValueCategory::Let);
+      return Success();
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
@@ -1367,14 +1601,20 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                                     ImplScope& impl_scope) {
-  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+auto TypeChecker::CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+    -> Nonnull<Expression*> {
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
   impl_id->set_value_node(impl_binding);
+  return impl_id;
+}
+
+void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                     ImplScope& impl_scope) {
+  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
-                 *impl_binding->type_var()->symbolic_identity(), impl_id);
+                 *impl_binding->type_var()->symbolic_identity(),
+                 CreateImplReference(impl_binding));
 }
 
 auto TypeChecker::TypeCheckPattern(

@@ -42,6 +42,7 @@ abstract class Expression : AstNode;
   class CallExpression : Expression;
   class FunctionTypeLiteral : Expression;
   class FieldAccessExpression : Expression;
+  class CompoundFieldAccessExpression : Expression;
   class IndexExpression : Expression;
   class IntTypeLiteral : Expression;
   class ContinuationTypeLiteral : Expression;

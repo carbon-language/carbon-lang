@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
-#define TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
+#ifndef CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
+#define CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
 
 #include <utility>
 #include <variant>
@@ -74,4 +74,4 @@ class LexedNumericLiteral {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
+#endif  // CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_

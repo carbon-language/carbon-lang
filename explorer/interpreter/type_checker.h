@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_TYPE_CHECKER_H_
-#define EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#define CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
 #include <set>
 
@@ -125,6 +125,10 @@ class TypeChecker {
   void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                   ImplScope& impl_scope);
 
+  // Create a reference to the given `impl` binding.
+  auto CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+      -> Nonnull<Expression*>;
+
   // Add the given ImplBinding to the given `impl_scope`.
   void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                           ImplScope& impl_scope);
@@ -236,4 +240,4 @@ class TypeChecker {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_

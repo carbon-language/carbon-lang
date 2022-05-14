@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_
-#define EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_
+#ifndef CARBON_EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_
+#define CARBON_EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -57,4 +57,4 @@ class ParsedAsMatcher {
 
 }  // namespace Carbon::TestingInternal
 
-#endif  // EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_
+#endif  // CARBON_EXPLORER_SYNTAX_PARSE_TEST_MATCHERS_INTERNAL_H_

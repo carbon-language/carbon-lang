@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_VALUE_H_
-#define EXPLORER_INTERPRETER_VALUE_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_VALUE_H_
+#define CARBON_EXPLORER_INTERPRETER_VALUE_H_
 
 #include <optional>
 #include <string>
@@ -17,6 +17,7 @@
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/field_path.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -58,6 +59,7 @@ class Value {
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
     ParameterizedEntityName,
+    MemberName,
     BindingPlaceholderValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
@@ -67,6 +69,7 @@ class Value {
     TypeOfInterfaceType,
     TypeOfChoiceType,
     TypeOfParameterizedEntityName,
+    TypeOfMemberName,
     StaticArrayType,
   };
 
@@ -757,6 +760,73 @@ class ParameterizedEntityName : public Value {
   Nonnull<const TuplePattern*> params_;
 };
 
+// A member of a type.
+//
+// This is either a declared member of a class, interface, or similar, or a
+// member of a struct with no declaration.
+class Member {
+ public:
+  explicit Member(const Declaration* declaration) : member_(declaration) {}
+  explicit Member(const NamedValue* struct_member) : member_(struct_member) {}
+
+  // The name of the member.
+  auto name() const -> std::string;
+  // The declared type of the member, which might include type variables.
+  auto type() const -> const Value&;
+  // A declaration of the member, if any exists.
+  auto declaration() const -> std::optional<Nonnull<const Declaration*>> {
+    if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+      return decl;
+    }
+    return std::nullopt;
+  }
+
+ private:
+  llvm::PointerUnion<Nonnull<const Declaration*>, Nonnull<const NamedValue*>>
+      member_;
+};
+
+// The name of a member of a class or interface.
+//
+// These values are used to represent the second operand of a compound member
+// access expression: `x.(A.B)`, and can also be the value of an alias
+// declaration, but cannot be used in most other contexts.
+class MemberName : public Value {
+ public:
+  MemberName(std::optional<Nonnull<const Value*>> base_type,
+             std::optional<Nonnull<const InterfaceType*>> interface,
+             Member member)
+      : Value(Kind::MemberName),
+        base_type_(base_type),
+        interface_(interface),
+        member_(member) {
+    CARBON_CHECK(base_type || interface)
+        << "member name must be in a type, an interface, or both";
+  }
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::MemberName;
+  }
+
+  // The type for which `name` is a member or a member of an `impl`.
+  auto base_type() const -> std::optional<Nonnull<const Value*>> {
+    return base_type_;
+  }
+  // The interface for which `name` is a member, if any.
+  auto interface() const -> std::optional<Nonnull<const InterfaceType*>> {
+    return interface_;
+  }
+  // The member.
+  auto member() const -> Member { return member_; }
+  // The name of the member.
+  auto name() const -> std::string { return member().name(); }
+
+ private:
+  std::optional<Nonnull<const Value*>> base_type_;
+  std::optional<Nonnull<const InterfaceType*>> interface_;
+  Member member_;
+};
+
 // A first-class continuation representation of a fragment of the stack.
 // A continuation value behaves like a pointer to the underlying stack
 // fragment, which is exposed by `Stack()`.
@@ -909,6 +979,31 @@ class TypeOfParameterizedEntityName : public Value {
   Nonnull<const ParameterizedEntityName*> name_;
 };
 
+// The type of a member name expression.
+//
+// This is used for member names that don't denote a specific object or value
+// until used on the right-hand side of a `.`, such as an instance method or
+// field name, or any member function in an interface.
+//
+// Such expressions can appear only as the target of an `alias` declaration or
+// as the member name in a compound member access.
+class TypeOfMemberName : public Value {
+ public:
+  explicit TypeOfMemberName(Member member)
+      : Value(Kind::TypeOfMemberName), member_(member) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfMemberName;
+  }
+
+  // TODO: consider removing this or moving it elsewhere in the AST,
+  // since it's arguably part of the expression value rather than its type.
+  auto member() const -> Member { return member_; }
+
+ private:
+  Member member_;
+};
+
 // The type of a statically-sized array.
 //
 // Note that values of this type are represented as tuples.
@@ -938,4 +1033,4 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool;
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_VALUE_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_VALUE_H_
