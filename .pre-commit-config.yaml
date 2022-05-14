@@ -128,6 +128,9 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
+        # Test data may contain intentional misspellings, as well as short,
+        # meaningless identifiers that codespell incorrectly identifies as
+        # typos but that we would want to detect in other contexts.
         exclude: |
           (?x)^(
               .*/testdata/.*
