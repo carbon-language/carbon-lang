@@ -9,8 +9,8 @@
 // TODO: Provide matchers for all node Kinds, and establish more uniform
 // conventions for them.
 
-#ifndef EXPLORER_AST_AST_TEST_MATCHERS_H_
-#define EXPLORER_AST_AST_TEST_MATCHERS_H_
+#ifndef CARBON_EXPLORER_AST_AST_TEST_MATCHERS_H_
+#define CARBON_EXPLORER_AST_AST_TEST_MATCHERS_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -129,4 +129,4 @@ inline auto ASTDeclarations(
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_AST_TEST_MATCHERS_H_
+#endif  // CARBON_EXPLORER_AST_AST_TEST_MATCHERS_H_

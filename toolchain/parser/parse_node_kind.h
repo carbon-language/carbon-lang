@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
-#define TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
 
 #include <cstdint>
 #include <iterator>
@@ -71,4 +71,4 @@ static_assert(sizeof(ParseNodeKind) == 1, "Kind objects include padding!");
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_

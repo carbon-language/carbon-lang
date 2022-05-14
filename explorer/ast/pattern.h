@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_PATTERN_H_
-#define EXPLORER_AST_PATTERN_H_
+#ifndef CARBON_EXPLORER_AST_PATTERN_H_
+#define CARBON_EXPLORER_AST_PATTERN_H_
 
 #include <optional>
 #include <string>
@@ -17,6 +17,7 @@
 #include "explorer/ast/value_category.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 
 namespace Carbon {
 
@@ -88,11 +89,12 @@ class Pattern : public AstNode {
   std::optional<Nonnull<const Value*>> value_;
 };
 
-class BindingPattern;
-
-// Returns all `BindingPattern`s in the AST subtree rooted at `pattern`.
-auto GetBindings(const Pattern& pattern)
-    -> std::vector<Nonnull<const BindingPattern*>>;
+// Call the given `visitor` on all patterns nested within the given pattern,
+// including `pattern` itself. Aborts and returns `false` if `visitor` returns
+// `false`, otherwise returns `true`.
+auto VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor)
+    -> bool;
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
@@ -121,25 +123,6 @@ class VarPattern : public Pattern {
 
  private:
   Nonnull<Pattern*> pattern_;
-};
-
-class AddrPattern : public Pattern {
- public:
-  explicit AddrPattern(SourceLocation source_loc,
-                       Nonnull<BindingPattern*> binding)
-      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromAddrPattern(node->kind());
-  }
-
-  auto binding() const -> const BindingPattern& { return *binding_; }
-  auto binding() -> BindingPattern& { return *binding_; }
-
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
-
- private:
-  Nonnull<BindingPattern*> binding_;
 };
 
 // A pattern that matches a value of a specified type, and optionally binds
@@ -199,6 +182,25 @@ class BindingPattern : public Pattern {
   std::string name_;
   Nonnull<Pattern*> type_;
   std::optional<ValueCategory> value_category_;
+};
+
+class AddrPattern : public Pattern {
+ public:
+  explicit AddrPattern(SourceLocation source_loc,
+                       Nonnull<BindingPattern*> binding)
+      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAddrPattern(node->kind());
+  }
+
+  auto binding() const -> const BindingPattern& { return *binding_; }
+  auto binding() -> BindingPattern& { return *binding_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+
+ private:
+  Nonnull<BindingPattern*> binding_;
 };
 
 // A pattern that matches a tuple value field-wise.
@@ -363,4 +365,4 @@ class ExpressionPattern : public Pattern {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_PATTERN_H_
+#endif  // CARBON_EXPLORER_AST_PATTERN_H_

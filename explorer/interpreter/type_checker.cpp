@@ -61,6 +61,58 @@ static auto ExpectPointerType(SourceLocation source_loc,
   return Success();
 }
 
+// Returns whether the value is a type whose values are themselves known to be
+// types.
+static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
+  switch (value->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      // These are values, not types.
+      return false;
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::TupleValue:
+      // These are types whose values are not types.
+      return false;
+    case Value::Kind::AutoType:
+    case Value::Kind::VariableType:
+      // A value of one of these types could be a type, but isn't known to be.
+      return false;
+    case Value::Kind::TypeType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+      // A value of one of these types is itself always a type.
+      return true;
+  }
+}
+
 // Returns whether the value is a valid result from a type expression,
 // as opposed to a non-type value.
 static auto IsType(Nonnull<const Value*> value) -> bool {
@@ -81,6 +133,12 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+      return false;
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      // Names aren't first-class values, and their types aren't first-class
+      // types.
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -97,7 +155,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
       return true;
@@ -143,6 +200,9 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::StringValue:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       return false;
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -158,7 +218,6 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::StaticArrayType:
       return true;
     case Value::Kind::AutoType:
@@ -189,19 +248,31 @@ auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
   }
 }
 
+// Returns the named field, or None if not found.
+static auto FindField(llvm::ArrayRef<NamedValue> fields,
+                      const std::string& field_name)
+    -> std::optional<NamedValue> {
+  auto it = std::find_if(
+      fields.begin(), fields.end(),
+      [&](const NamedValue& field) { return field.name == field_name; });
+  if (it == fields.end()) {
+    return std::nullopt;
+  }
+  return *it;
+}
+
 auto TypeChecker::FieldTypesImplicitlyConvertible(
     llvm::ArrayRef<NamedValue> source_fields,
-    llvm::ArrayRef<NamedValue> destination_fields) const {
+    llvm::ArrayRef<NamedValue> destination_fields) const -> bool {
   if (source_fields.size() != destination_fields.size()) {
     return false;
   }
   for (const auto& source_field : source_fields) {
-    auto it = std::find_if(destination_fields.begin(), destination_fields.end(),
-                           [&](const NamedValue& field) {
-                             return field.name == source_field.name;
-                           });
-    if (it == destination_fields.end() ||
-        !IsImplicitlyConvertible(source_field.value, it->value)) {
+    std::optional<NamedValue> destination_field =
+        FindField(destination_fields, source_field.name);
+    if (!destination_field.has_value() ||
+        !IsImplicitlyConvertible(source_field.value,
+                                 destination_field.value().value)) {
       return false;
     }
   }
@@ -321,10 +392,35 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
 }
 
 auto TypeChecker::ArgumentDeduction(
-    SourceLocation source_loc,
+    SourceLocation source_loc, const std::string& context,
     llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
     BindingMap& deduced, Nonnull<const Value*> param_type,
-    Nonnull<const Value*> arg_type) const -> ErrorOr<Success> {
+    Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
+    -> ErrorOr<Success> {
+  if (trace_stream_) {
+    **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
+                    << "\n";
+  }
+  // Handle the case where we can't perform deduction, either because the
+  // parameter is a primitive type or because the parameter and argument have
+  // different forms. In this case, we require an implicit conversion to exist,
+  // or for an exact type match if implicit conversions are not permitted.
+  auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
+    if (!IsConcreteType(param_type)) {
+      // Parameter type contains a nested `auto` and argument type isn't the
+      // same kind of type.
+      // FIXME: This seems like something we should be able to accept.
+      return CompilationError(source_loc) << "type error in " << context << "\n"
+                                          << "expected: " << *param_type << "\n"
+                                          << "actual: " << *arg_type;
+    }
+    const Value* subst_param_type = Substitute(deduced, param_type);
+    return allow_implicit_conversion
+               ? ExpectType(source_loc, context, subst_param_type, arg_type)
+               : ExpectExactType(source_loc, context, subst_param_type,
+                                 arg_type);
+  };
+
   switch (param_type->kind()) {
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*param_type);
@@ -332,23 +428,18 @@ auto TypeChecker::ArgumentDeduction(
                     &var_type.binding()) != type_params.end()) {
         auto [it, success] = deduced.insert({&var_type.binding(), arg_type});
         if (!success) {
-          // Variable already has a match.
-          // TODO: can we allow implicit conversions here?
+          // All deductions are required to produce the same value.
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              source_loc, "argument deduction", it->second, arg_type));
+              source_loc, "repeated argument deduction", it->second, arg_type));
         }
       } else {
-        CARBON_RETURN_IF_ERROR(ExpectExactType(source_loc, "argument deduction",
-                                               param_type, arg_type));
+        return handle_non_deduced_type();
       }
       return Success();
     }
     case Value::Kind::TupleValue: {
       if (arg_type->kind() != Value::Kind::TupleValue) {
-        return CompilationError(source_loc)
-               << "type error in argument deduction\n"
-               << "expected: " << *param_type << "\n"
-               << "actual: " << *arg_type;
+        return handle_non_deduced_type();
       }
       const auto& param_tup = cast<TupleValue>(*param_type);
       const auto& arg_tup = cast<TupleValue>(*arg_type);
@@ -359,67 +450,91 @@ auto TypeChecker::ArgumentDeduction(
                << arg_tup.elements().size();
       }
       for (size_t i = 0; i < param_tup.elements().size(); ++i) {
-        CARBON_RETURN_IF_ERROR(
-            ArgumentDeduction(source_loc, type_params, deduced,
-                              param_tup.elements()[i], arg_tup.elements()[i]));
+        CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+            source_loc, context, type_params, deduced, param_tup.elements()[i],
+            arg_tup.elements()[i], allow_implicit_conversion));
       }
       return Success();
     }
     case Value::Kind::StructType: {
       if (arg_type->kind() != Value::Kind::StructType) {
-        return CompilationError(source_loc)
-               << "type error in argument deduction\n"
-               << "expected: " << *param_type << "\n"
-               << "actual: " << *arg_type;
+        return handle_non_deduced_type();
       }
       const auto& param_struct = cast<StructType>(*param_type);
       const auto& arg_struct = cast<StructType>(*arg_type);
-      if (param_struct.fields().size() != arg_struct.fields().size()) {
+      auto diagnose_missing_field = [&](const StructType& struct_type,
+                                        const NamedValue& field,
+                                        bool missing_from_source) -> Error {
+        static constexpr const char* SourceOrDestination[2] = {"source",
+                                                               "destination"};
         return CompilationError(source_loc)
-               << "mismatch in struct field counts, expected "
-               << param_struct.fields().size() << " but got "
-               << arg_struct.fields().size();
-      }
+               << "mismatch in field names, "
+               << SourceOrDestination[missing_from_source ? 1 : 0] << " field `"
+               << field.name << "` not in "
+               << SourceOrDestination[missing_from_source ? 0 : 1] << " type `"
+               << struct_type << "`";
+      };
       for (size_t i = 0; i < param_struct.fields().size(); ++i) {
-        if (param_struct.fields()[i].name != arg_struct.fields()[i].name) {
-          return CompilationError(source_loc)
-                 << "mismatch in field names, " << param_struct.fields()[i].name
-                 << " != " << arg_struct.fields()[i].name;
+        NamedValue param_field = param_struct.fields()[i];
+        NamedValue arg_field;
+        if (allow_implicit_conversion) {
+          if (std::optional<NamedValue> maybe_arg_field =
+                  FindField(arg_struct.fields(), param_field.name)) {
+            arg_field = *maybe_arg_field;
+          } else {
+            return diagnose_missing_field(arg_struct, param_field, true);
+          }
+        } else {
+          if (i >= arg_struct.fields().size()) {
+            return diagnose_missing_field(arg_struct, param_field, true);
+          }
+          arg_field = arg_struct.fields()[i];
+          if (param_field.name != arg_field.name) {
+            return CompilationError(source_loc)
+                   << "mismatch in field names, `" << param_field.name
+                   << "` != `" << arg_field.name << "`";
+          }
         }
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, type_params, deduced, param_struct.fields()[i].value,
-            arg_struct.fields()[i].value));
+            source_loc, context, type_params, deduced, param_field.value,
+            arg_field.value, allow_implicit_conversion));
+      }
+      if (param_struct.fields().size() != arg_struct.fields().size()) {
+        CARBON_CHECK(allow_implicit_conversion)
+            << "should have caught this earlier";
+        for (const NamedValue& arg_field : arg_struct.fields()) {
+          if (!FindField(param_struct.fields(), arg_field.name).has_value()) {
+            return diagnose_missing_field(param_struct, arg_field, false);
+          }
+        }
+        CARBON_FATAL() << "field count mismatch but no missing field; "
+                       << "duplicate field name?";
       }
       return Success();
     }
     case Value::Kind::FunctionType: {
       if (arg_type->kind() != Value::Kind::FunctionType) {
-        return CompilationError(source_loc)
-               << "type error in argument deduction\n"
-               << "expected: " << *param_type << "\n"
-               << "actual: " << *arg_type;
+        return handle_non_deduced_type();
       }
       const auto& param_fn = cast<FunctionType>(*param_type);
       const auto& arg_fn = cast<FunctionType>(*arg_type);
       // TODO: handle situation when arg has deduced parameters.
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(source_loc, type_params, deduced,
-                                               &param_fn.parameters(),
-                                               &arg_fn.parameters()));
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(source_loc, type_params, deduced,
-                                               &param_fn.return_type(),
-                                               &arg_fn.return_type()));
+      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+          source_loc, context, type_params, deduced, &param_fn.parameters(),
+          &arg_fn.parameters(), /*allow_implicit_conversion=*/false));
+      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+          source_loc, context, type_params, deduced, &param_fn.return_type(),
+          &arg_fn.return_type(), /*allow_implicit_conversion=*/false));
       return Success();
     }
     case Value::Kind::PointerType: {
       if (arg_type->kind() != Value::Kind::PointerType) {
-        return CompilationError(source_loc)
-               << "type error in argument deduction\n"
-               << "expected: " << *param_type << "\n"
-               << "actual: " << *arg_type;
+        return handle_non_deduced_type();
       }
-      return ArgumentDeduction(source_loc, type_params, deduced,
+      return ArgumentDeduction(source_loc, context, type_params, deduced,
                                &cast<PointerType>(*param_type).type(),
-                               &cast<PointerType>(*arg_type).type());
+                               &cast<PointerType>(*arg_type).type(),
+                               /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
@@ -427,25 +542,27 @@ auto TypeChecker::ArgumentDeduction(
     }
     case Value::Kind::NominalClassType: {
       const auto& param_class_type = cast<NominalClassType>(*param_type);
-      if (arg_type->kind() == Value::Kind::NominalClassType) {
-        const auto& arg_class_type = cast<NominalClassType>(*arg_type);
-        if (param_class_type.declaration().name() ==
-            arg_class_type.declaration().name()) {
-          for (const auto& [ty, param_ty] : param_class_type.type_args()) {
-            CARBON_RETURN_IF_ERROR(
-                ArgumentDeduction(source_loc, type_params, deduced, param_ty,
-                                  arg_class_type.type_args().at(ty)));
-          }
-          return Success();
-        }
+      if (arg_type->kind() != Value::Kind::NominalClassType) {
+        // FIXME: We could determine the parameters of the class from field
+        // types in a struct argument.
+        return handle_non_deduced_type();
       }
-      return CompilationError(source_loc)
-             << "type error in argument deduction\n"
-             << "expected: " << *param_type << "\n"
-             << "actual: " << *arg_type;
+      const auto& arg_class_type = cast<NominalClassType>(*arg_type);
+      if (param_class_type.declaration().name() !=
+          arg_class_type.declaration().name()) {
+        return handle_non_deduced_type();
+      }
+      for (const auto& [ty, param_ty] : param_class_type.type_args()) {
+        CARBON_RETURN_IF_ERROR(
+            ArgumentDeduction(source_loc, context, type_params, deduced,
+                              param_ty, arg_class_type.type_args().at(ty),
+                              /*allow_implicit_conversion=*/false));
+      }
+      return Success();
     }
-    // For the following cases, we check for type convertability.
+    // For the following cases, we check the type matches.
     case Value::Kind::StaticArrayType:
+      // FIXME: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
@@ -457,10 +574,12 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
-      return ExpectType(source_loc, "argument deduction", param_type, arg_type);
+    case Value::Kind::TypeOfMemberName:
+      return handle_non_deduced_type();
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -511,9 +630,10 @@ auto TypeChecker::Substitute(
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
-      return arena_->New<FunctionType>(
-          std::vector<Nonnull<const GenericBinding*>>(), param, ret,
-          std::vector<Nonnull<const ImplBinding*>>());
+      // FIXME: Only remove the bindings that are in `dict`; we may still need
+      // to do deduction.
+      return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
+                                       llvm::None);
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
@@ -559,10 +679,12 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       return type;
     // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
     case Value::Kind::IntValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
@@ -610,7 +732,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     // case: impl is a generic impl.
     BindingMap deduced_type_args;
     ErrorOr<Success> e = ArgumentDeduction(
-        source_loc, impl.deduced, deduced_type_args, impl.type, impl_type);
+        source_loc, "match", impl.deduced, deduced_type_args, impl.type,
+        impl_type, /*allow_implicit_conversion=*/true);
     if (trace_stream_) {
       **trace_stream_ << "match results: {";
       llvm::ListSeparator sep;
@@ -710,8 +833,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::TupleLiteral: {
       std::vector<Nonnull<const Value*>> arg_types;
-      for (auto& arg : cast<TupleLiteral>(*e).fields()) {
+      for (auto* arg : cast<TupleLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+        CARBON_RETURN_IF_ERROR(
+            ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleValue>(std::move(arg_types)));
@@ -722,6 +847,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       std::vector<NamedValue> arg_types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
+            arg.expression().source_loc(), &arg.expression().static_type()));
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
@@ -766,6 +893,35 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
                  << access.field();
+        }
+        case Value::Kind::TypeType: {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              InterpExp(&access.aggregate(), arena_, trace_stream_));
+          if (const auto* struct_type = dyn_cast<StructType>(type)) {
+            for (const auto& field : struct_type->fields()) {
+              if (access.field() == field.name) {
+                access.set_static_type(
+                    arena_->New<TypeOfMemberName>(Member(&field)));
+                access.set_value_category(ValueCategory::Let);
+                return Success();
+              }
+            }
+            return CompilationError(access.source_loc())
+                   << "struct " << *struct_type
+                   << " does not have a field named " << access.field();
+          }
+          // FIXME: We should handle all types here, not only structs. For
+          // example:
+          //   fn Main() -> i32 {
+          //     class Class { var n: i32; };
+          //     let T:! Type = Class;
+          //     let x: T = {.n = 0};
+          //     return x.(T.n);
+          //   }
+          // is valid, and the type of `T` here is `Type`, not `typeof(Class)`.
+          return CompilationError(access.source_loc())
+                 << "unsupported member access into type " << *type;
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(aggregate_type);
@@ -817,8 +973,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.field();
           }
           access.set_static_type(arena_->New<FunctionType>(
-              std::vector<Nonnull<const GenericBinding*>>(), *parameter_types,
-              &aggregate_type, std::vector<Nonnull<const ImplBinding*>>()));
+              *parameter_types, llvm::None, &aggregate_type, llvm::None,
+              llvm::None));
           access.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -843,11 +999,29 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
-            return CompilationError(access.source_loc())
-                   << access.field() << " is not a class function";
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
+            return Success();
           } else {
             return CompilationError(access.source_loc())
-                   << class_type << " does not have a class function named "
+                   << class_type << " does not have a member named "
+                   << access.field();
+          }
+        }
+        case Value::Kind::TypeOfInterfaceType: {
+          const InterfaceType& iface_type =
+              cast<TypeOfInterfaceType>(aggregate_type).interface_type();
+          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
+                  access.field(), iface_type.declaration().members());
+              member.has_value()) {
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
+            return Success();
+          } else {
+            return CompilationError(access.source_loc())
+                   << iface_type << " does not have a member named "
                    << access.field();
           }
         }
@@ -902,14 +1076,33 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), iface_decl.members());
               member.has_value()) {
-            const Value& member_type = (*member)->static_type();
-            BindingMap binding_map = iface_type.args();
-            binding_map[iface_decl.self()] = &var_type;
-            Nonnull<const Value*> inst_member_type =
-                Substitute(binding_map, &member_type);
-            access.set_static_type(inst_member_type);
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
+
+            switch ((*member)->kind()) {
+              case DeclarationKind::FunctionDeclaration: {
+                const auto& func = cast<FunctionDeclaration>(*member);
+                if (func->is_method()) {
+                  break;
+                }
+                const Value& member_type = (*member)->static_type();
+                BindingMap binding_map = iface_type.args();
+                binding_map[iface_decl.self()] = &var_type;
+                Nonnull<const Value*> inst_member_type =
+                    Substitute(binding_map, &member_type);
+                access.set_static_type(inst_member_type);
+                return Success();
+              }
+              default:
+                break;
+            }
+            // FIXME: Consider setting the static type of all interface member
+            // declarations and instance member declarations to be member name
+            // types, rather than special-casing member accesses that name
+            // them.
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(Member(*member)));
+            access.set_value_category(ValueCategory::Let);
             return Success();
           } else {
             return CompilationError(e->source_loc())
@@ -923,6 +1116,106 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "field access, unexpected " << aggregate_type << " in "
                  << *e;
       }
+    }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
+      if (!isa<TypeOfMemberName>(access.path().static_type())) {
+        return CompilationError(e->source_loc())
+               << "expected name of instance member or interface member in "
+                  "compound member access, found "
+               << access.path().static_type();
+      }
+
+      // Evaluate the member name expression to determine which member we're
+      // accessing.
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
+                              InterpExp(&access.path(), arena_, trace_stream_));
+      const auto& member_name = cast<MemberName>(*member_name_value);
+      access.set_member(&member_name);
+
+      bool has_instance = true;
+      std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
+      if (!base_type.has_value()) {
+        if (IsTypeOfType(&access.object().static_type())) {
+          // This is `Type.(member_name)`, where `member_name` doesn't specify
+          // a type. This access doesn't perform instance binding.
+          CARBON_ASSIGN_OR_RETURN(
+              base_type, InterpExp(&access.object(), arena_, trace_stream_));
+          has_instance = false;
+        } else {
+          // This is `value.(member_name)`, where `member_name` doesn't specify
+          // a type. The member will be found in the type of `value`, or in a
+          // corresponding `impl` if `member_name` is an interface member.
+          base_type = &access.object().static_type();
+        }
+      } else {
+        // This is `value.(member_name)`, where `member_name` specifies a type.
+        // `value` is implicitly converted to that type.
+        CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(),
+                                          "compound member access", *base_type,
+                                          &access.object().static_type()));
+      }
+
+      // Perform impl selection if necessary.
+      if (std::optional<Nonnull<const Value*>> iface =
+              member_name.interface()) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> impl,
+            impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
+        access.set_impl(impl);
+      }
+
+      auto SubstituteIntoMemberType = [&]() {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        if (member_name.interface()) {
+          Nonnull<const InterfaceType*> iface_type = *member_name.interface();
+          BindingMap binding_map = iface_type->args();
+          binding_map[iface_type->declaration().self()] = *base_type;
+          return Substitute(binding_map, member_type);
+        }
+        if (auto* class_type = dyn_cast<NominalClassType>(base_type.value())) {
+          return Substitute(class_type->type_args(), member_type);
+        }
+        return member_type;
+      };
+
+      switch (std::optional<Nonnull<const Declaration*>> decl =
+                  member_name.member().declaration();
+              decl ? decl.value()->kind()
+                   : DeclarationKind::VariableDeclaration) {
+        case DeclarationKind::VariableDeclaration:
+          if (has_instance) {
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(access.object().value_category());
+            return Success();
+          }
+          break;
+        case DeclarationKind::FunctionDeclaration: {
+          bool is_method = cast<FunctionDeclaration>(*decl.value()).is_method();
+          if (has_instance || !is_method) {
+            // This should not be possible: the name of a static member
+            // function should have function type not member name type.
+            CARBON_CHECK(!has_instance || is_method ||
+                         !member_name.base_type().has_value())
+                << "vacuous compound member access";
+            access.set_static_type(SubstituteIntoMemberType());
+            access.set_value_category(ValueCategory::Let);
+            return Success();
+          }
+          break;
+        }
+        default:
+          CARBON_FATAL() << "member " << member_name
+                         << " is not a field or method";
+          break;
+      }
+
+      access.set_static_type(
+          arena_->New<TypeOfMemberName>(member_name.member()));
+      access.set_value_category(ValueCategory::Let);
+      return Success();
     }
     case ExpressionKind::IdentifierExpression: {
       auto& ident = cast<IdentifierExpression>(*e);
@@ -1049,41 +1342,74 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
-          Nonnull<const Value*> parameters = &fun_t.parameters();
-          Nonnull<const Value*> return_type = &fun_t.return_type();
-          if (!fun_t.deduced().empty()) {
-            BindingMap deduced_type_args;
-            CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-                e->source_loc(), fun_t.deduced(), deduced_type_args, parameters,
-                &call.argument().static_type()));
-            call.set_deduced_args(deduced_type_args);
-            for (Nonnull<const GenericBinding*> deduced_param :
-                 fun_t.deduced()) {
-              // TODO: change the following to a CHECK once the real checking
-              // has been added to the type checking of function signatures.
-              if (auto it = deduced_type_args.find(deduced_param);
-                  it == deduced_type_args.end()) {
-                return CompilationError(e->source_loc())
-                       << "could not deduce type argument for type parameter "
-                       << deduced_param->name() << "\n"
-                       << "in " << call;
-              }
-            }
-            parameters = Substitute(deduced_type_args, parameters);
-            return_type = Substitute(deduced_type_args, return_type);
-            // Find impls for all the impl bindings of the function.
-            ImplExpMap impls;
-            CARBON_RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(),
-                                                impl_scope, e->source_loc(),
-                                                deduced_type_args, impls));
-            call.set_impls(impls);
-          } else {
-            // No deduced parameters. Check that the argument types
-            // are convertible to the parameter types.
-            CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(), "call",
-                                              parameters,
-                                              &call.argument().static_type()));
+
+          const auto& param_tuple = cast<TupleValue>(fun_t.parameters());
+          const auto& arg_tuple = cast<TupleLiteral>(call.argument());
+          llvm::ArrayRef<FunctionType::GenericParameter> generic_params =
+              fun_t.generic_parameters();
+          if (param_tuple.elements().size() != arg_tuple.fields().size()) {
+            return CompilationError(call.source_loc())
+                   << "wrong number of arguments in function call, expected "
+                   << param_tuple.elements().size() << " but got "
+                   << arg_tuple.fields().size();
           }
+
+          // Bindings for deduced parameters and generic parameters.
+          BindingMap generic_bindings;
+
+          // Deduce and/or convert each argument to the corresponding
+          // parameter.
+          for (size_t i = 0; i < param_tuple.elements().size(); ++i) {
+            const Value* param = param_tuple.elements()[i];
+            const Expression* arg = arg_tuple.fields()[i];
+            CARBON_RETURN_IF_ERROR(ArgumentDeduction(
+                arg->source_loc(), "call", fun_t.deduced_bindings(),
+                generic_bindings, param, &arg->static_type(),
+                /*allow_implicit_conversion=*/true));
+            // If the parameter is a `:!` binding, evaluate and collect its
+            // value for use in later parameters and in the function body.
+            if (!generic_params.empty() && generic_params.front().index == i) {
+              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
+                                      InterpExp(arg, arena_, trace_stream_));
+              if (trace_stream_) {
+                **trace_stream_ << "evaluated generic parameter "
+                                << *generic_params.front().binding << " as "
+                                << *arg_value << "\n";
+              }
+              bool newly_added =
+                  generic_bindings
+                      .insert({generic_params.front().binding, arg_value})
+                      .second;
+              CARBON_CHECK(newly_added)
+                  << "generic parameter should not be deduced";
+              generic_params = generic_params.drop_front();
+            }
+          }
+          CARBON_CHECK(generic_params.empty())
+              << "did not find all generic parameters in parameter list";
+          call.set_deduced_args(generic_bindings);
+          for (Nonnull<const GenericBinding*> deduced_param :
+               fun_t.deduced_bindings()) {
+            // TODO: change the following to a CHECK once the real checking
+            // has been added to the type checking of function signatures.
+            if (auto it = generic_bindings.find(deduced_param);
+                it == generic_bindings.end()) {
+              return CompilationError(e->source_loc())
+                     << "could not deduce type argument for type parameter "
+                     << deduced_param->name() << "\n"
+                     << "in " << call;
+            }
+          }
+
+          Nonnull<const Value*> return_type =
+              Substitute(generic_bindings, &fun_t.return_type());
+
+          // Find impls for all the impl bindings of the function.
+          ImplExpMap impls;
+          CARBON_RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(), impl_scope,
+                                              e->source_loc(), generic_bindings,
+                                              impls));
+          call.set_impls(impls);
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
           return Success();
@@ -1151,9 +1477,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         default: {
           return CompilationError(e->source_loc())
-                 << "in call, expected a function\n"
-                 << *e << "\nnot an operator of type "
-                 << call.function().static_type() << "\n";
+                 << "in call `" << *e
+                 << "`, expected callee to be a function, found `"
+                 << call.function().static_type() << "`";
         }
       }
       break;
@@ -1257,40 +1583,28 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
   }
 }
 
+void TypeChecker::CollectGenericBindingsInPattern(
+    Nonnull<const Pattern*> p,
+    std::vector<Nonnull<const GenericBinding*>>& generic_bindings) {
+  VisitNestedPatterns(*p, [&](const Pattern& pattern) {
+    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+      generic_bindings.push_back(binding);
+    }
+    return true;
+  });
+}
+
 void TypeChecker::CollectImplBindingsInPattern(
     Nonnull<const Pattern*> p,
     std::vector<Nonnull<const ImplBinding*>>& impl_bindings) {
-  switch (p->kind()) {
-    case PatternKind::GenericBinding: {
-      auto& binding = cast<GenericBinding>(*p);
-      if (binding.impl_binding().has_value()) {
-        impl_bindings.push_back(*binding.impl_binding());
+  VisitNestedPatterns(*p, [&](const Pattern& pattern) {
+    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+      if (binding->impl_binding().has_value()) {
+        impl_bindings.push_back(binding->impl_binding().value());
       }
-      return;
     }
-    case PatternKind::TuplePattern: {
-      auto& tuple = cast<TuplePattern>(*p);
-      for (Nonnull<const Pattern*> field : tuple.fields()) {
-        CollectImplBindingsInPattern(field, impl_bindings);
-      }
-      return;
-    }
-    case PatternKind::AlternativePattern: {
-      auto& alternative = cast<AlternativePattern>(*p);
-      CollectImplBindingsInPattern(&alternative.arguments(), impl_bindings);
-      return;
-    }
-    case PatternKind::VarPattern: {
-      auto& var_pattern = cast<VarPattern>(*p);
-      CollectImplBindingsInPattern(&var_pattern.pattern(), impl_bindings);
-      return;
-    }
-    case PatternKind::ExpressionPattern:
-    case PatternKind::AutoPattern:
-    case PatternKind::BindingPattern:
-    case PatternKind::AddrPattern:
-      return;
-  }
+    return true;
+  });
 }
 
 void TypeChecker::BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
@@ -1308,14 +1622,20 @@ void TypeChecker::BringImplsIntoScope(
   }
 }
 
-void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                                     ImplScope& impl_scope) {
-  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
+auto TypeChecker::CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+    -> Nonnull<Expression*> {
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_binding->source_loc(), "impl");
   impl_id->set_value_node(impl_binding);
+  return impl_id;
+}
+
+void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                     ImplScope& impl_scope) {
+  CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
-                 *impl_binding->type_var()->symbolic_identity(), impl_id);
+                 *impl_binding->type_var()->symbolic_identity(),
+                 CreateImplReference(impl_binding));
 }
 
 auto TypeChecker::TypeCheckPattern(
@@ -1338,7 +1658,9 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      if (!GetBindings(binding.type()).empty()) {
+      if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
+            return !isa<BindingPattern>(pattern);
+          })) {
         return CompilationError(binding.type().source_loc())
                << "The type of a binding pattern cannot contain bindings.";
       }
@@ -1719,23 +2041,38 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   }
   ImplScope function_scope;
   function_scope.AddParent(&enclosing_scope);
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         deduced, std::nullopt, function_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(deduced, deduced_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->me_pattern(), std::nullopt, function_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(&f->me_pattern(), deduced_bindings);
     CollectImplBindingsInPattern(&f->me_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
                                           function_scope, ValueCategory::Let));
   CollectImplBindingsInPattern(&f->param_pattern(), impl_bindings);
+
+  // Keep track of any generic parameters and nested generic bindings in the
+  // parameter pattern.
+  std::vector<FunctionType::GenericParameter> generic_parameters;
+  for (size_t i = 0; i != f->param_pattern().fields().size(); ++i) {
+    const Pattern* param_pattern = f->param_pattern().fields()[i];
+    if (auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
+      generic_parameters.push_back({i, binding});
+    } else {
+      CollectGenericBindingsInPattern(param_pattern, deduced_bindings);
+    }
+  }
 
   // Evaluate the return type, if we can do so without examining the body.
   if (std::optional<Nonnull<Expression*>> return_expression =
@@ -1769,8 +2106,8 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
   CARBON_RETURN_IF_ERROR(
       ExpectIsConcreteType(f->source_loc(), &f->return_term().static_type()));
   f->set_static_type(arena_->New<FunctionType>(
-      f->deduced_parameters(), &f->param_pattern().static_type(),
-      &f->return_term().static_type(), impl_bindings));
+      &f->param_pattern().static_type(), generic_parameters,
+      &f->return_term().static_type(), deduced_bindings, impl_bindings));
   SetConstantValue(f, arena_->New<FunctionValue>(f));
 
   if (f->name() == "Main") {

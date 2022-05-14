@@ -47,8 +47,8 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
-      auto& choice = cast<ChoiceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
+      // Choice name is added to the scope after the choice's alternatives.
+      // See https://github.com/carbon-language/carbon-lang/issues/1248.
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -111,6 +111,12 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
                        enclosing_scope));
       break;
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(expression);
+      CARBON_RETURN_IF_ERROR(ResolveNames(access.object(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(access.path(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));
@@ -428,6 +434,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
                  << "` in choice type";
         }
       }
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
       break;
     }
     case DeclarationKind::VariableDeclaration: {

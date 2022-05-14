@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
-#define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
 
 #include <optional>
 
@@ -37,4 +37,4 @@ class SemanticsIRFactory {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FACTORY_H_

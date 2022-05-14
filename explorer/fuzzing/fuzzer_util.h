@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_FUZZING_FUZZER_UTIL_H_
-#define EXPLORER_FUZZING_FUZZER_UTIL_H_
+#ifndef CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_
+#define CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
@@ -27,4 +27,4 @@ auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string>;
 }  // namespace Internal
 }  // namespace Carbon
 
-#endif  // EXPLORER_FUZZING_FUZZER_UTIL_H_
+#endif  // CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_

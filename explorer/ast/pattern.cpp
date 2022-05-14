@@ -99,41 +99,33 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
-// Equivalent to `GetBindings`, but stores its output in `bindings` instead of
-// returning it.
-static void GetBindingsImpl(
-    const Pattern& pattern,
-    std::vector<Nonnull<const BindingPattern*>>& bindings) {
+auto VisitNestedPatterns(const Pattern& pattern,
+                         llvm::function_ref<bool(const Pattern&)> visitor)
+    -> bool {
+  if (!visitor(pattern)) {
+    return false;
+  }
   switch (pattern.kind()) {
-    case PatternKind::BindingPattern:
-      bindings.push_back(&cast<BindingPattern>(pattern));
-      return;
     case PatternKind::TuplePattern:
       for (const Pattern* field : cast<TuplePattern>(pattern).fields()) {
-        GetBindingsImpl(*field, bindings);
+        if (!VisitNestedPatterns(*field, visitor)) {
+          return false;
+        }
       }
-      return;
+      return true;
     case PatternKind::AlternativePattern:
-      GetBindingsImpl(cast<AlternativePattern>(pattern).arguments(), bindings);
-      return;
+      return VisitNestedPatterns(cast<AlternativePattern>(pattern).arguments(),
+                                 visitor);
+    case PatternKind::VarPattern:
+      return VisitNestedPatterns(cast<VarPattern>(pattern).pattern(), visitor);
+    case PatternKind::AddrPattern:
+      return VisitNestedPatterns(cast<AddrPattern>(pattern).binding(), visitor);
+    case PatternKind::BindingPattern:
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:
     case PatternKind::GenericBinding:
-      return;
-    case PatternKind::VarPattern:
-      GetBindingsImpl(cast<VarPattern>(pattern).pattern(), bindings);
-      return;
-    case PatternKind::AddrPattern:
-      GetBindingsImpl(cast<AddrPattern>(pattern).binding(), bindings);
-      return;
+      return true;
   }
-}
-
-auto GetBindings(const Pattern& pattern)
-    -> std::vector<Nonnull<const BindingPattern*>> {
-  std::vector<Nonnull<const BindingPattern*>> result;
-  GetBindingsImpl(pattern, result);
-  return result;
 }
 
 auto PatternFromParenContents(Nonnull<Arena*> arena, SourceLocation source_loc,

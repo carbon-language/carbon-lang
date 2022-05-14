@@ -28,6 +28,11 @@ message FieldAccessExpression {
   optional Expression aggregate = 2;
 }
 
+message CompoundFieldAccessExpression {
+  optional Expression object = 1;
+  optional Expression path = 2;
+}
+
 message IndexExpression {
   optional Expression aggregate = 1;
   optional Expression offset = 2;
@@ -138,6 +143,7 @@ message Expression {
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
+    CompoundFieldAccessExpression compound_field_access = 22;
   }
 }
 

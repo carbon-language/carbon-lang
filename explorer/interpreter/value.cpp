@@ -287,10 +287,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced().empty()) {
+      if (!fn_type.deduced_bindings().empty()) {
         out << "[";
         unsigned int i = 0;
-        for (Nonnull<const GenericBinding*> deduced : fn_type.deduced()) {
+        for (Nonnull<const GenericBinding*> deduced :
+             fn_type.deduced_bindings()) {
           if (i != 0) {
             out << ", ";
           }
@@ -360,6 +361,25 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::ParameterizedEntityName:
       out << *GetName(cast<ParameterizedEntityName>(*this).declaration());
       break;
+    case Value::Kind::MemberName: {
+      const auto& member_name = cast<MemberName>(*this);
+      if (member_name.base_type().has_value()) {
+        out << *member_name.base_type().value();
+      }
+      if (member_name.base_type().has_value() &&
+          member_name.interface().has_value()) {
+        out << "(";
+      }
+      if (member_name.interface().has_value()) {
+        out << *member_name.interface().value();
+      }
+      out << "." << member_name.name();
+      if (member_name.base_type().has_value() &&
+          member_name.interface().has_value()) {
+        out << ")";
+      }
+      break;
+    }
     case Value::Kind::ChoiceType:
       out << "choice " << cast<ChoiceType>(*this).name();
       break;
@@ -394,9 +414,13 @@ void Value::Print(llvm::raw_ostream& out) const {
           << ")";
       break;
     case Value::Kind::TypeOfParameterizedEntityName:
-      out << "typeof(" << cast<TypeOfParameterizedEntityName>(*this).name()
-          << ")";
+      out << "parameterized entity name "
+          << cast<TypeOfParameterizedEntityName>(*this).name();
       break;
+    case Value::Kind::TypeOfMemberName: {
+      out << "member name " << cast<TypeOfMemberName>(*this).member().name();
+      break;
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
       out << "[" << array_type.element_type() << "; " << array_type.size()
@@ -528,10 +552,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
-    case Value::Kind::TypeOfParameterizedEntityName: {
-      return ValueEqual(&cast<TypeOfParameterizedEntityName>(*t1).name(),
-                        &cast<TypeOfParameterizedEntityName>(*t2).name());
-    }
     case Value::Kind::StaticArrayType: {
       const auto& array1 = cast<StaticArrayType>(*t1);
       const auto& array2 = cast<StaticArrayType>(*t2);
@@ -553,6 +573,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -652,6 +675,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2);
     case Value::Kind::NominalClassValue:
@@ -662,6 +686,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
+    case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
       // between pointers and lvalues.
       CARBON_FATAL() << "ValueEqual does not support this kind of value: "
@@ -709,6 +734,22 @@ auto FindMember(const std::string& name,
     }
   }
   return std::nullopt;
+}
+
+auto Member::name() const -> std::string {
+  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+    return GetName(*decl).value();
+  } else {
+    return member_.get<const NamedValue*>()->name;
+  }
+}
+
+auto Member::type() const -> const Value& {
+  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
+    return decl->static_type();
+  } else {
+    return *member_.get<const NamedValue*>()->value;
+  }
 }
 
 void ImplBinding::Print(llvm::raw_ostream& out) const {

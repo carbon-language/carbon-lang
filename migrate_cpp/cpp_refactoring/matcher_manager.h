@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_
-#define MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_
+#ifndef CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_
+#define CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Core/Replacement.h"
@@ -55,4 +55,4 @@ class MatcherManager {
 
 }  // namespace Carbon
 
-#endif  // MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_
+#endif  // CARBON_MIGRATE_CPP_CPP_REFACTORING_MATCHER_MANAGER_H_

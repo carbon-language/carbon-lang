@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
-#define TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -75,4 +75,4 @@ class SemanticsIR {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_
