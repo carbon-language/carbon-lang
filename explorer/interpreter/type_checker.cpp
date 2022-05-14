@@ -781,9 +781,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 auto func_decl = cast<FunctionDeclaration>(*member);
-                if (func_decl->is_method() &&
-                    func_decl->me_pattern().kind() ==
-                        PatternKind::AddrBindingPattern) {
+                if (func_decl->is_method() && func_decl->me_pattern().kind() ==
+                                                  PatternKind::AddrPattern) {
                   access.set_is_field_addr_me_method();
                   if (access.aggregate().value_category() !=
                       ValueCategory::Var) {
@@ -1289,7 +1288,7 @@ void TypeChecker::CollectImplBindingsInPattern(
     case PatternKind::ExpressionPattern:
     case PatternKind::AutoPattern:
     case PatternKind::BindingPattern:
-    case PatternKind::AddrBindingPattern:
+    case PatternKind::AddrPattern:
       return;
   }
 }
@@ -1489,9 +1488,9 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(&var_pattern, pattern_value);
       return Success();
     }
-    case PatternKind::AddrBindingPattern:
+    case PatternKind::AddrPattern:
       std::optional<Nonnull<const Value*>> expected_ptr;
-      auto& addr_binding_pattern = cast<AddrBindingPattern>(*p);
+      auto& addr_binding_pattern = cast<AddrPattern>(*p);
       if (expected) {
         expected_ptr = arena_->New<PointerType>(expected.value());
       }

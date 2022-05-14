@@ -248,11 +248,6 @@ static auto BindingPatternToProto(const BindingPattern& pattern)
   return pattern_proto;
 }
 
-static auto AddrBindingPatternToProto(const AddrBindingPattern& pattern)
-    -> Fuzzing::BindingPattern {
-  return BindingPatternToProto(cast<AddrBindingPattern>(pattern).binding());
-}
-
 static auto GenericBindingToProto(const GenericBinding& binding)
     -> Fuzzing::GenericBinding {
   Fuzzing::GenericBinding binding_proto;
@@ -312,9 +307,9 @@ static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
       *pattern_proto.mutable_var_pattern()->mutable_pattern() =
           PatternToProto(cast<VarPattern>(pattern).pattern());
       break;
-    case PatternKind::AddrBindingPattern:
-      *pattern_proto.mutable_binding_pattern() =
-          AddrBindingPatternToProto(cast<AddrBindingPattern>(pattern));
+    case PatternKind::AddrPattern:
+      *pattern_proto.mutable_addr_pattern()->mutable_binding_pattern() =
+          BindingPatternToProto(cast<AddrPattern>(pattern).binding());
       break;
   }
   return pattern_proto;
@@ -474,17 +469,20 @@ static auto DeclarationToProto(const Declaration& declaration)
       }
       if (function.is_method()) {
         switch (function.me_pattern().kind()) {
-          case PatternKind::AddrBindingPattern:
-            *function_proto->mutable_me_pattern() = AddrBindingPatternToProto(
-                cast<AddrBindingPattern>(function.me_pattern()));
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() = BindingPatternToProto(
-                cast<BindingPattern>(function.me_pattern()));
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
             break;
           default:
             // Parser shouldn't allow me_pattern to be anything other than
-            // AddrBindingPattern or BindingPattern
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
             break;
         }
       }

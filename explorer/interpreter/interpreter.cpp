@@ -783,9 +783,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { { e :: [].f :: C, E, F} :: S, H}
         if (access.is_field_addr_me_method()) {
           return todo_.Spawn(std::make_unique<LValAction>(&access.aggregate()));
+        } else {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&access.aggregate()));
         }
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.aggregate()));
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
@@ -1060,8 +1061,8 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
       } else {
         return todo_.FinishAction(act.results()[0]);
       }
-    case PatternKind::AddrBindingPattern:
-      const auto& addr = cast<AddrBindingPattern>(pattern);
+    case PatternKind::AddrPattern:
+      const auto& addr = cast<AddrPattern>(pattern);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<PatternAction>(&addr.binding()));
       } else {

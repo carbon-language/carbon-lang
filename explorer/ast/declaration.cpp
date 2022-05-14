@@ -194,8 +194,8 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
         me_pattern = bp;
         break;
       }
-      case AstNodeKind::AddrBindingPattern: {
-        Nonnull<AddrBindingPattern*> abp = &cast<AddrBindingPattern>(*param);
+      case AstNodeKind::AddrPattern: {
+        Nonnull<AddrPattern*> abp = &cast<AddrPattern>(*param);
         Nonnull<BindingPattern*> bp = &cast<BindingPattern>(abp->binding());
         if (me_pattern.has_value() || bp->name() != "me") {
           return CompilationError(source_loc)

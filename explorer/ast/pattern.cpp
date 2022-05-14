@@ -56,8 +56,8 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     case PatternKind::VarPattern:
       out << "var" << cast<VarPattern>(*this).pattern();
       break;
-    case PatternKind::AddrBindingPattern:
-      out << "addr" << cast<AddrBindingPattern>(*this).binding();
+    case PatternKind::AddrPattern:
+      out << "addr" << cast<AddrPattern>(*this).binding();
       break;
   }
 }
@@ -90,7 +90,7 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
     case PatternKind::VarPattern:
       out << "var ...";
       break;
-    case PatternKind::AddrBindingPattern:
+    case PatternKind::AddrPattern:
       out << "addr ...";
       break;
     case PatternKind::ExpressionPattern:
@@ -123,8 +123,8 @@ static void GetBindingsImpl(
     case PatternKind::VarPattern:
       GetBindingsImpl(cast<VarPattern>(pattern).pattern(), bindings);
       return;
-    case PatternKind::AddrBindingPattern:
-      GetBindingsImpl(cast<AddrBindingPattern>(pattern).binding(), bindings);
+    case PatternKind::AddrPattern:
+      GetBindingsImpl(cast<AddrPattern>(pattern).binding(), bindings);
       return;
   }
 }

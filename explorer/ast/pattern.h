@@ -123,15 +123,14 @@ class VarPattern : public Pattern {
   Nonnull<Pattern*> pattern_;
 };
 
-class AddrBindingPattern : public Pattern {
+class AddrPattern : public Pattern {
  public:
-  explicit AddrBindingPattern(SourceLocation source_loc,
-                              Nonnull<BindingPattern*> binding)
-      : Pattern(AstNodeKind::AddrBindingPattern, source_loc),
-        binding_(binding) {}
+  explicit AddrPattern(SourceLocation source_loc,
+                       Nonnull<BindingPattern*> binding)
+      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromAddrBindingPattern(node->kind());
+    return InheritsFromAddrPattern(node->kind());
   }
 
   auto binding() const -> const BindingPattern& { return *binding_; }
