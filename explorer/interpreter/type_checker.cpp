@@ -2423,7 +2423,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::TupleValue:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
-    // case Value::Kind::MemberName:
+    case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
@@ -2452,7 +2452,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
-      // case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfMemberName:
       return true;
   }
 }
