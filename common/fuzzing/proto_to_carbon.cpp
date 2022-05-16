@@ -695,6 +695,16 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       out << "}";
       break;
     }
+
+    case Fuzzing::Declaration::kAlias: {
+      const auto& alias = declaration.alias();
+      out << "alias ";
+      IdentifierToCarbon(alias.name(), out);
+      out << " = ";
+      ExpressionToCarbon(alias.target(), out);
+      out << ";";
+      break;
+    }
   }
 }
 

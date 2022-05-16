@@ -64,6 +64,11 @@ static auto AddExposedNames(const Declaration& declaration,
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add("Self", &self));
       break;
     }
+    case DeclarationKind::AliasDeclaration: {
+      auto& alias = cast<AliasDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
+      break;
+    }
   }
   return Success();
 }
@@ -445,6 +450,12 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable: resolving names for `Self` declaration";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      CARBON_RETURN_IF_ERROR(ResolveNames(
+          cast<AliasDeclaration>(declaration).target(), enclosing_scope));
+      break;
     }
   }
   return Success();
