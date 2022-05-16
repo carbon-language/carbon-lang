@@ -45,7 +45,7 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 
 static auto StringLiteralToCarbon(std::string_view s, llvm::raw_ostream& out) {
   out << '"';
-  out.write_escaped(s);
+  out.write_escaped(s, /*UseHexEscapes=*/true);
   out << '"';
 }
 
@@ -199,7 +199,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
 
     case Fuzzing::Expression::kFunctionType: {
       const auto& fun_type = expression.function_type();
-      out << "__Fn";
+      out << "__Fn ";
       ExpressionToCarbon(fun_type.parameter(), out);
       out << " -> ";
       ExpressionToCarbon(fun_type.return_type(), out);
