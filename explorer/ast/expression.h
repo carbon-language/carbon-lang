@@ -162,8 +162,8 @@ class FieldAccessExpression : public Expression {
   auto aggregate() const -> const Expression& { return *aggregate_; }
   auto aggregate() -> Expression& { return *aggregate_; }
   auto field() const -> const std::string& { return field_; }
-  // returns true if the field is a method which has a "me" declaration in an
-  // AddrPattern
+  // Returns true if the field is a method that has a "me" declaration in an
+  // AddrPattern.
   auto is_field_addr_me_method() const -> bool {
     return is_field_addr_me_method_;
   }
