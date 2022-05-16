@@ -11,10 +11,17 @@
 
 package ExplorerTest api;
 
+interface Addable {
+  fn Add[me: Self](k: i32) -> Self;
+}
+impl i32 as Addable {
+  fn Add[me: Self](k: i32) -> Self { return me + k; }
+}
+
 class Class { var n: i32; }
-class GenericClass(T:! Type) {
-  var m: i32;
-  fn Get[me: Self]() -> i32 { return me.m + 1; }
+class GenericClass(T:! Addable) {
+  var m: T;
+  fn Get[me: Self](n: i32) -> T { return me.m.Add(n); }
 }
 
 alias ClassAlias = Class;
@@ -29,5 +36,5 @@ fn Main() -> i32 {
   var d: GenericClassAlias(i32) = c;
   var e: ClassSpecializationAlias = c;
   // TODO: Switch to using Print here once it supports printing integers.
-  return 100 * b.n + 10 * d.m + e.Get();
+  return 100 * b.n + 10 * d.Get(0) + e.Get(1);
 }
