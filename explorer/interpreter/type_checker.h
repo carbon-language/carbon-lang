@@ -80,13 +80,17 @@ class TypeChecker {
   auto TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  using EnclosingBindings = llvm::ArrayRef<Nonnull<const GenericBinding*>>;
+
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the
   // compile-time interpretation of any type expressions in the
   // declaration. It does not involve type checking statements and
   // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
-  auto DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope)
+  auto DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope,
+                          ImplScope& non_class_scope,
+                          EnclosingBindings enclosing_bindings)
       -> ErrorOr<Success>;
 
   auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
@@ -94,14 +98,20 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                               ImplScope& enclosing_scope) -> ErrorOr<Success>;
+                               ImplScope& enclosing_scope,
+                               ImplScope& non_class_scope,
+                               EnclosingBindings enclosing_bindings)
+      -> ErrorOr<Success>;
 
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
                                    ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              ImplScope& enclosing_scope) -> ErrorOr<Success>;
+                              ImplScope& enclosing_scope,
+                              ImplScope& non_class_scope,
+                              EnclosingBindings enclosing_bindings)
+      -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ImplScope& enclosing_scope)
