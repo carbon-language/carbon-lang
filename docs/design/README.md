@@ -710,6 +710,9 @@ colon (`:`), and a type. It can only match values that may be
 [implicitly converted](expressions/implicit_conversions.md) to that type. An `_`
 may be used instead of the name to ignore the value.
 
+> **TODO:** Using `var` before a binding pattern to allocate storage so the new
+> name can be modified?
+
 There are also _destructuring patterns_, such as _tuple destructuring_. A tuple
 destructuring pattern looks like a tuple of patterns. It may only be used to
 match tuple values whose components match the component patterns of the tuple.
@@ -1354,6 +1357,36 @@ having names inside the class' scope:
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
 > **TODO:**
+
+```carbon
+choice Result(T:! Type, Error:! Type) {
+  Success(value: T),
+  Failure(error: Error),
+  Cancelled
+}
+
+fn ParseAsInt(s: String) -> Result(i32, String) {
+  var r: i32 = 0;
+  ...
+    if (not IsDigit(s[i])) {
+      return .Failure("Invalid character");
+    }
+  ...
+  return .Success(r);
+}
+
+match (ParseAsInt(s)) {
+  case .Success(value: i32) => {
+    return value;
+  }
+  case .Failure(error: String) => {
+    Display(error);
+  }
+  case .Cancelled => {
+    Terminate();
+  }
+}
+```
 
 ## Names
 
