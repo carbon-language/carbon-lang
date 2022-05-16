@@ -197,8 +197,6 @@ class AddrPattern : public Pattern {
   auto binding() const -> const BindingPattern& { return *binding_; }
   auto binding() -> BindingPattern& { return *binding_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
-
  private:
   Nonnull<BindingPattern*> binding_;
 };

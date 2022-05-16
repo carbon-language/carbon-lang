@@ -940,6 +940,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 if (func_decl->is_method() && func_decl->me_pattern().kind() ==
                                                   PatternKind::AddrPattern) {
                   access.set_is_field_addr_me_method();
+                  CARBON_RETURN_IF_ERROR(
+                      ExpectType(e->source_loc(), "method access",
+                                 &func_decl->me_pattern().static_type(),
+                                 &access.aggregate().static_type()));
                   if (access.aggregate().value_category() !=
                       ValueCategory::Var) {
                     return CompilationError(e->source_loc())
@@ -1812,20 +1816,25 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::AddrPattern:
       std::optional<Nonnull<const Value*>> expected_ptr;
-      auto& addr_binding_pattern = cast<AddrPattern>(*p);
+      auto& addr_pattern = cast<AddrPattern>(*p);
       if (expected) {
         expected_ptr = arena_->New<PointerType>(expected.value());
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_binding_pattern.binding(),
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
                                               expected_ptr, impl_scope,
                                               enclosing_value_category));
 
-      addr_binding_pattern.set_static_type(arena_->New<PointerType>(
-          &addr_binding_pattern.binding().static_type()));
+      if (auto* inner_binding_type =
+              dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
+        addr_pattern.set_static_type(&inner_binding_type->type());
+      } else {
+        return CompilationError(addr_pattern.source_loc())
+               << "Type associated with addr must be a pointer type.";
+      }
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> pattern_value,
-          InterpPattern(&addr_binding_pattern, arena_, trace_stream_));
-      SetValue(&addr_binding_pattern, pattern_value);
+          InterpPattern(&addr_pattern, arena_, trace_stream_));
+      SetValue(&addr_pattern, pattern_value);
       return Success();
   }
 }
