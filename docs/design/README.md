@@ -58,7 +58,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
         -   [Other members](#other-members)
-    -   [Variants](#variants)
+    -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
     -   [Names and scopes](#names-and-scopes)
@@ -1282,7 +1282,16 @@ class DerivedFromAbstract extends AbstractClass {
 > -   Question-for-leads issue
 >     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
 
-> **TODO:**
+Class members are by default publicly accessible. The `private` keyword prefix
+can be added to the member's declaration to restrict it to members of the class
+or any friends. A `private virtual` or `private abstract` method may be
+implemented in derived classes, even though it may not be called.
+
+Friends may be declared using a `friend` declaration inside the class naming an
+existing function or type. Unlike C++, `friend` declarations may only refer to
+names resolvable to the compiler and don't act like forward declarations.
+
+`protected` is like `private`, but also gives access to derived classes.
 
 #### Destructors
 
@@ -1292,15 +1301,50 @@ class DerivedFromAbstract extends AbstractClass {
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
-> **TODO:**
+A destructor for a class is a custom code executed when the lifetime of a value
+of that type ends. They are defined with the `destructor` keyword followed by
+either `[me: Self]` or `[addr me: Self*]` (as is done with [methods](#methods))
+and the block of code in the class definition, as in:
+
+```carbon
+class MyClass {
+  destructor [me: Self] { ... }
+}
+```
+
+or:
+
+```carbon
+class MyClass {
+  // Can modify `me` in the body.
+  destructor [addr me: Self*] { ... }
+}
+```
+
+The destructor for a class is run before the destructors of its data members.
+The data members are destroyed in reverse order of declaration. Derived classes
+are destroyed before their base classes.
+
+A destructor in a abstract or base class may be declared `virtual` like with
+[methods](#inheritance). Destructors in classes derived from one with a virtual
+destructor must be declared with the `impl` keyword prefix. It is illegal to
+delete an instance of a derived class through a pointer to a base class unless
+the base class is declared `virtual` or `impl`. To delete a pointer to a
+non-abstract base class when it is known not to point to a value with a derived
+type, use `UnsafeDelete`.
 
 #### Other members
 
-> **TODO:** `let`, `alias`, class functions, nested classes
+Classes may also contain other kinds of declarations, which results in them
+having names inside the class' scope:
 
-### Variants
+-   [`alias`](#aliases)
+-   [`let`](#let) to define constants. **TODO:** Are these constants associated
+    with the class or the instance?
+-   `class`, to define a
+    [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
-FIXME: Rename to "Choice types"
+### Choice types
 
 > References:
 >
