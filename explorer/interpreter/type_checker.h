@@ -122,6 +122,10 @@ class TypeChecker {
   void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                   ImplScope& impl_scope);
 
+  // Create a reference to the given `impl` binding.
+  auto CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+      -> Nonnull<Expression*>;
+
   // Add the given ImplBinding to the given `impl_scope`.
   void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                           ImplScope& impl_scope);
