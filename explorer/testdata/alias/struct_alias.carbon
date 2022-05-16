@@ -17,5 +17,6 @@ alias BA = {.b: i32, .a: i32};
 fn Main() -> i32 {
   var ab: AB = {.b = 1, .a = 2};
   var ba: BA = ab;
+  // TODO: Switch to using Print here once it supports printing integers.
   return 1000 * ab.a + 100 * ab.b + 10 * ba.a + ba.b;
 }
