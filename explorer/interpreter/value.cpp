@@ -17,6 +17,7 @@
 namespace Carbon {
 
 using llvm::cast;
+using llvm::dyn_cast;
 
 auto StructValue::FindField(const std::string& name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -72,9 +73,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
     }
     case Value::Kind::NominalClassValue: {
       const auto& object = cast<NominalClassValue>(*v);
-      // Look for a field
-      std::optional<Nonnull<const Value*>> field =
-          cast<StructValue>(object.inits()).FindField(f);
+      // Look for a field.
+      // Note that the value representation of an empty class is a
+      // `StructType`, not a `StructValue`.
+      std::optional<Nonnull<const Value*>> field;
+      if (auto* struct_value = dyn_cast<StructValue>(&object.inits())) {
+        field = struct_value->FindField(f);
+      }
       if (field.has_value()) {
         return *field;
       } else {
