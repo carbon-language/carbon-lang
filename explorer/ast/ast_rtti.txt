@@ -19,6 +19,7 @@ abstract class Declaration : AstNode;
   class VariableDeclaration : Declaration;
   class InterfaceDeclaration : Declaration;
   class ImplDeclaration : Declaration;
+  class AliasDeclaration : Declaration;
 class ImplBinding : AstNode;
 class AlternativeSignature : AstNode;
 abstract class Statement : AstNode;

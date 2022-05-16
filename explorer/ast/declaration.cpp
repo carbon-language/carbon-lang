@@ -78,6 +78,13 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "Self";
       break;
     }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(*this);
+      PrintID(out);
+      out << " = " << alias.target() << ";\n";
+      break;
+    }
   }
 }
 
@@ -127,6 +134,12 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "Self";
       break;
     }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(*this);
+      out << "alias " << alias.name();
+      break;
+    }
   }
 }
 
@@ -146,6 +159,9 @@ auto GetName(const Declaration& declaration) -> std::optional<std::string> {
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
       return cast<SelfDeclaration>(declaration).name();
+    case DeclarationKind::AliasDeclaration: {
+      return cast<AliasDeclaration>(declaration).name();
+    }
   }
 }
 
