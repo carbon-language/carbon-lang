@@ -62,14 +62,12 @@ class SemanticsIRForTest {
 
   static void Print(llvm::raw_ostream& out, Semantics::Expression expr) {
     CARBON_CHECK(g_semantics != llvm::None);
-    out << "TODO(expr)";
-    // g_semantics->Print(out, expr);
+    g_semantics->Print(out, expr);
   }
 
   static void Print(llvm::raw_ostream& out, Semantics::Statement stmt) {
     CARBON_CHECK(g_semantics != llvm::None);
-    out << "TODO(stmt)";
-    // g_semantics->Print(out, stmt);
+    g_semantics->Print(out, stmt);
   }
 
   static auto semantics() -> const SemanticsIR& {

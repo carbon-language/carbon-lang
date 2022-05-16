@@ -17,12 +17,13 @@ class ExpressionStatement {
   static constexpr StatementKind MetaNodeKind =
       StatementKind::ExpressionStatement;
 
-  explicit ExpressionStatement(Expression expr) : expr_(expr) {}
+  explicit ExpressionStatement(Expression expression)
+      : expression_(expression) {}
 
-  auto expr() const -> Expression { return expr_; }
+  auto expression() const -> Expression { return expression_; }
 
  private:
-  Expression expr_;
+  Expression expression_;
 };
 
 }  // namespace Carbon::Semantics

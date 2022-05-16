@@ -10,34 +10,22 @@
 #include "llvm/ADT/StringMap.h"
 #include "toolchain/semantics/nodes/meta_node.h"
 
-namespace Carbon {
-class SemanticsIR;
-class SemanticsIRFactory;
-}  // namespace Carbon
-
 namespace Carbon::Semantics {
 
 // The standard structure for declaration and statement blocks.
 template <typename MetaNodeT>
 struct MetaNodeBlock {
  public:
+  MetaNodeBlock(llvm::SmallVector<MetaNodeT, 0> nodes,
+                llvm::StringMap<MetaNodeT> name_lookup)
+      : nodes_(std::move(nodes)), name_lookup_(std::move(name_lookup)) {}
+
   auto nodes() const -> llvm::ArrayRef<MetaNodeT> { return nodes_; }
   auto name_lookup() const -> const llvm::StringMap<MetaNodeT>& {
     return name_lookup_;
   }
 
  protected:
-  friend class Carbon::SemanticsIR;
-  friend class Carbon::SemanticsIRFactory;
-
-  // TODO: Switch to direct construction instead of incremental adds?
-  void add_node(MetaNodeT node) { nodes_.push_back(node); }
-  void add_named_node(std::tuple<llvm::StringRef, MetaNodeT> named_node) {
-    auto& [name, node] = named_node;
-    add_node(node);
-    name_lookup_[name] = node;
-  }
-
   llvm::SmallVector<MetaNodeT, 0> nodes_;
   llvm::StringMap<MetaNodeT> name_lookup_;
 };

@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/semantics/nodes/expression_statement.h"
 
 namespace Carbon {
 
@@ -42,6 +43,11 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 }
 
 void SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::ExpressionStatement expr) const {
+  Print(out, expr.expression());
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Function function) const {
   out << "fn ";
   Print(out, function.name());
@@ -69,6 +75,29 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
   Print(out, binding.name());
   out << ": ";
   Print(out, binding.type());
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out, Semantics::Return ret) const {
+  out << "return";
+  if (ret.expression()) {
+    out << " ";
+    Print(out, *ret.expression());
+  }
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::Statement stmt) const {
+  switch (stmt.kind()) {
+    case Semantics::StatementKind::ExpressionStatement:
+      Print(out, statements_.Get<Semantics::ExpressionStatement>(stmt));
+      return;
+    case Semantics::StatementKind::Return:
+      Print(out, statements_.Get<Semantics::Return>(stmt));
+      return;
+    case Semantics::StatementKind::Invalid:
+      CARBON_FATAL() << "Invalid expression type";
+  }
+  out << ";";
 }
 
 }  // namespace Carbon

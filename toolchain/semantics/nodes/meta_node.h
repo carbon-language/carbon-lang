@@ -36,12 +36,7 @@ class MetaNode {
  private:
   friend MetaNodeStoreT;
 
-  MetaNode(KindT kind, int32_t index) : kind_(kind), index_(index) {
-    // TODO: kind_ and index_ are currently unused, this suppresses the
-    // warning.
-    kind_ = kind;
-    index_ = index;
-  }
+  MetaNode(KindT kind, int32_t index) : kind_(kind), index_(index) {}
 
   KindT kind_;
 
@@ -55,6 +50,7 @@ class MetaNodeStore {
  public:
   using MetaNodeT = MetaNode<KindT, MetaNodeStore<KindT, StoredNodeT...>>;
 
+  // Stores the provided node, returning a pointer to it.
   template <typename NodeT>
   auto Store(NodeT node) -> MetaNodeT {
     auto& node_store =
@@ -64,14 +60,16 @@ class MetaNodeStore {
     return MetaNodeT(NodeT::MetaNodeKind, index);
   }
 
+  // Returns the requested node. Requires that the pointer is valid for this
+  // store.
   template <typename NodeT>
   auto Get(MetaNodeT meta_node) const -> const NodeT& {
+    CARBON_CHECK(meta_node.index_ >= 0);
     CARBON_CHECK(meta_node.kind_ == NodeT::MetaNodeKind)
         << "Kind mismatch: " << static_cast<int>(meta_node.kind_) << " vs "
         << static_cast<int>(NodeT::MetaNodeKind);
     auto& node_store =
         std::get<static_cast<size_t>(NodeT::MetaNodeKind)>(node_stores_);
-    CARBON_CHECK(meta_node.index_ >= 0);
     CARBON_CHECK(static_cast<size_t>(meta_node.index_) < node_store.size());
     return node_store[meta_node.index_];
   }

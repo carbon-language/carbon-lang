@@ -27,7 +27,7 @@ class SemanticsIR {
 
   // File-level declarations.
   auto root_block() const -> const Semantics::DeclarationBlock& {
-    return root_block_;
+    return *root_block_;
   }
 
  private:
@@ -41,16 +41,19 @@ class SemanticsIR {
   void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
   void Print(llvm::raw_ostream& out, Semantics::DeclaredName name) const;
   void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
+  void Print(llvm::raw_ostream& out, Semantics::ExpressionStatement expr) const;
   void Print(llvm::raw_ostream& out, Semantics::Function function) const;
   void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
   void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
+  void Print(llvm::raw_ostream& out, Semantics::Return ret) const;
+  void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
 
   Semantics::DeclarationStore declarations_;
   Semantics::ExpressionStore expressions_;
   Semantics::StatementStore statements_;
 
-  // The file-level block.
-  Semantics::DeclarationBlock root_block_;
+  // The file-level block. Only assigned after initialization is complete.
+  llvm::Optional<Semantics::DeclarationBlock> root_block_;
 
   const ParseTree* parse_tree_;
 };
