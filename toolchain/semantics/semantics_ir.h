@@ -9,6 +9,7 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/nodes/expression_statement.h"
 #include "toolchain/semantics/nodes/function.h"
+#include "toolchain/semantics/nodes/infix_operator.h"
 #include "toolchain/semantics/nodes/literal.h"
 #include "toolchain/semantics/nodes/meta_node_block.h"
 #include "toolchain/semantics/nodes/pattern_binding.h"
@@ -43,10 +44,12 @@ class SemanticsIR {
   void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
   void Print(llvm::raw_ostream& out, Semantics::ExpressionStatement expr) const;
   void Print(llvm::raw_ostream& out, Semantics::Function function) const;
+  void Print(llvm::raw_ostream& out, Semantics::InfixOperator op) const;
   void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
   void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
   void Print(llvm::raw_ostream& out, Semantics::Return ret) const;
   void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
+  void Print(llvm::raw_ostream& out, Semantics::StatementBlock block) const;
 
   Semantics::DeclarationStore declarations_;
   Semantics::ExpressionStore expressions_;

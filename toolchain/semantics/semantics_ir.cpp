@@ -34,6 +34,9 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
 void SemanticsIR::Print(llvm::raw_ostream& out,
                         Semantics::Expression expr) const {
   switch (expr.kind()) {
+    case Semantics::ExpressionKind::InfixOperator:
+      Print(out, expressions_.Get<Semantics::InfixOperator>(expr));
+      return;
     case Semantics::ExpressionKind::Literal:
       Print(out, expressions_.Get<Semantics::Literal>(expr));
       return;
@@ -62,7 +65,16 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
     out << " -> ";
     Print(out, *function.return_expr());
   }
-  out << ";";
+  Print(out, function.body());
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::InfixOperator op) const {
+  Print(out, op.lhs());
+  out << " ";
+  Print(out, op.node());
+  out << " ";
+  Print(out, op.rhs());
 }
 
 void SemanticsIR::Print(llvm::raw_ostream& out,
@@ -98,6 +110,16 @@ void SemanticsIR::Print(llvm::raw_ostream& out,
       CARBON_FATAL() << "Invalid expression type";
   }
   out << ";";
+}
+
+void SemanticsIR::Print(llvm::raw_ostream& out,
+                        Semantics::StatementBlock block) const {
+  out << " { ";
+  for (const auto& statement : block.nodes()) {
+    Print(out, statement);
+    out << "; ";
+  }
+  out << "}";
 }
 
 }  // namespace Carbon

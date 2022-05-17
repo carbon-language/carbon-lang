@@ -62,12 +62,14 @@ class SemanticsIRForTest {
 
   static void Print(llvm::raw_ostream& out, Semantics::Expression expr) {
     CARBON_CHECK(g_semantics != llvm::None);
-    g_semantics->Print(out, expr);
+    out << "TODO(expr)";
+    // g_semantics->Print(out, expr);
   }
 
   static void Print(llvm::raw_ostream& out, Semantics::Statement stmt) {
     CARBON_CHECK(g_semantics != llvm::None);
-    g_semantics->Print(out, stmt);
+    out << "TODO(stmt)";
+    // g_semantics->Print(out, stmt);
   }
 
   static auto semantics() -> const SemanticsIR& {
@@ -110,15 +112,37 @@ MATCHER_P(DeclaredName, name_matcher,
                             result_listener);
 }
 
-MATCHER_P(ExpressionLiteral, text_matcher,
-          llvm::formatv("Expression literal {0}",
+MATCHER_P3(InfixOperator, lhs_matcher, op_matcher, rhs_matcher,
+           llvm::formatv("InfixOperator {0} {1} {2}",
+                         ::testing::PrintToString(lhs_matcher),
+                         ::testing::PrintToString(op_matcher),
+                         ::testing::PrintToString(rhs_matcher))) {
+  const Semantics::Expression& expr = arg;
+  if (auto infix =
+          SemanticsIRForTest::GetExpression<Semantics::InfixOperator>(expr)) {
+    return ExplainMatchResult(op_matcher,
+                              SemanticsIRForTest::GetNodeText(infix->node()),
+                              result_listener) &&
+           ExplainMatchResult(lhs_matcher, infix->lhs(), result_listener) &&
+           ExplainMatchResult(rhs_matcher, infix->rhs(), result_listener);
+  } else {
+    *result_listener << "node is not a literal";
+    return result_listener;
+  }
+}
+
+MATCHER_P(Literal, text_matcher,
+          llvm::formatv("Literal {0}",
                         ::testing::PrintToString(text_matcher))) {
   const Semantics::Expression& expr = arg;
-  return ExplainMatchResult(
-      text_matcher,
-      SemanticsIRForTest::GetNodeText(
-          SemanticsIRForTest::GetExpression<Semantics::Literal>(expr)->node()),
-      result_listener);
+  if (auto lit = SemanticsIRForTest::GetExpression<Semantics::Literal>(expr)) {
+    return ExplainMatchResult(text_matcher,
+                              SemanticsIRForTest::GetNodeText(lit->node()),
+                              result_listener);
+  } else {
+    *result_listener << "node is not a literal";
+    return result_listener;
+  }
 }
 
 MATCHER_P(FunctionName, name_matcher,

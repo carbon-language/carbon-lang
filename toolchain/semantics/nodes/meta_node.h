@@ -101,11 +101,13 @@ using Statement = MetaNode<StatementKind, StatementStore>;
 
 // Meta node information for declarations.
 enum class ExpressionKind {
+  InfixOperator,
   Literal,
   Invalid,
 };
+class InfixOperator;
 class Literal;
-using ExpressionStore = MetaNodeStore<ExpressionKind, Literal>;
+using ExpressionStore = MetaNodeStore<ExpressionKind, InfixOperator, Literal>;
 using Expression = MetaNode<ExpressionKind, ExpressionStore>;
 
 }  // namespace Carbon::Semantics

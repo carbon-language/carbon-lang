@@ -10,6 +10,7 @@ cc_library(
         "nodes/declared_name.h",
         "nodes/expression_statement.h",
         "nodes/function.h",
+        "nodes/infix_operator.h",
         "nodes/literal.h",
         "nodes/meta_node.h",
         "nodes/meta_node_block.h",

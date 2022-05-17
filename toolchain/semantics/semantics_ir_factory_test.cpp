@@ -69,10 +69,10 @@ TEST_F(SemanticsIRFactoryTest, SimpleProgram) {
       ElementsAre(
           Function(
               Eq("Add"),
-              ElementsAre(PatternBinding(Eq("x"), ExpressionLiteral("i32")),
-                          PatternBinding(Eq("y"), ExpressionLiteral("i32"))),
-              Optional(ExpressionLiteral("i32"))),
-          Function(Eq("Main"), IsEmpty(), Optional(ExpressionLiteral("i32")))),
+              ElementsAre(PatternBinding(Eq("x"), Literal("i32")),
+                          PatternBinding(Eq("y"), Literal("i32"))),
+              Optional(Literal("i32"))),
+          Function(Eq("Main"), IsEmpty(), Optional(Literal("i32")))),
       UnorderedElementsAre(MappedNode("Add", FunctionName("Add")),
                            MappedNode("Main", FunctionName("Main"))));
 }
@@ -96,21 +96,20 @@ TEST_F(SemanticsIRFactoryTest, FunctionParams) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo(x: i32, y: i64) {}");
   ExpectRootBlock(
-      ElementsAre(Function(
-          Eq("Foo"),
-          ElementsAre(PatternBinding(Eq("x"), ExpressionLiteral("i32")),
-                      PatternBinding(Eq("y"), ExpressionLiteral("i64"))),
-          IsNone(), StatementBlock(IsEmpty(), IsEmpty()))),
+      ElementsAre(Function(Eq("Foo"),
+                           ElementsAre(PatternBinding(Eq("x"), Literal("i32")),
+                                       PatternBinding(Eq("y"), Literal("i64"))),
+                           IsNone(), StatementBlock(IsEmpty(), IsEmpty()))),
       UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionReturnType) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
   Build("fn Foo() -> i32 {}");
-  ExpectRootBlock(ElementsAre(Function(Eq("Foo"), IsEmpty(),
-                                       Optional(ExpressionLiteral("i32")),
-                                       StatementBlock(IsEmpty(), IsEmpty()))),
-                  UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
+  ExpectRootBlock(
+      ElementsAre(Function(Eq("Foo"), IsEmpty(), Optional(Literal("i32")),
+                           StatementBlock(IsEmpty(), IsEmpty()))),
+      UnorderedElementsAre(MappedNode("Foo", FunctionName("Foo"))));
 }
 
 TEST_F(SemanticsIRFactoryTest, FunctionDuplicate) {
@@ -152,26 +151,27 @@ TEST_F(SemanticsIRFactoryTest, ReturnLiteral) {
            }
           )");
   ExpectRootBlock(
-      ElementsAre(Function(
-          Eq("Main"), IsEmpty(), IsNone(),
-          StatementBlock(ElementsAre(Return(Optional(ExpressionLiteral("1")))),
-                         IsEmpty()))),
+      ElementsAre(
+          Function(Eq("Main"), IsEmpty(), IsNone(),
+                   StatementBlock(ElementsAre(Return(Optional(Literal("1")))),
+                                  IsEmpty()))),
       UnorderedElementsAre(MappedNode("Main", FunctionName("Main"))));
 }
 
-/*
 TEST_F(SemanticsIRFactoryTest, ReturnArithmetic) {
   EXPECT_CALL(consumer, HandleDiagnostic(_)).Times(0);
-  Build(R"(fn Main() -> i32 {
+  Build(R"(fn Main() {
              return 1 + 2;
            }
           )");
   ExpectRootBlock(
       ElementsAre(
-          Function(Eq("Main"), IsEmpty(), Optional(ExpressionLiteral("i32")))),
+          Function(Eq("Main"), IsEmpty(), IsNone(),
+                   StatementBlock(ElementsAre(Return(Optional(InfixOperator(
+                                      Literal("1"), "+", Literal("2"))))),
+                                  IsEmpty()))),
       UnorderedElementsAre(MappedNode("Main", FunctionName("Main"))));
 }
-*/
 
 }  // namespace
 }  // namespace Carbon::Testing

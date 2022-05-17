@@ -102,11 +102,17 @@ auto SemanticsIRFactory::TransformDeclaredName(ParseTree::Node node)
 
 auto SemanticsIRFactory::TransformExpression(ParseTree::Node node)
     -> Semantics::Expression {
-  // TODO: This is still purpose-specific, and will need to handle more kinds of
-  // expressions.
-  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::Literal());
-  RequireNodeEmpty(node);
-  return semantics_.expressions_.Store(Semantics::Literal(node));
+  switch (auto node_kind = parse_tree().node_kind(node)) {
+    case ParseNodeKind::Literal():
+      RequireNodeEmpty(node);
+      return semantics_.expressions_.Store(Semantics::Literal(node));
+    case ParseNodeKind::InfixOperator():
+      return semantics_.expressions_.Store(TransformInfixOperator(node));
+    default:
+      CARBON_FATAL() << "At index " << node.index() << ", unexpected "
+                     << node_kind;
+      break;
+  }
 }
 
 auto SemanticsIRFactory::TransformExpressionStatement(ParseTree::Node node)
@@ -141,14 +147,24 @@ auto SemanticsIRFactory::TransformFunctionDeclaration(ParseTree::Node node)
   return std::make_tuple(parse_tree().GetNodeText(name.node()), decl);
 }
 
+auto SemanticsIRFactory::TransformInfixOperator(ParseTree::Node node)
+    -> Semantics::InfixOperator {
+  CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::InfixOperator());
+
+  auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  auto rhs = TransformExpression(subtree.RequireConsume());
+  auto lhs = TransformExpression(subtree.RequireConsume());
+  return Semantics::InfixOperator(node, lhs, rhs);
+}
+
 auto SemanticsIRFactory::TransformParameterList(ParseTree::Node node)
     -> llvm::SmallVector<Semantics::PatternBinding, 0> {
   CARBON_CHECK(parse_tree().node_kind(node) == ParseNodeKind::ParameterList());
 
   auto subtree = ParseSubtreeConsumer::ForParent(parse_tree(), node);
+  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::ParameterListEnd()));
 
   llvm::SmallVector<Semantics::PatternBinding, 0> params;
-  RequireNodeEmpty(subtree.RequireConsume(ParseNodeKind::ParameterListEnd()));
   if (auto first_param_node =
           subtree.TryConsume(ParseNodeKind::PatternBinding())) {
     params.push_back(TransformPatternBinding(*first_param_node));

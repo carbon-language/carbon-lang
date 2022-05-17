@@ -35,6 +35,7 @@ class SemanticsIRFactory {
       -> Semantics::Statement;
   auto TransformFunctionDeclaration(ParseTree::Node node)
       -> std::tuple<llvm::StringRef, Semantics::Declaration>;
+  auto TransformInfixOperator(ParseTree::Node node) -> Semantics::InfixOperator;
   auto TransformParameterList(ParseTree::Node node)
       -> llvm::SmallVector<Semantics::PatternBinding, 0>;
   auto TransformPatternBinding(ParseTree::Node node)
