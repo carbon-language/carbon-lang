@@ -2144,9 +2144,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_stmt.condition(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "condition of `if`",
-                                        arena_->New<BoolType>(),
-                                        &if_stmt.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `if`", impl_scope,
+                            &if_stmt.condition(), arena_->New<BoolType>()));
+      if_stmt.set_condition(converted_condition);
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&if_stmt.then_block(), impl_scope));
       if (if_stmt.else_block()) {
         CARBON_RETURN_IF_ERROR(
