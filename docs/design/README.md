@@ -75,6 +75,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Functions with template parameters](#functions-with-template-parameters)
     -   [Generic types](#generic-types)
         -   [Types with template parameters](#types-with-template-parameters)
+        -   [Generic choice types](#generic-choice-types)
     -   [Operator overloading](#operator-overloading)
         -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
         -   [Comparison operators](#comparison-operators)
@@ -366,6 +367,8 @@ are available for representing strings with `\`s and `"`s.
 
 ### Composite types
 
+> **TODO:** Maybe rename to "structural types"?
+
 #### Tuples
 
 > References: [Tuples](tuples.md)
@@ -450,6 +453,10 @@ the only pointer [operations](#expressions) are:
 -   Address-of: given an
     [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
     `x`, `&x` returns a pointer to `x`.
+
+There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
+Carbon. To represent a pointer that may not refer to a valid object, use the
+type `Optional(T*)`.
 
 In Carbon, one use of pointers is to pass `&x` into a function that will modify
 `x`.
@@ -1017,6 +1024,8 @@ contain patterns that may or may not match based on the runtime value of the
 
 ## User-defined types
 
+> **TODO:** Maybe rename to "nominal types"?
+
 ### Classes
 
 > References:
@@ -1049,7 +1058,7 @@ Breaking apart `Widget`:
 The order of the field declarations determines the fields' memory-layout order.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
-class types, but they are commonly referred to as "structs" and "classes"
+_class types_, but they are commonly referred to as "structs" and "classes"
 respectively when that is not confusing. Like structs, classes refer to their
 members by name. Unlike structs, classes are
 [nominal types](#structural-and-nominal-types).
@@ -1089,7 +1098,7 @@ notation:
 Assert(sprocket.x == thingy.x);
 ```
 
-Every class has a member named `Self` equal to the class type.
+Every class has a member named `Self` equal to the class type itself.
 
 #### Class functions and factory functions
 
@@ -1359,19 +1368,20 @@ having names inside the class' scope:
 > **TODO:**
 
 ```carbon
-choice Result(T:! Type, Error:! Type) {
-  Success(value: T),
-  Failure(error: Error),
+choice IntResult {
+  Success(value: i32),
+  Failure(error: String),
   Cancelled
 }
 
-fn ParseAsInt(s: String) -> Result(i32, String) {
+fn ParseAsInt(s: String) -> IntResult {
   var r: i32 = 0;
-  ...
-    if (not IsDigit(s[i])) {
+  for (c: i32 in s) {
+    if (not IsDigit(c)) {
       return .Failure("Invalid character");
     }
-  ...
+    // ...
+  }
   return .Success(r);
 }
 
@@ -1623,6 +1633,16 @@ Breaking apart the template use in `Stack`:
     would be used, and will only be type checked on instantiation.
 -   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
     instantiated.
+
+#### Generic choice types
+
+```carbon
+choice Result(T:! Type, Error:! Type) {
+  Success(value: T),
+  Failure(error: Error),
+  Cancelled
+}
+```
 
 ### Operator overloading
 
