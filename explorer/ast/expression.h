@@ -238,6 +238,9 @@ class CompoundFieldAccessExpression : public Expression {
     impl_ = impl;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
+
  private:
   Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
@@ -468,7 +471,7 @@ class CallExpression : public Expression {
   }
 
   // Can only be called by type-checking, if a conversion was required.
-  void set_argument(Expression& argument) { argument_ = &argument; }
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
 
  private:
   Nonnull<Expression*> function_;

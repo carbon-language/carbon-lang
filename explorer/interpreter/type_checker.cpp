@@ -1391,9 +1391,11 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
       } else {
         // This is `value.(member_name)`, where `member_name` specifies a type.
         // `value` is implicitly converted to that type.
-        CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(),
-                                          "compound member access", *base_type,
-                                          &access.object().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_object,
+            ImplicitlyConvert("compound member access", impl_scope,
+                              &access.object(), *base_type));
+        access.set_object(converted_object);
       }
 
       // Perform impl selection if necessary.
@@ -1642,7 +1644,7 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> converted_argument,
                                   ImplicitlyConvert("function call", impl_scope,
                                                     &arg_tuple, param_type));
-          call.set_argument(*converted_argument);
+          call.set_argument(converted_argument);
 
           Nonnull<const Value*> return_type =
               Substitute(generic_bindings, &fun_t.return_type());
