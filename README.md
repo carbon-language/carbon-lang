@@ -56,7 +56,7 @@ C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
 improve and meet developers' needs outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
-[extremely difficult](), both due to the technical debt itself and challenges
+[extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to the technical debt itself and challenges
 with its evolution process. We want a language that avoids inheriting the legacy
 of C or C++ directly, and instead starts with solid language foundations like a
 modern generics system, modular code organization, and consistent, simple
