@@ -922,8 +922,98 @@ auto TypeChecker::SatisfyImpls(
   return Success();
 }
 
-auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
-                               const ImplScope& impl_scope)
+auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
+                                       const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  switch (e->kind()) {
+    case ExpressionKind::IndexExpression: {
+      auto& index = cast<IndexExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
+      break;
+    }
+    case ExpressionKind::TupleLiteral:
+      for (auto* arg : cast<TupleLiteral>(*e).fields()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+      }
+      break;
+    case ExpressionKind::StructLiteral:
+      for (auto& arg : cast<StructLiteral>(*e).fields()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+      }
+      break;
+    case ExpressionKind::StructTypeLiteral:
+      for (auto& arg : cast<StructTypeLiteral>(*e).fields()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+      }
+      break;
+    case ExpressionKind::FieldAccessExpression:
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<FieldAccessExpression>(*e).aggregate(), impl_scope));
+      break;
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
+      break;
+    }
+    case ExpressionKind::PrimitiveOperatorExpression:
+      for (Nonnull<Expression*> argument :
+           cast<PrimitiveOperatorExpression>(*e).arguments()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
+      }
+      break;
+    case ExpressionKind::CallExpression: {
+      auto& call = cast<CallExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
+      break;
+    }
+    case ExpressionKind::FunctionTypeLiteral: {
+      auto& fn = cast<FunctionTypeLiteral>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.parameter(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.return_type(), impl_scope));
+      break;
+    }
+    case ExpressionKind::IntrinsicExpression:
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<IntrinsicExpression>(*e).args(), impl_scope));
+      break;
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_expr.condition(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&if_expr.then_expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&if_expr.else_expression(), impl_scope));
+      break;
+    }
+    case ExpressionKind::ArrayTypeLiteral: {
+      auto& array_literal = cast<ArrayTypeLiteral>(*e);
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&array_literal.size_expression(), impl_scope));
+      break;
+    }
+    case ExpressionKind::InstantiateImpl:
+    case ExpressionKind::ValueLiteral:
+    case ExpressionKind::IdentifierExpression:
+    case ExpressionKind::IntLiteral:
+    case ExpressionKind::BoolLiteral:
+    case ExpressionKind::StringLiteral:
+    case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::BoolTypeLiteral:
+    case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
+    case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::UnimplementedExpression:
+      break;
+  }
+
+  return Success();
+}
+
+auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
+                                  const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (e == skip_typechecking_expr) {
     // FIXME: this is a hack
@@ -945,8 +1035,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       return Success();
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
       const Value& aggregate_type = index.aggregate().static_type();
       switch (aggregate_type.kind()) {
         case Value::Kind::TupleValue: {
@@ -983,7 +1071,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::TupleLiteral: {
       std::vector<Nonnull<const Value*>> arg_types;
       for (auto* arg : cast<TupleLiteral>(*e).fields()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
         CARBON_RETURN_IF_ERROR(
             ExpectIsConcreteType(arg->source_loc(), &arg->static_type()));
         arg_types.push_back(&arg->static_type());
@@ -995,7 +1082,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::StructLiteral: {
       std::vector<NamedValue> arg_types;
       for (auto& arg : cast<StructLiteral>(*e).fields()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
         CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
             arg.expression().source_loc(), &arg.expression().static_type()));
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
@@ -1007,7 +1093,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::StructTypeLiteral: {
       auto& struct_type = cast<StructTypeLiteral>(*e);
       for (auto& arg : struct_type.fields()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
         CARBON_ASSIGN_OR_RETURN(
             auto value, InterpExp(&arg.expression(), arena_, trace_stream_));
         CARBON_RETURN_IF_ERROR(
@@ -1027,7 +1112,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::FieldAccessExpression: {
       auto& access = cast<FieldAccessExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.aggregate(), impl_scope));
       const Value& aggregate_type = access.aggregate().static_type();
       switch (aggregate_type.kind()) {
         case Value::Kind::StructType: {
@@ -1256,8 +1340,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::CompoundFieldAccessExpression: {
       auto& access = cast<CompoundFieldAccessExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {
         return CompilationError(e->source_loc())
                << "expected name of instance member or interface member in "
@@ -1382,7 +1464,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       auto& op = cast<PrimitiveOperatorExpression>(*e);
       std::vector<Nonnull<const Value*>> ts;
       for (Nonnull<Expression*> argument : op.arguments()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
         ts.push_back(&argument->static_type());
       }
       switch (op.op()) {
@@ -1474,8 +1555,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
@@ -1643,7 +1722,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       return Success();
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           if (intrinsic_exp.args().fields().size() != 1) {
@@ -1669,16 +1747,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       return Success();
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_expr.condition(), impl_scope));
       CARBON_RETURN_IF_ERROR(ExpectType(
           if_expr.source_loc(), "condition of `if`", arena_->New<BoolType>(),
           &if_expr.condition().static_type()));
 
       // TODO: Compute the common type and convert both operands to it.
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&if_expr.then_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&if_expr.else_expression(), impl_scope));
       CARBON_RETURN_IF_ERROR(
           ExpectExactType(e->source_loc(), "expression of `if` expression",
                           &if_expr.then_expression().static_type(),
@@ -1691,8 +1764,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> element_type,
           InterpExp(&array_literal.element_type_expression(), arena_,
@@ -1700,8 +1771,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
           array_literal.element_type_expression().source_loc(), element_type));
 
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.size_expression(), impl_scope));
       CARBON_RETURN_IF_ERROR(
           ExpectExactType(array_literal.size_expression().source_loc(),
                           "array size", arena_->New<IntType>(),
@@ -1718,6 +1787,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       return Success();
     }
   }
+}
+
+auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
+                               const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExpOperands(e, impl_scope));
+  CARBON_RETURN_IF_ERROR(TypeCheckOneExp(e, impl_scope));
+  return Success();
 }
 
 void TypeChecker::CollectGenericBindingsInPattern(
