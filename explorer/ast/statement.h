@@ -101,6 +101,9 @@ class Assign : public Statement {
   auto rhs() const -> const Expression& { return *rhs_; }
   auto rhs() -> Expression& { return *rhs_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_rhs(Nonnull<Expression*> rhs) { rhs_ = rhs; }
+
  private:
   Nonnull<Expression*> lhs_;
   Nonnull<Expression*> rhs_;

@@ -1919,6 +1919,9 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_RETURN_IF_ERROR(ExpectIsType(binding.source_loc(), type));
       if (expected) {
         if (IsConcreteType(type)) {
+          // We permit built-in conversions here but not user-defined
+          // conversions.
+          // FIXME: Is this correct?
           CARBON_RETURN_IF_ERROR(
               ExpectType(p->source_loc(), "name binding", type, *expected));
         } else {
@@ -2122,13 +2125,15 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& assign = cast<Assign>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.rhs(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.lhs(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "assign",
-                                        &assign.lhs().static_type(),
-                                        &assign.rhs().static_type()));
       if (assign.lhs().value_category() != ValueCategory::Var) {
         return CompilationError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_rhs,
+          ImplicitlyConvert("assignment", impl_scope, &assign.rhs(),
+                            &assign.lhs().static_type()));
+      assign.set_rhs(converted_rhs);
       return Success();
     }
     case StatementKind::ExpressionStatement: {
