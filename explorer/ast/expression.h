@@ -537,6 +537,29 @@ class TypeTypeLiteral : public Expression {
   }
 };
 
+// A literal value. This is used in desugaring, and can't be expressed in
+// source syntax.
+class ValueLiteral : public Expression {
+ public:
+  // Value literals are created by type-checking, and so are created with their
+  // type and value category already known.
+  ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
+               Nonnull<const Value*> type, ValueCategory value_category)
+      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+    set_static_type(type);
+    set_value_category(value_category);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromValueLiteral(node->kind());
+  }
+
+  auto value() const -> const Value& { return *value_; }
+
+ private:
+  Nonnull<const Value*> value_;
+};
+
 class IntrinsicExpression : public Expression {
  public:
   enum class Intrinsic {

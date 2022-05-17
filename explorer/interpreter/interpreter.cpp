@@ -401,6 +401,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::ValueLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::ArrayTypeLiteral:
@@ -1041,6 +1042,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::StringTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
+    }
+    case ExpressionKind::ValueLiteral: {
+      CARBON_CHECK(act.pos() == 0);
+      return todo_.FinishAction(&cast<ValueLiteral>(exp).value());
     }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(exp);

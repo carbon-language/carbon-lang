@@ -427,7 +427,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     const ImplScope& impl_scope,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
-    -> ErrorOr<Nonnull<const Expression*>> {
+    -> ErrorOr<Nonnull<Expression*>> {
   // FIXME: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
@@ -438,7 +438,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
     return source;
   }
   CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<const Expression*>> converted,
+      std::optional<Nonnull<Expression*>> converted,
       BuildBuiltinMethodCall(
           impl_scope, source,
           BuiltinInterfaceName{Builtin::ImplicitAs, destination},
@@ -492,18 +492,16 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
                                          Nonnull<Expression*> source,
                                          BuiltinInterfaceName interface,
                                          BuiltinMethodCall method)
-    -> ErrorOr<Nonnull<const Expression*>> {
+    -> ErrorOr<Nonnull<Expression*>> {
   const SourceLocation source_loc = source->source_loc();
-  const int builtin_id = static_cast<int>(interface.builtin);
-
   CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
                           GetBuiltinInterfaceType(source_loc, interface));
 
   // Build an expression to perform the call `source.(interface.method)(args)`
   // and type-check it.
-  Nonnull<IdentifierExpression*> iface_expr =
-      arena_->New<IdentifierExpression>(source_loc, kBuiltinNames[builtin_id]);
-  iface_expr->set_value_node(&iface_type->declaration());
+  Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
+      source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
+      ValueCategory::Let);
   Nonnull<Expression*> iface_member =
       arena_->New<FieldAccessExpression>(source_loc, iface_expr, method.name);
   Nonnull<Expression*> method_access =
@@ -513,17 +511,21 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
       arena_->New<TupleLiteral>(source_loc, method.arguments);
   Nonnull<Expression*> call =
       arena_->New<CallExpression>(source_loc, method_access, call_args);
+  // FIXME: `source` has already been type-checked at this point.
+  auto* old = skip_typechecking_expr;
+  skip_typechecking_expr = source;
   CARBON_RETURN_IF_ERROR(TypeCheckExp(call, impl_scope));
+  skip_typechecking_expr = old;
 
   return {call};
 }
 
-auto TypeChecker::ExpectType(SourceLocation source_loc,
-                             const std::string& context,
-                             Nonnull<const Value*> expected,
-                             Nonnull<const Value*> actual) const
+auto TypeChecker::ExpectType(
+    SourceLocation source_loc, const std::string& context,
+    Nonnull<const Value*> expected, Nonnull<const Value*> actual,
+    std::optional<Nonnull<const ImplScope*>> impl_scope) const
     -> ErrorOr<Success> {
-  if (!IsImplicitlyConvertible(actual, expected, /*FIXME*/ std::nullopt)) {
+  if (!IsImplicitlyConvertible(actual, expected, impl_scope)) {
     return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
@@ -923,6 +925,10 @@ auto TypeChecker::SatisfyImpls(
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
+  if (e == skip_typechecking_expr) {
+    // FIXME: this is a hack
+    return Success();
+  }
   if (trace_stream_) {
     **trace_stream_ << "checking expression " << *e;
     **trace_stream_ << "\nconstants: ";
@@ -930,10 +936,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     **trace_stream_ << "\n";
   }
   switch (e->kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      CARBON_FATAL()
-          << "instantiate impl nodes are generated during type checking";
-    }
+    case ExpressionKind::InstantiateImpl:
+    //case ExpressionKind::ValueLiteral: // FIXME
+      CARBON_FATAL() << "attempting to type check node " << *e
+                     << " generated during type checking";
+    case ExpressionKind::ValueLiteral:
+      // FIXME: this is a hack
+      return Success();
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
@@ -1964,9 +1973,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::While: {
       auto& while_stmt = cast<While>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&while_stmt.condition(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "condition of `while`",
-                                        arena_->New<BoolType>(),
-                                        &while_stmt.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `while`", impl_scope,
+                            &while_stmt.condition(), arena_->New<BoolType>()));
+      while_stmt.set_condition(converted_condition);
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }

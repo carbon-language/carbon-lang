@@ -73,6 +73,9 @@ class TypeChecker {
     llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
   };
 
+  // FIXME: this is a hack
+  const Expression* skip_typechecking_expr = nullptr;
+
   // Form a builtin method call. Ensures that the type of `source` implements
   // the interface `interface`, which should be defined in the prelude, and
   // forms a call to the method `method` on that interface.
@@ -80,7 +83,7 @@ class TypeChecker {
                               Nonnull<Expression*> source,
                               BuiltinInterfaceName interface,
                               BuiltinMethodCall method)
-      -> ErrorOr<Nonnull<const Expression*>>;
+      -> ErrorOr<Nonnull<Expression*>>;
 
   // Get a type for a builtin interface.
   auto GetBuiltinInterfaceType(SourceLocation source_loc,
@@ -245,13 +248,18 @@ class TypeChecker {
                          const ImplScope& impl_scope,
                          Nonnull<Expression*> source,
                          Nonnull<const Value*> destination)
-      -> ErrorOr<Nonnull<const Expression*>>;
+      -> ErrorOr<Nonnull<Expression*>>;
 
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
+  //
+  // FIXME: Does not actually perform the conversion if `impl_scope` is
+  // specified and a user-defined conversion is needed. Should be used very
+  // rarely.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
-                  Nonnull<const Value*> expected,
-                  Nonnull<const Value*> actual) const -> ErrorOr<Success>;
+                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
+                  std::optional<Nonnull<const ImplScope*>> impl_scope =
+                      std::nullopt) const -> ErrorOr<Success>;
 
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding`) are replaced by their

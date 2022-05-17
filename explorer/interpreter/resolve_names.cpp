@@ -191,6 +191,7 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       break;
     case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:

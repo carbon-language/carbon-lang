@@ -4,6 +4,11 @@
 
 package Carbon api;
 
+// Implicitly convert `Self` to `T`.
+interface ImplicitAs(T:! Type) {
+  fn Convert[me: Self]() -> T;
+}
+
 // Note that Print is experimental, and not part of an accepted proposal, but
 // is included here for printing state in tests.
 fn Print(format_str: String) {

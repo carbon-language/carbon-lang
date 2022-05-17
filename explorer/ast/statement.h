@@ -215,6 +215,9 @@ class While : public Statement {
   auto body() const -> const Block& { return *body_; }
   auto body() -> Block& { return *body_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
+
  private:
   Nonnull<Expression*> condition_;
   Nonnull<Block*> body_;
