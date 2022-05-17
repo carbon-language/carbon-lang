@@ -2163,9 +2163,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       if (return_term.is_auto()) {
         return_term.set_static_type(&ret.expression().static_type());
       } else {
-        CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "return",
-                                          &return_term.static_type(),
-                                          &ret.expression().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_ret_val,
+            ImplicitlyConvert("return value", impl_scope, &ret.expression(),
+                              &return_term.static_type()));
+        ret.set_expression(converted_ret_val);
       }
       return Success();
     }
