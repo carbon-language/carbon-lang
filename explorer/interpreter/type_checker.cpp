@@ -705,11 +705,28 @@ auto TypeChecker::ArgumentDeduction(
       }
       return Success();
     }
+    case Value::Kind::InterfaceType: {
+      const auto& param_iface_type = cast<InterfaceType>(*param_type);
+      if (arg_type->kind() != Value::Kind::InterfaceType) {
+        return handle_non_deduced_type();
+      }
+      const auto& arg_iface_type = cast<InterfaceType>(*arg_type);
+      if (param_iface_type.declaration().name() !=
+          arg_iface_type.declaration().name()) {
+        return handle_non_deduced_type();
+      }
+      for (const auto& [ty, param_ty] : param_iface_type.args()) {
+        CARBON_RETURN_IF_ERROR(
+            ArgumentDeduction(source_loc, context, type_params, deduced,
+                              param_ty, arg_iface_type.args().at(ty),
+                              /*allow_implicit_conversion=*/false, impl_scope));
+      }
+      return Success();
+    }
     // For the following cases, we check the type matches.
     case Value::Kind::StaticArrayType:
       // FIXME: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
-    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
