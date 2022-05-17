@@ -1670,6 +1670,8 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           if (trace_stream_) {
             **trace_stream_ << "pattern matching type params and args\n";
           }
+          // FIXME: Switch to using `ArgumentDeduction` here to support things
+          // like `class X(T:! Type, N:! T) { ... }`.
           CARBON_RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
                                             &param_name.params().static_type(),
                                             &call.argument().static_type()));
@@ -1776,9 +1778,11 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
       return Success();
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
-      CARBON_RETURN_IF_ERROR(ExpectType(
-          if_expr.source_loc(), "condition of `if`", arena_->New<BoolType>(),
-          &if_expr.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `if`", impl_scope,
+                            &if_expr.condition(), arena_->New<BoolType>()));
+      if_expr.set_condition(converted_condition);
 
       // TODO: Compute the common type and convert both operands to it.
       CARBON_RETURN_IF_ERROR(
