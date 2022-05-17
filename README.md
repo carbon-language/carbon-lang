@@ -117,9 +117,9 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon is currently an experiment and a research project to better understand
-whether the above approach can be an effective and compelling future direction
-for C++. We want to understand whether we can realize this technical direction
+Carbon is currently an experimental research project to better understand
+whether the successor language approach can be an effective and compelling future direction
+for the C++ ecosystem. We want to understand whether we can realize this technical direction
 and whether there is a critical mass of interest in the direction within the
 larger C++ industry and community.
 
@@ -145,7 +145,7 @@ We are currently focused on getting more broad feedback and participation from
 the C++ community, completing the 0.1 language design, and completing the Carbon
 Explorer implementation of this design. Beyond that, we plan to prioritize C++
 interoperability and a realistic toolchain that implements the 0.1 language,
-including interop, and can be used to evaluate Carbon in more detail. You can
+including interoperability, and can be used to evaluate Carbon in more detail. You can
 see our [roadmap](/docs/project/roadmap.md) for more details.
 
 ## Carbon and C++
@@ -193,7 +193,7 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
 Read more about
 [C++ interop in Carbon](/docs/design/interoperability/philosophy_and_goals.md).
 
-Beyond interoperability between Carbon and C++, we've also planning to support
+Beyond interoperability between Carbon and C++, we're also planning to support
 migration tools that will mechanically translate idiomatic C++ code into Carbon
 code to help you switch an existing C++ codebase to Carbon.
 
@@ -209,7 +209,7 @@ generics provide several advantages compared to C++ templates:
     and won't fail just due to being used with a new type, giving greater
     confidence in the code.
     -   Avoids compile time cost of re-checking the definition for every
-        instance.
+        instantiation.
     -   When using a definition-checked generic, usage error messages are
         clearer, directly showing which requirements are not met.
 -   **Enables automatic, opt-in type erasure and dynamic dispatch** without a
@@ -220,7 +220,7 @@ generics provide several advantages compared to C++ templates:
 
 Without sacrificing these advantages, **Carbon generics support
 specialization**, ensuring it can fully address performance-critical use cases
-of C++ templates. For more details about Carbon's generics see their
+of C++ templates. For more details about Carbon's generics, see their
 [design](/docs/design/generics).
 
 In addition to easy and powerful interop with C++, Carbon templates can be
@@ -246,9 +246,7 @@ fruit in the safety space:
 
 Once we can migrate code into Carbon, we will have a simplified language with
 room in the design space to add any necessary annotations or features, and
-infrastructure like
-
-[generics](#generics) to support safer design patterns. Longer term, we will
+infrastructure like [generics](#generics) to support safer design patterns. Longer term, we will
 build on this to introduce **a safe Carbon subset**. This will be a large and
 complex undertaking, and won't be in the 0.1 design. Meanwhile, we are closely
 watching and learning from efforts to add memory safe semantics onto C++ such as

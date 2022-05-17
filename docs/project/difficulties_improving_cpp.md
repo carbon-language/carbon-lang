@@ -13,7 +13,7 @@ improve C++.
 
 Improving C++ to modernize it and deliver the kind of experience developers
 expect from a programming language today is difficult in part because **C++ has
-decades of technical debt **accumulated in the design of the language. It
+decades of technical debt** accumulated in the design of the language. It
 inherited the legacy of C, including
 [textual preprocessing and inclusion](https://clang.llvm.org/docs/Modules.html#problems-with-the-current-model).
 At the time, this was essential to C++'s success by giving it instant and high
@@ -23,7 +23,7 @@ significant technical debt ranging from
 to complex syntax with
 "[the most vexing parse](https://en.wikipedia.org/wiki/Most_vexing_parse)".
 
-**C++ has also prioritized backwards compatibility **including both syntax and
+**C++ has also prioritized backwards compatibility** including both syntax and
 [ABI](https://en.wikipedia.org/wiki/Application_binary_interface). This is
 heavily motivated by preserving its access to existing C/C++ ecosystems, and
 forms one of the foundations of common Linux package management approaches. A
@@ -35,7 +35,7 @@ legacy features.
 
 Carbon is specifically exploring and experimenting with immediate and
 significant backwards incompatible changes. It doesn't inherit the legacy of C
-or C++ directly, and instead is starting with solid foundations like a modern
+or C++ directly, and instead is starting with solid foundations, like a modern
 generics system, modular code organization, and consistent, simple syntax. Then,
 it builds a simplified and improved language around those foundational
 components that remains both interoperable with and migratable from C++, while
@@ -82,5 +82,5 @@ towards a more modern language. Given the difficulties posed by C++'s technical
 debt, sustained priority of backwards compatibility, and evolution process, we
 wanted to explore an alternative approach to achieve these goals -- through a
 backwards-incompatible successor language, designed with robust support for
-interoperability with and migration from C++. We generally hope other efforts to
+interoperability with and migration from C++. We hope other efforts to
 incrementally improve C++ continue, and would love to share ideas where we can.

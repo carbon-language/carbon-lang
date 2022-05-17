@@ -164,7 +164,7 @@ We are designing Carbon to support:
 
 Many languages share subsets of these goals, but what distinguishes Carbon is
 their combination. Where it is necessary to make tradeoffs between these goals,
-we intend to roughly prioritize them in this order.
+we intend to prioritize them in this order.
 
 ### Goals in detail
 
