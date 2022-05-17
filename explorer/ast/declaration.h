@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_DECLARATION_H_
-#define EXPLORER_AST_DECLARATION_H_
+#ifndef CARBON_EXPLORER_AST_DECLARATION_H_
+#define CARBON_EXPLORER_AST_DECLARATION_H_
 
 #include <string>
 #include <utility>
@@ -417,9 +417,33 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
 };
 
+class AliasDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit AliasDeclaration(SourceLocation source_loc, const std::string& name,
+                            Nonnull<Expression*> target)
+      : Declaration(AstNodeKind::AliasDeclaration, source_loc),
+        name_(name),
+        target_(target) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAliasDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string { return name_; }
+  auto target() const -> const Expression& { return *target_; }
+  auto target() -> Expression& { return *target_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> target_;
+};
+
 // Return the name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string>;
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_DECLARATION_H_
+#endif  // CARBON_EXPLORER_AST_DECLARATION_H_

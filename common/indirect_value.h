@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef COMMON_INDIRECT_VALUE_H_
-#define COMMON_INDIRECT_VALUE_H_
+#ifndef CARBON_COMMON_INDIRECT_VALUE_H_
+#define CARBON_COMMON_INDIRECT_VALUE_H_
 
 #include <memory>
 #include <type_traits>
@@ -106,4 +106,4 @@ auto CreateIndirectValue(Callable callable)
 
 }  // namespace Carbon
 
-#endif  // COMMON_INDIRECT_VALUE_H_
+#endif  // CARBON_COMMON_INDIRECT_VALUE_H_

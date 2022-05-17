@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_LEXER_CHARACTER_SET_H_
-#define TOOLCHAIN_LEXER_CHARACTER_SET_H_
+#ifndef CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_
+#define CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -74,4 +74,4 @@ inline auto IsSpace(char c) -> bool {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_LEXER_CHARACTER_SET_H_
+#endif  // CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_

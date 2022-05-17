@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
-#define EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
+#define CARBON_EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
 
 #include "explorer/ast/ast.h"
 #include "explorer/common/nonnull.h"
@@ -18,4 +18,4 @@ auto ResolveControlFlow(AST& ast) -> ErrorOr<Success>;
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_RESOLVE_CONTROL_FLOW_H_

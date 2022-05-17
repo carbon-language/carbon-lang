@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_MAIN_H_
-#define EXPLORER_MAIN_H_
+#ifndef CARBON_EXPLORER_MAIN_H_
+#define CARBON_EXPLORER_MAIN_H_
 
 #include "llvm/ADT/StringRef.h"
 
@@ -15,4 +15,4 @@ auto ExplorerMain(llvm::StringRef default_prelude_file, int argc, char** argv)
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_MAIN_H_
+#endif  // CARBON_EXPLORER_MAIN_H_

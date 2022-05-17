@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_SYNTAX_PRELUDE_H_
-#define EXPLORER_SYNTAX_PRELUDE_H_
+#ifndef CARBON_EXPLORER_SYNTAX_PRELUDE_H_
+#define CARBON_EXPLORER_SYNTAX_PRELUDE_H_
 
 #include <string_view>
 
@@ -19,4 +19,4 @@ void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_SYNTAX_PRELUDE_H_
+#endif  // CARBON_EXPLORER_SYNTAX_PRELUDE_H_

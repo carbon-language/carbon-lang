@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_TYPE_CHECKER_H_
-#define EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#define CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
 #include <set>
 
@@ -37,10 +37,11 @@ class TypeChecker {
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
   auto ArgumentDeduction(
-      SourceLocation source_loc,
+      SourceLocation source_loc, const std::string& context,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
       BindingMap& deduced, Nonnull<const Value*> param_type,
-      Nonnull<const Value*> arg_type) const -> ErrorOr<Success>;
+      Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
+      -> ErrorOr<Success>;
 
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness
@@ -105,6 +106,14 @@ class TypeChecker {
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ImplScope& enclosing_scope)
       -> ErrorOr<Success>;
+  auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
+                               const ImplScope& enclosing_scope)
+      -> ErrorOr<Success>;
+
+  // Find all of the GenericBindings in the given pattern.
+  void CollectGenericBindingsInPattern(
+      Nonnull<const Pattern*> p,
+      std::vector<Nonnull<const GenericBinding*>>& generic_bindings);
 
   // Find all of the ImplBindings in the given pattern. The pattern is required
   // to have already been type-checked.
@@ -115,6 +124,10 @@ class TypeChecker {
   // Add the impls from the pattern into the given `impl_scope`.
   void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                   ImplScope& impl_scope);
+
+  // Create a reference to the given `impl` binding.
+  auto CreateImplReference(Nonnull<const ImplBinding*> impl_binding)
+      -> Nonnull<Expression*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
   void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
@@ -182,7 +195,7 @@ class TypeChecker {
   // must be types.
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
-      llvm::ArrayRef<NamedValue> destination_fields) const;
+      llvm::ArrayRef<NamedValue> destination_fields) const -> bool;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
@@ -227,4 +240,4 @@ class TypeChecker {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_TYPE_CHECKER_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
