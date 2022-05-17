@@ -128,6 +128,9 @@ class VariableDefinition : public Statement {
   auto init() -> Expression& { return *init_; }
   auto value_category() const -> ValueCategory { return value_category_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_init(Nonnull<Expression*> init) { init_ = init; }
+
  private:
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;

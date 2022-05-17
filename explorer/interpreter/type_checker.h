@@ -84,14 +84,15 @@ class TypeChecker {
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
-  // surrounding context gives us that information. Otherwise, it is
-  // nullopt.
+  // surrounding context gives us that information. Otherwise, it is nullopt.
+  // Implicit conversions from `expected` to the pattern's type are permitted.
   //
   // `impl_scope` is extended with all impls implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
-                        ValueCategory enclosing_value_category)
+                        ValueCategory enclosing_value_category,
+                        bool allow_user_defined_conversions = true)
       -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.

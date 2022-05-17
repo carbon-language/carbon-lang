@@ -437,20 +437,18 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                               std::nullopt)) {
     return source;
   }
-  CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<Expression*>> converted,
-      BuildBuiltinMethodCall(
-          impl_scope, source,
-          BuiltinInterfaceName{Builtins::ImplicitAs, destination},
-          BuiltinMethodCall{"Convert"}));
-  if (!converted.value()) {
+  ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+      impl_scope, source,
+      BuiltinInterfaceName{Builtins::ImplicitAs, destination},
+      BuiltinMethodCall{"Convert"});
+  if (!converted.ok()) {
     // We couldn't find a matching `impl`.
     return CompilationError(source->source_loc())
            << "type error in " << context << ": "
-           << "'" << *source << "' is not implicitly convertible to '"
-           << *destination << "'";
+           << "'" << source->static_type()
+           << "' is not implicitly convertible to '" << *destination << "'";
   }
-  return converted.value();
+  return *converted;
 }
 
 auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
@@ -1213,8 +1211,7 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.field();
           }
           access.set_static_type(arena_->New<FunctionType>(
-              *parameter_types, llvm::None, &aggregate_type, llvm::None,
-              llvm::None));
+              *parameter_types, llvm::None, &choice, llvm::None, llvm::None));
           access.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1887,8 +1884,8 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
 
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ValueCategory enclosing_value_category)
-    -> ErrorOr<Success> {
+    ImplScope& impl_scope, ValueCategory enclosing_value_category,
+    bool allow_user_defined_conversions) -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "checking pattern " << *p;
     if (expected) {
@@ -1912,18 +1909,21 @@ auto TypeChecker::TypeCheckPattern(
                << "The type of a binding pattern cannot contain bindings.";
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
+          &binding.type(), std::nullopt, impl_scope, enclosing_value_category,
+          allow_user_defined_conversions));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           InterpPattern(&binding.type(), arena_, trace_stream_));
       CARBON_RETURN_IF_ERROR(ExpectIsType(binding.source_loc(), type));
       if (expected) {
         if (IsConcreteType(type)) {
-          // We permit built-in conversions here but not user-defined
-          // conversions.
-          // FIXME: Is this correct?
-          CARBON_RETURN_IF_ERROR(
-              ExpectType(p->source_loc(), "name binding", type, *expected));
+          std::optional<Nonnull<const ImplScope*>> impl_scope_for_conversion;
+          if (allow_user_defined_conversions) {
+            impl_scope_for_conversion = &impl_scope;
+          }
+          CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
+                                            type, *expected,
+                                            impl_scope_for_conversion));
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -1990,7 +1990,8 @@ auto TypeChecker::TypeCheckPattern(
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            field, expected_field_type, impl_scope, enclosing_value_category));
+            field, expected_field_type, impl_scope, enclosing_value_category,
+            allow_user_defined_conversions));
         if (trace_stream_)
           **trace_stream_ << "finished checking tuple pattern field " << *field
                           << "\n";
@@ -2011,25 +2012,25 @@ auto TypeChecker::TypeCheckPattern(
         return CompilationError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
-      if (expected) {
-        CARBON_RETURN_IF_ERROR(ExpectExactType(
-            alternative.source_loc(), "alternative pattern", *expected,
-            &alternative.choice_type().static_type()));
-      }
       const ChoiceType& choice_type =
           cast<TypeOfChoiceType>(alternative.choice_type().static_type())
               .choice_type();
+      if (expected) {
+        // FIXME: Should implicit conversions be permitted here?
+        CARBON_RETURN_IF_ERROR(ExpectExactType(alternative.source_loc(),
+                                               "alternative pattern", *expected,
+                                               &choice_type));
+      }
       std::optional<Nonnull<const Value*>> parameter_types =
-          cast<ChoiceType>(choice_type)
-              .FindAlternative(alternative.alternative_name());
+          choice_type.FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         return CompilationError(alternative.source_loc())
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
-                                              *parameter_types, impl_scope,
-                                              enclosing_value_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &alternative.arguments(), *parameter_types, impl_scope,
+          enclosing_value_category, allow_user_defined_conversions));
       alternative.set_static_type(&choice_type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
@@ -2049,9 +2050,9 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::VarPattern:
       auto& let_var_pattern = cast<VarPattern>(*p);
 
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckPattern(&let_var_pattern.pattern(), expected, impl_scope,
-                           let_var_pattern.value_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &let_var_pattern.pattern(), expected, impl_scope,
+          let_var_pattern.value_category(), allow_user_defined_conversions));
       let_var_pattern.set_static_type(&let_var_pattern.pattern().static_type());
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> pattern_value,
@@ -2075,9 +2076,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
+        // FIXME: Should user-defined conversions be permitted in `match`
+        // statements? When would we run them?
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
-            ValueCategory::Let));
+            ValueCategory::Let, /*allow_user_defined_conversions=*/false));
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
       }
@@ -2117,8 +2120,14 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       // ```
       ImplScope var_scope;
       var_scope.AddParent(&impl_scope);
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), &rhs_ty,
-                                              var_scope, var.value_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &var.pattern(), &rhs_ty, var_scope, var.value_category(),
+          /*allow_user_defined_conversions=*/true));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_init,
+          ImplicitlyConvert("initializer of variable", impl_scope, &var.init(),
+                            &var.pattern().static_type()));
+      var.set_init(converted_init);
       return Success();
     }
     case StatementKind::Assign: {
@@ -2634,9 +2643,11 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         binding_map[iface_decl.self()] = impl_type_value;
         Nonnull<const Value*> iface_mem_type =
             Substitute(binding_map, &m->static_type());
+        // FIXME: How should the signature in the implementation be permitted
+        // to differ from the signature in the interface?
         CARBON_RETURN_IF_ERROR(
-            ExpectType((*mem)->source_loc(), "member of implementation",
-                       iface_mem_type, &(*mem)->static_type()));
+            ExpectExactType((*mem)->source_loc(), "member of implementation",
+                            iface_mem_type, &(*mem)->static_type()));
       } else {
         return CompilationError(impl_decl->source_loc())
                << "implementation missing " << *mem_name;
@@ -2804,9 +2815,6 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       return Success();
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
-      // Signals a type error if the initializing expression does not have
-      // the declared type of the variable, otherwise returns this
-      // declaration with annotated types.
       if (var.has_initializer()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), impl_scope));
       }
@@ -2818,9 +2826,11 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                << "Type of a top-level variable must be an expression.";
       }
       if (var.has_initializer()) {
-        CARBON_RETURN_IF_ERROR(
-            ExpectType(var.source_loc(), "initializer of variable",
-                       &var.static_type(), &var.initializer().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_initializer,
+            ImplicitlyConvert("initializer of variable", impl_scope,
+                              &var.initializer(), &var.static_type()));
+        var.set_initializer(converted_initializer);
       }
       return Success();
     }

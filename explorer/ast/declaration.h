@@ -295,6 +295,12 @@ class VariableDeclaration : public Declaration {
 
   auto has_initializer() const -> bool { return initializer_.has_value(); }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_initializer(Nonnull<Expression*> initializer) {
+    CARBON_CHECK(has_initializer()) << "should not add a new initializer";
+    initializer_ = initializer;
+  }
+
  private:
   // TODO: split this into a non-optional name and a type, initialized by
   // a constructor that takes a BindingPattern and handles errors like a
