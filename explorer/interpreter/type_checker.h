@@ -12,6 +12,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
@@ -40,8 +41,9 @@ class TypeChecker {
       SourceLocation source_loc, const std::string& context,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
       BindingMap& deduced, Nonnull<const Value*> param_type,
-      Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
-      -> ErrorOr<Success>;
+      Nonnull<const Value*> arg_type, bool allow_implicit_conversion,
+      std::optional<Nonnull<const ImplScope*>> impl_scope =
+          /*FIXME*/ std::nullopt) const -> ErrorOr<Success>;
 
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness
@@ -52,51 +54,6 @@ class TypeChecker {
       -> std::optional<Nonnull<Expression*>>;
 
  private:
-  enum class Builtin {
-    ImplicitAs,
-    Last = ImplicitAs
-  };
-  static constexpr int kNumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static inline constexpr const char* kBuiltinNames[] = {
-    "ImplicitAs"
-  };
-
-  const Declaration* builtins[kNumBuiltins] = {};
-
-  // The name of a builtin interface, with any arguments.
-  struct BuiltinInterfaceName {
-    Builtin builtin;
-    llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
-  };
-  // The name of a method on a builtin interface, with any arguments.
-  struct BuiltinMethodCall {
-    const std::string &name;
-    llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
-  };
-
-  // Form a builtin method call. Ensures that the type of `source` implements
-  // the interface `interface`, which should be defined in the prelude, and
-  // forms a call to the method `method` on that interface.
-  auto BuildBuiltinMethodCall(const ImplScope& impl_scope,
-                              Nonnull<Expression*> source,
-                              BuiltinInterfaceName interface,
-                              BuiltinMethodCall method)
-      -> ErrorOr<Nonnull<Expression*>>;
-
-  // Get a type for a builtin interface.
-  auto GetBuiltinInterfaceType(SourceLocation source_loc,
-                               BuiltinInterfaceName interface) const
-      -> ErrorOr<Nonnull<const InterfaceType*>>;
-
-  // Build a node from the given arguments and type-check it.
-  template <typename ExpNode, typename... Args>
-  auto BuildAndTypeCheckExp(const ImplScope& impl_scope, Args&&... args)
-      -> ErrorOr<Nonnull<ExpNode*>> {
-    Nonnull<ExpNode*> expr = arena_->New<ExpNode>(std::forward<Args>(args)...);
-    CARBON_RETURN_IF_ERROR(TypeCheckOneExp(expr, impl_scope));
-    return expr;
-  }
-
   // Type-check the immediate operands of `e`, populating their `static_type`
   // and `value_category`. Does not perform type-checking for `e` itself.
   // Type-checking the operands of `e` will recursively type-check the AST
@@ -109,6 +66,15 @@ class TypeChecker {
   // operands of `e` have already been type-checked.
   auto TypeCheckOneExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
+
+  // Build a node from the given arguments and type-check it.
+  template <typename ExpNode, typename... Args>
+  auto BuildAndTypeCheckExp(const ImplScope& impl_scope, Args&&... args)
+      -> ErrorOr<Nonnull<ExpNode*>> {
+    Nonnull<ExpNode*> expr = arena_->New<ExpNode>(std::forward<Args>(args)...);
+    CARBON_RETURN_IF_ERROR(TypeCheckOneExp(expr, impl_scope));
+    return expr;
+  }
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -277,6 +243,31 @@ class TypeChecker {
                   std::optional<Nonnull<const ImplScope*>> impl_scope =
                       std::nullopt) const -> ErrorOr<Success>;
 
+  // The name of a builtin interface, with any arguments.
+  struct BuiltinInterfaceName {
+    Builtins::Builtin builtin;
+    llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
+  };
+  // The name of a method on a builtin interface, with any arguments.
+  struct BuiltinMethodCall {
+    const std::string &name;
+    llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
+  };
+
+  // Form a builtin method call. Ensures that the type of `source` implements
+  // the interface `interface`, which should be defined in the prelude, and
+  // forms a call to the method `method` on that interface.
+  auto BuildBuiltinMethodCall(const ImplScope& impl_scope,
+                              Nonnull<Expression*> source,
+                              BuiltinInterfaceName interface,
+                              BuiltinMethodCall method)
+      -> ErrorOr<Nonnull<Expression*>>;
+
+  // Get a type for a builtin interface.
+  auto GetBuiltinInterfaceType(SourceLocation source_loc,
+                               BuiltinInterfaceName interface) const
+      -> ErrorOr<Nonnull<const InterfaceType*>>;
+
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding`) are replaced by their
   // corresponding type in `dict`.
@@ -303,6 +294,7 @@ class TypeChecker {
 
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
+  Builtins builtins_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
 };

@@ -192,10 +192,12 @@ cc_library(
 cc_library(
     name = "type_checker",
     srcs = [
+        "builtins.cpp",
         "impl_scope.cpp",
         "type_checker.cpp",
     ],
     hdrs = [
+        "builtins.h",
         "impl_scope.h",
         "type_checker.h",
     ],

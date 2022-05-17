@@ -467,6 +467,9 @@ class CallExpression : public Expression {
     deduced_args_ = deduced_args;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(Expression& argument) { argument_ = &argument; }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;

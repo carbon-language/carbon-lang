@@ -418,7 +418,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // The source location doesn't matter, we're discarding the diagnostics.
   SourceLocation source_loc("", 0);
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
-      source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination});
+      source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
   return iface_type.ok() &&
          (*impl_scope)->Resolve(*iface_type, source, source_loc, *this).ok();
 }
@@ -441,7 +441,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
       std::optional<Nonnull<Expression*>> converted,
       BuildBuiltinMethodCall(
           impl_scope, source,
-          BuiltinInterfaceName{Builtin::ImplicitAs, destination},
+          BuiltinInterfaceName{Builtins::ImplicitAs, destination},
           BuiltinMethodCall{"Convert"}));
   if (!converted.value()) {
     // We couldn't find a matching `impl`.
@@ -456,16 +456,16 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
 auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
-  const int builtin_id = static_cast<int>(interface.builtin);
   auto BadBuiltin = [&]() -> Error {
     return CompilationError(source_loc)
-           << "missing or unsupported declaration for builtin `"
-           << kBuiltinNames[builtin_id] << "`";
+           << "unsupported declaration for builtin `"
+           << Builtins::GetName(interface.builtin) << "`";
   };
 
   // Find the builtin interface declaration.
-  Nonnull<const InterfaceDeclaration*> iface_decl =
-      dyn_cast_or_null<InterfaceDeclaration>(builtins[builtin_id]);
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Declaration*> builtin_decl,
+                          builtins_.Get(source_loc, interface.builtin));
+  auto* iface_decl = dyn_cast<InterfaceDeclaration>(builtin_decl);
   if (!iface_decl || !iface_decl->constant_value()) {
     return BadBuiltin();
   }
@@ -536,7 +536,8 @@ auto TypeChecker::ArgumentDeduction(
     SourceLocation source_loc, const std::string& context,
     llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
     BindingMap& deduced, Nonnull<const Value*> param_type,
-    Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
+    Nonnull<const Value*> arg_type, bool allow_implicit_conversion,
+    std::optional<Nonnull<const ImplScope*>> impl_scope) const
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
@@ -557,7 +558,8 @@ auto TypeChecker::ArgumentDeduction(
     }
     const Value* subst_param_type = Substitute(deduced, param_type);
     return allow_implicit_conversion
-               ? ExpectType(source_loc, context, subst_param_type, arg_type)
+               ? ExpectType(source_loc, context, subst_param_type, arg_type,
+                            impl_scope)
                : ExpectExactType(source_loc, context, subst_param_type,
                                  arg_type);
   };
@@ -593,7 +595,7 @@ auto TypeChecker::ArgumentDeduction(
       for (size_t i = 0; i < param_tup.elements().size(); ++i) {
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
             source_loc, context, type_params, deduced, param_tup.elements()[i],
-            arg_tup.elements()[i], allow_implicit_conversion));
+            arg_tup.elements()[i], allow_implicit_conversion, impl_scope));
       }
       return Success();
     }
@@ -638,7 +640,7 @@ auto TypeChecker::ArgumentDeduction(
         }
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
             source_loc, context, type_params, deduced, param_field.value,
-            arg_field.value, allow_implicit_conversion));
+            arg_field.value, allow_implicit_conversion, impl_scope));
       }
       if (param_struct.fields().size() != arg_struct.fields().size()) {
         CARBON_CHECK(allow_implicit_conversion)
@@ -660,12 +662,14 @@ auto TypeChecker::ArgumentDeduction(
       const auto& param_fn = cast<FunctionType>(*param_type);
       const auto& arg_fn = cast<FunctionType>(*arg_type);
       // TODO: handle situation when arg has deduced parameters.
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.parameters(),
-          &arg_fn.parameters(), /*allow_implicit_conversion=*/false));
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.return_type(),
-          &arg_fn.return_type(), /*allow_implicit_conversion=*/false));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, type_params, deduced,
+                            &param_fn.parameters(), &arg_fn.parameters(),
+                            /*allow_implicit_conversion=*/false, impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, type_params, deduced,
+                            &param_fn.return_type(), &arg_fn.return_type(),
+                            /*allow_implicit_conversion=*/false, impl_scope));
       return Success();
     }
     case Value::Kind::PointerType: {
@@ -675,7 +679,7 @@ auto TypeChecker::ArgumentDeduction(
       return ArgumentDeduction(source_loc, context, type_params, deduced,
                                &cast<PointerType>(*param_type).type(),
                                &cast<PointerType>(*arg_type).type(),
-                               /*allow_implicit_conversion=*/false);
+                               /*allow_implicit_conversion=*/false, impl_scope);
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
@@ -697,7 +701,7 @@ auto TypeChecker::ArgumentDeduction(
         CARBON_RETURN_IF_ERROR(
             ArgumentDeduction(source_loc, context, type_params, deduced,
                               param_ty, arg_class_type.type_args().at(ty),
-                              /*allow_implicit_conversion=*/false));
+                              /*allow_implicit_conversion=*/false, impl_scope));
       }
       return Success();
     }
@@ -1550,7 +1554,7 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
 
           const auto& param_tuple = cast<TupleValue>(fun_t.parameters());
-          const auto& arg_tuple = cast<TupleLiteral>(call.argument());
+          auto& arg_tuple = cast<TupleLiteral>(call.argument());
           llvm::ArrayRef<FunctionType::GenericParameter> generic_params =
               fun_t.generic_parameters();
           if (param_tuple.elements().size() != arg_tuple.fields().size()) {
@@ -1563,15 +1567,15 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           // Bindings for deduced parameters and generic parameters.
           BindingMap generic_bindings;
 
-          // Deduce and/or convert each argument to the corresponding
-          // parameter.
+          // Deduce and/or check that we can convert each argument to the
+          // corresponding parameter.
           for (size_t i = 0; i < param_tuple.elements().size(); ++i) {
             const Value* param = param_tuple.elements()[i];
             const Expression* arg = arg_tuple.fields()[i];
             CARBON_RETURN_IF_ERROR(ArgumentDeduction(
                 arg->source_loc(), "call", fun_t.deduced_bindings(),
                 generic_bindings, param, &arg->static_type(),
-                /*allow_implicit_conversion=*/true));
+                /*allow_implicit_conversion=*/true, &impl_scope));
             // If the parameter is a `:!` binding, evaluate and collect its
             // value for use in later parameters and in the function body.
             if (!generic_params.empty() && generic_params.front().index == i) {
@@ -1606,6 +1610,15 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
                      << "in " << call;
             }
           }
+
+          // Convert the arguments to the parameter type.
+          Nonnull<const Value*> param_type =
+              Substitute(generic_bindings, &fun_t.parameters());
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> converted_argument,
+              ImplicitlyConvert("function call", impl_scope,
+                                &arg_tuple, param_type));
+          call.set_argument(*converted_argument);
 
           Nonnull<const Value*> return_type =
               Substitute(generic_bindings, &fun_t.return_type());
@@ -2709,13 +2722,9 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
-
-    if (InterfaceDeclaration* interface =
-            dyn_cast<InterfaceDeclaration>(decl)) {
-      if (interface->name() == "ImplicitAs") {
-        builtins[static_cast<int>(Builtin::ImplicitAs)] = interface;
-      }
-    }
+    // Check to see if this declaration is a builtin.
+    // FIXME: Only do this when type-checking the prelude.
+    builtins_.Register(decl);
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));
   return Success();
