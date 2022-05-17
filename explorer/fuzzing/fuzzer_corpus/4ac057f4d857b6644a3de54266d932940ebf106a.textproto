@@ -422,11 +422,9 @@ compilation_unit {
                     expression {
                       function_type {
                         parameter {
-                          tuple_literal {
-                            fields {
-                              identifier {
-                                name: "T"
-                              }
+                          fields {
+                            identifier {
+                              name: "T"
                             }
                           }
                         }
@@ -463,10 +461,8 @@ compilation_unit {
                     expression {
                       function_type {
                         parameter {
-                          tuple_literal {
-                            fields {
-                              int_type_literal {
-                              }
+                          fields {
+                            int_type_literal {
                             }
                           }
                         }

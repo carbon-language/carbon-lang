@@ -200,7 +200,7 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     case Fuzzing::Expression::kFunctionType: {
       const auto& fun_type = expression.function_type();
       out << "__Fn";
-      ExpressionToCarbon(fun_type.parameter(), out);
+      TupleLiteralExpressionToCarbon(fun_type.parameter(), out);
       out << " -> ";
       ExpressionToCarbon(fun_type.return_type(), out);
       break;

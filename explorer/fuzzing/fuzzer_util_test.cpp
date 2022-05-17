@@ -29,7 +29,8 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
     contents << file.rdbuf();
     Fuzzing::Carbon carbon_proto;
     ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(contents.str(),
-                                                              &carbon_proto));
+                                                              &carbon_proto))
+        << " couldn't parse text proto in " << f;
     ParseAndExecute(carbon_proto.compilation_unit());
     ++file_count;
   }

@@ -245,20 +245,18 @@ compilation_unit {
             type {
               function_type {
                 parameter {
-                  tuple_literal {
-                    fields {
-                      call {
-                        function {
-                          identifier {
-                            name: "Point"
-                          }
+                  fields {
+                    call {
+                      function {
+                        identifier {
+                          name: "Point"
                         }
-                        argument {
-                          tuple_literal {
-                            fields {
-                              identifier {
-                                name: "T"
-                              }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            identifier {
+                              name: "T"
                             }
                           }
                         }
