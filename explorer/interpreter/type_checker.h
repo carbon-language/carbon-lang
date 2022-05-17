@@ -51,6 +51,7 @@ class TypeChecker {
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
 
+ private:
   enum class Builtin {
     ImplicitAs,
     Last = ImplicitAs
@@ -73,9 +74,6 @@ class TypeChecker {
     llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
   };
 
-  // FIXME: this is a hack
-  const Expression* skip_typechecking_expr = nullptr;
-
   // Form a builtin method call. Ensures that the type of `source` implements
   // the interface `interface`, which should be defined in the prelude, and
   // forms a call to the method `method` on that interface.
@@ -90,7 +88,15 @@ class TypeChecker {
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
 
- private:
+  // Build a node from the given arguments and type-check it.
+  template <typename ExpNode, typename... Args>
+  auto BuildAndTypeCheckExp(const ImplScope& impl_scope, Args&&... args)
+      -> ErrorOr<Nonnull<ExpNode*>> {
+    Nonnull<ExpNode*> expr = arena_->New<ExpNode>(std::forward<Args>(args)...);
+    CARBON_RETURN_IF_ERROR(TypeCheckOneExp(expr, impl_scope));
+    return expr;
+  }
+
   // Type-check the immediate operands of `e`, populating their `static_type`
   // and `value_category`. Does not perform type-checking for `e` itself.
   // Type-checking the operands of `e` will recursively type-check the AST

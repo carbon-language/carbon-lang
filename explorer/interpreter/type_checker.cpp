@@ -497,26 +497,23 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
                           GetBuiltinInterfaceType(source_loc, interface));
 
-  // Build an expression to perform the call `source.(interface.method)(args)`
-  // and type-check it.
+  // Build an expression to perform the call `source.(interface.method)(args)`.
   Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
       source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
       ValueCategory::Let);
-  Nonnull<Expression*> iface_member =
-      arena_->New<FieldAccessExpression>(source_loc, iface_expr, method.name);
-  Nonnull<Expression*> method_access =
-      arena_->New<CompoundFieldAccessExpression>(source_loc, source,
-                                                 iface_member);
-  Nonnull<Expression*> call_args =
-      arena_->New<TupleLiteral>(source_loc, method.arguments);
-  Nonnull<Expression*> call =
-      arena_->New<CallExpression>(source_loc, method_access, call_args);
-  // FIXME: `source` has already been type-checked at this point.
-  auto* old = skip_typechecking_expr;
-  skip_typechecking_expr = source;
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(call, impl_scope));
-  skip_typechecking_expr = old;
-
+  CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> iface_member,
+                          BuildAndTypeCheckExp<FieldAccessExpression>(
+                              impl_scope, source_loc, iface_expr, method.name));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> method_access,
+                          BuildAndTypeCheckExp<CompoundFieldAccessExpression>(
+                              impl_scope, source_loc, source, iface_member));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> call_args,
+                          BuildAndTypeCheckExp<TupleLiteral>(
+                              impl_scope, source_loc, method.arguments));
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<Expression*> call,
+      BuildAndTypeCheckExp<CallExpression>(impl_scope, source_loc,
+                                           method_access, call_args));
   return {call};
 }
 
@@ -1015,10 +1012,6 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
 auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
                                   const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (e == skip_typechecking_expr) {
-    // FIXME: this is a hack
-    return Success();
-  }
   if (trace_stream_) {
     **trace_stream_ << "checking expression " << *e;
     **trace_stream_ << "\nconstants: ";
@@ -1027,12 +1020,9 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
   }
   switch (e->kind()) {
     case ExpressionKind::InstantiateImpl:
-    //case ExpressionKind::ValueLiteral: // FIXME
+    case ExpressionKind::ValueLiteral:
       CARBON_FATAL() << "attempting to type check node " << *e
                      << " generated during type checking";
-    case ExpressionKind::ValueLiteral:
-      // FIXME: this is a hack
-      return Success();
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
       const Value& aggregate_type = index.aggregate().static_type();
