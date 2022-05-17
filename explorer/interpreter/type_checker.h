@@ -260,7 +260,7 @@ class TypeChecker {
   };
   // The name of a method on a builtin interface, with any arguments.
   struct BuiltinMethodCall {
-    const std::string &name;
+    const std::string& name;
     llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
   };
 

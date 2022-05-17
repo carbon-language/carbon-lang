@@ -313,8 +313,8 @@ auto TypeChecker::IsImplicitlyConvertible(
       switch (destination->kind()) {
         case Value::Kind::StructType:
           if (FieldTypesImplicitlyConvertible(
-              cast<StructType>(*source).fields(),
-              cast<StructType>(*destination).fields())) {
+                  cast<StructType>(*source).fields(),
+                  cast<StructType>(*destination).fields())) {
             return true;
           }
           break;
@@ -972,7 +972,8 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
       }
       break;
     case ExpressionKind::FieldAccessExpression:
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<FieldAccessExpression>(*e).aggregate(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(
+          &cast<FieldAccessExpression>(*e).aggregate(), impl_scope));
       break;
     case ExpressionKind::CompoundFieldAccessExpression: {
       auto& access = cast<CompoundFieldAccessExpression>(*e);
@@ -999,7 +1000,8 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
       break;
     }
     case ExpressionKind::IntrinsicExpression:
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<IntrinsicExpression>(*e).args(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&cast<IntrinsicExpression>(*e).args(), impl_scope));
       break;
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
@@ -1637,10 +1639,9 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           // Convert the arguments to the parameter type.
           Nonnull<const Value*> param_type =
               Substitute(generic_bindings, &fun_t.parameters());
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<Expression*> converted_argument,
-              ImplicitlyConvert("function call", impl_scope,
-                                &arg_tuple, param_type));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> converted_argument,
+                                  ImplicitlyConvert("function call", impl_scope,
+                                                    &arg_tuple, param_type));
           call.set_argument(*converted_argument);
 
           Nonnull<const Value*> return_type =

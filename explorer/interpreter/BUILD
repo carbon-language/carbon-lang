@@ -205,6 +205,7 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/ast:declaration",
@@ -213,6 +214,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )

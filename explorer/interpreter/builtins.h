@@ -20,10 +20,7 @@ class Builtins {
  public:
   explicit Builtins() {}
 
-  enum class Builtin {
-    ImplicitAs,
-    Last = ImplicitAs
-  };
+  enum class Builtin { ImplicitAs, Last = ImplicitAs };
   // FIXME: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
 
