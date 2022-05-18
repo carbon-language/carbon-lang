@@ -797,7 +797,8 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
       }
       break;
     case ExpressionKind::FieldAccessExpression:
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<FieldAccessExpression>(*e).aggregate(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(
+          &cast<FieldAccessExpression>(*e).aggregate(), impl_scope));
       break;
     case ExpressionKind::CompoundFieldAccessExpression: {
       auto& access = cast<CompoundFieldAccessExpression>(*e);
@@ -824,7 +825,8 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
       break;
     }
     case ExpressionKind::IntrinsicExpression:
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&cast<IntrinsicExpression>(*e).args(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&cast<IntrinsicExpression>(*e).args(), impl_scope));
       break;
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
