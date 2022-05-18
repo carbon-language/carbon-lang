@@ -198,7 +198,7 @@ Beyond interoperability between Carbon and C++, we're also planning to support
 migration tools that will mechanically translate idiomatic C++ code into Carbon
 code to help you switch an existing C++ codebase to Carbon.
 
-### Generics
+## Generics
 
 Carbon provides a **modern
 [generics](/docs/design/generics/overview.md#what-are-generics) system** with
@@ -228,7 +228,7 @@ In addition to easy and powerful interop with C++, Carbon templates can be
 constrained and incrementally migrated to checked generics at a fine granularity
 and with a smooth evolutionary path.
 
-### Memory safety
+## Memory safety
 
 Safety, and especially
 [memory safety](https://en.wikipedia.org/wiki/Memory_safety), remain key
@@ -254,7 +254,7 @@ Meanwhile, we are closely watching and learning from efforts to add memory safe
 semantics onto C++ such as Rust-inspired
 [lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
-### Getting started
+## Getting started
 
 You can get started playing with Carbon by checking out the codebase and using
 the Carbon explorer:
@@ -269,7 +269,7 @@ Learn more about the Carbon project:
 -   [Language design overview](/docs/design)
 -   [Carbon Explorer](/explorer)
 
-### Join us
+## Join us
 
 Carbon is committed to a welcoming and inclusive environment where everyone can
 contribute.
