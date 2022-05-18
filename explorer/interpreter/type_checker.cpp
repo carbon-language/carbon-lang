@@ -2202,9 +2202,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::Run: {
       auto& run = cast<Run>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&run.argument(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "argument of `run`",
-                                        arena_->New<ContinuationType>(),
-                                        &run.argument().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_argument,
+          ImplicitlyConvert("argument of `run`", impl_scope, &run.argument(),
+                            arena_->New<ContinuationType>()));
+      run.set_argument(converted_argument);
       return Success();
     }
     case StatementKind::Await: {
