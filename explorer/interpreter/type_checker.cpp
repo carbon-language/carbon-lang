@@ -844,7 +844,6 @@ auto TypeChecker::TypeCheckExpOperands(Nonnull<Expression*> e,
       break;
     }
     case ExpressionKind::InstantiateImpl:
-    case ExpressionKind::ValueLiteral:
     case ExpressionKind::IdentifierExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
