@@ -56,11 +56,11 @@ C++ remains the dominant programming language for performance-critical software,
 with massive and growing codebases and investments. However, it is struggling to
 improve and meet developers' needs outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
-[extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to the technical debt itself and challenges
-with its evolution process. We want a language that avoids inheriting the legacy
-of C or C++ directly, and instead starts with solid language foundations like a
-modern generics system, modular code organization, and consistent, simple
-syntax.
+[extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
+the technical debt itself and challenges with its evolution process. We want a
+language that avoids inheriting the legacy of C or C++ directly, and instead
+starts with solid language foundations like a modern generics system, modular
+code organization, and consistent, simple syntax.
 
 Existing modern languages already provide an excellent developer experience: Go,
 Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
@@ -118,10 +118,10 @@ and provides a deeper view into our goals for the Carbon project and language.
 ## Project status
 
 Carbon is currently an experimental research project to better understand
-whether the successor language approach can be an effective and compelling future direction
-for the C++ ecosystem. We want to understand whether we can realize this technical direction
-and whether there is a critical mass of interest in the direction within the
-larger C++ industry and community.
+whether the successor language approach can be an effective and compelling
+future direction for the C++ ecosystem. We want to understand whether we can
+realize this technical direction and whether there is a critical mass of
+interest in the direction within the larger C++ industry and community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
@@ -145,8 +145,8 @@ We are currently focused on getting more broad feedback and participation from
 the C++ community, completing the 0.1 language design, and completing the Carbon
 Explorer implementation of this design. Beyond that, we plan to prioritize C++
 interoperability and a realistic toolchain that implements the 0.1 language,
-including interoperability, and can be used to evaluate Carbon in more detail. You can
-see our [roadmap](/docs/project/roadmap.md) for more details.
+including interoperability, and can be used to evaluate Carbon in more detail.
+You can see our [roadmap](/docs/project/roadmap.md) for more details.
 
 ## Carbon and C++
 
@@ -246,11 +246,11 @@ fruit in the safety space:
 
 Once we can migrate code into Carbon, we will have a simplified language with
 room in the design space to add any necessary annotations or features, and
-infrastructure like [generics](#generics) to support safer design patterns. Longer term, we will
-build on this to introduce **a safe Carbon subset**. This will be a large and
-complex undertaking, and won't be in the 0.1 design. Meanwhile, we are closely
-watching and learning from efforts to add memory safe semantics onto C++ such as
-Rust-inspired
+infrastructure like [generics](#generics) to support safer design patterns.
+Longer term, we will build on this to introduce **a safe Carbon subset**. This
+will be a large and complex undertaking, and won't be in the 0.1 design.
+Meanwhile, we are closely watching and learning from efforts to add memory safe
+semantics onto C++ such as Rust-inspired
 [lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
 ### Getting started
