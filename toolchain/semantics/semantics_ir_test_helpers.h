@@ -21,6 +21,8 @@
 
 namespace Carbon::Testing {
 
+// TODO: Relocate these matchers.
+
 inline auto MappedNode(::testing::Matcher<std::string> key,
                        ::testing::Matcher<Semantics::Declaration> value)
     -> ::testing::Matcher<llvm::StringMapEntry<Semantics::Declaration>> {
