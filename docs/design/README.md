@@ -51,7 +51,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment, copying](#assignment-copying)
-        -   [Member access](#member-access)
         -   [Class functions and factory functions](#class-functions-and-factory-functions)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
@@ -597,6 +596,9 @@ Some common expressions in Carbon include:
     -   [Conversion](expressions/as_expressions.md): `2 as i32`
     -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
         `not e`
+    -   Indexing: `a[3]`
+    -   Function call: `f(4)`
+    -   Pointer and member: `*p`, `x.m`, `p->m`, `&x`
 
 -   [Conditional](expressions/if.md): `if c then t else f`
 -   Parenthesized: `(7 + 8) * (3 - 1)`
@@ -604,9 +606,6 @@ Some common expressions in Carbon include:
 When an expression appears in a context in which an expression of a specific
 type is expected, [implicit conversions](expressions/implicit_conversions.md)
 are applied to convert the expression to the target type.
-
-> **TODO:** indexing `a[`...`]`, function call `f(`...`)`, dereference `*p`,
-> member access `x.m` and `p->m`, and address of `&x`
 
 ### Variables
 
@@ -1037,6 +1036,8 @@ contain patterns that may or may not match based on the runtime value of the
 > -   [Classes](classes.md#nominal-class-types)
 > -   Proposal
 >     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
 _Nominal classes_, or just _classes_, are a way for users to define their own
 data strutures or record types.
@@ -1061,13 +1062,16 @@ Breaking apart `Widget`:
 
 The order of the field declarations determines the fields' memory-layout order.
 
+Every class has a member named `Self` equal to the class type itself.
+
+Like functions, a class may be forward declared, ending the declaration with a
+semicolon (`;`) instead of the block in curly braces (`{`...`}`).
+
 Both [structural data classes](#struct-types) and nominal classes are considered
 _class types_, but they are commonly referred to as "structs" and "classes"
 respectively when that is not confusing. Like structs, classes refer to their
 members by name. Unlike structs, classes are
 [nominal types](#structural-and-nominal-types).
-
-> **TODO:** Forward declarations
 
 #### Assignment, copying
 
@@ -1090,21 +1094,8 @@ You may also copy one struct into another of the same type.
 ```carbon
 var thingy: Widget = sprocket;
 sprocket = thingy;
-```
-
-#### Member access
-
-> References: Proposal
-> [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
-
-The data members of a variable with a class type may be accessed using dot `.`
-notation:
-
-```carbon
 Assert(sprocket.x == thingy.x);
 ```
-
-Every class has a member named `Self` equal to the class type itself.
 
 #### Class functions and factory functions
 
@@ -1358,7 +1349,8 @@ having names inside the class' scope:
 
 -   [`alias`](#aliases)
 -   [`let`](#let) to define constants. **TODO:** Are these constants associated
-    with the class or the instance?
+    with the class or the instance? Do we need to another syntax to distinguish
+    constants associated with the class like `class let` or `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
