@@ -2931,7 +2931,8 @@ parameter.
 [2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
 and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
-support some form of this feature as part of their type inference.
+support some form of this feature as part of their type inference (and
+[the Rust community is considering expanding support](http://smallcultfollowing.com/babysteps//blog/2022/04/12/implied-bounds-and-perfect-derive/#expanded-implied-bounds)).
 
 #### Must be legal type argument constraints
 
