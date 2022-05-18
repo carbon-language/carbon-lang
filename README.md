@@ -84,9 +84,9 @@ developers. A successor language for C++ specifically will require:
     idiomatic C++ code.
 
 With this approach, we can build on top of C++'s existing ecosystem, and bring
-along existing investments, codebases, and developer populations. There are a few
-languages that have followed this model for other ecosystems, and Carbon aims to
-fill an analogous role for C++:
+along existing investments, codebases, and developer populations. There are a
+few languages that have followed this model for other ecosystems, and Carbon
+aims to fill an analogous role for C++:
 
 -   JavaScript → TypeScript
 -   Java → Kotlin
