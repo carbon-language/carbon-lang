@@ -69,10 +69,10 @@ present significant barriers to the level of adoption and migration possible
 from C++. These barriers range from changes in the idiomatic design of software
 to performance overhead.
 
-Fundamentally, **we want a successor language** that is designed around
-interoperability with C++ and large-scale adoption and migration for existing
-C++ codebases and developers. A successor language for C++ specifically will
-require:
+Carbon is fundamentally **a successor language approach**, rather than an
+attempt to incrementally evolve C++. It is designed around interoperability with
+C++ as well as large-scale adoption and migration for existing C++ codebases and
+developers. A successor language for C++ specifically will require:
 
 -   **Performance matching C++**, an essential property for our developers.
 -   **Seamless, bidirectional interoperability with C++**, such that a library
@@ -118,10 +118,8 @@ and provides a deeper view into our goals for the Carbon project and language.
 ## Project status
 
 Carbon is currently an experimental research project to better understand
-whether a successor language approach can be an effective and compelling future
-direction for the C++ ecosystem. We want to understand whether we can realize
-this technical direction and whether there is a critical mass of interest in the
-direction within the larger C++ industry and community.
+whether we can realize this technical direction and whether there is a critical
+mass of interest in the direction within the larger C++ industry and community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
