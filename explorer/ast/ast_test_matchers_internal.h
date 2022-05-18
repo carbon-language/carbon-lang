@@ -4,8 +4,8 @@
 
 // Implementation details of the functions in ast_test_matchers.h.
 
-#ifndef EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_
-#define EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_
+#ifndef CARBON_EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_
+#define CARBON_EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -234,4 +234,4 @@ class ASTDeclarationsMatcher {
 
 }  // namespace Carbon::TestingInternal
 
-#endif  // EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_
+#endif  // CARBON_EXPLORER_AST_AST_TEST_MATCHERS_INTERNAL_H_

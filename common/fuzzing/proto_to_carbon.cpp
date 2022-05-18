@@ -214,6 +214,15 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
+    case Fuzzing::Expression::kCompoundFieldAccess: {
+      const auto& field_access = expression.compound_field_access();
+      ExpressionToCarbon(field_access.object(), out);
+      out << ".(";
+      ExpressionToCarbon(field_access.path(), out);
+      out << ")";
+      break;
+    }
+
     case Fuzzing::Expression::kIndex: {
       const auto& index = expression.index();
       ExpressionToCarbon(index.aggregate(), out);
@@ -684,6 +693,16 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
+      break;
+    }
+
+    case Fuzzing::Declaration::kAlias: {
+      const auto& alias = declaration.alias();
+      out << "alias ";
+      IdentifierToCarbon(alias.name(), out);
+      out << " = ";
+      ExpressionToCarbon(alias.target(), out);
+      out << ";";
       break;
     }
   }

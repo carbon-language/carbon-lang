@@ -337,6 +337,22 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      } else {
+        CARBON_CHECK(!access.member().interface().has_value())
+            << "unexpected lvalue interface member";
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> val,
+            Convert(act.results()[0], *access.member().base_type(),
+                    exp.source_loc()));
+        Address object = cast<LValue>(*val).address();
+        Address field = object.SubobjectAddress(access.member().name());
+        return todo_.FinishAction(arena_->New<LValue>(field));
+      }
+    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
@@ -478,7 +494,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
-    case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::Witness:
@@ -495,7 +510,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
+    case Value::Kind::MemberName:
       // TODO: add `CARBON_CHECK(TypeEqual(type, value->dynamic_type()))`, once
       // we have Value::dynamic_type.
       return value;
@@ -529,6 +546,19 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           CARBON_FATAL() << "Can't convert value " << *value << " to type "
                          << *destination_type;
       }
+    }
+    case Value::Kind::StructType: {
+      // The value `{}` has kind `StructType` not `StructValue`. This value can
+      // be converted to an empty class type.
+      if (auto* destination_class_type =
+              dyn_cast<NominalClassType>(destination_type)) {
+        CARBON_CHECK(cast<StructType>(*value).fields().empty())
+            << "only an empty struct type value converts to class type";
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_dest,
+                                InstantiateType(destination_type, source_loc));
+        return arena_->New<NominalClassValue>(inst_dest, value);
+      }
+      return value;
     }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
@@ -580,26 +610,31 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::FunctionValue: {
       const FunctionValue& fun_val = cast<FunctionValue>(*fun);
       const FunctionDeclaration& function = fun_val.declaration();
+      RuntimeScope binding_scope(&heap_);
+      // Bring the class type arguments into scope.
+      for (const auto& [bind, val] : fun_val.type_args()) {
+        binding_scope.Initialize(bind, val);
+      }
+      // Bring the deduced type arguments into scope.
+      for (const auto& [bind, val] : call.deduced_args()) {
+        binding_scope.Initialize(bind, val);
+      }
+      // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : witnesses) {
+        binding_scope.Initialize(impl_bind, witness);
+      }
+      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
+        binding_scope.Initialize(impl_bind, witness);
+      }
+      // Enter the binding scope to make any deduced arguments visible before
+      // we resolve the parameter type.
+      todo_.CurrentAction().StartScope(std::move(binding_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
           Convert(arg, &function.param_pattern().static_type(),
                   call.source_loc()));
+
       RuntimeScope function_scope(&heap_);
-      // Bring the class type arguments into scope.
-      for (const auto& [bind, val] : fun_val.type_args()) {
-        function_scope.Initialize(bind, val);
-      }
-      // Bring the deduced type arguments into scope.
-      for (const auto& [bind, val] : call.deduced_args()) {
-        function_scope.Initialize(bind, val);
-      }
-      // Bring the impl witness tables into scope.
-      for (const auto& [impl_bind, witness] : witnesses) {
-        function_scope.Initialize(impl_bind, witness);
-      }
-      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
-        function_scope.Initialize(impl_bind, witness);
-      }
       BindingMap generic_args;
       CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
                                 converted_args, call.source_loc(),
@@ -768,30 +803,99 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::FieldAccessExpression: {
       const auto& access = cast<FieldAccessExpression>(exp);
       if (act.pos() == 0) {
-        //    { { e.f :: C, E, F} :: S, H}
-        // -> { { e :: [].f :: C, E, F} :: S, H}
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.aggregate()));
       } else {
-        //    { { v :: [].f :: C, E, F} :: S, H}
-        // -> { { v_f :: C, E, F} : S, H}
-        std::optional<Nonnull<const Witness*>> witness = std::nullopt;
-        if (access.impl().has_value()) {
+        if (const auto* member_name_type =
+                dyn_cast<TypeOfMemberName>(&access.static_type())) {
+          // The result is a member name, such as in `Type.field_name`. Form a
+          // suitable member name value.
+          CARBON_CHECK(phase() == Phase::CompileTime)
+              << "should not form MemberNames at runtime";
+          std::optional<const InterfaceType*> iface_result;
+          std::optional<const Value*> type_result;
+          if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
+            iface_result = iface_type;
+          } else {
+            type_result = act.results()[0];
+            if (access.impl().has_value()) {
+              iface_result =
+                  cast<InterfaceType>(access.impl().value()->interface());
+            }
+          }
+          MemberName* member_name = arena_->New<MemberName>(
+              type_result, iface_result, member_name_type->member());
+          return todo_.FinishAction(member_name);
+        } else {
+          // The result is the value of the named field, such as in
+          // `value.field_name`. Extract the value within the given object.
+          std::optional<Nonnull<const Witness*>> witness;
+          if (access.impl().has_value()) {
+            CARBON_ASSIGN_OR_RETURN(
+                auto witness_addr,
+                todo_.ValueOfNode(*access.impl(), access.source_loc()));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> witness_value,
+                heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
+                           access.source_loc()));
+            witness = cast<Witness>(witness_value);
+          }
+          FieldPath::Component field(access.field(), witness);
           CARBON_ASSIGN_OR_RETURN(
-              auto witness_addr,
-              todo_.ValueOfNode(*access.impl(), access.source_loc()));
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> witness_value,
-              heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                         access.source_loc()));
-          witness = cast<Witness>(witness_value);
+              Nonnull<const Value*> member,
+              act.results()[0]->GetField(arena_, FieldPath(field),
+                                         exp.source_loc()));
+          return todo_.FinishAction(member);
         }
-        FieldPath::Component field(access.field(), witness);
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> member,
-            act.results()[0]->GetField(arena_, FieldPath(field),
-                                       exp.source_loc()));
-        return todo_.FinishAction(member);
+      }
+    }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
+      if (act.pos() == 0) {
+        // First, evaluate the first operand.
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&access.object()));
+      } else if (act.pos() == 1 && access.impl().has_value() &&
+                 !forming_member_name) {
+        // Next, if we're accessing an interface member, evaluate the `impl`
+        // expression to find the corresponding witness.
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(access.impl().value()));
+      } else {
+        // Finally, produce the result.
+        if (forming_member_name) {
+          // If we're forming a member name, we must be in the outer evaluation
+          // in `Type.(Interface.method)`. Produce the same method name with
+          // its `type` field set.
+          CARBON_CHECK(phase() == Phase::CompileTime)
+              << "should not form MemberNames at runtime";
+          CARBON_CHECK(!access.member().base_type().has_value())
+              << "compound member access forming a member name should be "
+                 "performing impl lookup";
+          auto* member_name = arena_->New<MemberName>(
+              act.results()[0], access.member().interface(),
+              access.member().member());
+          return todo_.FinishAction(member_name);
+        } else {
+          // Access the object to find the named member.
+          Nonnull<const Value*> object = act.results()[0];
+          std::optional<Nonnull<const Witness*>> witness;
+          if (access.impl().has_value()) {
+            witness = cast<Witness>(act.results()[1]);
+          } else {
+            CARBON_CHECK(access.member().base_type().has_value())
+                << "compound access should have base type or impl";
+            CARBON_ASSIGN_OR_RETURN(
+                object, Convert(object, *access.member().base_type(),
+                                exp.source_loc()));
+          }
+          FieldPath::Component field(access.member().name(), witness);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> member,
+              object->GetField(arena_, FieldPath(field), exp.source_loc()));
+          return todo_.FinishAction(member);
+        }
       }
     }
     case ExpressionKind::IdentifierExpression: {
@@ -921,8 +1025,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
         return todo_.FinishAction(arena_->New<FunctionType>(
-            std::vector<Nonnull<const GenericBinding*>>(), act.results()[0],
-            act.results()[1], std::vector<Nonnull<const ImplBinding*>>()));
+            act.results()[0], llvm::None, act.results()[1], llvm::None,
+            llvm::None));
       }
     }
     case ExpressionKind::ContinuationTypeLiteral: {
@@ -1296,6 +1400,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
+    case DeclarationKind::AliasDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

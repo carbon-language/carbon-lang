@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_LEXER_TOKEN_KIND_H_
-#define TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#ifndef CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#define CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
 
 #include <cstdint>
 #include <initializer_list>
@@ -111,4 +111,4 @@ class TokenKind {
 
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#endif  // CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_

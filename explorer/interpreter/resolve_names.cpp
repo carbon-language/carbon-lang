@@ -64,6 +64,11 @@ static auto AddExposedNames(const Declaration& declaration,
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add("Self", &self));
       break;
     }
+    case DeclarationKind::AliasDeclaration: {
+      auto& alias = cast<AliasDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
+      break;
+    }
   }
   return Success();
 }
@@ -111,6 +116,12 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
                        enclosing_scope));
       break;
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      auto& access = cast<CompoundFieldAccessExpression>(expression);
+      CARBON_RETURN_IF_ERROR(ResolveNames(access.object(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(access.path(), enclosing_scope));
+      break;
+    }
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));
@@ -297,13 +308,13 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       break;
     }
     case StatementKind::Continuation: {
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
-                                          continuation_scope));
+      auto& continuation = cast<Continuation>(statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(continuation.body(), continuation_scope));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(continuation.name(), &continuation));
       break;
     }
     case StatementKind::Run:
@@ -439,6 +450,12 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable: resolving names for `Self` declaration";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      CARBON_RETURN_IF_ERROR(ResolveNames(
+          cast<AliasDeclaration>(declaration).target(), enclosing_scope));
+      break;
     }
   }
   return Success();

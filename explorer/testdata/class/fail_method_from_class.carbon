@@ -24,6 +24,6 @@ class Point {
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: GetX is not a class function
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_from_class.carbon:[[@LINE+1]]: in call `Point.GetX()`, expected callee to be a function, found `member name GetX`
   return Point.GetX();
 }

@@ -95,6 +95,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << access.aggregate() << "." << access.field();
       break;
     }
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& access = cast<CompoundFieldAccessExpression>(*this);
+      out << access.object() << ".(" << access.path() << ")";
+      break;
+    }
     case ExpressionKind::TupleLiteral: {
       out << "(";
       llvm::ListSeparator sep;
@@ -233,6 +238,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::CompoundFieldAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:

@@ -58,7 +58,12 @@ repos:
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
         language: python
-        files: '^(.*/)?(BUILD\.bazel|BUILD|WORKSPACE)$|\.BUILD$|\.bzl$'
+        files: |
+          (?x)^(
+            .*BUILD.*|
+            .*WORKSPACE.*|
+            .*\.bzl
+          )$'
       - id: clang-format
         name: clang-format
         entry: clang-format
@@ -74,10 +79,17 @@ repos:
         pass_filenames: false
         additional_dependencies: ['clang-format==13.0.1']
 
-  # This may rename files, so it's deliberately between formatters and linters.
   - repo: local
     hooks:
+      - id: check-header-guards
+        # This should run after clang-format, which may reformat a guard.
+        name: Check header guards
+        entry: scripts/check_header_guards.py
+        language: python
+        files: '^.*\.h$'
       - id: check-sha-filenames
+        # This may rename files, so it's deliberately between formatters and
+        # linters.
         name: Check fuzzer SHA filenames
         entry: scripts/check_sha_filenames.py
         language: python
@@ -123,6 +135,13 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
+        # Test data may contain intentional misspellings, as well as short,
+        # meaningless identifiers that codespell incorrectly identifies as
+        # typos but that we would want to detect in other contexts.
+        exclude: |
+          (?x)^(
+              .*/testdata/.*
+          )$
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: cb78d9293306d9f737c64d9702bbaa88e157caaa # frozen: v1.2.2
     hooks:

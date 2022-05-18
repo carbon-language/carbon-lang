@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_ADDRESS_H_
-#define EXPLORER_INTERPRETER_ADDRESS_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_ADDRESS_H_
+#define CARBON_EXPLORER_INTERPRETER_ADDRESS_H_
 
 #include <cstdint>
 #include <string>
@@ -84,4 +84,4 @@ class Address {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_ADDRESS_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_ADDRESS_H_
