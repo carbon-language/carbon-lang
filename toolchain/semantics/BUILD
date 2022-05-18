@@ -67,8 +67,17 @@ cc_library(
 cc_library(
     name = "semantics_ir_test_helpers",
     testonly = 1,
-    srcs = ["semantics_ir_test_helpers.cpp"],
-    hdrs = ["semantics_ir_test_helpers.h"],
+    srcs = ["semantics_ir_for_test.cpp"],
+    hdrs = [
+        "nodes/declared_name_test_matchers.h",
+        "nodes/function_test_matchers.h",
+        "nodes/infix_operator_test_matchers.h",
+        "nodes/literal_test_matchers.h",
+        "nodes/pattern_binding_test_matchers.h",
+        "nodes/return_test_matchers.h",
+        "semantics_ir_for_test.h",
+        "semantics_ir_test_helpers.h",
+    ],
     deps = [
         ":nodes",
         ":semantics_ir",

@@ -24,12 +24,31 @@ namespace Carbon {
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
-  void Print(llvm::raw_ostream& out, Semantics::Declaration decl) const;
-
   // File-level declarations.
   auto root_block() const -> const Semantics::DeclarationBlock& {
     return *root_block_;
   }
+
+  // Debug printer for the parse tree.
+  void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
+
+  // Debug printers for meta nodes.
+  void Print(llvm::raw_ostream& out, Semantics::Declaration decl) const;
+  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
+  void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
+
+  // Debug printers for other nodes.
+  void Print(llvm::raw_ostream& out, const Semantics::DeclaredName& name) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::ExpressionStatement& expr) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Function& function) const;
+  void Print(llvm::raw_ostream& out, const Semantics::InfixOperator& op) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Literal& literal) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::PatternBinding& binding) const;
+  void Print(llvm::raw_ostream& out, const Semantics::Return& ret) const;
+  void Print(llvm::raw_ostream& out,
+             const Semantics::StatementBlock& block) const;
 
  private:
   friend class SemanticsIRFactory;
@@ -37,19 +56,6 @@ class SemanticsIR {
 
   explicit SemanticsIR(const ParseTree& parse_tree)
       : parse_tree_(&parse_tree) {}
-
-  // Helpers for debug printing.
-  void Print(llvm::raw_ostream& out, ParseTree::Node node) const;
-  void Print(llvm::raw_ostream& out, Semantics::DeclaredName name) const;
-  void Print(llvm::raw_ostream& out, Semantics::Expression expr) const;
-  void Print(llvm::raw_ostream& out, Semantics::ExpressionStatement expr) const;
-  void Print(llvm::raw_ostream& out, Semantics::Function function) const;
-  void Print(llvm::raw_ostream& out, Semantics::InfixOperator op) const;
-  void Print(llvm::raw_ostream& out, Semantics::Literal literal) const;
-  void Print(llvm::raw_ostream& out, Semantics::PatternBinding binding) const;
-  void Print(llvm::raw_ostream& out, Semantics::Return ret) const;
-  void Print(llvm::raw_ostream& out, Semantics::Statement stmt) const;
-  void Print(llvm::raw_ostream& out, Semantics::StatementBlock block) const;
 
   Semantics::DeclarationStore declarations_;
   Semantics::ExpressionStore expressions_;

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantics_ir_test_helpers.h"
+#include "toolchain/semantics/semantics_ir_for_test.h"
 
 namespace Carbon::Testing {
 
