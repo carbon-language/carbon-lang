@@ -2334,8 +2334,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
   impl_id->set_value_node(impl_decl);
   {
-    // The deduced bindings the parameters for all enclosing classes followed
-    // by any deduced parameters written on the `impl` declaration itself.
+    // The deduced bindings are the parameters for all enclosing classes
+    // followed by any deduced parameters written on the `impl` declaration
+    // itself.
     std::vector<Nonnull<const GenericBinding*>> deduced_bindings(
         enclosing_bindings.begin(), enclosing_bindings.end());
     deduced_bindings.insert(deduced_bindings.end(),
