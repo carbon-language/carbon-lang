@@ -118,8 +118,9 @@ and provides a deeper view into our goals for the Carbon project and language.
 ## Project status
 
 Carbon is currently an experimental research project to better understand
-whether we can realize this technical direction and whether there is a critical
-mass of interest in the direction within the larger C++ industry and community.
+whether we can realize this technical direction as well as whether there is a
+critical mass of interest in the direction within the larger C++ industry and
+community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
