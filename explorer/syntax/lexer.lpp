@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
+ALIAS                "alias"
 AMPERSAND            "&"
 AND                  "and"
 API                  "api"
@@ -137,6 +138,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 %}
 
  /* table-begin */
+{ALIAS}               { return SIMPLE_TOKEN(ALIAS);               }
 {AMPERSAND}           { return SIMPLE_TOKEN(AMPERSAND);           }
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
@@ -283,7 +285,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 {string_literal} {
   llvm::StringRef str(yytext);
-  CHECK(str.consume_front("\"") && str.consume_back("\""));
+  CARBON_CHECK(str.consume_front("\"") && str.consume_back("\""));
   std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
   if (unescaped == std::nullopt) {
     return context.RecordSyntaxError(

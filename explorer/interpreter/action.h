@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_ACTION_H_
-#define EXPLORER_INTERPRETER_ACTION_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_ACTION_H_
+#define CARBON_EXPLORER_INTERPRETER_ACTION_H_
 
 #include <map>
 #include <vector>
@@ -97,7 +97,7 @@ class Action {
 
   // Resets this Action to its initial state.
   void Clear() {
-    CHECK(!scope_.has_value());
+    CARBON_CHECK(!scope_.has_value());
     pos_ = 0;
     results_.clear();
   }
@@ -127,7 +127,7 @@ class Action {
   // Action is completed or unwound. Can only be called once on a given
   // Action.
   void StartScope(RuntimeScope scope) {
-    CHECK(!scope_.has_value());
+    CARBON_CHECK(!scope_.has_value());
     scope_ = std::move(scope);
   }
 
@@ -251,4 +251,4 @@ class ScopeAction : public Action {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_ACTION_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_ACTION_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_COMMON_ARENA_H_
-#define EXPLORER_COMMON_ARENA_H_
+#ifndef CARBON_EXPLORER_COMMON_ARENA_H_
+#define CARBON_EXPLORER_COMMON_ARENA_H_
 
 #include <memory>
 #include <type_traits>
@@ -55,4 +55,4 @@ class Arena {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_COMMON_ARENA_H_
+#endif  // CARBON_EXPLORER_COMMON_ARENA_H_

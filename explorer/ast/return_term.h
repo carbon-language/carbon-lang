@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_RETURN_TERM_H_
-#define EXPLORER_AST_RETURN_TERM_H_
+#ifndef CARBON_EXPLORER_AST_RETURN_TERM_H_
+#define CARBON_EXPLORER_AST_RETURN_TERM_H_
 
 #include <optional>
 #include <utility>
@@ -66,7 +66,7 @@ class ReturnTerm {
   // Sets the value of static_type(). Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -80,7 +80,7 @@ class ReturnTerm {
 
   explicit ReturnTerm(ReturnKind kind, SourceLocation source_loc)
       : kind_(kind), source_loc_(source_loc) {
-    CHECK(kind != ReturnKind::Expression);
+    CARBON_CHECK(kind != ReturnKind::Expression);
   }
 
   explicit ReturnTerm(Nonnull<Expression*> type_expression)
@@ -97,4 +97,4 @@ class ReturnTerm {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_RETURN_TERM_H_
+#endif  // CARBON_EXPLORER_AST_RETURN_TERM_H_

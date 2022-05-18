@@ -7,7 +7,6 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:21: undefined behavior: access to dead value 1
 
 package ExplorerTest api;
 
@@ -18,6 +17,7 @@ package ExplorerTest api;
 fn capture() -> __Continuation {
   var x: i32 = 1;
   __continuation k {
+    // CHECK: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:[[@LINE+1]]: undefined behavior: access to dead value 1
     var y: i32 = x;
   }
   return k;

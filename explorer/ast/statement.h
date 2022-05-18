@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_STATEMENT_H_
-#define EXPLORER_AST_STATEMENT_H_
+#ifndef CARBON_EXPLORER_AST_STATEMENT_H_
+#define CARBON_EXPLORER_AST_STATEMENT_H_
 
 #include <utility>
 #include <vector>
@@ -188,7 +188,7 @@ class Return : public Statement {
 
   // Can only be called once, by ResolveControlFlow.
   void set_function(Nonnull<FunctionDeclaration*> function) {
-    CHECK(!function_.has_value());
+    CARBON_CHECK(!function_.has_value());
     function_ = function;
   }
 
@@ -239,7 +239,7 @@ class Break : public Statement {
 
   // Can only be called once, by ResolveControlFlow.
   void set_loop(Nonnull<const Statement*> loop) {
-    CHECK(!loop_.has_value());
+    CARBON_CHECK(!loop_.has_value());
     loop_ = loop;
   }
 
@@ -266,7 +266,7 @@ class Continue : public Statement {
 
   // Can only be called once, by ResolveControlFlow.
   void set_loop(Nonnull<const Statement*> loop) {
-    CHECK(!loop_.has_value());
+    CARBON_CHECK(!loop_.has_value());
     loop_ = loop;
   }
 
@@ -343,7 +343,7 @@ class Continuation : public Statement {
   // Sets the static type of the continuation. Can only be called once,
   // during typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -395,4 +395,4 @@ class Await : public Statement {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_STATEMENT_H_
+#endif  // CARBON_EXPLORER_AST_STATEMENT_H_

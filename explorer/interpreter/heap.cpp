@@ -23,17 +23,17 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
 
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   return values_[a.allocation_.index_]->GetField(arena_, a.field_path_,
                                                  source_loc);
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
-  RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
-  ASSIGN_OR_RETURN(values_[a.allocation_.index_],
-                   values_[a.allocation_.index_]->SetField(
-                       arena_, a.field_path_, v, source_loc));
+  CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
+                          values_[a.allocation_.index_]->SetField(
+                              arena_, a.field_path_, v, source_loc));
   return Success();
 }
 
@@ -51,8 +51,8 @@ void Heap::Deallocate(AllocationId allocation) {
   if (alive_[allocation.index_]) {
     alive_[allocation.index_] = false;
   } else {
-    FATAL() << "deallocating an already dead value: "
-            << *values_[allocation.index_];
+    CARBON_FATAL() << "deallocating an already dead value: "
+                   << *values_[allocation.index_];
   }
 }
 

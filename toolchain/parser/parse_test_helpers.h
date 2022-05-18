@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
-#define TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 
@@ -101,7 +101,7 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
     }
 
     if (expected_node.skip_subtree) {
-      CHECK(expected_node.children.empty())
+      CARBON_CHECK(expected_node.children.empty())
           << "Must not skip an expected subtree while specifying expected "
              "children!";
       nodes_it = llvm::reverse(tree.postorder(n)).end();
@@ -138,7 +138,7 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   // subtrees. Instead, we need to check that we successfully processed all of
   // the actual tree and consumed all of the expected tree.
   if (nodes_it != nodes_end) {
-    CHECK(expected_node_stack.empty())
+    CARBON_CHECK(expected_node_stack.empty())
         << "If we have unmatched nodes in the input tree, should only finish "
            "having fully processed expected tree.";
     output << "\nFinished processing expected nodes and there are still "
@@ -193,7 +193,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     }
 
     if (!expected_node.children.empty()) {
-      CHECK(!expected_node.skip_subtree)
+      CARBON_CHECK(!expected_node.skip_subtree)
           << "Must not have children and skip a subtree!";
       output << ", children: [\n";
       for (const ExpectedNode& child_expected_node :
@@ -209,7 +209,7 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
     // we pop up.
     output << "}";
     if (!expected_node_stack.empty()) {
-      CHECK(depth >= expected_node_stack.back().second)
+      CARBON_CHECK(depth >= expected_node_stack.back().second)
           << "Cannot have an increase in depth on a leaf node!";
       // The distance we need to pop is the difference in depth.
       int pop_depth = depth - expected_node_stack.back().second;
@@ -343,4 +343,4 @@ auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
 }  // namespace Testing
 }  // namespace Carbon
 
-#endif  // TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSE_TEST_HELPERS_H_

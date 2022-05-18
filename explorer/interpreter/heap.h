@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_INTERPRETER_HEAP_H_
-#define EXPLORER_INTERPRETER_HEAP_H_
+#ifndef CARBON_EXPLORER_INTERPRETER_HEAP_H_
+#define CARBON_EXPLORER_INTERPRETER_HEAP_H_
 
 #include <vector>
 
@@ -60,4 +60,4 @@ class Heap : public HeapAllocationInterface {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_INTERPRETER_HEAP_H_
+#endif  // CARBON_EXPLORER_INTERPRETER_HEAP_H_

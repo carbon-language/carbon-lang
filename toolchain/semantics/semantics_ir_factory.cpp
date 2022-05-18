@@ -27,8 +27,8 @@ void SemanticsIRFactory::ProcessRoots() {
         // No action needed.
         break;
       default:
-        FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->node_kind(node).name();
+        CARBON_FATAL() << "Unhandled node kind: "
+                       << semantics_.parse_tree_->node_kind(node).name();
     }
   }
 }
@@ -49,8 +49,8 @@ void SemanticsIRFactory::ProcessFunctionNode(SemanticsIR::Block& block,
         // TODO: Should accumulate the definition into the code block.
         break;
       default:
-        FATAL() << "Unhandled node kind: "
-                << semantics_.parse_tree_->node_kind(node).name();
+        CARBON_FATAL() << "Unhandled node kind: "
+                       << semantics_.parse_tree_->node_kind(node).name();
     }
   }
 }

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_SYNTAX_BISON_WRAP_H_
-#define EXPLORER_SYNTAX_BISON_WRAP_H_
+#ifndef CARBON_EXPLORER_SYNTAX_BISON_WRAP_H_
+#define CARBON_EXPLORER_SYNTAX_BISON_WRAP_H_
 
 #include <optional>
 
@@ -30,7 +30,7 @@ class BisonWrap {
   // Deliberately releases the contained value. Errors if not initialized.
   // Called directly in parser.ypp when releasing pairs.
   auto Release() -> T {
-    CHECK(val_.has_value());
+    CARBON_CHECK(val_.has_value());
     T ret = std::move(*val_);
     val_.reset();
     return ret;
@@ -42,4 +42,4 @@ class BisonWrap {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_SYNTAX_BISON_WRAP_H_
+#endif  // CARBON_EXPLORER_SYNTAX_BISON_WRAP_H_

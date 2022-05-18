@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_GENERIC_BINDING_H_
-#define EXPLORER_AST_GENERIC_BINDING_H_
+#ifndef CARBON_EXPLORER_AST_IMPL_BINDING_H_
+#define CARBON_EXPLORER_AST_IMPL_BINDING_H_
 
 #include <map>
 
@@ -62,7 +62,7 @@ class ImplBinding : public AstNode {
   // Sets the static type of the impl. Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
@@ -75,4 +75,4 @@ class ImplBinding : public AstNode {
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_GENERIC_BINDING_H_
+#endif  // CARBON_EXPLORER_AST_IMPL_BINDING_H_

@@ -124,7 +124,7 @@ SourceBuffer::SourceBuffer(std::string filename, llvm::StringRef text)
     : content_mode_(ContentMode::MMapped),
       filename_(std::move(filename)),
       text_(text) {
-  CHECK(!text.empty())
+  CARBON_CHECK(!text.empty())
       << "Must not have an empty text when we have mapped data from a file!";
 }
 
@@ -134,7 +134,7 @@ SourceBuffer::~SourceBuffer() {
     int result =
         munmap(const_cast<void*>(static_cast<const void*>(text_.data())),
                text_.size());
-    CHECK(result != -1) << "Unmapping text failed!";
+    CARBON_CHECK(result != -1) << "Unmapping text failed!";
   }
 }
 

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXPLORER_AST_EXPRESSION_H_
-#define EXPLORER_AST_EXPRESSION_H_
+#ifndef CARBON_EXPLORER_AST_EXPRESSION_H_
+#define CARBON_EXPLORER_AST_EXPRESSION_H_
 
 #include <map>
 #include <optional>
@@ -24,6 +24,7 @@
 namespace Carbon {
 
 class Value;
+class MemberName;
 class VariableType;
 class ImplBinding;
 
@@ -46,14 +47,14 @@ class Expression : public AstNode {
 
   // The static type of this expression. Cannot be called before typechecking.
   auto static_type() const -> const Value& {
-    CHECK(static_type_.has_value());
+    CARBON_CHECK(static_type_.has_value());
     return **static_type_;
   }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
   void set_static_type(Nonnull<const Value*> type) {
-    CHECK(!static_type_.has_value());
+    CARBON_CHECK(!static_type_.has_value());
     static_type_ = type;
   }
 
@@ -64,7 +65,8 @@ class Expression : public AstNode {
   // Sets the value category of this expression. Can be called multiple times,
   // but the argument must have the same value each time.
   void set_value_category(ValueCategory value_category) {
-    CHECK(!value_category_.has_value() || value_category == *value_category_);
+    CARBON_CHECK(!value_category_.has_value() ||
+                 value_category == *value_category_);
     value_category_ = value_category;
   }
 
@@ -135,7 +137,7 @@ class IdentifierExpression : public Expression {
   // Sets the value returned by value_node. Can be called only once,
   // during name resolution.
   void set_value_node(ValueNodeView value_node) {
-    CHECK(!value_node_.has_value());
+    CARBON_CHECK(!value_node_.has_value());
     value_node_ = std::move(value_node);
   }
 
@@ -170,7 +172,7 @@ class FieldAccessExpression : public Expression {
 
   // Can only be called once, during typechecking.
   void set_impl(Nonnull<const ImplBinding*> impl) {
-    CHECK(!impl_.has_value());
+    CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
 
@@ -178,6 +180,69 @@ class FieldAccessExpression : public Expression {
   Nonnull<Expression*> aggregate_;
   std::string field_;
   std::optional<Nonnull<const ImplBinding*>> impl_;
+};
+
+// A compound member access expression of the form `object.(path)`.
+//
+// `path` is required to have `TypeOfMemberName` type, and describes the member
+// being accessed, which is one of:
+//
+// -   An instance member of a type: `object.(Type.member)`.
+// -   A non-instance member of an interface: `Type.(Interface.member)` or
+//     `object.(Interface.member)`.
+// -   An instance member of an interface: `object.(Interface.member)` or
+//     `object.(Type.(Interface.member))`.
+//
+// Note that the `path` is evaluated during type-checking, not at runtime, so
+// the corresponding `member` is determined statically.
+class CompoundFieldAccessExpression : public Expression {
+ public:
+  explicit CompoundFieldAccessExpression(SourceLocation source_loc,
+                                         Nonnull<Expression*> object,
+                                         Nonnull<Expression*> path)
+      : Expression(AstNodeKind::CompoundFieldAccessExpression, source_loc),
+        object_(object),
+        path_(path) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromCompoundFieldAccessExpression(node->kind());
+  }
+
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+  auto path() const -> const Expression& { return *path_; }
+  auto path() -> Expression& { return *path_; }
+
+  // Returns the `MemberName` value that evaluation of the path produced.
+  // Should not be called before typechecking.
+  auto member() const -> const MemberName& {
+    CARBON_CHECK(member_.has_value());
+    return **member_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_member(Nonnull<const MemberName*> member) {
+    CARBON_CHECK(!member_.has_value());
+    member_ = member;
+  }
+
+  // Returns the expression to use to compute the witness table, if this
+  // expression names an interface member.
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
+    return impl_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const Expression*> impl) {
+    CARBON_CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
+ private:
+  Nonnull<Expression*> object_;
+  Nonnull<Expression*> path_;
+  std::optional<Nonnull<const MemberName*>> member_;
+  std::optional<Nonnull<const Expression*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -294,7 +359,7 @@ class StructLiteral : public Expression {
                          std::vector<FieldInitializer> fields)
       : Expression(AstNodeKind::StructLiteral, loc),
         fields_(std::move(fields)) {
-    CHECK(!fields_.empty())
+    CARBON_CHECK(!fields_.empty())
         << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
   }
 
@@ -392,7 +457,7 @@ class CallExpression : public Expression {
 
   // Can only be called once, during typechecking.
   void set_impls(const ImplExpMap& impls) {
-    CHECK(impls_.empty());
+    CARBON_CHECK(impls_.empty());
     impls_ = impls;
   }
 
@@ -652,4 +717,4 @@ auto TupleExpressionFromParenContents(
 
 }  // namespace Carbon
 
-#endif  // EXPLORER_AST_EXPRESSION_H_
+#endif  // CARBON_EXPLORER_AST_EXPRESSION_H_

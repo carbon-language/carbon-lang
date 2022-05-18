@@ -111,6 +111,18 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::CompoundFieldAccessExpression: {
+      const auto& field_access =
+          cast<CompoundFieldAccessExpression>(expression);
+      auto* field_access_proto =
+          expression_proto.mutable_compound_field_access();
+      *field_access_proto->mutable_object() =
+          ExpressionToProto(field_access.object());
+      *field_access_proto->mutable_path() =
+          ExpressionToProto(field_access.path());
+      break;
+    }
+
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(expression);
       auto* index_proto = expression_proto.mutable_index();
@@ -549,7 +561,15 @@ static auto DeclarationToProto(const Declaration& declaration)
     }
 
     case DeclarationKind::SelfDeclaration: {
-      FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+      CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(declaration);
+      auto* alias_proto = declaration_proto.mutable_alias();
+      alias_proto->set_name(alias.name());
+      *alias_proto->mutable_target() = ExpressionToProto(alias.target());
+      break;
     }
   }
   return declaration_proto;
