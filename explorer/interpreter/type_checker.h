@@ -245,13 +245,16 @@ class TypeChecker {
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
   //
-  // FIXME: Does not actually perform the conversion if `impl_scope` is
-  // specified and a user-defined conversion is needed. Should be used very
-  // rarely.
+  // If `impl_scope` is `std::nullopt`, only built-in conversions are
+  // considered.
+  // FIXME: Remove this behavior.
+  //
+  // FIXME: Does not actually perform the conversion if a user-defined
+  // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  std::optional<Nonnull<const ImplScope*>> impl_scope =
-                      std::nullopt) const -> ErrorOr<Success>;
+                  std::optional<Nonnull<const ImplScope*>> impl_scope) const
+      -> ErrorOr<Success>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {

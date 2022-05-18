@@ -540,6 +540,8 @@ auto TypeChecker::ArgumentDeduction(
     Nonnull<const Value*> arg_type, bool allow_implicit_conversion,
     std::optional<Nonnull<const ImplScope*>> impl_scope) const
     -> ErrorOr<Success> {
+  CARBON_CHECK(!allow_implicit_conversion || impl_scope.has_value())
+      << "an ImplScope must be provided if implicit conversions are desired";
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
                     << "\n";
@@ -560,7 +562,7 @@ auto TypeChecker::ArgumentDeduction(
     const Value* subst_param_type = Substitute(deduced, param_type);
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg_type,
-                            impl_scope)
+                            impl_scope.value())
                : ExpectExactType(source_loc, context, subst_param_type,
                                  arg_type);
   };
@@ -1674,7 +1676,8 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           // like `class X(T:! Type, N:! T) { ... }`.
           CARBON_RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
                                             &param_name.params().static_type(),
-                                            &call.argument().static_type()));
+                                            &call.argument().static_type(),
+                                            std::nullopt));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> arg,
               InterpExp(&call.argument(), arena_, trace_stream_));
@@ -1759,10 +1762,10 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
             return CompilationError(e->source_loc())
                    << "__intrinsic_print takes 1 argument";
           }
-          CARBON_RETURN_IF_ERROR(
-              ExpectType(e->source_loc(), "__intrinsic_print argument",
-                         arena_->New<StringType>(),
-                         &intrinsic_exp.args().fields()[0]->static_type()));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_print argument",
+              arena_->New<StringType>(),
+              &intrinsic_exp.args().fields()[0]->static_type()));
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
