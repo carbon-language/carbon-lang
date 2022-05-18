@@ -952,8 +952,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " does not have a field named " << access.field();
           }
           access.set_static_type(arena_->New<FunctionType>(
-              *parameter_types, llvm::None, &aggregate_type, llvm::None,
-              llvm::None));
+              *parameter_types, llvm::None, &choice, llvm::None, llvm::None));
           access.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1740,17 +1739,16 @@ auto TypeChecker::TypeCheckPattern(
         return CompilationError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
-      if (expected) {
-        CARBON_RETURN_IF_ERROR(ExpectExactType(
-            alternative.source_loc(), "alternative pattern", *expected,
-            &alternative.choice_type().static_type()));
-      }
       const ChoiceType& choice_type =
           cast<TypeOfChoiceType>(alternative.choice_type().static_type())
               .choice_type();
+      if (expected) {
+        CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
+                                          "alternative pattern", &choice_type,
+                                          *expected));
+      }
       std::optional<Nonnull<const Value*>> parameter_types =
-          cast<ChoiceType>(choice_type)
-              .FindAlternative(alternative.alternative_name());
+          choice_type.FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         return CompilationError(alternative.source_loc())
                << "'" << alternative.alternative_name()
