@@ -1674,10 +1674,9 @@ auto TypeChecker::TypeCheckOneExp(Nonnull<Expression*> e,
           }
           // FIXME: Switch to using `ArgumentDeduction` here to support things
           // like `class X(T:! Type, N:! T) { ... }`.
-          CARBON_RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
-                                            &param_name.params().static_type(),
-                                            &call.argument().static_type(),
-                                            std::nullopt));
+          CARBON_RETURN_IF_ERROR(ExpectType(
+              call.source_loc(), "call", &param_name.params().static_type(),
+              &call.argument().static_type(), std::nullopt));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> arg,
               InterpExp(&call.argument(), arena_, trace_stream_));

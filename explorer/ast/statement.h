@@ -399,9 +399,7 @@ class Run : public Statement {
   auto argument() -> Expression& { return *argument_; }
 
   // Can only be called by type-checking, if a conversion was required.
-  void set_argument(Nonnull<Expression*> argument) {
-    argument_ = argument;
-  }
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
 
  private:
   Nonnull<Expression*> argument_;
