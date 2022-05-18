@@ -109,8 +109,8 @@ their combination.
 
 We also have explicit _non-goals_ for Carbon, notably including:
 
--   A stable ABI for the entire language and library.
--   Perfect backwards or forwards compatibility.
+-   A stable ABI for the entire language and library
+-   Perfect backwards or forwards compatibility
 
 Our detailed [goals](/docs/project/goals.md) document fleshes out these ideas
 and provides a deeper view into our goals for the Carbon project and language.
@@ -118,7 +118,7 @@ and provides a deeper view into our goals for the Carbon project and language.
 ## Project status
 
 Carbon is currently an experimental research project to better understand
-whether the successor language approach can be an effective and compelling
+whether a successor language approach can be an effective and compelling
 future direction for the C++ ecosystem. We want to understand whether we can
 realize this technical direction and whether there is a critical mass of
 interest in the direction within the larger C++ industry and community.
@@ -144,8 +144,9 @@ and the language:
 We are currently focused on getting more broad feedback and participation from
 the C++ community, completing the 0.1 language design, and completing the Carbon
 Explorer implementation of this design. Beyond that, we plan to prioritize C++
-interoperability and a realistic toolchain that implements the 0.1 language,
-including interoperability, and can be used to evaluate Carbon in more detail.
+interoperability and a realistic toolchain that implements the 0.1 language and
+can be used to evaluate Carbon in more detail.
+
 You can see our [roadmap](/docs/project/roadmap.md) for more details.
 
 ## Carbon and C++
@@ -238,10 +239,10 @@ fruit in the safety space:
 -   Tracking uninitialized states better, increased enforcement of
     initialization, and systematically providing hardening against
     initialization bugs when desired.
--   Rebasing fundamental APIs and idioms to support dynamic bounds checks in
+-   Designing fundamental APIs and idioms to support dynamic bounds checks in
     debug and hardened builds.
 -   Having a default debug build mode that is both cheaper and more
-    comprehensive than even existing C++ build modes combined with
+    comprehensive than existing C++ build modes even when combined with
     [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
 
 Once we can migrate code into Carbon, we will have a simplified language with
