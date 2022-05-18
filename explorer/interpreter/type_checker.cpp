@@ -269,7 +269,10 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
                                  destination_field.value().value,
-                                 // FIXME
+                                 // FIXME: We don't have a way to perform
+                                 // user-defined conversions of a struct field
+                                 // yet, because we can't write a suitable impl
+                                 // for ImplicitAs.
                                  std::nullopt)) {
       return false;
     }
@@ -391,16 +394,16 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     }
     case Value::Kind::TypeType:
+      // FIXME: This seems suspicious. Shouldn't this require that the type
+      // implements the interface?
       if (destination->kind() == Value::Kind::InterfaceType) {
         return true;
       }
       break;
     case Value::Kind::InterfaceType:
-      if (destination->kind() == Value::Kind::TypeType) {
-        return true;
-      }
-      break;
     case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfChoiceType:
+      // FIXME: These types should presumably also convert to interface types.
       if (destination->kind() == Value::Kind::TypeType) {
         return true;
       }
@@ -2016,10 +2019,13 @@ auto TypeChecker::TypeCheckPattern(
           cast<TypeOfChoiceType>(alternative.choice_type().static_type())
               .choice_type();
       if (expected) {
-        // FIXME: Should implicit conversions be permitted here?
-        CARBON_RETURN_IF_ERROR(ExpectExactType(alternative.source_loc(),
-                                               "alternative pattern", *expected,
-                                               &choice_type));
+        std::optional<Nonnull<const ImplScope*>> impl_scope_for_conversion;
+        if (allow_user_defined_conversions) {
+          impl_scope_for_conversion = &impl_scope;
+        }
+        CARBON_RETURN_IF_ERROR(
+            ExpectType(alternative.source_loc(), "alternative pattern",
+                       &choice_type, *expected, impl_scope_for_conversion));
       }
       std::optional<Nonnull<const Value*>> parameter_types =
           choice_type.FindAlternative(alternative.alternative_name());
