@@ -31,7 +31,7 @@ consequence is that rather than changing or replacing language designs to
 simplify and improve the language, features have been added. This both creates
 its own technical debt when those features interact in surprising and complex
 ways, as well as missing opportunities to reduce technical debt by replacing
-legacy features.
+or removing legacy features.
 
 Carbon is specifically exploring significant backwards incompatible changes. It
 doesn't inherit the legacy of C or C++ directly, and instead is starting with
