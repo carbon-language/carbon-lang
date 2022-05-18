@@ -118,10 +118,10 @@ and provides a deeper view into our goals for the Carbon project and language.
 ## Project status
 
 Carbon is currently an experimental research project to better understand
-whether a successor language approach can be an effective and compelling
-future direction for the C++ ecosystem. We want to understand whether we can
-realize this technical direction and whether there is a critical mass of
-interest in the direction within the larger C++ industry and community.
+whether a successor language approach can be an effective and compelling future
+direction for the C++ ecosystem. We want to understand whether we can realize
+this technical direction and whether there is a critical mass of interest in the
+direction within the larger C++ industry and community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
