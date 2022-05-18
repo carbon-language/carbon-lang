@@ -323,6 +323,11 @@ class Match : public Statement {
   auto clauses() const -> llvm::ArrayRef<Clause> { return clauses_; }
   auto clauses() -> llvm::MutableArrayRef<Clause> { return clauses_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_expression(Nonnull<Expression*> expression) {
+    expression_ = expression;
+  }
+
  private:
   Nonnull<Expression*> expression_;
   std::vector<Clause> clauses_;

@@ -91,8 +91,7 @@ class TypeChecker {
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
-                        ValueCategory enclosing_value_category,
-                        bool allow_user_defined_conversions = true)
+                        ValueCategory enclosing_value_category)
       -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.

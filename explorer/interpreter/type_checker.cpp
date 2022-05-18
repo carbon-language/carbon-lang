@@ -1887,8 +1887,8 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
 
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ValueCategory enclosing_value_category,
-    bool allow_user_defined_conversions) -> ErrorOr<Success> {
+    ImplScope& impl_scope, ValueCategory enclosing_value_category)
+    -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "checking pattern " << *p;
     if (expected) {
@@ -1912,21 +1912,15 @@ auto TypeChecker::TypeCheckPattern(
                << "The type of a binding pattern cannot contain bindings.";
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &binding.type(), std::nullopt, impl_scope, enclosing_value_category,
-          allow_user_defined_conversions));
+          &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           InterpPattern(&binding.type(), arena_, trace_stream_));
       CARBON_RETURN_IF_ERROR(ExpectIsType(binding.source_loc(), type));
       if (expected) {
         if (IsConcreteType(type)) {
-          std::optional<Nonnull<const ImplScope*>> impl_scope_for_conversion;
-          if (allow_user_defined_conversions) {
-            impl_scope_for_conversion = &impl_scope;
-          }
           CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
-                                            type, *expected,
-                                            impl_scope_for_conversion));
+                                            type, *expected, &impl_scope));
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -1993,8 +1987,7 @@ auto TypeChecker::TypeCheckPattern(
           expected_field_type = cast<TupleValue>(**expected).elements()[i];
         }
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            field, expected_field_type, impl_scope, enclosing_value_category,
-            allow_user_defined_conversions));
+            field, expected_field_type, impl_scope, enclosing_value_category));
         if (trace_stream_)
           **trace_stream_ << "finished checking tuple pattern field " << *field
                           << "\n";
@@ -2019,13 +2012,9 @@ auto TypeChecker::TypeCheckPattern(
           cast<TypeOfChoiceType>(alternative.choice_type().static_type())
               .choice_type();
       if (expected) {
-        std::optional<Nonnull<const ImplScope*>> impl_scope_for_conversion;
-        if (allow_user_defined_conversions) {
-          impl_scope_for_conversion = &impl_scope;
-        }
-        CARBON_RETURN_IF_ERROR(
-            ExpectType(alternative.source_loc(), "alternative pattern",
-                       &choice_type, *expected, impl_scope_for_conversion));
+        CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
+                                          "alternative pattern", &choice_type,
+                                          *expected, &impl_scope));
       }
       std::optional<Nonnull<const Value*>> parameter_types =
           choice_type.FindAlternative(alternative.alternative_name());
@@ -2034,9 +2023,9 @@ auto TypeChecker::TypeCheckPattern(
                << "'" << alternative.alternative_name()
                << "' is not an alternative of " << choice_type;
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &alternative.arguments(), *parameter_types, impl_scope,
-          enclosing_value_category, allow_user_defined_conversions));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
+                                              *parameter_types, impl_scope,
+                                              enclosing_value_category));
       alternative.set_static_type(&choice_type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> alternative_value,
@@ -2056,9 +2045,9 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::VarPattern:
       auto& let_var_pattern = cast<VarPattern>(*p);
 
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &let_var_pattern.pattern(), expected, impl_scope,
-          let_var_pattern.value_category(), allow_user_defined_conversions));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&let_var_pattern.pattern(), expected, impl_scope,
+                           let_var_pattern.value_category()));
       let_var_pattern.set_static_type(&let_var_pattern.pattern().static_type());
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> pattern_value,
@@ -2079,6 +2068,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& match = cast<Match>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&match.expression(), impl_scope));
       std::vector<Match::Clause> new_clauses;
+      std::optional<Nonnull<const Value*>> expected_type;
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
@@ -2086,9 +2076,27 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // statements? When would we run them?
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
-            ValueCategory::Let, /*allow_user_defined_conversions=*/false));
+            ValueCategory::Let));
+        if (expected_type.has_value()) {
+          // FIXME: For now, we require all patterns to have the same type. If
+          // that's not the same type as the scrutinee, we will convert the
+          // scrutinee. We might want to instead allow a different conversion
+          // to be performed for each pattern.
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              clause.pattern().source_loc(), "`match` pattern type",
+              expected_type.value(), &clause.pattern().static_type()));
+        } else {
+          expected_type = &clause.pattern().static_type();
+        }
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
+      }
+      if (expected_type.has_value()) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_expression,
+            ImplicitlyConvert("`match` expression", impl_scope,
+                              &match.expression(), expected_type.value()));
+        match.set_expression(converted_expression);
       }
       return Success();
     }
@@ -2126,9 +2134,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       // ```
       ImplScope var_scope;
       var_scope.AddParent(&impl_scope);
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &var.pattern(), &rhs_ty, var_scope, var.value_category(),
-          /*allow_user_defined_conversions=*/true));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), &rhs_ty,
+                                              var_scope, var.value_category()));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<Expression*> converted_init,
           ImplicitlyConvert("initializer of variable", impl_scope, &var.init(),
