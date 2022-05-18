@@ -450,6 +450,7 @@ the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
     [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
+    `p->m` is syntactic sugar for `(*p).m`.
 -   Address-of: given an
     [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
     `x`, `&x` returns a pointer to `x`.
@@ -603,6 +604,9 @@ Some common expressions in Carbon include:
 When an expression appears in a context in which an expression of a specific
 type is expected, [implicit conversions](expressions/implicit_conversions.md)
 are applied to convert the expression to the target type.
+
+> **TODO:** indexing `a[`...`]`, function call `f(`...`)`, dereference `*p`,
+> member access `x.m` and `p->m`, and address of `&x`
 
 ### Variables
 
@@ -1063,6 +1067,8 @@ respectively when that is not confusing. Like structs, classes refer to their
 members by name. Unlike structs, classes are
 [nominal types](#structural-and-nominal-types).
 
+> **TODO:** Forward declarations
+
 #### Assignment, copying
 
 > References: [Classes](classes.md#construction)
@@ -1365,7 +1371,10 @@ having names inside the class' scope:
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
-> **TODO:**
+A _choice type_ is a [tagged union](https://en.wikipedia.org/wiki/Tagged_union),
+that can store different types of data in a storage space that can hold the
+largest. A choice type has a name, and a list of cases separated by commas
+(`,`). Each case has a name and a optional parameter list.
 
 ```carbon
 choice IntResult {
@@ -1373,18 +1382,29 @@ choice IntResult {
   Failure(error: String),
   Cancelled
 }
+```
 
+The value of a choice type is one of the cases, plus the values of the
+parameters to that case, if any. A value can be constructed by naming the case
+and providing values for the parameters, if any:
+
+```carbon
 fn ParseAsInt(s: String) -> IntResult {
   var r: i32 = 0;
   for (c: i32 in s) {
     if (not IsDigit(c)) {
+      // Equivalent to `IntResult.Failure(...)`
       return .Failure("Invalid character");
     }
     // ...
   }
   return .Success(r);
 }
+```
 
+Choice type values may be consumed using a [`match` statement](#match):
+
+```carbon
 match (ParseAsInt(s)) {
   case .Success(value: i32) => {
     return value;
@@ -1396,6 +1416,14 @@ match (ParseAsInt(s)) {
     Terminate();
   }
 }
+```
+
+They can also represent an
+[enumerated type](https://en.wikipedia.org/wiki/Enumerated_type), if no
+additional data is associated with the choices, as in:
+
+```carbon
+choice LikeABoolean { False, True }
 ```
 
 ## Names
