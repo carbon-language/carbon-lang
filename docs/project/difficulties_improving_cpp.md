@@ -33,15 +33,14 @@ its own technical debt when those features interact in surprising and complex
 ways, as well as missing opportunities to reduce technical debt by replacing
 legacy features.
 
-Carbon is specifically exploring and experimenting with immediate and
-significant backwards incompatible changes. It doesn't inherit the legacy of C
-or C++ directly, and instead is starting with solid foundations, like a modern
-generics system, modular code organization, and consistent, simple syntax. Then,
-it builds a simplified and improved language around those foundational
-components that remains both interoperable with and migratable from C++, while
-giving up transparent backwards compatibility. This is fundamentally **a
-successor language approach**, rather than an attempt to incrementally evolve
-C++ to achieve these improvements.
+Carbon is specifically exploring significant backwards incompatible changes. It
+doesn't inherit the legacy of C or C++ directly, and instead is starting with
+solid foundations, like a modern generics system, modular code organization, and
+consistent, simple syntax. Then, it builds a simplified and improved language
+around those foundational components that remains both interoperable with and
+migratable from C++, while giving up transparent backwards compatibility. This
+is fundamentally **a successor language approach**, rather than an attempt to
+incrementally evolve C++ to achieve these improvements.
 
 Another challenge to improving C++ in these ways is the current evolution
 process and direction. A key example of this is the committee's struggle to
