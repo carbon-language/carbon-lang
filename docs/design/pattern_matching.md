@@ -38,7 +38,7 @@ overload resolution.
 ### Pattern match control flow
 
 The most powerful form and easiest to explain form of pattern matching is a
-dedicated control flow construct that subsumes the `switch` of C and C++ i32o
+dedicated control flow construct that subsumes the `switch` of C and C++ into
 something much more powerful, `match`. This is not a novel construct, and is
 widely used in existing languages (Swift and Rust among others) and is currently
 under active investigation for C++. Carbon's `match` can be used as follows:
