@@ -81,30 +81,11 @@ class TypeChecker {
     std::vector<Nonnull<const GenericBinding*>> bindings;
   };
 
-  // Type-check the immediate operands of `e`, populating their `static_type`
-  // and `value_category`. Does not perform type-checking for `e` itself.
-  // Type-checking the operands of `e` will recursively type-check the AST
-  // rooted at `e`, except for `e` itself.
-  auto TypeCheckExpOperands(Nonnull<Expression*> e, const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
-
-  // Type-check the expression `e`, by ensuring it follows Carbon's typing
-  // rules and computing its `static_type` and `value_category`. Assumes the
-  // operands of `e` have already been type-checked.
-  auto TypeCheckOneExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
-
-  // Build a node from the given arguments and type-check it.
-  template <typename ExpNode, typename... Args>
-  auto BuildAndTypeCheckExp(const ImplScope& impl_scope, Args&&... args)
-      -> ErrorOr<Nonnull<ExpNode*>> {
-    Nonnull<ExpNode*> expr = arena_->New<ExpNode>(std::forward<Args>(args)...);
-    CARBON_RETURN_IF_ERROR(TypeCheckOneExp(expr, impl_scope));
-    return expr;
-  }
-
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
+  //
+  // `values` maps variable names to their compile-time values. It is not
+  //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 

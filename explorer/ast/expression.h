@@ -70,6 +70,12 @@ class Expression : public AstNode {
     value_category_ = value_category;
   }
 
+  // Determines whether the expression has already been type-checked. Should
+  // only be used by type-checking.
+  auto has_been_type_checked() -> bool {
+    return static_type_.has_value() && value_category_.has_value();
+  }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
