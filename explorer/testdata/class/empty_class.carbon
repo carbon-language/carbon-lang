@@ -11,13 +11,11 @@
 
 package ExplorerTest api;
 
-fn CompareStr(s: String) -> i32 {
-  if (s == "str;\x07") {
-    return 0;
-  }
-  return 1;
-}
+class A { fn F[me: Self]() -> i32 { return 0; } }
 
 fn Main() -> i32 {
-  return CompareStr("\x73\x74\x72\x3B\x07");
+  // {} is a bit strange; its type is {}. Make sure we can properly convert a
+  // value of type {} to type TypeOfClassType.
+  var a: A = {};
+  return a.F();
 }

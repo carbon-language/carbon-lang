@@ -133,6 +133,8 @@ class TypeChecker {
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
+  auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   // Find all of the GenericBindings in the given pattern.
   void CollectGenericBindingsInPattern(

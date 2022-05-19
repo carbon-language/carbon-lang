@@ -45,7 +45,7 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 
 static auto StringLiteralToCarbon(std::string_view s, llvm::raw_ostream& out) {
   out << '"';
-  out.write_escaped(s);
+  out.write_escaped(s, /*UseHexEscapes=*/true);
   out << '"';
 }
 
@@ -693,6 +693,16 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "\n";
       }
       out << "}";
+      break;
+    }
+
+    case Fuzzing::Declaration::kAlias: {
+      const auto& alias = declaration.alias();
+      out << "alias ";
+      IdentifierToCarbon(alias.name(), out);
+      out << " = ";
+      ExpressionToCarbon(alias.target(), out);
+      out << ";";
       break;
     }
   }

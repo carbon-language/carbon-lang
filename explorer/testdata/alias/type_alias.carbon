@@ -7,17 +7,16 @@
 // RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// CHECK: result: 4
 
 package ExplorerTest api;
 
-fn CompareStr(s: String) -> i32 {
-  if (s == "str;\x07") {
-    return 0;
-  }
-  return 1;
-}
+alias TypeAlias = i32;
 
-fn Main() -> i32 {
-  return CompareStr("\x73\x74\x72\x3B\x07");
+fn Main() -> TypeAlias {
+  var n: TypeAlias = 1;
+  var m: i32 = n;
+  var p: i32* = &n;
+  var q: TypeAlias* = &m;
+  return *p + *q + m + n;
 }

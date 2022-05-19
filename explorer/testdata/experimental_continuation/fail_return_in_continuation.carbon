@@ -2,22 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
+// RUN: %{not} %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
 
 package ExplorerTest api;
 
-fn CompareStr(s: String) -> i32 {
-  if (s == "str;\x07") {
-    return 0;
-  }
-  return 1;
-}
-
 fn Main() -> i32 {
-  return CompareStr("\x73\x74\x72\x3B\x07");
+  var x: i32 = 0;
+  __continuation k {
+    x = x + 1;
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_return_in_continuation.carbon:[[@LINE+1]]: return is not within a function body
+    return x;
+  }
 }

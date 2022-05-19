@@ -18,9 +18,9 @@ choice Ints {
 }
 
 fn Main() -> i32 {
-  var x: auto = Ints.None();
-  var y: auto = Ints.One(42);
-  var n: auto = 0;
+  var x: Ints = Ints.None();
+  var y: Ints = Ints.One(42);
+  var n: i32 = 0;
   match (y) {
     case Ints.None =>
       n = n + 2;
