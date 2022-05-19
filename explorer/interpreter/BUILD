@@ -203,6 +203,7 @@ cc_library(
         ":action_and_value",
         ":dictionary",
         ":interpreter",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/ast:declaration",

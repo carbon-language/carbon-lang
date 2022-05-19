@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
@@ -1470,18 +1471,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.parameter(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> param_type,
-          InterpExp(&fn.parameter(), arena_, trace_stream_));
       CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.parameter().source_loc(), param_type));
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&fn.return_type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> ret_type,
-          InterpExp(&fn.return_type(), arena_, trace_stream_));
+          TypeCheckConcreteTypeExp(&fn.parameter(), impl_scope));
       CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.return_type().source_loc(), ret_type));
+          TypeCheckConcreteTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
       return Success();
@@ -1622,6 +1615,17 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
                  CreateImplReference(impl_binding));
+}
+
+auto TypeChecker::TypeCheckConcreteTypeExp(Nonnull<Expression*> type_expression,
+                                           const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                          InterpExp(type_expression, arena_, trace_stream_));
+  CARBON_RETURN_IF_ERROR(
+      ExpectIsConcreteType(type_expression->source_loc(), type));
+  return Success();
 }
 
 auto TypeChecker::TypeCheckPattern(

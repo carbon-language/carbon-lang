@@ -87,6 +87,12 @@ class TypeChecker {
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  // Type checks and interprets `type_expression`, and validates it represents a
+  // concrete type.
+  auto TypeCheckConcreteTypeExp(Nonnull<Expression*> type_expression,
+                                const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
