@@ -54,6 +54,33 @@ class TypeChecker {
       -> std::optional<Nonnull<Expression*>>;
 
  private:
+  // Information about the currently enclosing scopes.
+  struct ScopeInfo {
+    static auto ForNonClassScope(Nonnull<ImplScope*> impl_scope) -> ScopeInfo {
+      return {.innermost_scope = impl_scope,
+              .innermost_non_class_scope = impl_scope,
+              .bindings = {}};
+    }
+
+    static auto ForClassScope(
+        const ScopeInfo& outer, Nonnull<ImplScope*> class_impl_scope,
+        std::vector<Nonnull<const GenericBinding*>> class_bindings)
+        -> ScopeInfo {
+      return {.innermost_scope = class_impl_scope,
+              .innermost_non_class_scope = outer.innermost_non_class_scope,
+              .bindings = std::move(class_bindings)};
+    }
+
+    // The innermost enclosing impl scope, within which impls should be looked
+    // up.
+    Nonnull<ImplScope*> innermost_scope;
+    // The innermost enclosing non-class impl scope, where impl declarations
+    // should introduce new impls.
+    Nonnull<ImplScope*> innermost_non_class_scope;
+    // The enclosing generic bindings, if any.
+    std::vector<Nonnull<const GenericBinding*>> bindings;
+  };
+
   // Type-check the immediate operands of `e`, populating their `static_type`
   // and `value_category`. Does not perform type-checking for `e` itself.
   // Type-checking the operands of `e` will recursively type-check the AST
@@ -101,45 +128,34 @@ class TypeChecker {
   auto TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
-  using EnclosingBindings = llvm::ArrayRef<Nonnull<const GenericBinding*>>;
-
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the
   // compile-time interpretation of any type expressions in the
   // declaration. It does not involve type checking statements and
   // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
-  auto DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope,
-                          ImplScope& non_class_scope,
-                          EnclosingBindings enclosing_bindings)
+  auto DeclareDeclaration(Nonnull<Declaration*> d, const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                  const ImplScope& enclosing_scope)
+                                  const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                               ImplScope& enclosing_scope,
-                               ImplScope& non_class_scope,
-                               EnclosingBindings enclosing_bindings)
-      -> ErrorOr<Success>;
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                   ImplScope& enclosing_scope)
+                                   const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              ImplScope& enclosing_scope,
-                              ImplScope& non_class_scope,
-                              EnclosingBindings enclosing_bindings)
-      -> ErrorOr<Success>;
+                              const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                const ImplScope& enclosing_scope)
+                                const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
-                               const ImplScope& enclosing_scope)
-      -> ErrorOr<Success>;
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   // Find all of the GenericBindings in the given pattern.
   void CollectGenericBindingsInPattern(

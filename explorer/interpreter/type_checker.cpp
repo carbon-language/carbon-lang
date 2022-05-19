@@ -2283,7 +2283,6 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
-      return Success();
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
@@ -2299,13 +2298,13 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             const ImplScope& enclosing_scope)
+                                             const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring function " << f->name() << "\n";
   }
   ImplScope function_scope;
-  function_scope.AddParent(&enclosing_scope);
+  function_scope.AddParent(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
@@ -2422,9 +2421,7 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 }
 
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                                          ImplScope& enclosing_scope,
-                                          ImplScope& non_class_scope,
-                                          EnclosingBindings enclosing_bindings)
+                                          const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
@@ -2432,10 +2429,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   Nonnull<SelfDeclaration*> self = class_decl->self();
 
   ImplScope class_scope;
-  class_scope.AddParent(&enclosing_scope);
+  class_scope.AddParent(scope_info.innermost_scope);
 
-  std::vector<Nonnull<const GenericBinding*>> bindings(
-      enclosing_bindings.begin(), enclosing_bindings.end());
+  std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
@@ -2476,9 +2472,10 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     class_decl->set_static_type(&self->static_type());
   }
 
+  ScopeInfo class_scope_info =
+      ScopeInfo::ForClassScope(scope_info, &class_scope, std::move(bindings));
   for (Nonnull<Declaration*> m : class_decl->members()) {
-    CARBON_RETURN_IF_ERROR(
-        DeclareDeclaration(m, class_scope, non_class_scope, bindings));
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
   }
 
   if (trace_stream_) {
@@ -2513,13 +2510,13 @@ auto TypeChecker::TypeCheckClassDeclaration(
 }
 
 auto TypeChecker::DeclareInterfaceDeclaration(
-    Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope)
+    Nonnull<InterfaceDeclaration*> iface_decl, const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring interface " << iface_decl->name() << "\n";
   }
   ImplScope iface_scope;
-  iface_scope.AddParent(&enclosing_scope);
+  iface_scope.AddParent(scope_info.innermost_scope);
 
   if (iface_decl->params().has_value()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(*iface_decl->params(), std::nullopt,
@@ -2542,9 +2539,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
                                           iface_scope, ValueCategory::Let));
+
+  ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
-    CARBON_RETURN_IF_ERROR(
-        DeclareDeclaration(m, iface_scope, iface_scope, llvm::None));
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
   }
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring interface " << iface_decl->name()
@@ -2578,15 +2576,13 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
 }
 
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                         ImplScope& enclosing_scope,
-                                         ImplScope& non_class_scope,
-                                         EnclosingBindings enclosing_bindings)
+                                         const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
   ImplScope impl_scope;
-  impl_scope.AddParent(&enclosing_scope);
+  impl_scope.AddParent(scope_info.innermost_scope);
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
 
   // Bring the deduced parameters into scope.
@@ -2612,8 +2608,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   self->set_static_type(&impl_decl->impl_type()->static_type());
 
   // Check and interpret the interface.
-  CARBON_RETURN_IF_ERROR(
-      TypeCheckExp(&impl_decl->interface(), enclosing_scope));
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), impl_scope));
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> written_iface_type,
       InterpExp(&impl_decl->interface(), arena_, trace_stream_));
@@ -2633,21 +2628,23 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
   impl_id->set_value_node(impl_decl);
   {
-    // The deduced bindings the parameters for all enclosing classes followed
-    // by any deduced parameters written on the `impl` declaration itself.
-    std::vector<Nonnull<const GenericBinding*>> deduced_bindings(
-        enclosing_bindings.begin(), enclosing_bindings.end());
+    // The deduced bindings are the parameters for all enclosing classes
+    // followed by any deduced parameters written on the `impl` declaration
+    // itself.
+    std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
+        scope_info.bindings;
     deduced_bindings.insert(deduced_bindings.end(),
                             impl_decl->deduced_parameters().begin(),
                             impl_decl->deduced_parameters().end());
-    non_class_scope.Add(iface_type, std::move(deduced_bindings),
-                        impl_type_value, impl_bindings, impl_id);
+    scope_info.innermost_non_class_scope->Add(
+        iface_type, std::move(deduced_bindings), impl_type_value, impl_bindings,
+        impl_id);
   }
 
   // Declare the impl members.
+  ScopeInfo impl_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
-    CARBON_RETURN_IF_ERROR(
-        DeclareDeclaration(m, impl_scope, impl_scope, llvm::None));
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
   }
   // Check that the interface is satisfied by the impl members.
   for (Nonnull<Declaration*> m : iface_decl.members()) {
@@ -2699,12 +2696,12 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                           const ImplScope& enclosing_scope)
+                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
     CARBON_RETURN_IF_ERROR(
-        TypeCheckExp(&alternative->signature(), enclosing_scope));
+        TypeCheckExp(&alternative->signature(), *scope_info.innermost_scope));
     CARBON_ASSIGN_OR_RETURN(auto signature, InterpExp(&alternative->signature(),
                                                       arena_, trace_stream_));
     alternatives.push_back({.name = alternative->name(), .value = signature});
@@ -2771,9 +2768,10 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
 }
 
 auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
-                                          const ImplScope& enclosing_scope)
+                                          const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(&alias->target(), enclosing_scope));
+  CARBON_RETURN_IF_ERROR(
+      TypeCheckExp(&alias->target(), *scope_info.innermost_scope));
 
   if (!IsValidTypeForAliasTarget(&alias->target().static_type())) {
     return CompilationError(alias->source_loc())
@@ -2790,9 +2788,10 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
 
 auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
+  ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(
-        DeclareDeclaration(declaration, impl_scope, impl_scope, llvm::None));
+        DeclareDeclaration(declaration, top_level_scope_info));
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
@@ -2862,41 +2861,35 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
 }
 
 auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
-                                     ImplScope& enclosing_scope,
-                                     ImplScope& non_class_scope,
-                                     EnclosingBindings enclosing_bindings)
+                                     const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(
-          DeclareInterfaceDeclaration(&iface_decl, enclosing_scope));
+          DeclareInterfaceDeclaration(&iface_decl, scope_info));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(
-          &impl_decl, enclosing_scope, non_class_scope, enclosing_bindings));
+      CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, scope_info));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareFunctionDeclaration(&func_def, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareFunctionDeclaration(&func_def, scope_info));
       break;
     }
 
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(
-          &class_decl, enclosing_scope, non_class_scope, enclosing_bindings));
+      CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, scope_info));
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareChoiceDeclaration(&choice, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareChoiceDeclaration(&choice, scope_info));
       break;
     }
 
@@ -2910,8 +2903,9 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &var.binding(), std::nullopt, enclosing_scope, var.value_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
+                                              *scope_info.innermost_scope,
+                                              var.value_category()));
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
@@ -2924,7 +2918,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, scope_info));
       break;
     }
   }
