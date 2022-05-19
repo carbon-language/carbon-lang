@@ -100,4 +100,4 @@ operations as built-in tuple types.
 
 ## Alternatives considered
 
--   Built-in primitive types (FIXME: add link)
+-   [Built-in primitive types](/proposals/p1280.md#built-in-primitive-types)
