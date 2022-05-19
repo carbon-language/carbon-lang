@@ -864,6 +864,8 @@ applicable to more types. For example, this `Min` function has a type parameter
 
 ```carbon
 fn Min[T:! Ordered](x: T, y: T) -> T {
+  // Can compare `x` and `y` since they have
+  // type `T` known to implement `Ordered`.
   return if x <= y then x else y;
 }
 
@@ -933,11 +935,65 @@ _Interfaces_ specify a set of requirements that a types might satisfy.
 Interfaces act both as constraints on types a caller might supply and
 capabilities that may be assumed of types that satisfy that constraint.
 
-> **TODO:**
+```carbon
+interface Printable {
+  // Inside an interface definition `Self` means
+  // "the type implementing this interface".
+  fn Print[me: Self]();
+}
+```
+
+Types only implement an interface if there is an explicit `impl` declaration
+that they do. Simply having a `Print` function with the right signature is not
+sufficient.
+
+```carbon
+class Circle {
+  var radius: f32;
+
+  impl as Printable {
+    fn Print[me: Self]() {
+      Console.WriteLine("Circle with radius: {0}", me.radius);
+    }
+  }
+}
+```
 
 ### Combining constraints
 
-> **TODO:**
+> References:
+>
+> -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
+> -   Question-for-leads issue
+>     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
+
+A function can require calling types to implement multiple interfaces by
+combining them using an ampersand (`&`):
+
+```carbon
+fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
+  // Can compare since type `T` implements `Ordered`.
+  if (x <= y) {
+    // Can call `Print` since type `T` implements `Printable`.
+    x.Print();
+  } else {
+    y.Print();
+  }
+}
+```
+
+The body of the function may call functions that are in either interface, except
+for names that are members of both. In that case, use the
+[compound member access syntax to qualify the name of the member](generics/details.md#qualified-member-names-and-compound-member-access),
+as in:
+
+```carbon
+fn DrawTies[T:! Renderable & GameResult](x: T) {
+  if (x.(GameResult.Draw)()) {
+    x.(Renderable.Draw)();
+  }
+}
+```
 
 ### Generic types
 
@@ -975,8 +1031,7 @@ Breaking apart the template use in `Stack`:
 ```carbon
 choice Result(T:! Type, Error:! Type) {
   Success(value: T),
-  Failure(error: Error),
-  Cancelled
+  Failure(error: Error)
 }
 ```
 
@@ -989,7 +1044,6 @@ choice Result(T:! Type, Error:! Type) {
 **TODO:**
 
 -   [external impls](generics/details.md#external-impl)
--   [compound member access](generics/details.md#qualified-member-names-and-compound-member-access)
 -   [named and template constraints](generics/details.md#named-constraints)
 -   [extending interfaces](generics/details.md#interface-extension)
 -   [adapter types](generics/details.md#adapting-types)
@@ -1036,7 +1090,10 @@ choice Result(T:! Type, Error:! Type) {
 
 > **TODO:** `like` for implicit conversions
 
-> **TODO:** Same or different types
+> **TODO:** Binary operators taking the same or different types
+
+> **TODO:** Change this to a table? Concern: no support for merging cells in a
+> markdown table unless you make it using html.
 
 -   [Arithmetic](expressions/arithmetic.md#extensibility):
     -   `-x`: `Negate`
