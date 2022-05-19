@@ -63,6 +63,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Generics](#generics)
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
+    -   [Combining constraints](#combining-constraints)
     -   [Generic types](#generic-types)
         -   [Types with template parameters](#types-with-template-parameters)
         -   [Generic choice types](#generic-choice-types)
@@ -934,6 +935,10 @@ capabilities that may be assumed of types that satisfy that constraint.
 
 > **TODO:**
 
+### Combining constraints
+
+> **TODO:**
+
 ### Generic types
 
 > **TODO:**
@@ -983,19 +988,27 @@ choice Result(T:! Type, Error:! Type) {
 
 **TODO:**
 
--   extending interfaces
--   named and template constraints
--   adapter types
--   associated types
--   generic/parameterized interfaces
--   `where` constraints
--   _maybe:_ implied constraints
--   `observe` declarations
--   generic/parameterized impls
--   specialization and `final` impls
--   forward declarations
--   dynamic erased types
--   variadics
+-   [external impls](generics/details.md#external-impl)
+-   [compound member access](generics/details.md#qualified-member-names-and-compound-member-access)
+-   [named and template constraints](generics/details.md#named-constraints)
+-   [extending interfaces](generics/details.md#interface-extension)
+-   [adapter types](generics/details.md#adapting-types)
+-   [associated types](generics/details.md#associated-types) and other
+    [associated constants](generics/details.md#associated-constants)
+-   [generic/parameterized interfaces](generics/details.md#parameterized-interfaces)
+-   [`where` constraints](generics/details.md#where-constraints)
+-   [implied constraints](generics/details.md#implied-constraints)
+-   `observe` declarations:
+    [observing types are equal](generics/details.md#observe-declarations),
+    [observing types implement an interface](generics/details.md#observing-a-type-implements-an-interface)
+-   [generic/parameterized impls](generics/details.md#parameterized-impls)
+-   [specialization](generics/details.md#lookup-resolution-and-specialization)
+-   [`final` impls](generics/details.md#final-impls)
+-   [forward declarations](generics/details.md#forward-declarations-and-cyclic-references)
+-   [interface defaults](generics/details.md#interface-defaults)
+-   [`final` interface members](generics/details.md#final-members)
+-   [dynamic erased types](generics/details.md#runtime-type-fields)
+-   [variadics](generics/details.md#variadic-arguments)
 
 ### Operator overloading
 
