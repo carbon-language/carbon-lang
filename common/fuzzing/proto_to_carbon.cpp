@@ -45,7 +45,7 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 
 static auto StringLiteralToCarbon(std::string_view s, llvm::raw_ostream& out) {
   out << '"';
-  out.write_escaped(s);
+  out.write_escaped(s, /*UseHexEscapes=*/true);
   out << '"';
 }
 
