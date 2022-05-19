@@ -80,8 +80,9 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      // UNDER CONSTRUCTION
+    case ExpressionKind::InstantiateImpl:
+    case ExpressionKind::ValueLiteral: {
+      // These do not correspond to source syntax.
       break;
     }
     case ExpressionKind::CallExpression: {
