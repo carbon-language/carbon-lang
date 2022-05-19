@@ -13,13 +13,13 @@ package ExplorerTest api;
 interface Similar(T:! Type) {}
 
 impl forall [T:! Type] T as Similar(T) {}
-impl i32 as Similar(Bool) {}
+impl forall [T:! Type] i32 as Similar(T) {}
 
 fn CheckSimilar[T:! Type, U:! Similar(T)](a: T, b: U) {}
 
 fn Main() -> i32 {
   let n: i32 = 0;
-  CheckSimilar(n, n);
+  CheckSimilar(true, false);
   CheckSimilar(true, n);
   // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_param_interface_in_impl.carbon:[[@LINE+1]]: could not find implementation of interface Similar(T = i32) for Bool
   CheckSimilar(n, false);
