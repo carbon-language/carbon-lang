@@ -10,8 +10,9 @@
 
 package ExplorerTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type String
-external impl i32 as String {}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_alternative_not_type.carbon:[[@LINE+1]]: Expected a type, but got (42)
+choice C { X(42) }
 
 fn Main() -> i32 {
+  return 0;
 }

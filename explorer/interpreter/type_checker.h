@@ -88,15 +88,9 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Type checks and interprets `type_expression`, and validates it represents a
-  // concrete type.
-  auto TypeCheckConcreteType(Nonnull<Expression*> type_expression,
-                             const ImplScope& impl_scope)
-      -> ErrorOr<Nonnull<const Value*>>;
-
-  // Type checks and interprets `type_expression`, and validates it represents a
-  // type.
-  auto TypeCheckType(Nonnull<Expression*> type_expression,
-                     const ImplScope& impl_scope)
+  // [concrete] type.
+  auto TypeCheckTypeExp(Nonnull<Expression*> type_expression,
+                        const ImplScope& impl_scope, bool concrete = true)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
