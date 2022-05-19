@@ -2465,9 +2465,10 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
 }
 
 auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
-                                          const ImplScope& enclosing_scope)
+                                          const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(&alias->target(), enclosing_scope));
+  CARBON_RETURN_IF_ERROR(
+      TypeCheckExp(&alias->target(), *scope_info.innermost_scope));
 
   if (!IsValidTypeForAliasTarget(&alias->target().static_type())) {
     return CompilationError(alias->source_loc())
@@ -2612,7 +2613,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, scope_info));
       break;
     }
   }

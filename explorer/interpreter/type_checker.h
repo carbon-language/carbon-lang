@@ -134,8 +134,7 @@ class TypeChecker {
                                 const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
-                               const ImplScope& enclosing_scope)
-      -> ErrorOr<Success>;
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   // Find all of the GenericBindings in the given pattern.
   void CollectGenericBindingsInPattern(
