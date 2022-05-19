@@ -52,6 +52,33 @@ class TypeChecker {
       -> std::optional<Nonnull<Expression*>>;
 
  private:
+  // Information about the currently enclosing scopes.
+  struct ScopeInfo {
+    static auto ForNonClassScope(Nonnull<ImplScope*> impl_scope) -> ScopeInfo {
+      return {.innermost_scope = impl_scope,
+              .innermost_non_class_scope = impl_scope,
+              .bindings = {}};
+    }
+
+    static auto ForClassScope(
+        const ScopeInfo& outer, Nonnull<ImplScope*> class_impl_scope,
+        std::vector<Nonnull<const GenericBinding*>> class_bindings)
+        -> ScopeInfo {
+      return {.innermost_scope = class_impl_scope,
+              .innermost_non_class_scope = outer.innermost_non_class_scope,
+              .bindings = std::move(class_bindings)};
+    }
+
+    // The innermost enclosing impl scope, within which impls should be looked
+    // up.
+    Nonnull<ImplScope*> innermost_scope;
+    // The innermost enclosing non-class impl scope, where impl declarations
+    // should introduce new impls.
+    Nonnull<ImplScope*> innermost_non_class_scope;
+    // The enclosing generic bindings, if any.
+    std::vector<Nonnull<const GenericBinding*>> bindings;
+  };
+
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
   //
@@ -86,25 +113,25 @@ class TypeChecker {
   // declaration. It does not involve type checking statements and
   // (runtime) expressions, as in the body of a function or a method.
   // Dispatches to one of the following functions.
-  auto DeclareDeclaration(Nonnull<Declaration*> d, ImplScope& enclosing_scope)
+  auto DeclareDeclaration(Nonnull<Declaration*> d, const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                  const ImplScope& enclosing_scope)
+                                  const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                               ImplScope& enclosing_scope) -> ErrorOr<Success>;
+                               const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                   ImplScope& enclosing_scope)
+                                   const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              ImplScope& enclosing_scope) -> ErrorOr<Success>;
+                              const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                const ImplScope& enclosing_scope)
+                                const ScopeInfo& scope_info)
       -> ErrorOr<Success>;
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
                                const ImplScope& enclosing_scope)
