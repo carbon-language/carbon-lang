@@ -58,14 +58,16 @@ allow the names in the prelude to be used unqualified. However, in accordance
 with this principle, they will remain available to ordinary qualified name
 lookup as well.
 
-According to the resolutions of #543 and #750, Carbon will have a substantial
-number of type keywords, such as `i32`, `f64`, and `bool`. However, these
-keywords will all be aliases for ordinary type names, such as `Carbon.Int(32)`,
-`Carbon.Float(64)`, and `Carbon.Bool`. Furthermore, all arithmetic and logical
-operators will be overloadable, so that those types can be defined as class
-types. The member function bodies for these types will be probably not be
-implemented in Carbon, but this principle applies only to function declarations,
-not function definitions.
+According to the resolutions of
+[#543](https://github.com/carbon-language/carbon-lang/issues/543) and
+[#750](https://github.com/carbon-language/carbon-lang/issues/543), Carbon will
+have a substantial number of type keywords, such as `i32`, `f64`, and `bool`.
+However, these keywords will all be aliases for ordinary type names, such as
+`Carbon.Int(32)`, `Carbon.Float(64)`, and `Carbon.Bool`. Furthermore, all
+arithmetic and logical operators will be overloadable, so that those types can
+be defined as class types. The member function bodies for these types will be
+probably not be implemented in Carbon, but this principle applies only to
+function declarations, not function definitions.
 
 Similarly, a pointer type such as `Foo*` will be an alias for some library class
 type, for example `Carbon.Ptr(i32)`. As a result, Carbon will support
