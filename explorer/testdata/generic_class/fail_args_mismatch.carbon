@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 class Point(T:! Type) {
   // Point(T, T) does not match class declaration
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_args_mismatch.carbon:[[@LINE+1]]: type error in call: '(Type, Type)' is not implicitly convertible to '(Type)'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_args_mismatch.carbon:[[@LINE+1]]: wrong number of arguments in function call, expected 1 but got 2
   fn Origin(zero: T) -> Point(T, T) {
     return {.x = zero, .y = zero};
   }

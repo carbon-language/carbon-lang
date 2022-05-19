@@ -756,7 +756,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
-    BindingMap& deduced_type_args, ImplExpMap& impls) const
+    const BindingMap& deduced_type_args, ImplExpMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     Nonnull<const Value*> interface =
@@ -764,10 +764,76 @@ auto TypeChecker::SatisfyImpls(
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<Expression*> impl,
         impl_scope.Resolve(interface,
-                           deduced_type_args[impl_binding->type_var()],
+                           deduced_type_args.at(impl_binding->type_var()),
                            source_loc, *this));
     impls.emplace(impl_binding, impl);
   }
+  return Success();
+}
+
+auto TypeChecker::DeduceCallBindings(
+    CallExpression& call, Nonnull<const Value*> params_type,
+    llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings)
+    -> ErrorOr<Success> {
+  llvm::ArrayRef<Nonnull<const Value*>> params =
+      cast<TupleValue>(*params_type).elements();
+  llvm::ArrayRef<Nonnull<const Expression*>> args =
+      cast<TupleLiteral>(call.argument()).fields();
+  if (params.size() != args.size()) {
+    return CompilationError(call.source_loc())
+           << "wrong number of arguments in function call, expected "
+           << params.size() << " but got " << args.size();
+  }
+
+  // Bindings for deduced parameters and generic parameters.
+  BindingMap generic_bindings;
+
+  // Deduce and/or convert each argument to the corresponding
+  // parameter.
+  for (size_t i = 0; i < params.size(); ++i) {
+    const Value* param = params[i];
+    const Expression* arg = args[i];
+    CARBON_RETURN_IF_ERROR(
+        ArgumentDeduction(arg->source_loc(), "call", deduced_bindings,
+                          generic_bindings, param, &arg->static_type(),
+                          /*allow_implicit_conversion=*/true));
+    // If the parameter is a `:!` binding, evaluate and collect its
+    // value for use in later parameters and in the function body.
+    if (!generic_params.empty() && generic_params.front().index == i) {
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
+                              InterpExp(arg, arena_, trace_stream_));
+      if (trace_stream_) {
+        **trace_stream_ << "evaluated generic parameter "
+                        << *generic_params.front().binding << " as "
+                        << *arg_value << "\n";
+      }
+      // FIXME: Use PatternMatch here and remove GenericParameter::binding.
+      bool newly_added =
+          generic_bindings
+              .insert({generic_params.front().binding, arg_value})
+              .second;
+      CARBON_CHECK(newly_added)
+          << "generic parameter should not be deduced";
+      generic_params = generic_params.drop_front();
+    }
+  }
+  CARBON_CHECK(generic_params.empty())
+      << "did not find all generic parameters in parameter list";
+
+  call.set_deduced_args(generic_bindings);
+  for (Nonnull<const GenericBinding*> deduced_param : deduced_bindings) {
+    // TODO: change the following to a CHECK once the real checking
+    // has been added to the type checking of function signatures.
+    if (auto it = generic_bindings.find(deduced_param);
+        it == generic_bindings.end()) {
+      return CompilationError(call.source_loc())
+             << "could not deduce type argument for type parameter "
+             << deduced_param->name() << "\n"
+             << "in " << call;
+    }
+  }
+
   return Success();
 }
 
@@ -1320,67 +1386,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
-
-          const auto& param_tuple = cast<TupleValue>(fun_t.parameters());
-          const auto& arg_tuple = cast<TupleLiteral>(call.argument());
-          llvm::ArrayRef<FunctionType::GenericParameter> generic_params =
-              fun_t.generic_parameters();
-          if (param_tuple.elements().size() != arg_tuple.fields().size()) {
-            return CompilationError(call.source_loc())
-                   << "wrong number of arguments in function call, expected "
-                   << param_tuple.elements().size() << " but got "
-                   << arg_tuple.fields().size();
-          }
-
-          // Bindings for deduced parameters and generic parameters.
-          BindingMap generic_bindings;
-
-          // Deduce and/or convert each argument to the corresponding
-          // parameter.
-          for (size_t i = 0; i < param_tuple.elements().size(); ++i) {
-            const Value* param = param_tuple.elements()[i];
-            const Expression* arg = arg_tuple.fields()[i];
-            CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-                arg->source_loc(), "call", fun_t.deduced_bindings(),
-                generic_bindings, param, &arg->static_type(),
-                /*allow_implicit_conversion=*/true));
-            // If the parameter is a `:!` binding, evaluate and collect its
-            // value for use in later parameters and in the function body.
-            if (!generic_params.empty() && generic_params.front().index == i) {
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
-                                      InterpExp(arg, arena_, trace_stream_));
-              if (trace_stream_) {
-                **trace_stream_ << "evaluated generic parameter "
-                                << *generic_params.front().binding << " as "
-                                << *arg_value << "\n";
-              }
-              bool newly_added =
-                  generic_bindings
-                      .insert({generic_params.front().binding, arg_value})
-                      .second;
-              CARBON_CHECK(newly_added)
-                  << "generic parameter should not be deduced";
-              generic_params = generic_params.drop_front();
-            }
-          }
-          CARBON_CHECK(generic_params.empty())
-              << "did not find all generic parameters in parameter list";
-          call.set_deduced_args(generic_bindings);
-          for (Nonnull<const GenericBinding*> deduced_param :
-               fun_t.deduced_bindings()) {
-            // TODO: change the following to a CHECK once the real checking
-            // has been added to the type checking of function signatures.
-            if (auto it = generic_bindings.find(deduced_param);
-                it == generic_bindings.end()) {
-              return CompilationError(e->source_loc())
-                     << "could not deduce type argument for type parameter "
-                     << deduced_param->name() << "\n"
-                     << "in " << call;
-            }
-          }
-
-          Nonnull<const Value*> return_type =
-              Substitute(generic_bindings, &fun_t.return_type());
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(call, &fun_t.parameters(),
+                                                    fun_t.generic_parameters(),
+                                                    fun_t.deduced_bindings()));
+          const BindingMap &generic_bindings = call.deduced_args();
 
           // Find impls for all the impl bindings of the function.
           ImplExpMap impls;
@@ -1388,7 +1397,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                               e->source_loc(), generic_bindings,
                                               impls));
           call.set_impls(impls);
+
+          // Substitute into the return type to determine the type of the call
+          // expression.
+          Nonnull<const Value*> return_type =
+              Substitute(generic_bindings, &fun_t.return_type());
           call.set_static_type(return_type);
+
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1399,19 +1414,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const ParameterizedEntityName& param_name =
               cast<TypeOfParameterizedEntityName>(call.function().static_type())
                   .name();
-          BindingMap generic_args;
-          if (trace_stream_) {
-            **trace_stream_ << "pattern matching type params and args\n";
+
+          // Collect the top-level generic parameters.
+          std::vector<FunctionType::GenericParameter> generic_parameters;
+          llvm::ArrayRef<Nonnull<const Pattern*>> params =
+              param_name.params().fields();
+          for (size_t i = 0; i != params.size(); ++i) {
+            // FIXME: Should we disallow all other kinds of top-level params?
+            if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
+              generic_parameters.push_back({i, binding});
+            }
           }
-          CARBON_RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
-                                            &param_name.params().static_type(),
-                                            &call.argument().static_type()));
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> arg,
-              InterpExp(&call.argument(), arena_, trace_stream_));
-          CARBON_CHECK(PatternMatch(&param_name.params().value(), arg,
-                                    call.source_loc(), std::nullopt,
-                                    generic_args, trace_stream_));
+
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &param_name.params().static_type(), generic_parameters,
+              /*deduced_bindings=*/llvm::None));
+          const BindingMap &generic_args = call.deduced_args();
+
           // Find impls for all the impl bindings.
           ImplExpMap impls;
           for (const auto& [binding, val] : generic_args) {
@@ -1420,9 +1439,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   *binding->impl_binding();
               CARBON_ASSIGN_OR_RETURN(
                   Nonnull<Expression*> impl,
-                  impl_scope.Resolve(impl_binding->interface(),
-                                     generic_args[binding], call.source_loc(),
-                                     *this));
+                  impl_scope.Resolve(impl_binding->interface(), val,
+                                     call.source_loc(), *this));
               impls.emplace(impl_binding, impl);
             }
           }
