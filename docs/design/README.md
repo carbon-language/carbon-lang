@@ -52,23 +52,32 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
             -   [Inline type composition](#inline-type-composition)
         -   [Unions](#unions)
--   [Pattern matching](#pattern-matching)
-    -   [`match` control flow](#match-control-flow)
-    -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
-    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
--   [Type abstractions](#type-abstractions)
-    -   [Interfaces](#interfaces)
-    -   [Generics](#generics)
-    -   [Templates](#templates)
+-   [Names](#names)
+    -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
+    -   [Names and scopes](#names-and-scopes-1)
+    -   [Naming conventions](#naming-conventions-1)
+    -   [Aliases](#aliases-1)
+    -   [Name lookup](#name-lookup-1)
+        -   [Name lookup for common types](#name-lookup-for-common-types-1)
+    -   [Name visibility](#name-visibility)
+-   [Generics](#generics)
+    -   [Checked and template parameters](#checked-and-template-parameters)
+    -   [Interfaces and implementations](#interfaces-and-implementations)
+    -   [Generic types](#generic-types)
         -   [Types with template parameters](#types-with-template-parameters)
-        -   [Functions with template parameters](#functions-with-template-parameters)
-        -   [Overloading](#overloading)
--   [Metaprogramming](#metaprogramming)
--   [Execution abstractions](#execution-abstractions)
-    -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
-    -   [Lambdas](#lambdas)
-    -   [Co-routines](#co-routines)
+        -   [Generic choice types](#generic-choice-types)
+    -   [Other features](#other-features)
+    -   [Operator overloading](#operator-overloading)
+        -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
+-   [Unfinished tales](#unfinished-tales)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+    -   [Lifetime and move semantics](#lifetime-and-move-semantics-1)
+    -   [Metaprogramming](#metaprogramming)
+    -   [Execution abstractions](#execution-abstractions)
+        -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
+        -   [Lambdas](#lambdas)
+        -   [Co-routines](#co-routines)
 
 <!-- tocstop -->
 
@@ -687,129 +696,247 @@ two methods `Distance` and `Offset`:
 
 > **TODO:** Needs a detailed design and a high level summary provided inline.
 
-## Pattern matching
+## Names
 
-> References: [Pattern matching](pattern_matching.md)
+### Packages, libraries, namespaces
+
+> References:
 >
-> **TODO:** References need to be evolved.
+> -   [Code and name organization](code_and_name_organization)
+> -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
+> -   Question-for-leads issue
+>     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
-The most prominent mechanism to manipulate and work with types in Carbon is
-pattern matching. This may seem like a deviation from C++, but in fact this is
-largely about building a clear, coherent model for a fundamental part of C++:
-overload resolution.
+-   **Files** are grouped into libraries, which are in turn grouped into
+    packages.
+-   **Libraries** are the granularity of code reuse through imports.
+-   **Packages** are the unit of distribution.
 
-### `match` control flow
+Name paths in Carbon always start with the package name. Additional namespaces
+may be specified as desired.
 
-> References: [Pattern matching](pattern_matching.md)
->
-> **TODO:** References need to be evolved.
-
-`match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other languages, such as Swift.
-
-An example `match` is:
+For example, this code declares a class `Geometry.Shapes.Flat.Circle` in a
+library `Geometry/OneSide`:
 
 ```carbon
-fn Bar() -> (Int, (Float, Float));
+package Geometry library("OneSide") namespace Shapes;
 
-fn Foo() -> Float {
-  match (Bar()...) {
-    case (42, (x: Float, y: Float)) => {
-      return x - y;
-    }
-    case (p: Int, (x: Float, _: Float)) if (p < 13) => {
-      return p * x;
-    }
-    case (p: Int, _: auto) if (p > 3) => {
-      return p * Pi;
-    }
-    default => {
-      return Pi;
-    }
-  }
+namespace Flat;
+class Flat.Circle { ... }
+```
+
+This type can be used from another package:
+
+```carbon
+package ExampleUser;
+
+import Geometry library("OneSide");
+
+fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
+```
+
+### Names and scopes
+
+> References: [Lexical conventions](lexical_conventions)
+>
+> **TODO:** References need to be evolved.
+
+Various constructs introduce a named entity in Carbon. These can be functions,
+types, variables, or other kinds of entities that we'll cover. A name in Carbon
+is formed from a word, which is a sequence of letters, numbers, and underscores,
+and which starts with a letter. We intend to follow Unicode's Annex 31 in
+selecting valid identifier characters, but a concrete set of valid characters
+has not been selected yet.
+
+### Naming conventions
+
+> References:
+>
+> -   [Naming conventions](naming_conventions.md)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
+
+Our naming conventions are:
+
+-   For idiomatic Carbon code:
+    -   `UpperCamelCase` will be used when the named entity cannot have a
+        dynamically varying value. For example, functions, namespaces, or
+        compile-time constant values.
+    -   `lower_snake_case` will be used when the named entity's value won't be
+        known until runtime, such as for variables.
+-   For Carbon-provided features:
+    -   Keywords and type literals will use `lower_snake_case`.
+    -   Other code will use the conventions for idiomatic Carbon code.
+
+### Aliases
+
+> References:
+>
+> -   [Aliases](aliases.md)
+> -   Question-for-leads issue
+>     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+
+> **TODO:** References need to be evolved.
+
+Carbon provides a facility to declare a new name as an alias for a value. This
+is a fully general facility because everything is a value in Carbon, including
+types.
+
+For example:
+
+```carbon
+alias MyInt = i32;
+```
+
+This creates an alias called `MyInt` for whatever `i32` resolves to. Code
+textually after this can refer to `MyInt`, and it will transparently refer to
+`i32`.
+
+### Name lookup
+
+> References:
+>
+> -   [Name lookup](name_lookup.md)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+>
+> **TODO:** References need to be evolved.
+
+Unqualified name lookup will always find a file-local result, including aliases.
+
+#### Name lookup for common types
+
+FIXME: should this be renamed to "The prelude"?
+
+> References: [Name lookup](name_lookup.md)
+>
+> -   Question-for-leads issue
+>     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
+> -   Question-for-leads issue
+>     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
+>
+> **TODO:** References need to be evolved.
+
+Common types that we expect to be used universally will be provided for every
+file, including `i32` and `Bool`. These will likely be defined in a special
+"prelude" package.
+
+### Name visibility
+
+> References:
+>
+> -   FIXME: Name visibility and access control at file scope
+> -   Question-for-leads issue
+>     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Proposal
+>     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
+
+> **TODO:**
+
+## Generics
+
+> References: **TODO:** Revisit
+>
+> -   [Generics: Overview](generics/overview.md)
+> -   Proposal
+>     [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+> -   Proposal
+>     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+> -   Proposal
+>     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+> -   Proposal
+>     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+> -   Proposal
+>     [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+> -   Proposal
+>     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+
+Generics allow Carbon constructs like [functions](#functions) and
+[classes](#classes) to have compile-time parameters to allow them to be
+applicable to more types. For example, this `Min` function has a type parameter
+`T` that can be any type that implements the `Ordered` interface.
+
+```carbon
+fn Min[T:! Ordered](x: T, y: T) -> T {
+  return if x <= y then x else y;
+}
+
+var a: i32 = 1;
+var b: i32 = 2;
+// `T` is deduced to be `i32`
+Assert(Min(a, b) == 1);
+// `T` is deduced to be `String`
+Assert(Min("abc", "xyz") == "abc");
+```
+
+Since the `T` type parameter is in the deduced parameter list in square brackets
+(`[`...`]`) before the explicit parameter list in parentheses (`(`...`)`), the
+value of `T` is determined from the types of the explicit arguments instead of
+being passed as a separate explicit argument.
+
+### Checked and template parameters
+
+> References:
+>
+> -   [Templates](templates.md)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+
+The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
+"Checked" here means that the body of `Min` is type checked when the function is
+defined, independent of the specific type values `T` is instantiated with, and
+name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
+type checking is equivalent to saying the function would pass type checking
+given any type `T` that implements the `Ordered` interface. Then calls to `Min`
+only need to check that the deduced type value of `T` implements `Ordered`.
+
+Instead, the parameter could be declared to be a _template_ parameter by
+prefixing with the `template` keyword, as in `template T:! Type`.
+
+```carbon
+fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+  var converted: U = source;
+  return converted;
+}
+
+fn Foo(i: i32) -> f32 {
+  // Instantiates with the `T` implicit argument set to `i32` and the `U`
+  // explicit argument set to `f32`, then calls with the runtime value `i`.
+  return Convert(i, f32);
 }
 ```
 
-Breaking apart this `match`:
-
--   It accepts a value that will be inspected; in this case, the result of the
-    call to `Bar()`.
-    -   It then will find the _first_ `case` that matches this value, and
-        execute that block.
-    -   If none match, then it executes the default block.
--   Each `case` pattern contains a value pattern, such as `(Int p, auto _)`,
-    followed by an optional boolean predicate introduced by the `if` keyword.
-    -   The value pattern must first match, and then the predicate must also
-        evaluate to true for the overall `case` pattern to match.
-    -   Using `auto` for a type will always match.
-
-Value patterns may be composed of the following:
-
--   An expression, such as `42`, whose value must be equal to match.
--   An identifier to bind the value, followed by a `:` and followed by a type,
-    such as `Int`.
-    -   The special identifier `_` may be used to discard the value once
-        matched.
--   A destructuring pattern containing a sequence of value patterns, such as
-    `(x: Float, y: Float)`, which match against tuples and tuple-like values by
-    recursively matching on their elements.
--   An unwrapping pattern containing a nested value pattern which matches
-    against a variant or variant-like value by unwrapping it.
-
-### Pattern matching in local variables
-
-> References: [Pattern matching](pattern_matching.md)
->
-> **TODO:** References need to be evolved.
-
-Value patterns may be used when declaring local variables to conveniently
-destructure them and do other type manipulations. However, the patterns must
-match at compile time, so a boolean predicate cannot be used directly.
-
-An example use is:
-
-```carbon
-fn Bar() -> (Int, (Float, Float));
-fn Foo() -> Int {
-  var (p: Int, _: auto) = Bar();
-  return p;
-}
-```
-
-To break this apart:
-
--   The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
--   The `(Float, Float)` returned by `Bar()` matches and is discarded by
-    `_: auto`.
-
-### Pattern matching as function overload resolution
-
-> References: [Pattern matching](pattern_matching.md)
->
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-## Type abstractions
-
-### Interfaces
-
-> **TODO:** Needs a feature design and a high level summary provided inline.
-
-### Generics
-
-> **TODO:** Needs a feature design and a high level summary provided inline.
-
-### Templates
-
-> References: [Templates](templates.md)
->
-> **TODO:** References need to be evolved.
-
-Carbon templates follow the same fundamental paradigm as C++ templates: they are
+Carbon templates follow the same fundamental paradigm as
+[C++ templates](<https://en.wikipedia.org/wiki/Template_(C%2B%2B)>): they are
 instantiated when called, resulting in late type checking, duck typing, and lazy
-binding. Although generics are generally preferred, templates enable translation
-of code between C++ and Carbon, and address some cases where the type checking
-rigor of generics are problematic.
+binding.
+
+Member lookup into a template type parameter is done in the actual type value
+provided by the caller. This means member name lookup and type checking for
+anything [dependent](generics/terminology.md#dependent-names) on the template
+parameter are delayed until the template is instantiated with a specific
+concrete type. This gives semantics similar to
+
+Although generics are generally preferred, templates enable translation of code
+between C++ and Carbon, and address some cases where the type checking rigor of
+generics are problematic.
+
+### Interfaces and implementations
+
+_Interfaces_ specify a set of requirements that a types might satisfy.
+Interfaces act both as constraints on types a caller might supply and
+capabilities that may be assumed of types that satisfy that constraint.
+
+> **TODO:**
+
+### Generic types
+
+> **TODO:**
 
 #### Types with template parameters
 
@@ -838,57 +965,142 @@ Breaking apart the template use in `Stack`:
 -   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
     instantiated.
 
-#### Functions with template parameters
-
-> References: [Templates](templates.md)
->
-> **TODO:** References need to be evolved.
-
-Both implicit and explicit function parameters in Carbon can be marked as
-_template_ parameters. When called, the arguments to these parameters trigger
-instantiation of the function definition, fully type checking and resolving that
-definition after substituting in the provided (or computed if implicit)
-arguments. The runtime call then passes the remaining arguments to the resulting
-complete definition.
+#### Generic choice types
 
 ```carbon
-fn Convert[template T:! Type](source: T, template U:! Type) -> U {
-  var converted: U = source;
-  return converted;
-}
-
-fn Foo(i: Int) -> Float {
-  // Instantiates with the `T` implicit argument set to `Int` and the `U`
-  // explicit argument set to `Float`, then calls with the runtime value `i`.
-  return Convert(i, Float);
+choice Result(T:! Type, Error:! Type) {
+  Success(value: T),
+  Failure(error: Error),
+  Cancelled
 }
 ```
 
-Here we deduce one type parameter and explicitly pass another. It is not
-possible to explicitly pass a deduced type parameter; instead the call site
-should cast or convert the argument to control the deduction. In this particular
-example, the explicit type is passed after a runtime parameter. While this makes
-that type unavailable to the declaration of _that_ runtime parameter, it still
-is a _template_ parameter and available to use as a type in the remaining parts
-of the function declaration.
+### Other features
 
-#### Overloading
-
-> References: [Templates](templates.md)
+> References:
 >
-> **TODO:** References need to be evolved.
+> -   [Generics details](generics/details.md)
 
-An important feature of templates in C++ is the ability to customize how they
-end up specialized for specific arguments. Because template parameters (whether
-as type parameters or function parameters) are pattern matched, we expect to
-leverage pattern matching techniques to provide "better match" definitions that
-are selected analogously to specializations in C++ templates. When expressed
-through pattern matching, this may enable things beyond just template parameter
-specialization, but that is an area that we want to explore cautiously.
+**TODO:**
 
-> **TODO:** lots more work to flesh this out needs to be done...
+-   extending interfaces
+-   named and template constraints
+-   adapter types
+-   associated types
+-   generic/parameterized interfaces
+-   `where` constraints
+-   _maybe:_ implied constraints
+-   `observe` declarations
+-   generic/parameterized impls
+-   specialization and `final` impls
+-   forward declarations
+-   dynamic erased types
+-   variadics
 
-## Metaprogramming
+### Operator overloading
+
+> References:
+>
+> -   [Operator overloading](generics/details.md#operator-overloading)
+> -   Proposal
+>     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
+> -   Question-for-leads issue
+>     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
+> -   Proposal
+>     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+
+> **TODO:** Operators are translated into calls into interface methods, so to
+> overload an operator for a type, implement the corresponding interface for
+> that type.
+
+> **TODO:** `like` for implicit conversions
+
+> **TODO:** Same or different types
+
+-   [Arithmetic](expressions/arithmetic.md#extensibility):
+    -   `-x`: `Negate`
+    -   `x + y`: `Add` or `AddWith(U)`
+    -   `x - y`: `Sub` or `SubWith(U)`
+    -   `x * y`: `Mul` or `MulWith(U)`
+    -   `x / y`: `Div` or `DivWith(U)`
+    -   `x % y`: `Mod` or `ModWith(U)`
+-   [Bitwise and shift operators](expressions/bitwise.md#extensibility):
+    -   `^x`: `BitComplement`
+    -   `x & y`: `BitAnd` or `BitAndWith(U)`
+    -   `x | y`: `BitOr` or `BitOrWith(U)`
+    -   `x ^ y`: `BitXor` or `BitXorWith(U)`
+    -   `x << y`: `LeftShift` or `LeftShiftWith(U)`
+    -   `x >> y`: `RightShift` or `RightShiftWith(U)`
+-   Comparison:
+    -   `x == y`, `x != y` overloaded by implementing
+        [`Eq` or `EqWith(U)`](expressions/comparison_operators.md#equality)
+    -   `x < y`, `x > y`, `x <= 8`, `8 >= 8` overloaded by implementing
+        [`Ordered` or `OrderedWith(U)`](expressions/comparison_operators.md#ordering)
+-   Conversion:
+    -   `x as U` is rewritten to use the
+        [`As(U)`](expressions/as_expressions.md#extensibility) interface
+    -   Implicit conversions use
+        [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   **TODO:** Indexing: `a[3]`
+-   **TODO:** Function call: `f(4)`
+
+#### Common type
+
+> References:
+>
+> -   [`if` expressions](expressions/if.md#finding-a-common-type)
+> -   Proposal
+>     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+
+> **TODO:**
+
+Common type: used to define the result of
+[conditional expressions like `if c then t else f`](expressions/if.md) and other
+situations where a common type needs to be found for two types, as in:
+
+```carbon
+fn F[T:! Type](x: T, y: T);
+
+var a: U;
+var b: V;
+// Calls `F` with the `T` set to
+// the common type of `U` and `V`:
+F(a, b);
+```
+
+## Bidirectional interoperability with C/C++
+
+> References:
+>
+> -   [Bidirectional interoperability with C/C++](interoperability/README.md)
+> -   Proposal
+>     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
+>
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+## Unfinished tales
+
+### Pattern matching as function overload resolution
+
+> References: [Pattern matching](pattern_matching.md)
+>
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+### Lifetime and move semantics
+
+> **TODO:**
+
+### Metaprogramming
 
 > References: [Metaprogramming](metaprogramming.md)
 >
@@ -899,27 +1111,19 @@ Carbon provides metaprogramming facilities that look similar to regular Carbon
 code. These are structured, and do not offer arbitrary inclusion or
 preprocessing of source text such as C/C++ does.
 
-## Execution abstractions
+### Execution abstractions
 
 Carbon provides some higher-order abstractions of program execution, as well as
 the critical underpinnings of such abstractions.
 
-### Abstract machine and execution model
+#### Abstract machine and execution model
 
-> **TODO:** Needs a feature design and a high level summary provided inline.
+> **TODO:**
 
-### Lambdas
+#### Lambdas
 
-> **TODO:** Needs a feature design and a high level summary provided inline.
+> **TODO:**
 
-### Co-routines
+#### Co-routines
 
-> **TODO:** Needs a feature design and a high level summary provided inline.
-
-## Bidirectional interoperability with C/C++
-
-> References:
-> [Bidirectional interoperability with C/C++](interoperability/README.md)
->
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
+> **TODO:**
