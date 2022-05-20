@@ -846,7 +846,6 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return type;
-    // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -863,7 +862,10 @@ auto TypeChecker::Substitute(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-      CARBON_FATAL() << "In Substitute: expected type, not value " << *type;
+      // This can happen when substituting into the arguments of a class or
+      // interface.
+      // TODO: Implement substitution for these cases.
+      return type;
   }
 }
 
