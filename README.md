@@ -59,7 +59,7 @@ accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
 the technical debt itself and challenges with its evolution process. We want a
 language that avoids inheriting the legacy of C or C++ directly, and instead
-starts with solid language foundations like a modern generics system, modular
+starts with solid language foundations like a [modern generics system](#generics), modular
 code organization, and consistent, simple syntax.
 
 Existing modern languages already provide an excellent developer experience: Go,
@@ -72,7 +72,7 @@ to performance overhead.
 Carbon is fundamentally **a successor language approach**, rather than an
 attempt to incrementally evolve C++. It is designed around interoperability with
 C++ as well as large-scale adoption and migration for existing C++ codebases and
-developers. A successor language for C++ specifically will require:
+developers. A successor language for C++ requires:
 
 -   **Performance matching C++**, an essential property for our developers.
 -   **Seamless, bidirectional interoperability with C++**, such that a library
@@ -176,7 +176,7 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
      alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
 
-You can also call Carbon from C++ without overhead and the other way around. You
+You can also call Carbon from C++, and the other way around, without overhead. You
 can port your library to Carbon, or write new Carbon on top of your existing C++
 investment. Carbon won't add a sea of dependencies or slow down your
 performance-critical code. For example:
