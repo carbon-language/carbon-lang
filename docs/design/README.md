@@ -76,10 +76,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Types with template parameters](#types-with-template-parameters)
         -   [Generic choice types](#generic-choice-types)
     -   [Operator overloading](#operator-overloading)
-        -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
-        -   [Comparison operators](#comparison-operators)
-        -   [Arithmetic operators](#arithmetic-operators)
-        -   [Bitwise and shift operators](#bitwise-and-shift-operators)
         -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 -   [Unfinished tales](#unfinished-tales)
@@ -982,7 +978,11 @@ This is instead of
 
 #### `match`
 
-> References: [Pattern matching](pattern_matching.md)
+> References:
+>
+> -   [Pattern matching](pattern_matching.md)
+> -   Question-for-leads issue
+>     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
 constructs in other languages, such as Swift. The `match` is followed by an
@@ -1669,57 +1669,28 @@ choice Result(T:! Type, Error:! Type) {
 > References:
 >
 > -   [Operator overloading](generics/details.md#operator-overloading)
-> -   Question-for-leads issue
->     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
 > -   Proposal
->     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
-
-> **TODO:**
-
-#### Implicit and explicit conversion
-
-> References:
->
-> -   [Implicit conversions](expressions/implicit_conversions.md#extensibility)
-> -   [`as` expressions](expressions/as_expressions.md#extensibility)
+>     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 > -   Proposal
 >     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
-
-> **TODO:**
-
-#### Comparison operators
-
-> References:
->
-> -   [Comparison operators](expressions/comparison_operators.md#extensibility)
+> -   Question-for-leads issue
+>     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
 > -   Proposal
->     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 > -   Proposal
 >     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 
 > **TODO:**
 
-#### Arithmetic operators
-
-> References:
->
+> -   [Implicit conversions](expressions/implicit_conversions.md#extensibility)
+> -   [`as` expressions](expressions/as_expressions.md#extensibility)
+> -   [Comparison operators](expressions/comparison_operators.md#extensibility)
 > -   [Arithmetic expressions](expressions/arithmetic.md#extensibility)
-> -   Proposal
->     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
-
-> **TODO:**
-
-#### Bitwise and shift operators
-
-> References:
->
 > -   [Bitwise and shift operators](expressions/bitwise.md#extensibility)
-> -   Proposal
->     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
-
-> **TODO:**
 
 #### Common type
 
