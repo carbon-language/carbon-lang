@@ -65,9 +65,8 @@ code organization, and consistent, simple syntax.
 Existing modern languages already provide an excellent developer experience: Go,
 Swift, Kotlin, Rust, and many more. **Developers that _can_ use one of these
 existing languages _should_.** Unfortunately, the designs of these languages
-present significant barriers to adoption and migration
-from C++. These barriers range from changes in the idiomatic design of software
-to performance overhead.
+present significant barriers to adoption and migration from C++. These barriers
+range from changes in the idiomatic design of software to performance overhead.
 
 Carbon is fundamentally **a successor language approach**, rather than an
 attempt to incrementally evolve C++. It is designed around interoperability with
