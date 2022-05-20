@@ -117,10 +117,10 @@ and provides a deeper view into our goals for the Carbon project and language.
 
 ## Project status
 
-Carbon is currently an experimental research project to better understand
-whether we can realize this technical direction as well as whether there is a
-critical mass of interest in the direction within the larger C++ industry and
-community.
+Carbon is currently an experimental project. We want to better understand
+whether we can build a language that meets our successor language criteria, and
+whether the resulting language can gather a critical mass of interest within the
+larger C++ industry and community.
 
 Currently, we have fleshed out several core aspects of both Carbon the project
 and the language:
@@ -205,9 +205,9 @@ checked definitions, while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
--   **Generic definitions are type checked**, immediately diagnosing any errors,
-    and won't fail just due to being used with a new type, giving greater
-    confidence in the code.
+-   **Generic definitions are type checked**, immediately diagnosing any errors.
+    They won't fail unexpectedly in the future due to a bug that is only
+    discovered when used with a new type.
     -   Avoids compile time cost of re-checking the definition for every
         instantiation.
     -   When using a definition-checked generic, usage error messages are
