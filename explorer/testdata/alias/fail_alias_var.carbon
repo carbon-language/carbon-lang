@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 var v: i32;
-// FIXME: This should probably be valid if we allow global variables at all.
+// TODO: This should probably be valid if we allow global variables at all.
 // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_alias_var.carbon:[[@LINE+1]]: invalid target for alias declaration
 alias A = v;
 

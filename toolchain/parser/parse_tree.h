@@ -253,7 +253,7 @@ class ParseTree::Node {
   // Returns an opaque integer identifier of the node in the tree. Clients
   // should not expect any particular semantics from this value.
   //
-  // FIXME: Maybe we can switch to stream operator overloads?
+  // TODO: Maybe we can switch to stream operator overloads?
   [[nodiscard]] auto index() const -> int { return index_; }
 
   // Prints the node index.

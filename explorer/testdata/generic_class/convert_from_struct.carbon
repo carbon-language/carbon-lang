@@ -25,6 +25,6 @@ fn GetY(T:! Type, pt: Point(T)) -> T {
 
 fn Main() -> i32 {
   var p: Point(i32) = {.x = 1, .y = 2};
-  // FIXME: Should `GetX({.x = 1, .y = 2})` work? See #1251.
+  // TODO: Should `GetX({.x = 1, .y = 2})` work? See #1251.
   return GetX(p) + GetY(i32, {.x = 3, .y = 4});
 }

@@ -308,7 +308,7 @@ primary_expression:
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
 | SELF
-    // FIXME: Should we create a new TypeLiteral for `Self`?
+    // TODO: Should we create a new TypeLiteral for `Self`?
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | STRING
     { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
@@ -933,7 +933,7 @@ declaration:
       // TODO: Type of `Self` should be the interface being declared, not
       // `Type`.
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
-      // FIXME: Should this be switched to use a `SelfDeclaration` instead?
+      // TODO: Should this be switched to use a `SelfDeclaration` instead?
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
