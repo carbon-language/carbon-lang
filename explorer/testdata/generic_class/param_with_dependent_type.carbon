@@ -12,11 +12,16 @@
 package ExplorerTest api;
 
 class Point(T:! Type, V:! T) {
-  fn Get() -> T {
+  fn Get[me: Self]() -> T {
     return V;
   }
 }
 
+fn F(p: Point(i32, 1)) -> i32 {
+  return p.Get();
+}
+
 fn Main() -> i32 {
-  return Point(i32, 1).Get();
+  var v: Point(i32, 1) = {};
+  return F(v);
 }
