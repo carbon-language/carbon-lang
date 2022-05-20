@@ -432,7 +432,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> llvm::Optional<Node> {
     if (!ParseStatement()) {
       // We detected and diagnosed an error of some kind. We can trivially skip
       // to the actual close curly brace from here.
-      // FIXME: It would be better to skip to the next semicolon, or the next
+      // TODO: It would be better to skip to the next semicolon, or the next
       // token at the start of a line with the same indent as this one.
       SkipTo(tokens_.GetMatchedClosingToken(open_curly));
       has_errors = true;
@@ -468,7 +468,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
                       "Expected function name after `fn` keyword.");
     emitter_.Emit(*position_, ExpectedFunctionName);
-    // FIXME: We could change the lexer to allow us to synthesize certain
+    // TODO: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
@@ -965,7 +965,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
              NextTokenKind(), IsTrailingOperatorInfix())) {
     auto [operator_precedence, is_binary] = *trailing_operator;
 
-    // FIXME: If this operator is ambiguous with either the ambient precedence
+    // TODO: If this operator is ambiguous with either the ambient precedence
     // or the LHS precedence, and there's a variant with a different fixity
     // that would work, use that one instead for error recovery.
     if (PrecedenceGroup::GetPriority(ambient_precedence, operator_precedence) !=
@@ -1119,7 +1119,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
     CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
                       TokenKind);
     emitter_.Emit(*position_, ExpectedSemiAfter, keyword_kind);
-    // FIXME: Try to skip to a semicolon to recover.
+    // TODO: Try to skip to a semicolon to recover.
   }
   return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
 }

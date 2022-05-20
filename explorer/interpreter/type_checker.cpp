@@ -402,7 +402,7 @@ auto TypeChecker::ArgumentDeduction(
     if (!IsConcreteType(param_type)) {
       // Parameter type contains a nested `auto` and argument type isn't the
       // same kind of type.
-      // FIXME: This seems like something we should be able to accept.
+      // TODO: This seems like something we should be able to accept.
       return CompilationError(source_loc) << "type error in " << context << "\n"
                                           << "expected: " << *param_type << "\n"
                                           << "actual: " << *arg_type;
@@ -536,7 +536,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::NominalClassType: {
       const auto& param_class_type = cast<NominalClassType>(*param_type);
       if (arg_type->kind() != Value::Kind::NominalClassType) {
-        // FIXME: We could determine the parameters of the class from field
+        // TODO: We could determine the parameters of the class from field
         // types in a struct argument.
         return handle_non_deduced_type();
       }
@@ -573,7 +573,7 @@ auto TypeChecker::ArgumentDeduction(
     }
     // For the following cases, we check the type matches.
     case Value::Kind::StaticArrayType:
-      // FIXME: We could deduce the array type from an array or tuple argument.
+      // TODO: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
@@ -639,7 +639,7 @@ auto TypeChecker::Substitute(
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
-      // FIXME: Only remove the bindings that are in `dict`; we may still need
+      // TODO: Only remove the bindings that are in `dict`; we may still need
       // to do deduction.
       return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
                                        llvm::None);
@@ -925,7 +925,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << "struct " << *struct_type
                    << " does not have a field named " << access.field();
           }
-          // FIXME: We should handle all types here, not only structs. For
+          // TODO: We should handle all types here, not only structs. For
           // example:
           //   fn Main() -> i32 {
           //     class Class { var n: i32; };
@@ -1097,7 +1097,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
-            // FIXME: Consider setting the static type of all interface member
+            // TODO: Consider setting the static type of all interface member
             // declarations and instance member declarations to be member name
             // types, rather than special-casing member accesses that name
             // them.
@@ -1856,7 +1856,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& var = cast<VariableDefinition>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
       const Value& rhs_ty = var.init().static_type();
-      // FIXME: If the pattern contains a binding that implies a new impl is
+      // TODO: If the pattern contains a binding that implies a new impl is
       // available, should that remain in scope for as long as its binding?
       // ```
       // var a: (T:! Widget) = ...;
