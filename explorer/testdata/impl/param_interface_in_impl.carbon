@@ -2,17 +2,25 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 0
 
 package ExplorerTest api;
 
-var v: i32;
-// TODO: This should probably be valid if we allow global variables at all.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_alias_var.carbon:[[@LINE+1]]: invalid target for alias declaration
-alias A = v;
+interface Similar(T:! Type) {}
 
-fn Main() -> i32 { return 0; }
+impl forall [T:! Type] T as Similar(T) {}
+impl forall [T:! Type] i32 as Similar(T) {}
+
+fn CheckSimilar[T:! Type, U:! Similar(T)](a: T, b: U) {}
+
+fn Main() -> i32 {
+  let n: i32 = 0;
+  CheckSimilar(true, false);
+  CheckSimilar(true, n);
+  return 0;
+}

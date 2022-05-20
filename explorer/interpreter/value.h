@@ -643,7 +643,7 @@ class InterfaceType : public Value {
   }
   auto args() const -> const BindingMap& { return args_; }
 
-  // FIXME: These aren't used for anything yet.
+  // TODO: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 

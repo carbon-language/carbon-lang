@@ -2,17 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 1
 
 package ExplorerTest api;
 
-var v: i32;
-// TODO: This should probably be valid if we allow global variables at all.
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_alias_var.carbon:[[@LINE+1]]: invalid target for alias declaration
-alias A = v;
+class Point(T:! Type, V:! T) {
+  fn Get() -> T {
+    return V;
+  }
+}
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return Point(i32, 1).Get();
+}

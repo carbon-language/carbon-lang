@@ -10,21 +10,18 @@
 
 package ExplorerTest api;
 
-class Point(T:! i32) {
-  fn Origin(zero: T) -> Point(T) {
-    return {.x = zero, .y = zero};
-  }
+interface Similar(T:! Type) {}
 
-  fn GetX[me: Point(T)]() -> T {
-    return me.x;
-  }
+impl forall [T:! Type] T as Similar(T) {}
+impl forall [T:! Type] i32 as Similar(T) {}
 
-  var x: T;
-  var y: T;
-}
+fn CheckSimilar[T:! Type, U:! Similar(T)](a: T, b: U) {}
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_bad_parameter_type.carbon:[[@LINE+1]]: type error in call: 'Type' is not implicitly convertible to 'i32'
-  var p: Point(i32) = Point(i32).Origin(0);
-  return p.GetX();
+  let n: i32 = 0;
+  CheckSimilar(true, false);
+  CheckSimilar(true, n);
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_param_interface_in_impl.carbon:[[@LINE+1]]: could not find implementation of interface Similar(T = i32) for Bool
+  CheckSimilar(n, false);
+  return 0;
 }
