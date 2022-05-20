@@ -341,7 +341,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineUntilOutdent) {
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipWithoutSemiToCurly) {
-  // FIXME: We don't have a grammar construct that uses curlies yet so this just
+  // TODO: We don't have a grammar construct that uses curlies yet so this just
   // won't parse at all. Once it does, we should ensure that the close brace
   // gets properly parsed for the struct (or whatever other curly-braced syntax
   // we have grouping function declarations) despite the invalid function
@@ -660,12 +660,12 @@ TEST_F(ParseTreeTest, OperatorWhitespaceErrors) {
       {"var n: i8 = (n)*3;", Valid},
       {"var n: i8 = 3*(n);", Valid},
       {"var n: i8 = n *n;", Recovered},
-      // FIXME: We could figure out that this first Failed example is infix
+      // TODO: We could figure out that this first Failed example is infix
       // with one-token lookahead.
       {"var n: i8 = n* n;", Failed},
       {"var n: i8 = n* -n;", Failed},
       {"var n: i8 = n* *p;", Failed},
-      // FIXME: We try to form (n*)*p and reject due to missing parentheses
+      // TODO: We try to form (n*)*p and reject due to missing parentheses
       // before we notice the missing whitespace around the second `*`.
       // It'd be better to (somehow) form n*(*p) and reject due to the missing
       // whitespace around the first `*`.

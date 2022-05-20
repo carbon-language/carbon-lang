@@ -38,7 +38,7 @@ alias i32IM = i32.(IM);
 
 fn Main() -> i32 {
   var a: A = {.n = 0};
-  // FIXME: Use != once we support it.
+  // TODO: Use != once we support it.
   if (not (A.(IF)() == 1)) {
     return 1;
   }

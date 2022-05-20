@@ -71,7 +71,7 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
                                llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  // FIXME: We should support getting detailed help on a subcommand by looking
+  // TODO: We should support getting detailed help on a subcommand by looking
   // for it as a positional parameter here.
   if (!args.empty()) {
     ReportExtraArgs("help", args);
@@ -93,7 +93,7 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
 
   for (auto subcommand_and_help : SubcommandsAndHelp) {
     llvm::StringRef subcommand_text = subcommand_and_help[0];
-    // FIXME: We should wrap this to the number of columns left after the
+    // TODO: We should wrap this to the number of columns left after the
     // subcommand on the terminal, and using a hanging indent.
     llvm::StringRef help_text = subcommand_and_help[1];
     output_stream_ << "  "
