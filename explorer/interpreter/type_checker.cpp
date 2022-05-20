@@ -810,11 +810,9 @@ auto TypeChecker::DeduceCallBindings(
                         << *arg_value << "\n";
       }
       bool newly_added =
-          generic_bindings
-              .insert({generic_params.front().binding, arg_value})
+          generic_bindings.insert({generic_params.front().binding, arg_value})
               .second;
-      CARBON_CHECK(newly_added)
-          << "generic parameter should not be deduced";
+      CARBON_CHECK(newly_added) << "generic parameter should not be deduced";
       generic_params = generic_params.drop_front();
     }
   }
@@ -1395,7 +1393,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
               fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
-          const BindingMap &generic_bindings = call.deduced_args();
+          const BindingMap& generic_bindings = call.deduced_args();
 
           // Substitute into the return type to determine the type of the call
           // expression.
@@ -1423,8 +1421,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
               if (binding->impl_binding().has_value()) {
-                impl_bindings.push_back(
-                    *binding->impl_binding());
+                impl_bindings.push_back(*binding->impl_binding());
               }
             }
           }
