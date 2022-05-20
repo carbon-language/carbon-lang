@@ -80,7 +80,8 @@ class TypeChecker {
   auto TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
-  // Perform deduction for the deduced bindings in a function call.
+  // Perform deduction for the deduced bindings in a function call, and set its
+  // lists of generic bindings and impls.
   //
   // `params` is the list of parameters.
   //
@@ -89,11 +90,15 @@ class TypeChecker {
   //
   // `deduced_bindings` is a list of the bindings that are expected to be
   // deduced by the call.
+  //
+  // `impl_bindings` is a list of the impl bindings that are expected to be
+  // satisfied by the call.
   auto DeduceCallBindings(
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings)
-      -> ErrorOr<Success>;
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the

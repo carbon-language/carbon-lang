@@ -774,8 +774,9 @@ auto TypeChecker::SatisfyImpls(
 auto TypeChecker::DeduceCallBindings(
     CallExpression& call, Nonnull<const Value*> params_type,
     llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings)
-    -> ErrorOr<Success> {
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+    llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+    const ImplScope& impl_scope) -> ErrorOr<Success> {
   llvm::ArrayRef<Nonnull<const Value*>> params =
       cast<TupleValue>(*params_type).elements();
   llvm::ArrayRef<Nonnull<const Expression*>> args =
@@ -808,7 +809,6 @@ auto TypeChecker::DeduceCallBindings(
                         << *generic_params.front().binding << " as "
                         << *arg_value << "\n";
       }
-      // FIXME: Use PatternMatch here and remove GenericParameter::binding.
       bool newly_added =
           generic_bindings
               .insert({generic_params.front().binding, arg_value})
@@ -833,6 +833,12 @@ auto TypeChecker::DeduceCallBindings(
              << "in " << call;
     }
   }
+
+  // Find impls for all the required impl bindings.
+  ImplExpMap impls;
+  CARBON_RETURN_IF_ERROR(SatisfyImpls(
+      impl_bindings, impl_scope, call.source_loc(), generic_bindings, impls));
+  call.set_impls(impls);
 
   return Success();
 }
@@ -1386,24 +1392,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
-          CARBON_RETURN_IF_ERROR(DeduceCallBindings(call, &fun_t.parameters(),
-                                                    fun_t.generic_parameters(),
-                                                    fun_t.deduced_bindings()));
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &fun_t.parameters(), fun_t.generic_parameters(),
+              fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
           const BindingMap &generic_bindings = call.deduced_args();
-
-          // Find impls for all the impl bindings of the function.
-          ImplExpMap impls;
-          CARBON_RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(), impl_scope,
-                                              e->source_loc(), generic_bindings,
-                                              impls));
-          call.set_impls(impls);
 
           // Substitute into the return type to determine the type of the call
           // expression.
           Nonnull<const Value*> return_type =
               Substitute(generic_bindings, &fun_t.return_type());
           call.set_static_type(return_type);
-
           call.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1415,54 +1413,45 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               cast<TypeOfParameterizedEntityName>(call.function().static_type())
                   .name();
 
-          // Collect the top-level generic parameters.
+          // Collect the top-level generic parameters and their constraints.
           std::vector<FunctionType::GenericParameter> generic_parameters;
+          std::vector<Nonnull<const ImplBinding*>> impl_bindings;
           llvm::ArrayRef<Nonnull<const Pattern*>> params =
               param_name.params().fields();
           for (size_t i = 0; i != params.size(); ++i) {
             // FIXME: Should we disallow all other kinds of top-level params?
             if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
+              if (binding->impl_binding().has_value()) {
+                impl_bindings.push_back(
+                    *binding->impl_binding());
+              }
             }
           }
 
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &param_name.params().static_type(), generic_parameters,
-              /*deduced_bindings=*/llvm::None));
-          const BindingMap &generic_args = call.deduced_args();
-
-          // Find impls for all the impl bindings.
-          ImplExpMap impls;
-          for (const auto& [binding, val] : generic_args) {
-            if (binding->impl_binding().has_value()) {
-              Nonnull<const ImplBinding*> impl_binding =
-                  *binding->impl_binding();
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<Expression*> impl,
-                  impl_scope.Resolve(impl_binding->interface(), val,
-                                     call.source_loc(), *this));
-              impls.emplace(impl_binding, impl);
-            }
-          }
-          call.set_impls(impls);
-          call.set_value_category(ValueCategory::Let);
+              /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
 
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                generic_args, impls);
+                                                call.deduced_args(),
+                                                call.impls());
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
+              call.set_value_category(ValueCategory::Let);
               break;
             }
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             generic_args, impls);
+                                             call.deduced_args(), call.impls());
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
+              call.set_value_category(ValueCategory::Let);
               break;
             }
             default:
