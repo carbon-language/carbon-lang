@@ -83,16 +83,13 @@ class TypeChecker {
   // Perform deduction for the deduced bindings in a function call, and set its
   // lists of generic bindings and impls.
   //
-  // `params` is the list of parameters.
-  //
-  // `generic_params` indicates which parameters are generic parameters,
-  // which require a constant argument.
-  //
-  // `deduced_bindings` is a list of the bindings that are expected to be
-  // deduced by the call.
-  //
-  // `impl_bindings` is a list of the impl bindings that are expected to be
-  // satisfied by the call.
+  // -   `params` is the list of parameters.
+  // -   `generic_params` indicates which parameters are generic parameters,
+  //     which require a constant argument.
+  // -   `deduced_bindings` is a list of the bindings that are expected to be
+  //     deduced by the call.
+  // -   `impl_bindings` is a list of the impl bindings that are expected to be
+  //     satisfied by the call.
   auto DeduceCallBindings(
       CallExpression& call, Nonnull<const Value*> params,
       llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
