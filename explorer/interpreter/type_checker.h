@@ -30,17 +30,19 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Perform type argument deduction, matching the parameter type `param`
-  // against the argument type `arg`. Whenever there is an VariableType
-  // in the parameter type, it is deduced to be the corresponding type
-  // inside the argument type.
+  // Perform type argument deduction, matching the parameter value `param`
+  // against the argument value `arg`. Whenever there is an VariableType in the
+  // parameter, it is deduced to be the corresponding type inside the argument
+  // type. The argument and parameter will typically be types, but can be
+  // non-type values when deduction recurses into the arguments of a
+  // parameterized type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
   auto ArgumentDeduction(
       SourceLocation source_loc, const std::string& context,
-      llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
-      BindingMap& deduced, Nonnull<const Value*> param_type,
-      Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
+      BindingMap& deduced, Nonnull<const Value*> param,
+      Nonnull<const Value*> arg, bool allow_implicit_conversion) const
       -> ErrorOr<Success>;
 
   // If `impl` can be an implementation of interface `iface` for the
