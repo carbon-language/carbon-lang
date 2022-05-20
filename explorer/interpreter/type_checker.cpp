@@ -586,7 +586,6 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return handle_non_deduced_type();
-    // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -602,9 +601,17 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::StringValue:
-      CARBON_FATAL() << "In ArgumentDeduction: expected type, not value "
-                     << *param_type;
+    case Value::Kind::StringValue: {
+      // Argument deduction within the parameters of a parameterized class type
+      // or interface type can compare values, rather than types.
+      // TODO: Deduce within the values where possible.
+      if (!ValueEqual(param_type, arg_type)) {
+        return CompilationError(source_loc)
+               << "mismatch in non-type values, `" << *arg_type << "` != `"
+               << *param_type << "`";
+      }
+      return Success();
+    }
   }
 }
 
