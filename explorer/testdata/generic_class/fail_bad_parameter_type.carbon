@@ -24,7 +24,7 @@ class Point(T:! i32) {
 }
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_bad_parameter_type.carbon:[[@LINE+1]]: type error in call: '(Type)' is not implicitly convertible to '(i32)'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_bad_parameter_type.carbon:[[@LINE+1]]: type error in call: 'Type' is not implicitly convertible to 'i32'
   var p: Point(i32) = Point(i32).Origin(0);
   return p.GetX();
 }

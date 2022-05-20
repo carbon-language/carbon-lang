@@ -107,6 +107,23 @@ class TypeChecker {
   auto TypeCheckStmt(Nonnull<Statement*> s, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  // Perform deduction for the deduced bindings in a function call, and set its
+  // lists of generic bindings and impls.
+  //
+  // -   `params` is the list of parameters.
+  // -   `generic_params` indicates which parameters are generic parameters,
+  //     which require a constant argument.
+  // -   `deduced_bindings` is a list of the bindings that are expected to be
+  //     deduced by the call.
+  // -   `impl_bindings` is a list of the impl bindings that are expected to be
+  //     satisfied by the call.
+  auto DeduceCallBindings(
+      CallExpression& call, Nonnull<const Value*> params,
+      llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
+      llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+      llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
+
   // Establish the `static_type` and `constant_value` of the
   // declaration and all of its nested declarations. This involves the
   // compile-time interpretation of any type expressions in the
@@ -247,8 +264,8 @@ class TypeChecker {
   // `impls` map.
   auto SatisfyImpls(llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     const ImplScope& impl_scope, SourceLocation source_loc,
-                    BindingMap& deduced_type_args, ImplExpMap& impls) const
-      -> ErrorOr<Success>;
+                    const BindingMap& deduced_type_args,
+                    ImplExpMap& impls) const -> ErrorOr<Success>;
 
   // Sets value_node.constant_value() to `value`. Can be called multiple
   // times on the same value_node, so long as it is always called with
