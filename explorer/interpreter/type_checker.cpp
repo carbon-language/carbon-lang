@@ -386,44 +386,41 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
 
 auto TypeChecker::ArgumentDeduction(
     SourceLocation source_loc, const std::string& context,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
-    BindingMap& deduced, Nonnull<const Value*> param_type,
-    Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
-    -> ErrorOr<Success> {
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
+    BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
+    bool allow_implicit_conversion) const -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
-                    << "\n";
+    **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
   }
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
   // different forms. In this case, we require an implicit conversion to exist,
   // or for an exact type match if implicit conversions are not permitted.
   auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
-    if (!IsConcreteType(param_type)) {
+    if (!IsConcreteType(param)) {
       // Parameter type contains a nested `auto` and argument type isn't the
       // same kind of type.
       // TODO: This seems like something we should be able to accept.
       return CompilationError(source_loc) << "type error in " << context << "\n"
-                                          << "expected: " << *param_type << "\n"
-                                          << "actual: " << *arg_type;
+                                          << "expected: " << *param << "\n"
+                                          << "actual: " << *arg;
     }
-    const Value* subst_param_type = Substitute(deduced, param_type);
+    const Value* subst_param_type = Substitute(deduced, param);
     return allow_implicit_conversion
-               ? ExpectType(source_loc, context, subst_param_type, arg_type)
-               : ExpectExactType(source_loc, context, subst_param_type,
-                                 arg_type);
+               ? ExpectType(source_loc, context, subst_param_type, arg)
+               : ExpectExactType(source_loc, context, subst_param_type, arg);
   };
 
-  switch (param_type->kind()) {
+  switch (param->kind()) {
     case Value::Kind::VariableType: {
-      const auto& var_type = cast<VariableType>(*param_type);
-      if (std::find(type_params.begin(), type_params.end(),
-                    &var_type.binding()) != type_params.end()) {
-        auto [it, success] = deduced.insert({&var_type.binding(), arg_type});
+      const auto& var_type = cast<VariableType>(*param);
+      if (std::find(bindings_to_deduce.begin(), bindings_to_deduce.end(),
+                    &var_type.binding()) != bindings_to_deduce.end()) {
+        auto [it, success] = deduced.insert({&var_type.binding(), arg});
         if (!success) {
           // All deductions are required to produce the same value.
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              source_loc, "repeated argument deduction", it->second, arg_type));
+              source_loc, "repeated argument deduction", it->second, arg));
         }
       } else {
         return handle_non_deduced_type();
@@ -431,11 +428,11 @@ auto TypeChecker::ArgumentDeduction(
       return Success();
     }
     case Value::Kind::TupleValue: {
-      if (arg_type->kind() != Value::Kind::TupleValue) {
+      if (arg->kind() != Value::Kind::TupleValue) {
         return handle_non_deduced_type();
       }
-      const auto& param_tup = cast<TupleValue>(*param_type);
-      const auto& arg_tup = cast<TupleValue>(*arg_type);
+      const auto& param_tup = cast<TupleValue>(*param);
+      const auto& arg_tup = cast<TupleValue>(*arg);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
         return CompilationError(source_loc)
                << "mismatch in tuple sizes, expected "
@@ -443,18 +440,19 @@ auto TypeChecker::ArgumentDeduction(
                << arg_tup.elements().size();
       }
       for (size_t i = 0; i < param_tup.elements().size(); ++i) {
-        CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, context, type_params, deduced, param_tup.elements()[i],
-            arg_tup.elements()[i], allow_implicit_conversion));
+        CARBON_RETURN_IF_ERROR(
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                              param_tup.elements()[i], arg_tup.elements()[i],
+                              allow_implicit_conversion));
       }
       return Success();
     }
     case Value::Kind::StructType: {
-      if (arg_type->kind() != Value::Kind::StructType) {
+      if (arg->kind() != Value::Kind::StructType) {
         return handle_non_deduced_type();
       }
-      const auto& param_struct = cast<StructType>(*param_type);
-      const auto& arg_struct = cast<StructType>(*arg_type);
+      const auto& param_struct = cast<StructType>(*param);
+      const auto& arg_struct = cast<StructType>(*arg);
       auto diagnose_missing_field = [&](const StructType& struct_type,
                                         const NamedValue& field,
                                         bool missing_from_source) -> Error {
@@ -489,7 +487,7 @@ auto TypeChecker::ArgumentDeduction(
           }
         }
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, context, type_params, deduced, param_field.value,
+            source_loc, context, bindings_to_deduce, deduced, param_field.value,
             arg_field.value, allow_implicit_conversion));
       }
       if (param_struct.fields().size() != arg_struct.fields().size()) {
@@ -506,27 +504,29 @@ auto TypeChecker::ArgumentDeduction(
       return Success();
     }
     case Value::Kind::FunctionType: {
-      if (arg_type->kind() != Value::Kind::FunctionType) {
+      if (arg->kind() != Value::Kind::FunctionType) {
         return handle_non_deduced_type();
       }
-      const auto& param_fn = cast<FunctionType>(*param_type);
-      const auto& arg_fn = cast<FunctionType>(*arg_type);
+      const auto& param_fn = cast<FunctionType>(*param);
+      const auto& arg_fn = cast<FunctionType>(*arg);
       // TODO: handle situation when arg has deduced parameters.
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.parameters(),
-          &arg_fn.parameters(), /*allow_implicit_conversion=*/false));
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.return_type(),
-          &arg_fn.return_type(), /*allow_implicit_conversion=*/false));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                            &param_fn.parameters(), &arg_fn.parameters(),
+                            /*allow_implicit_conversion=*/false));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                            &param_fn.return_type(), &arg_fn.return_type(),
+                            /*allow_implicit_conversion=*/false));
       return Success();
     }
     case Value::Kind::PointerType: {
-      if (arg_type->kind() != Value::Kind::PointerType) {
+      if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      return ArgumentDeduction(source_loc, context, type_params, deduced,
-                               &cast<PointerType>(*param_type).type(),
-                               &cast<PointerType>(*arg_type).type(),
+      return ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                               &cast<PointerType>(*param).type(),
+                               &cast<PointerType>(*arg).type(),
                                /*allow_implicit_conversion=*/false);
     }
     // Nothing to do in the case for `auto`.
@@ -534,38 +534,38 @@ auto TypeChecker::ArgumentDeduction(
       return Success();
     }
     case Value::Kind::NominalClassType: {
-      const auto& param_class_type = cast<NominalClassType>(*param_type);
-      if (arg_type->kind() != Value::Kind::NominalClassType) {
+      const auto& param_class_type = cast<NominalClassType>(*param);
+      if (arg->kind() != Value::Kind::NominalClassType) {
         // TODO: We could determine the parameters of the class from field
         // types in a struct argument.
         return handle_non_deduced_type();
       }
-      const auto& arg_class_type = cast<NominalClassType>(*arg_type);
+      const auto& arg_class_type = cast<NominalClassType>(*arg);
       if (param_class_type.declaration().name() !=
           arg_class_type.declaration().name()) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_class_type.type_args()) {
         CARBON_RETURN_IF_ERROR(
-            ArgumentDeduction(source_loc, context, type_params, deduced,
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
                               param_ty, arg_class_type.type_args().at(ty),
                               /*allow_implicit_conversion=*/false));
       }
       return Success();
     }
     case Value::Kind::InterfaceType: {
-      const auto& param_iface_type = cast<InterfaceType>(*param_type);
-      if (arg_type->kind() != Value::Kind::InterfaceType) {
+      const auto& param_iface_type = cast<InterfaceType>(*param);
+      if (arg->kind() != Value::Kind::InterfaceType) {
         return handle_non_deduced_type();
       }
-      const auto& arg_iface_type = cast<InterfaceType>(*arg_type);
+      const auto& arg_iface_type = cast<InterfaceType>(*arg);
       if (param_iface_type.declaration().name() !=
           arg_iface_type.declaration().name()) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_iface_type.args()) {
         CARBON_RETURN_IF_ERROR(
-            ArgumentDeduction(source_loc, context, type_params, deduced,
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
                               param_ty, arg_iface_type.args().at(ty),
                               /*allow_implicit_conversion=*/false));
       }
@@ -605,10 +605,10 @@ auto TypeChecker::ArgumentDeduction(
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
-      if (!ValueEqual(param_type, arg_type)) {
+      if (!ValueEqual(param, arg)) {
         return CompilationError(source_loc)
-               << "mismatch in non-type values, `" << *arg_type << "` != `"
-               << *param_type << "`";
+               << "mismatch in non-type values, `" << *arg << "` != `" << *param
+               << "`";
       }
       return Success();
     }
