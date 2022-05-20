@@ -35,7 +35,8 @@ and coroutines, were motivated largely by their anticipated uses in a small set
 of standard library types. In a language with a different design philosophy,
 those types could have been built into the core language. This would probably
 have substantially simplified the language, and made those types available
-faster, at the cost of less flexibility for users outside the common case.
+faster. However, that would have come at the cost of less flexibility for users
+outside the common case.
 
 ## Principle
 
