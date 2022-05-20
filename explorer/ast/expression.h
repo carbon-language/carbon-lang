@@ -72,7 +72,7 @@ class Expression : public AstNode {
 
   // Determines whether the expression has already been type-checked. Should
   // only be used by type-checking.
-  auto has_been_type_checked() -> bool {
+  auto is_type_checked() -> bool {
     return static_type_.has_value() && value_category_.has_value();
   }
 

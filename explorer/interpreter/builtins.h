@@ -33,14 +33,14 @@ class Builtins {
 
   // Get the source name of a builtin.
   static constexpr auto GetName(Builtin builtin) -> const char* {
-    return kBuiltinNames[static_cast<int>(builtin)];
+    return BuiltinNames[static_cast<int>(builtin)];
   }
 
  private:
-  static constexpr int kNumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* kBuiltinNames[kNumBuiltins] = {"ImplicitAs"};
+  static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
+  static constexpr const char* BuiltinNames[NumBuiltins] = {"ImplicitAs"};
 
-  std::optional<Nonnull<const Declaration*>> builtins_[kNumBuiltins] = {};
+  std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };
 
 }  // namespace Carbon

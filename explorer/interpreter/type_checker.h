@@ -37,13 +37,15 @@ class TypeChecker {
   // inside the argument type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
+  // `allow_implicit_conversion` specifies whether implicit conversions are
+  // permitted from the argument to the parameter type. If so, an `impl_scope`
+  // must be provided.
   auto ArgumentDeduction(
       SourceLocation source_loc, const std::string& context,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
       BindingMap& deduced, Nonnull<const Value*> param_type,
       Nonnull<const Value*> arg_type, bool allow_implicit_conversion,
-      std::optional<Nonnull<const ImplScope*>> impl_scope =
-          /*FIXME*/ std::nullopt) const -> ErrorOr<Success>;
+      const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness

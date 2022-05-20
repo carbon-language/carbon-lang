@@ -457,7 +457,7 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
 auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
-  auto BadBuiltin = [&]() -> Error {
+  auto bad_builtin = [&]() -> Error {
     return CompilationError(source_loc)
            << "unsupported declaration for builtin `"
            << Builtins::GetName(interface.builtin) << "`";
@@ -468,7 +468,7 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                           builtins_.Get(source_loc, interface.builtin));
   auto* iface_decl = dyn_cast<InterfaceDeclaration>(builtin_decl);
   if (!iface_decl || !iface_decl->constant_value()) {
-    return BadBuiltin();
+    return bad_builtin();
   }
 
   // Match the interface arguments up with the parameters and build the
@@ -476,14 +476,14 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   bool has_parameters = iface_decl->params().has_value();
   bool has_arguments = !interface.arguments.empty();
   if (has_parameters != has_arguments) {
-    return BadBuiltin();
+    return bad_builtin();
   }
   BindingMap bindings;
   if (has_arguments) {
     TupleValue args(interface.arguments);
     if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
                       std::nullopt, bindings, trace_stream_)) {
-      return BadBuiltin();
+      return bad_builtin();
     }
   }
   return arena_->New<InterfaceType>(iface_decl, bindings);
@@ -535,10 +535,7 @@ auto TypeChecker::ArgumentDeduction(
     llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
     BindingMap& deduced, Nonnull<const Value*> param_type,
     Nonnull<const Value*> arg_type, bool allow_implicit_conversion,
-    std::optional<Nonnull<const ImplScope*>> impl_scope) const
-    -> ErrorOr<Success> {
-  CARBON_CHECK(!allow_implicit_conversion || impl_scope.has_value())
-      << "an ImplScope must be provided if implicit conversions are desired";
+    const ImplScope& impl_scope) const -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
                     << "\n";
@@ -559,7 +556,7 @@ auto TypeChecker::ArgumentDeduction(
     const Value* subst_param_type = Substitute(deduced, param_type);
     return allow_implicit_conversion
                ? ExpectType(source_loc, context, subst_param_type, arg_type,
-                            impl_scope.value())
+                            &impl_scope)
                : ExpectExactType(source_loc, context, subst_param_type,
                                  arg_type);
   };
@@ -880,7 +877,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.type, impl_type,
-          /*allow_implicit_conversion=*/false);
+          /*allow_implicit_conversion=*/false, impl_scope);
       !e.ok()) {
     if (trace_stream_) {
       **trace_stream_ << "type does not match: " << e.error() << "\n";
@@ -890,7 +887,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.interface,
-          &iface, /*allow_implicit_conversion=*/false);
+          &iface, /*allow_implicit_conversion=*/false, impl_scope);
       !e.ok()) {
     if (trace_stream_) {
       **trace_stream_ << "interface does not match: " << e.error() << "\n";
@@ -955,7 +952,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     PrintConstants(**trace_stream_);
     **trace_stream_ << "\n";
   }
-  if (e->has_been_type_checked()) {
+  if (e->is_type_checked()) {
     if (trace_stream_) {
       **trace_stream_ << "expression has already been type-checked\n";
     }
@@ -1526,7 +1523,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_RETURN_IF_ERROR(ArgumentDeduction(
                 arg->source_loc(), "call", fun_t.deduced_bindings(),
                 generic_bindings, param, &arg->static_type(),
-                /*allow_implicit_conversion=*/true, &impl_scope));
+                /*allow_implicit_conversion=*/true, impl_scope));
             // If the parameter is a `:!` binding, evaluate and collect its
             // value for use in later parameters and in the function body.
             if (!generic_params.empty() && generic_params.front().index == i) {
@@ -1999,7 +1996,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
         // FIXME: Should user-defined conversions be permitted in `match`
-        // statements? When would we run them?
+        // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
             ValueCategory::Let));
