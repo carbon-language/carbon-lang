@@ -19,7 +19,7 @@ message CallExpression {
 }
 
 message FunctionTypeLiteral {
-  optional Expression parameter = 1;
+  optional TupleLiteralExpression parameter = 3;
   optional Expression return_type = 2;
 }
 

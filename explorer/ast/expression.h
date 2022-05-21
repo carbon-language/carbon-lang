@@ -489,7 +489,7 @@ class CallExpression : public Expression {
 class FunctionTypeLiteral : public Expression {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
-                               Nonnull<Expression*> parameter,
+                               Nonnull<TupleLiteral*> parameter,
                                Nonnull<Expression*> return_type)
       : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
@@ -499,13 +499,13 @@ class FunctionTypeLiteral : public Expression {
     return InheritsFromFunctionTypeLiteral(node->kind());
   }
 
-  auto parameter() const -> const Expression& { return *parameter_; }
-  auto parameter() -> Expression& { return *parameter_; }
+  auto parameter() const -> const TupleLiteral& { return *parameter_; }
+  auto parameter() -> TupleLiteral& { return *parameter_; }
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
 
  private:
-  Nonnull<Expression*> parameter_;
+  Nonnull<TupleLiteral*> parameter_;
   Nonnull<Expression*> return_type_;
 };
 
