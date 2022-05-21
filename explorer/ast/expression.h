@@ -70,6 +70,12 @@ class Expression : public AstNode {
     value_category_ = value_category;
   }
 
+  // Determines whether the expression has already been type-checked. Should
+  // only be used by type-checking.
+  auto is_type_checked() -> bool {
+    return static_type_.has_value() && value_category_.has_value();
+  }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -237,6 +243,9 @@ class CompoundFieldAccessExpression : public Expression {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
 
  private:
   Nonnull<Expression*> object_;
@@ -467,6 +476,9 @@ class CallExpression : public Expression {
     deduced_args_ = deduced_args;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
@@ -537,6 +549,29 @@ class TypeTypeLiteral : public Expression {
   }
 };
 
+// A literal value. This is used in desugaring, and can't be expressed in
+// source syntax.
+class ValueLiteral : public Expression {
+ public:
+  // Value literals are created by type-checking, and so are created with their
+  // type and value category already known.
+  ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
+               Nonnull<const Value*> type, ValueCategory value_category)
+      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+    set_static_type(type);
+    set_value_category(value_category);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromValueLiteral(node->kind());
+  }
+
+  auto value() const -> const Value& { return *value_; }
+
+ private:
+  Nonnull<const Value*> value_;
+};
+
 class IntrinsicExpression : public Expression {
  public:
   enum class Intrinsic {
@@ -594,6 +629,9 @@ class IfExpression : public Expression {
     return *else_expression_;
   }
   auto else_expression() -> Expression& { return *else_expression_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
 
  private:
   Nonnull<Expression*> condition_;

@@ -22,7 +22,7 @@ fn Main() -> i32 {
   var y: Ints = Ints.One(42);
   var n: i32 = 0;
   match (y) {
-    case Ints.None =>
+    case Ints.None() =>
       n = n + 2;
     case Ints.One(x: auto) =>
       n = x + 1 - 42;
