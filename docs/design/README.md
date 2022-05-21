@@ -369,8 +369,8 @@ are available for representing strings with `\`s and `"`s.
 > References: [Tuples](tuples.md)
 
 A tuple is a fixed-size collection of values that can have different types,
-where each value is identified by its position in the tuple. An example use
-of tuples is to return multiple values from a function:
+where each value is identified by its position in the tuple. An example use of
+tuples is to return multiple values from a function:
 
 ```carbon
 fn DoubleBoth(x: i32, y: i32) -> (i32, i32) {
@@ -494,8 +494,8 @@ Console.Print(a[0]);
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 
-Functions are the core unit of behavior. For example, this is a declaration
-of a function that adds two 64-bit integers:
+Functions are the core unit of behavior. For example, this is a declaration of a
+function that adds two 64-bit integers:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64;
@@ -510,13 +510,14 @@ Breaking this apart:
 
 You would call this function like `Add(1, 2)`.
 
-A function definition is a function declaration that has a body block
-instead of a semicolon:
+A function definition is a function declaration that has a body block instead of
+a semicolon:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64 {
   return a + b;
 }
+```
 
 ### Blocks and statements
 
@@ -660,8 +661,8 @@ fn DoSomething() -> i64 {
 ```
 
 The `let` binds `x` to the _value_ `42`. `x` is an r-value, so it can not be
-modified, for example by being the left side of an assignment statement,
-and its address cannot be taken.
+modified, for example by being the left side of an assignment statement, and its
+address cannot be taken.
 
 Function parameters are passed by value, and so act like they were defined in a
 `let` implicitly. **FIXME:** Is this just the default, or can you write `var` in
@@ -692,9 +693,9 @@ var z: auto = (y > 1);
 ```
 
 It may also be used as the return type in a function definition. In this case,
-the body of the function must have exactly one `return` statement, and the return
-type of the function is set to the static type of the expression argument of that
-`return`.
+the body of the function must have exactly one `return` statement, and the
+return type of the function is set to the static type of the expression argument
+of that `return`.
 
 ```
 // Return type is inferred to be `bool`, the type of `a > 0`.
@@ -770,8 +771,8 @@ described on the left-hand side of the assignment.
     `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
     `x = x @ y;` for each operator `@`.
 
-Unlike C++, these assignments are statements, not expressions, and don't return a
-value.
+Unlike C++, these assignments are statements, not expressions, and don't return
+a value.
 
 ### Control flow
 
@@ -799,8 +800,8 @@ allows an individual statement without curly braces.
 > -   Proposal
 >     [#285: if/else](https://github.com/carbon-language/carbon-lang/pull/285)
 
-`if` and `else` provide conditional execution of statements. An `if`
-statement consists of:
+`if` and `else` provide conditional execution of statements. An `if` statement
+consists of:
 
 -   An `if` introducer followed by a condition in parentheses. If the condition
     evaluates to `true`, the block following the condition is executed,
@@ -993,11 +994,11 @@ This is instead of
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other languages, such as Swift. The `match` keyword is followed by an
-expression in parentheses, whose value is matched against `case` declarations in order. The
-code for the first matching `case` is executed. An optional `default` code block
-may be placed after the `case` declaratoins, it will be executed if none of the
-`case` declarations match.
+constructs in other languages, such as Swift. The `match` keyword is followed by
+an expression in parentheses, whose value is matched against `case` declarations
+in order. The code for the first matching `case` is executed. An optional
+`default` code block may be placed after the `case` declaratoins, it will be
+executed if none of the `case` declarations match.
 
 An example `match` is:
 
@@ -1318,8 +1319,8 @@ names resolvable by the compiler, and don't act like forward declarations.
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
-A destructor for a class is custom code executed when the lifetime of a value
-of that type ends. They are defined with the `destructor` keyword followed by
+A destructor for a class is custom code executed when the lifetime of a value of
+that type ends. They are defined with the `destructor` keyword followed by
 either `[me: Self]` or `[addr me: Self*]` (as is done with [methods](#methods))
 and the block of code in the class definition, as in:
 
