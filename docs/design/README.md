@@ -160,7 +160,7 @@ required to be the only non-whitespace on the line.
 
 ## Build modes
 
-The behavior of Carbon programs depends on the _build mode_:
+The behavior of the Carbon compiler depends on the _build mode_:
 
 -   In a _development build_, the priority is diagnosing problems and fast build
     time.
@@ -368,9 +368,9 @@ are available for representing strings with `\`s and `"`s.
 
 > References: [Tuples](tuples.md)
 
-A tuple is a simple aggregation of types. In formal type theory, tuples are
-product types. An example use of tuples is to return multiple values from a
-function:
+A tuple is a fixed-size collection of values that can have different types,
+where each value is identified by its position in the tuple. An example use
+of tuples is to return multiple values from a function:
 
 ```carbon
 fn DoubleBoth(x: i32, y: i32) -> (i32, i32) {
@@ -385,10 +385,11 @@ Breaking this example apart:
 
 Both of these are expressions using the tuple syntax
 `(<expression>, <expression>)`. The only difference is the type of the tuple
-expression: one is a tuple of types, the other a tuple of values.
+expression: one is a tuple of types, the other a tuple of values. In other
+words, a tuple type is a tuple _of_ types.
 
 The components of a tuple are accessed positionally, so element access uses
-subscript syntax:
+subscript syntax, but the index must be a compile-time constant:
 
 ```carbon
 fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
@@ -440,7 +441,7 @@ both cases, they have a comma-separated list of members that start with a period
 
 The type of pointers-to-values-of-type-`T` is written `T*`. Carbon pointers do
 not support
-[pointer arithmetic](<https://en.wikipedia.org/wiki/Pointer_(computer_programming)>),
+[pointer arithmetic](<https://en.wikipedia.org/wiki/Pointer_(computer_programming)>);
 the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
@@ -493,8 +494,8 @@ Console.Print(a[0]);
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 
-Functions are the core unit of behavior. For example, this declares a function
-that adds two 64-bit integers:
+Functions are the core unit of behavior. For example, this is a declaration
+of a function that adds two 64-bit integers:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64;
@@ -509,8 +510,13 @@ Breaking this apart:
 
 You would call this function like `Add(1, 2)`.
 
-This just declares the function, a definition that includes the body that
-defines what this function does would follow.
+A function definition is a function declaration that has a body block
+instead of a semicolon:
+
+```carbon
+fn Add(a: i64, b: i64) -> i64 {
+  return a + b;
+}
 
 ### Blocks and statements
 
@@ -596,8 +602,8 @@ Some common expressions in Carbon include:
     -   Function call: `f(4)`
     -   Pointer and member: `*p`, `x.m`, `p->m`, `&x`
 
--   [Conditional](expressions/if.md): `if c then t else f`
--   Parenthesized: `(7 + 8) * (3 - 1)`
+-   [Conditionals](expressions/if.md): `if c then t else f`
+-   Parentheses: `(7 + 8) * (3 - 1)`
 
 When an expression appears in a context in which an expression of a specific
 type is expected, [implicit conversions](expressions/implicit_conversions.md)
@@ -654,7 +660,8 @@ fn DoSomething() -> i64 {
 ```
 
 The `let` binds `x` to the _value_ `42`. `x` is an r-value, so it can not be
-modified, for example by being the left side of an assignment statement.
+modified, for example by being the left side of an assignment statement,
+and its address cannot be taken.
 
 Function parameters are passed by value, and so act like they were defined in a
 `let` implicitly. **FIXME:** Is this just the default, or can you write `var` in
@@ -685,8 +692,8 @@ var z: auto = (y > 1);
 ```
 
 It may also be used as the return type in a function definition. In this case,
-the body of the function must have exactly one `return` statement, and the type
-of the function is set to the static type of the expression argument of that
+the body of the function must have exactly one `return` statement, and the return
+type of the function is set to the static type of the expression argument of that
 `return`.
 
 ```
@@ -763,7 +770,7 @@ described on the left-hand side of the assignment.
     `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
     `x = x @ y;` for each operator `@`.
 
-Unlike C++, these assignments are statements, not operators, and don't return a
+Unlike C++, these assignments are statements, not expressions, and don't return a
 value.
 
 ### Control flow
@@ -792,9 +799,10 @@ allows an individual statement without curly braces.
 > -   Proposal
 >     [#285: if/else](https://github.com/carbon-language/carbon-lang/pull/285)
 
-`if` and `else` provide conditional execution of statements. It consists of:
+`if` and `else` provide conditional execution of statements. An `if`
+statement consists of:
 
--   An `if` introducer followed by a condition in parenthesis. If the condition
+-   An `if` introducer followed by a condition in parentheses. If the condition
     evaluates to `true`, the block following the condition is executed,
     otherwise it is skipped.
 -   This may be followed by zero or more `else if` clauses, whose conditions are
@@ -834,7 +842,7 @@ This code will:
 > -   Proposal
 >     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
 
-`while` statements loop for as long as the passed expression returns `True`. For
+`while` statements loop for as long as the passed expression returns `true`. For
 example, this prints `0`, `1`, `2`, then `Done!`:
 
 ```carbon
@@ -985,8 +993,8 @@ This is instead of
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other languages, such as Swift. The `match` is followed by an
-expression, whose value is matched against `case` declarations in order. The
+constructs in other languages, such as Swift. The `match` keyword is followed by an
+expression in parentheses, whose value is matched against `case` declarations in order. The
 code for the first matching `case` is executed. An optional `default` code block
 may be placed after the `case` declaratoins, it will be executed if none of the
 `case` declarations match.
@@ -1058,13 +1066,13 @@ Breaking apart `Widget`:
 
 -   `Widget` has three `i32` field: `x`, `y`, and `z`.
 -   `Widget` has one `String` field: `payload`.
--   Given an instance `dial`, a field can be referenced with `dial.paylod`.
+-   Given an instance `dial`, a field can be referenced with `dial.payload`.
 
 The order of the field declarations determines the fields' memory-layout order.
 
 Every class has a member named `Self` equal to the class type itself.
 
-Like functions, a class may be forward declared, ending the declaration with a
+Like functions, classes may be forward declared, ending the declaration with a
 semicolon (`;`) instead of the block in curly braces (`{`...`}`).
 
 Both [structural data classes](#struct-types) and nominal classes are considered
@@ -1298,7 +1306,7 @@ implemented in derived classes, even though it may not be called.
 
 Friends may be declared using a `friend` declaration inside the class naming an
 existing function or type. Unlike C++, `friend` declarations may only refer to
-names resolvable to the compiler and don't act like forward declarations.
+names resolvable by the compiler, and don't act like forward declarations.
 
 `protected` is like `private`, but also gives access to derived classes.
 
@@ -1310,7 +1318,7 @@ names resolvable to the compiler and don't act like forward declarations.
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 
-A destructor for a class is a custom code executed when the lifetime of a value
+A destructor for a class is custom code executed when the lifetime of a value
 of that type ends. They are defined with the `destructor` keyword followed by
 either `[me: Self]` or `[addr me: Self*]` (as is done with [methods](#methods))
 and the block of code in the class definition, as in:
@@ -1366,7 +1374,7 @@ having names inside the class' scope:
 A _choice type_ is a [tagged union](https://en.wikipedia.org/wiki/Tagged_union),
 that can store different types of data in a storage space that can hold the
 largest. A choice type has a name, and a list of cases separated by commas
-(`,`). Each case has a name and a optional parameter list.
+(`,`). Each case has a name and an optional parameter list.
 
 ```carbon
 choice IntResult {
