@@ -97,7 +97,7 @@ static auto ExpressionToProto(const Expression& expression)
       const auto& fun_type = cast<FunctionTypeLiteral>(expression);
       auto* fun_type_proto = expression_proto.mutable_function_type();
       *fun_type_proto->mutable_parameter() =
-          ExpressionToProto(fun_type.parameter());
+          TupleLiteralExpressionToProto(fun_type.parameter());
       *fun_type_proto->mutable_return_type() =
           ExpressionToProto(fun_type.return_type());
       break;

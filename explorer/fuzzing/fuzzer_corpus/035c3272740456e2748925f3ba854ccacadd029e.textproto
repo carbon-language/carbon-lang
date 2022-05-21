@@ -29,11 +29,9 @@ compilation_unit {
                 expression {
                   function_type {
                     parameter {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "T"
-                          }
+                      fields {
+                        identifier {
+                          name: "T"
                         }
                       }
                     }
