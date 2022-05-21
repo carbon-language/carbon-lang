@@ -12,6 +12,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
@@ -38,12 +39,15 @@ class TypeChecker {
   // parameterized type.
   // The `deduced` parameter is an accumulator, that is, it holds the
   // results so-far.
+  // `allow_implicit_conversion` specifies whether implicit conversions are
+  // permitted from the argument to the parameter type. If so, an `impl_scope`
+  // must be provided.
   auto ArgumentDeduction(
       SourceLocation source_loc, const std::string& context,
       llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
       BindingMap& deduced, Nonnull<const Value*> param,
-      Nonnull<const Value*> arg, bool allow_implicit_conversion) const
-      -> ErrorOr<Success>;
+      Nonnull<const Value*> arg, bool allow_implicit_conversion,
+      const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // If `impl` can be an implementation of interface `iface` for the
   // given `type`, then return an expression that will produce the witness
@@ -92,8 +96,8 @@ class TypeChecker {
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the
-  // surrounding context gives us that information. Otherwise, it is
-  // nullopt.
+  // surrounding context gives us that information. Otherwise, it is nullopt.
+  // Implicit conversions from `expected` to the pattern's type are permitted.
   //
   // `impl_scope` is extended with all impls implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
@@ -244,14 +248,56 @@ class TypeChecker {
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
-  auto IsImplicitlyConvertible(Nonnull<const Value*> source,
-                               Nonnull<const Value*> destination) const -> bool;
+  auto IsImplicitlyConvertible(
+      Nonnull<const Value*> source, Nonnull<const Value*> destination,
+      std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool;
+
+  // Attempt to implicitly convert type-checked expression `source` to the type
+  // `destination`.
+  auto ImplicitlyConvert(const std::string& context,
+                         const ImplScope& impl_scope,
+                         Nonnull<Expression*> source,
+                         Nonnull<const Value*> destination)
+      -> ErrorOr<Nonnull<Expression*>>;
 
   // Check whether `actual` is implicitly convertible to `expected`
   // and halt with a fatal compilation error if it is not.
+  //
+  // If `impl_scope` is `std::nullopt`, only built-in conversions are
+  // considered.
+  // FIXME: Remove this behavior.
+  //
+  // FIXME: Does not actually perform the conversion if a user-defined
+  // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
-                  Nonnull<const Value*> expected,
-                  Nonnull<const Value*> actual) const -> ErrorOr<Success>;
+                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
+                  std::optional<Nonnull<const ImplScope*>> impl_scope) const
+      -> ErrorOr<Success>;
+
+  // The name of a builtin interface, with any arguments.
+  struct BuiltinInterfaceName {
+    Builtins::Builtin builtin;
+    llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
+  };
+  // The name of a method on a builtin interface, with any arguments.
+  struct BuiltinMethodCall {
+    const std::string& name;
+    llvm::ArrayRef<Nonnull<Expression*>> arguments = {};
+  };
+
+  // Form a builtin method call. Ensures that the type of `source` implements
+  // the interface `interface`, which should be defined in the prelude, and
+  // forms a call to the method `method` on that interface.
+  auto BuildBuiltinMethodCall(const ImplScope& impl_scope,
+                              Nonnull<Expression*> source,
+                              BuiltinInterfaceName interface,
+                              BuiltinMethodCall method)
+      -> ErrorOr<Nonnull<Expression*>>;
+
+  // Get a type for a builtin interface.
+  auto GetBuiltinInterfaceType(SourceLocation source_loc,
+                               BuiltinInterfaceName interface) const
+      -> ErrorOr<Nonnull<const InterfaceType*>>;
 
   // Construct a type that is the same as `type` except that occurrences
   // of type variables (aka. `GenericBinding`) are replaced by their
@@ -279,6 +325,7 @@ class TypeChecker {
 
   Nonnull<Arena*> arena_;
   std::set<ValueNodeView> constants_;
+  Builtins builtins_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
 };

@@ -24,7 +24,9 @@ class Point {
     }
     fn Scale[me: Point](v: i32) -> i32 {
       return 0;
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+1]]: type error in member of implementation: 'fn (i32) -> i32' is not implicitly convertible to 'fn (i32) -> class Point'
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+3]]: type error in member of implementation
+    // CHECK: expected: fn (i32) -> class Point
+    // CHECK: actual: fn (i32) -> i32
     }
   }
 }

@@ -200,6 +200,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
   }
@@ -235,6 +236,10 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
+      break;
+    case ExpressionKind::ValueLiteral:
+      // FIXME: For layering reasons, we can't print out the value from here.
+      out << "ValueLiteral";
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::FieldAccessExpression:
