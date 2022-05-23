@@ -10,18 +10,14 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
-  // The return type should be Point(T). Point by itself is not a type.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_return_type_is_type.carbon:[[@LINE+1]]: Expected a type, but got Point
-  fn Create(x: T, y: T) -> Point {
-    return {.x = x, .y = y};
-  }
-
-  var x: T;
-  var y: T;
+interface Vector {
+  fn Zero() -> i32;
+}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_not_type.carbon:[[@LINE+1]]: Expected a type, but got "hello"
+impl "hello" as Vector {
+  fn Zero() -> i32 { return 0; }
 }
 
 fn Main() -> i32 {
-  var p: Point(i32) = Point(i32).Create(0, 1);
-  return p.x;
+  return 0;
 }
