@@ -701,16 +701,6 @@ two methods `Distance` and `Offset`:
 
 ### Packages, libraries, namespaces
 
-> References:
->
-> -   [Code and name organization](code_and_name_organization)
-> -   Proposal
->     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
-> -   Proposal
->     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
-> -   Question-for-leads issue
->     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
-
 -   **Files** are grouped into libraries, which are in turn grouped into
     packages.
 -   **Libraries** are the granularity of code reuse through imports.
@@ -739,11 +729,17 @@ import Geometry library("OneSide");
 fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 ```
 
-### Names and scopes
-
-> References: [Lexical conventions](lexical_conventions)
+> References:
 >
-> **TODO:** References need to be evolved.
+> -   [Code and name organization](code_and_name_organization)
+> -   Proposal
+>     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
+> -   Question-for-leads issue
+>     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
+
+### Names and scopes
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
@@ -752,13 +748,11 @@ and which starts with a letter. We intend to follow Unicode's Annex 31 in
 selecting valid identifier characters, but a concrete set of valid characters
 has not been selected yet.
 
-### Naming conventions
-
-> References:
+> References: [Lexical conventions](lexical_conventions)
 >
-> -   [Naming conventions](naming_conventions.md)
-> -   Proposal
->     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
+> **TODO:** References need to be evolved.
+
+### Naming conventions
 
 Our naming conventions are:
 
@@ -772,15 +766,13 @@ Our naming conventions are:
     -   Keywords and type literals will use `lower_snake_case`.
     -   Other code will use the conventions for idiomatic Carbon code.
 
-### Aliases
-
 > References:
 >
-> -   [Aliases](aliases.md)
-> -   Question-for-leads issue
->     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+> -   [Naming conventions](naming_conventions.md)
+> -   Proposal
+>     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
-> **TODO:** References need to be evolved.
+### Aliases
 
 Carbon provides a facility to declare a new name as an alias for a value. This
 is a fully general facility because everything is a value in Carbon, including
@@ -796,7 +788,17 @@ This creates an alias called `MyInt` for whatever `i32` resolves to. Code
 textually after this can refer to `MyInt`, and it will transparently refer to
 `i32`.
 
+> References:
+>
+> -   [Aliases](aliases.md)
+> -   Question-for-leads issue
+>     [#749: Alias syntax](https://github.com/carbon-language/carbon-lang/issues/749)
+
+> **TODO:** References need to be evolved.
+
 ### Name lookup
+
+Unqualified name lookup will always find a file-local result, including aliases.
 
 > References:
 >
@@ -806,14 +808,17 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 >
 > **TODO:** References need to be evolved.
 
-Unqualified name lookup will always find a file-local result, including aliases.
-
 #### Name lookup for common types
 
 FIXME: should this be renamed to "The prelude"?
 
-> References: [Name lookup](name_lookup.md)
+Common types that we expect to be used universally will be provided for every
+file, including `i32` and `Bool`. These will likely be defined in a special
+"prelude" package.
+
+> References:
 >
+> -   [Name lookup](name_lookup.md)
 > -   Question-for-leads issue
 >     [#750: Naming conventions for Carbon-provided features](https://github.com/carbon-language/carbon-lang/issues/750)
 > -   Question-for-leads issue
@@ -821,11 +826,9 @@ FIXME: should this be renamed to "The prelude"?
 >
 > **TODO:** References need to be evolved.
 
-Common types that we expect to be used universally will be provided for every
-file, including `i32` and `Bool`. These will likely be defined in a special
-"prelude" package.
-
 ### Name visibility
+
+> **TODO:**
 
 > References:
 >
@@ -835,27 +838,7 @@ file, including `i32` and `Bool`. These will likely be defined in a special
 > -   Proposal
 >     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
 
-> **TODO:**
-
 ## Generics
-
-> References: **TODO:** Revisit
->
-> -   [Generics: Overview](generics/overview.md)
-> -   Proposal
->     [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
-> -   Proposal
->     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
-> -   Proposal
->     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
-> -   Proposal
->     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
-> -   Proposal
->     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
-> -   Proposal
->     [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
-> -   Proposal
->     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
 
 Generics allow Carbon constructs like [functions](#functions) and
 [classes](#classes) to have compile-time parameters to allow them to be
@@ -882,13 +865,25 @@ Since the `T` type parameter is in the deduced parameter list in square brackets
 value of `T` is determined from the types of the explicit arguments instead of
 being passed as a separate explicit argument.
 
-### Checked and template parameters
-
-> References:
+> References: **TODO:** Revisit
 >
-> -   [Templates](templates.md)
+> -   [Generics: Overview](generics/overview.md)
 > -   Proposal
->     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+>     [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+> -   Proposal
+>     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+> -   Proposal
+>     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+> -   Proposal
+>     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+> -   Proposal
+>     [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+> -   Proposal
+>     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+
+### Checked and template parameters
 
 The `:!` indicates that `T` is a _checked_ parameter passed at compile time.
 "Checked" here means that the body of `Min` is type checked when the function is
@@ -929,6 +924,12 @@ Although generics are generally preferred, templates enable translation of code
 between C++ and Carbon, and address some cases where the type checking rigor of
 generics are problematic.
 
+> References:
+>
+> -   [Templates](templates.md)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+
 ### Interfaces and implementations
 
 _Interfaces_ specify a set of requirements that a types might satisfy.
@@ -961,12 +962,6 @@ class Circle {
 
 ### Combining constraints
 
-> References:
->
-> -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
-> -   Question-for-leads issue
->     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
-
 A function can require calling types to implement multiple interfaces by
 combining them using an ampersand (`&`):
 
@@ -995,15 +990,17 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 }
 ```
 
+> References:
+>
+> -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
+> -   Question-for-leads issue
+>     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
+
 ### Generic types
 
 > **TODO:**
 
 #### Types with template parameters
-
-> References: [Templates](templates.md)
->
-> **TODO:** References need to be evolved.
 
 User-defined types may have template parameters. The resulting type-function may
 be used to instantiate the parameterized definition with the provided arguments
@@ -1026,6 +1023,10 @@ Breaking apart the template use in `Stack`:
 -   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
     instantiated.
 
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
+
 #### Generic choice types
 
 ```carbon
@@ -1036,10 +1037,6 @@ choice Result(T:! Type, Error:! Type) {
 ```
 
 ### Other features
-
-> References:
->
-> -   [Generics details](generics/details.md)
 
 **TODO:**
 
@@ -1064,25 +1061,11 @@ choice Result(T:! Type, Error:! Type) {
 -   [dynamic erased types](generics/details.md#runtime-type-fields)
 -   [variadics](generics/details.md#variadic-arguments)
 
-### Operator overloading
-
 > References:
 >
-> -   [Operator overloading](generics/details.md#operator-overloading)
-> -   Proposal
->     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
-> -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
-> -   Proposal
->     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
-> -   Question-for-leads issue
->     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
-> -   Proposal
->     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
-> -   Proposal
->     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
-> -   Proposal
->     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+> -   [Generics details](generics/details.md)
+
+### Operator overloading
 
 > **TODO:** Operators are translated into calls into interface methods, so to
 > overload an operator for a type, implement the corresponding interface for
@@ -1122,13 +1105,25 @@ choice Result(T:! Type, Error:! Type) {
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
 
-#### Common type
-
 > References:
 >
-> -   [`if` expressions](expressions/if.md#finding-a-common-type)
+> -   [Operator overloading](generics/details.md#operator-overloading)
 > -   Proposal
->     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+>     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
+> -   Question-for-leads issue
+>     [#1058: How should interfaces for core functionality be named?](https://github.com/carbon-language/carbon-lang/issues/1058)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
+> -   Proposal
+>     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+
+#### Common type
 
 > **TODO:**
 
@@ -1146,7 +1141,15 @@ var b: V;
 F(a, b);
 ```
 
+> References:
+>
+> -   [`if` expressions](expressions/if.md#finding-a-common-type)
+> -   Proposal
+>     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+
 ## Bidirectional interoperability with C/C++
+
+> **TODO:** Needs a detailed design and a high level summary provided inline.
 
 > References:
 >
@@ -1154,8 +1157,7 @@ F(a, b);
 > -   Proposal
 >     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
 >
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
+> **TODO:** References need to be evolved.
 
 ## Unfinished tales
 
@@ -1172,14 +1174,14 @@ F(a, b);
 
 ### Metaprogramming
 
-> References: [Metaprogramming](metaprogramming.md)
->
 > **TODO:** References need to be evolved. Needs a detailed design and a high
 > level summary provided inline.
 
 Carbon provides metaprogramming facilities that look similar to regular Carbon
 code. These are structured, and do not offer arbitrary inclusion or
 preprocessing of source text such as C/C++ does.
+
+> References: [Metaprogramming](metaprogramming.md)
 
 ### Execution abstractions
 
