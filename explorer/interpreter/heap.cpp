@@ -24,7 +24,7 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
-  return values_[a.allocation_.index_]->GetField(arena_, a.field_path_,
+  return values_[a.allocation_.index_]->GetMember(arena_, a.field_path_,
                                                  source_loc);
 }
 

@@ -504,9 +504,9 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
       source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
       ValueCategory::Let);
   Nonnull<Expression*> iface_member =
-      arena_->New<FieldAccessExpression>(source_loc, iface_expr, method.name);
+      arena_->New<SimpleMemberAccessExpression>(source_loc, iface_expr, method.name);
   Nonnull<Expression*> method_access =
-      arena_->New<CompoundFieldAccessExpression>(source_loc, source,
+      arena_->New<CompoundMemberAccessExpression>(source_loc, source,
                                                  iface_member);
   Nonnull<Expression*> call_args =
       arena_->New<TupleLiteral>(source_loc, method.arguments);
@@ -1051,12 +1051,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << " generated during type checking";
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.object(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
-      const Value& aggregate_type = index.aggregate().static_type();
-      switch (aggregate_type.kind()) {
+      const Value& object_type = index.object().static_type();
+      switch (object_type.kind()) {
         case Value::Kind::TupleValue: {
-          const auto& tuple_type = cast<TupleValue>(aggregate_type);
+          const auto& tuple_type = cast<TupleValue>(object_type);
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               index.offset().source_loc(), "tuple index",
               arena_->New<IntType>(), &index.offset().static_type()));
@@ -1070,7 +1070,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << tuple_type;
           }
           index.set_static_type(tuple_type.elements()[i]);
-          index.set_value_category(index.aggregate().value_category());
+          index.set_value_category(index.object().value_category());
           return Success();
         }
         case Value::Kind::StaticArrayType: {
@@ -1078,8 +1078,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               index.offset().source_loc(), "array index",
               arena_->New<IntType>(), &index.offset().static_type()));
           index.set_static_type(
-              &cast<StaticArrayType>(aggregate_type).element_type());
-          index.set_value_category(index.aggregate().value_category());
+              &cast<StaticArrayType>(object_type).element_type());
+          index.set_value_category(index.object().value_category());
           return Success();
         }
         default:
@@ -1127,17 +1127,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       return Success();
     }
-    case ExpressionKind::FieldAccessExpression: {
-      auto& access = cast<FieldAccessExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.aggregate(), impl_scope));
-      const Value& aggregate_type = access.aggregate().static_type();
-      switch (aggregate_type.kind()) {
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      auto& access = cast<SimpleMemberAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      const Value& object_type = access.object().static_type();
+      switch (object_type.kind()) {
         case Value::Kind::StructType: {
-          const auto& struct_type = cast<StructType>(aggregate_type);
+          const auto& struct_type = cast<StructType>(object_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
             if (access.field() == field_name) {
               access.set_static_type(field_type);
-              access.set_value_category(access.aggregate().value_category());
+              access.set_value_category(access.object().value_category());
               return Success();
             }
           }
@@ -1148,7 +1148,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::TypeType: {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
-              InterpExp(&access.aggregate(), arena_, trace_stream_));
+              InterpExp(&access.object(), arena_, trace_stream_));
           if (const auto* struct_type = dyn_cast<StructType>(type)) {
             for (const auto& field : struct_type->fields()) {
               if (access.field() == field.name) {
@@ -1175,7 +1175,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "unsupported member access into type " << *type;
         }
         case Value::Kind::NominalClassType: {
-          const auto& t_class = cast<NominalClassType>(aggregate_type);
+          const auto& t_class = cast<NominalClassType>(object_type);
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), t_class.declaration().members());
               member.has_value()) {
@@ -1184,7 +1184,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             access.set_static_type(field_type);
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
-                access.set_value_category(access.aggregate().value_category());
+                access.set_value_category(access.object().value_category());
                 break;
               case DeclarationKind::FunctionDeclaration:
                 access.set_value_category(ValueCategory::Let);
@@ -1203,7 +1203,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeOfChoiceType: {
           const ChoiceType& choice =
-              cast<TypeOfChoiceType>(aggregate_type).choice_type();
+              cast<TypeOfChoiceType>(object_type).choice_type();
           std::optional<Nonnull<const Value*>> parameter_types =
               choice.FindAlternative(access.field());
           if (!parameter_types.has_value()) {
@@ -1218,7 +1218,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeOfClassType: {
           const NominalClassType& class_type =
-              cast<TypeOfClassType>(aggregate_type).class_type();
+              cast<TypeOfClassType>(object_type).class_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
                   access.field(), class_type.declaration().members());
               member.has_value()) {
@@ -1249,7 +1249,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::TypeOfInterfaceType: {
           const InterfaceType& iface_type =
-              cast<TypeOfInterfaceType>(aggregate_type).interface_type();
+              cast<TypeOfInterfaceType>(object_type).interface_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
                   access.field(), iface_type.declaration().members());
               member.has_value()) {
@@ -1268,7 +1268,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // is a type variable. For example, `x.foo` where the type of
           // `x` is `T` and `foo` and `T` implements an interface that
           // includes `foo`.
-          const VariableType& var_type = cast<VariableType>(aggregate_type);
+          const VariableType& var_type = cast<VariableType>(object_type);
           const Value& typeof_var = var_type.binding().static_type();
           switch (typeof_var.kind()) {
             case Value::Kind::InterfaceType: {
@@ -1295,7 +1295,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             default:
               return CompilationError(e->source_loc())
-                     << "field access, unexpected " << aggregate_type
+                     << "field access, unexpected " << object_type
                      << " of non-interface type " << typeof_var << " in " << *e;
           }
           break;
@@ -1307,9 +1307,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // function of `T`.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> var_addr,
-              InterpExp(&access.aggregate(), arena_, trace_stream_));
+              InterpExp(&access.object(), arena_, trace_stream_));
           const VariableType& var_type = cast<VariableType>(*var_addr);
-          const InterfaceType& iface_type = cast<InterfaceType>(aggregate_type);
+          const InterfaceType& iface_type = cast<InterfaceType>(object_type);
           const InterfaceDeclaration& iface_decl = iface_type.declaration();
           if (std::optional<Nonnull<const Declaration*>> member =
                   FindMember(access.field(), iface_decl.members());
@@ -1351,12 +1351,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         default:
           return CompilationError(e->source_loc())
-                 << "field access, unexpected " << aggregate_type << " in "
+                 << "field access, unexpected " << object_type << " in "
                  << *e;
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      auto& access = cast<CompoundFieldAccessExpression>(*e);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      auto& access = cast<CompoundMemberAccessExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {

@@ -81,7 +81,7 @@ class Value {
 
   // Returns the sub-Value specified by `path`, which must be a valid field
   // path for *this.
-  auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
+  auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
                 SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 

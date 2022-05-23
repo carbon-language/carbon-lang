@@ -280,9 +280,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "U"
                                 }
@@ -301,9 +301,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "U"
                                 }
@@ -412,12 +412,12 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Add"
-                              aggregate {
-                                field_access {
+                              object {
+                                simple_member_access {
                                   field: "x"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -429,9 +429,9 @@ compilation_unit {
                           argument {
                             tuple_literal {
                               fields {
-                                field_access {
+                                simple_member_access {
                                   field: "x"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "other"
                                     }
@@ -448,12 +448,12 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Add"
-                              aggregate {
-                                field_access {
+                              object {
+                                simple_member_access {
                                   field: "y"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -465,9 +465,9 @@ compilation_unit {
                           argument {
                             tuple_literal {
                               fields {
-                                field_access {
+                                simple_member_access {
                                   field: "y"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "other"
                                     }
@@ -557,9 +557,9 @@ compilation_unit {
             init {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "Zero"
-                    aggregate {
+                    object {
                       identifier {
                         name: "E"
                       }
@@ -584,9 +584,9 @@ compilation_unit {
             rhs {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "Add"
-                    aggregate {
+                    object {
                       identifier {
                         name: "total"
                       }
@@ -616,9 +616,9 @@ compilation_unit {
             rhs {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "Add"
-                    aggregate {
+                    object {
                       identifier {
                         name: "total"
                       }
@@ -822,9 +822,9 @@ compilation_unit {
               primitive_operator {
                 op: Sub
                 arguments {
-                  field_access {
+                  simple_member_access {
                     field: "x"
-                    aggregate {
+                    object {
                       identifier {
                         name: "r"
                       }
@@ -832,9 +832,9 @@ compilation_unit {
                   }
                 }
                 arguments {
-                  field_access {
+                  simple_member_access {
                     field: "y"
-                    aggregate {
+                    object {
                       identifier {
                         name: "r"
                       }

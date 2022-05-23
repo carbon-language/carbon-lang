@@ -322,23 +322,23 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       CARBON_CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
-    case ExpressionKind::FieldAccessExpression: {
+    case ExpressionKind::SimpleMemberAccessExpression: {
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<FieldAccessExpression>(exp).aggregate()));
+            &cast<SimpleMemberAccessExpression>(exp).object()));
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
-        Address aggregate = cast<LValue>(*act.results()[0]).address();
-        Address field = aggregate.SubobjectAddress(
-            cast<FieldAccessExpression>(exp).field());
+        Address object = cast<LValue>(*act.results()[0]).address();
+        Address field = object.SubobjectAddress(
+            cast<SimpleMemberAccessExpression>(exp).field());
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
@@ -358,7 +358,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<IndexExpression>(exp).aggregate()));
+            &cast<IndexExpression>(exp).object()));
 
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -366,10 +366,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        Address aggregate = cast<LValue>(*act.results()[0]).address();
+        Address object = cast<LValue>(*act.results()[0]).address();
         std::string f =
             std::to_string(cast<IntValue>(*act.results()[1]).value());
-        Address field = aggregate.SubobjectAddress(f);
+        Address field = object.SubobjectAddress(f);
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -749,7 +749,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<IndexExpression>(exp).aggregate()));
+            &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
@@ -801,11 +801,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<StructType>(std::move(fields)));
       }
     }
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(exp);
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.aggregate()));
+            std::make_unique<ExpressionAction>(&access.object()));
       } else {
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
@@ -844,14 +844,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           FieldPath::Component field(access.field(), witness);
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member,
-              act.results()[0]->GetField(arena_, FieldPath(field),
+              act.results()[0]->GetMember(arena_, FieldPath(field),
                                          exp.source_loc()));
           return todo_.FinishAction(member);
         }
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(exp);
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
@@ -894,7 +894,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           FieldPath::Component field(access.member().name(), witness);
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member,
-              object->GetField(arena_, FieldPath(field), exp.source_loc()));
+              object->GetMember(arena_, FieldPath(field), exp.source_loc()));
           return todo_.FinishAction(member);
         }
       }

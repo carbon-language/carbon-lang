@@ -159,9 +159,9 @@ compilation_unit {
                 fields {
                   call {
                     function {
-                      field_access {
+                      simple_member_access {
                         field: "Two"
-                        aggregate {
+                        object {
                           identifier {
                             name: "Ints"
                           }

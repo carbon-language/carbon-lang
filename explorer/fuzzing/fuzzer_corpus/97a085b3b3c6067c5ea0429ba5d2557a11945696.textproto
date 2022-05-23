@@ -194,9 +194,9 @@ compilation_unit {
                         primitive_operator {
                           op: Add
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "x"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "me"
                                 }
@@ -204,9 +204,9 @@ compilation_unit {
                             }
                           }
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "x"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "b"
                                 }
@@ -222,9 +222,9 @@ compilation_unit {
                         primitive_operator {
                           op: Add
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "y"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "me"
                                 }
@@ -232,9 +232,9 @@ compilation_unit {
                             }
                           }
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "y"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "b"
                                 }
@@ -300,9 +300,9 @@ compilation_unit {
                         primitive_operator {
                           op: Mul
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "x"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "me"
                                 }
@@ -323,9 +323,9 @@ compilation_unit {
                         primitive_operator {
                           op: Mul
                           arguments {
-                            field_access {
+                            simple_member_access {
                               field: "y"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "me"
                                 }
@@ -424,9 +424,9 @@ compilation_unit {
               }
             }
             init {
-              field_access {
+              simple_member_access {
                 field: "Add"
-                aggregate {
+                object {
                   identifier {
                     name: "a"
                   }
@@ -447,9 +447,9 @@ compilation_unit {
               }
             }
             init {
-              field_access {
+              simple_member_access {
                 field: "Scale"
-                aggregate {
+                object {
                   call {
                     function {
                       identifier {
@@ -637,9 +637,9 @@ compilation_unit {
               primitive_operator {
                 op: Sub
                 arguments {
-                  field_access {
+                  simple_member_access {
                     field: "x"
-                    aggregate {
+                    object {
                       identifier {
                         name: "p"
                       }

@@ -110,9 +110,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "T"
                                 }
@@ -131,9 +131,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "T"
                                 }
@@ -213,9 +213,9 @@ compilation_unit {
                     fields {
                       name: "x"
                       expression {
-                        field_access {
+                        simple_member_access {
                           field: "x"
-                          aggregate {
+                          object {
                             identifier {
                               name: "me"
                             }
@@ -226,9 +226,9 @@ compilation_unit {
                     fields {
                       name: "y"
                       expression {
-                        field_access {
+                        simple_member_access {
                           field: "y"
-                          aggregate {
+                          object {
                             identifier {
                               name: "me"
                             }
@@ -287,12 +287,12 @@ compilation_unit {
                 expression {
                   call {
                     function {
-                      field_access {
+                      simple_member_access {
                         field: "Add"
-                        aggregate {
-                          field_access {
+                        object {
+                          simple_member_access {
                             field: "x"
-                            aggregate {
+                            object {
                               identifier {
                                 name: "me"
                               }
@@ -304,9 +304,9 @@ compilation_unit {
                     argument {
                       tuple_literal {
                         fields {
-                          field_access {
+                          simple_member_access {
                             field: "y"
-                            aggregate {
+                            object {
                               identifier {
                                 name: "me"
                               }
@@ -510,9 +510,9 @@ compilation_unit {
             init {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "Origin"
-                    aggregate {
+                    object {
                       call {
                         function {
                           identifier {
@@ -544,14 +544,14 @@ compilation_unit {
             expression {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "SumXY"
-                    aggregate {
+                    object {
                       call {
                         function {
-                          field_access {
+                          simple_member_access {
                             field: "Clone"
-                            aggregate {
+                            object {
                               identifier {
                                 name: "p"
                               }

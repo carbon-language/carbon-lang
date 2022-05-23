@@ -90,9 +90,9 @@ compilation_unit {
             statements {
               return_statement {
                 expression {
-                  field_access {
+                  simple_member_access {
                     field: "x"
-                    aggregate {
+                    object {
                       identifier {
                         name: "me"
                       }
@@ -193,9 +193,9 @@ compilation_unit {
             init {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "Origin"
-                    aggregate {
+                    object {
                       call {
                         function {
                           identifier {
@@ -232,9 +232,9 @@ compilation_unit {
             expression {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "GetX"
-                    aggregate {
+                    object {
                       identifier {
                         name: "p"
                       }
