@@ -135,15 +135,6 @@ these types are strongly-typed as well.
 
 ## Code and comments
 
-> References:
->
-> -   [Source files](code_and_name_organization/source_files.md)
-> -   [lexical conventions](lexical_conventions)
-> -   Proposal
->     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
-> -   Proposal
->     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
-
 All source code is UTF-8 encoded text. Comments, identifiers, and strings are
 allowed to have non-ASCII characters.
 
@@ -157,6 +148,15 @@ required to be the only non-whitespace on the line.
 ```carbon
 // Compute an approximation of π
 ```
+
+> References:
+>
+> -   [Source files](code_and_name_organization/source_files.md)
+> -   [lexical conventions](lexical_conventions)
+> -   Proposal
+>     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
+> -   Proposal
+>     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
 
 ## Build modes
 
@@ -188,8 +188,6 @@ However, in simple cases this doesn't make much difference.
 
 ### Primitive types
 
-> References: [Primitive types](primitive_types.md)
-
 These types are fundamental to the language as they aren't either formed from or
 modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. These will be made
@@ -202,6 +200,8 @@ Primitive types fall into the following categories:
 -   IEEE-754 floating-point types, and
 -   string types.
 
+> References: [Primitive types](primitive_types.md)
+
 #### `bool`
 
 The type `bool` is a boolean type with two possible values: `true` and `false`.
@@ -211,15 +211,6 @@ and [`while`](#while), and
 [`if`-`then`-`else` conditional expressions](#expressions) take `bool` values.
 
 #### Integer types
-
-> References:
->
-> -   Question-for-leads issue
->     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
-> -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
-> -   Proposal
->     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
 The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
 convenience and brevity, the common power-of-two sizes may be written with an
@@ -248,17 +239,16 @@ Values which can never be negative, like sizes, but for which wrapping does not
 make sense
 [should use signed integer types](/proposals/p1083.md#dont-let-unsigned-arithmetic-wrap).
 
-##### Integer literals
-
 > References:
 >
-> -   [Integer literals](lexical_conventions/numeric_literals.md#integer-literals)
-> -   Proposal
->     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
-> -   Proposal
->     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
+> -   Question-for-leads issue
+>     [#543: pick names for fixed-size integer types](https://github.com/carbon-language/carbon-lang/issues/543)
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+
+##### Integer literals
 
 Integers may be written in decimal, hexadecimal, or binary:
 
@@ -275,7 +265,22 @@ numeric literals have a type derived from their value, and can be
 [implicitly converted](expressions/implicit_conversions.md) to any type that can
 represent that value.
 
+> References:
+>
+> -   [Integer literals](lexical_conventions/numeric_literals.md#integer-literals)
+> -   Proposal
+>     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
+> -   Proposal
+>     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+
 #### Floating-point types
+
+Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
+rounding mode, and do not set any floating-point exception state. They are named
+with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
+[`BFloat16`](primitive_types.md#bfloat16) is also provided.
 
 > References:
 >
@@ -286,24 +291,7 @@ represent that value.
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
-Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
-rounding mode, and do not set any floating-point exception state. They are named
-with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
-[`BFloat16`](primitive_types.md#bfloat16) is also provided.
-
 ##### Floating-point literals
-
-> References:
->
-> -   [Real-number literals](lexical_conventions/numeric_literals.md#real-number-literals)
-> -   Proposal
->     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
-> -   Proposal
->     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
-> -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
-> -   Proposal
->     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 
 Decimal and hexadecimal real-number literals are supported:
 
@@ -317,6 +305,18 @@ type, its value is the representable real number closest to the value of the
 literal. In the case of a tie, the nearest value whose mantissa is even is
 selected.
 
+> References:
+>
+> -   [Real-number literals](lexical_conventions/numeric_literals.md#real-number-literals)
+> -   Proposal
+>     [#143: Numeric literals](https://github.com/carbon-language/carbon-lang/pull/143)
+> -   Proposal
+>     [#144: Numeric literal semantics](https://github.com/carbon-language/carbon-lang/pull/144)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+> -   Proposal
+>     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
+
 #### String types
 
 There are two string types:
@@ -326,12 +326,6 @@ There are two string types:
     containing UTF-8 encoded text.
 
 ##### String literals
-
-> References:
->
-> -   [String literals](lexical_conventions/string_literals.md)
-> -   Proposal
->     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
 String literals may be written on a single line using a double quotation mark
 (`"`) at the beginning and end of the string, as in `"example"`.
@@ -360,13 +354,17 @@ introduced with a backslash (`\`).
 [Raw string literals](lexical_conventions/string_literals.md#raw-string-literals)
 are available for representing strings with `\`s and `"`s.
 
+> References:
+>
+> -   [String literals](lexical_conventions/string_literals.md)
+> -   Proposal
+>     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
+
 ### Composite types
 
 > **TODO:** Maybe rename to "structural types"?
 
 #### Tuples
-
-> References: [Tuples](tuples.md)
 
 A tuple is a fixed-size collection of values that can have different types,
 where each value is identified by its position in the tuple. An example use of
@@ -397,6 +395,8 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
+> References: [Tuples](tuples.md)
+
 #### Structural and nominal types
 
 Tuple types are _structural_, which means two tuple types are equal if they have
@@ -405,16 +405,6 @@ that identifies a specific declaration. Two nominal types are equal if their
 names resolve to the same declaration.
 
 #### Struct types
-
-> References:
->
-> -   [Struct types](classes.md#struct-types)
-> -   Proposal
->     [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
-> -   Proposal
->     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
-> -   Proposal
->     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
 
 The other [structural type](#structural-and-nominal-types) is called a
 _structural data class_, also known as a _struct type_ or _struct_. In contrast
@@ -430,14 +420,17 @@ both cases, they have a comma-separated list of members that start with a period
     literal_, the field name is followed by an equal sign (`=`) and the value,
     as in `{.key = "Joe", .count = 3}`.
 
-#### Pointer types
-
 > References:
 >
-> -   Question-for-leads issue
->     [#520: should we use whitespace-sensitive operator fixity?](https://github.com/carbon-language/carbon-lang/issues/520)
-> -   Question-for-leads issue
->     [#523: what syntax should we use for pointer types?](https://github.com/carbon-language/carbon-lang/issues/523)
+> -   [Struct types](classes.md#struct-types)
+> -   Proposal
+>     [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+> -   Proposal
+>     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+> -   Proposal
+>     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+
+#### Pointer types
 
 The type of pointers-to-values-of-type-`T` is written `T*`. Carbon pointers do
 not support
@@ -457,6 +450,13 @@ type `Optional(T*)`.
 
 In Carbon, one use of pointers is to pass `&x` into a function that will modify
 `x`.
+
+> References:
+>
+> -   Question-for-leads issue
+>     [#520: should we use whitespace-sensitive operator fixity?](https://github.com/carbon-language/carbon-lang/issues/520)
+> -   Question-for-leads issue
+>     [#523: what syntax should we use for pointer types?](https://github.com/carbon-language/carbon-lang/issues/523)
 
 #### Arrays and slices
 
@@ -484,16 +484,6 @@ Console.Print(a[0]);
 
 ## Functions
 
-> References:
->
-> -   [Functions](functions.md)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-> -   Proposal
->     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
-> -   Question-for-leads issue
->     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
-
 Functions are the core unit of behavior. For example, this is a declaration of a
 function that adds two 64-bit integers:
 
@@ -519,13 +509,17 @@ fn Add(a: i64, b: i64) -> i64 {
 }
 ```
 
-### Blocks and statements
-
 > References:
 >
-> -   [Blocks and statements](blocks_and_statements.md)
+> -   [Functions](functions.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
+> -   Question-for-leads issue
+>     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
+
+### Blocks and statements
 
 The body or definition of a function is provided by a block of code in curly
 braces (`{`...`}`) containing statements. The body of a function is also a new
@@ -550,27 +544,13 @@ fn Foo() {
 }
 ```
 
-### Expressions
-
 > References:
 >
-> -   [Expressions](expressions/)
+> -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-> -   Proposal
->     [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555)
-> -   Proposal
->     [#601: Operator tokens](https://github.com/carbon-language/carbon-lang/pull/601)
-> -   Proposal
->     [#680: And, or, not](https://github.com/carbon-language/carbon-lang/pull/680)
-> -   Proposal
->     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
-> -   Proposal
->     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
-> -   Proposal
->     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
-> -   Proposal
->     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+
+### Expressions
 
 Expressions describe some computed value. The simplest example would be a
 literal number like `42`: an expression that computes the integer value 42.
@@ -610,19 +590,27 @@ When an expression appears in a context in which an expression of a specific
 type is expected, [implicit conversions](expressions/implicit_conversions.md)
 are applied to convert the expression to the target type.
 
-### Variables
-
 > References:
 >
-> -   [Variables](variables.md)
+> -   [Expressions](expressions/)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
->     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+>     [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555)
 > -   Proposal
->     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
+>     [#601: Operator tokens](https://github.com/carbon-language/carbon-lang/pull/601)
 > -   Proposal
->     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
+>     [#680: And, or, not](https://github.com/carbon-language/carbon-lang/pull/680)
+> -   Proposal
+>     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+> -   Proposal
+>     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
+> -   Proposal
+>     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+
+### Variables
 
 Blocks introduce nested scopes and can contain variable declarations that are
 local to that block, similarly to function parameters.
@@ -648,6 +636,18 @@ Unlike function parameters, `x` is an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 which means it has storage and an address, and so can be modified.
 
+> References:
+>
+> -   [Variables](variables.md)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+> -   Proposal
+>     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
+> -   Proposal
+>     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
+
 ### `let`
 
 To bind a name to a value without associating a specific storage location, use
@@ -670,15 +670,6 @@ a function signature to give parameters dedicated storage so they may be
 modified?
 
 ### `auto`
-
-> References:
->
-> -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
-> -   Proposal
->     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
-> -   Proposal
->     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
 
 The keyword `auto` may be used in place of the type in a `var` or `let`
 statement in a function body. In this case, the type is the static type of the
@@ -707,13 +698,16 @@ fn Positive(a: i64) -> auto {
 Note that `auto` is not allowed in a function declaration without a function
 body.
 
-### Pattern matching
-
 > References:
 >
-> -   [Pattern matching](pattern_matching.md)
+> -   [Type inference](type_inference.md)
+> -   [Function return clause](functions.md#return-clause)
 > -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+>     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
+> -   Proposal
+>     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
+
+### Pattern matching
 
 Patterns are used in a variety of Carbon language constructs, including
 [function parameters](#functions), [variable declarations](#variables), and
@@ -755,6 +749,12 @@ the value is discarded.
 
 Additional kinds of patterns are allowed in [`match` statements](#match).
 
+> References:
+>
+> -   [Pattern matching](pattern_matching.md)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+
 ### Assignment statements
 
 Assignment statements mutate the value of the
@@ -776,14 +776,6 @@ a value.
 
 ### Control flow
 
-> References:
->
-> -   [Control flow](control_flow/README.md)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-> -   Proposal
->     [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
-
 Blocks of statements are generally executed sequentially. Control-flow
 statements give additional control over the flow of execution and which
 statements are executed.
@@ -792,13 +784,15 @@ Some control-flow statements include [block](#blocks-and-statements) arguments.
 Those blocks will always be within curly braces `{`...`}`, unlike C++ which also
 allows an individual statement without curly braces.
 
-#### `if` and `else`
-
 > References:
 >
-> -   [Control flow](control_flow/conditionals.md)
+> -   [Control flow](control_flow/README.md)
 > -   Proposal
->     [#285: if/else](https://github.com/carbon-language/carbon-lang/pull/285)
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#623: Require braces](https://github.com/carbon-language/carbon-lang/pull/623)
+
+#### `if` and `else`
 
 `if` and `else` provide conditional execution of statements. An `if` statement
 consists of:
@@ -831,17 +825,17 @@ This code will:
     `True`.
 -   Print `Vegetable!` if both of the above return `False`.
 
+> References:
+>
+> -   [Control flow](control_flow/conditionals.md)
+> -   Proposal
+>     [#285: if/else](https://github.com/carbon-language/carbon-lang/pull/285)
+
 #### Loops
 
 > References: [Loops](control_flow/loops.md)
 
 ##### `while`
-
-> References:
->
-> -   [`while` loops](control_flow/loops.md#while)
-> -   Proposal
->     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
 
 `while` statements loop for as long as the passed expression returns `true`. For
 example, this prints `0`, `1`, `2`, then `Done!`:
@@ -855,13 +849,13 @@ while (x < 3) {
 Console.Print("Done!");
 ```
 
-##### `for`
-
 > References:
 >
-> -   [`for` loops](control_flow/loops.md#for)
+> -   [`while` loops](control_flow/loops.md#while)
 > -   Proposal
->     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
+>     [#340: Add C++-like `while` loops](https://github.com/carbon-language/carbon-lang/pull/340)
+
+##### `for`
 
 `for` statements support range-based looping, typically over containers. For
 example, this prints all names in `names`:
@@ -874,9 +868,13 @@ for (var name: String in names) {
 
 This prints each `String` value in `names`.
 
-##### `break`
+> References:
+>
+> -   [`for` loops](control_flow/loops.md#for)
+> -   Proposal
+>     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
 
-> References: [`break`](control_flow/loops.md#break)
+##### `break`
 
 The `break` statement immediately ends a `while` or `for` loop. Execution will
 continue starting from the end of the loop's scope. For example, this processes
@@ -893,9 +891,9 @@ for (var step: Step in steps) {
 }
 ```
 
-##### `continue`
+> References: [`break`](control_flow/loops.md#break)
 
-> References: [`continue`](control_flow/loops.md#continue)
+##### `continue`
 
 The `continue` statement immediately goes to the next loop of a `while` or
 `for`. In a `while`, execution continues with the `while` expression. For
@@ -913,16 +911,9 @@ while (!f.EOF()) {
 }
 ```
 
-#### `return`
+> References: [`continue`](control_flow/loops.md#continue)
 
-> References:
->
-> -   [`return`](control_flow/return.md)
-> -   [`return` statements](functions.md#return-statements)
-> -   Proposal
->     [#415: return](https://github.com/carbon-language/carbon-lang/pull/415)
-> -   Proposal
->     [#538: return with no argument](https://github.com/carbon-language/carbon-lang/pull/538)
+#### `return`
 
 The `return` statement ends the flow of execution within a function, returning
 execution to the caller.
@@ -961,13 +952,16 @@ fn Sign(i: i32) -> i32 {
 Assert(Sign(-3) == -1);
 ```
 
-##### `returned var`
-
 > References:
 >
-> -   [`returned var`](control_flow/return.md#returned-var)
+> -   [`return`](control_flow/return.md)
+> -   [`return` statements](functions.md#return-statements)
 > -   Proposal
->     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+>     [#415: return](https://github.com/carbon-language/carbon-lang/pull/415)
+> -   Proposal
+>     [#538: return with no argument](https://github.com/carbon-language/carbon-lang/pull/538)
+
+##### `returned var`
 
 To avoid a copy when returning a variable, add a `returned` prefix to the
 variable's declaration and use `return var` instead of returning an expression,
@@ -985,13 +979,13 @@ fn MakeCircle(radius: i32) -> Circle {
 This is instead of
 [the "named return value optimization" of C++](https://en.wikipedia.org/wiki/Copy_elision#Return_value_optimization).
 
-#### `match`
-
 > References:
 >
-> -   [Pattern matching](pattern_matching.md)
-> -   Question-for-leads issue
->     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+> -   [`returned var`](control_flow/return.md#returned-var)
+> -   Proposal
+>     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+
+#### `match`
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
 constructs in other languages, such as Swift. The `match` keyword is followed by
@@ -1034,19 +1028,17 @@ contain patterns that may or may not match based on the runtime value of the
     the pattern like `if (p < 13)`, matches if the predicate evaluates to
     `true`.
 
+> References:
+>
+> -   [Pattern matching](pattern_matching.md)
+> -   Question-for-leads issue
+>     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+
 ## User-defined types
 
 > **TODO:** Maybe rename to "nominal types"?
 
 ### Classes
-
-> References:
->
-> -   [Classes](classes.md#nominal-class-types)
-> -   Proposal
->     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
-> -   Proposal
->     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
 _Nominal classes_, or just _classes_, are a way for users to define their own
 data strutures or record types.
@@ -1082,12 +1074,15 @@ respectively when that is not confusing. Like structs, classes refer to their
 members by name. Unlike structs, classes are
 [nominal types](#structural-and-nominal-types).
 
-#### Assignment, copying
-
-> References: [Classes](classes.md#construction)
+> References:
 >
+> -   [Classes](classes.md#nominal-class-types)
 > -   Proposal
->     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+
+#### Assignment, copying
 
 You may use a [struct literal](#struct-types), to assign or initialize a
 variable with a class type in any scope that has [access](#access-control) to
@@ -1105,6 +1100,11 @@ var thingy: Widget = sprocket;
 sprocket = thingy;
 Assert(sprocket.x == thingy.x);
 ```
+
+> References: [Classes](classes.md#construction)
+>
+> -   Proposal
+>     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
 #### Class functions and factory functions
 
@@ -1147,12 +1147,6 @@ class Registered {
 This approach can also be used for types that can't be copied or moved.
 
 #### Methods
-
-> References:
->
-> -   [Methods](classes.md#methods)
-> -   Proposal
->     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 
 Class type definitions can include methods:
 
@@ -1199,15 +1193,13 @@ two methods `Distance` and `Offset`:
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
-#### Inheritance
-
 > References:
 >
-> -   [Inheritance](classes.md#inheritance)
+> -   [Methods](classes.md#methods)
 > -   Proposal
->     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
-> -   Proposal
->     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+>     [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+
+#### Inheritance
 
 Classes by default are
 [_final_](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>),
@@ -1290,15 +1282,15 @@ class DerivedFromAbstract extends AbstractClass {
 }
 ```
 
-#### Access control
-
 > References:
 >
-> -   [Access control for class members](classes.md#access-control)
-> -   Question-for-leads issue
->     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
-> -   Question-for-leads issue
->     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
+> -   [Inheritance](classes.md#inheritance)
+> -   Proposal
+>     [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+> -   Proposal
+>     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
+
+#### Access control
 
 Class members are by default publicly accessible. The `private` keyword prefix
 can be added to the member's declaration to restrict it to members of the class
@@ -1311,13 +1303,15 @@ names resolvable by the compiler, and don't act like forward declarations.
 
 `protected` is like `private`, but also gives access to derived classes.
 
-#### Destructors
-
 > References:
 >
-> -   [Destructors](classes.md#destructors)
-> -   Proposal
->     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+> -   [Access control for class members](classes.md#access-control)
+> -   Question-for-leads issue
+>     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
+> -   Question-for-leads issue
+>     [#971: Private interfaces in public API files](https://github.com/carbon-language/carbon-lang/issues/971)
+
+#### Destructors
 
 A destructor for a class is custom code executed when the lifetime of a value of
 that type ends. They are defined with the `destructor` keyword followed by
@@ -1351,6 +1345,12 @@ the base class is declared `virtual` or `impl`. To delete a pointer to a
 non-abstract base class when it is known not to point to a value with a derived
 type, use `UnsafeDelete`.
 
+> References:
+>
+> -   [Destructors](classes.md#destructors)
+> -   Proposal
+>     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
 #### Other members
 
 Classes may also contain other kinds of declarations, which results in them
@@ -1364,13 +1364,6 @@ having names inside the class' scope:
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
 ### Choice types
-
-> References:
->
-> -   Proposal
->     [#157: Design direction for sum types](https://github.com/carbon-language/carbon-lang/pull/157)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
 A _choice type_ is a [tagged union](https://en.wikipedia.org/wiki/Tagged_union),
 that can store different types of data in a storage space that can hold the
@@ -1426,6 +1419,13 @@ additional data is associated with the choices, as in:
 ```carbon
 choice LikeABoolean { False, True }
 ```
+
+> References:
+>
+> -   Proposal
+>     [#157: Design direction for sum types](https://github.com/carbon-language/carbon-lang/pull/157)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
 ## Names
 
