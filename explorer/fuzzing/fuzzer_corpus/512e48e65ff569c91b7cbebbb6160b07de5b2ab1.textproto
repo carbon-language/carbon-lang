@@ -1,0 +1,20 @@
+compilation_unit {
+  declarations {
+    function {
+      body {
+        statements {
+          match {
+            expression {
+              function_type {
+                parameter {
+                  primitive_operator {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

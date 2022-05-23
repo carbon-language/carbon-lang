@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
@@ -1112,11 +1113,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::StructTypeLiteral: {
       auto& struct_type = cast<StructTypeLiteral>(*e);
       for (auto& arg : struct_type.fields()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
-        CARBON_ASSIGN_OR_RETURN(
-            auto value, InterpExp(&arg.expression(), arena_, trace_stream_));
-        CARBON_RETURN_IF_ERROR(
-            ExpectIsConcreteType(arg.expression().source_loc(), value));
+        CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&arg.expression(), impl_scope));
       }
       if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
@@ -1663,16 +1660,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> param_type,
-          InterpExp(&fn.parameter(), arena_, trace_stream_));
-      CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.parameter().source_loc(), param_type));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> ret_type,
-          InterpExp(&fn.return_type(), arena_, trace_stream_));
-      CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.return_type().source_loc(), ret_type));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&fn.parameter(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
       return Success();
@@ -1733,14 +1722,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> element_type,
-          InterpExp(&array_literal.element_type_expression(), arena_,
-                    trace_stream_));
-      CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
-          array_literal.element_type_expression().source_loc(), element_type));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
+          &array_literal.element_type_expression(), impl_scope));
 
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&array_literal.size_expression(), impl_scope));
@@ -1817,6 +1800,18 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                  CreateImplReference(impl_binding));
 }
 
+auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
+                                   const ImplScope& impl_scope, bool concrete)
+    -> ErrorOr<Nonnull<const Value*>> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                          InterpExp(type_expression, arena_, trace_stream_));
+  CARBON_RETURN_IF_ERROR(
+      concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
+               : ExpectIsType(type_expression->source_loc(), type));
+  return type;
+}
+
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
@@ -1877,10 +1872,8 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(*p);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&binding.type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> type,
-          InterpExp(&binding.type(), arena_, trace_stream_));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                              TypeCheckTypeExp(&binding.type(), impl_scope));
       if (expected) {
         return CompilationError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
@@ -2274,13 +2267,11 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
       return_expression.has_value()) {
     // We ignore the return value because return type expressions can't bring
     // new types into scope.
-    CARBON_RETURN_IF_ERROR(TypeCheckExp(*return_expression, function_scope));
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Value*> ret_type,
-        InterpExp(*return_expression, arena_, trace_stream_));
-    CARBON_RETURN_IF_ERROR(ExpectIsType(f->source_loc(), ret_type));
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
+                            TypeCheckTypeExp(*return_expression, function_scope,
+                                             /*concrete=*/false));
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -2524,10 +2515,8 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   impl_decl->set_impl_bindings(impl_bindings);
 
   // Check and interpret the impl_type
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
-  CARBON_ASSIGN_OR_RETURN(
-      Nonnull<const Value*> impl_type_value,
-      InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
+                          TypeCheckTypeExp(impl_decl->impl_type(), impl_scope));
 
   // Set `Self` to `impl_type`. We do this whether `Self` resolves to it or to
   // the `Self` from an enclosing scope. This needs to be done before
@@ -2538,11 +2527,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   self->set_static_type(&impl_decl->impl_type()->static_type());
 
   // Check and interpret the interface.
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(&impl_decl->interface(), impl_scope));
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> written_iface_type,
-      InterpExp(&impl_decl->interface(), arena_, trace_stream_));
-
+      TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
   const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
   if (!iface_type) {
     return CompilationError(impl_decl->interface().source_loc())
@@ -2630,10 +2617,9 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     -> ErrorOr<Success> {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
-    CARBON_RETURN_IF_ERROR(
-        TypeCheckExp(&alternative->signature(), *scope_info.innermost_scope));
-    CARBON_ASSIGN_OR_RETURN(auto signature, InterpExp(&alternative->signature(),
-                                                      arena_, trace_stream_));
+    CARBON_ASSIGN_OR_RETURN(auto signature,
+                            TypeCheckTypeExp(&alternative->signature(),
+                                             *scope_info.innermost_scope));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
