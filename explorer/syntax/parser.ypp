@@ -327,11 +327,14 @@ primary_expression:
 postfix_expression:
   primary_expression
 | postfix_expression designator
-    { $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), $1, $2); }
+    {
+      $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), $1,
+                                                    $2);
+    }
 | postfix_expression PERIOD LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
     {
       $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(), $1,
-                                                     $4);
+                                                      $4);
     }
 | postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }

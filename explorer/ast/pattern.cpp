@@ -141,7 +141,8 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-auto AlternativePattern::RequireSimpleMemberAccess(Nonnull<Expression*> alternative)
+auto AlternativePattern::RequireSimpleMemberAccess(
+    Nonnull<Expression*> alternative)
     -> ErrorOr<Nonnull<SimpleMemberAccessExpression*>> {
   if (alternative->kind() != ExpressionKind::SimpleMemberAccessExpression) {
     return ProgramError(alternative->source_loc())

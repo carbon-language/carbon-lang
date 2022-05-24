@@ -131,11 +131,12 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 }
 
 auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,
-                     SourceLocation source_loc) const
+                      SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    CARBON_ASSIGN_OR_RETURN(value, Carbon::GetMember(arena, value, field, source_loc));
+    CARBON_ASSIGN_OR_RETURN(value,
+                            Carbon::GetMember(arena, value, field, source_loc));
   }
   return value;
 }
