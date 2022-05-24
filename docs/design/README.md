@@ -11,25 +11,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
-    -   [A note on example code](#a-note-on-example-code)
+    -   [This document is provisional](#this-document-is-provisional)
 -   [Hello, Carbon](#hello-carbon)
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
--   [Types](#types)
-    -   [Primitive types](#primitive-types)
-        -   [`bool`](#bool)
-        -   [Integer types](#integer-types)
-            -   [Integer literals](#integer-literals)
-        -   [Floating-point types](#floating-point-types)
-            -   [Floating-point literals](#floating-point-literals)
-        -   [String types](#string-types)
-            -   [String literals](#string-literals)
-    -   [Composite types](#composite-types)
-        -   [Tuples](#tuples)
-        -   [Structural and nominal types](#structural-and-nominal-types)
-        -   [Struct types](#struct-types)
-        -   [Pointer types](#pointer-types)
-        -   [Arrays and slices](#arrays-and-slices)
+-   [Types are values](#types-are-values)
+    -   [Structural and nominal types](#structural-and-nominal-types)
+-   [Primitive types](#primitive-types)
+    -   [`bool`](#bool)
+    -   [Integer types](#integer-types)
+        -   [Integer literals](#integer-literals)
+    -   [Floating-point types](#floating-point-types)
+        -   [Floating-point literals](#floating-point-literals)
+    -   [String types](#string-types)
+        -   [String literals](#string-literals)
+-   [Composite types](#composite-types)
+    -   [Tuples](#tuples)
+    -   [Struct types](#struct-types)
+    -   [Pointer types](#pointer-types)
+    -   [Arrays and slices](#arrays-and-slices)
 -   [Functions](#functions)
     -   [Blocks and statements](#blocks-and-statements)
     -   [Expressions](#expressions)
@@ -100,10 +100,12 @@ This document is _not_ a complete programming manual, and, nor does it provide
 detailed and comprehensive justification for design decisions. These
 descriptions are found in linked dedicated designs.
 
-### A note on example code
+### This document is provisional
 
-Some syntax used in example code is provisional or placeholder, and may change
-later.
+This document includes much that is provisional or placeholder. This means that
+the syntax used, language rules, standard library, and other aspects of the
+design have things that have not been decided through the Carbon process. This
+preliminary material fills in gaps until aspects of the design can be filled in.
 
 ## Hello, Carbon
 
@@ -169,28 +171,27 @@ The behavior of the Carbon compiler depends on the _build mode_:
 -   In a _hardened build_, the first priority is safety and second is
     performance.
 
-## Types
+> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
-Carbon's core types are broken down into three categories:
-
--   Primitive types
--   Composite types
--   [User-defined types](#user-defined-types)
-
-The first two are intrinsic and directly built in the language and are discussed
-in this section. The last category of types allows for defining new types, and
-is described [later](#user-defined-types).
+## Types are values
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values.
 However, in simple cases this doesn't make much difference.
 
-### Primitive types
+### Structural and nominal types
 
-These types are fundamental to the language as they aren't either formed from or
-modifying other types. They also have semantics that are defined from first
-principles rather than in terms of other operations. These will be made
+Some types are _structural_, which means they are equal if they have the same
+components. This is in contrast to _nominal_ types that have a name that
+identifies a specific declaration. Two nominal types are equal if their names
+resolve to the same declaration. If a nominal type is [generic](#generics), and
+so has parameters, then the parameters must also be equal for the types to be
+equal.
+
+## Primitive types
+
+Some types are used as the building blocks for other types and are made
 available through the [prelude package](#name-lookup-for-common-types).
 
 Primitive types fall into the following categories:
@@ -202,7 +203,7 @@ Primitive types fall into the following categories:
 
 > References: [Primitive types](primitive_types.md)
 
-#### `bool`
+### `bool`
 
 The type `bool` is a boolean type with two possible values: `true` and `false`.
 [Comparison expressions](#expressions) produce `bool` values. The condition
@@ -210,7 +211,7 @@ arguments in [control-flow statements](#control-flow), like [`if`](#if-and-else)
 and [`while`](#while), and
 [`if`-`then`-`else` conditional expressions](#expressions) take `bool` values.
 
-#### Integer types
+### Integer types
 
 The signed-integer type with bit width `N` may be written `Carbon.Int(N)`. For
 convenience and brevity, the common power-of-two sizes may be written with an
@@ -248,7 +249,7 @@ make sense
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
-##### Integer literals
+#### Integer literals
 
 Integers may be written in decimal, hexadecimal, or binary:
 
@@ -256,9 +257,10 @@ Integers may be written in decimal, hexadecimal, or binary:
 -   `0x1FE` (hexadecimal)
 -   `0b1010` (binary)
 
-Underscores `_` may be as a digit separator, but only in conventional locations.
-Numeric literals are case-sensitive: `0x`, `0b` must be lowercase, whereas
-hexadecimal digits must be uppercase. Integer literals never contain a `.`.
+Underscores `_` may be as a digit separator, but for decimal and hexadecimal
+literals, they can only appear in conventional locations. Numeric literals are
+case-sensitive: `0x`, `0b` must be lowercase, whereas hexadecimal digits must be
+uppercase. Integer literals never contain a `.`.
 
 Unlike in C++, literals do not have a suffix to indicate their type. Instead,
 numeric literals have a type derived from their value, and can be
@@ -275,7 +277,7 @@ represent that value.
 > -   Proposal
 >     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820)
 
-#### Floating-point types
+### Floating-point types
 
 Floating-point types in Carbon have IEEE 754 semantics, use the round-to-nearest
 rounding mode, and do not set any floating-point exception state. They are named
@@ -291,7 +293,7 @@ with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
-##### Floating-point literals
+#### Floating-point literals
 
 Decimal and hexadecimal real-number literals are supported:
 
@@ -317,7 +319,7 @@ selected.
 > -   Proposal
 >     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866)
 
-#### String types
+### String types
 
 There are two string types:
 
@@ -325,7 +327,7 @@ There are two string types:
 -   `StringView` - a read-only reference to a byte sequence treated as
     containing UTF-8 encoded text.
 
-##### String literals
+#### String literals
 
 String literals may be written on a single line using a double quotation mark
 (`"`) at the beginning and end of the string, as in `"example"`.
@@ -360,11 +362,9 @@ are available for representing strings with `\`s and `"`s.
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
-### Composite types
+## Composite types
 
-> **TODO:** Maybe rename to "structural types"?
-
-#### Tuples
+### Tuples
 
 A tuple is a fixed-size collection of values that can have different types,
 where each value is identified by its position in the tuple. An example use of
@@ -395,20 +395,15 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
+Tuple types are [structural](#structural-and-nominal-types).
+
 > References: [Tuples](tuples.md)
 
-#### Structural and nominal types
+### Struct types
 
-Tuple types are _structural_, which means two tuple types are equal if they have
-the same components. This is in contrast to _nominal_ types that have a name
-that identifies a specific declaration. Two nominal types are equal if their
-names resolve to the same declaration.
-
-#### Struct types
-
-The other [structural type](#structural-and-nominal-types) is called a
-_structural data class_, also known as a _struct type_ or _struct_. In contrast
-to a tuple, a struct's members are identified by name instead of position.
+Carbon also has [structural types](#structural-and-nominal-types) whose members
+are identified by name instead of position. These are called _structural data
+classes_, also known as a _struct types_ or _structs_.
 
 Both struct types and values are written inside curly braces (`{`...`}`). In
 both cases, they have a comma-separated list of members that start with a period
@@ -430,7 +425,7 @@ both cases, they have a comma-separated list of members that start with a period
 > -   Proposal
 >     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
 
-#### Pointer types
+### Pointer types
 
 The type of pointers-to-values-of-type-`T` is written `T*`. Carbon pointers do
 not support
@@ -448,8 +443,8 @@ There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
 type `Optional(T*)`.
 
-In Carbon, one use of pointers is to pass `&x` into a function that will modify
-`x`.
+Pointers are the main Carbon mechanism for allowing a function to modify a
+variable of the caller.
 
 > References:
 >
@@ -458,7 +453,7 @@ In Carbon, one use of pointers is to pass `&x` into a function that will modify
 > -   Question-for-leads issue
 >     [#523: what syntax should we use for pointer types?](https://github.com/carbon-language/carbon-lang/issues/523)
 
-#### Arrays and slices
+### Arrays and slices
 
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to
@@ -581,7 +576,7 @@ Some common expressions in Carbon include:
         `not e`
     -   Indexing: `a[3]`
     -   Function call: `f(4)`
-    -   Pointer and member: `*p`, `x.m`, `p->m`, `&x`
+    -   Pointer: `*p`, `p->m`, `&x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
 -   Parentheses: `(7 + 8) * (3 - 1)`
@@ -820,10 +815,10 @@ if (fruit.IsYellow()) {
 
 This code will:
 
--   Print `Banana!` if `fruit.IsYellow()` is `True`.
--   Print `Orange!` if `fruit.IsYellow()` is `False` and `fruit.IsOrange()` is
-    `True`.
--   Print `Vegetable!` if both of the above return `False`.
+-   Print `Banana!` if `fruit.IsYellow()` is `true`.
+-   Print `Orange!` if `fruit.IsYellow()` is `false` and `fruit.IsOrange()` is
+    `true`.
+-   Print `Vegetable!` if both of the above return `false`.
 
 > References:
 >
@@ -1063,7 +1058,7 @@ Breaking apart `Widget`:
 
 The order of the field declarations determines the fields' memory-layout order.
 
-Every class has a member named `Self` equal to the class type itself.
+Every class has a constant member named `Self` equal to the class type itself.
 
 Like functions, classes may be forward declared, ending the declaration with a
 semicolon (`;`) instead of the block in curly braces (`{`...`}`).
