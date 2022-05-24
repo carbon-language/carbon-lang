@@ -1079,16 +1079,17 @@ members by name. Unlike structs, classes are
 
 #### Assignment, copying
 
-You may use a [struct literal](#struct-types), to assign or initialize a
-variable with a class type in any scope that has [access](#access-control) to
-all of its fields, as in:
+There is an [implicit conversions](expressions/implicit_conversions.md) defined
+between a [struct literal](#struct-types) and a class type with the same fields,
+in any scope that has [access](#access-control) to all of the class' fields.
+This may be used to assign or initialize a variable with a class type, as in:
 
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
 sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
 ```
 
-You may also copy one struct into another of the same type.
+You may also copy a value of a class type into a variable of the same type.
 
 ```carbon
 var thingy: Widget = sprocket;
@@ -1096,15 +1097,20 @@ sprocket = thingy;
 Assert(sprocket.x == thingy.x);
 ```
 
-> References: [Classes](classes.md#construction)
+> References:
 >
+> -   [Classes: Construction](classes.md#construction)
 > -   Proposal
 >     [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 
 #### Class functions and factory functions
 
-Classes may also contain functions as members of the type. This is commonly used
-to define a function that creates instances. Carbon does not have separate
+Classes may also contain _class functions_. These are functions that are
+accessed as members of the type, like
+[static member functions in C++](<https://en.wikipedia.org/wiki/Method_(computer_programming)#Static_methods>),
+as opposed to [methods](#methods) that are members of instances. They are
+commonly used to define a function that creates instances. Carbon does not have
+separate
 [constructors](<https://en.wikipedia.org/wiki/Constructor_(object-oriented_programming)>)
 like C++ does.
 
