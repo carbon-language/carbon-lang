@@ -1135,7 +1135,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(object_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.field() == field_name) {
+            if (access.member() == field_name) {
               access.set_static_type(field_type);
               access.set_value_category(access.object().value_category());
               return Success();
@@ -1143,7 +1143,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
-                 << access.field();
+                 << access.member();
         }
         case Value::Kind::TypeType: {
           CARBON_ASSIGN_OR_RETURN(
@@ -1151,7 +1151,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               InterpExp(&access.object(), arena_, trace_stream_));
           if (const auto* struct_type = dyn_cast<StructType>(type)) {
             for (const auto& field : struct_type->fields()) {
-              if (access.field() == field.name) {
+              if (access.member() == field.name) {
                 access.set_static_type(
                     arena_->New<TypeOfMemberName>(Member(&field)));
                 access.set_value_category(ValueCategory::Let);
@@ -1160,7 +1160,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             return CompilationError(access.source_loc())
                    << "struct " << *struct_type
-                   << " does not have a field named " << access.field();
+                   << " does not have a field named " << access.member();
           }
           // TODO: We should handle all types here, not only structs. For
           // example:
@@ -1177,7 +1177,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
           if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.field(), t_class.declaration().members());
+                  FindMember(access.member(), t_class.declaration().members());
               member.has_value()) {
             Nonnull<const Value*> field_type =
                 Substitute(t_class.type_args(), &(*member)->static_type());
@@ -1190,7 +1190,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_value_category(ValueCategory::Let);
                 break;
               default:
-                CARBON_FATAL() << "member " << access.field()
+                CARBON_FATAL() << "member " << access.member()
                                << " is not a field or method";
                 break;
             }
@@ -1198,18 +1198,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(e->source_loc())
                    << "class " << t_class.declaration().name()
-                   << " does not have a field named " << access.field();
+                   << " does not have a field named " << access.member();
           }
         }
         case Value::Kind::TypeOfChoiceType: {
           const ChoiceType& choice =
               cast<TypeOfChoiceType>(object_type).choice_type();
           std::optional<Nonnull<const Value*>> parameter_types =
-              choice.FindAlternative(access.field());
+              choice.FindAlternative(access.member());
           if (!parameter_types.has_value()) {
             return CompilationError(e->source_loc())
                    << "choice " << choice.name()
-                   << " does not have a field named " << access.field();
+                   << " does not have an alternative named " << access.member();
           }
           access.set_static_type(arena_->New<FunctionType>(
               *parameter_types, llvm::None, &choice, llvm::None, llvm::None));
@@ -1220,7 +1220,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const NominalClassType& class_type =
               cast<TypeOfClassType>(object_type).class_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.field(), class_type.declaration().members());
+                  access.member(), class_type.declaration().members());
               member.has_value()) {
             switch ((*member)->kind()) {
               case DeclarationKind::FunctionDeclaration: {
@@ -1244,14 +1244,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(access.source_loc())
                    << class_type << " does not have a member named "
-                   << access.field();
+                   << access.member();
           }
         }
         case Value::Kind::TypeOfInterfaceType: {
           const InterfaceType& iface_type =
               cast<TypeOfInterfaceType>(object_type).interface_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.field(), iface_type.declaration().members());
+                  access.member(), iface_type.declaration().members());
               member.has_value()) {
             access.set_static_type(
                 arena_->New<TypeOfMemberName>(Member(*member)));
@@ -1260,7 +1260,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(access.source_loc())
                    << iface_type << " does not have a member named "
-                   << access.field();
+                   << access.member();
           }
         }
         case Value::Kind::VariableType: {
@@ -1275,7 +1275,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               const auto& iface_type = cast<InterfaceType>(typeof_var);
               const InterfaceDeclaration& iface_decl = iface_type.declaration();
               if (std::optional<Nonnull<const Declaration*>> member =
-                      FindMember(access.field(), iface_decl.members());
+                      FindMember(access.member(), iface_decl.members());
                   member.has_value()) {
                 const Value& member_type = (*member)->static_type();
                 BindingMap binding_map = iface_type.args();
@@ -1288,14 +1288,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 return Success();
               } else {
                 return CompilationError(e->source_loc())
-                       << "field access, " << access.field() << " not in "
+                       << "member access, " << access.member() << " not in "
                        << iface_decl.name();
               }
               break;
             }
             default:
               return CompilationError(e->source_loc())
-                     << "field access, unexpected " << object_type
+                     << "member access, unexpected " << object_type
                      << " of non-interface type " << typeof_var << " in " << *e;
           }
           break;
@@ -1312,7 +1312,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const InterfaceType& iface_type = cast<InterfaceType>(object_type);
           const InterfaceDeclaration& iface_decl = iface_type.declaration();
           if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.field(), iface_decl.members());
+                  FindMember(access.member(), iface_decl.members());
               member.has_value()) {
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
@@ -1344,14 +1344,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             return CompilationError(e->source_loc())
-                   << "field access, " << access.field() << " not in "
+                   << "member access, " << access.member() << " not in "
                    << iface_decl.name();
           }
           break;
         }
         default:
           return CompilationError(e->source_loc())
-                 << "field access, unexpected " << object_type << " in "
+                 << "member access, unexpected " << object_type << " in "
                  << *e;
       }
     }

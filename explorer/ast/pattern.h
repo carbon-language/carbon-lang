@@ -285,11 +285,11 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> ErrorOr<Nonnull<AlternativePattern*>> {
-    CARBON_ASSIGN_OR_RETURN(Nonnull<SimpleMemberAccessExpression*> field_access,
+    CARBON_ASSIGN_OR_RETURN(Nonnull<SimpleMemberAccessExpression*> member_access,
                             RequireSimpleMemberAccess(alternative));
     return arena->New<AlternativePattern>(source_loc,
-                                          &field_access->object(),
-                                          field_access->field(), arguments);
+                                          &member_access->object(),
+                                          member_access->member(), arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type

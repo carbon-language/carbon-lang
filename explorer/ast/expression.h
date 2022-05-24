@@ -156,10 +156,10 @@ class SimpleMemberAccessExpression : public Expression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
                                  Nonnull<Expression*> object,
-                                 std::string field)
+                                 std::string member)
       : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
         object_(object),
-        field_(std::move(field)) {}
+        member_(std::move(member)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSimpleMemberAccessExpression(node->kind());
@@ -167,7 +167,7 @@ class SimpleMemberAccessExpression : public Expression {
 
   auto object() const -> const Expression& { return *object_; }
   auto object() -> Expression& { return *object_; }
-  auto field() const -> const std::string& { return field_; }
+  auto member() const -> const std::string& { return member_; }
 
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
@@ -184,7 +184,7 @@ class SimpleMemberAccessExpression : public Expression {
 
  private:
   Nonnull<Expression*> object_;
-  std::string field_;
+  std::string member_;
   std::optional<Nonnull<const ImplBinding*>> impl_;
 };
 

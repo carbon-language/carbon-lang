@@ -332,9 +332,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
-        Address field = object.SubobjectAddress(
-            cast<SimpleMemberAccessExpression>(exp).field());
-        return todo_.FinishAction(arena_->New<LValue>(field));
+        Address member = object.SubobjectAddress(
+            cast<SimpleMemberAccessExpression>(exp).member());
+        return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
     case ExpressionKind::CompoundMemberAccessExpression: {
@@ -841,12 +841,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                            access.source_loc()));
             witness = cast<Witness>(witness_value);
           }
-          FieldPath::Component field(access.field(), witness);
+          FieldPath::Component member(access.member(), witness);
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> member,
-              act.results()[0]->GetMember(arena_, FieldPath(field),
+              Nonnull<const Value*> member_value,
+              act.results()[0]->GetMember(arena_, FieldPath(member),
                                          exp.source_loc()));
-          return todo_.FinishAction(member);
+          return todo_.FinishAction(member_value);
         }
       }
     }
