@@ -81,6 +81,11 @@ class ImplScope {
   };
 
  private:
+  struct ImplResult {
+    Nonnull<Expression*> impl_expression;
+    ImplScope::Impl impl;
+  };
+
   // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope, returns std::nullopt if there
   // is none, or reports a compilation error is there is not a most
@@ -90,7 +95,7 @@ class ImplScope {
   auto TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
                   SourceLocation source_loc, const ImplScope& original_scope,
                   const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<ImplResult>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // this scope, returns std::nullopt if there is none, or reports
@@ -102,7 +107,15 @@ class ImplScope {
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const ImplScope& original_scope,
                    const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<Expression*>>>;
+      -> ErrorOr<std::optional<ImplResult>>;
+
+  // Choose the more specific of two impls, if there is one.
+  auto SelectImpl(const ImplScope::ImplResult& impl1,
+                  const ImplScope::ImplResult& impl2, SourceLocation source_loc,
+                  const ImplScope& impl_scope, const TypeChecker& type_checker,
+                  Nonnull<const Value*> iface_type,
+                  Nonnull<const Value*> impl_type) const
+      -> ErrorOr<std::optional<ImplScope::ImplResult>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
