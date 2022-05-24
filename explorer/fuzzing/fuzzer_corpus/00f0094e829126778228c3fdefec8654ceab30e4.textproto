@@ -7,7 +7,9 @@ compilation_unit {
             expression {
               function_type {
                 parameter {
-                  primitive_operator {
+                  fields {
+                    primitive_operator {
+                    }
                   }
                 }
               }
