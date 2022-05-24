@@ -104,8 +104,10 @@ static auto ExpressionToProto(const Expression& expression)
     }
 
     case ExpressionKind::SimpleMemberAccessExpression: {
-      const auto& simple_member_access = cast<SimpleMemberAccessExpression>(expression);
-      auto* simple_member_access_proto = expression_proto.mutable_simple_member_access();
+      const auto& simple_member_access =
+          cast<SimpleMemberAccessExpression>(expression);
+      auto* simple_member_access_proto =
+          expression_proto.mutable_simple_member_access();
       simple_member_access_proto->set_field(simple_member_access.member());
       *simple_member_access_proto->mutable_object() =
           ExpressionToProto(simple_member_access.object());

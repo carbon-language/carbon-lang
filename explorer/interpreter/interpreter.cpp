@@ -357,8 +357,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<IndexExpression>(exp).object()));
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&cast<IndexExpression>(exp).object()));
 
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -845,7 +845,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
               act.results()[0]->GetMember(arena_, FieldPath(member),
-                                         exp.source_loc()));
+                                          exp.source_loc()));
           return todo_.FinishAction(member_value);
         }
       }

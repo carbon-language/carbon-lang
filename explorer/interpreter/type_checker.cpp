@@ -503,11 +503,11 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
       source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
       ValueCategory::Let);
-  Nonnull<Expression*> iface_member =
-      arena_->New<SimpleMemberAccessExpression>(source_loc, iface_expr, method.name);
+  Nonnull<Expression*> iface_member = arena_->New<SimpleMemberAccessExpression>(
+      source_loc, iface_expr, method.name);
   Nonnull<Expression*> method_access =
       arena_->New<CompoundMemberAccessExpression>(source_loc, source,
-                                                 iface_member);
+                                                  iface_member);
   Nonnull<Expression*> call_args =
       arena_->New<TupleLiteral>(source_loc, method.arguments);
   Nonnull<Expression*> call =
@@ -1351,8 +1351,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         default:
           return CompilationError(e->source_loc())
-                 << "member access, unexpected " << object_type << " in "
-                 << *e;
+                 << "member access, unexpected " << object_type << " in " << *e;
       }
     }
     case ExpressionKind::CompoundMemberAccessExpression: {

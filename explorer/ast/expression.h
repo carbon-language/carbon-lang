@@ -155,8 +155,8 @@ class IdentifierExpression : public Expression {
 class SimpleMemberAccessExpression : public Expression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
-                                 Nonnull<Expression*> object,
-                                 std::string member)
+                                        Nonnull<Expression*> object,
+                                        std::string member)
       : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
         object_(object),
         member_(std::move(member)) {}
@@ -204,8 +204,8 @@ class SimpleMemberAccessExpression : public Expression {
 class CompoundMemberAccessExpression : public Expression {
  public:
   explicit CompoundMemberAccessExpression(SourceLocation source_loc,
-                                         Nonnull<Expression*> object,
-                                         Nonnull<Expression*> path)
+                                          Nonnull<Expression*> object,
+                                          Nonnull<Expression*> path)
       : Expression(AstNodeKind::CompoundMemberAccessExpression, source_loc),
         object_(object),
         path_(path) {}
