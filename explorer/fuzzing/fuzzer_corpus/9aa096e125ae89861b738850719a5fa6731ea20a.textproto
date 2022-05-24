@@ -78,6 +78,7 @@ compilation_unit {
         function {
           name: "GetX"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -100,6 +101,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {

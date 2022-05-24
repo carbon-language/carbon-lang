@@ -5,37 +5,11 @@ compilation_unit {
   is_api: true
   declarations {
     interface {
-      name: "Vector"
+      name: "Number"
       members {
         function {
-          name: "Add"
-          me_pattern {
-            name: "me"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "Self"
-                  }
-                }
-              }
-            }
-          }
+          name: "Zero"
           param_pattern {
-            fields {
-              binding_pattern {
-                name: "b"
-                type {
-                  expression_pattern {
-                    expression {
-                      identifier {
-                        name: "Self"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
           return_term {
             kind: Expression
@@ -49,8 +23,9 @@ compilation_unit {
       }
       members {
         function {
-          name: "Scale"
+          name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -61,15 +36,17 @@ compilation_unit {
                 }
               }
             }
+            }
           }
           param_pattern {
             fields {
               binding_pattern {
-                name: "v"
+                name: "other"
                 type {
                   expression_pattern {
                     expression {
-                      int_type_literal {
+                      identifier {
+                        name: "Self"
                       }
                     }
                   }
@@ -106,7 +83,8 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  int_type_literal {
+                  identifier {
+                    name: "T"
                   }
                 }
               }
@@ -121,9 +99,22 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  int_type_literal {
+                  identifier {
+                    name: "T"
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              identifier {
+                name: "Number"
               }
             }
           }
@@ -135,51 +126,23 @@ compilation_unit {
     impl {
       kind: ExternalImpl
       impl_type {
-        identifier {
-          name: "Point"
+        int_type_literal {
         }
       }
       interface {
         identifier {
-          name: "Vector"
+          name: "Number"
         }
       }
       members {
         function {
-          name: "Add"
-          me_pattern {
-            name: "me"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "Self"
-                  }
-                }
-              }
-            }
-          }
+          name: "Zero"
           param_pattern {
-            fields {
-              binding_pattern {
-                name: "b"
-                type {
-                  expression_pattern {
-                    expression {
-                      identifier {
-                        name: "Self"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
           return_term {
             kind: Expression
             type {
-              identifier {
-                name: "Self"
+              int_type_literal {
               }
             }
           }
@@ -187,63 +150,8 @@ compilation_unit {
             statements {
               return_statement {
                 expression {
-                  struct_literal {
-                    fields {
-                      name: "x"
-                      expression {
-                        primitive_operator {
-                          op: Add
-                          arguments {
-                            field_access {
-                              field: "x"
-                              aggregate {
-                                identifier {
-                                  name: "me"
-                                }
-                              }
-                            }
-                          }
-                          arguments {
-                            field_access {
-                              field: "x"
-                              aggregate {
-                                identifier {
-                                  name: "b"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                    fields {
-                      name: "y"
-                      expression {
-                        primitive_operator {
-                          op: Add
-                          arguments {
-                            field_access {
-                              field: "y"
-                              aggregate {
-                                identifier {
-                                  name: "me"
-                                }
-                              }
-                            }
-                          }
-                          arguments {
-                            field_access {
-                              field: "y"
-                              aggregate {
-                                identifier {
-                                  name: "b"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
+                  int_literal {
+                    value: 0
                   }
                 }
               }
@@ -253,23 +161,24 @@ compilation_unit {
       }
       members {
         function {
-          name: "Scale"
+          name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
                 expression {
-                  identifier {
-                    name: "Self"
+                  int_type_literal {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
             fields {
               binding_pattern {
-                name: "v"
+                name: "other"
                 type {
                   expression_pattern {
                     expression {
@@ -284,8 +193,84 @@ compilation_unit {
           return_term {
             kind: Expression
             type {
-              identifier {
-                name: "Self"
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  primitive_operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "other"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        call {
+          function {
+            identifier {
+              name: "Point"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                identifier {
+                  name: "U"
+                }
+              }
+            }
+          }
+        }
+      }
+      interface {
+        identifier {
+          name: "Number"
+        }
+      }
+      members {
+        function {
+          name: "Zero"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Point"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -297,21 +282,19 @@ compilation_unit {
                     fields {
                       name: "x"
                       expression {
-                        primitive_operator {
-                          op: Mul
-                          arguments {
+                        call {
+                          function {
                             field_access {
-                              field: "x"
+                              field: "Zero"
                               aggregate {
                                 identifier {
-                                  name: "me"
+                                  name: "U"
                                 }
                               }
                             }
                           }
-                          arguments {
-                            identifier {
-                              name: "v"
+                          argument {
+                            tuple_literal {
                             }
                           }
                         }
@@ -320,21 +303,183 @@ compilation_unit {
                     fields {
                       name: "y"
                       expression {
-                        primitive_operator {
-                          op: Mul
-                          arguments {
+                        call {
+                          function {
                             field_access {
-                              field: "y"
+                              field: "Zero"
                               aggregate {
                                 identifier {
-                                  name: "me"
+                                  name: "U"
                                 }
                               }
                             }
                           }
-                          arguments {
-                            identifier {
-                              name: "v"
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "U"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "other"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "U"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Point"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "U"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        call {
+                          function {
+                            field_access {
+                              field: "Add"
+                              aggregate {
+                                field_access {
+                                  field: "x"
+                                  aggregate {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                field_access {
+                                  field: "x"
+                                  aggregate {
+                                    identifier {
+                                      name: "other"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        call {
+                          function {
+                            field_access {
+                              field: "Add"
+                              aggregate {
+                                field_access {
+                                  field: "y"
+                                  aggregate {
+                                    identifier {
+                                      name: "me"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                field_access {
+                                  field: "y"
+                                  aggregate {
+                                    identifier {
+                                      name: "other"
+                                    }
+                                  }
+                                }
+                              }
                             }
                           }
                         }
@@ -351,24 +496,24 @@ compilation_unit {
   }
   declarations {
     function {
-      name: "AddAndScaleGeneric"
+      name: "Sum"
       deduced_parameters {
-        name: "T"
+        name: "E"
         type {
           identifier {
-            name: "Vector"
+            name: "Number"
           }
         }
       }
       param_pattern {
         fields {
           binding_pattern {
-            name: "a"
+            name: "x"
             type {
               expression_pattern {
                 expression {
                   identifier {
-                    name: "T"
+                    name: "E"
                   }
                 }
               }
@@ -377,25 +522,12 @@ compilation_unit {
         }
         fields {
           binding_pattern {
-            name: "b"
+            name: "y"
             type {
               expression_pattern {
                 expression {
                   identifier {
-                    name: "T"
-                  }
-                }
-              }
-            }
-          }
-        }
-        fields {
-          binding_pattern {
-            name: "s"
-            type {
-              expression_pattern {
-                expression {
-                  int_type_literal {
+                    name: "E"
                   }
                 }
               }
@@ -407,7 +539,7 @@ compilation_unit {
         kind: Expression
         type {
           identifier {
-            name: "T"
+            name: "E"
           }
         }
       }
@@ -416,19 +548,32 @@ compilation_unit {
           variable_definition {
             pattern {
               binding_pattern {
-                name: "m"
+                name: "total"
                 type {
-                  auto_pattern {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "E"
+                      }
+                    }
                   }
                 }
               }
             }
             init {
-              field_access {
-                field: "Add"
-                aggregate {
-                  identifier {
-                    name: "a"
+              call {
+                function {
+                  field_access {
+                    field: "Zero"
+                    aggregate {
+                      identifier {
+                        name: "E"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
                   }
                 }
               }
@@ -436,33 +581,61 @@ compilation_unit {
           }
         }
         statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "n"
-                type {
-                  auto_pattern {
+          assign {
+            lhs {
+              identifier {
+                name: "total"
+              }
+            }
+            rhs {
+              call {
+                function {
+                  field_access {
+                    field: "Add"
+                    aggregate {
+                      identifier {
+                        name: "total"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "x"
+                      }
+                    }
                   }
                 }
               }
             }
-            init {
-              field_access {
-                field: "Scale"
-                aggregate {
-                  call {
-                    function {
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "total"
+              }
+            }
+            rhs {
+              call {
+                function {
+                  field_access {
+                    field: "Add"
+                    aggregate {
                       identifier {
-                        name: "m"
+                        name: "total"
                       }
                     }
-                    argument {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "b"
-                          }
-                        }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "y"
                       }
                     }
                   }
@@ -474,21 +647,8 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              call {
-                function {
-                  identifier {
-                    name: "n"
-                  }
-                }
-                argument {
-                  tuple_literal {
-                    fields {
-                      identifier {
-                        name: "s"
-                      }
-                    }
-                  }
-                }
+              identifier {
+                name: "total"
               }
             }
           }
@@ -513,12 +673,24 @@ compilation_unit {
           variable_definition {
             pattern {
               binding_pattern {
-                name: "a"
+                name: "p"
                 type {
                   expression_pattern {
                     expression {
-                      identifier {
-                        name: "Point"
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -539,7 +711,7 @@ compilation_unit {
                   name: "y"
                   expression {
                     int_literal {
-                      value: 4
+                      value: 2
                     }
                   }
                 }
@@ -551,12 +723,24 @@ compilation_unit {
           variable_definition {
             pattern {
               binding_pattern {
-                name: "b"
+                name: "q"
                 type {
                   expression_pattern {
                     expression {
-                      identifier {
-                        name: "Point"
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -569,7 +753,7 @@ compilation_unit {
                   name: "x"
                   expression {
                     int_literal {
-                      value: 2
+                      value: 4
                     }
                   }
                 }
@@ -589,12 +773,24 @@ compilation_unit {
           variable_definition {
             pattern {
               binding_pattern {
-                name: "p"
+                name: "r"
                 type {
                   expression_pattern {
                     expression {
-                      identifier {
-                        name: "Point"
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -605,24 +801,19 @@ compilation_unit {
               call {
                 function {
                   identifier {
-                    name: "AddAndScaleGeneric"
+                    name: "Sum"
                   }
                 }
                 argument {
                   tuple_literal {
                     fields {
                       identifier {
-                        name: "a"
+                        name: "p"
                       }
                     }
                     fields {
                       identifier {
-                        name: "b"
-                      }
-                    }
-                    fields {
-                      int_literal {
-                        value: 5
+                        name: "q"
                       }
                     }
                   }
@@ -641,14 +832,19 @@ compilation_unit {
                     field: "x"
                     aggregate {
                       identifier {
-                        name: "p"
+                        name: "r"
                       }
                     }
                   }
                 }
                 arguments {
-                  int_literal {
-                    value: 15
+                  field_access {
+                    field: "y"
+                    aggregate {
+                      identifier {
+                        name: "r"
+                      }
+                    }
                   }
                 }
               }

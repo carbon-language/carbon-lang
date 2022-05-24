@@ -10,6 +10,7 @@ compilation_unit {
         function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -51,6 +53,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -60,6 +63,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -146,6 +150,7 @@ compilation_unit {
             function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -155,6 +160,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -253,6 +259,7 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -262,6 +269,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -363,21 +371,26 @@ compilation_unit {
       param_pattern {
         fields {
           binding_pattern {
-            name: "t"
+            name: "a"
             type {
               expression_pattern {
                 expression {
-                  tuple_literal {
-                    fields {
-                      identifier {
-                        name: "T"
-                      }
-                    }
-                    fields {
-                      identifier {
-                        name: "T"
-                      }
-                    }
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "b"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
                   }
                 }
               }
@@ -413,7 +426,25 @@ compilation_unit {
               binding_pattern {
                 name: "m"
                 type {
-                  auto_pattern {
+                  expression_pattern {
+                    expression {
+                      function_type {
+                        parameter {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                        return_type {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -422,17 +453,8 @@ compilation_unit {
               field_access {
                 field: "Add"
                 aggregate {
-                  index {
-                    aggregate {
-                      identifier {
-                        name: "t"
-                      }
-                    }
-                    offset {
-                      int_literal {
-                        value: 0
-                      }
-                    }
+                  identifier {
+                    name: "a"
                   }
                 }
               }
@@ -445,7 +467,24 @@ compilation_unit {
               binding_pattern {
                 name: "n"
                 type {
-                  auto_pattern {
+                  expression_pattern {
+                    expression {
+                      function_type {
+                        parameter {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                        return_type {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -463,17 +502,8 @@ compilation_unit {
                     argument {
                       tuple_literal {
                         fields {
-                          index {
-                            aggregate {
-                              identifier {
-                                name: "t"
-                              }
-                            }
-                            offset {
-                              int_literal {
-                                value: 1
-                              }
-                            }
+                          identifier {
+                            name: "b"
                           }
                         }
                       }
@@ -624,17 +654,13 @@ compilation_unit {
                 argument {
                   tuple_literal {
                     fields {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "a"
-                          }
-                        }
-                        fields {
-                          identifier {
-                            name: "b"
-                          }
-                        }
+                      identifier {
+                        name: "a"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "b"
                       }
                     }
                     fields {

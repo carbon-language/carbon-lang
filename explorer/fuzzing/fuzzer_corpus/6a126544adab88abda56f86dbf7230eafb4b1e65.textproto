@@ -10,26 +10,12 @@ compilation_unit {
         function {
           name: "Origin"
           param_pattern {
-            fields {
-              binding_pattern {
-                name: "zero"
-                type {
-                  expression_pattern {
-                    expression {
-                      identifier {
-                        name: "T"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
           return_term {
             kind: Expression
             type {
               identifier {
-                name: "Self"
+                name: "Point"
               }
             }
           }
@@ -41,16 +27,16 @@ compilation_unit {
                     fields {
                       name: "x"
                       expression {
-                        identifier {
-                          name: "zero"
+                        int_literal {
+                          value: 0
                         }
                       }
                     }
                     fields {
                       name: "y"
                       expression {
-                        identifier {
-                          name: "zero"
+                        int_literal {
+                          value: 0
                         }
                       }
                     }
@@ -65,12 +51,14 @@ compilation_unit {
         function {
           name: "GetX"
           me_pattern {
-            name: "me"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "Self"
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Point"
+                    }
                   }
                 }
               }
@@ -81,8 +69,7 @@ compilation_unit {
           return_term {
             kind: Expression
             type {
-              identifier {
-                name: "T"
+              int_type_literal {
               }
             }
           }
@@ -111,8 +98,7 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  identifier {
-                    name: "T"
+                  int_type_literal {
                   }
                 }
               }
@@ -127,21 +113,9 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  identifier {
-                    name: "T"
+                  int_type_literal {
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-      type_params {
-        fields {
-          generic_binding {
-            name: "T"
-            type {
-              type_type_literal {
               }
             }
           }
@@ -170,20 +144,8 @@ compilation_unit {
                 type {
                   expression_pattern {
                     expression {
-                      call {
-                        function {
-                          identifier {
-                            name: "Point"
-                          }
-                        }
-                        argument {
-                          tuple_literal {
-                            fields {
-                              int_type_literal {
-                              }
-                            }
-                          }
-                        }
+                      identifier {
+                        name: "Point"
                       }
                     }
                   }
@@ -196,31 +158,14 @@ compilation_unit {
                   field_access {
                     field: "Origin"
                     aggregate {
-                      call {
-                        function {
-                          identifier {
-                            name: "Point"
-                          }
-                        }
-                        argument {
-                          tuple_literal {
-                            fields {
-                              int_type_literal {
-                              }
-                            }
-                          }
-                        }
+                      identifier {
+                        name: "Point"
                       }
                     }
                   }
                 }
                 argument {
                   tuple_literal {
-                    fields {
-                      int_literal {
-                        value: 0
-                      }
-                    }
                   }
                 }
               }

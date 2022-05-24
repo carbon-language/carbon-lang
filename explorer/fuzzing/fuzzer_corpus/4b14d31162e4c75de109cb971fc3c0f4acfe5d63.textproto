@@ -10,6 +10,7 @@ compilation_unit {
         function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -51,6 +53,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -60,6 +63,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -146,6 +150,7 @@ compilation_unit {
             function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -155,6 +160,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -253,6 +259,7 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -262,6 +269,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -399,6 +407,7 @@ compilation_unit {
             function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -408,6 +417,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -526,6 +536,7 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -535,6 +546,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {

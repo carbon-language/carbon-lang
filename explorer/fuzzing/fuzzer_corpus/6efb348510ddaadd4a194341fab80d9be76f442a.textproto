@@ -10,6 +10,7 @@ compilation_unit {
         function {
           name: "Op"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -121,6 +123,7 @@ compilation_unit {
         function {
           name: "Op"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -130,6 +133,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
