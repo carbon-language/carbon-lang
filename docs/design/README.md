@@ -243,7 +243,8 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 >
 > **TODO:** References need to be evolved.
 
-Unqualified name lookup will always find a file-local result, including aliases.
+Unqualified name lookup will always find a file-local result, including aliases,
+or names that are defined as part of the prelude.
 
 ##### Name lookup for common types
 
