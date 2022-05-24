@@ -9,17 +9,13 @@ compilation_unit {
       alternatives {
         name: "None"
         signature {
-          tuple_literal {
-          }
         }
       }
       alternatives {
         name: "One"
         signature {
-          tuple_literal {
-            fields {
-              int_type_literal {
-              }
+          fields {
+            int_type_literal {
             }
           }
         }
@@ -27,14 +23,12 @@ compilation_unit {
       alternatives {
         name: "Two"
         signature {
-          tuple_literal {
-            fields {
-              int_type_literal {
-              }
+          fields {
+            int_type_literal {
             }
-            fields {
-              int_type_literal {
-              }
+          }
+          fields {
+            int_type_literal {
             }
           }
         }

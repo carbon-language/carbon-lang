@@ -300,7 +300,7 @@ message ClassDeclaration {
 
 message AlternativeSignature {
   optional string name = 1;
-  optional Expression signature = 2;
+  optional TupleLiteralExpression signature = 3;
 }
 
 message ChoiceDeclaration {
