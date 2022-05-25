@@ -516,7 +516,7 @@ static auto DeclarationToProto(const Declaration& declaration)
         auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
         *alternative_proto->mutable_signature() =
-            ExpressionToProto(alternative->signature());
+            TupleLiteralExpressionToProto(alternative->signature());
       }
       break;
     }
