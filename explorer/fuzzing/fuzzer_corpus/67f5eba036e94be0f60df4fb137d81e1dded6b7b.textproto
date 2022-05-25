@@ -132,7 +132,7 @@ compilation_unit {
                               }
                               arguments {
                                 index {
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "c"
                                     }
@@ -148,7 +148,7 @@ compilation_unit {
                           }
                           arguments {
                             index {
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "c"
                                 }

@@ -192,9 +192,9 @@ compilation_unit {
                             primitive_operator {
                               op: Add
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "x"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -202,9 +202,9 @@ compilation_unit {
                                 }
                               }
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "x"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "b"
                                     }
@@ -220,9 +220,9 @@ compilation_unit {
                             primitive_operator {
                               op: Add
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "y"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -230,9 +230,9 @@ compilation_unit {
                                 }
                               }
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "y"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "b"
                                     }
@@ -298,9 +298,9 @@ compilation_unit {
                             primitive_operator {
                               op: Mul
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "x"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -321,9 +321,9 @@ compilation_unit {
                             primitive_operator {
                               op: Mul
                               arguments {
-                                field_access {
+                                simple_member_access {
                                   field: "y"
-                                  aggregate {
+                                  object {
                                     identifier {
                                       name: "me"
                                     }
@@ -338,6 +338,85 @@ compilation_unit {
                             }
                           }
                         }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "ScaleGeneric"
+      deduced_parameters {
+        name: "U"
+        type {
+          identifier {
+            name: "Vector"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "c"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "U"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "s"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "U"
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Scale"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "s"
                       }
                     }
                   }
@@ -413,106 +492,39 @@ compilation_unit {
       }
       body {
         statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "m"
-                type {
-                  expression_pattern {
-                    expression {
-                      function_type {
-                        parameter {
-                          fields {
-                            identifier {
-                              name: "T"
-                            }
-                          }
-                        }
-                        return_type {
-                          identifier {
-                            name: "T"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            init {
-              field_access {
-                field: "Add"
-                aggregate {
-                  identifier {
-                    name: "a"
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "n"
-                type {
-                  expression_pattern {
-                    expression {
-                      function_type {
-                        parameter {
-                          fields {
-                            int_type_literal {
-                            }
-                          }
-                        }
-                        return_type {
-                          identifier {
-                            name: "T"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            init {
-              field_access {
-                field: "Scale"
-                aggregate {
-                  call {
-                    function {
-                      identifier {
-                        name: "m"
-                      }
-                    }
-                    argument {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "b"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
           return_statement {
             expression {
               call {
                 function {
                   identifier {
-                    name: "n"
+                    name: "ScaleGeneric"
                   }
                 }
                 argument {
                   tuple_literal {
+                    fields {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Add"
+                            object {
+                              identifier {
+                                name: "a"
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "b"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
                     fields {
                       identifier {
                         name: "s"
@@ -668,9 +680,9 @@ compilation_unit {
               primitive_operator {
                 op: Sub
                 arguments {
-                  field_access {
+                  simple_member_access {
                     field: "x"
-                    aggregate {
+                    object {
                       identifier {
                         name: "p"
                       }

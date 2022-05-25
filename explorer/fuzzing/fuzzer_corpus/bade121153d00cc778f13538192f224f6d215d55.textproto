@@ -110,9 +110,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "T"
                                 }
@@ -131,9 +131,9 @@ compilation_unit {
                       expression {
                         call {
                           function {
-                            field_access {
+                            simple_member_access {
                               field: "Zero"
-                              aggregate {
+                              object {
                                 identifier {
                                   name: "T"
                                 }
@@ -142,6 +142,155 @@ compilation_unit {
                           }
                           argument {
                             tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "SumXY"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Add"
+                        object {
+                          simple_member_access {
+                            field: "x"
+                            object {
+                              identifier {
+                                name: "p"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          simple_member_access {
+                            field: "y"
+                            object {
+                              identifier {
+                                name: "p"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "SumFn"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              function_type {
+                parameter {
+                  fields {
+                    call {
+                      function {
+                        identifier {
+                          name: "Point"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            identifier {
+                              name: "T"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                return_type {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  simple_member_access {
+                    field: "SumXY"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
                             }
                           }
                         }
@@ -300,108 +449,6 @@ compilation_unit {
   }
   declarations {
     function {
-      name: "SumXY"
-      deduced_parameters {
-        name: "U"
-        type {
-          identifier {
-            name: "Number"
-          }
-        }
-      }
-      param_pattern {
-        fields {
-          binding_pattern {
-            name: "p"
-            type {
-              expression_pattern {
-                expression {
-                  call {
-                    function {
-                      identifier {
-                        name: "Point"
-                      }
-                    }
-                    argument {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "U"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return_term {
-        kind: Expression
-        type {
-          identifier {
-            name: "U"
-          }
-        }
-      }
-      body {
-        statements {
-          return_statement {
-            expression {
-              call {
-                function {
-                  field_access {
-                    field: "Add"
-                    aggregate {
-                      field_access {
-                        field: "x"
-                        aggregate {
-                          call {
-                            function {
-                              field_access {
-                                field: "Origin"
-                                aggregate {
-                                  identifier {
-                                    name: "p"
-                                  }
-                                }
-                              }
-                            }
-                            argument {
-                              tuple_literal {
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-                argument {
-                  tuple_literal {
-                    fields {
-                      field_access {
-                        field: "y"
-                        aggregate {
-                          identifier {
-                            name: "p"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  declarations {
-    function {
       name: "Main"
       param_pattern {
       }
@@ -442,21 +489,31 @@ compilation_unit {
               }
             }
             init {
-              struct_literal {
-                fields {
-                  name: "x"
-                  expression {
-                    int_literal {
-                      value: 0
+              call {
+                function {
+                  simple_member_access {
+                    field: "Origin"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
-                fields {
-                  name: "y"
-                  expression {
-                    int_literal {
-                      value: 0
-                    }
+                argument {
+                  tuple_literal {
                   }
                 }
               }
@@ -468,8 +525,21 @@ compilation_unit {
             expression {
               call {
                 function {
-                  identifier {
-                    name: "SumXY"
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "SumFn"
+                        object {
+                          identifier {
+                            name: "p"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
                   }
                 }
                 argument {

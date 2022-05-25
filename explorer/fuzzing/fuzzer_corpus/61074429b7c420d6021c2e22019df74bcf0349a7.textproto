@@ -96,7 +96,7 @@ compilation_unit {
                       tuple_literal {
                         fields {
                           index {
-                            aggregate {
+                            object {
                               identifier {
                                 name: "tuple"
                               }
@@ -123,7 +123,7 @@ compilation_unit {
                       tuple_literal {
                         fields {
                           index {
-                            aggregate {
+                            object {
                               identifier {
                                 name: "tuple"
                               }
@@ -211,7 +211,7 @@ compilation_unit {
           return_statement {
             expression {
               index {
-                aggregate {
+                object {
                   call {
                     function {
                       identifier {
