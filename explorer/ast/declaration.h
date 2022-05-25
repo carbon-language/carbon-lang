@@ -220,7 +220,7 @@ class ClassDeclaration : public Declaration {
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       Nonnull<Expression*> signature)
+                       Nonnull<TupleLiteral*> signature)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
         signature_(signature) {}
@@ -233,12 +233,12 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> const Expression& { return *signature_; }
-  auto signature() -> Expression& { return *signature_; }
+  auto signature() const -> const TupleLiteral& { return *signature_; }
+  auto signature() -> TupleLiteral& { return *signature_; }
 
  private:
   std::string name_;
-  Nonnull<Expression*> signature_;
+  Nonnull<TupleLiteral*> signature_;
 };
 
 class ChoiceDeclaration : public Declaration {
@@ -294,6 +294,12 @@ class VariableDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return value_category_; }
 
   auto has_initializer() const -> bool { return initializer_.has_value(); }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_initializer(Nonnull<Expression*> initializer) {
+    CARBON_CHECK(has_initializer()) << "should not add a new initializer";
+    initializer_ = initializer;
+  }
 
  private:
   // TODO: split this into a non-optional name and a type, initialized by
@@ -415,6 +421,30 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+};
+
+class AliasDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit AliasDeclaration(SourceLocation source_loc, const std::string& name,
+                            Nonnull<Expression*> target)
+      : Declaration(AstNodeKind::AliasDeclaration, source_loc),
+        name_(name),
+        target_(target) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAliasDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string { return name_; }
+  auto target() const -> const Expression& { return *target_; }
+  auto target() -> Expression& { return *target_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+  Nonnull<Expression*> target_;
 };
 
 // Return the name of a declaration, if it has one.

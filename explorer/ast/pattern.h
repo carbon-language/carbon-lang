@@ -302,11 +302,11 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> ErrorOr<Nonnull<AlternativePattern*>> {
-    CARBON_ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
-                            RequireFieldAccess(alternative));
-    return arena->New<AlternativePattern>(source_loc,
-                                          &field_access->aggregate(),
-                                          field_access->field(), arguments);
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<SimpleMemberAccessExpression*> member_access,
+        RequireSimpleMemberAccess(alternative));
+    return arena->New<AlternativePattern>(source_loc, &member_access->object(),
+                                          member_access->member(), arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type
@@ -334,8 +334,8 @@ class AlternativePattern : public Pattern {
   auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
-  static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
+  static auto RequireSimpleMemberAccess(Nonnull<Expression*> alternative)
+      -> ErrorOr<Nonnull<SimpleMemberAccessExpression*>>;
 
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;

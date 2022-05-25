@@ -70,6 +70,12 @@ class Expression : public AstNode {
     value_category_ = value_category;
   }
 
+  // Determines whether the expression has already been type-checked. Should
+  // only be used by type-checking.
+  auto is_type_checked() -> bool {
+    return static_type_.has_value() && value_category_.has_value();
+  }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -146,22 +152,22 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
-class FieldAccessExpression : public Expression {
+class SimpleMemberAccessExpression : public Expression {
  public:
-  explicit FieldAccessExpression(SourceLocation source_loc,
-                                 Nonnull<Expression*> aggregate,
-                                 std::string field)
-      : Expression(AstNodeKind::FieldAccessExpression, source_loc),
-        aggregate_(aggregate),
-        field_(std::move(field)) {}
+  explicit SimpleMemberAccessExpression(SourceLocation source_loc,
+                                        Nonnull<Expression*> object,
+                                        std::string member)
+      : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
+        object_(object),
+        member_(std::move(member)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromFieldAccessExpression(node->kind());
+    return InheritsFromSimpleMemberAccessExpression(node->kind());
   }
 
-  auto aggregate() const -> const Expression& { return *aggregate_; }
-  auto aggregate() -> Expression& { return *aggregate_; }
-  auto field() const -> const std::string& { return field_; }
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+  auto member() const -> const std::string& { return member_; }
   // Returns true if the field is a method that has a "me" declaration in an
   // AddrPattern.
   auto is_field_addr_me_method() const -> bool {
@@ -171,7 +177,7 @@ class FieldAccessExpression : public Expression {
   // Can only be called once, during typechecking.
   void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
 
-  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
   auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
@@ -185,8 +191,8 @@ class FieldAccessExpression : public Expression {
   }
 
  private:
-  Nonnull<Expression*> aggregate_;
-  std::string field_;
+  Nonnull<Expression*> object_;
+  std::string member_;
   std::optional<Nonnull<const ImplBinding*>> impl_;
   bool is_field_addr_me_method_ = false;
 };
@@ -204,17 +210,17 @@ class FieldAccessExpression : public Expression {
 //
 // Note that the `path` is evaluated during type-checking, not at runtime, so
 // the corresponding `member` is determined statically.
-class CompoundFieldAccessExpression : public Expression {
+class CompoundMemberAccessExpression : public Expression {
  public:
-  explicit CompoundFieldAccessExpression(SourceLocation source_loc,
-                                         Nonnull<Expression*> object,
-                                         Nonnull<Expression*> path)
-      : Expression(AstNodeKind::CompoundFieldAccessExpression, source_loc),
+  explicit CompoundMemberAccessExpression(SourceLocation source_loc,
+                                          Nonnull<Expression*> object,
+                                          Nonnull<Expression*> path)
+      : Expression(AstNodeKind::CompoundMemberAccessExpression, source_loc),
         object_(object),
         path_(path) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromCompoundFieldAccessExpression(node->kind());
+    return InheritsFromCompoundMemberAccessExpression(node->kind());
   }
 
   auto object() const -> const Expression& { return *object_; }
@@ -247,6 +253,9 @@ class CompoundFieldAccessExpression : public Expression {
     impl_ = impl;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
+
  private:
   Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
@@ -257,23 +266,23 @@ class CompoundFieldAccessExpression : public Expression {
 class IndexExpression : public Expression {
  public:
   explicit IndexExpression(SourceLocation source_loc,
-                           Nonnull<Expression*> aggregate,
+                           Nonnull<Expression*> object,
                            Nonnull<Expression*> offset)
       : Expression(AstNodeKind::IndexExpression, source_loc),
-        aggregate_(aggregate),
+        object_(object),
         offset_(offset) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIndexExpression(node->kind());
   }
 
-  auto aggregate() const -> const Expression& { return *aggregate_; }
-  auto aggregate() -> Expression& { return *aggregate_; }
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
   auto offset() const -> const Expression& { return *offset_; }
   auto offset() -> Expression& { return *offset_; }
 
  private:
-  Nonnull<Expression*> aggregate_;
+  Nonnull<Expression*> object_;
   Nonnull<Expression*> offset_;
 };
 
@@ -476,6 +485,9 @@ class CallExpression : public Expression {
     deduced_args_ = deduced_args;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
@@ -486,7 +498,7 @@ class CallExpression : public Expression {
 class FunctionTypeLiteral : public Expression {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
-                               Nonnull<Expression*> parameter,
+                               Nonnull<TupleLiteral*> parameter,
                                Nonnull<Expression*> return_type)
       : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
@@ -496,13 +508,13 @@ class FunctionTypeLiteral : public Expression {
     return InheritsFromFunctionTypeLiteral(node->kind());
   }
 
-  auto parameter() const -> const Expression& { return *parameter_; }
-  auto parameter() -> Expression& { return *parameter_; }
+  auto parameter() const -> const TupleLiteral& { return *parameter_; }
+  auto parameter() -> TupleLiteral& { return *parameter_; }
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
 
  private:
-  Nonnull<Expression*> parameter_;
+  Nonnull<TupleLiteral*> parameter_;
   Nonnull<Expression*> return_type_;
 };
 
@@ -544,6 +556,29 @@ class TypeTypeLiteral : public Expression {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTypeTypeLiteral(node->kind());
   }
+};
+
+// A literal value. This is used in desugaring, and can't be expressed in
+// source syntax.
+class ValueLiteral : public Expression {
+ public:
+  // Value literals are created by type-checking, and so are created with their
+  // type and value category already known.
+  ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
+               Nonnull<const Value*> type, ValueCategory value_category)
+      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+    set_static_type(type);
+    set_value_category(value_category);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromValueLiteral(node->kind());
+  }
+
+  auto value() const -> const Value& { return *value_; }
+
+ private:
+  Nonnull<const Value*> value_;
 };
 
 class IntrinsicExpression : public Expression {
@@ -603,6 +638,9 @@ class IfExpression : public Expression {
     return *else_expression_;
   }
   auto else_expression() -> Expression& { return *else_expression_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
 
  private:
   Nonnull<Expression*> condition_;

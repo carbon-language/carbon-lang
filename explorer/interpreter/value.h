@@ -84,8 +84,9 @@ class Value {
   // path for *this. If the sub-Value is a method and its me_pattern is an
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
-  auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc, Nonnull<const Value*> me_value) const
+  auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
+                 SourceLocation source_loc,
+                 Nonnull<const Value*> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -662,7 +663,7 @@ class InterfaceType : public Value {
   }
   auto args() const -> const BindingMap& { return args_; }
 
-  // FIXME: These aren't used for anything yet.
+  // TODO: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 

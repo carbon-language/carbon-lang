@@ -106,6 +106,7 @@
 %type <bool> api_or_impl
 %type <Nonnull<Declaration*>> declaration
 %type <Nonnull<FunctionDeclaration*>> function_declaration
+%type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<If*>> if_statement
@@ -174,6 +175,7 @@
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
   ADDR
+  ALIAS
   AMPERSAND
   AND
   API
@@ -307,7 +309,7 @@ primary_expression:
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
 | SELF
-    // FIXME: Should we create a new TypeLiteral for `Self`?
+    // TODO: Should we create a new TypeLiteral for `Self`?
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | STRING
     { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
@@ -326,11 +328,14 @@ primary_expression:
 postfix_expression:
   primary_expression
 | postfix_expression designator
-    { $$ = arena->New<FieldAccessExpression>(context.source_loc(), $1, $2); }
+    {
+      $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), $1,
+                                                    $2);
+    }
 | postfix_expression PERIOD LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
     {
-      $$ = arena->New<CompoundFieldAccessExpression>(context.source_loc(), $1,
-                                                     $4);
+      $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(), $1,
+                                                      $4);
     }
 | postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }
@@ -877,6 +882,9 @@ variable_declaration: identifier COLON pattern
                                       std::nullopt);
     }
 ;
+alias_declaration: ALIAS identifier EQUAL expression SEMICOLON
+    { $$ = arena->New<AliasDeclaration>(context.source_loc(), $2, $4); }
+;
 alternative:
   identifier tuple
     { $$ = arena->New<AlternativeSignature>(context.source_loc(), $1, $2); }
@@ -941,7 +949,7 @@ declaration:
       // TODO: Type of `Self` should be the interface being declared, not
       // `Type`.
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
-      // FIXME: Should this be switched to use a `SelfDeclaration` instead?
+      // TODO: Should this be switched to use a `SelfDeclaration` instead?
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
@@ -958,6 +966,8 @@ declaration:
         YYERROR;
       }
     }
+| alias_declaration
+    { $$ = $1; }
 ;
 impl_kind:
   // Internal

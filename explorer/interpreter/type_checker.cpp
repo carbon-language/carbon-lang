@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
@@ -23,6 +24,7 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
 using llvm::isa;
 
 namespace Carbon {
@@ -115,7 +117,8 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
 
 // Returns whether the value is a valid result from a type expression,
 // as opposed to a non-type value.
-static auto IsType(Nonnull<const Value*> value) -> bool {
+// `auto` is not considered a type by the function if `concrete` is false.
+static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
     case Value::Kind::FunctionValue:
@@ -144,7 +147,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
-    case Value::Kind::PointerType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
@@ -156,15 +158,20 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
-    case Value::Kind::AutoType:
       return true;
+    case Value::Kind::AutoType:
+      // `auto` isn't a concrete type, it's a pattern that matches types.
+      return !concrete;
     case Value::Kind::TupleValue: {
       for (Nonnull<const Value*> field : cast<TupleValue>(*value).elements()) {
-        if (!IsType(field)) {
+        if (!IsType(field, concrete)) {
           return false;
         }
       }
       return true;
+    }
+    case Value::Kind::PointerType: {
+      return IsType(&cast<PointerType>(*value).type(), concrete);
     }
   }
 }
@@ -183,58 +190,7 @@ auto TypeChecker::ExpectIsType(SourceLocation source_loc,
 // Returns whether *value represents the type of a Carbon value, as
 // opposed to a type pattern or a non-type value.
 static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
-  switch (value->kind()) {
-    case Value::Kind::IntValue:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::StructValue:
-    case Value::Kind::NominalClassValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
-    case Value::Kind::StringValue:
-    case Value::Kind::Witness:
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-    case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
-      return false;
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::TypeType:
-    case Value::Kind::FunctionType:
-    case Value::Kind::StructType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
-    case Value::Kind::VariableType:
-    case Value::Kind::StringType:
-    case Value::Kind::TypeOfClassType:
-    case Value::Kind::TypeOfInterfaceType:
-    case Value::Kind::TypeOfChoiceType:
-    case Value::Kind::StaticArrayType:
-      return true;
-    case Value::Kind::AutoType:
-      // `auto` isn't a concrete type, it's a pattern that matches types.
-      return false;
-    case Value::Kind::TupleValue: {
-      for (Nonnull<const Value*> field : cast<TupleValue>(*value).elements()) {
-        if (!IsConcreteType(field)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    case Value::Kind::PointerType: {
-      return IsConcreteType(&cast<PointerType>(*value).type());
-    }
-  }
+  return IsType(value, /*concrete=*/true);
 }
 
 auto TypeChecker::ExpectIsConcreteType(SourceLocation source_loc,
@@ -272,7 +228,12 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
         FindField(destination_fields, source_field.name);
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
-                                 destination_field.value().value)) {
+                                 destination_field.value().value,
+                                 // FIXME: We don't have a way to perform
+                                 // user-defined conversions of a struct field
+                                 // yet, because we can't write a suitable impl
+                                 // for ImplicitAs.
+                                 std::nullopt)) {
       return false;
     }
   }
@@ -300,8 +261,11 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
-    Nonnull<const Value*> source, Nonnull<const Value*> destination) const
-    -> bool {
+    Nonnull<const Value*> source, Nonnull<const Value*> destination,
+    std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool {
+  // Check for an exact match or for an implicit conversion.
+  // FIXME: `impl`s of `ImplicitAs` should be provided to cover these
+  // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
   if (TypeEqual(source, destination)) {
@@ -311,16 +275,23 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType:
-          return FieldTypesImplicitlyConvertible(
-              cast<StructType>(*source).fields(),
-              cast<StructType>(*destination).fields());
+          if (FieldTypesImplicitlyConvertible(
+                  cast<StructType>(*source).fields(),
+                  cast<StructType>(*destination).fields())) {
+            return true;
+          }
+          break;
         case Value::Kind::NominalClassType:
-          return FieldTypesImplicitlyConvertible(
-              cast<StructType>(*source).fields(),
-              FieldTypes(cast<NominalClassType>(*destination)));
+          if (FieldTypesImplicitlyConvertible(
+                  cast<StructType>(*source).fields(),
+                  FieldTypes(cast<NominalClassType>(*destination)))) {
+            return true;
+          }
+          break;
         default:
-          return false;
+          break;
       }
+      break;
     case Value::Kind::TupleValue: {
       const auto& source_tuple = cast<TupleValue>(*source);
       switch (destination->kind()) {
@@ -328,60 +299,188 @@ auto TypeChecker::IsImplicitlyConvertible(
           const auto& destination_tuple = cast<TupleValue>(*destination);
           if (source_tuple.elements().size() !=
               destination_tuple.elements().size()) {
-            return false;
+            break;
           }
+          bool all_ok = true;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
             if (!IsImplicitlyConvertible(source_tuple.elements()[i],
-                                         destination_tuple.elements()[i])) {
-              return false;
+                                         destination_tuple.elements()[i],
+                                         impl_scope)) {
+              all_ok = false;
+              break;
             }
           }
-          return true;
+          if (all_ok) {
+            return true;
+          }
+          break;
         }
         case Value::Kind::StaticArrayType: {
           const auto& destination_array = cast<StaticArrayType>(*destination);
           if (destination_array.size() != source_tuple.elements().size()) {
-            return false;
+            break;
           }
+          bool all_ok = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             if (!IsImplicitlyConvertible(source_element,
-                                         &destination_array.element_type())) {
-              return false;
+                                         &destination_array.element_type(),
+                                         impl_scope)) {
+              all_ok = false;
+              break;
             }
           }
-          return true;
+          if (all_ok) {
+            return true;
+          }
+          break;
         }
         case Value::Kind::TypeType: {
+          bool all_types = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
-            if (!IsImplicitlyConvertible(source_element, destination)) {
-              return false;
+            if (!IsImplicitlyConvertible(source_element, destination,
+                                         impl_scope)) {
+              all_types = false;
+              break;
             }
           }
-          return true;
+          if (all_types) {
+            return true;
+          }
+          break;
         }
         default:
-          return false;
+          break;
       }
+      break;
     }
     case Value::Kind::TypeType:
-      return destination->kind() == Value::Kind::InterfaceType;
+      // FIXME: This seems suspicious. Shouldn't this require that the type
+      // implements the interface?
+      if (destination->kind() == Value::Kind::InterfaceType) {
+        return true;
+      }
+      break;
     case Value::Kind::InterfaceType:
-      return destination->kind() == Value::Kind::TypeType;
     case Value::Kind::TypeOfClassType:
-      return destination->kind() == Value::Kind::TypeType;
     case Value::Kind::TypeOfChoiceType:
-      return destination->kind() == Value::Kind::TypeType;
+      // FIXME: These types should presumably also convert to interface types.
+      if (destination->kind() == Value::Kind::TypeType) {
+        return true;
+      }
+      break;
     default:
-      return false;
+      break;
   }
+
+  // If we weren't given an impl scope, only look for builtin conversions.
+  if (!impl_scope.has_value()) {
+    return false;
+  }
+
+  // We didn't find a builtin implicit conversion. Try a user-defined one.
+  // The source location doesn't matter, we're discarding the diagnostics.
+  SourceLocation source_loc("", 0);
+  ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
+      source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
+  return iface_type.ok() &&
+         (*impl_scope)->Resolve(*iface_type, source, source_loc, *this).ok();
 }
 
-auto TypeChecker::ExpectType(SourceLocation source_loc,
-                             const std::string& context,
-                             Nonnull<const Value*> expected,
-                             Nonnull<const Value*> actual) const
+auto TypeChecker::ImplicitlyConvert(const std::string& context,
+                                    const ImplScope& impl_scope,
+                                    Nonnull<Expression*> source,
+                                    Nonnull<const Value*> destination)
+    -> ErrorOr<Nonnull<Expression*>> {
+  // FIXME: If a builtin conversion works, for now we don't create any
+  // expression to do the conversion and rely on the interpreter to know how to
+  // do it.
+  // FIXME: This doesn't work for cases of combined built-in and user-defined
+  // conversion, such as converting a struct element via an `ImplicitAs` impl.
+  if (IsImplicitlyConvertible(&source->static_type(), destination,
+                              std::nullopt)) {
+    return source;
+  }
+  ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+      impl_scope, source,
+      BuiltinInterfaceName{Builtins::ImplicitAs, destination},
+      BuiltinMethodCall{"Convert"});
+  if (!converted.ok()) {
+    // We couldn't find a matching `impl`.
+    return CompilationError(source->source_loc())
+           << "type error in " << context << ": "
+           << "'" << source->static_type()
+           << "' is not implicitly convertible to '" << *destination << "'";
+  }
+  return *converted;
+}
+
+auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
+                                          BuiltinInterfaceName interface) const
+    -> ErrorOr<Nonnull<const InterfaceType*>> {
+  auto bad_builtin = [&]() -> Error {
+    return CompilationError(source_loc)
+           << "unsupported declaration for builtin `"
+           << Builtins::GetName(interface.builtin) << "`";
+  };
+
+  // Find the builtin interface declaration.
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Declaration*> builtin_decl,
+                          builtins_.Get(source_loc, interface.builtin));
+  auto* iface_decl = dyn_cast<InterfaceDeclaration>(builtin_decl);
+  if (!iface_decl || !iface_decl->constant_value()) {
+    return bad_builtin();
+  }
+
+  // Match the interface arguments up with the parameters and build the
+  // interface type.
+  bool has_parameters = iface_decl->params().has_value();
+  bool has_arguments = !interface.arguments.empty();
+  if (has_parameters != has_arguments) {
+    return bad_builtin();
+  }
+  BindingMap bindings;
+  if (has_arguments) {
+    TupleValue args(interface.arguments);
+    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
+                      std::nullopt, bindings, trace_stream_, this->arena_)) {
+      return bad_builtin();
+    }
+  }
+  return arena_->New<InterfaceType>(iface_decl, bindings);
+}
+
+auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
+                                         Nonnull<Expression*> source,
+                                         BuiltinInterfaceName interface,
+                                         BuiltinMethodCall method)
+    -> ErrorOr<Nonnull<Expression*>> {
+  const SourceLocation source_loc = source->source_loc();
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
+                          GetBuiltinInterfaceType(source_loc, interface));
+
+  // Build an expression to perform the call `source.(interface.method)(args)`.
+  Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
+      source_loc, iface_type, arena_->New<TypeOfInterfaceType>(iface_type),
+      ValueCategory::Let);
+  Nonnull<Expression*> iface_member = arena_->New<SimpleMemberAccessExpression>(
+      source_loc, iface_expr, method.name);
+  Nonnull<Expression*> method_access =
+      arena_->New<CompoundMemberAccessExpression>(source_loc, source,
+                                                  iface_member);
+  Nonnull<Expression*> call_args =
+      arena_->New<TupleLiteral>(source_loc, method.arguments);
+  Nonnull<Expression*> call =
+      arena_->New<CallExpression>(source_loc, method_access, call_args);
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(call, impl_scope));
+  return {call};
+}
+
+auto TypeChecker::ExpectType(
+    SourceLocation source_loc, const std::string& context,
+    Nonnull<const Value*> expected, Nonnull<const Value*> actual,
+    std::optional<Nonnull<const ImplScope*>> impl_scope) const
     -> ErrorOr<Success> {
-  if (!IsImplicitlyConvertible(actual, expected)) {
+  if (!IsImplicitlyConvertible(actual, expected, impl_scope)) {
     return CompilationError(source_loc)
            << "type error in " << context << ": "
            << "'" << *actual << "' is not implicitly convertible to '"
@@ -393,44 +492,43 @@ auto TypeChecker::ExpectType(SourceLocation source_loc,
 
 auto TypeChecker::ArgumentDeduction(
     SourceLocation source_loc, const std::string& context,
-    llvm::ArrayRef<Nonnull<const GenericBinding*>> type_params,
-    BindingMap& deduced, Nonnull<const Value*> param_type,
-    Nonnull<const Value*> arg_type, bool allow_implicit_conversion) const
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings_to_deduce,
+    BindingMap& deduced, Nonnull<const Value*> param, Nonnull<const Value*> arg,
+    bool allow_implicit_conversion, const ImplScope& impl_scope) const
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "deducing " << *param_type << " from " << *arg_type
-                    << "\n";
+    **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
   }
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
   // different forms. In this case, we require an implicit conversion to exist,
   // or for an exact type match if implicit conversions are not permitted.
   auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
-    if (!IsConcreteType(param_type)) {
+    if (!IsConcreteType(param)) {
       // Parameter type contains a nested `auto` and argument type isn't the
       // same kind of type.
-      // FIXME: This seems like something we should be able to accept.
+      // TODO: This seems like something we should be able to accept.
       return CompilationError(source_loc) << "type error in " << context << "\n"
-                                          << "expected: " << *param_type << "\n"
-                                          << "actual: " << *arg_type;
+                                          << "expected: " << *param << "\n"
+                                          << "actual: " << *arg;
     }
-    const Value* subst_param_type = Substitute(deduced, param_type);
+    const Value* subst_param_type = Substitute(deduced, param);
     return allow_implicit_conversion
-               ? ExpectType(source_loc, context, subst_param_type, arg_type)
-               : ExpectExactType(source_loc, context, subst_param_type,
-                                 arg_type);
+               ? ExpectType(source_loc, context, subst_param_type, arg,
+                            &impl_scope)
+               : ExpectExactType(source_loc, context, subst_param_type, arg);
   };
 
-  switch (param_type->kind()) {
+  switch (param->kind()) {
     case Value::Kind::VariableType: {
-      const auto& var_type = cast<VariableType>(*param_type);
-      if (std::find(type_params.begin(), type_params.end(),
-                    &var_type.binding()) != type_params.end()) {
-        auto [it, success] = deduced.insert({&var_type.binding(), arg_type});
+      const auto& var_type = cast<VariableType>(*param);
+      if (std::find(bindings_to_deduce.begin(), bindings_to_deduce.end(),
+                    &var_type.binding()) != bindings_to_deduce.end()) {
+        auto [it, success] = deduced.insert({&var_type.binding(), arg});
         if (!success) {
           // All deductions are required to produce the same value.
           CARBON_RETURN_IF_ERROR(ExpectExactType(
-              source_loc, "repeated argument deduction", it->second, arg_type));
+              source_loc, "repeated argument deduction", it->second, arg));
         }
       } else {
         return handle_non_deduced_type();
@@ -438,11 +536,11 @@ auto TypeChecker::ArgumentDeduction(
       return Success();
     }
     case Value::Kind::TupleValue: {
-      if (arg_type->kind() != Value::Kind::TupleValue) {
+      if (arg->kind() != Value::Kind::TupleValue) {
         return handle_non_deduced_type();
       }
-      const auto& param_tup = cast<TupleValue>(*param_type);
-      const auto& arg_tup = cast<TupleValue>(*arg_type);
+      const auto& param_tup = cast<TupleValue>(*param);
+      const auto& arg_tup = cast<TupleValue>(*arg);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
         return CompilationError(source_loc)
                << "mismatch in tuple sizes, expected "
@@ -450,18 +548,19 @@ auto TypeChecker::ArgumentDeduction(
                << arg_tup.elements().size();
       }
       for (size_t i = 0; i < param_tup.elements().size(); ++i) {
-        CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, context, type_params, deduced, param_tup.elements()[i],
-            arg_tup.elements()[i], allow_implicit_conversion));
+        CARBON_RETURN_IF_ERROR(
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                              param_tup.elements()[i], arg_tup.elements()[i],
+                              allow_implicit_conversion, impl_scope));
       }
       return Success();
     }
     case Value::Kind::StructType: {
-      if (arg_type->kind() != Value::Kind::StructType) {
+      if (arg->kind() != Value::Kind::StructType) {
         return handle_non_deduced_type();
       }
-      const auto& param_struct = cast<StructType>(*param_type);
-      const auto& arg_struct = cast<StructType>(*arg_type);
+      const auto& param_struct = cast<StructType>(*param);
+      const auto& arg_struct = cast<StructType>(*arg);
       auto diagnose_missing_field = [&](const StructType& struct_type,
                                         const NamedValue& field,
                                         bool missing_from_source) -> Error {
@@ -496,8 +595,8 @@ auto TypeChecker::ArgumentDeduction(
           }
         }
         CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-            source_loc, context, type_params, deduced, param_field.value,
-            arg_field.value, allow_implicit_conversion));
+            source_loc, context, bindings_to_deduce, deduced, param_field.value,
+            arg_field.value, allow_implicit_conversion, impl_scope));
       }
       if (param_struct.fields().size() != arg_struct.fields().size()) {
         CARBON_CHECK(allow_implicit_conversion)
@@ -513,58 +612,77 @@ auto TypeChecker::ArgumentDeduction(
       return Success();
     }
     case Value::Kind::FunctionType: {
-      if (arg_type->kind() != Value::Kind::FunctionType) {
+      if (arg->kind() != Value::Kind::FunctionType) {
         return handle_non_deduced_type();
       }
-      const auto& param_fn = cast<FunctionType>(*param_type);
-      const auto& arg_fn = cast<FunctionType>(*arg_type);
+      const auto& param_fn = cast<FunctionType>(*param);
+      const auto& arg_fn = cast<FunctionType>(*arg);
       // TODO: handle situation when arg has deduced parameters.
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.parameters(),
-          &arg_fn.parameters(), /*allow_implicit_conversion=*/false));
-      CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-          source_loc, context, type_params, deduced, &param_fn.return_type(),
-          &arg_fn.return_type(), /*allow_implicit_conversion=*/false));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                            &param_fn.parameters(), &arg_fn.parameters(),
+                            /*allow_implicit_conversion=*/false, impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                            &param_fn.return_type(), &arg_fn.return_type(),
+                            /*allow_implicit_conversion=*/false, impl_scope));
       return Success();
     }
     case Value::Kind::PointerType: {
-      if (arg_type->kind() != Value::Kind::PointerType) {
+      if (arg->kind() != Value::Kind::PointerType) {
         return handle_non_deduced_type();
       }
-      return ArgumentDeduction(source_loc, context, type_params, deduced,
-                               &cast<PointerType>(*param_type).type(),
-                               &cast<PointerType>(*arg_type).type(),
-                               /*allow_implicit_conversion=*/false);
+      return ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                               &cast<PointerType>(*param).type(),
+                               &cast<PointerType>(*arg).type(),
+                               /*allow_implicit_conversion=*/false, impl_scope);
     }
     // Nothing to do in the case for `auto`.
     case Value::Kind::AutoType: {
       return Success();
     }
     case Value::Kind::NominalClassType: {
-      const auto& param_class_type = cast<NominalClassType>(*param_type);
-      if (arg_type->kind() != Value::Kind::NominalClassType) {
-        // FIXME: We could determine the parameters of the class from field
+      const auto& param_class_type = cast<NominalClassType>(*param);
+      if (arg->kind() != Value::Kind::NominalClassType) {
+        // TODO: We could determine the parameters of the class from field
         // types in a struct argument.
         return handle_non_deduced_type();
       }
-      const auto& arg_class_type = cast<NominalClassType>(*arg_type);
+      const auto& arg_class_type = cast<NominalClassType>(*arg);
       if (param_class_type.declaration().name() !=
           arg_class_type.declaration().name()) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_class_type.type_args()) {
         CARBON_RETURN_IF_ERROR(
-            ArgumentDeduction(source_loc, context, type_params, deduced,
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
                               param_ty, arg_class_type.type_args().at(ty),
-                              /*allow_implicit_conversion=*/false));
+                              /*allow_implicit_conversion=*/false, impl_scope));
+      }
+      return Success();
+    }
+    case Value::Kind::InterfaceType: {
+      const auto& param_iface_type = cast<InterfaceType>(*param);
+      if (arg->kind() != Value::Kind::InterfaceType) {
+        return handle_non_deduced_type();
+      }
+      const auto& arg_iface_type = cast<InterfaceType>(*arg);
+      if (param_iface_type.declaration().name() !=
+          arg_iface_type.declaration().name()) {
+        return handle_non_deduced_type();
+      }
+      for (const auto& [ty, param_ty] : param_iface_type.args()) {
+        CARBON_RETURN_IF_ERROR(
+            ArgumentDeduction(source_loc, context, bindings_to_deduce, deduced,
+                              param_ty, arg_iface_type.args().at(ty),
+                              /*allow_implicit_conversion=*/false, impl_scope));
       }
       return Success();
     }
     // For the following cases, we check the type matches.
     case Value::Kind::StaticArrayType:
-      // FIXME: We could deduce the array type from an array or tuple argument.
+      // TODO: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
-    case Value::Kind::InterfaceType:
     case Value::Kind::ChoiceType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -576,7 +694,6 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return handle_non_deduced_type();
-    // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -593,9 +710,17 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
-    case Value::Kind::StringValue:
-      CARBON_FATAL() << "In ArgumentDeduction: expected type, not value "
-                     << *param_type;
+    case Value::Kind::StringValue: {
+      // Argument deduction within the parameters of a parameterized class type
+      // or interface type can compare values, rather than types.
+      // TODO: Deduce within the values where possible.
+      if (!ValueEqual(param, arg)) {
+        return CompilationError(source_loc)
+               << "mismatch in non-type values, `" << *arg << "` != `" << *param
+               << "`";
+      }
+      return Success();
+    }
   }
 }
 
@@ -630,7 +755,7 @@ auto TypeChecker::Substitute(
       const auto& fn_type = cast<FunctionType>(*type);
       auto param = Substitute(dict, &fn_type.parameters());
       auto ret = Substitute(dict, &fn_type.return_type());
-      // FIXME: Only remove the bindings that are in `dict`; we may still need
+      // TODO: Only remove the bindings that are in `dict`; we may still need
       // to do deduction.
       return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
                                        llvm::None);
@@ -681,7 +806,6 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return type;
-    // The rest of these cases should never happen.
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -699,7 +823,10 @@ auto TypeChecker::Substitute(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-      CARBON_FATAL() << "In Substitute: expected type, not value " << *type;
+      // This can happen when substituting into the arguments of a class or
+      // interface.
+      // TODO: Implement substitution for these cases.
+      return type;
   }
 }
 
@@ -712,60 +839,66 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   if (trace_stream_) {
     **trace_stream_ << "MatchImpl: looking for " << *impl_type << " as "
                     << iface << "\n";
-    **trace_stream_ << "checking [";
-    llvm::ListSeparator sep;
-    for (Nonnull<const GenericBinding*> deduced_param : impl.deduced) {
-      **trace_stream_ << sep << *deduced_param;
-    }
-    **trace_stream_ << "] " << *impl.type << " as " << *impl.interface << "\n";
+    **trace_stream_ << "checking " << *impl.type << " as "
+                    << *impl.interface << "\n";
   }
-  if (!TypeEqual(&iface, impl.interface)) {
+
+  BindingMap deduced_args;
+
+  if (ErrorOr<Success> e = ArgumentDeduction(
+          source_loc, "match", impl.deduced, deduced_args, impl.type, impl_type,
+          /*allow_implicit_conversion=*/false, impl_scope);
+      !e.ok()) {
+    if (trace_stream_) {
+      **trace_stream_ << "type does not match: " << e.error() << "\n";
+    }
     return std::nullopt;
   }
-  if (impl.deduced.empty() && impl.impl_bindings.empty()) {
-    // case: impl is a non-generic impl.
-    if (!TypeEqual(impl_type, impl.type)) {
-      return std::nullopt;
-    }
-    return impl.impl;
-  } else {
-    // case: impl is a generic impl.
-    BindingMap deduced_type_args;
-    ErrorOr<Success> e = ArgumentDeduction(
-        source_loc, "match", impl.deduced, deduced_type_args, impl.type,
-        impl_type, /*allow_implicit_conversion=*/true);
+
+  if (ErrorOr<Success> e = ArgumentDeduction(
+          source_loc, "match", impl.deduced, deduced_args, impl.interface,
+          &iface, /*allow_implicit_conversion=*/false, impl_scope);
+      !e.ok()) {
     if (trace_stream_) {
-      **trace_stream_ << "match results: {";
-      llvm::ListSeparator sep;
-      for (const auto& [binding, val] : deduced_type_args) {
-        **trace_stream_ << sep << *binding << " = " << *val;
-      }
-      **trace_stream_ << "}\n";
+      **trace_stream_ << "interface does not match: " << e.error() << "\n";
     }
-    if (!e.ok()) {
-      return std::nullopt;
-    }
-    // Check that all the type parameters were deduced.
-    // Find impls for all the impls bindings.
-    ImplExpMap impls;
-    ErrorOr<Success> m = SatisfyImpls(impl.impl_bindings, impl_scope,
-                                      source_loc, deduced_type_args, impls);
-    if (!m.ok()) {
-      return std::nullopt;
-    }
-    if (trace_stream_) {
-      **trace_stream_ << "matched with " << *impl.type << " as "
-                      << *impl.interface << "\n\n";
-    }
-    return arena_->New<InstantiateImpl>(source_loc, impl.impl,
-                                        deduced_type_args, impls);
+    return std::nullopt;
   }
+
+  if (trace_stream_) {
+    **trace_stream_ << "match results: {";
+    llvm::ListSeparator sep;
+    for (const auto& [binding, val] : deduced_args) {
+      **trace_stream_ << sep << *binding << " = " << *val;
+    }
+    **trace_stream_ << "}\n";
+  }
+
+  // Ensure the constraints on the `impl` are satisfied by the deduced
+  // arguments.
+  ImplExpMap impls;
+  if (ErrorOr<Success> e = SatisfyImpls(impl.impl_bindings, impl_scope,
+                                        source_loc, deduced_args, impls);
+      !e.ok()) {
+    if (trace_stream_) {
+      **trace_stream_ << "missing required impl: " << e.error() << "\n";
+    }
+    return std::nullopt;
+  }
+
+  if (trace_stream_) {
+    **trace_stream_ << "matched with " << *impl.type << " as "
+                    << *impl.interface << "\n\n";
+  }
+  return deduced_args.empty() ? impl.impl
+                              : arena_->New<InstantiateImpl>(
+                                    source_loc, impl.impl, deduced_args, impls);
 }
 
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
-    BindingMap& deduced_type_args, ImplExpMap& impls) const
+    const BindingMap& deduced_type_args, ImplExpMap& impls) const
     -> ErrorOr<Success> {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     Nonnull<const Value*> interface =
@@ -773,10 +906,87 @@ auto TypeChecker::SatisfyImpls(
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<Expression*> impl,
         impl_scope.Resolve(interface,
-                           deduced_type_args[impl_binding->type_var()],
+                           deduced_type_args.at(impl_binding->type_var()),
                            source_loc, *this));
     impls.emplace(impl_binding, impl);
   }
+  return Success();
+}
+
+auto TypeChecker::DeduceCallBindings(
+    CallExpression& call, Nonnull<const Value*> params_type,
+    llvm::ArrayRef<FunctionType::GenericParameter> generic_params,
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced_bindings,
+    llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
+    const ImplScope& impl_scope) -> ErrorOr<Success> {
+  llvm::ArrayRef<Nonnull<const Value*>> params =
+      cast<TupleValue>(*params_type).elements();
+  llvm::ArrayRef<Nonnull<const Expression*>> args =
+      cast<TupleLiteral>(call.argument()).fields();
+  if (params.size() != args.size()) {
+    return CompilationError(call.source_loc())
+           << "wrong number of arguments in function call, expected "
+           << params.size() << " but got " << args.size();
+  }
+
+  // Bindings for deduced parameters and generic parameters.
+  BindingMap generic_bindings;
+
+  // Deduce and/or convert each argument to the corresponding
+  // parameter.
+  for (size_t i = 0; i < params.size(); ++i) {
+    const Value* param = params[i];
+    const Expression* arg = args[i];
+    CARBON_RETURN_IF_ERROR(
+        ArgumentDeduction(arg->source_loc(), "call", deduced_bindings,
+                          generic_bindings, param, &arg->static_type(),
+                          /*allow_implicit_conversion=*/true, impl_scope));
+    // If the parameter is a `:!` binding, evaluate and collect its
+    // value for use in later parameters and in the function body.
+    if (!generic_params.empty() && generic_params.front().index == i) {
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
+                              InterpExp(arg, arena_, trace_stream_));
+      if (trace_stream_) {
+        **trace_stream_ << "evaluated generic parameter "
+                        << *generic_params.front().binding << " as "
+                        << *arg_value << "\n";
+      }
+      bool newly_added =
+          generic_bindings.insert({generic_params.front().binding, arg_value})
+              .second;
+      CARBON_CHECK(newly_added) << "generic parameter should not be deduced";
+      generic_params = generic_params.drop_front();
+    }
+  }
+  CARBON_CHECK(generic_params.empty())
+      << "did not find all generic parameters in parameter list";
+
+  call.set_deduced_args(generic_bindings);
+  for (Nonnull<const GenericBinding*> deduced_param : deduced_bindings) {
+    // TODO: change the following to a CHECK once the real checking
+    // has been added to the type checking of function signatures.
+    if (auto it = generic_bindings.find(deduced_param);
+        it == generic_bindings.end()) {
+      return CompilationError(call.source_loc())
+             << "could not deduce type argument for type parameter "
+             << deduced_param->name() << "\n"
+             << "in " << call;
+    }
+  }
+
+  // Find impls for all the required impl bindings.
+  ImplExpMap impls;
+  CARBON_RETURN_IF_ERROR(SatisfyImpls(
+      impl_bindings, impl_scope, call.source_loc(), generic_bindings, impls));
+  call.set_impls(impls);
+
+  // Convert the arguments to the parameter type.
+  Nonnull<const Value*> param_type = Substitute(generic_bindings, params_type);
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<Expression*> converted_argument,
+      ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
+  call.set_argument(converted_argument);
+
   return Success();
 }
 
@@ -789,19 +999,25 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     PrintConstants(**trace_stream_);
     **trace_stream_ << "\n";
   }
-  switch (e->kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      CARBON_FATAL()
-          << "instantiate impl nodes are generated during type checking";
+  if (e->is_type_checked()) {
+    if (trace_stream_) {
+      **trace_stream_ << "expression has already been type-checked\n";
     }
+    return Success();
+  }
+  switch (e->kind()) {
+    case ExpressionKind::InstantiateImpl:
+    case ExpressionKind::ValueLiteral:
+      CARBON_FATAL() << "attempting to type check node " << *e
+                     << " generated during type checking";
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.aggregate(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.object(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
-      const Value& aggregate_type = index.aggregate().static_type();
-      switch (aggregate_type.kind()) {
+      const Value& object_type = index.object().static_type();
+      switch (object_type.kind()) {
         case Value::Kind::TupleValue: {
-          const auto& tuple_type = cast<TupleValue>(aggregate_type);
+          const auto& tuple_type = cast<TupleValue>(object_type);
           CARBON_RETURN_IF_ERROR(ExpectExactType(
               index.offset().source_loc(), "tuple index",
               arena_->New<IntType>(), &index.offset().static_type()));
@@ -815,7 +1031,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << tuple_type;
           }
           index.set_static_type(tuple_type.elements()[i]);
-          index.set_value_category(index.aggregate().value_category());
+          index.set_value_category(index.object().value_category());
           return Success();
         }
         case Value::Kind::StaticArrayType: {
@@ -823,8 +1039,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               index.offset().source_loc(), "array index",
               arena_->New<IntType>(), &index.offset().static_type()));
           index.set_static_type(
-              &cast<StaticArrayType>(aggregate_type).element_type());
-          index.set_value_category(index.aggregate().value_category());
+              &cast<StaticArrayType>(object_type).element_type());
+          index.set_value_category(index.object().value_category());
           return Success();
         }
         default:
@@ -858,11 +1074,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::StructTypeLiteral: {
       auto& struct_type = cast<StructTypeLiteral>(*e);
       for (auto& arg : struct_type.fields()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
-        CARBON_ASSIGN_OR_RETURN(
-            auto value, InterpExp(&arg.expression(), arena_, trace_stream_));
-        CARBON_RETURN_IF_ERROR(
-            ExpectIsConcreteType(arg.expression().source_loc(), value));
+        CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&arg.expression(), impl_scope));
       }
       if (struct_type.fields().empty()) {
         // `{}` is the type of `{}`, just as `()` is the type of `()`.
@@ -876,31 +1088,31 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       return Success();
     }
-    case ExpressionKind::FieldAccessExpression: {
-      auto& access = cast<FieldAccessExpression>(*e);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.aggregate(), impl_scope));
-      const Value& aggregate_type = access.aggregate().static_type();
-      switch (aggregate_type.kind()) {
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      auto& access = cast<SimpleMemberAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      const Value& object_type = access.object().static_type();
+      switch (object_type.kind()) {
         case Value::Kind::StructType: {
-          const auto& struct_type = cast<StructType>(aggregate_type);
+          const auto& struct_type = cast<StructType>(object_type);
           for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.field() == field_name) {
+            if (access.member() == field_name) {
               access.set_static_type(field_type);
-              access.set_value_category(access.aggregate().value_category());
+              access.set_value_category(access.object().value_category());
               return Success();
             }
           }
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
-                 << access.field();
+                 << access.member();
         }
         case Value::Kind::TypeType: {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> type,
-              InterpExp(&access.aggregate(), arena_, trace_stream_));
+              InterpExp(&access.object(), arena_, trace_stream_));
           if (const auto* struct_type = dyn_cast<StructType>(type)) {
             for (const auto& field : struct_type->fields()) {
-              if (access.field() == field.name) {
+              if (access.member() == field.name) {
                 access.set_static_type(
                     arena_->New<TypeOfMemberName>(Member(&field)));
                 access.set_value_category(ValueCategory::Let);
@@ -909,9 +1121,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             return CompilationError(access.source_loc())
                    << "struct " << *struct_type
-                   << " does not have a field named " << access.field();
+                   << " does not have a field named " << access.member();
           }
-          // FIXME: We should handle all types here, not only structs. For
+          // TODO: We should handle all types here, not only structs. For
           // example:
           //   fn Main() -> i32 {
           //     class Class { var n: i32; };
@@ -924,16 +1136,16 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                  << "unsupported member access into type " << *type;
         }
         case Value::Kind::NominalClassType: {
-          const auto& t_class = cast<NominalClassType>(aggregate_type);
+          const auto& t_class = cast<NominalClassType>(object_type);
           if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.field(), t_class.declaration().members());
+                  FindMember(access.member(), t_class.declaration().members());
               member.has_value()) {
             Nonnull<const Value*> field_type =
                 Substitute(t_class.type_args(), &(*member)->static_type());
             access.set_static_type(field_type);
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
-                access.set_value_category(access.aggregate().value_category());
+                access.set_value_category(access.object().value_category());
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 auto func_decl = cast<FunctionDeclaration>(*member);
@@ -943,11 +1155,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   CARBON_RETURN_IF_ERROR(
                       ExpectType(e->source_loc(), "method access",
                                  &func_decl->me_pattern().static_type(),
-                                 &access.aggregate().static_type()));
-                  if (access.aggregate().value_category() !=
-                      ValueCategory::Var) {
+                                 &access.object().static_type(), &impl_scope));
+                  if (access.object().value_category() != ValueCategory::Var) {
                     return CompilationError(e->source_loc())
-                           << "method " << access.field()
+                           << "method " << access.member()
                            << " requires its receiver to be an lvalue";
                   }
                 }
@@ -955,7 +1166,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               }
               default:
-                CARBON_FATAL() << "member " << access.field()
+                CARBON_FATAL() << "member " << access.member()
                                << " is not a field or method";
                 break;
             }
@@ -963,30 +1174,29 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(e->source_loc())
                    << "class " << t_class.declaration().name()
-                   << " does not have a field named " << access.field();
+                   << " does not have a field named " << access.member();
           }
         }
         case Value::Kind::TypeOfChoiceType: {
           const ChoiceType& choice =
-              cast<TypeOfChoiceType>(aggregate_type).choice_type();
+              cast<TypeOfChoiceType>(object_type).choice_type();
           std::optional<Nonnull<const Value*>> parameter_types =
-              choice.FindAlternative(access.field());
+              choice.FindAlternative(access.member());
           if (!parameter_types.has_value()) {
             return CompilationError(e->source_loc())
                    << "choice " << choice.name()
-                   << " does not have a field named " << access.field();
+                   << " does not have an alternative named " << access.member();
           }
           access.set_static_type(arena_->New<FunctionType>(
-              *parameter_types, llvm::None, &aggregate_type, llvm::None,
-              llvm::None));
+              *parameter_types, llvm::None, &choice, llvm::None, llvm::None));
           access.set_value_category(ValueCategory::Let);
           return Success();
         }
         case Value::Kind::TypeOfClassType: {
           const NominalClassType& class_type =
-              cast<TypeOfClassType>(aggregate_type).class_type();
+              cast<TypeOfClassType>(object_type).class_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.field(), class_type.declaration().members());
+                  access.member(), class_type.declaration().members());
               member.has_value()) {
             switch ((*member)->kind()) {
               case DeclarationKind::FunctionDeclaration: {
@@ -1010,14 +1220,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(access.source_loc())
                    << class_type << " does not have a member named "
-                   << access.field();
+                   << access.member();
           }
         }
         case Value::Kind::TypeOfInterfaceType: {
           const InterfaceType& iface_type =
-              cast<TypeOfInterfaceType>(aggregate_type).interface_type();
+              cast<TypeOfInterfaceType>(object_type).interface_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.field(), iface_type.declaration().members());
+                  access.member(), iface_type.declaration().members());
               member.has_value()) {
             access.set_static_type(
                 arena_->New<TypeOfMemberName>(Member(*member)));
@@ -1026,7 +1236,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(access.source_loc())
                    << iface_type << " does not have a member named "
-                   << access.field();
+                   << access.member();
           }
         }
         case Value::Kind::VariableType: {
@@ -1034,14 +1244,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // is a type variable. For example, `x.foo` where the type of
           // `x` is `T` and `foo` and `T` implements an interface that
           // includes `foo`.
-          const VariableType& var_type = cast<VariableType>(aggregate_type);
+          const VariableType& var_type = cast<VariableType>(object_type);
           const Value& typeof_var = var_type.binding().static_type();
           switch (typeof_var.kind()) {
             case Value::Kind::InterfaceType: {
               const auto& iface_type = cast<InterfaceType>(typeof_var);
               const InterfaceDeclaration& iface_decl = iface_type.declaration();
               if (std::optional<Nonnull<const Declaration*>> member =
-                      FindMember(access.field(), iface_decl.members());
+                      FindMember(access.member(), iface_decl.members());
                   member.has_value()) {
                 const Value& member_type = (*member)->static_type();
                 BindingMap binding_map = iface_type.args();
@@ -1054,14 +1264,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 return Success();
               } else {
                 return CompilationError(e->source_loc())
-                       << "field access, " << access.field() << " not in "
+                       << "member access, " << access.member() << " not in "
                        << iface_decl.name();
               }
               break;
             }
             default:
               return CompilationError(e->source_loc())
-                     << "field access, unexpected " << aggregate_type
+                     << "member access, unexpected " << object_type
                      << " of non-interface type " << typeof_var << " in " << *e;
           }
           break;
@@ -1073,12 +1283,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // function of `T`.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> var_addr,
-              InterpExp(&access.aggregate(), arena_, trace_stream_));
+              InterpExp(&access.object(), arena_, trace_stream_));
           const VariableType& var_type = cast<VariableType>(*var_addr);
-          const InterfaceType& iface_type = cast<InterfaceType>(aggregate_type);
+          const InterfaceType& iface_type = cast<InterfaceType>(object_type);
           const InterfaceDeclaration& iface_decl = iface_type.declaration();
           if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.field(), iface_decl.members());
+                  FindMember(access.member(), iface_decl.members());
               member.has_value()) {
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(*var_type.binding().impl_binding());
@@ -1100,7 +1310,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               default:
                 break;
             }
-            // FIXME: Consider setting the static type of all interface member
+            // TODO: Consider setting the static type of all interface member
             // declarations and instance member declarations to be member name
             // types, rather than special-casing member accesses that name
             // them.
@@ -1110,19 +1320,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             return CompilationError(e->source_loc())
-                   << "field access, " << access.field() << " not in "
+                   << "member access, " << access.member() << " not in "
                    << iface_decl.name();
           }
           break;
         }
         default:
           return CompilationError(e->source_loc())
-                 << "field access, unexpected " << aggregate_type << " in "
-                 << *e;
+                 << "member access, unexpected " << object_type << " in " << *e;
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      auto& access = cast<CompoundFieldAccessExpression>(*e);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      auto& access = cast<CompoundMemberAccessExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
       if (!isa<TypeOfMemberName>(access.path().static_type())) {
@@ -1157,9 +1366,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       } else {
         // This is `value.(member_name)`, where `member_name` specifies a type.
         // `value` is implicitly converted to that type.
-        CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(),
-                                          "compound member access", *base_type,
-                                          &access.object().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_object,
+            ImplicitlyConvert("compound member access", impl_scope,
+                              &access.object(), *base_type));
+        access.set_object(converted_object);
       }
 
       // Perform impl selection if necessary.
@@ -1322,8 +1533,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Var);
           return Success();
         case Operator::Ptr:
-          CARBON_RETURN_IF_ERROR(
-              ExpectType(e->source_loc(), "*", arena_->New<TypeType>(), ts[0]));
+          CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(), "*",
+                                            arena_->New<TypeType>(), ts[0],
+                                            &impl_scope));
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
@@ -1346,74 +1558,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &fun_t.parameters(), fun_t.generic_parameters(),
+              fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
+          const BindingMap& generic_bindings = call.deduced_args();
 
-          const auto& param_tuple = cast<TupleValue>(fun_t.parameters());
-          const auto& arg_tuple = cast<TupleLiteral>(call.argument());
-          llvm::ArrayRef<FunctionType::GenericParameter> generic_params =
-              fun_t.generic_parameters();
-          if (param_tuple.elements().size() != arg_tuple.fields().size()) {
-            return CompilationError(call.source_loc())
-                   << "wrong number of arguments in function call, expected "
-                   << param_tuple.elements().size() << " but got "
-                   << arg_tuple.fields().size();
-          }
-
-          // Bindings for deduced parameters and generic parameters.
-          BindingMap generic_bindings;
-
-          // Deduce and/or convert each argument to the corresponding
-          // parameter.
-          for (size_t i = 0; i < param_tuple.elements().size(); ++i) {
-            const Value* param = param_tuple.elements()[i];
-            const Expression* arg = arg_tuple.fields()[i];
-            CARBON_RETURN_IF_ERROR(ArgumentDeduction(
-                arg->source_loc(), "call", fun_t.deduced_bindings(),
-                generic_bindings, param, &arg->static_type(),
-                /*allow_implicit_conversion=*/true));
-            // If the parameter is a `:!` binding, evaluate and collect its
-            // value for use in later parameters and in the function body.
-            if (!generic_params.empty() && generic_params.front().index == i) {
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> arg_value,
-                                      InterpExp(arg, arena_, trace_stream_));
-              if (trace_stream_) {
-                **trace_stream_ << "evaluated generic parameter "
-                                << *generic_params.front().binding << " as "
-                                << *arg_value << "\n";
-              }
-              bool newly_added =
-                  generic_bindings
-                      .insert({generic_params.front().binding, arg_value})
-                      .second;
-              CARBON_CHECK(newly_added)
-                  << "generic parameter should not be deduced";
-              generic_params = generic_params.drop_front();
-            }
-          }
-          CARBON_CHECK(generic_params.empty())
-              << "did not find all generic parameters in parameter list";
-          call.set_deduced_args(generic_bindings);
-          for (Nonnull<const GenericBinding*> deduced_param :
-               fun_t.deduced_bindings()) {
-            // TODO: change the following to a CHECK once the real checking
-            // has been added to the type checking of function signatures.
-            if (auto it = generic_bindings.find(deduced_param);
-                it == generic_bindings.end()) {
-              return CompilationError(e->source_loc())
-                     << "could not deduce type argument for type parameter "
-                     << deduced_param->name() << "\n"
-                     << "in " << call;
-            }
-          }
-
+          // Substitute into the return type to determine the type of the call
+          // expression.
           Nonnull<const Value*> return_type =
               Substitute(generic_bindings, &fun_t.return_type());
-
-          // Find impls for all the impl bindings of the function.
-          ImplExpMap impls;
-          CARBON_RETURN_IF_ERROR(SatisfyImpls(fun_t.impl_bindings(), impl_scope,
-                                              e->source_loc(), generic_bindings,
-                                              impls));
-          call.set_impls(impls);
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
           return Success();
@@ -1425,52 +1578,45 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const ParameterizedEntityName& param_name =
               cast<TypeOfParameterizedEntityName>(call.function().static_type())
                   .name();
-          BindingMap generic_args;
-          if (trace_stream_) {
-            **trace_stream_ << "pattern matching type params and args\n";
-          }
-          CARBON_RETURN_IF_ERROR(ExpectType(call.source_loc(), "call",
-                                            &param_name.params().static_type(),
-                                            &call.argument().static_type()));
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> arg,
-              InterpExp(&call.argument(), arena_, trace_stream_));
-          CARBON_CHECK(PatternMatch(&param_name.params().value(), arg,
-                                    call.source_loc(), std::nullopt,
-                                    generic_args, trace_stream_, this->arena_));
-          // Find impls for all the impl bindings.
-          ImplExpMap impls;
-          for (const auto& [binding, val] : generic_args) {
-            if (binding->impl_binding().has_value()) {
-              Nonnull<const ImplBinding*> impl_binding =
-                  *binding->impl_binding();
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<Expression*> impl,
-                  impl_scope.Resolve(impl_binding->interface(),
-                                     generic_args[binding], call.source_loc(),
-                                     *this));
-              impls.emplace(impl_binding, impl);
+
+          // Collect the top-level generic parameters and their constraints.
+          std::vector<FunctionType::GenericParameter> generic_parameters;
+          std::vector<Nonnull<const ImplBinding*>> impl_bindings;
+          llvm::ArrayRef<Nonnull<const Pattern*>> params =
+              param_name.params().fields();
+          for (size_t i = 0; i != params.size(); ++i) {
+            // FIXME: Should we disallow all other kinds of top-level params?
+            if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
+              generic_parameters.push_back({i, binding});
+              if (binding->impl_binding().has_value()) {
+                impl_bindings.push_back(*binding->impl_binding());
+              }
             }
           }
-          call.set_impls(impls);
-          call.set_value_category(ValueCategory::Let);
+
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &param_name.params().static_type(), generic_parameters,
+              /*deduced_bindings=*/llvm::None, impl_bindings, impl_scope));
 
           const Declaration& decl = param_name.declaration();
           switch (decl.kind()) {
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                generic_args, impls);
+                                                call.deduced_args(),
+                                                call.impls());
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
+              call.set_value_category(ValueCategory::Let);
               break;
             }
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             generic_args, impls);
+                                             call.deduced_args(), call.impls());
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
+              call.set_value_category(ValueCategory::Let);
               break;
             }
             default:
@@ -1490,16 +1636,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::FunctionTypeLiteral: {
       auto& fn = cast<FunctionTypeLiteral>(*e);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> param_type,
-          InterpExp(&fn.parameter(), arena_, trace_stream_));
-      CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.parameter().source_loc(), param_type));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> ret_type,
-          InterpExp(&fn.return_type(), arena_, trace_stream_));
-      CARBON_RETURN_IF_ERROR(
-          ExpectIsConcreteType(fn.return_type().source_loc(), ret_type));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&fn.parameter(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_value_category(ValueCategory::Let);
       return Success();
@@ -1517,10 +1655,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return CompilationError(e->source_loc())
                    << "__intrinsic_print takes 1 argument";
           }
-          CARBON_RETURN_IF_ERROR(
-              ExpectType(e->source_loc(), "__intrinsic_print argument",
-                         arena_->New<StringType>(),
-                         &intrinsic_exp.args().fields()[0]->static_type()));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_print argument",
+              arena_->New<StringType>(),
+              &intrinsic_exp.args().fields()[0]->static_type()));
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
@@ -1537,9 +1675,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::IfExpression: {
       auto& if_expr = cast<IfExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_expr.condition(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(
-          if_expr.source_loc(), "condition of `if`", arena_->New<BoolType>(),
-          &if_expr.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `if`", impl_scope,
+                            &if_expr.condition(), arena_->New<BoolType>()));
+      if_expr.set_condition(converted_condition);
 
       // TODO: Compute the common type and convert both operands to it.
       CARBON_RETURN_IF_ERROR(
@@ -1558,14 +1698,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.element_type_expression(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> element_type,
-          InterpExp(&array_literal.element_type_expression(), arena_,
-                    trace_stream_));
-      CARBON_RETURN_IF_ERROR(ExpectIsConcreteType(
-          array_literal.element_type_expression().source_loc(), element_type));
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(
+          &array_literal.element_type_expression(), impl_scope));
 
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&array_literal.size_expression(), impl_scope));
@@ -1642,6 +1776,18 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
                  CreateImplReference(impl_binding));
 }
 
+auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
+                                   const ImplScope& impl_scope, bool concrete)
+    -> ErrorOr<Nonnull<const Value*>> {
+  CARBON_RETURN_IF_ERROR(TypeCheckExp(type_expression, impl_scope));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                          InterpExp(type_expression, arena_, trace_stream_));
+  CARBON_RETURN_IF_ERROR(
+      concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
+               : ExpectIsType(type_expression->source_loc(), type));
+  return type;
+}
+
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
@@ -1676,8 +1822,8 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_RETURN_IF_ERROR(ExpectIsType(binding.source_loc(), type));
       if (expected) {
         if (IsConcreteType(type)) {
-          CARBON_RETURN_IF_ERROR(
-              ExpectType(p->source_loc(), "name binding", type, *expected));
+          CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
+                                            type, *expected, &impl_scope));
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -1703,10 +1849,8 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(*p);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&binding.type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> type,
-          InterpExp(&binding.type(), arena_, trace_stream_));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                              TypeCheckTypeExp(&binding.type(), impl_scope));
       if (expected) {
         return CompilationError(binding.type().source_loc())
                << "Generic binding may not occur in pattern with expected "
@@ -1766,17 +1910,16 @@ auto TypeChecker::TypeCheckPattern(
         return CompilationError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
-      if (expected) {
-        CARBON_RETURN_IF_ERROR(ExpectExactType(
-            alternative.source_loc(), "alternative pattern", *expected,
-            &alternative.choice_type().static_type()));
-      }
       const ChoiceType& choice_type =
           cast<TypeOfChoiceType>(alternative.choice_type().static_type())
               .choice_type();
+      if (expected) {
+        CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
+                                          "alternative pattern", &choice_type,
+                                          *expected, &impl_scope));
+      }
       std::optional<Nonnull<const Value*>> parameter_types =
-          cast<ChoiceType>(choice_type)
-              .FindAlternative(alternative.alternative_name());
+          choice_type.FindAlternative(alternative.alternative_name());
       if (parameter_types == std::nullopt) {
         return CompilationError(alternative.source_loc())
                << "'" << alternative.alternative_name()
@@ -1850,23 +1993,46 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& match = cast<Match>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&match.expression(), impl_scope));
       std::vector<Match::Clause> new_clauses;
+      std::optional<Nonnull<const Value*>> expected_type;
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
+        // FIXME: Should user-defined conversions be permitted in `match`
+        // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
             ValueCategory::Let));
+        if (expected_type.has_value()) {
+          // FIXME: For now, we require all patterns to have the same type. If
+          // that's not the same type as the scrutinee, we will convert the
+          // scrutinee. We might want to instead allow a different conversion
+          // to be performed for each pattern.
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              clause.pattern().source_loc(), "`match` pattern type",
+              expected_type.value(), &clause.pattern().static_type()));
+        } else {
+          expected_type = &clause.pattern().static_type();
+        }
         CARBON_RETURN_IF_ERROR(
             TypeCheckStmt(&clause.statement(), clause_scope));
+      }
+      if (expected_type.has_value()) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_expression,
+            ImplicitlyConvert("`match` expression", impl_scope,
+                              &match.expression(), expected_type.value()));
+        match.set_expression(converted_expression);
       }
       return Success();
     }
     case StatementKind::While: {
       auto& while_stmt = cast<While>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&while_stmt.condition(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "condition of `while`",
-                                        arena_->New<BoolType>(),
-                                        &while_stmt.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `while`", impl_scope,
+                            &while_stmt.condition(), arena_->New<BoolType>()));
+      while_stmt.set_condition(converted_condition);
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&while_stmt.body(), impl_scope));
       return Success();
     }
@@ -1884,7 +2050,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       auto& var = cast<VariableDefinition>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
       const Value& rhs_ty = var.init().static_type();
-      // FIXME: If the pattern contains a binding that implies a new impl is
+      // TODO: If the pattern contains a binding that implies a new impl is
       // available, should that remain in scope for as long as its binding?
       // ```
       // var a: (T:! Widget) = ...;
@@ -1895,19 +2061,26 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       var_scope.AddParent(&impl_scope);
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.pattern(), &rhs_ty,
                                               var_scope, var.value_category()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_init,
+          ImplicitlyConvert("initializer of variable", impl_scope, &var.init(),
+                            &var.pattern().static_type()));
+      var.set_init(converted_init);
       return Success();
     }
     case StatementKind::Assign: {
       auto& assign = cast<Assign>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.rhs(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.lhs(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "assign",
-                                        &assign.lhs().static_type(),
-                                        &assign.rhs().static_type()));
       if (assign.lhs().value_category() != ValueCategory::Var) {
         return CompilationError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_rhs,
+          ImplicitlyConvert("assignment", impl_scope, &assign.rhs(),
+                            &assign.lhs().static_type()));
+      assign.set_rhs(converted_rhs);
       return Success();
     }
     case StatementKind::ExpressionStatement: {
@@ -1918,9 +2091,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::If: {
       auto& if_stmt = cast<If>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_stmt.condition(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "condition of `if`",
-                                        arena_->New<BoolType>(),
-                                        &if_stmt.condition().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `if`", impl_scope,
+                            &if_stmt.condition(), arena_->New<BoolType>()));
+      if_stmt.set_condition(converted_condition);
       CARBON_RETURN_IF_ERROR(TypeCheckStmt(&if_stmt.then_block(), impl_scope));
       if (if_stmt.else_block()) {
         CARBON_RETURN_IF_ERROR(
@@ -1935,9 +2110,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       if (return_term.is_auto()) {
         return_term.set_static_type(&ret.expression().static_type());
       } else {
-        CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "return",
-                                          &return_term.static_type(),
-                                          &ret.expression().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_ret_val,
+            ImplicitlyConvert("return value", impl_scope, &ret.expression(),
+                              &return_term.static_type()));
+        ret.set_expression(converted_ret_val);
       }
       return Success();
     }
@@ -1950,9 +2127,11 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     case StatementKind::Run: {
       auto& run = cast<Run>(*s);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&run.argument(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectType(s->source_loc(), "argument of `run`",
-                                        arena_->New<ContinuationType>(),
-                                        &run.argument().static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_argument,
+          ImplicitlyConvert("argument of `run`", impl_scope, &run.argument(),
+                            arena_->New<ContinuationType>()));
+      run.set_argument(converted_argument);
       return Success();
     }
     case StatementKind::Await: {
@@ -2027,7 +2206,6 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
-      return Success();
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
@@ -2043,13 +2221,13 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 // TODO: Add checking to function definitions to ensure that
 //   all deduced type parameters will be deduced.
 auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
-                                             const ImplScope& enclosing_scope)
+                                             const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring function " << f->name() << "\n";
   }
   ImplScope function_scope;
-  function_scope.AddParent(&enclosing_scope);
+  function_scope.AddParent(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
@@ -2089,13 +2267,11 @@ auto TypeChecker::DeclareFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
       return_expression.has_value()) {
     // We ignore the return value because return type expressions can't bring
     // new types into scope.
-    CARBON_RETURN_IF_ERROR(TypeCheckExp(*return_expression, function_scope));
     // Should we be doing SetConstantValue instead? -Jeremy
     // And shouldn't the type of this be Type?
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Value*> ret_type,
-        InterpExp(*return_expression, arena_, trace_stream_));
-    CARBON_RETURN_IF_ERROR(ExpectIsType(f->source_loc(), ret_type));
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret_type,
+                            TypeCheckTypeExp(*return_expression, function_scope,
+                                             /*concrete=*/false));
     f->return_term().set_static_type(ret_type);
   } else if (f->return_term().is_omitted()) {
     f->return_term().set_static_type(TupleValue::Empty());
@@ -2166,72 +2342,63 @@ auto TypeChecker::TypeCheckFunctionDeclaration(Nonnull<FunctionDeclaration*> f,
 }
 
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
-                                          ImplScope& enclosing_scope)
+                                          const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
+
+  ImplScope class_scope;
+  class_scope.AddParent(scope_info.innermost_scope);
+
+  std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
-    ImplScope class_scope;
-    class_scope.AddParent(&enclosing_scope);
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             class_scope, ValueCategory::Let));
+    CollectGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_) {
       **trace_stream_ << class_scope;
     }
+  }
 
+  // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
+  // should have the value `MyType(T, U)`.
+  BindingMap generic_args;
+  for (auto* binding : bindings) {
+    // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
+    // above and/or by any enclosing generic classes.
+    generic_args[binding] = *binding->symbolic_identity();
+  }
+  Nonnull<NominalClassType*> self_type =
+      arena_->New<NominalClassType>(class_decl, generic_args);
+  SetConstantValue(self, self_type);
+  self->set_static_type(arena_->New<TypeOfClassType>(self_type));
+
+  // The declarations of the members may refer to the class, so we must set the
+  // constant value of the class and its static type before we start processing
+  // the members.
+  if (class_decl->type_params().has_value()) {
+    // TODO: The `enclosing_bindings` should be tracked in the parameterized
+    // entity name so that they can be included in the eventual type.
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(class_decl,
                                              *class_decl->type_params());
     SetConstantValue(class_decl, param_name);
     class_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
-
-    // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
-    // should have the value `MyType(T, U)`.
-    BindingMap generic_args;
-    for (Nonnull<Pattern*> field : type_params->fields()) {
-      // TODO(#1229): Nothing is currently enforcing that the deduced parameter
-      // list only contains generic bindings. We need to decide if Carbon should
-      // allow expressions like:
-      //     class B((T:! Type, U:! Type), V:! Type) {}
-      CARBON_CHECK(field->kind() == PatternKind::GenericBinding);
-      auto& binding = cast<GenericBinding>(*field);
-      // binding.symbolic_identity() set by call to `TypeCheckPattern(...)`
-      // above.
-      generic_args[&binding] = *binding.symbolic_identity();
-    }
-    // `self_type` is like `class_type` but with the type parameters bound to
-    // their symbolic identity.
-    Nonnull<NominalClassType*> self_type =
-        arena_->New<NominalClassType>(class_decl, generic_args);
-    SetConstantValue(self, self_type);
-    self->set_static_type(arena_->New<TypeOfClassType>(self_type));
-
-    for (Nonnull<Declaration*> m : class_decl->members()) {
-      CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope));
-    }
   } else {
-    // The declarations of the members may refer to the class, so we
-    // must set the constant value of the class and its static type
-    // before we start processing the members.
-    Nonnull<NominalClassType*> class_type =
-        arena_->New<NominalClassType>(class_decl);
-    Nonnull<TypeOfClassType*> static_type =
-        arena_->New<TypeOfClassType>(class_type);
-    SetConstantValue(class_decl, class_type);
-    class_decl->set_static_type(static_type);
-    // For the class declaration `class MyType`, `Self` should have the same
-    // value as `MyType`.
-    SetConstantValue(self, class_type);
-    self->set_static_type(static_type);
-
-    for (Nonnull<Declaration*> m : class_decl->members()) {
-      CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, enclosing_scope));
-    }
+    SetConstantValue(class_decl, self_type);
+    class_decl->set_static_type(&self->static_type());
   }
+
+  ScopeInfo class_scope_info =
+      ScopeInfo::ForClassScope(scope_info, &class_scope, std::move(bindings));
+  for (Nonnull<Declaration*> m : class_decl->members()) {
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
+  }
+
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring class " << class_decl->name()
                     << "\n";
@@ -2264,13 +2431,13 @@ auto TypeChecker::TypeCheckClassDeclaration(
 }
 
 auto TypeChecker::DeclareInterfaceDeclaration(
-    Nonnull<InterfaceDeclaration*> iface_decl, ImplScope& enclosing_scope)
+    Nonnull<InterfaceDeclaration*> iface_decl, const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "** declaring interface " << iface_decl->name() << "\n";
   }
   ImplScope iface_scope;
-  iface_scope.AddParent(&enclosing_scope);
+  iface_scope.AddParent(scope_info.innermost_scope);
 
   if (iface_decl->params().has_value()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(*iface_decl->params(), std::nullopt,
@@ -2293,8 +2460,10 @@ auto TypeChecker::DeclareInterfaceDeclaration(
   // Process the Self parameter.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(iface_decl->self(), std::nullopt,
                                           iface_scope, ValueCategory::Let));
+
+  ScopeInfo iface_scope_info = ScopeInfo::ForNonClassScope(&iface_scope);
   for (Nonnull<Declaration*> m : iface_decl->members()) {
-    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope));
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, iface_scope_info));
   }
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring interface " << iface_decl->name()
@@ -2328,13 +2497,13 @@ auto TypeChecker::TypeCheckInterfaceDeclaration(
 }
 
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                         ImplScope& enclosing_scope)
+                                         const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "declaring " << *impl_decl << "\n";
   }
   ImplScope impl_scope;
-  impl_scope.AddParent(&enclosing_scope);
+  impl_scope.AddParent(scope_info.innermost_scope);
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
 
   // Bring the deduced parameters into scope.
@@ -2346,13 +2515,11 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   impl_decl->set_impl_bindings(impl_bindings);
 
   // Check and interpret the impl_type
-  CARBON_RETURN_IF_ERROR(TypeCheckExp(impl_decl->impl_type(), impl_scope));
-  CARBON_ASSIGN_OR_RETURN(
-      Nonnull<const Value*> impl_type_value,
-      InterpExp(impl_decl->impl_type(), arena_, trace_stream_));
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> impl_type_value,
+                          TypeCheckTypeExp(impl_decl->impl_type(), impl_scope));
 
-  // Set `Self` to `impl_type`. We do this whether or not it `Self` resolves to
-  // it or the `Self` from an enclosing scope. This needs to be done before
+  // Set `Self` to `impl_type`. We do this whether `Self` resolves to it or to
+  // the `Self` from an enclosing scope. This needs to be done before
   // processing the interface, in case the interface expression uses `Self`.
   Nonnull<SelfDeclaration*> self = impl_decl->self();
   self->set_constant_value(impl_type_value);
@@ -2360,12 +2527,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   self->set_static_type(&impl_decl->impl_type()->static_type());
 
   // Check and interpret the interface.
-  CARBON_RETURN_IF_ERROR(
-      TypeCheckExp(&impl_decl->interface(), enclosing_scope));
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> written_iface_type,
-      InterpExp(&impl_decl->interface(), arena_, trace_stream_));
-
+      TypeCheckTypeExp(&impl_decl->interface(), impl_scope));
   const auto* iface_type = dyn_cast<InterfaceType>(written_iface_type);
   if (!iface_type) {
     return CompilationError(impl_decl->interface().source_loc())
@@ -2376,16 +2540,28 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   const auto& iface_decl = iface_type->declaration();
   impl_decl->set_interface_type(iface_type);
 
-  // Bring this impl into the enclosing scope.
+  // Bring this impl into the enclosing non-class scope.
   auto impl_id =
       arena_->New<IdentifierExpression>(impl_decl->source_loc(), "impl");
   impl_id->set_value_node(impl_decl);
-  enclosing_scope.Add(iface_type, impl_decl->deduced_parameters(),
-                      impl_type_value, impl_bindings, impl_id);
+  {
+    // The deduced bindings are the parameters for all enclosing classes
+    // followed by any deduced parameters written on the `impl` declaration
+    // itself.
+    std::vector<Nonnull<const GenericBinding*>> deduced_bindings =
+        scope_info.bindings;
+    deduced_bindings.insert(deduced_bindings.end(),
+                            impl_decl->deduced_parameters().begin(),
+                            impl_decl->deduced_parameters().end());
+    scope_info.innermost_non_class_scope->Add(
+        iface_type, std::move(deduced_bindings), impl_type_value, impl_bindings,
+        impl_id);
+  }
 
   // Declare the impl members.
+  ScopeInfo impl_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
-    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope));
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
   }
   // Check that the interface is satisfied by the impl members.
   for (Nonnull<Declaration*> m : iface_decl.members()) {
@@ -2398,9 +2574,11 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         binding_map[iface_decl.self()] = impl_type_value;
         Nonnull<const Value*> iface_mem_type =
             Substitute(binding_map, &m->static_type());
+        // FIXME: How should the signature in the implementation be permitted
+        // to differ from the signature in the interface?
         CARBON_RETURN_IF_ERROR(
-            ExpectType((*mem)->source_loc(), "member of implementation",
-                       iface_mem_type, &(*mem)->static_type()));
+            ExpectExactType((*mem)->source_loc(), "member of implementation",
+                            iface_mem_type, &(*mem)->static_type()));
       } else {
         return CompilationError(impl_decl->source_loc())
                << "implementation missing " << *mem_name;
@@ -2435,14 +2613,13 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 }
 
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
-                                           const ImplScope& enclosing_scope)
+                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
-    CARBON_RETURN_IF_ERROR(
-        TypeCheckExp(&alternative->signature(), enclosing_scope));
-    CARBON_ASSIGN_OR_RETURN(auto signature, InterpExp(&alternative->signature(),
-                                                      arena_, trace_stream_));
+    CARBON_ASSIGN_OR_RETURN(auto signature,
+                            TypeCheckTypeExp(&alternative->signature(),
+                                             *scope_info.innermost_scope));
     alternatives.push_back({.name = alternative->name(), .value = signature});
   }
   auto ct = arena_->New<ChoiceType>(choice->name(), std::move(alternatives));
@@ -2458,13 +2635,86 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
   return Success();
 }
 
+static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
+  switch (type->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::TupleValue:
+    case Value::Kind::Witness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::ContinuationValue:
+    case Value::Kind::StringValue:
+      CARBON_FATAL() << "type of alias target is not a type";
+
+    case Value::Kind::AutoType:
+    case Value::Kind::VariableType:
+      CARBON_FATAL() << "pattern type in alias target";
+
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::PointerType:
+    case Value::Kind::StaticArrayType:
+    case Value::Kind::StructType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::ContinuationType:
+    case Value::Kind::StringType:
+      return false;
+
+    case Value::Kind::FunctionType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::TypeType:
+    case Value::Kind::TypeOfClassType:
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+      return true;
+  }
+}
+
+auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
+                                          const ScopeInfo& scope_info)
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(
+      TypeCheckExp(&alias->target(), *scope_info.innermost_scope));
+
+  if (!IsValidTypeForAliasTarget(&alias->target().static_type())) {
+    return CompilationError(alias->source_loc())
+           << "invalid target for alias declaration";
+  }
+
+  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
+                          InterpExp(&alias->target(), arena_, trace_stream_));
+
+  SetConstantValue(alias, target);
+  alias->set_static_type(&alias->target().static_type());
+  return Success();
+}
+
 auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
+  ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
   for (Nonnull<Declaration*> declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(DeclareDeclaration(declaration, impl_scope));
+    CARBON_RETURN_IF_ERROR(
+        DeclareDeclaration(declaration, top_level_scope_info));
   }
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
+    // Check to see if this declaration is a builtin.
+    // FIXME: Only do this when type-checking the prelude.
+    builtins_.Register(decl);
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));
   return Success();
@@ -2498,9 +2748,6 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
       return Success();
     case DeclarationKind::VariableDeclaration: {
       auto& var = cast<VariableDeclaration>(*d);
-      // Signals a type error if the initializing expression does not have
-      // the declared type of the variable, otherwise returns this
-      // declaration with annotated types.
       if (var.has_initializer()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), impl_scope));
       }
@@ -2512,53 +2759,54 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                << "Type of a top-level variable must be an expression.";
       }
       if (var.has_initializer()) {
-        CARBON_RETURN_IF_ERROR(
-            ExpectType(var.source_loc(), "initializer of variable",
-                       &var.static_type(), &var.initializer().static_type()));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_initializer,
+            ImplicitlyConvert("initializer of variable", impl_scope,
+                              &var.initializer(), &var.static_type()));
+        var.set_initializer(converted_initializer);
       }
       return Success();
     }
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
+    case DeclarationKind::AliasDeclaration: {
+      return Success();
+    }
   }
   return Success();
 }
 
 auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
-                                     ImplScope& enclosing_scope)
+                                     const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       auto& iface_decl = cast<InterfaceDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(
-          DeclareInterfaceDeclaration(&iface_decl, enclosing_scope));
+          DeclareInterfaceDeclaration(&iface_decl, scope_info));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareImplDeclaration(&impl_decl, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, scope_info));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
       auto& func_def = cast<FunctionDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareFunctionDeclaration(&func_def, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareFunctionDeclaration(&func_def, scope_info));
       break;
     }
 
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareClassDeclaration(&class_decl, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, scope_info));
       break;
     }
 
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(
-          DeclareChoiceDeclaration(&choice, enclosing_scope));
+      CARBON_RETURN_IF_ERROR(DeclareChoiceDeclaration(&choice, scope_info));
       break;
     }
 
@@ -2572,8 +2820,9 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       }
       Expression& type =
           cast<ExpressionPattern>(var.binding().type()).expression();
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &var.binding(), std::nullopt, enclosing_scope, var.value_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
+                                              *scope_info.innermost_scope,
+                                              var.value_category()));
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> declared_type,
                               InterpExp(&type, arena_, trace_stream_));
       var.set_static_type(declared_type);
@@ -2582,6 +2831,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable TypeChecker declare `Self` declaration";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      auto& alias = cast<AliasDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, scope_info));
+      break;
     }
   }
   return Success();

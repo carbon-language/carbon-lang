@@ -331,23 +331,23 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       CARBON_CHECK(isa<LValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
-    case ExpressionKind::FieldAccessExpression: {
+    case ExpressionKind::SimpleMemberAccessExpression: {
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<FieldAccessExpression>(exp).aggregate()));
+            &cast<SimpleMemberAccessExpression>(exp).object()));
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
-        Address aggregate = cast<LValue>(*act.results()[0]).address();
-        Address field = aggregate.SubobjectAddress(
-            cast<FieldAccessExpression>(exp).field());
-        return todo_.FinishAction(arena_->New<LValue>(field));
+        Address object = cast<LValue>(*act.results()[0]).address();
+        Address member = object.SubobjectAddress(
+            cast<SimpleMemberAccessExpression>(exp).member());
+        return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
@@ -366,8 +366,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(
-            &cast<IndexExpression>(exp).aggregate()));
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&cast<IndexExpression>(exp).object()));
 
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -375,10 +375,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        Address aggregate = cast<LValue>(*act.results()[0]).address();
+        Address object = cast<LValue>(*act.results()[0]).address();
         std::string f =
             std::to_string(cast<IntValue>(*act.results()[1]).value());
-        Address field = aggregate.SubobjectAddress(f);
+        Address field = object.SubobjectAddress(f);
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
@@ -410,6 +410,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::ValueLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::ArrayTypeLiteral:
@@ -503,7 +504,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
     case Value::Kind::AutoType:
-    case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::Witness:
@@ -557,6 +557,19 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           CARBON_FATAL() << "Can't convert value " << *value << " to type "
                          << *destination_type;
       }
+    }
+    case Value::Kind::StructType: {
+      // The value `{}` has kind `StructType` not `StructValue`. This value can
+      // be converted to an empty class type.
+      if (auto* destination_class_type =
+              dyn_cast<NominalClassType>(destination_type)) {
+        CARBON_CHECK(cast<StructType>(*value).fields().empty())
+            << "only an empty struct type value converts to class type";
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_dest,
+                                InstantiateType(destination_type, source_loc));
+        return arena_->New<NominalClassValue>(inst_dest, value);
+      }
+      return value;
     }
     case Value::Kind::TupleValue: {
       const auto& tuple = cast<TupleValue>(value);
@@ -747,7 +760,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &cast<IndexExpression>(exp).aggregate()));
+            &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
@@ -799,16 +812,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<StructType>(std::move(fields)));
       }
     }
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(exp);
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (act.pos() == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
         if (access.is_field_addr_me_method()) {
-          return todo_.Spawn(std::make_unique<LValAction>(&access.aggregate()));
+          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
         } else {
           return todo_.Spawn(
-              std::make_unique<ExpressionAction>(&access.aggregate()));
+              std::make_unique<ExpressionAction>(&access.object()));
         }
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
@@ -847,7 +860,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                            access.source_loc()));
             witness = cast<Witness>(witness_value);
           }
-          FieldPath::Component field(access.field(), witness);
+          FieldPath::Component member(access.member(), witness);
           const Value* aggregate;
           if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
@@ -857,15 +870,15 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             aggregate = act.results()[0];
           }
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> member,
-              aggregate->GetField(arena_, FieldPath(field), exp.source_loc(),
-                                  act.results()[0]));
-          return todo_.FinishAction(member);
+              Nonnull<const Value*> member_value,
+              aggregate->GetMember(arena_, FieldPath(member), exp.source_loc(),
+                                   act.results()[0]));
+          return todo_.FinishAction(member_value);
         }
       }
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(exp);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(exp);
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
@@ -907,8 +920,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           FieldPath::Component field(access.member().name(), witness);
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                                  object->GetField(arena_, FieldPath(field),
-                                                   exp.source_loc(), object));
+                                  object->GetMember(arena_, FieldPath(field),
+                                                    exp.source_loc(), object));
           return todo_.FinishAction(member);
         }
       }
@@ -1056,6 +1069,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::StringTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<StringType>());
+    }
+    case ExpressionKind::ValueLiteral: {
+      CARBON_CHECK(act.pos() == 0);
+      return todo_.FinishAction(&cast<ValueLiteral>(exp).value());
     }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(exp);
@@ -1423,6 +1440,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
+    case DeclarationKind::AliasDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

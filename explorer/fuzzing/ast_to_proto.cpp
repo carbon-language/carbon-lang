@@ -80,8 +80,9 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      // UNDER CONSTRUCTION
+    case ExpressionKind::InstantiateImpl:
+    case ExpressionKind::ValueLiteral: {
+      // These do not correspond to source syntax.
       break;
     }
     case ExpressionKind::CallExpression: {
@@ -96,37 +97,39 @@ static auto ExpressionToProto(const Expression& expression)
       const auto& fun_type = cast<FunctionTypeLiteral>(expression);
       auto* fun_type_proto = expression_proto.mutable_function_type();
       *fun_type_proto->mutable_parameter() =
-          ExpressionToProto(fun_type.parameter());
+          TupleLiteralExpressionToProto(fun_type.parameter());
       *fun_type_proto->mutable_return_type() =
           ExpressionToProto(fun_type.return_type());
       break;
     }
 
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& field_access = cast<FieldAccessExpression>(expression);
-      auto* field_access_proto = expression_proto.mutable_field_access();
-      field_access_proto->set_field(field_access.field());
-      *field_access_proto->mutable_aggregate() =
-          ExpressionToProto(field_access.aggregate());
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& simple_member_access =
+          cast<SimpleMemberAccessExpression>(expression);
+      auto* simple_member_access_proto =
+          expression_proto.mutable_simple_member_access();
+      simple_member_access_proto->set_field(simple_member_access.member());
+      *simple_member_access_proto->mutable_object() =
+          ExpressionToProto(simple_member_access.object());
       break;
     }
 
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& field_access =
-          cast<CompoundFieldAccessExpression>(expression);
-      auto* field_access_proto =
-          expression_proto.mutable_compound_field_access();
-      *field_access_proto->mutable_object() =
-          ExpressionToProto(field_access.object());
-      *field_access_proto->mutable_path() =
-          ExpressionToProto(field_access.path());
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& simple_member_access =
+          cast<CompoundMemberAccessExpression>(expression);
+      auto* simple_member_access_proto =
+          expression_proto.mutable_compound_member_access();
+      *simple_member_access_proto->mutable_object() =
+          ExpressionToProto(simple_member_access.object());
+      *simple_member_access_proto->mutable_path() =
+          ExpressionToProto(simple_member_access.path());
       break;
     }
 
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(expression);
       auto* index_proto = expression_proto.mutable_index();
-      *index_proto->mutable_aggregate() = ExpressionToProto(index.aggregate());
+      *index_proto->mutable_object() = ExpressionToProto(index.object());
       *index_proto->mutable_offset() = ExpressionToProto(index.offset());
       break;
     }
@@ -532,7 +535,7 @@ static auto DeclarationToProto(const Declaration& declaration)
         auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
         *alternative_proto->mutable_signature() =
-            ExpressionToProto(alternative->signature());
+            TupleLiteralExpressionToProto(alternative->signature());
       }
       break;
     }
@@ -581,6 +584,14 @@ static auto DeclarationToProto(const Declaration& declaration)
 
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
+    }
+
+    case DeclarationKind::AliasDeclaration: {
+      const auto& alias = cast<AliasDeclaration>(declaration);
+      auto* alias_proto = declaration_proto.mutable_alias();
+      alias_proto->set_name(alias.name());
+      *alias_proto->mutable_target() = ExpressionToProto(alias.target());
+      break;
     }
   }
   return declaration_proto;

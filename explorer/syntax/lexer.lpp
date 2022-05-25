@@ -34,6 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /* table-begin */
 ADDR                 "addr"
+ALIAS                "alias"
 AMPERSAND            "&"
 AND                  "and"
 API                  "api"
@@ -139,6 +140,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
  /* table-begin */
 {ADDR}                { return SIMPLE_TOKEN(ADDR);                }
+{ALIAS}               { return SIMPLE_TOKEN(ALIAS);               }
 {AMPERSAND}           { return SIMPLE_TOKEN(AMPERSAND);           }
 {AND}                 { return SIMPLE_TOKEN(AND);                 }
 {API}                 { return SIMPLE_TOKEN(API);                 }
