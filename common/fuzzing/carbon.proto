@@ -23,18 +23,18 @@ message FunctionTypeLiteral {
   optional Expression return_type = 2;
 }
 
-message FieldAccessExpression {
+message SimpleMemberAccessExpression {
   optional string field = 1;
-  optional Expression aggregate = 2;
+  optional Expression object = 2;
 }
 
-message CompoundFieldAccessExpression {
+message CompoundMemberAccessExpression {
   optional Expression object = 1;
   optional Expression path = 2;
 }
 
 message IndexExpression {
-  optional Expression aggregate = 1;
+  optional Expression object = 1;
   optional Expression offset = 2;
 }
 
@@ -124,7 +124,7 @@ message Expression {
   oneof kind {
     CallExpression call = 1;
     FunctionTypeLiteral function_type = 2;
-    FieldAccessExpression field_access = 3;
+    SimpleMemberAccessExpression simple_member_access = 3;
     IndexExpression index = 4;
     PrimitiveOperatorExpression primitive_operator = 5;
     TupleLiteralExpression tuple_literal = 6;
@@ -143,7 +143,7 @@ message Expression {
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
-    CompoundFieldAccessExpression compound_field_access = 22;
+    CompoundMemberAccessExpression compound_member_access = 22;
   }
 }
 

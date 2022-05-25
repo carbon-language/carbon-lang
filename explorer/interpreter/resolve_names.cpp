@@ -111,20 +111,20 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(fun_type.return_type(), enclosing_scope));
       break;
     }
-    case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::SimpleMemberAccessExpression:
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
+          ResolveNames(cast<SimpleMemberAccessExpression>(expression).object(),
                        enclosing_scope));
       break;
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      auto& access = cast<CompoundFieldAccessExpression>(expression);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      auto& access = cast<CompoundMemberAccessExpression>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(access.object(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(access.path(), enclosing_scope));
       break;
     }
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
-      CARBON_RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(index.object(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(index.offset(), enclosing_scope));
       break;
     }

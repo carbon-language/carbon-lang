@@ -68,9 +68,9 @@ compilation_unit {
             init {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "None"
-                    aggregate {
+                    object {
                       identifier {
                         name: "Ints"
                       }
@@ -99,9 +99,9 @@ compilation_unit {
             init {
               call {
                 function {
-                  field_access {
+                  simple_member_access {
                     field: "One"
-                    aggregate {
+                    object {
                       identifier {
                         name: "Ints"
                       }
@@ -150,9 +150,9 @@ compilation_unit {
               pattern {
                 expression_pattern {
                   expression {
-                    field_access {
+                    simple_member_access {
                       field: "None"
-                      aggregate {
+                      object {
                         identifier {
                           name: "Ints"
                         }
@@ -351,9 +351,9 @@ compilation_unit {
                   expression {
                     call {
                       function {
-                        field_access {
+                        simple_member_access {
                           field: "None"
-                          aggregate {
+                          object {
                             identifier {
                               name: "Ints"
                             }

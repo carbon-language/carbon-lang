@@ -141,13 +141,14 @@ auto TuplePatternFromParenContents(Nonnull<Arena*> arena,
 // Used by AlternativePattern for constructor initialization. Produces a helpful
 // error for incorrect expressions, rather than letting a default cast error
 // apply.
-auto AlternativePattern::RequireFieldAccess(Nonnull<Expression*> alternative)
-    -> ErrorOr<Nonnull<FieldAccessExpression*>> {
-  if (alternative->kind() != ExpressionKind::FieldAccessExpression) {
+auto AlternativePattern::RequireSimpleMemberAccess(
+    Nonnull<Expression*> alternative)
+    -> ErrorOr<Nonnull<SimpleMemberAccessExpression*>> {
+  if (alternative->kind() != ExpressionKind::SimpleMemberAccessExpression) {
     return ProgramError(alternative->source_loc())
            << "Alternative pattern must have the form of a field access.";
   }
-  return &cast<FieldAccessExpression>(*alternative);
+  return &cast<SimpleMemberAccessExpression>(*alternative);
 }
 
 auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
