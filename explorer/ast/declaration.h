@@ -220,7 +220,7 @@ class ClassDeclaration : public Declaration {
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       Nonnull<Expression*> signature)
+                       Nonnull<TupleLiteral*> signature)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
         signature_(signature) {}
@@ -233,12 +233,12 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> const Expression& { return *signature_; }
-  auto signature() -> Expression& { return *signature_; }
+  auto signature() const -> const TupleLiteral& { return *signature_; }
+  auto signature() -> TupleLiteral& { return *signature_; }
 
  private:
   std::string name_;
-  Nonnull<Expression*> signature_;
+  Nonnull<TupleLiteral*> signature_;
 };
 
 class ChoiceDeclaration : public Declaration {
