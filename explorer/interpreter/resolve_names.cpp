@@ -65,8 +65,6 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::AliasDeclaration: {
-      auto& alias = cast<AliasDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
       break;
     }
   }
@@ -454,8 +452,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
     }
 
     case DeclarationKind::AliasDeclaration: {
-      CARBON_RETURN_IF_ERROR(ResolveNames(
-          cast<AliasDeclaration>(declaration).target(), enclosing_scope));
+      auto& alias = cast<AliasDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
       break;
     }
   }

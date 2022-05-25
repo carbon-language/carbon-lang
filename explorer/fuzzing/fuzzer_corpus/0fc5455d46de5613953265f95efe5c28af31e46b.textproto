@@ -1,0 +1,15 @@
+compilation_unit {
+  declarations {
+    alias {
+      target {
+        identifier {
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "\001\000\000\000"
+    }
+  }
+}
