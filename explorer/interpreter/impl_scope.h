@@ -5,6 +5,8 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 #define CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 
+#include <list>
+
 #include "explorer/ast/declaration.h"
 
 namespace Carbon {
@@ -86,36 +88,45 @@ class ImplScope {
     ImplScope::Impl impl;
   };
 
-  // Returns the associated impl for the given `iface` and `type` in
-  // the ancestor graph of this scope, returns std::nullopt if there
-  // is none, or reports a compilation error is there is not a most
-  // specific impl for the given `iface` and `type`.
+  // Returns the matching impls for the given `iface` and `type` in
+  // the ancestor graph of this scope.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
+  void TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
                   SourceLocation source_loc, const ImplScope& original_scope,
-                  const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<ImplResult>>;
+                  const TypeChecker& type_checker,
+                  std::list<ImplResult>& result) const;
 
-  // Returns the associated impl for the given `iface` and `type` in
-  // this scope, returns std::nullopt if there is none, or reports
-  // a compilation error is there is not a most specific impl for the
-  // given `iface` and `type`.
+  // Returns the matching impls for the given `iface` and `type` in
+  // this scope.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto ResolveHere(Nonnull<const Value*> iface_type,
+  void ResolveHere(Nonnull<const Value*> iface_type,
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const ImplScope& original_scope,
-                   const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<ImplResult>>;
+                   const TypeChecker& type_checker,
+                   std::list<ImplResult>& result) const;
 
-  // Choose the more specific of two impls, if there is one.
-  auto SelectImpl(const ImplScope::ImplResult& impl1,
-                  const ImplScope::ImplResult& impl2, SourceLocation source_loc,
-                  const ImplScope& impl_scope, const TypeChecker& type_checker,
+  enum ImplComparison {
+    LessSpecific,
+    MoreSpecific,
+    EquallySpecific,
+    Incomparable
+  };
+
+  auto MoreSpecificImpl(const ImplScope::ImplResult& impl1,
+                        const ImplScope::ImplResult& impl2,
+                        SourceLocation source_loc,
+                        const ImplScope& original_scope,
+                        const TypeChecker& type_checker) const
+      -> ImplComparison;
+
+  auto SelectImpl(const std::list<ImplScope::ImplResult>& impls,
                   Nonnull<const Value*> iface_type,
-                  Nonnull<const Value*> impl_type) const
-      -> ErrorOr<std::optional<ImplScope::ImplResult>>;
+                  Nonnull<const Value*> impl_type, SourceLocation source_loc,
+                  const ImplScope& original_scope,
+                  const TypeChecker& type_checker) const
+      -> ErrorOr<Nonnull<Expression*>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
