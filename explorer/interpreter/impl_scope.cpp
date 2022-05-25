@@ -116,8 +116,9 @@ auto ImplScope::ResolveHere(Nonnull<const Value*> iface_type,
         iface, impl_type, impl, original_scope, source_loc);
     if (m.has_value()) {
       if (result.has_value()) {
-        return SelectImpl(*result, {*m, impl}, source_loc, original_scope,
-                          type_checker, iface_type, impl_type);
+        CARBON_ASSIGN_OR_RETURN(
+            result, SelectImpl(*result, {*m, impl}, source_loc, original_scope,
+                               type_checker, iface_type, impl_type));
       } else {
         result = {*m, impl};
       }
