@@ -61,7 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
-    -   [Names and scopes](#names-and-scopes)
+    -   [Legal names](#legal-names)
     -   [Naming conventions](#naming-conventions)
     -   [Aliases](#aliases)
     -   [Name lookup](#name-lookup)
@@ -542,13 +542,24 @@ are applied to convert the expression to the target type.
 
 ## Declarations, Definitions, and Scopes
 
-**FIXME**: Content needed here.
-[Scope](<https://en.wikipedia.org/wiki/Scope_(computer_science)>)
+_Declarations_ introduce a new [name](#names) and say what that name represents.
+For some kinds of entities, like [functions](#functions), there are two kinds of
+declarations: _forward declarations_ and _definitions_. In this case, there
+should be exactly one definition for the name, but there can be additional
+forward declarations that introduce the name before it is defined. Forward
+declarations allow cyclic references, and can be used to declare a name in an
+[api file](#packages-libraries-namespaces) that is defined in an
+[impl file](#packages-libraries-namespaces).
+
+A name is valid until the end of the innermost enclosing
+[_scope_](<https://en.wikipedia.org/wiki/Scope_(computer_science)>). Except for
+the outermost scope, scopes are enclosed in curly braces (`{`...`}`).
 
 ## Functions
 
-Functions are the core unit of behavior. For example, this is a declaration of a
-function that adds two 64-bit integers:
+Functions are the core unit of behavior. For example, this is a
+[declaration](#declarations-definitions-and-scopes) of a function that adds two
+64-bit integers:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64;
@@ -1495,18 +1506,18 @@ import Geometry library("OneSide");
 fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 ```
 
-### Names and scopes
+### Legal names
 
 > References: [Lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
-types, variables, or other kinds of entities that we'll cover. A name in Carbon
-is formed from a word, which is a sequence of letters, numbers, and underscores,
-and which starts with a letter. We intend to follow Unicode's Annex 31 in
-selecting valid identifier characters, but a concrete set of valid characters
-has not been selected yet.
+types, variables, or other kinds of entities. A name in Carbon is formed from a
+word, which is a sequence of letters, numbers, and underscores, and which starts
+with a letter. We intend to follow Unicode's Annex 31 in selecting valid
+identifier characters, but a concrete set of valid characters has not been
+selected yet.
 
 ### Naming conventions
 
