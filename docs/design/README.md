@@ -743,8 +743,8 @@ Patterns are used in a variety of Carbon language constructs, including
 
 The most common pattern is a _binding pattern_, consisting of a new name, a
 colon (`:`), and a type. It can only match values that may be
-[implicitly converted](expressions/implicit_conversions.md) to that type. An `_`
-may be used instead of the name to ignore the value.
+[implicitly converted](expressions/implicit_conversions.md) to that type. A
+underscore (`_`) may be used instead of the name to ignore the value.
 
 > **TODO:** Using `var` before a binding pattern to allocate storage so the new
 > name can be modified?
@@ -1102,7 +1102,8 @@ Breaking this apart:
 
 -   This defines a class named `Widget`. `Widget` is the name added to the
     enclosing [scope](#declarations-definitions-and-scopes).
--   The name `Widget` is followed by curly braces (`{`...`}`), making this a
+-   The name `Widget` is followed by curly braces (`{`...`}`) containing the
+    class _body_, making this a
     [definition](#declarations-definitions-and-scopes). A
     [forward declaration](#declarations-definitions-and-scopes) would instead
     have a semicolon(`;`).
@@ -1114,7 +1115,7 @@ Breaking this apart:
 
 The order of the field declarations determines the fields' memory-layout order.
 
-Classes may have other kinds of members beyond fields declared in a class scope:
+Classes may have other kinds of members beyond fields declared in its scope:
 
 -   [Class functions](#class-functions-and-factory-functions)
 -   [Methods](#methods)
@@ -1124,8 +1125,8 @@ Classes may have other kinds of members beyond fields declared in a class scope:
     constants associated with the class like `class let` or `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
--   Every class has a constant member named `Self` equal to the class type
-    itself.
+-   Every class automatically has a [constant member](#let) named `Self` equal
+    to the class type itself.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
 _class types_, but they are commonly referred to as "structs" and "classes"
