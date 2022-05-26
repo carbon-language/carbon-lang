@@ -27,9 +27,9 @@ def _parse_args() -> argparse.Namespace:
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--delete_old",
-        action="store_false",
-        help="Whether to delete old corpus files.",
+        "--keep_old",
+        action="store_true",
+        help="Whether to keep old corpus files.",
     )
     parser.add_argument(
         "--num_files",
@@ -99,7 +99,7 @@ def main() -> None:
     subprocess.check_call(["bazel", "build", "//explorer/fuzzing:fuzzverter"])
 
     parsed_args = _parse_args()
-    if parsed_args.delete_old:
+    if not parsed_args.keep_old:
         _delete_corpus_files()
 
     carbon_sources = _get_files(_TESTDATA, ".carbon")
