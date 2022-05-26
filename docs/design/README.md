@@ -57,7 +57,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Inheritance](#inheritance)
         -   [Access control](#access-control)
         -   [Destructors](#destructors)
-        -   [Other members](#other-members)
     -   [Choice types](#choice-types)
 -   [Names](#names)
     -   [Packages, libraries, namespaces](#packages-libraries-namespaces)
@@ -568,7 +567,8 @@ fn Add(a: i64, b: i64) -> i64;
 Breaking this apart:
 
 -   `fn` is the keyword used to introduce a function.
--   Its name is `Add`.
+-   Its name is `Add`. This is the name added to the enclosing
+    [scope](#declarations-definitions-and-scopes).
 -   It accepts two `i64` parameters, `a` and `b`.
 -   It returns an `i64` result.
 
@@ -582,6 +582,9 @@ fn Add(a: i64, b: i64) -> i64 {
   return a + b;
 }
 ```
+
+The names of the parameters are in scope until the end of the definition or
+declaration.
 
 > References:
 >
@@ -632,8 +635,9 @@ fn Foo() {
 
 ### Variables
 
-Blocks introduce nested scopes and can contain variable declarations that are
-local to that block, similarly to function parameters.
+Blocks introduce nested scopes and can contain variable
+[declarations](#declarations-definitions-and-scopes) that are local to that
+block, similarly to function parameters.
 
 For example:
 
@@ -648,13 +652,17 @@ fn DoSomething() -> i64 {
 Breaking this apart:
 
 -   `var` is the keyword used to indicate a variable.
--   Its name is `x`.
+-   Its name is `x`. This is the name added to the enclosing
+    [scope](#declarations-definitions-and-scopes).
 -   Its type is `i64`.
 -   It is initialized with the value `42`.
 
 Unlike function parameters, `x` is an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 which means it has storage and an address, and so can be modified.
+
+Note that there are no forward declarations of variables, all variable
+declarations are [definitions](#declarations-definitions-and-scopes).
 
 > References:
 >
@@ -1071,10 +1079,14 @@ contain patterns that may or may not match based on the runtime value of the
 
 ### Classes
 
-_Nominal classes_, or just _classes_, are a way for users to define their own
-data strutures or record types.
+_Nominal classes_, or just
+[_classes_](<https://en.wikipedia.org/wiki/Class_(computer_programming)>), are a
+way for users to define their own
+[data strutures](https://en.wikipedia.org/wiki/Data_structure) or
+[record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>).
 
-For example:
+This is an example of a class
+[definition](#declarations-definitions-and-scopes):
 
 ```carbon
 class Widget {
@@ -1086,18 +1098,34 @@ class Widget {
 }
 ```
 
-Breaking apart `Widget`:
+Breaking this apart:
 
--   `Widget` has three `i32` field: `x`, `y`, and `z`.
+-   This defines a class named `Widget`. `Widget` is the name added to the
+    enclosing [scope](#declarations-definitions-and-scopes).
+-   The name `Widget` is followed by curly braces (`{`...`}`), making this a
+    [definition](#declarations-definitions-and-scopes). A
+    [forward declaration](#declarations-definitions-and-scopes) would instead
+    have a semicolon(`;`).
+-   Those braces delimit the class'
+    [scope](#declarations-definitions-and-scopes).
+-   `Widget` has three `i32` fields: `x`, `y`, and `z`.
 -   `Widget` has one `String` field: `payload`.
 -   Given an instance `dial`, a field can be referenced with `dial.payload`.
 
 The order of the field declarations determines the fields' memory-layout order.
 
-Every class has a constant member named `Self` equal to the class type itself.
+Classes may have other kinds of members beyond fields declared in a class scope:
 
-Like functions, classes may be forward declared, ending the declaration with a
-semicolon (`;`) instead of the block in curly braces (`{`...`}`).
+-   [Class functions](#class-functions-and-factory-functions)
+-   [Methods](#methods)
+-   [`alias`](#aliases)
+-   [`let`](#let) to define constants. **TODO:** Are these constants associated
+    with the class or the instance? Do we need to another syntax to distinguish
+    constants associated with the class like `class let` or `static let`?
+-   `class`, to define a
+    [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
+-   Every class has a constant member named `Self` equal to the class type
+    itself.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
 _class types_, but they are commonly referred to as "structs" and "classes"
@@ -1387,18 +1415,6 @@ type, use `UnsafeDelete`.
 > -   [Destructors](classes.md#destructors)
 > -   Proposal
 >     [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
-
-#### Other members
-
-Classes may also contain other kinds of declarations, which results in them
-having names inside the class' scope:
-
--   [`alias`](#aliases)
--   [`let`](#let) to define constants. **TODO:** Are these constants associated
-    with the class or the instance? Do we need to another syntax to distinguish
-    constants associated with the class like `class let` or `static let`?
--   `class`, to define a
-    [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
 
 ### Choice types
 
