@@ -58,11 +58,8 @@ static auto TextProtoToCarbon(std::string_view input_file_name,
     -> ErrorOr<Success> {
   CARBON_ASSIGN_OR_RETURN(const std::string input_contents,
                           ReadFile(input_file_name));
-  Fuzzing::Carbon carbon_proto;
-  if (!google::protobuf::TextFormat::ParseFromString(input_contents,
-                                                     &carbon_proto)) {
-    return Error("Could not parse text proto");
-  }
+  CARBON_ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
+                          ParseCarbonTextProto(input_contents));
   const std::string carbon_source =
       ProtoToCarbonWithMain(carbon_proto.compilation_unit());
   return WriteFile(carbon_source, output_file_name);
