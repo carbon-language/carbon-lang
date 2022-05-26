@@ -30,9 +30,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Struct types](#struct-types)
     -   [Pointer types](#pointer-types)
     -   [Arrays and slices](#arrays-and-slices)
+-   [Expressions](#expressions)
+-   [Declarations, Definitions, and Scopes](#declarations-definitions-and-scopes)
 -   [Functions](#functions)
     -   [Blocks and statements](#blocks-and-statements)
-    -   [Expressions](#expressions)
     -   [Variables](#variables)
     -   [`let`](#let)
     -   [`auto`](#auto)
@@ -177,15 +178,17 @@ The behavior of the Carbon compiler depends on the _build mode_:
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time constant values.
-However, in simple cases this doesn't make much difference.
+themselves modeled as values; specifically, compile-time constant values. This
+means that the grammar for writing a type is the expression](#expressions)
+grammar. Expressions written where a type is expected must be able to be
+evaluated at compile-time and must evaluate to a type value.
 
 ### Structural and nominal types
 
 Some types are _structural_, which means they are equal if they have the same
 components. This is in contrast to _nominal_ types that have a name that
-identifies a specific declaration. Two nominal types are equal if their names
-resolve to the same declaration. If a nominal type is [generic](#generics), and
+identifies a specific definition. Two nominal types are equal if their names
+resolve to the same definition. If a nominal type is [generic](#generics), and
 so has parameters, then the parameters must also be equal for the types to be
 equal.
 
@@ -477,6 +480,71 @@ Console.Print(a[0]);
 
 > **TODO:** Slices
 
+## Expressions
+
+Expressions describe some computed value. The simplest example would be a
+literal number like `42`: an expression that computes the integer value 42.
+
+Some common expressions in Carbon include:
+
+-   Literals:
+
+    -   [boolean](#bool): `true`, `false`
+    -   [integer](#integer-literals): `42`, `-7`
+    -   [real-number](#floating-point-literals): `3.1419`, `6.022e+23`
+    -   [string](#string-literals): `"Hello World!"`
+    -   [tuple](#tuples): `(1, 2, 3)`
+    -   [struct](#struct-types): `{.word = "the", .count = 56}`
+
+-   [Names](#names) and [member access](expressions/member_access.md)
+
+-   [Operators](expressions#operators):
+
+    -   [Arithmetic](expressions/arithmetic.md): `-x`, `1 + 2`, `3 - 4`,
+        `2 * 5`, `6 / 3`, `5 % 3`
+    -   [Bitwise](expressions/bitwise.md): `2 & 3`, `2 | 4`, `3 ^ 1`, `^7`
+    -   [Bit shift](expressions/bitwise.md): `1 << 3`, `8 >> 1`
+    -   [Comparison](expressions/comparison_operators.md): `2 == 2`, `3 != 4`,
+        `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
+    -   [Conversion](expressions/as_expressions.md): `2 as i32`
+    -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
+        `not e`
+    -   [Indexing](#arrays-and-slices): `a[3]`
+    -   [Function](#functions) call: `f(4)`
+    -   [Pointer](#pointer-types): `*p`, `p->m`, `&x`
+
+-   [Conditionals](expressions/if.md): `if c then t else f`
+-   Parentheses: `(7 + 8) * (3 - 1)`
+
+When an expression appears in a context in which an expression of a specific
+type is expected, [implicit conversions](expressions/implicit_conversions.md)
+are applied to convert the expression to the target type.
+
+> References:
+>
+> -   [Expressions](expressions/)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555)
+> -   Proposal
+>     [#601: Operator tokens](https://github.com/carbon-language/carbon-lang/pull/601)
+> -   Proposal
+>     [#680: And, or, not](https://github.com/carbon-language/carbon-lang/pull/680)
+> -   Proposal
+>     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
+> -   Proposal
+>     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
+> -   Proposal
+>     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+> -   Proposal
+>     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+
+## Declarations, Definitions, and Scopes
+
+**FIXME**: Content needed here.
+[Scope](<https://en.wikipedia.org/wiki/Scope_(computer_science)>)
+
 ## Functions
 
 Functions are the core unit of behavior. For example, this is a declaration of a
@@ -516,19 +584,25 @@ fn Add(a: i64, b: i64) -> i64 {
 
 ### Blocks and statements
 
-The body or definition of a function is provided by a block of code in curly
-braces (`{`...`}`) containing statements. The body of a function is also a new
-scope nested inside the function's scope. Nested here means that parameter names
-from the function's scope are available in addition to any names introduced in
-the function body.
+A _code block_ or _block_ is a sequence of _statements_. Blocks define a
+[scope](#declarations-definitions-and-scopes) and, like other scopes, is
+enclosed in curly braces (`{`...`}`). Each statement is terminated by a
+semicolon, and can be one of:
 
-Statements within a block are terminated by a semicolon. Each statement can,
-among other things, be an expression. Some
+-   an [expression](#expressions),
+-   a [variable declaration](#variables),
+-   a [`let` declaration](#let),
+-   an [assignment statement](#assignment-statements), or
+-   a [control-flow statement](#control-flow).
+
+Statements within a block are normally executed in the order the appear in the
+source code, except when modified by control-flow statements.
+
+The body of a function is defined by a block, and some
 [control-flow statements](#control-flow) have their own blocks of code. These
-are nested within the enclosing scope.
-
-For example, here is a function definition with a block of statements defining
-the body of the function, and a nested block as part of a `while` statement:
+are nested within the enclosing scope. For example, here is a function
+definition with a block of statements defining the body of the function, and a
+nested block as part of a `while` statement:
 
 ```carbon
 fn Foo() {
@@ -544,66 +618,6 @@ fn Foo() {
 > -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-
-### Expressions
-
-Expressions describe some computed value. The simplest example would be a
-literal number like `42`: an expression that computes the integer value 42.
-
-Some common expressions in Carbon include:
-
--   Literals:
-
-    -   [boolean](#bool): `true`, `false`
-    -   [integer](#integer-literals): `42`, `-7`
-    -   [real-number](#floating-point-literals): `3.1419`, `6.022e+23`
-    -   [string](#string-literals): `"Hello World!"`
-    -   [tuple](#tuples): `(1, 2, 3)`
-    -   [struct](#struct-types): `{.word = "the", .count = 56}`
-
--   [Names](#names) and [member access](expressions/member_access.md)
-
--   [Operators](expressions#operators):
-
-    -   [Arithmetic](expressions/arithmetic.md): `-x`, `1 + 2`, `3 - 4`,
-        `2 * 5`, `6 / 3`, `5 % 3`
-    -   [Bitwise](expressions/bitwise.md): `2 & 3`, `2 | 4`, `3 ^ 1`, `^7`
-    -   [Bit shift](expressions/bitwise.md): `1 << 3`, `8 >> 1`
-    -   [Comparison](expressions/comparison_operators.md): `2 == 2`, `3 != 4`,
-        `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
-    -   [Conversion](expressions/as_expressions.md): `2 as i32`
-    -   [Logical](expressions/logical_operators.md): `a and b`, `c or d`,
-        `not e`
-    -   Indexing: `a[3]`
-    -   Function call: `f(4)`
-    -   Pointer: `*p`, `p->m`, `&x`
-
--   [Conditionals](expressions/if.md): `if c then t else f`
--   Parentheses: `(7 + 8) * (3 - 1)`
-
-When an expression appears in a context in which an expression of a specific
-type is expected, [implicit conversions](expressions/implicit_conversions.md)
-are applied to convert the expression to the target type.
-
-> References:
->
-> -   [Expressions](expressions/)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-> -   Proposal
->     [#555: Operator precedence](https://github.com/carbon-language/carbon-lang/pull/555)
-> -   Proposal
->     [#601: Operator tokens](https://github.com/carbon-language/carbon-lang/pull/601)
-> -   Proposal
->     [#680: And, or, not](https://github.com/carbon-language/carbon-lang/pull/680)
-> -   Proposal
->     [#702: Comparison operators](https://github.com/carbon-language/carbon-lang/pull/702)
-> -   Proposal
->     [#845: as expressions](https://github.com/carbon-language/carbon-lang/pull/845)
-> -   Proposal
->     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
-> -   Proposal
->     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 
 ### Variables
 
@@ -775,9 +789,20 @@ Blocks of statements are generally executed sequentially. Control-flow
 statements give additional control over the flow of execution and which
 statements are executed.
 
-Some control-flow statements include [block](#blocks-and-statements) arguments.
-Those blocks will always be within curly braces `{`...`}`, unlike C++ which also
-allows an individual statement without curly braces.
+Some control-flow statements include [blocks](#blocks-and-statements). Those
+blocks will always be within curly braces `{`...`}`.
+
+```carbon
+// Curly braces { ... } are required.
+if (condition) {
+  ExecutedWhenTrue();
+} else {
+  ExecutedWhenFalse();
+}
+```
+
+This is unlike C++, which allows control-flow constructs to omit curly braces
+around a single statement.
 
 > References:
 >
