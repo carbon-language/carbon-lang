@@ -106,7 +106,7 @@ def main() -> None:
             [
                 "bazel-bin/explorer/fuzzing/explorer_fuzzer",
                 "-merge=1",
-                "/tmp/fuzz",  # TODO _FUZZER_CORPUS,
+                _FUZZER_CORPUS,
                 new_corpus_dir,
             ]
         )
