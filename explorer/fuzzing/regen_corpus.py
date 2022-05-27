@@ -67,18 +67,14 @@ def _write_corpus_files(text_protos: Iterable[str], corpus_dir: str) -> None:
 def main() -> None:
     os.chdir(os.path.join(os.path.dirname(__file__), "../.."))
 
-    print("Building required binaries...", flush=True)
+    print("Building fuzzverter...", flush=True)
     subprocess.check_call(
         [
             "bazel",
             "build",
-            "--config",
-            "proto-fuzzer",
             "//explorer/fuzzing:fuzzverter",
-            "//explorer/fuzzing:explorer_fuzzer",
         ]
     )
-
     carbon_sources = _get_files(_TESTDATA, ".carbon")
     print(
         "Converting {} carbon files to proto...".format(len(carbon_sources)),
@@ -97,6 +93,20 @@ def main() -> None:
             flush=True,
         )
         _write_corpus_files(text_protos, new_corpus_dir)
+
+        print("Building explorer_fuzzer...", flush=True)
+        subprocess.check_call(
+            [
+                "bazel",
+                "build",
+                # Workaround for #1208.
+                "--copt=-U_LIBCPP_DEBUG",
+                # Workaround for #1173.
+                "--per_file_copt=explorer/.*.cpp@-fsanitize=fuzzer",
+                "--linkopt=-fsanitize=fuzzer",
+                "//explorer/fuzzing:explorer_fuzzer",
+            ]
+        )
 
         print(
             "Merging interesting inputs into {}...".format(_FUZZER_CORPUS),
