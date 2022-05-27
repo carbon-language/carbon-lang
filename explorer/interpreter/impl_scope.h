@@ -55,10 +55,10 @@ class ImplScope {
   // REQUIRES: `parent` is not already a parent of this scope.
   void AddParent(Nonnull<const ImplScope*> parent);
 
-  // Returns the associated impl for the given `iface` and `type` in
+  // Returns the associated impl for the given `constraint` and `type` in
   // the ancestor graph of this scope, or reports a compilation error
   // at `source_loc` there isn't exactly one matching impl.
-  auto Resolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
+  auto Resolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
                SourceLocation source_loc, const TypeChecker& type_checker) const
       -> ErrorOr<Nonnull<Expression*>>;
 
@@ -82,13 +82,22 @@ class ImplScope {
 
  private:
   // Returns the associated impl for the given `iface` and `type` in
+  // the ancestor graph of this scope, or reports a compilation error
+  // at `source_loc` there isn't exactly one matching impl.
+  auto ResolveInterface(Nonnull<const InterfaceType*> iface,
+                        Nonnull<const Value*> type, SourceLocation source_loc,
+                        const TypeChecker& type_checker) const
+      -> ErrorOr<Nonnull<Expression*>>;
+
+  // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope, returns std::nullopt if there
   // is none, or reports a compilation error is there is not a most
   // specific impl for the given `iface` and `type`.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto TryResolve(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-                  SourceLocation source_loc, const ImplScope& original_scope,
+  auto TryResolve(Nonnull<const InterfaceType*> iface_type,
+                  Nonnull<const Value*> type, SourceLocation source_loc,
+                  const ImplScope& original_scope,
                   const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<Expression*>>>;
 
@@ -98,7 +107,7 @@ class ImplScope {
   // given `iface` and `type`.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto ResolveHere(Nonnull<const Value*> iface_type,
+  auto ResolveHere(Nonnull<const InterfaceType*> iface_type,
                    Nonnull<const Value*> impl_type, SourceLocation source_loc,
                    const ImplScope& original_scope,
                    const TypeChecker& type_checker) const

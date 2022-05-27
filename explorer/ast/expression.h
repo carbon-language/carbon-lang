@@ -111,6 +111,7 @@ enum class Operator {
   Add,
   AddressOf,
   And,
+  Combine,
   Deref,
   Eq,
   Mul,

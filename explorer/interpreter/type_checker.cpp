@@ -106,8 +106,10 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       return false;
     case Value::Kind::TypeType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
       // A value of one of these types is itself always a type.
       return true;
@@ -149,12 +151,14 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
       return true;
@@ -680,12 +684,14 @@ auto TypeChecker::ArgumentDeduction(
       // TODO: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -722,6 +728,14 @@ auto TypeChecker::ArgumentDeduction(
 auto TypeChecker::Substitute(
     const std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& dict,
     Nonnull<const Value*> type) const -> Nonnull<const Value*> {
+  auto SubstituteIntoBindingMap = [&](const BindingMap& map) -> BindingMap {
+    BindingMap result;
+    for (const auto& [name, value] : map) {
+      result[name] = Substitute(dict, value);
+    }
+    return result;
+  };
+
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       auto it = dict.find(&cast<VariableType>(*type).binding());
@@ -761,12 +775,10 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
-      BindingMap type_args;
-      for (const auto& [name, value] : class_type.type_args()) {
-        type_args[name] = Substitute(dict, value);
-      }
       Nonnull<const NominalClassType*> new_class_type =
-          arena_->New<NominalClassType>(&class_type.declaration(), type_args);
+          arena_->New<NominalClassType>(
+              &class_type.declaration(),
+              SubstituteIntoBindingMap(class_type.type_args()));
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << class_type << " => "
                         << *new_class_type << "\n";
@@ -775,17 +787,56 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*type);
-      BindingMap args;
-      for (const auto& [name, value] : iface_type.args()) {
-        args[name] = Substitute(dict, value);
-      }
-      Nonnull<const InterfaceType*> new_iface_type =
-          arena_->New<InterfaceType>(&iface_type.declaration(), args);
+      Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
+          &iface_type.declaration(),
+          SubstituteIntoBindingMap(iface_type.args()));
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << iface_type << " => "
                         << *new_iface_type << "\n";
       }
       return new_iface_type;
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint = cast<ConstraintType>(*type);
+      std::vector<ConstraintType::ImplConstraint> impl_constraints;
+      impl_constraints.reserve(constraint.impl_constraints().size());
+      for (const auto& impl_constraint : constraint.impl_constraints()) {
+        impl_constraints.push_back(
+            {.type = Substitute(dict, impl_constraint.type),
+             .interface = cast<InterfaceType>(
+                 Substitute(dict, impl_constraint.interface))});
+      }
+
+      std::vector<ConstraintType::SameTypeConstraint> same_type_constraints;
+      same_type_constraints.reserve(constraint.same_type_constraints().size());
+      for (const auto& same_type_constraint :
+           constraint.same_type_constraints()) {
+        std::vector<Nonnull<const Value*>> types;
+        for (const Value* type: same_type_constraint.types) {
+          types.push_back(Substitute(dict, type));
+        }
+        same_type_constraints.push_back({.types = types});
+      }
+      // TODO: Coalesce same-type constraints that are now overlapping.
+
+      std::vector<ConstraintType::LookupContext> lookup_contexts;
+      lookup_contexts.reserve(constraint.lookup_contexts().size());
+      for (const auto& lookup_context :
+           constraint.lookup_contexts()) {
+        lookup_contexts.push_back(
+            {.context = Substitute(dict, lookup_context.context)});
+      }
+      // TODO: If the self_binding is substituted, should we track that
+      // somehow?
+      Nonnull<const ConstraintType*> new_constraint =
+          arena_->New<ConstraintType>(
+              constraint.self_binding(), std::move(impl_constraints),
+              std::move(same_type_constraints), std::move(lookup_contexts));
+      if (trace_stream_) {
+        **trace_stream_ << "substitution: " << constraint << " => "
+                        << *new_constraint << "\n";
+      }
+      return new_constraint;
     }
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
@@ -795,11 +846,15 @@ auto TypeChecker::Substitute(
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
+      return type;
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+      // TODO: We should substitute into the value and produce a new type of
+      // type for it.
       return type;
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
@@ -849,6 +904,10 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
 
+  // TODO: If the `interface` is a ConstraintType, for every impl_constraint,
+  // try deduction against that.
+  // TODO: How to handle the case where `iface` is itself a ConstraintType?
+  // Look up each impl_constraint individually?
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.interface,
           &iface, /*allow_implicit_conversion=*/false, impl_scope);
@@ -889,6 +948,14 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                                     source_loc, impl.impl, deduced_args, impls);
 }
 
+auto TypeChecker::MakeConstraintWitness(
+    const ConstraintType& constraint,
+    std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
+    SourceLocation source_loc) const -> Nonnull<Expression*> {
+  return arena_->New<TupleLiteral>(source_loc,
+                                   std::move(impl_constraint_witnesses));
+}
+
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
@@ -905,6 +972,79 @@ auto TypeChecker::SatisfyImpls(
     impls.emplace(impl_binding, impl);
   }
   return Success();
+}
+
+auto TypeChecker::MakeConstraintForInterface(
+                                SourceLocation source_loc,
+                                Nonnull<const InterfaceType*> iface_type)
+    -> Nonnull<const ConstraintType*> {
+  auto* self_binding = arena_->New<GenericBinding>(
+      source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
+  auto* self = arena_->New<VariableType>(self_binding);
+  std::vector<ConstraintType::ImplConstraint> impl_constraints = {
+      ConstraintType::ImplConstraint{.type = self, .interface = iface_type}};
+  std::vector<ConstraintType::SameTypeConstraint> same_type_constraints = {};
+  std::vector<ConstraintType::LookupContext> lookup_contexts = {
+      {.context = iface_type}};
+  return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
+                                     std::move(same_type_constraints),
+                                     std::move(lookup_contexts));
+}
+
+auto TypeChecker::CombineConstraints(
+ SourceLocation source_loc,
+    llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
+    -> Nonnull<const ConstraintType*> {
+  auto* self_binding = arena_->New<GenericBinding>(
+      source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
+  auto* self = arena_->New<VariableType>(self_binding);
+  std::vector<ConstraintType::ImplConstraint> impl_constraints;
+  std::vector<ConstraintType::SameTypeConstraint> same_type_constraints;
+  std::vector<ConstraintType::LookupContext> lookup_contexts;
+  for (Nonnull<const ConstraintType*> constraint : constraints) {
+    BindingMap map;
+    map[constraint->self_binding()] = self;
+    // TODO: Remove duplicates
+    for (ConstraintType::ImplConstraint impl : constraint->impl_constraints()) {
+      impl_constraints.push_back(
+          {.type = Substitute(map, impl.type),
+           .interface = cast<InterfaceType>(Substitute(map, impl.interface))});
+    }
+    for (ConstraintType::SameTypeConstraint same :
+         constraint->same_type_constraints()) {
+      std::vector<Nonnull<const Value*>> types;
+      for (const Value* type : same.types) {
+        types.push_back(Substitute(map, type));
+      }
+      auto AddSameTypeConstraint =
+          [&](std::vector<Nonnull<const Value*>> types) {
+            // TODO: This is really inefficient. Use value canonicalization or
+            // hashing or similar to avoid the quadratic scan here.
+            for (const Value* type : types) {
+              for (ConstraintType::SameTypeConstraint& existing :
+                   same_type_constraints) {
+                for (const Value* existing_type : existing.types) {
+                  if (TypeEqual(type, existing_type)) {
+                    // TODO: Remove duplicates
+                    existing.types.insert(existing.types.end(), types.begin(),
+                                          types.end());
+                    return;
+                  }
+                }
+              }
+            }
+            same_type_constraints.push_back({.types = std::move(types)});
+          };
+      AddSameTypeConstraint(std::move(types));
+    }
+    // TODO: Remove duplicates
+    for (ConstraintType::LookupContext lookup : constraint->lookup_contexts()) {
+      lookup_contexts.push_back({.context = Substitute(map, lookup.context)});
+    }
+  }
+  return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
+                                     std::move(same_type_constraints),
+                                     std::move(lookup_contexts));
 }
 
 auto TypeChecker::DeduceCallBindings(
@@ -1526,6 +1666,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
           return Success();
+        case Operator::Combine: {
+          std::optional<Nonnull<const ConstraintType*>> constraints[2];
+          for (int i : {0, 1}) {
+            if (auto* iface_type_type = dyn_cast<TypeOfInterfaceType>(ts[i])) {
+              constraints[i] = MakeConstraintForInterface(
+                  e->source_loc(), &iface_type_type->interface_type());
+            } else if (auto* constraint_type_type =
+                           dyn_cast<TypeOfConstraintType>(ts[i])) {
+              constraints[i] = &constraint_type_type->constraint_type();
+            } else {
+              return CompilationError(op.arguments()[i]->source_loc())
+                     << "argument to " << ToString(op.op())
+                     << " should be a constraint, found `" << *ts[i] << "`";
+            }
+          }
+          op.set_static_type(
+              arena_->New<TypeOfConstraintType>(CombineConstraints(
+                  e->source_loc(), {*constraints[0], *constraints[1]})));
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
       }
       break;
     }
@@ -1840,7 +2001,7 @@ auto TypeChecker::TypeCheckPattern(
       binding.set_symbolic_identity(val);
       SetValue(&binding, val);
 
-      if (isa<InterfaceType>(type)) {
+      if (isa<InterfaceType, ConstraintType>(type)) {
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
         binding.set_impl_binding(impl_binding);
@@ -2627,9 +2788,11 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
 
     case Value::Kind::FunctionType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:

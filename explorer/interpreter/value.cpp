@@ -198,6 +198,21 @@ auto Value::SetField(Nonnull<Arena*> arena, const FieldPath& path,
                       field_value, source_loc);
 }
 
+static auto PrintNameWithBindings(llvm::raw_ostream& out,
+                                  Nonnull<const Declaration*> declaration,
+                                  const BindingMap& args) {
+  out << GetName(*declaration).value_or("(anonymous)");
+  // TODO: Print '()' if declaration is parameterized but no args are provided.
+  if (!args.empty()) {
+    out << "(";
+    llvm::ListSeparator sep;
+    for (const auto& [bind, val] : args) {
+      out << sep << bind->name() << " = " << *val;
+    }
+    out << ")";
+  }
+}
+
 void Value::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Value::Kind::AlternativeConstructorValue: {
@@ -313,15 +328,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*this);
-      out << "class " << class_type.declaration().name();
-      if (!class_type.type_args().empty()) {
-        out << "(";
-        llvm::ListSeparator sep;
-        for (const auto& [bind, val] : class_type.type_args()) {
-          out << sep << bind->name() << " = " << *val;
-        }
-        out << ")";
-      }
+      out << "class ";
+      PrintNameWithBindings(out, &class_type.declaration(),
+                            class_type.type_args());
       if (!class_type.impls().empty()) {
         out << " impls ";
         llvm::ListSeparator sep;
@@ -340,14 +349,33 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*this);
-      out << "interface " << iface_type.declaration().name();
-      if (!iface_type.args().empty()) {
-        out << "(";
-        llvm::ListSeparator sep;
-        for (const auto& [bind, val] : iface_type.args()) {
-          out << sep << bind->name() << " = " << *val;
+      out << "interface ";
+      PrintNameWithBindings(out, &iface_type.declaration(), iface_type.args());
+      break;
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint = cast<ConstraintType>(*this);
+      out << "constraint ";
+      llvm::ListSeparator combine(" & ");
+      for (const ConstraintType::LookupContext &ctx :
+           constraint.lookup_contexts()) {
+        out << combine << *ctx.context;
+      }
+      out << " where ";
+      llvm::ListSeparator sep;
+      for (const ConstraintType::ImplConstraint &impl :
+           constraint.impl_constraints()) {
+        // TODO: Skip cases where `impl.type` is `.Self` and the interface is
+        // in `lookup_contexts()`.
+        out << sep << *impl.type << " is " << *impl.interface;
+      }
+      for (const ConstraintType::SameTypeConstraint &same_type :
+           constraint.same_type_constraints()) {
+        out << sep;
+        llvm::ListSeparator equal(" = ");
+        for (Nonnull<const Value*> type : same_type.types) {
+          out << equal << *type;
         }
-        out << ")";
       }
       break;
     }
@@ -408,6 +436,10 @@ void Value::Print(llvm::raw_ostream& out) const {
                  .name()
           << ")";
       break;
+    case Value::Kind::TypeOfConstraintType:
+      out << "typeof(" << cast<TypeOfConstraintType>(*this).constraint_type()
+          << ")";
+      break;
     case Value::Kind::TypeOfChoiceType:
       out << "typeof(" << cast<TypeOfChoiceType>(*this).choice_type().name()
           << ")";
@@ -466,6 +498,18 @@ void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
+// Check whether two binding maps, which are assumed to have the same keys, are
+// equal.
+static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2) -> bool {
+  CARBON_CHECK(map1.size() == map2.size()) << "maps should have same keys";
+  for (const auto& [key, value] : map1) {
+    if (!ValueEqual(value, map2.at(key))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
   if (t1->kind() != t2->kind()) {
     return false;
@@ -494,30 +538,58 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       }
       return true;
     }
-    case Value::Kind::NominalClassType:
-      if (cast<NominalClassType>(*t1).declaration().name() !=
-          cast<NominalClassType>(*t2).declaration().name()) {
+    case Value::Kind::NominalClassType: {
+      const auto& class1 = cast<NominalClassType>(*t1);
+      const auto& class2 = cast<NominalClassType>(*t2);
+      return class1.declaration().name() == class2.declaration().name() &&
+             BindingMapEqual(class1.type_args(), class2.type_args());
+    }
+    case Value::Kind::InterfaceType: {
+      const auto& iface1 = cast<InterfaceType>(*t1);
+      const auto& iface2 = cast<InterfaceType>(*t2);
+      return iface1.declaration().name() == iface2.declaration().name() &&
+             BindingMapEqual(iface1.args(), iface2.args());
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint1 = cast<ConstraintType>(*t1);
+      const auto& constraint2 = cast<ConstraintType>(*t2);
+      if (constraint1.impl_constraints().size() !=
+              constraint2.impl_constraints().size() ||
+          constraint1.same_type_constraints().size() !=
+              constraint2.same_type_constraints().size() ||
+          constraint1.lookup_contexts().size() !=
+              constraint2.lookup_contexts().size()) {
         return false;
       }
-      for (const auto& [ty_var1, ty1] :
-           cast<NominalClassType>(*t1).type_args()) {
-        if (!ValueEqual(ty1,
-                        cast<NominalClassType>(*t2).type_args().at(ty_var1))) {
+      for (size_t i = 0; i < constraint1.impl_constraints().size(); ++i) {
+        const auto& impl1 = constraint1.impl_constraints()[i];
+        const auto& impl2 = constraint2.impl_constraints()[i];
+        if (!TypeEqual(impl1.type, impl2.type) ||
+            !TypeEqual(impl1.interface, impl2.interface)) {
+          return false;
+        }
+      }
+      for (size_t i = 0; i < constraint1.same_type_constraints().size(); ++i) {
+        const auto& same_type1 = constraint1.same_type_constraints()[i];
+        const auto& same_type2 = constraint2.same_type_constraints()[i];
+        if (same_type1.types.size() != same_type2.types.size()) {
+          return false;
+        }
+        for (size_t j = 0; j < same_type1.types.size(); ++j) {
+          if (!TypeEqual(same_type1.types[i], same_type2.types[i])) {
+            return false;
+          }
+        }
+      }
+      for (size_t i = 0; i < constraint1.lookup_contexts().size(); ++i) {
+        const auto& context1 = constraint1.lookup_contexts()[i];
+        const auto& context2 = constraint2.lookup_contexts()[i];
+        if (!TypeEqual(context1.context, context2.context)) {
           return false;
         }
       }
       return true;
-    case Value::Kind::InterfaceType:
-      if (cast<InterfaceType>(*t1).declaration().name() !=
-          cast<InterfaceType>(*t2).declaration().name()) {
-        return false;
-      }
-      for (const auto& [ty_var1, ty1] : cast<InterfaceType>(*t1).args()) {
-        if (!ValueEqual(ty1, cast<InterfaceType>(*t2).args().at(ty_var1))) {
-          return false;
-        }
-      }
-      return true;
+    }
     case Value::Kind::ChoiceType:
       return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
     case Value::Kind::TupleValue: {
@@ -548,6 +620,9 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::TypeOfInterfaceType:
       return TypeEqual(&cast<TypeOfInterfaceType>(*t1).interface_type(),
                        &cast<TypeOfInterfaceType>(*t2).interface_type());
+    case Value::Kind::TypeOfConstraintType:
+      return TypeEqual(&cast<TypeOfConstraintType>(*t1).constraint_type(),
+                       &cast<TypeOfConstraintType>(*t2).constraint_type());
     case Value::Kind::TypeOfChoiceType:
       return TypeEqual(&cast<TypeOfChoiceType>(*t1).choice_type(),
                        &cast<TypeOfChoiceType>(*t2).choice_type());
@@ -664,6 +739,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::Witness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -671,6 +747,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:

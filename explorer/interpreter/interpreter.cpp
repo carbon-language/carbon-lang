@@ -84,7 +84,8 @@ class Interpreter {
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
 
-  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
+  auto EvalPrim(Operator op, Nonnull<const Value*> static_type,
+                const std::vector<Nonnull<const Value*>>& args,
                 SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the result of converting `value` to type `destination_type`.
@@ -159,6 +160,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
 }
 
 auto Interpreter::EvalPrim(Operator op,
+                           Nonnull<const Value*> static_type,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -190,6 +192,8 @@ auto Interpreter::EvalPrim(Operator op,
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
+    case Operator::Combine:
+      return &cast<TypeOfConstraintType>(static_type)->constraint_type();
   }
 }
 
@@ -464,7 +468,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         CARBON_ASSIGN_OR_RETURN(inst_type_args[ty_var],
                                 InstantiateType(ty_arg, source_loc));
       }
-      std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
+      ImplWitnessMap witnesses;
       for (const auto& [bind, impl_exp] : class_type.impls()) {
         CARBON_ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
       }
@@ -497,6 +501,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
@@ -509,6 +514,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -936,9 +942,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> value,
-            EvalPrim(op.op(), act.results(), exp.source_loc()));
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                                EvalPrim(op.op(), &op.static_type(),
+                                         act.results(), exp.source_loc()));
         return todo_.FinishAction(value);
       }
     }
@@ -968,7 +974,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         if (num_impls > 0) {
           int i = 2;
           for (const auto& [impl_bind, impl_exp] : call.impls()) {
-            witnesses[impl_bind] = cast<Witness>(act.results()[i]);
+            witnesses[impl_bind] = act.results()[i];
             ++i;
           }
         }
