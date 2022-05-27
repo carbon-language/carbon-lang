@@ -10,34 +10,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import hashlib
 from pathlib import Path
-import argparse
 from concurrent import futures
 import os
-import random
 import subprocess
-import sys
-from typing import Set
+import tempfile
+from typing import List, Set
 from collections.abc import Iterable
 
 _TESTDATA = "explorer/testdata"
 _FUZZER_CORPUS = "explorer/fuzzing/fuzzer_corpus"
-
-
-def _parse_args() -> argparse.Namespace:
-    """Parses command-line arguments."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--keep_old",
-        action="store_true",
-        help="Whether to keep old corpus files.",
-    )
-    parser.add_argument(
-        "--num_files",
-        type=int,
-        default=32,
-        help="The number of fuzzer corpus files to generate.",
-    )
-    return parser.parse_args(sys.argv[1:])
 
 
 def _get_files(folder: str, extension: str) -> Set[str]:
@@ -48,14 +29,6 @@ def _get_files(folder: str, extension: str) -> Set[str]:
             if os.path.splitext(f)[1] == extension:
                 matching_files.add(os.path.join(root, f))
     return matching_files
-
-
-def _delete_corpus_files() -> None:
-    """Deletes corpus files."""
-    corpus_files = _get_files(_FUZZER_CORPUS, ".textproto")
-    print("Deleting {} old corpus file(s).".format(len(corpus_files)))
-    for f in corpus_files:
-        os.unlink(f)
 
 
 def _carbon_to_proto(carbon_file: str) -> str:
@@ -79,42 +52,65 @@ def _carbon_to_proto(carbon_file: str) -> str:
         return ""
 
 
-def _write_corpus_files(text_protos: Iterable[str]) -> None:
+def _write_corpus_files(text_protos: Iterable[str], corpus_dir: str) -> None:
     """Writes text proto contents to files in corpus directory."""
     for text_proto in text_protos:
         file_name = (
-            Path(_FUZZER_CORPUS)
+            Path(corpus_dir)
             .joinpath(hashlib.sha1(text_proto.encode("utf-8")).hexdigest())
             .with_suffix(".textproto")
         )
         with open(file_name, "w") as f:
-            print("Writing {}: {} byte(s)".format(file_name, len(text_proto)))
             f.write(text_proto)
 
 
 def main() -> None:
     os.chdir(os.path.join(os.path.dirname(__file__), "../.."))
 
-    print("Building fuzzverter...")
-    subprocess.check_call(["bazel", "build", "//explorer/fuzzing:fuzzverter"])
-
-    parsed_args = _parse_args()
-    if not parsed_args.keep_old:
-        _delete_corpus_files()
+    print("Building required binaries...", flush=True)
+    subprocess.check_call(
+        [
+            "bazel",
+            "build",
+            "--config",
+            "proto-fuzzer",
+            "//explorer/fuzzing:fuzzverter",
+            "//explorer/fuzzing:explorer_fuzzer",
+        ]
+    )
 
     carbon_sources = _get_files(_TESTDATA, ".carbon")
-    print("Converting {} carbon files to proto".format(len(carbon_sources)))
+    print(
+        "Converting {} carbon files to proto...".format(len(carbon_sources)),
+        flush=True,
+    )
+    text_protos: List[str] = []
     with futures.ThreadPoolExecutor() as exec:
-        text_protos = exec.map(_carbon_to_proto, carbon_sources)
-        non_empty_text_protos = list(filter(lambda p: len(p) > 0, text_protos))
-        random.shuffle(non_empty_text_protos)
-        selected_text_protos = non_empty_text_protos[0 : parsed_args.num_files]
+        all_protos = exec.map(_carbon_to_proto, carbon_sources)
+        text_protos.extend(filter(lambda p: len(p) > 0, all_protos))
+
+    with tempfile.TemporaryDirectory() as new_corpus_dir:
         print(
-            "\nWriting {} corpus files to {}.".format(
-                len(selected_text_protos), _FUZZER_CORPUS
-            )
+            "\nWriting {} corpus files to {}...".format(
+                len(text_protos), new_corpus_dir
+            ),
+            flush=True,
         )
-        _write_corpus_files(selected_text_protos)
+        _write_corpus_files(text_protos, new_corpus_dir)
+
+        print(
+            "Merging interesting inputs into {}...".format(_FUZZER_CORPUS),
+            flush=True,
+        )
+        subprocess.check_call(
+            [
+                "bazel-bin/explorer/fuzzing/explorer_fuzzer",
+                "-merge=1",
+                "/tmp/fuzz",  # TODO _FUZZER_CORPUS,
+                new_corpus_dir,
+            ]
+        )
+    print("All done!", flush=True)
 
 
 if __name__ == "__main__":
