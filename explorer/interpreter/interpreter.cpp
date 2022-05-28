@@ -808,13 +808,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
-      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
-      } else if (act.pos() == 1 && access.impl().has_value() &&
-                 !forming_member_name) {
+      } else if (act.pos() == 1 && access.impl().has_value()) {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
