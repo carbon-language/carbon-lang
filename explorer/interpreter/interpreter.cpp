@@ -159,8 +159,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "\n}\n";
 }
 
-auto Interpreter::EvalPrim(Operator op,
-                           Nonnull<const Value*> static_type,
+auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -840,8 +839,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               // FIXME: A lot still to do here.
               Nonnull<const Witness*> witness = cast<Witness>(act.results()[1]);
               Nonnull<const Value*> iface =
-                  witness->declaration().interface_type(); // better hope it's not parameterized
-              iface_result = cast<InterfaceType>(iface); // better hope this isn't a constraint
+                  witness->declaration()
+                      .interface_type();  // better hope it's not parameterized
+              iface_result = cast<InterfaceType>(
+                  iface);  // better hope this isn't a constraint
             }
           }
           MemberName* member_name = arena_->New<MemberName>(

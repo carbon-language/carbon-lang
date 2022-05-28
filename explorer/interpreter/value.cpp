@@ -357,19 +357,19 @@ void Value::Print(llvm::raw_ostream& out) const {
       const auto& constraint = cast<ConstraintType>(*this);
       out << "constraint ";
       llvm::ListSeparator combine(" & ");
-      for (const ConstraintType::LookupContext &ctx :
+      for (const ConstraintType::LookupContext& ctx :
            constraint.lookup_contexts()) {
         out << combine << *ctx.context;
       }
       out << " where ";
       llvm::ListSeparator sep;
-      for (const ConstraintType::ImplConstraint &impl :
+      for (const ConstraintType::ImplConstraint& impl :
            constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
         // in `lookup_contexts()`.
         out << sep << *impl.type << " is " << *impl.interface;
       }
-      for (const ConstraintType::SameTypeConstraint &same_type :
+      for (const ConstraintType::SameTypeConstraint& same_type :
            constraint.same_type_constraints()) {
         out << sep;
         llvm::ListSeparator equal(" = ");
@@ -500,7 +500,8 @@ void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
 
 // Check whether two binding maps, which are assumed to have the same keys, are
 // equal.
-static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2) -> bool {
+static auto BindingMapEqual(const BindingMap& map1, const BindingMap& map2)
+    -> bool {
   CARBON_CHECK(map1.size() == map2.size()) << "maps should have same keys";
   for (const auto& [key, value] : map1) {
     if (!ValueEqual(value, map2.at(key))) {

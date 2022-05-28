@@ -812,7 +812,7 @@ auto TypeChecker::Substitute(
       for (const auto& same_type_constraint :
            constraint.same_type_constraints()) {
         std::vector<Nonnull<const Value*>> types;
-        for (const Value* type: same_type_constraint.types) {
+        for (const Value* type : same_type_constraint.types) {
           types.push_back(Substitute(dict, type));
         }
         same_type_constraints.push_back({.types = types});
@@ -821,8 +821,7 @@ auto TypeChecker::Substitute(
 
       std::vector<ConstraintType::LookupContext> lookup_contexts;
       lookup_contexts.reserve(constraint.lookup_contexts().size());
-      for (const auto& lookup_context :
-           constraint.lookup_contexts()) {
+      for (const auto& lookup_context : constraint.lookup_contexts()) {
         lookup_contexts.push_back(
             {.context = Substitute(dict, lookup_context.context)});
       }
@@ -954,12 +953,11 @@ auto TypeChecker::MakeConstraintWitness(
                                    std::move(impl_constraint_witnesses));
 }
 
-auto TypeChecker::MakeConstraintWitnessAccess(
-    Nonnull<Expression*> witness, size_t impl_offset) const
+auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                              size_t impl_offset) const
     -> Nonnull<Expression*> {
   return arena_->New<IndexExpression>(
-      witness->source_loc(),
-      witness,
+      witness->source_loc(), witness,
       arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
 }
 
@@ -982,8 +980,7 @@ auto TypeChecker::SatisfyImpls(
 }
 
 auto TypeChecker::MakeConstraintForInterface(
-                                SourceLocation source_loc,
-                                Nonnull<const InterfaceType*> iface_type)
+    SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
     -> Nonnull<const ConstraintType*> {
   auto* self_binding = arena_->New<GenericBinding>(
       source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
@@ -999,7 +996,7 @@ auto TypeChecker::MakeConstraintForInterface(
 }
 
 auto TypeChecker::CombineConstraints(
- SourceLocation source_loc,
+    SourceLocation source_loc,
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
     -> Nonnull<const ConstraintType*> {
   auto* self_binding = arena_->New<GenericBinding>(
@@ -1399,7 +1396,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case Value::Kind::ConstraintType: {
               const auto& constraint = cast<ConstraintType>(typeof_var);
               std::optional<Nonnull<const Value*>> found_in;
-              for (ConstraintType::LookupContext ctx : constraint.lookup_contexts()) {
+              for (ConstraintType::LookupContext ctx :
+                   constraint.lookup_contexts()) {
                 BindingMap constraint_self_map;
                 constraint_self_map[constraint.self_binding()] = &var_type;
                 Nonnull<const Value*> resolved_context =
@@ -1410,7 +1408,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   continue;
                 }
                 const auto& iface_type = cast<InterfaceType>(*resolved_context);
-                const InterfaceDeclaration& iface_decl = iface_type.declaration();
+                const InterfaceDeclaration& iface_decl =
+                    iface_type.declaration();
                 if (std::optional<Nonnull<const Declaration*>> member =
                         FindMember(access.member(), iface_decl.members());
                     member.has_value()) {
@@ -1433,8 +1432,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   // binding; it should always be there.
                   CARBON_ASSIGN_OR_RETURN(
                       Nonnull<Expression*> impl,
-                      impl_scope.Resolve(&iface_type, &var_type, e->source_loc(),
-                                         *this));
+                      impl_scope.Resolve(&iface_type, &var_type,
+                                         e->source_loc(), *this));
                   access.set_impl(impl);
                   found_in = resolved_context;
                 }

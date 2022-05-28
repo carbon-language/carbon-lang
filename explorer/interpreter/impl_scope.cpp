@@ -26,7 +26,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<Expression*> impl_expr,
                     const TypeChecker& type_checker) {
-  if (auto *constraint = dyn_cast<ConstraintType>(iface)) {
+  if (auto* constraint = dyn_cast<ConstraintType>(iface)) {
     BindingMap map;
     map[constraint->self_binding()] = type;
     for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
@@ -54,7 +54,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                         SourceLocation source_loc,
                         const TypeChecker& type_checker) const
     -> ErrorOr<Nonnull<Expression*>> {
-  if (const auto *iface_type = dyn_cast<InterfaceType>(constraint_type)) {
+  if (const auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
     return ResolveInterface(iface_type, impl_type, source_loc, type_checker);
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {

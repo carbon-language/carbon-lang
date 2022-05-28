@@ -183,7 +183,6 @@ class SimpleMemberAccessExpression : public Expression {
     impl_ = impl;
   }
 
-
  private:
   Nonnull<Expression*> object_;
   std::string member_;
