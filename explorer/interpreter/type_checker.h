@@ -71,6 +71,12 @@ class TypeChecker {
       std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
       SourceLocation source_loc) const -> Nonnull<Expression*>;
 
+  // Given the witnesses for the components of a constraint, form a witness for
+  // the constraint.
+  auto MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                   size_t impl_offset) const
+      -> Nonnull<Expression*>;
+
  private:
   // Information about the currently enclosing scopes.
   struct ScopeInfo {

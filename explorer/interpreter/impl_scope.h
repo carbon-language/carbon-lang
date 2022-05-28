@@ -42,14 +42,14 @@ class ImplScope {
  public:
   // Associates `iface` and `type` with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-           Nonnull<Expression*> impl);
+           Nonnull<Expression*> impl, const TypeChecker& type_checker);
   // For a parameterized impl, associates `iface` and `type`
   // with the `impl` in this scope.
   void Add(Nonnull<const Value*> iface,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-           Nonnull<Expression*> impl);
+           Nonnull<Expression*> impl, const TypeChecker& type_checker);
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -73,7 +73,7 @@ class ImplScope {
   // are non-empty. The former contains the type parameters and the
   // later are impl bindings, that is, parameters for witnesses.
   struct Impl {
-    Nonnull<const Value*> interface;
+    Nonnull<const InterfaceType*> interface;
     std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
     std::vector<Nonnull<const ImplBinding*>> impl_bindings;

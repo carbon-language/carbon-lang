@@ -15,20 +15,34 @@ using llvm::dyn_cast;
 namespace Carbon {
 
 void ImplScope::Add(Nonnull<const Value*> iface, Nonnull<const Value*> type,
-                    Nonnull<Expression*> impl) {
-  Add(iface, {}, type, {}, impl);
+                    Nonnull<Expression*> impl,
+                    const TypeChecker& type_checker) {
+  Add(iface, {}, type, {}, impl, type_checker);
 }
 
 void ImplScope::Add(Nonnull<const Value*> iface,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     Nonnull<const Value*> type,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-                    Nonnull<Expression*> impl) {
-  impls_.push_back({.interface = iface,
+                    Nonnull<Expression*> impl_expr,
+                    const TypeChecker& type_checker) {
+  if (auto *constraint = dyn_cast<ConstraintType>(iface)) {
+    BindingMap map;
+    map[constraint->self_binding()] = type;
+    for (size_t i = 0; i != constraint->impl_constraints().size(); ++i) {
+      ConstraintType::ImplConstraint impl = constraint->impl_constraints()[i];
+      Add(cast<InterfaceType>(type_checker.Substitute(map, impl.interface)),
+          deduced, type_checker.Substitute(map, impl.type), impl_bindings,
+          type_checker.MakeConstraintWitnessAccess(impl_expr, i), type_checker);
+    }
+    return;
+  }
+
+  impls_.push_back({.interface = cast<InterfaceType>(iface),
                     .deduced = deduced,
                     .type = type,
                     .impl_bindings = impl_bindings,
-                    .impl = impl});
+                    .impl = impl_expr});
 }
 
 void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {

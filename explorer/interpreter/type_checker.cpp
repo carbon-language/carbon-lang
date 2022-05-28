@@ -906,8 +906,6 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 
   // TODO: If the `interface` is a ConstraintType, for every impl_constraint,
   // try deduction against that.
-  // TODO: How to handle the case where `iface` is itself a ConstraintType?
-  // Look up each impl_constraint individually?
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.interface,
           &iface, /*allow_implicit_conversion=*/false, impl_scope);
@@ -954,6 +952,15 @@ auto TypeChecker::MakeConstraintWitness(
     SourceLocation source_loc) const -> Nonnull<Expression*> {
   return arena_->New<TupleLiteral>(source_loc,
                                    std::move(impl_constraint_witnesses));
+}
+
+auto TypeChecker::MakeConstraintWitnessAccess(
+    Nonnull<Expression*> witness, size_t impl_offset) const
+    -> Nonnull<Expression*> {
+  return arena_->New<IndexExpression>(
+      witness->source_loc(),
+      witness,
+      arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
 }
 
 auto TypeChecker::SatisfyImpls(
@@ -1379,7 +1386,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     Substitute(binding_map, &member_type);
                 access.set_static_type(inst_member_type);
                 CARBON_CHECK(var_type.binding().impl_binding().has_value());
-                access.set_impl(*var_type.binding().impl_binding());
+                access.set_impl(
+                    CreateImplReference(*var_type.binding().impl_binding()));
                 return Success();
               } else {
                 return CompilationError(e->source_loc())
@@ -1387,6 +1395,56 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        << iface_decl.name();
               }
               break;
+            }
+            case Value::Kind::ConstraintType: {
+              const auto& constraint = cast<ConstraintType>(typeof_var);
+              std::optional<Nonnull<const Value*>> found_in;
+              for (ConstraintType::LookupContext ctx : constraint.lookup_contexts()) {
+                BindingMap constraint_self_map;
+                constraint_self_map[constraint.self_binding()] = &var_type;
+                Nonnull<const Value*> resolved_context =
+                    Substitute(constraint_self_map, ctx.context);
+                if (!isa<InterfaceType>(resolved_context)) {
+                  // TODO: Support other kinds of lookup context, notably named
+                  // constraints.
+                  continue;
+                }
+                const auto& iface_type = cast<InterfaceType>(*resolved_context);
+                const InterfaceDeclaration& iface_decl = iface_type.declaration();
+                if (std::optional<Nonnull<const Declaration*>> member =
+                        FindMember(access.member(), iface_decl.members());
+                    member.has_value()) {
+                  if (found_in.has_value() &&
+                      !ValueEqual(found_in.value(), resolved_context)) {
+                    // TODO: If we resolve to the same member either way, this
+                    // is not ambiguous.
+                    return CompilationError(e->source_loc())
+                           << "ambiguous member access, " << access.member()
+                           << " found in " << *found_in.value() << " and "
+                           << *resolved_context;
+                  }
+                  const Value& member_type = (*member)->static_type();
+                  BindingMap binding_map = iface_type.args();
+                  binding_map[iface_decl.self()] = &var_type;
+                  Nonnull<const Value*> inst_member_type =
+                      Substitute(binding_map, &member_type);
+                  access.set_static_type(inst_member_type);
+                  // TODO: We could dig this out of the witness for the impl
+                  // binding; it should always be there.
+                  CARBON_ASSIGN_OR_RETURN(
+                      Nonnull<Expression*> impl,
+                      impl_scope.Resolve(&iface_type, &var_type, e->source_loc(),
+                                         *this));
+                  access.set_impl(impl);
+                  found_in = resolved_context;
+                }
+              }
+              if (!found_in) {
+                return CompilationError(e->source_loc())
+                       << "member access, " << access.member() << " not in "
+                       << constraint;
+              }
+              return Success();
             }
             default:
               return CompilationError(e->source_loc())
@@ -1410,7 +1468,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   FindMember(access.member(), iface_decl.members());
               member.has_value()) {
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
-            access.set_impl(*var_type.binding().impl_binding());
+            access.set_impl(
+                CreateImplReference(*var_type.binding().impl_binding()));
 
             switch ((*member)->kind()) {
               case DeclarationKind::FunctionDeclaration: {
@@ -1912,7 +1971,7 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
   CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
-                 CreateImplReference(impl_binding));
+                 CreateImplReference(impl_binding), *this);
 }
 
 auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
@@ -2670,7 +2729,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                             impl_decl->deduced_parameters().end());
     scope_info.innermost_non_class_scope->Add(
         iface_type, std::move(deduced_bindings), impl_type_value, impl_bindings,
-        impl_id);
+        impl_id, *this);
   }
 
   // Declare the impl members.

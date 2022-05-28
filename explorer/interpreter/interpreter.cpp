@@ -809,10 +809,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
+        // First, evaluate the first operand.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
+      } else if (act.pos() == 1 && access.impl().has_value() &&
+                 !forming_member_name) {
+        // Next, if we're accessing an interface member, evaluate the `impl`
+        // expression to find the corresponding witness.
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
+        // Finally, produce the result.
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
@@ -826,8 +835,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           } else {
             type_result = act.results()[0];
             if (access.impl().has_value()) {
-              iface_result =
-                  cast<InterfaceType>(access.impl().value()->interface());
+              // TODO: A Witness should know the interface type it's a witness
+              // for.
+              // FIXME: A lot still to do here.
+              Nonnull<const Witness*> witness = cast<Witness>(act.results()[1]);
+              Nonnull<const Value*> iface =
+                  witness->declaration().interface_type(); // better hope it's not parameterized
+              iface_result = cast<InterfaceType>(iface); // better hope this isn't a constraint
             }
           }
           MemberName* member_name = arena_->New<MemberName>(
@@ -838,14 +852,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // `value.field_name`. Extract the value within the given object.
           std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
-            CARBON_ASSIGN_OR_RETURN(
-                auto witness_addr,
-                todo_.ValueOfNode(*access.impl(), access.source_loc()));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> witness_value,
-                heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                           access.source_loc()));
-            witness = cast<Witness>(witness_value);
+            witness = cast<Witness>(act.results()[1]);
           }
           FieldPath::Component member(access.member(), witness);
           CARBON_ASSIGN_OR_RETURN(

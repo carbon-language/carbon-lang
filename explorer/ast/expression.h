@@ -173,20 +173,21 @@ class SimpleMemberAccessExpression : public Expression {
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
     return impl_;
   }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const ImplBinding*> impl) {
+  void set_impl(Nonnull<const Expression*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
 
+
  private:
   Nonnull<Expression*> object_;
   std::string member_;
-  std::optional<Nonnull<const ImplBinding*>> impl_;
+  std::optional<Nonnull<const Expression*>> impl_;
 };
 
 // A compound member access expression of the form `object.(path)`.
