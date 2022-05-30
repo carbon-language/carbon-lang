@@ -153,7 +153,13 @@ class StaticScope {
  public:
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
-  auto Add(std::string name, ValueNodeView entity) -> ErrorOr<Success>;
+  // If `usable` is `false`, `name` cannot yet be referenced and `Resolve()`
+  // methods will fail for it.
+  auto Add(const std::string& name, ValueNodeView entity, bool usable = true)
+      -> ErrorOr<Success>;
+
+  // Marks `name` as usable.
+  auto MarkUsable(const std::string& name) -> ErrorOr<Success>;
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
@@ -174,8 +180,12 @@ class StaticScope {
   auto TryResolve(const std::string& name, SourceLocation source_loc) const
       -> ErrorOr<std::optional<ValueNodeView>>;
 
+  struct Entry {
+    ValueNodeView entity;
+    bool usable = false;
+  };
   // Maps locally declared names to their entities.
-  std::unordered_map<std::string, ValueNodeView> declared_names_;
+  std::unordered_map<std::string, Entry> declared_names_;
 
   // A list of scopes used for name lookup within this scope.
   std::vector<Nonnull<StaticScope*>> parent_scopes_;
