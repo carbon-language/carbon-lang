@@ -25,11 +25,10 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
   return Success();
 }
 
-auto StaticScope::MarkUsable(const std::string& name) -> ErrorOr<Success> {
+void StaticScope::MarkUsable(const std::string& name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.usable = true;
-  return Success();
 }
 
 auto StaticScope::Resolve(const std::string& name,

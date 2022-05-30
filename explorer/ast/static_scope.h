@@ -159,7 +159,7 @@ class StaticScope {
       -> ErrorOr<Success>;
 
   // Marks `name` as usable.
-  auto MarkUsable(const std::string& name) -> ErrorOr<Success>;
+  void MarkUsable(const std::string& name);
 
   // Make `parent` a parent of this scope.
   // REQUIRES: `parent` is not already a parent of this scope.
