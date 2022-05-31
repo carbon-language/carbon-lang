@@ -17,6 +17,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   // Reads and returns a single character. Reports an error on EOF.
   auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
+  // Reads consecutive hash tags (up to hashtag_num) and returns visited chars
+  // or std::nullopt on EOF
+  auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context,
+                    std::size_t hashtag_num) -> std::optional<std::string>;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -285,66 +289,119 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   return ARG_TOKEN(integer_literal, val);
 }
 
-{string_literal} {
-  llvm::StringRef str(yytext);
-  CARBON_CHECK(str.consume_front("\"") && str.consume_back("\""));
-  std::optional<std::string> unescaped = Carbon::UnescapeStringLiteral(str);
-  if (unescaped == std::nullopt) {
-    return context.RecordSyntaxError(
-        llvm::formatv("Invalid escaping in string: {0}", yytext));
-  }
-  return ARG_TOKEN(string_literal, *unescaped);
-}
-
-\"\"\" {
-  // Block string literal.
+#*\" {
+  // raw string literal.
   std::string s(yytext);
-  // Scans for the closing """, checking for possible escape sequences
-  // like \""".
+
+  std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
+  std::string hashtags(hashtag_num, '#');
+  // if it's possible to be a string line string
+  bool single_line = true;
+  // set to true when no need to read before check
+  bool skip_read = false;
+  int c = 0;
   for (;;) {
-    int c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
-    s.push_back(c);
-    if (c != '"' && c != '\\') {
-      continue;
-    }
-    if (c == '\\') {
-      // \" in \""" is not a terminator.
+    if (skip_read) {
+      skip_read = false;
+    } else {
       c = ReadChar(yyscanner, context);
       if (c <= 0) {
         return SIMPLE_TOKEN(END_OF_FILE);
       }
       s.push_back(c);
+    }
+
+    if (single_line && c == '\n') {
+      // only block string can have new line
+      single_line = false;
       continue;
     }
 
-    c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return SIMPLE_TOKEN(END_OF_FILE);
-    }
-    s.push_back(c);
-    if (c != '"') {
+    if (c != '"' && c != '\\') {
       continue;
     }
 
-    c = ReadChar(yyscanner, context);
-    if (c <= 0) {
+    if (c == '"' && !single_line) {
+      // checks for 2 more '"'s on block string
+      c = ReadChar(yyscanner, context);
+      if (c <= 0) {
+        return SIMPLE_TOKEN(END_OF_FILE);
+      }
+      s.push_back(c);
+      if (c != '"') {
+        skip_read = true;
+        continue;
+      }
+      c = ReadChar(yyscanner, context);
+      if (c <= 0) {
+        return SIMPLE_TOKEN(END_OF_FILE);
+      }
+      s.push_back(c);
+      if (c != '"') {
+        skip_read = true;
+        continue;
+      }
+    }
+
+    std::optional<std::string> next_hash_tags =
+        ReadHashTags(yyscanner, context, hashtag_num);
+    if (next_hash_tags == std::nullopt) {
       return SIMPLE_TOKEN(END_OF_FILE);
     }
-    s.push_back(c);
-    if (c == '"') {
-      break;
+    s.append(next_hash_tags.value());
+
+    if (c == '\\') {
+      if (hashtag_num > 0) {
+        c = next_hash_tags.value().back();
+      }
+      if (hashtag_num == 0 || c == '#') {
+        c = ReadChar(yyscanner, context);
+        if (c <= 0) {
+          return SIMPLE_TOKEN(END_OF_FILE);
+        }
+        s.push_back(c);
+      } else {
+        skip_read = true;
+      }
+      continue;
+    } else {
+      // c == '"'
+      if (hashtag_num > 0) {
+        c = next_hash_tags.value().back();
+      }
+      if (hashtag_num == 0 || c == '#') {
+        break;
+      } else {
+        skip_read = true;
+      }
     }
   }
-  Carbon::ErrorOr<std::string> block_string =
-      Carbon::ParseBlockStringLiteral(s);
-  if (!block_string.ok()) {
-    return context.RecordSyntaxError(llvm::formatv(
-        "Invalid block string: {0}", block_string.error().message()));
+
+  if (!single_line) {
+    // block string
+    llvm::StringRef str(s);
+    CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
+
+    Carbon::ErrorOr<std::string> block_string =
+        Carbon::ParseBlockStringLiteral(str, hashtag_num);
+    if (!block_string.ok()) {
+      return context.RecordSyntaxError(llvm::formatv(
+          "Invalid block string: {0}", block_string.error().message()));
+    }
+    return ARG_TOKEN(string_literal, *block_string);
+  } else {
+    llvm::StringRef str(s);
+    CARBON_CHECK(str.consume_front(hashtags + "\"") &&
+                 str.consume_back("\"" + hashtags));
+
+    std::optional<std::string> unescaped =
+        Carbon::UnescapeStringLiteral(str, hashtag_num);
+    if (unescaped == std::nullopt) {
+      return context.RecordSyntaxError(
+          llvm::formatv("Invalid escaping in string: {0}", str));
+    }
+    return ARG_TOKEN(string_literal, *unescaped);
   }
-  return ARG_TOKEN(string_literal, *block_string);
 }
 
 {one_line_comment} {
@@ -382,4 +439,22 @@ auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
     context.RecordSyntaxError("Unexpected end of file");
   }
   return c;
+}
+
+auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context, std::size_t hashtag_num) -> std::optional<std::string> {
+  std::string s = "";
+  std::size_t hashtag_count = 0;
+  bool counting_hashtag = true;
+  while (counting_hashtag && hashtag_count++ < hashtag_num) {
+    int c = ReadChar(yyscanner, context);
+    if (c <= 0) {
+      return std::nullopt;
+    }
+    s.push_back(c);
+
+    if (c != '#') {
+      counting_hashtag = false;
+    }
+  }
+  return s;
 }

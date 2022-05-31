@@ -27,87 +27,85 @@ static auto FromHex(char c) -> std::optional<char> {
   return std::nullopt;
 }
 
-auto UnescapeStringLiteral(llvm::StringRef source, bool is_block_string)
-    -> std::optional<std::string> {
+auto UnescapeStringLiteral(llvm::StringRef source, std::size_t hashtag_num,
+                           bool is_block_string) -> std::optional<std::string> {
   std::string ret;
+  std::string escape = "\\" + std::string(hashtag_num, '#');
   ret.reserve(source.size());
   size_t i = 0;
   while (i < source.size()) {
     char c = source[i];
-    switch (c) {
-      case '\\':
-        ++i;
-        if (i == source.size()) {
-          return std::nullopt;
-        }
-        switch (source[i]) {
-          case 'n':
-            ret.push_back('\n');
-            break;
-          case 'r':
-            ret.push_back('\r');
-            break;
-          case 't':
-            ret.push_back('\t');
-            break;
-          case '0':
-            if (i + 1 < source.size() && llvm::isDigit(source[i + 1])) {
-              // \0[0-9] is reserved.
-              return std::nullopt;
-            }
-            ret.push_back('\0');
-            break;
-          case '"':
-            ret.push_back('"');
-            break;
-          case '\'':
-            ret.push_back('\'');
-            break;
-          case '\\':
-            ret.push_back('\\');
-            break;
-          case 'x': {
-            i += 2;
-            if (i >= source.size()) {
-              return std::nullopt;
-            }
-            std::optional<char> c1 = FromHex(source[i - 1]);
-            std::optional<char> c2 = FromHex(source[i]);
-            if (c1 == std::nullopt || c2 == std::nullopt) {
-              return std::nullopt;
-            }
-            ret.push_back(16 * *c1 + *c2);
-            break;
-          }
-          case 'u':
-            CARBON_FATAL() << "\\u is not yet supported in string literals";
-          case '\n':
-            if (!is_block_string) {
-              return std::nullopt;
-            }
-            break;
-          default:
-            // Unsupported.
-            return std::nullopt;
-        }
-        break;
-
-      case '\t':
-        // Disallow non-` ` horizontal whitespace:
-        // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/whitespace.md
-        // TODO: This doesn't handle unicode whitespace.
+    if (i + hashtag_num < source.size() &&
+        source.slice(i, i + hashtag_num + 1).equals(escape)) {
+      i += hashtag_num + 1;
+      if (i == source.size()) {
         return std::nullopt;
-
-      default:
-        ret.push_back(c);
-        break;
+      }
+      switch (source[i]) {
+        case 'n':
+          ret.push_back('\n');
+          break;
+        case 'r':
+          ret.push_back('\r');
+          break;
+        case 't':
+          ret.push_back('\t');
+          break;
+        case '0':
+          if (i + 1 < source.size() && llvm::isDigit(source[i + 1])) {
+            // \0[0-9] is reserved.
+            return std::nullopt;
+          }
+          ret.push_back('\0');
+          break;
+        case '"':
+          ret.push_back('"');
+          break;
+        case '\'':
+          ret.push_back('\'');
+          break;
+        case '\\':
+          ret.push_back('\\');
+          break;
+        case 'x': {
+          i += 2;
+          if (i >= source.size()) {
+            return std::nullopt;
+          }
+          std::optional<char> c1 = FromHex(source[i - 1]);
+          std::optional<char> c2 = FromHex(source[i]);
+          if (c1 == std::nullopt || c2 == std::nullopt) {
+            return std::nullopt;
+          }
+          ret.push_back(16 * *c1 + *c2);
+          break;
+        }
+        case 'u':
+          CARBON_FATAL() << "\\u is not yet supported in string literals";
+        case '\n':
+          if (!is_block_string) {
+            return std::nullopt;
+          }
+          break;
+        default:
+          // Unsupported.
+          return std::nullopt;
+      }
+    } else if (c == '\t') {
+      // Disallow non-` ` horizontal whitespace:
+      // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/whitespace.md
+      // TODO: This doesn't handle unicode whitespace.
+      return std::nullopt;
+    } else {
+      ret.push_back(c);
     }
     ++i;
   }
   return ret;
 }
 
-auto ParseBlockStringLiteral(llvm::StringRef source) -> ErrorOr<std::string> {
+auto ParseBlockStringLiteral(llvm::StringRef source, std::size_t hashtag_num)
+    -> ErrorOr<std::string> {
   llvm::SmallVector<llvm::StringRef> lines;
   source.split(lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/true);
   if (lines.size() < 2) {
@@ -150,8 +148,9 @@ auto ParseBlockStringLiteral(llvm::StringRef source) -> ErrorOr<std::string> {
     }
     // Unescaping with \n appended to handle things like \\<newline>.
     llvm::SmallVector<char> buffer;
-    std::optional<std::string> unescaped = UnescapeStringLiteral(
-        (line + "\n").toStringRef(buffer), /*is_block_string=*/true);
+    std::optional<std::string> unescaped =
+        UnescapeStringLiteral((line + "\n").toStringRef(buffer), hashtag_num,
+                              /*is_block_string=*/true);
     if (!unescaped.has_value()) {
       return Error("Invalid escaping in " + line);
     }
