@@ -83,13 +83,16 @@ filegroup(
 cc_test(
     name = "fuzzer_util_test",
     srcs = ["fuzzer_util_test.cpp"],
+    args = [
+        "$(locations fuzzer_corpus_files)",
+    ],
     data = [
+        ":fuzzer_corpus_files",
         "//explorer:standard_libraries",
     ],
     deps = [
         ":fuzzer_util",
         "@com_google_googletest//:gtest",
-        "//common:gtest_main",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
