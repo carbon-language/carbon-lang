@@ -32,12 +32,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Arrays and slices](#arrays-and-slices)
 -   [Expressions](#expressions)
 -   [Declarations, Definitions, and Scopes](#declarations-definitions-and-scopes)
--   [Functions](#functions)
-    -   [Blocks and statements](#blocks-and-statements)
-    -   [Variables](#variables)
-    -   [`let`](#let)
+-   [Patterns](#patterns)
+    -   [Binding patterns](#binding-patterns)
+    -   [Destructuring patterns](#destructuring-patterns)
+    -   [Refutable patterns](#refutable-patterns)
+-   [Name-binding declarations](#name-binding-declarations)
+    -   [Constant `let` declarations](#constant-let-declarations)
+    -   [Variable `var` declarations](#variable-var-declarations)
     -   [`auto`](#auto)
-    -   [Pattern matching](#pattern-matching)
+-   [Functions](#functions)
+    -   [`auto` return type](#auto-return-type)
+    -   [Blocks and statements](#blocks-and-statements)
     -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
@@ -548,17 +553,181 @@ should be exactly one definition for the name, but there can be additional
 forward declarations that introduce the name before it is defined. Forward
 declarations allow cyclic references, and can be used to declare a name in an
 [api file](#packages-libraries-namespaces) that is defined in an
-[impl file](#packages-libraries-namespaces).
+[impl file](#packages-libraries-namespaces). A name that has been declared but
+not defined is called _incomplete_, and in some cases there are limitations on
+what can be done with an incomplete name.
 
 A name is valid until the end of the innermost enclosing
 [_scope_](<https://en.wikipedia.org/wiki/Scope_(computer_science)>). Except for
 the outermost scope, scopes are enclosed in curly braces (`{`...`}`).
 
+## Patterns
+
+A _pattern_ says how to receive some data that is being matched against. There
+are two kinds of patterns:
+
+-   _Refutable_ patterns can fail to match based on the runtime value being
+    matched.
+-   _Irrefutable_ patterns must match at compile time.
+
+Irrefutable patterns are used in [function parameters](#functions),
+[variable `var` declarations](#variable-var-declarations), and
+[constant `let` declarations](#constant-let-declarations).
+[`match` statements](#match) can include both refutable patterns and irrefutable
+patterns.
+
+> References:
+>
+> -   [Pattern matching](pattern_matching.md)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+
+### Binding patterns
+
+The most common irrefutable pattern is a _binding pattern_, consisting of a new
+name, a colon (`:`), and a type. It can only match values that may be
+[implicitly converted](expressions/implicit_conversions.md) to that type. A
+underscore (`_`) may be used instead of the name to ignore the value.
+
+Binding patterns default to `let` bindings except inside a context where the
+`var` keyword is used:
+
+-   The result of a `let` binding is the name is bound to an
+    [r-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
+    This means the value can not be modified, and its address cannot be taken.
+-   A `var` binding has dedicated storage, and so the name is an
+    [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
+    which can be modified and has a stable address.
+
+A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
+colon (`:`) and can only match compile-time values.
+
+The keyword `auto` may be used in place of the type in a binding pattern, as
+long as the type can be deduced from the type of a value in the same
+declaration.
+
+### Destructuring patterns
+
+There are also irrefutable _destructuring patterns_, such as _tuple
+destructuring_. A tuple destructuring pattern looks like a tuple of patterns. It
+may only be used to match tuple values whose components match the component
+patterns of the tuple. An example use is:
+
+```carbon
+// `Bar()` returns a tuple consisting of an
+// `i32` value and 2-tuple of `f32` values.
+fn Bar() -> (i32, (f32, f32));
+
+fn Foo() -> i64 {
+  // Pattern in `var` declaration:
+  var (p: i64, _: auto) = Bar();
+  return p;
+}
+```
+
+The pattern used in the `var` declaration destructures the tuple value returned
+by `Bar()`. The first component pattern, `p: i64`, corresponds to the first
+component of the value returned by `Bar()`, which has type `i32`. This is
+allowed since there is an implicit conversion from `i32` to `i64`. The result of
+this conversion is assigned to the name `p`. The second component pattern,
+`_: auto`, matches the second component of the value returned by `Bar()`, which
+has type `(f32, f32)`.
+
+### Refutable patterns
+
+Additional kinds of patterns are allowed in [`match` statements](#match), that
+may or may not match based on the runtime value of the `match` expression:
+
+-   A _value pattern_ is an expression, such as `42`, whose value must be equal
+    to match.
+-   A _dynamic cast pattern_ is tests the dynamic type, as described in
+    [inheritance](#inheritance).
+
+In addition, an `if` expression may optionally follow a full refutable pattern,
+with a boolean predicate that must evaluate to `true` to match. See
+[`match`](#match) for an example.
+
+> References:
+>
+> -   [Pattern matching](pattern_matching.md)
+> -   Question-for-leads issue
+>     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+
+## Name-binding declarations
+
+There are two kinds of name-binding declarations:
+
+-   constant declarations, introduced with `let`, and
+-   variable declarations, introduced with `var`.
+
+There are no forward declarations of these, all name-binding declarations are
+[definitions](#declarations-definitions-and-scopes).
+
+### Constant `let` declarations
+
+A `let` declaration matches an [irrefutable pattern](#patterns) to a value. In
+this example, the name `x` is bound to the value `42` with type `i64`:
+
+```carbon
+let x: i64 = 42;
+```
+
+Here `x: i64` is the pattern, which is followed by an equal sign (`=`) and the
+value to match, `42`. The names from [binding patterns](#binding-patterns) are
+introduced into the enclosing [scope](#declarations-definitions-and-scopes).
+
+### Variable `var` declarations
+
+A `var` declaration is similar, except with `var` bindings, so `x` here is an
+[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>) with
+storage and an address, and so may be modified:
+
+```carbon
+var x: i64 = 42;
+x = 7;
+```
+
+Variables with a type that has
+[an unformed state](https://github.com/carbon-language/carbon-lang/pull/257) do
+not need to be initialized in the variable declaration, but do need to be
+assigned before they are used.
+
+> References:
+>
+> -   [Variables](variables.md)
+> -   Proposal
+>     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+> -   Proposal
+>     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
+> -   Proposal
+>     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
+
+### `auto`
+
+If `auto` is used as the type in a `var` or `let` declaration, the type is the
+static type of the initializer expression, which is required.
+
+```
+var x: i64 = 2;
+// The type of `y` is inferred to be `i64`.
+let y: auto = x + 3;
+// The type of `z` is inferred to be `bool`.
+var z: auto = (y > 1);
+```
+
+> References:
+>
+> -   [Type inference](type_inference.md)
+> -   Proposal
+>     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
+
 ## Functions
 
 Functions are the core unit of behavior. For example, this is a
-[declaration](#declarations-definitions-and-scopes) of a function that adds two
-64-bit integers:
+[forward declaration](#declarations-definitions-and-scopes) of a function that
+adds two 64-bit integers:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64;
@@ -569,13 +738,15 @@ Breaking this apart:
 -   `fn` is the keyword used to introduce a function.
 -   Its name is `Add`. This is the name added to the enclosing
     [scope](#declarations-definitions-and-scopes).
--   It accepts two `i64` parameters, `a` and `b`.
--   It returns an `i64` result.
+-   The parameter list in parentheses (`(`...`)`) is a comma-separated list of
+    [irrefutable patterns](#patterns).
+-   It returns an `i64` result. Functions that return nothing omit the `->` and
+    return type.
 
 You would call this function like `Add(1, 2)`.
 
-A function definition is a function declaration that has a body block instead of
-a semicolon:
+A function definition is a function declaration that has a body
+[block](#blocks-and-statements) instead of a semicolon:
 
 ```carbon
 fn Add(a: i64, b: i64) -> i64 {
@@ -585,6 +756,13 @@ fn Add(a: i64, b: i64) -> i64 {
 
 The names of the parameters are in scope until the end of the definition or
 declaration.
+
+The bindings in the parameter list default to
+[`let` bindings](#binding-patterns), and so the parameter names are treated as
+[r-values](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>). If
+the `var` keyword is added before the binding, then the arguments will be copied
+to new storage, and so can be mutated in the function body. The copy ensures
+that any mutations will not be visible to the caller.
 
 > References:
 >
@@ -596,6 +774,27 @@ declaration.
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 
+### `auto` return type
+
+If `auto` is used in place of the return type, the return type of the function
+is inferred from the function body. It is set to [common type](#common-type) of
+the static type of arguments to the [`return` statements](#return) in the
+function. This is not allowed in a forward declaration.
+
+```
+// Return type is inferred to be `bool`, the type of `a > 0`.
+fn Positive(a: i64) -> auto {
+  return a > 0;
+}
+```
+
+> References:
+>
+> -   [Type inference](type_inference.md)
+> -   [Function return clause](functions.md#return-clause)
+> -   Proposal
+>     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
+
 ### Blocks and statements
 
 A _code block_ or _block_ is a sequence of _statements_. Blocks define a
@@ -604,8 +803,8 @@ enclosed in curly braces (`{`...`}`). Each statement is terminated by a
 semicolon, and can be one of:
 
 -   an [expression](#expressions),
--   a [variable declaration](#variables),
--   a [`let` declaration](#let),
+-   a [variable declaration](#variable-var-declarations),
+-   a [`let` declaration](#constant-let-declarations),
 -   an [assignment statement](#assignment-statements), or
 -   a [control-flow statement](#control-flow).
 
@@ -630,156 +829,6 @@ fn Foo() {
 > References:
 >
 > -   [Blocks and statements](blocks_and_statements.md)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-
-### Variables
-
-Blocks introduce nested scopes and can contain variable
-[declarations](#declarations-definitions-and-scopes) that are local to that
-block, similarly to function parameters.
-
-For example:
-
-```carbon
-fn DoSomething() -> i64 {
-  var x: i64 = 42;
-  x = x + 2;
-  return x;
-}
-```
-
-Breaking this apart:
-
--   `var` is the keyword used to indicate a variable.
--   Its name is `x`. This is the name added to the enclosing
-    [scope](#declarations-definitions-and-scopes).
--   Its type is `i64`.
--   It is initialized with the value `42`.
-
-Unlike function parameters, `x` is an
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
-which means it has storage and an address, and so can be modified.
-
-Note that there are no forward declarations of variables, all variable
-declarations are [definitions](#declarations-definitions-and-scopes).
-
-> References:
->
-> -   [Variables](variables.md)
-> -   Proposal
->     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-> -   Proposal
->     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
-> -   Proposal
->     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
-> -   Proposal
->     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
-
-### `let`
-
-To bind a name to a value without associating a specific storage location, use
-`let` instead of `var`.
-
-```carbon
-fn DoSomething() -> i64 {
-  let x: i64 = 42;
-  return x + 2;
-}
-```
-
-The `let` binds `x` to the _value_ `42`. `x` is an r-value, so it can not be
-modified, for example by being the left side of an assignment statement, and its
-address cannot be taken.
-
-Function parameters are passed by value, and so act like they were defined in a
-`let` implicitly. **FIXME:** Is this just the default, or can you write `var` in
-a function signature to give parameters dedicated storage so they may be
-modified?
-
-### `auto`
-
-The keyword `auto` may be used in place of the type in a `var` or `let`
-statement in a function body. In this case, the type is the static type of the
-initializer expression.
-
-```
-var x: i64 = 2;
-// The type of `y` is inferred to be `i64`.
-let y: auto = x + 3;
-// The type of `z` is inferred to be `bool`.
-var z: auto = (y > 1);
-```
-
-It may also be used as the return type in a function definition. In this case,
-the body of the function must have exactly one `return` statement, and the
-return type of the function is set to the static type of the expression argument
-of that `return`.
-
-```
-// Return type is inferred to be `bool`, the type of `a > 0`.
-fn Positive(a: i64) -> auto {
-  return a > 0;
-}
-```
-
-Note that `auto` is not allowed in a function declaration without a function
-body.
-
-> References:
->
-> -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
-> -   Proposal
->     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
-> -   Proposal
->     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
-
-### Pattern matching
-
-Patterns are used in a variety of Carbon language constructs, including
-[function parameters](#functions), [variable declarations](#variables), and
-[`let` declarations](#let).
-
-The most common pattern is a _binding pattern_, consisting of a new name, a
-colon (`:`), and a type. It can only match values that may be
-[implicitly converted](expressions/implicit_conversions.md) to that type. A
-underscore (`_`) may be used instead of the name to ignore the value.
-
-> **TODO:** Using `var` before a binding pattern to allocate storage so the new
-> name can be modified?
-
-There are also _destructuring patterns_, such as _tuple destructuring_. A tuple
-destructuring pattern looks like a tuple of patterns. It may only be used to
-match tuple values whose components match the component patterns of the tuple.
-An example use is:
-
-```carbon
-// `Bar()` returns a tuple consisting of an
-// `i32` value and 2-tuple of `f32` values.
-fn Bar() -> (i32, (f32, f32));
-
-fn Foo() -> i64 {
-  // Pattern in `var` declaration:
-  var (p: i64, _: auto) = Bar();
-  return p;
-}
-```
-
-The pattern used in the `var` declaration destructures the tuple value returned
-by `Bar()`. The first component pattern, `p: i64`, corresponds to the first
-component of the value returned by `Bar()`, which has type `i32`. This is
-allowed since there is an implicit conversion from `i32` to `i64`. The result of
-this conversion is assigned to the name `p`. The second component pattern,
-`_: auto`, matches the second component of the value returned by `Bar()`, which
-has type `(f32, f32)`. The [`auto`](#auto) matches any type and the `_` means
-the value is discarded.
-
-Additional kinds of patterns are allowed in [`match` statements](#match).
-
-> References:
->
-> -   [Pattern matching](pattern_matching.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 
@@ -1028,9 +1077,10 @@ This is instead of
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
 constructs in other languages, such as Swift. The `match` keyword is followed by
-an expression in parentheses, whose value is matched against `case` declarations
+an expression in parentheses, whose value is matched against the `case`
+declarations, each of which contains a [refutable pattern](#refutable-patterns),
 in order. The code for the first matching `case` is executed. An optional
-`default` code block may be placed after the `case` declaratoins, it will be
+`default` code block may be placed after the `case` declarations, it will be
 executed if none of the `case` declarations match.
 
 An example `match` is:
@@ -1055,17 +1105,6 @@ fn Foo() -> f32 {
   }
 }
 ```
-
-A `case` pattern can contain
-[binding and destructuring patterns](#pattern-matching). In addition, it can
-contain patterns that may or may not match based on the runtime value of the
-`match` expression:
-
--   A _value pattern_ is an expression, such as `42`, whose value must be equal
-    to match.
--   An _if pattern_, consisting of an `if` and a boolean predicate at the end of
-    the pattern like `if (p < 13)`, matches if the predicate evaluates to
-    `true`.
 
 > References:
 >
@@ -1092,8 +1131,6 @@ This is an example of a class
 class Widget {
   var x: i32;
   var y: i32;
-  var z: i32;
-
   var payload: String;
 }
 ```
@@ -1109,9 +1146,10 @@ Breaking this apart:
     have a semicolon(`;`).
 -   Those braces delimit the class'
     [scope](#declarations-definitions-and-scopes).
--   `Widget` has three `i32` fields: `x`, `y`, and `z`.
--   `Widget` has one `String` field: `payload`.
--   Given an instance `dial`, a field can be referenced with `dial.payload`.
+-   Fields, or
+    [instances variables](https://en.wikipedia.org/wiki/Instance_variable), are
+    defined using [`var` declarations](#variable-var-declarations). `Widget` has
+    two `i32` fields (`x` and `y`), and one `String` field (`payload`).
 
 The order of the field declarations determines the fields' memory-layout order.
 
@@ -1120,13 +1158,18 @@ Classes may have other kinds of members beyond fields declared in its scope:
 -   [Class functions](#class-functions-and-factory-functions)
 -   [Methods](#methods)
 -   [`alias`](#aliases)
--   [`let`](#let) to define constants. **TODO:** Are these constants associated
-    with the class or the instance? Do we need to another syntax to distinguish
-    constants associated with the class like `class let` or `static let`?
+-   [`let`](#constant-let-declarations) to define class constants. **TODO:**
+    Another syntax to define constants associated with the class like
+    `class let` or `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
--   Every class automatically has a [constant member](#let) named `Self` equal
-    to the class type itself.
+-   Every class automatically has a
+    [constant member](#constant-let-declarations) named `Self` equal to the
+    class type itself.
+
+Members of a class are [accessed](expressions/member_access.md) using the dot
+(`.`) notation, so given an instance `dial` of type `Widget`, `dial.payload`
+refers to its `payload` field.
 
 Both [structural data classes](#struct-types) and nominal classes are considered
 _class types_, but they are commonly referred to as "structs" and "classes"
@@ -1150,8 +1193,8 @@ in any scope that has [access](#access-control) to all of the class' fields.
 This may be used to assign or initialize a variable with a class type, as in:
 
 ```carbon
-var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
-sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
+var sprocket: Widget = {.x = 3, .y = 4, .payload = "Sproing"};
+sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
 ```
 
 You may also copy a value of a class type into a variable of the same type.
@@ -1304,7 +1347,18 @@ by one of these three keywords:
 
 A pointer to a derived class may be cast to a pointer to one of its base
 classes. Calling a virtual method through a pointer to a base class will use the
-overridden definition provided in the derived class.
+overridden definition provided in the derived class. Base classes with `virtual`
+methods may use
+[run-time type information](https://en.wikipedia.org/wiki/Run-time_type_information)
+in a match statement to dynamically test whether the dynamic type of a value is
+some derived class, as in:
+
+```carbon
+var base_ptr: MyBaseType* = ...;
+match (base_ptr) {
+  case dyn p: MiddleDerived* => { ... }
+}
+```
 
 For purposes of construction, a derived class acts like its first field is
 called `base` with the type of its immediate base class.
