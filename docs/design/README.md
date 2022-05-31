@@ -640,12 +640,15 @@ may or may not match based on the runtime value of the `match` expression:
 
 -   A _value pattern_ is an expression, such as `42`, whose value must be equal
     to match.
+-   A _choice pattern_ matches one case from a choice type, as described in
+    [the choice types section](#choice-types).
 -   A _dynamic cast pattern_ is tests the dynamic type, as described in
     [inheritance](#inheritance).
 
 In addition, an `if` expression may optionally follow a full refutable pattern,
-with a boolean predicate that must evaluate to `true` to match. See
-[`match`](#match) for an example.
+with a boolean predicate that must evaluate to `true` to match. The names from
+any bindings in the pattern are in scope and so may be used in the predicate
+expression. See [`match`](#match) for an example.
 
 > References:
 >
