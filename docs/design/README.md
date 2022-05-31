@@ -64,9 +64,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
-    -   [Generic types](#generic-types)
-        -   [Types with template parameters](#types-with-template-parameters)
+    -   [Generic entities](#generic-entities)
+        -   [Generic Classes](#generic-classes)
         -   [Generic choice types](#generic-choice-types)
+        -   [Generic interfaces](#generic-interfaces)
+        -   [Generic implementations](#generic-implementations)
     -   [Other features](#other-features)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
@@ -916,14 +918,18 @@ instantiated when called, resulting in late type checking, duck typing, and lazy
 binding.
 
 Member lookup into a template type parameter is done in the actual type value
-provided by the caller. This means member name lookup and type checking for
-anything [dependent](generics/terminology.md#dependent-names) on the template
-parameter are delayed until the template is instantiated with a specific
-concrete type. This gives semantics similar to
+provided by the caller, _in addition_ to any constraints. This means member name
+lookup and type checking for anything
+[dependent](generics/terminology.md#dependent-names) on the template parameter
+can't be completed until the template is instantiated with a specific concrete
+type. When the constraint is just `Type`, this gives semantics similar to C++
+templates. Constraints can then be added incrementally, with the compiler
+verifying that the semantics stay the same. Once all constraints have been
+added, removing the word `template` to switch to a checked parameter is safe.
 
-Although generics are generally preferred, templates enable translation of code
-between C++ and Carbon, and address some cases where the type checking rigor of
-generics are problematic.
+Although checked generics are generally preferred, templates enable translation
+of code between C++ and Carbon, and address some cases where the type checking
+rigor of generics are problematic.
 
 > References:
 >
@@ -945,6 +951,16 @@ interface Printable {
 }
 ```
 
+In addition to function requirements, interfaces can contain:
+
+-   [requirements that other interfaces be implemented](generics/details.md#interface-requiring-other-interfaces)
+    or
+    [interfaces that this interface extends](generics/details.md#interface-extension)
+-   [associated types](generics/details.md#associated-types) and other
+    [associated constants](generics/details.md#associated-constants)
+-   [interface defaults](generics/details.md#interface-defaults)
+-   [`final` interface members](generics/details.md#final-members)
+
 Types only implement an interface if there is an explicit `impl` declaration
 that they do. Simply having a `Print` function with the right signature is not
 sufficient.
@@ -960,6 +976,11 @@ class Circle {
   }
 }
 ```
+
+**FIXME:** [external impls](generics/details.md#external-impl)
+
+**FIXME:**
+[forward declarations](generics/details.md#forward-declarations-and-cyclic-references)
 
 ### Combining constraints
 
@@ -997,38 +1018,60 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
 
-### Generic types
+### Generic entities
 
-> **TODO:**
+Many kinds of Carbon entities, not just functions: may be made generic by adding
+checked or template parameters
 
-#### Types with template parameters
+#### Generic Classes
 
-User-defined types may have template parameters. The resulting type-function may
-be used to instantiate the parameterized definition with the provided arguments
-in order to produce a complete type. For example:
+Classes may be defined with an optional explicit parameter list. All parameters
+to a class must be generic, and so defined with `:!`, either with or without the
+`template` prefix. For example, to define a stack that can hold values of any
+type `T`:
 
 ```carbon
-class Stack(template T:! Type) {
-  var storage: Array(T);
+class Stack(T:! Type) {
+  fn Push[addr me: Self*](value: T);
+  fn Pop[addr me: Self*]() -> T;
 
-  fn Push(value: T);
-  fn Pop() -> T;
+  var storage: Array(T);
 }
+
+var int_stack: Stack(i32);
 ```
 
-Breaking apart the template use in `Stack`:
+In this example:
 
--   `Stack` is a paremeterized type accepting a type `T`.
+-   `Stack` is a type parameterized by a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
-    would be used, and will only be type checked on instantiation.
--   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
-    instantiated.
+    would be used.
+-   `Array(T)` instantiates generic type `Array` with its parameter set to `T`.
+-   `Stack(i32)` instantiates `Stack` with `T` set to `i32`.
 
-> References: [Templates](templates.md)
+The values of type parameters are part of a type's value, and so may be deduced
+in a function call, as in this example:
+
+```carbon
+fn PeekTopOfStack[T:! Type](s: Stack(T)*) -> T {
+  var top: T = s->Pop();
+  s->Push(top);
+  return top;
+}
+
+// `int_stack` has type `Stack(i32)`, so `T` is deduced to be `i32`.
+PeekTopOfStack(&int_stack);
+```
+
+> References:
 >
-> **TODO:** References need to be evolved.
+> -   [Generic or parameterized types](generics/details.md#parameterized-types)
+> -   Proposal
+>     [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 
 #### Generic choice types
+
+<!-- [Choice types](#choice-types) --> may be parameterized similarly to classes:
 
 ```carbon
 choice Result(T:! Type, Error:! Type) {
@@ -1037,28 +1080,56 @@ choice Result(T:! Type, Error:! Type) {
 }
 ```
 
+#### Generic interfaces
+
+Interfaces are always parameterized by a `Self` type, but in some cases they
+will have additional parameters.
+
+```carbon
+interface AddWith(U:! Type);
+```
+
+Interfaces without parameters may only be implemented once for a given type, but
+a type can have distinct implementations of `AddWith(i32)` and
+`AddWith(BigInt)`.
+
+**FIXME:** Contrast with associated types
+
+> References:
+>
+> -   [Generic or parameterized interfaces](generics/details.md#parameterized-interfaces)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+
+#### Generic implementations
+
+```carbon
+impl forall [T:! Printable] Vector(T) as Printable;
+```
+
+**FIXME**
+
+-   [specialization](generics/details.md#lookup-resolution-and-specialization)
+-   [`final` impls](generics/details.md#final-impls)
+-   FIXME: coherence, orphan rules, etc.
+
+> References:
+>
+> -   [Generic or parameterized impls](generics/details.md#parameterized-impls)
+> -   Proposal
+>     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+
 ### Other features
 
 **TODO:**
 
--   [external impls](generics/details.md#external-impl)
 -   [named and template constraints](generics/details.md#named-constraints)
--   [extending interfaces](generics/details.md#interface-extension)
 -   [adapter types](generics/details.md#adapting-types)
--   [associated types](generics/details.md#associated-types) and other
-    [associated constants](generics/details.md#associated-constants)
--   [generic/parameterized interfaces](generics/details.md#parameterized-interfaces)
 -   [`where` constraints](generics/details.md#where-constraints)
 -   [implied constraints](generics/details.md#implied-constraints)
 -   `observe` declarations:
     [observing types are equal](generics/details.md#observe-declarations),
     [observing types implement an interface](generics/details.md#observing-a-type-implements-an-interface)
--   [generic/parameterized impls](generics/details.md#parameterized-impls)
--   [specialization](generics/details.md#lookup-resolution-and-specialization)
--   [`final` impls](generics/details.md#final-impls)
--   [forward declarations](generics/details.md#forward-declarations-and-cyclic-references)
--   [interface defaults](generics/details.md#interface-defaults)
--   [`final` interface members](generics/details.md#final-members)
 -   [dynamic erased types](generics/details.md#runtime-type-fields)
 -   [variadics](generics/details.md#variadic-arguments)
 
