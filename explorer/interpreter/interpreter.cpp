@@ -808,11 +808,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&access.object()));
-      } else if (act.pos() == 1 && access.impl().has_value()) {
+      } else if (act.pos() == 1 && access.impl().has_value() &&
+                 !forming_member_name) {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
         return todo_.Spawn(
@@ -828,20 +830,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           std::optional<const InterfaceType*> iface_result;
           std::optional<const Value*> type_result;
           if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
+            // This is `Interface.Member`.
             iface_result = iface_type;
           } else {
+            // This is `Type.Member` or `TypeParameter.Member`. In the latter
+            // case, we know both the type and the interface in which the
+            // member is found.
             type_result = act.results()[0];
-            if (access.impl().has_value()) {
-              // TODO: A Witness should know the interface type it's a witness
-              // for.
-              // FIXME: A lot still to do here.
-              Nonnull<const Witness*> witness = cast<Witness>(act.results()[1]);
-              Nonnull<const Value*> iface =
-                  witness->declaration()
-                      .interface_type();  // better hope it's not parameterized
-              iface_result = cast<InterfaceType>(
-                  iface);  // better hope this isn't a constraint
-            }
+            iface_result = access.found_in_interface();
           }
           MemberName* member_name = arena_->New<MemberName>(
               type_result, iface_result, member_name_type->member());

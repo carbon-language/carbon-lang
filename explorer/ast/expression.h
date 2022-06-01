@@ -26,6 +26,7 @@ namespace Carbon {
 class Value;
 class MemberName;
 class VariableType;
+class InterfaceType;
 class ImplBinding;
 
 class Expression : public AstNode {
@@ -183,10 +184,25 @@ class SimpleMemberAccessExpression : public Expression {
     impl_ = impl;
   }
 
+  // If `object` is a constrained type parameter and `member` was found in an
+  // interface, returns that interface. Should not be called before
+  // typechecking.
+  auto found_in_interface() const
+      -> std::optional<Nonnull<const InterfaceType*>> {
+    return found_in_interface_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_found_in_interface(Nonnull<const InterfaceType*> interface) {
+    CARBON_CHECK(!found_in_interface_.has_value());
+    found_in_interface_ = interface;
+  }
+
  private:
   Nonnull<Expression*> object_;
   std::string member_;
   std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
 // A compound member access expression of the form `object.(path)`.

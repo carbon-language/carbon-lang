@@ -1469,6 +1469,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_CHECK(var_type.binding().impl_binding().has_value());
             access.set_impl(
                 CreateImplReference(*var_type.binding().impl_binding()));
+            access.set_found_in_interface(&iface_type);
 
             switch ((*member)->kind()) {
               case DeclarationKind::FunctionDeclaration: {
