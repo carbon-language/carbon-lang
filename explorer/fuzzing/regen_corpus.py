@@ -95,9 +95,9 @@ def main() -> None:
             [
                 "bazel",
                 "build",
+                "--features=fuzzer",
                 # Workaround for #1208.
                 "--copt=-U_LIBCPP_DEBUG",
-                "--features=fuzzer",
                 # Workaround for #1173.
                 "--per_file_copt=llvm/.*@-fno-sanitize=fuzzer",
                 "//explorer/fuzzing:explorer_fuzzer",
