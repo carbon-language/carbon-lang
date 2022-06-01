@@ -35,14 +35,12 @@ def _carbon_to_proto(carbon_file: str) -> str:
     """Converts carbon file to text proto string."""
     try:
         p = subprocess.run(
-            (
-                "bazel-bin/explorer/fuzzing/fuzzverter --mode carbon_to_proto "
-                "--input {} --output /dev/stdout"
-            ).format(carbon_file),
+            "bazel-bin/explorer/fuzzing/fuzzverter --mode carbon_to_proto "
+            f"--input {carbon_file} --output /dev/stdout",
             shell=True,
             check=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDERR,
+            stderr=subprocess.STDOUT,
         )
         text_proto = p.stdout.decode("utf-8")
         print(".", end="", flush=True)
@@ -99,9 +97,9 @@ def main() -> None:
                 "build",
                 # Workaround for #1208.
                 "--copt=-U_LIBCPP_DEBUG",
+                "--features=fuzzer",
                 # Workaround for #1173.
-                "--per_file_copt=explorer/.*.cpp@-fsanitize=fuzzer",
-                "--linkopt=-fsanitize=fuzzer",
+                "--per_file_copt=llvm/.*@-fno-sanitize=fuzzer",
                 "//explorer/fuzzing:explorer_fuzzer",
             ]
         )
