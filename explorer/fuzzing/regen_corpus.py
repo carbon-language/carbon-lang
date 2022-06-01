@@ -42,7 +42,7 @@ def _carbon_to_proto(carbon_file: str) -> str:
             shell=True,
             check=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.STDERR,
         )
         text_proto = p.stdout.decode("utf-8")
         print(".", end="", flush=True)
@@ -77,19 +77,17 @@ def main() -> None:
     )
     carbon_sources = _get_files(_TESTDATA, ".carbon")
     print(
-        "Converting {} carbon files to proto...".format(len(carbon_sources)),
+        f"Converting {len(carbon_sources)} carbon files to proto...",
         flush=True,
     )
     text_protos: List[str] = []
     with futures.ThreadPoolExecutor() as exec:
         all_protos = exec.map(_carbon_to_proto, carbon_sources)
-        text_protos.extend(filter(lambda p: len(p) > 0, all_protos))
+        text_protos.extend(p for p in all_protos if p)
 
     with tempfile.TemporaryDirectory() as new_corpus_dir:
         print(
-            "\nWriting {} corpus files to {}...".format(
-                len(text_protos), new_corpus_dir
-            ),
+            f"\nWriting {len(text_protos)} corpus files to {new_corpus_dir}...",
             flush=True,
         )
         _write_corpus_files(text_protos, new_corpus_dir)
@@ -109,7 +107,7 @@ def main() -> None:
         )
 
         print(
-            "Merging interesting inputs into {}...".format(_FUZZER_CORPUS),
+            f"Merging interesting inputs into {_FUZZER_CORPUS}...",
             flush=True,
         )
         subprocess.check_call(
