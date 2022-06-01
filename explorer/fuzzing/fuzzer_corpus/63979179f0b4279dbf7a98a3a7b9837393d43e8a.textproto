@@ -10,12 +10,26 @@ compilation_unit {
         function {
           name: "Origin"
           param_pattern {
+            fields {
+              binding_pattern {
+                name: "zero"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
           return_term {
             kind: Expression
             type {
               identifier {
-                name: "Point"
+                name: "Self"
               }
             }
           }
@@ -27,16 +41,16 @@ compilation_unit {
                     fields {
                       name: "x"
                       expression {
-                        int_literal {
-                          value: 0
+                        identifier {
+                          name: "zero"
                         }
                       }
                     }
                     fields {
                       name: "y"
                       expression {
-                        int_literal {
-                          value: 0
+                        identifier {
+                          name: "zero"
                         }
                       }
                     }
@@ -51,15 +65,17 @@ compilation_unit {
         function {
           name: "GetX"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
                 expression {
                   identifier {
-                    name: "Point"
+                    name: "Self"
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -67,7 +83,8 @@ compilation_unit {
           return_term {
             kind: Expression
             type {
-              int_type_literal {
+              identifier {
+                name: "T"
               }
             }
           }
@@ -96,7 +113,8 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  int_type_literal {
+                  identifier {
+                    name: "T"
                   }
                 }
               }
@@ -111,9 +129,21 @@ compilation_unit {
             type {
               expression_pattern {
                 expression {
-                  int_type_literal {
+                  identifier {
+                    name: "T"
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              type_type_literal {
               }
             }
           }
@@ -142,8 +172,20 @@ compilation_unit {
                 type {
                   expression_pattern {
                     expression {
-                      identifier {
-                        name: "Point"
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -156,14 +198,31 @@ compilation_unit {
                   simple_member_access {
                     field: "Origin"
                     object {
-                      identifier {
-                        name: "Point"
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
                 }
                 argument {
                   tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
                   }
                 }
               }

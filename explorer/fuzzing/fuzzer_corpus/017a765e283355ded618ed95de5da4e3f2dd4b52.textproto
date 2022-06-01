@@ -5,6 +5,273 @@ compilation_unit {
   is_api: true
   declarations {
     interface {
+      name: "AddMul"
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "o"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Mul"
+          me_pattern {
+            binding_pattern {
+              name: "me"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "o"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "AddMul"
+        }
+      }
+      members {
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "o"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  primitive_operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "o"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Mul"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "o"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  primitive_operator {
+                    op: Mul
+                    arguments {
+                      identifier {
+                        name: "me"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "o"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Holder"
+      members {
+        variable {
+          binding {
+            name: "v"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              identifier {
+                name: "AddMul"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
       name: "Vector"
       members {
         function {
@@ -25,6 +292,7 @@ compilation_unit {
         function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -34,6 +302,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -66,6 +335,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -75,6 +345,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -98,6 +369,62 @@ compilation_unit {
             type {
               identifier {
                 name: "Self"
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name: "Hold"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Scalar"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Holder"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "Scalar"
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -215,6 +542,7 @@ compilation_unit {
             function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -224,6 +552,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -322,6 +651,7 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -331,6 +661,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -414,6 +745,78 @@ compilation_unit {
               }
             }
           }
+          members {
+            function {
+              name: "Hold"
+              me_pattern {
+                binding_pattern {
+                name: "me"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "v"
+                    type {
+                      expression_pattern {
+                        expression {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  call {
+                    function {
+                      identifier {
+                        name: "Holder"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "v"
+                          expression {
+                            identifier {
+                              name: "v"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -424,7 +827,8 @@ compilation_unit {
       deduced_parameters {
         name: "T"
         type {
-          type_type_literal {
+          identifier {
+            name: "AddMul"
           }
         }
       }
@@ -536,8 +940,31 @@ compilation_unit {
                 argument {
                   tuple_literal {
                     fields {
-                      identifier {
-                        name: "s"
+                      simple_member_access {
+                        field: "v"
+                        object {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "Hold"
+                                object {
+                                  identifier {
+                                    name: "a"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  identifier {
+                                    name: "s"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
