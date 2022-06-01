@@ -11,7 +11,8 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_raw_more_hash_tags_on_left.carbon:[[@LINE+2]]: missing closing quote in simple string: ##"str"#) {
+  // CHECK-EMPTY:
   if (s == ##"str"#) {
     return 0;
   }

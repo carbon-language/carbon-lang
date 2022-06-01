@@ -11,7 +11,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+1]]: invalid character '\x22' in source file.
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in simple string: "new
+  // CHECK-EMPTY:
   Print("new
 line");
   return 0;
