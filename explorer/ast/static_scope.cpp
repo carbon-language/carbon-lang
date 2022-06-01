@@ -49,7 +49,8 @@ auto StaticScope::TryResolve(const std::string& name,
   if (it != declared_names_.end()) {
     if (!it->second.usable) {
       return CompilationError(source_loc)
-             << "'" << name << "' is not usable in the current context";
+             << "'" << name
+             << "' is not usable until after it has been completely declared";
     }
     return std::make_optional(it->second.entity);
   }
