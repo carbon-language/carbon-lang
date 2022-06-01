@@ -645,10 +645,7 @@ may or may not match based on the runtime value of the `match` expression:
 -   A _dynamic cast pattern_ is tests the dynamic type, as described in
     [inheritance](#inheritance).
 
-In addition, an `if` expression may optionally follow a full refutable pattern,
-with a boolean predicate that must evaluate to `true` to match. The names from
-any bindings in the pattern are in scope and so may be used in the predicate
-expression. See [`match`](#match) for an example.
+See [`match`](#match) for examples of refutable patterns.
 
 > References:
 >
@@ -1082,9 +1079,12 @@ This is instead of
 constructs in other languages, such as Swift. The `match` keyword is followed by
 an expression in parentheses, whose value is matched against the `case`
 declarations, each of which contains a [refutable pattern](#refutable-patterns),
-in order. The code for the first matching `case` is executed. An optional
-`default` code block may be placed after the `case` declarations, it will be
-executed if none of the `case` declarations match.
+in order. The refutable pattern may optionally be folloed by an `if` expression,
+which may use the names from bindings in the pattern.
+
+The code for the first matching `case` is executed. An optional `default` code
+block may be placed after the `case` declarations, it will be executed if none
+of the `case` declarations match.
 
 An example `match` is:
 
