@@ -356,15 +356,18 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::TypeType:
       // FIXME: This seems suspicious. Shouldn't this require that the type
       // implements the interface?
-      if (destination->kind() == Value::Kind::InterfaceType) {
+      if (isa<InterfaceType, ConstraintType>(destination)) {
         return true;
       }
       break;
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfChoiceType:
-      // FIXME: These types should presumably also convert to interface types.
-      if (destination->kind() == Value::Kind::TypeType) {
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
+      // FIXME: These types should presumably also convert to constraint types.
+      if (isa<TypeType>(destination)) {
         return true;
       }
       break;
@@ -1128,6 +1131,69 @@ auto TypeChecker::DeduceCallBindings(
   return Success();
 }
 
+struct ConstraintLookupResult {
+  Nonnull<const InterfaceType*> interface;
+  Nonnull<const Declaration*> member;
+  Nonnull<const Expression*> impl;
+};
+
+/// Look up a member name in a constraint, which might be a single interface or
+/// a compound constraint.
+static auto LookupInConstraint(SourceLocation source_loc,
+                               Nonnull<const Value*> type,
+                               const std::string& member_name)
+    -> ErrorOr<ConstraintLookupResult> {
+  // Find the set of lookup contexts.
+  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
+  ConstraintType::LookupContext interface_context[1];
+  if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
+    // For an interface, look into that interface alone.
+    // TODO: Also look into any interfaces extended by it.
+    interface_context[0].context = iface_type;
+    lookup_contexts = interface_context;
+  } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
+    // For a constraint, look in all of its lookup contexts.
+    lookup_contexts = constraint_type->lookup_contexts();
+  } else {
+    // Other kinds of constraint, such as TypeType, have no lookup contexts.
+  }
+
+  std::optional<ConstraintLookupResult> found;
+  for (ConstraintType::LookupContext lookup : lookup_contexts) {
+    if (!isa<InterfaceType>(lookup.context)) {
+      // TODO: Support other kinds of lookup context, notably named
+      // constraints.
+      continue;
+    }
+    const InterfaceType& iface_type = cast<InterfaceType>(*lookup.context);
+    if (std::optional<Nonnull<const Declaration*>> member =
+            FindMember(member_name, iface_type.declaration().members());
+        member.has_value()) {
+      if (found.has_value()) {
+        if (ValueEqual(found->interface, &iface_type)) {
+          continue;
+        }
+        // TODO: If we resolve to the same member either way, this
+        // is not ambiguous.
+        return CompilationError(source_loc)
+               << "ambiguous member access, " << member_name << " found in "
+               << *found->interface << " and " << iface_type;
+      }
+      found = {.interface = &iface_type, .member = member.value()};
+    }
+  }
+
+  if (!found) {
+    if (isa<TypeType>(type)) {
+      return CompilationError(source_loc)
+             << "member access into unconstrained type";
+    }
+    return CompilationError(source_loc)
+           << "member access, " << member_name << " not in " << *type;
+  }
+  return found.value();
+}
+
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -1346,162 +1412,94 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << access.member();
           }
         }
-        case Value::Kind::TypeOfInterfaceType: {
-          const InterfaceType& iface_type =
-              cast<TypeOfInterfaceType>(object_type).interface_type();
-          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.member(), iface_type.declaration().members());
-              member.has_value()) {
-            access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(*member)));
-            access.set_value_category(ValueCategory::Let);
-            return Success();
+        case Value::Kind::TypeOfInterfaceType:
+        case Value::Kind::TypeOfConstraintType: {
+          const Value* type;
+          if (isa<TypeOfInterfaceType>(object_type)) {
+            type = &cast<TypeOfInterfaceType>(object_type).interface_type();
           } else {
-            return CompilationError(access.source_loc())
-                   << iface_type << " does not have a member named "
-                   << access.member();
+            type = &cast<TypeOfConstraintType>(object_type).constraint_type();
           }
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), type, access.member()));
+          access.set_found_in_interface(result.interface);
+          access.set_static_type(
+              arena_->New<TypeOfMemberName>(Member(result.member)));
+          access.set_value_category(ValueCategory::Let);
+          return Success();
         }
         case Value::Kind::VariableType: {
           // This case handles access to a method on a receiver whose type
           // is a type variable. For example, `x.foo` where the type of
           // `x` is `T` and `foo` and `T` implements an interface that
           // includes `foo`.
-          const VariableType& var_type = cast<VariableType>(object_type);
-          const Value& typeof_var = var_type.binding().static_type();
-          switch (typeof_var.kind()) {
-            case Value::Kind::InterfaceType: {
-              const auto& iface_type = cast<InterfaceType>(typeof_var);
-              const InterfaceDeclaration& iface_decl = iface_type.declaration();
-              if (std::optional<Nonnull<const Declaration*>> member =
-                      FindMember(access.member(), iface_decl.members());
-                  member.has_value()) {
-                const Value& member_type = (*member)->static_type();
-                BindingMap binding_map = iface_type.args();
-                binding_map[iface_decl.self()] = &var_type;
-                Nonnull<const Value*> inst_member_type =
-                    Substitute(binding_map, &member_type);
-                access.set_static_type(inst_member_type);
-                CARBON_CHECK(var_type.binding().impl_binding().has_value());
-                access.set_impl(
-                    CreateImplReference(*var_type.binding().impl_binding()));
-                return Success();
-              } else {
-                return CompilationError(e->source_loc())
-                       << "member access, " << access.member() << " not in "
-                       << iface_decl.name();
-              }
-              break;
-            }
-            case Value::Kind::ConstraintType: {
-              const auto& constraint = cast<ConstraintType>(typeof_var);
-              std::optional<Nonnull<const Value*>> found_in;
-              for (ConstraintType::LookupContext ctx :
-                   constraint.lookup_contexts()) {
-                BindingMap constraint_self_map;
-                constraint_self_map[constraint.self_binding()] = &var_type;
-                Nonnull<const Value*> resolved_context =
-                    Substitute(constraint_self_map, ctx.context);
-                if (!isa<InterfaceType>(resolved_context)) {
-                  // TODO: Support other kinds of lookup context, notably named
-                  // constraints.
-                  continue;
-                }
-                const auto& iface_type = cast<InterfaceType>(*resolved_context);
-                const InterfaceDeclaration& iface_decl =
-                    iface_type.declaration();
-                if (std::optional<Nonnull<const Declaration*>> member =
-                        FindMember(access.member(), iface_decl.members());
-                    member.has_value()) {
-                  if (found_in.has_value() &&
-                      !ValueEqual(found_in.value(), resolved_context)) {
-                    // TODO: If we resolve to the same member either way, this
-                    // is not ambiguous.
-                    return CompilationError(e->source_loc())
-                           << "ambiguous member access, " << access.member()
-                           << " found in " << *found_in.value() << " and "
-                           << *resolved_context;
-                  }
-                  const Value& member_type = (*member)->static_type();
-                  BindingMap binding_map = iface_type.args();
-                  binding_map[iface_decl.self()] = &var_type;
-                  Nonnull<const Value*> inst_member_type =
-                      Substitute(binding_map, &member_type);
-                  access.set_static_type(inst_member_type);
-                  // TODO: We could dig this out of the witness for the impl
-                  // binding; it should always be there.
-                  CARBON_ASSIGN_OR_RETURN(
-                      Nonnull<Expression*> impl,
-                      impl_scope.Resolve(&iface_type, &var_type,
-                                         e->source_loc(), *this));
-                  access.set_impl(impl);
-                  found_in = resolved_context;
-                }
-              }
-              if (!found_in) {
-                return CompilationError(e->source_loc())
-                       << "member access, " << access.member() << " not in "
-                       << constraint;
-              }
-              return Success();
-            }
-            default:
-              return CompilationError(e->source_loc())
-                     << "member access, unexpected " << object_type
-                     << " of non-interface type " << typeof_var << " in " << *e;
-          }
-          break;
+          const Value& typeof_var =
+              cast<VariableType>(object_type).binding().static_type();
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), &typeof_var,
+                                 access.member()));
+
+          const Value& member_type = result.member->static_type();
+          BindingMap binding_map = result.interface->args();
+          binding_map[result.interface->declaration().self()] = &object_type;
+          Nonnull<const Value*> inst_member_type =
+              Substitute(binding_map, &member_type);
+          access.set_found_in_interface(result.interface);
+          access.set_static_type(inst_member_type);
+
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> impl,
+              impl_scope.Resolve(result.interface, &object_type,
+                                 e->source_loc(), *this));
+          access.set_impl(impl);
+          return Success();
         }
-        case Value::Kind::InterfaceType: {
+        case Value::Kind::InterfaceType:
+        case Value::Kind::ConstraintType: {
           // This case handles access to a class function from a type variable.
           // If `T` is a type variable and `foo` is a class function in an
           // interface implemented by `T`, then `T.foo` accesses the `foo` class
           // function of `T`.
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> var_addr,
+              Nonnull<const Value*> type,
               InterpExp(&access.object(), arena_, trace_stream_));
-          const VariableType& var_type = cast<VariableType>(*var_addr);
-          const InterfaceType& iface_type = cast<InterfaceType>(object_type);
-          const InterfaceDeclaration& iface_decl = iface_type.declaration();
-          if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.member(), iface_decl.members());
-              member.has_value()) {
-            CARBON_CHECK(var_type.binding().impl_binding().has_value());
-            access.set_impl(
-                CreateImplReference(*var_type.binding().impl_binding()));
-            access.set_found_in_interface(&iface_type);
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), &object_type,
+                                 access.member()));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
+                                  impl_scope.Resolve(result.interface, type,
+                                                     e->source_loc(), *this));
+          access.set_impl(impl);
+          access.set_found_in_interface(result.interface);
 
-            switch ((*member)->kind()) {
-              case DeclarationKind::FunctionDeclaration: {
-                const auto& func = cast<FunctionDeclaration>(*member);
-                if (func->is_method()) {
-                  break;
-                }
-                const Value& member_type = (*member)->static_type();
-                BindingMap binding_map = iface_type.args();
-                binding_map[iface_decl.self()] = &var_type;
-                Nonnull<const Value*> inst_member_type =
-                    Substitute(binding_map, &member_type);
-                access.set_static_type(inst_member_type);
-                return Success();
-              }
-              default:
+          switch (result.member->kind()) {
+            case DeclarationKind::FunctionDeclaration: {
+              const auto& func = cast<FunctionDeclaration>(*result.member);
+              if (func.is_method()) {
                 break;
+              }
+              const Value& member_type = func.static_type();
+              BindingMap binding_map = result.interface->args();
+              binding_map[result.interface->declaration().self()] = type;
+              Nonnull<const Value*> inst_member_type =
+                  Substitute(binding_map, &member_type);
+              access.set_static_type(inst_member_type);
+              return Success();
             }
-            // TODO: Consider setting the static type of all interface member
-            // declarations and instance member declarations to be member name
-            // types, rather than special-casing member accesses that name
-            // them.
-            access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(*member)));
-            access.set_value_category(ValueCategory::Let);
-            return Success();
-          } else {
-            return CompilationError(e->source_loc())
-                   << "member access, " << access.member() << " not in "
-                   << iface_decl.name();
+            default:
+              break;
           }
-          break;
+          // TODO: Consider setting the static type of all interface member
+          // declarations and instance member declarations to be member name
+          // types, rather than special-casing member accesses that name
+          // them.
+          access.set_static_type(
+              arena_->New<TypeOfMemberName>(Member(result.member)));
+          access.set_value_category(ValueCategory::Let);
+          return Success();
         }
         default:
           return CompilationError(e->source_loc())

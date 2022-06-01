@@ -15,7 +15,7 @@ interface Vector {
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in Vector
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in interface Vector
   return a.Scale(s);
 }
 

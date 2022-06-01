@@ -827,20 +827,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // suitable member name value.
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          std::optional<const InterfaceType*> iface_result;
           std::optional<const Value*> type_result;
-          if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
-            // This is `Interface.Member`.
-            iface_result = iface_type;
-          } else {
-            // This is `Type.Member` or `TypeParameter.Member`. In the latter
-            // case, we know both the type and the interface in which the
-            // member is found.
+          if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
             type_result = act.results()[0];
-            iface_result = access.found_in_interface();
           }
-          MemberName* member_name = arena_->New<MemberName>(
-              type_result, iface_result, member_name_type->member());
+          MemberName* member_name =
+              arena_->New<MemberName>(type_result, access.found_in_interface(),
+                                      member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in

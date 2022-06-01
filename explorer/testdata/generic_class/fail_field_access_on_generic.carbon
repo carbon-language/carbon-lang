@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn BadSimpleMemberAccess[T:! Type](a: T) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access, unexpected T:! Type of non-interface type Type in a.x
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access into unconstrained type
   return a.x;
 }
 
