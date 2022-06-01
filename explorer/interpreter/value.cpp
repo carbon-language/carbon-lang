@@ -369,12 +369,12 @@ void Value::Print(llvm::raw_ostream& out) const {
         // in `lookup_contexts()`.
         out << sep << *impl.type << " is " << *impl.interface;
       }
-      for (const ConstraintType::SameTypeConstraint& same_type :
-           constraint.same_type_constraints()) {
+      for (const ConstraintType::EqualityConstraint& equality :
+           constraint.equality_constraints()) {
         out << sep;
-        llvm::ListSeparator equal(" = ");
-        for (Nonnull<const Value*> type : same_type.types) {
-          out << equal << *type;
+        llvm::ListSeparator equal(" == ");
+        for (Nonnull<const Value*> value : equality.values) {
+          out << equal << *value;
         }
       }
       break;
@@ -556,8 +556,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       const auto& constraint2 = cast<ConstraintType>(*t2);
       if (constraint1.impl_constraints().size() !=
               constraint2.impl_constraints().size() ||
-          constraint1.same_type_constraints().size() !=
-              constraint2.same_type_constraints().size() ||
+          constraint1.equality_constraints().size() !=
+              constraint2.equality_constraints().size() ||
           constraint1.lookup_contexts().size() !=
               constraint2.lookup_contexts().size()) {
         return false;
@@ -570,14 +570,14 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
           return false;
         }
       }
-      for (size_t i = 0; i < constraint1.same_type_constraints().size(); ++i) {
-        const auto& same_type1 = constraint1.same_type_constraints()[i];
-        const auto& same_type2 = constraint2.same_type_constraints()[i];
-        if (same_type1.types.size() != same_type2.types.size()) {
+      for (size_t i = 0; i < constraint1.equality_constraints().size(); ++i) {
+        const auto& equality1 = constraint1.equality_constraints()[i];
+        const auto& equality2 = constraint2.equality_constraints()[i];
+        if (equality1.values.size() != equality2.values.size()) {
           return false;
         }
-        for (size_t j = 0; j < same_type1.types.size(); ++j) {
-          if (!TypeEqual(same_type1.types[i], same_type2.types[i])) {
+        for (size_t j = 0; j < equality1.values.size(); ++j) {
+          if (!ValueEqual(equality1.values[i], equality2.values[i])) {
             return false;
           }
         }

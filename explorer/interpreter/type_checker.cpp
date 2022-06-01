@@ -810,15 +810,15 @@ auto TypeChecker::Substitute(
                  Substitute(dict, impl_constraint.interface))});
       }
 
-      std::vector<ConstraintType::SameTypeConstraint> same_type_constraints;
-      same_type_constraints.reserve(constraint.same_type_constraints().size());
-      for (const auto& same_type_constraint :
-           constraint.same_type_constraints()) {
-        std::vector<Nonnull<const Value*>> types;
-        for (const Value* type : same_type_constraint.types) {
-          types.push_back(Substitute(dict, type));
+      std::vector<ConstraintType::EqualityConstraint> equality_constraints;
+      equality_constraints.reserve(constraint.equality_constraints().size());
+      for (const auto& equality_constraint :
+           constraint.equality_constraints()) {
+        std::vector<Nonnull<const Value*>> values;
+        for (const Value* value : equality_constraint.values) {
+          values.push_back(Substitute(dict, value));
         }
-        same_type_constraints.push_back({.types = types});
+        equality_constraints.push_back({.values = values});
       }
       // TODO: Coalesce same-type constraints that are now overlapping.
 
@@ -833,7 +833,7 @@ auto TypeChecker::Substitute(
       Nonnull<const ConstraintType*> new_constraint =
           arena_->New<ConstraintType>(
               constraint.self_binding(), std::move(impl_constraints),
-              std::move(same_type_constraints), std::move(lookup_contexts));
+              std::move(equality_constraints), std::move(lookup_contexts));
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << constraint << " => "
                         << *new_constraint << "\n";
@@ -990,11 +990,11 @@ auto TypeChecker::MakeConstraintForInterface(
   auto* self = arena_->New<VariableType>(self_binding);
   std::vector<ConstraintType::ImplConstraint> impl_constraints = {
       ConstraintType::ImplConstraint{.type = self, .interface = iface_type}};
-  std::vector<ConstraintType::SameTypeConstraint> same_type_constraints = {};
+  std::vector<ConstraintType::EqualityConstraint> equality_constraints = {};
   std::vector<ConstraintType::LookupContext> lookup_contexts = {
       {.context = iface_type}};
   return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
-                                     std::move(same_type_constraints),
+                                     std::move(equality_constraints),
                                      std::move(lookup_contexts));
 }
 
@@ -1006,7 +1006,7 @@ auto TypeChecker::CombineConstraints(
       source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
   auto* self = arena_->New<VariableType>(self_binding);
   std::vector<ConstraintType::ImplConstraint> impl_constraints;
-  std::vector<ConstraintType::SameTypeConstraint> same_type_constraints;
+  std::vector<ConstraintType::EqualityConstraint> equality_constraints;
   std::vector<ConstraintType::LookupContext> lookup_contexts;
   for (Nonnull<const ConstraintType*> constraint : constraints) {
     BindingMap map;
@@ -1017,32 +1017,34 @@ auto TypeChecker::CombineConstraints(
           {.type = Substitute(map, impl.type),
            .interface = cast<InterfaceType>(Substitute(map, impl.interface))});
     }
-    for (ConstraintType::SameTypeConstraint same :
-         constraint->same_type_constraints()) {
-      std::vector<Nonnull<const Value*>> types;
-      for (const Value* type : same.types) {
-        types.push_back(Substitute(map, type));
+    for (ConstraintType::EqualityConstraint same :
+         constraint->equality_constraints()) {
+      std::vector<Nonnull<const Value*>> values;
+      for (const Value* value : same.values) {
+        values.push_back(Substitute(map, value));
       }
-      auto AddSameTypeConstraint =
-          [&](std::vector<Nonnull<const Value*>> types) {
+      auto AddEqualityConstraint =
+          [&](std::vector<Nonnull<const Value*>> values) {
             // TODO: This is really inefficient. Use value canonicalization or
             // hashing or similar to avoid the quadratic scan here.
-            for (const Value* type : types) {
-              for (ConstraintType::SameTypeConstraint& existing :
-                   same_type_constraints) {
-                for (const Value* existing_type : existing.types) {
-                  if (TypeEqual(type, existing_type)) {
+            for (const Value* value : values) {
+              for (ConstraintType::EqualityConstraint& existing :
+                   equality_constraints) {
+                for (const Value* existing_value : existing.values) {
+                  if (ValueEqual(value, existing_value)) {
+                    // There is overlap between two equality constraints.
+                    // Combine them into a single constraint.
                     // TODO: Remove duplicates
-                    existing.types.insert(existing.types.end(), types.begin(),
-                                          types.end());
+                    existing.values.insert(existing.values.end(),
+                                           values.begin(), values.end());
                     return;
                   }
                 }
               }
             }
-            same_type_constraints.push_back({.types = std::move(types)});
+            equality_constraints.push_back({.values = std::move(values)});
           };
-      AddSameTypeConstraint(std::move(types));
+      AddEqualityConstraint(std::move(values));
     }
     // TODO: Remove duplicates
     for (ConstraintType::LookupContext lookup : constraint->lookup_contexts()) {
@@ -1050,7 +1052,7 @@ auto TypeChecker::CombineConstraints(
     }
   }
   return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
-                                     std::move(same_type_constraints),
+                                     std::move(equality_constraints),
                                      std::move(lookup_contexts));
 }
 

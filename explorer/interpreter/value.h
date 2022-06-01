@@ -658,7 +658,8 @@ class InterfaceType : public Value {
 //
 // * A collection of (type, interface) pairs for interfaces that are known to
 //   be implemented by a type satisfying the constraint.
-// * A collection of sets of types that are known to be the same.
+// * A collection of sets of values, typically associated constants, that are
+//   known to be the same.
 // * A collection of contexts in which member name lookups will be performed
 //   for a type variable whose type is this constraint.
 //
@@ -672,9 +673,9 @@ class ConstraintType : public Value {
     Nonnull<const InterfaceType*> interface;
   };
 
-  // A collection of types that are known to be the same.
-  struct SameTypeConstraint {
-    std::vector<Nonnull<const Value*>> types;
+  // A collection of values that are known to be the same.
+  struct EqualityConstraint {
+    std::vector<Nonnull<const Value*>> values;
   };
 
   // A context in which we might look up a name.
@@ -685,12 +686,12 @@ class ConstraintType : public Value {
  public:
   explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
                           std::vector<ImplConstraint> impl_constraints,
-                          std::vector<SameTypeConstraint> same_type_constraints,
+                          std::vector<EqualityConstraint> equality_constraints,
                           std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
         impl_constraints_(std::move(impl_constraints)),
-        same_type_constraints_(std::move(same_type_constraints)),
+        equality_constraints_(std::move(equality_constraints)),
         lookup_contexts_(std::move(lookup_contexts)) {}
 
   static auto classof(const Value* value) -> bool {
@@ -705,8 +706,8 @@ class ConstraintType : public Value {
     return impl_constraints_;
   }
 
-  auto same_type_constraints() const -> llvm::ArrayRef<SameTypeConstraint> {
-    return same_type_constraints_;
+  auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
+    return equality_constraints_;
   }
 
   auto lookup_contexts() const -> llvm::ArrayRef<LookupContext> {
@@ -716,7 +717,7 @@ class ConstraintType : public Value {
  private:
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
-  std::vector<SameTypeConstraint> same_type_constraints_;
+  std::vector<EqualityConstraint> equality_constraints_;
   std::vector<LookupContext> lookup_contexts_;
 };
 
