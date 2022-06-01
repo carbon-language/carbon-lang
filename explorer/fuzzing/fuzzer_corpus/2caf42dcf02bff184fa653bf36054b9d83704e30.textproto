@@ -5,11 +5,12 @@ compilation_unit {
   is_api: true
   declarations {
     interface {
-      name: "Vector"
+      name: "AddWith"
       members {
         function {
-          name: "Add"
+          name: "Op"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -29,47 +31,7 @@ compilation_unit {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Self"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          return_term {
-            kind: Expression
-            type {
-              identifier {
-                name: "Self"
-              }
-            }
-          }
-        }
-      }
-      members {
-        function {
-          name: "Scale"
-          me_pattern {
-            name: "me"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "Self"
-                  }
-                }
-              }
-            }
-          }
-          param_pattern {
-            fields {
-              binding_pattern {
-                name: "v"
-                type {
-                  expression_pattern {
-                    expression {
-                      int_type_literal {
+                        name: "T"
                       }
                     }
                   }
@@ -133,21 +95,35 @@ compilation_unit {
   }
   declarations {
     impl {
-      kind: ExternalImpl
+      kind: InternalImpl
       impl_type {
         identifier {
           name: "Point"
         }
       }
       interface {
-        identifier {
-          name: "Vector"
+        call {
+          function {
+            identifier {
+              name: "AddWith"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                identifier {
+                  name: "Self"
+                }
+              }
+            }
+          }
         }
       }
       members {
         function {
-          name: "Add"
+          name: "Op"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -157,6 +133,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -251,112 +228,36 @@ compilation_unit {
           }
         }
       }
-      members {
-        function {
-          name: "Scale"
-          me_pattern {
-            name: "me"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "Point"
-                  }
-                }
-              }
-            }
-          }
-          param_pattern {
-            fields {
-              binding_pattern {
-                name: "v"
-                type {
-                  expression_pattern {
-                    expression {
-                      int_type_literal {
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          return_term {
-            kind: Expression
-            type {
-              identifier {
-                name: "Point"
-              }
-            }
-          }
-          body {
-            statements {
-              return_statement {
-                expression {
-                  struct_literal {
-                    fields {
-                      name: "x"
-                      expression {
-                        primitive_operator {
-                          op: Mul
-                          arguments {
-                            simple_member_access {
-                              field: "x"
-                              object {
-                                identifier {
-                                  name: "me"
-                                }
-                              }
-                            }
-                          }
-                          arguments {
-                            identifier {
-                              name: "v"
-                            }
-                          }
-                        }
-                      }
-                    }
-                    fields {
-                      name: "y"
-                      expression {
-                        primitive_operator {
-                          op: Mul
-                          arguments {
-                            simple_member_access {
-                              field: "y"
-                              object {
-                                identifier {
-                                  name: "me"
-                                }
-                              }
-                            }
-                          }
-                          arguments {
-                            identifier {
-                              name: "v"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   }
   declarations {
     function {
-      name: "AddAndScaleGeneric"
+      name: "DoAddGeneric"
       deduced_parameters {
         name: "T"
         type {
-          identifier {
-            name: "Vector"
+          type_type_literal {
+          }
+        }
+      }
+      deduced_parameters {
+        name: "U"
+        type {
+          call {
+            function {
+              identifier {
+                name: "AddWith"
+              }
+            }
+            argument {
+              tuple_literal {
+                fields {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -368,7 +269,7 @@ compilation_unit {
               expression_pattern {
                 expression {
                   identifier {
-                    name: "T"
+                    name: "U"
                   }
                 }
               }
@@ -389,102 +290,35 @@ compilation_unit {
             }
           }
         }
-        fields {
-          binding_pattern {
-            name: "s"
-            type {
-              expression_pattern {
-                expression {
-                  int_type_literal {
-                  }
-                }
-              }
-            }
-          }
-        }
       }
       return_term {
         kind: Expression
         type {
           identifier {
-            name: "T"
+            name: "U"
           }
         }
       }
       body {
         statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "m"
-                type {
-                  auto_pattern {
-                  }
-                }
-              }
-            }
-            init {
-              simple_member_access {
-                field: "Add"
-                object {
-                  identifier {
-                    name: "a"
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "n"
-                type {
-                  auto_pattern {
-                  }
-                }
-              }
-            }
-            init {
-              simple_member_access {
-                field: "Scale"
-                object {
-                  call {
-                    function {
-                      identifier {
-                        name: "m"
-                      }
-                    }
-                    argument {
-                      tuple_literal {
-                        fields {
-                          identifier {
-                            name: "b"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
           return_statement {
             expression {
               call {
                 function {
-                  identifier {
-                    name: "n"
+                  simple_member_access {
+                    field: "Op"
+                    object {
+                      identifier {
+                        name: "a"
+                      }
+                    }
                   }
                 }
                 argument {
                   tuple_literal {
                     fields {
                       identifier {
-                        name: "s"
+                        name: "b"
                       }
                     }
                   }
@@ -531,7 +365,7 @@ compilation_unit {
                   name: "x"
                   expression {
                     int_literal {
-                      value: 1
+                      value: 2
                     }
                   }
                 }
@@ -539,7 +373,7 @@ compilation_unit {
                   name: "y"
                   expression {
                     int_literal {
-                      value: 4
+                      value: 1
                     }
                   }
                 }
@@ -569,7 +403,7 @@ compilation_unit {
                   name: "x"
                   expression {
                     int_literal {
-                      value: 2
+                      value: 4
                     }
                   }
                 }
@@ -577,7 +411,7 @@ compilation_unit {
                   name: "y"
                   expression {
                     int_literal {
-                      value: 3
+                      value: 2
                     }
                   }
                 }
@@ -605,7 +439,7 @@ compilation_unit {
               call {
                 function {
                   identifier {
-                    name: "AddAndScaleGeneric"
+                    name: "DoAddGeneric"
                   }
                 }
                 argument {
@@ -620,11 +454,6 @@ compilation_unit {
                         name: "b"
                       }
                     }
-                    fields {
-                      int_literal {
-                        value: 5
-                      }
-                    }
                   }
                 }
               }
@@ -637,18 +466,33 @@ compilation_unit {
               primitive_operator {
                 op: Sub
                 arguments {
-                  simple_member_access {
-                    field: "x"
-                    object {
-                      identifier {
-                        name: "p"
+                  primitive_operator {
+                    op: Sub
+                    arguments {
+                      simple_member_access {
+                        field: "x"
+                        object {
+                          identifier {
+                            name: "p"
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      simple_member_access {
+                        field: "y"
+                        object {
+                          identifier {
+                            name: "p"
+                          }
+                        }
                       }
                     }
                   }
                 }
                 arguments {
                   int_literal {
-                    value: 15
+                    value: 3
                   }
                 }
               }

@@ -10,6 +10,7 @@ compilation_unit {
         function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -51,6 +53,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -60,6 +63,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -129,114 +133,116 @@ compilation_unit {
           }
         }
       }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        identifier {
+          name: "Point"
+        }
+      }
+      interface {
+        identifier {
+          name: "Vector"
+        }
+      }
       members {
-        impl {
-          kind: InternalImpl
-          impl_type {
-            identifier {
-              name: "Point"
+        function {
+          name: "Add"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+            }
             }
           }
-          interface {
-            identifier {
-              name: "Vector"
-            }
-          }
-          members {
-            function {
-              name: "Add"
-              me_pattern {
-                name: "me"
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "b"
                 type {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Point"
+                        name: "Self"
                       }
                     }
                   }
                 }
               }
-              param_pattern {
-                fields {
-                  binding_pattern {
-                    name: "b"
-                    type {
-                      expression_pattern {
-                        expression {
-                          identifier {
-                            name: "Point"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
               }
-              return_term {
-                kind: Expression
-                type {
-                  identifier {
-                    name: "Point"
-                  }
-                }
-              }
-              body {
-                statements {
-                  return_statement {
-                    expression {
-                      struct_literal {
-                        fields {
-                          name: "x"
-                          expression {
-                            primitive_operator {
-                              op: Add
-                              arguments {
-                                simple_member_access {
-                                  field: "x"
-                                  object {
-                                    identifier {
-                                      name: "me"
-                                    }
-                                  }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        primitive_operator {
+                          op: Add
+                          arguments {
+                            simple_member_access {
+                              field: "x"
+                              object {
+                                identifier {
+                                  name: "me"
                                 }
                               }
-                              arguments {
-                                simple_member_access {
-                                  field: "x"
-                                  object {
-                                    identifier {
-                                      name: "b"
-                                    }
-                                  }
+                            }
+                          }
+                          arguments {
+                            simple_member_access {
+                              field: "x"
+                              object {
+                                identifier {
+                                  name: "b"
                                 }
                               }
                             }
                           }
                         }
-                        fields {
-                          name: "y"
-                          expression {
-                            primitive_operator {
-                              op: Add
-                              arguments {
-                                simple_member_access {
-                                  field: "y"
-                                  object {
-                                    identifier {
-                                      name: "me"
-                                    }
-                                  }
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        primitive_operator {
+                          op: Add
+                          arguments {
+                            simple_member_access {
+                              field: "y"
+                              object {
+                                identifier {
+                                  name: "me"
                                 }
                               }
-                              arguments {
-                                simple_member_access {
-                                  field: "y"
-                                  object {
-                                    identifier {
-                                      name: "b"
-                                    }
-                                  }
+                            }
+                          }
+                          arguments {
+                            simple_member_access {
+                              field: "y"
+                              object {
+                                identifier {
+                                  name: "b"
                                 }
                               }
                             }
@@ -249,92 +255,94 @@ compilation_unit {
               }
             }
           }
-          members {
-            function {
-              name: "Scale"
-              me_pattern {
-                name: "me"
+        }
+      }
+      members {
+        function {
+          name: "Scale"
+          me_pattern {
+            binding_pattern {
+            name: "me"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "v"
                 type {
                   expression_pattern {
                     expression {
-                      identifier {
-                        name: "Point"
+                      int_type_literal {
                       }
                     }
                   }
                 }
               }
-              param_pattern {
-                fields {
-                  binding_pattern {
-                    name: "v"
-                    type {
-                      expression_pattern {
-                        expression {
-                          int_type_literal {
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
               }
-              return_term {
-                kind: Expression
-                type {
-                  identifier {
-                    name: "Point"
-                  }
-                }
-              }
-              body {
-                statements {
-                  return_statement {
-                    expression {
-                      struct_literal {
-                        fields {
-                          name: "x"
-                          expression {
-                            primitive_operator {
-                              op: Mul
-                              arguments {
-                                simple_member_access {
-                                  field: "x"
-                                  object {
-                                    identifier {
-                                      name: "me"
-                                    }
-                                  }
-                                }
-                              }
-                              arguments {
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        primitive_operator {
+                          op: Mul
+                          arguments {
+                            simple_member_access {
+                              field: "x"
+                              object {
                                 identifier {
-                                  name: "v"
+                                  name: "me"
                                 }
                               }
                             }
                           }
+                          arguments {
+                            identifier {
+                              name: "v"
+                            }
+                          }
                         }
-                        fields {
-                          name: "y"
-                          expression {
-                            primitive_operator {
-                              op: Mul
-                              arguments {
-                                simple_member_access {
-                                  field: "y"
-                                  object {
-                                    identifier {
-                                      name: "me"
-                                    }
-                                  }
-                                }
-                              }
-                              arguments {
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        primitive_operator {
+                          op: Mul
+                          arguments {
+                            simple_member_access {
+                              field: "y"
+                              object {
                                 identifier {
-                                  name: "v"
+                                  name: "me"
                                 }
                               }
+                            }
+                          }
+                          arguments {
+                            identifier {
+                              name: "v"
                             }
                           }
                         }
@@ -418,23 +426,7 @@ compilation_unit {
               binding_pattern {
                 name: "m"
                 type {
-                  expression_pattern {
-                    expression {
-                      function_type {
-                        parameter {
-                          fields {
-                            identifier {
-                              name: "T"
-                            }
-                          }
-                        }
-                        return_type {
-                          identifier {
-                            name: "T"
-                          }
-                        }
-                      }
-                    }
+                  auto_pattern {
                   }
                 }
               }
@@ -457,22 +449,7 @@ compilation_unit {
               binding_pattern {
                 name: "n"
                 type {
-                  expression_pattern {
-                    expression {
-                      function_type {
-                        parameter {
-                          fields {
-                            int_type_literal {
-                            }
-                          }
-                        }
-                        return_type {
-                          identifier {
-                            name: "T"
-                          }
-                        }
-                      }
-                    }
+                  auto_pattern {
                   }
                 }
               }
@@ -570,7 +547,7 @@ compilation_unit {
                   name: "y"
                   expression {
                     int_literal {
-                      value: 1
+                      value: 4
                     }
                   }
                 }

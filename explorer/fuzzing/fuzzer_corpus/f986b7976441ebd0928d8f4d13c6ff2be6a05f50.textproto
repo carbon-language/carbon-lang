@@ -8,23 +8,9 @@ compilation_unit {
       name: "Vector"
       members {
         function {
-          name: "Zero"
-          param_pattern {
-          }
-          return_term {
-            kind: Expression
-            type {
-              identifier {
-                name: "Self"
-              }
-            }
-          }
-        }
-      }
-      members {
-        function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -34,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -66,6 +53,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -75,6 +63,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -159,49 +148,9 @@ compilation_unit {
           }
           members {
             function {
-              name: "Zero"
-              param_pattern {
-              }
-              return_term {
-                kind: Expression
-                type {
-                  identifier {
-                    name: "Point"
-                  }
-                }
-              }
-              body {
-                statements {
-                  return_statement {
-                    expression {
-                      struct_literal {
-                        fields {
-                          name: "x"
-                          expression {
-                            int_literal {
-                              value: 0
-                            }
-                          }
-                        }
-                        fields {
-                          name: "y"
-                          expression {
-                            int_literal {
-                              value: 0
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          members {
-            function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -211,6 +160,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -309,6 +259,7 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
@@ -318,6 +269,7 @@ compilation_unit {
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -407,6 +359,85 @@ compilation_unit {
   }
   declarations {
     function {
+      name: "ScaleGeneric"
+      deduced_parameters {
+        name: "U"
+        type {
+          identifier {
+            name: "Vector"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "c"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "U"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "s"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "U"
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Scale"
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "s"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
       name: "AddAndScaleGeneric"
       deduced_parameters {
         name: "T"
@@ -420,6 +451,20 @@ compilation_unit {
         fields {
           binding_pattern {
             name: "a"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "b"
             type {
               expression_pattern {
                 expression {
@@ -459,9 +504,13 @@ compilation_unit {
             expression {
               call {
                 function {
-                  simple_member_access {
-                    field: "Scale"
-                    object {
+                  identifier {
+                    name: "ScaleGeneric"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
                       call {
                         function {
                           simple_member_access {
@@ -476,31 +525,14 @@ compilation_unit {
                         argument {
                           tuple_literal {
                             fields {
-                              call {
-                                function {
-                                  simple_member_access {
-                                    field: "Zero"
-                                    object {
-                                      identifier {
-                                        name: "T"
-                                      }
-                                    }
-                                  }
-                                }
-                                argument {
-                                  tuple_literal {
-                                  }
-                                }
+                              identifier {
+                                name: "b"
                               }
                             }
                           }
                         }
                       }
                     }
-                  }
-                }
-                argument {
-                  tuple_literal {
                     fields {
                       identifier {
                         name: "s"
@@ -550,7 +582,7 @@ compilation_unit {
                   name: "x"
                   expression {
                     int_literal {
-                      value: 2
+                      value: 1
                     }
                   }
                 }
@@ -559,6 +591,44 @@ compilation_unit {
                   expression {
                     int_literal {
                       value: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "b"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "x"
+                  expression {
+                    int_literal {
+                      value: 2
+                    }
+                  }
+                }
+                fields {
+                  name: "y"
+                  expression {
+                    int_literal {
+                      value: 3
                     }
                   }
                 }
@@ -597,6 +667,11 @@ compilation_unit {
                       }
                     }
                     fields {
+                      identifier {
+                        name: "b"
+                      }
+                    }
+                    fields {
                       int_literal {
                         value: 5
                       }
@@ -624,7 +699,7 @@ compilation_unit {
                 }
                 arguments {
                   int_literal {
-                    value: 10
+                    value: 15
                   }
                 }
               }

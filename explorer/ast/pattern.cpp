@@ -56,6 +56,9 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     case PatternKind::VarPattern:
       out << "var" << cast<VarPattern>(*this).pattern();
       break;
+    case PatternKind::AddrPattern:
+      out << "addr" << cast<AddrPattern>(*this).binding();
+      break;
   }
 }
 
@@ -87,6 +90,9 @@ void Pattern::PrintID(llvm::raw_ostream& out) const {
     case PatternKind::VarPattern:
       out << "var ...";
       break;
+    case PatternKind::AddrPattern:
+      out << "addr ...";
+      break;
     case PatternKind::ExpressionPattern:
       out << "...";
       break;
@@ -112,6 +118,8 @@ auto VisitNestedPatterns(const Pattern& pattern,
                                  visitor);
     case PatternKind::VarPattern:
       return VisitNestedPatterns(cast<VarPattern>(pattern).pattern(), visitor);
+    case PatternKind::AddrPattern:
+      return VisitNestedPatterns(cast<AddrPattern>(pattern).binding(), visitor);
     case PatternKind::BindingPattern:
     case PatternKind::AutoPattern:
     case PatternKind::ExpressionPattern:
