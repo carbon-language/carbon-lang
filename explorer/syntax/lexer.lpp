@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   // or std::nullopt on EOF
   auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context,
                     std::size_t hashtag_num) -> std::optional<std::string>;
+  auto EscapeSingleLineString(std::string s, std::size_t hashtag_num);
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -289,18 +290,42 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   return ARG_TOKEN(integer_literal, val);
 }
 
-#*\" {
+#*(\"\"\"|\") {
   // raw string literal.
   std::string s(yytext);
-
+  std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
   std::string hashtags(hashtag_num, '#');
   // if it's possible to be a string line string
   bool single_line = true;
   // set to true when no need to read before check
   bool skip_read = false;
+  // set to true in case of #*\"\"\"#* to stop further scanning
+  bool skip_scan = false;
   int c = 0;
-  for (;;) {
+
+  if (leading_quotes == 3) {
+    if (hashtag_num > 0) {
+      // check if it's a single line string, like #"""#
+      std::optional<std::string> next_hash_tags =
+          ReadHashTags(yyscanner, context, hashtag_num);
+      if (next_hash_tags == std::nullopt) {
+        return SIMPLE_TOKEN(END_OF_FILE);
+      }
+      c = next_hash_tags.value().back();
+      s.append(next_hash_tags.value());
+      if (c == '#') {
+        skip_scan = true;
+      } else {
+        skip_read = true;
+        single_line = false;
+      }
+    } else {
+      single_line = false;
+    }
+  }
+
+  while (!skip_scan) {
     if (skip_read) {
       skip_read = false;
     } else {
@@ -311,35 +336,36 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       s.push_back(c);
     }
 
-    if (single_line && c == '\n') {
-      // only block string can have new line
-      single_line = false;
-      continue;
+    if (single_line && (c == '\n' || c == '\v' || c == '\f' || c == '\r')) {
+      return context.RecordSyntaxError(
+          llvm::formatv("missing closing quote in simple string: {0}", s));
     }
 
     if (c != '"' && c != '\\') {
       continue;
     }
 
-    if (c == '"' && !single_line) {
-      // checks for 2 more '"'s on block string
-      c = ReadChar(yyscanner, context);
-      if (c <= 0) {
-        return SIMPLE_TOKEN(END_OF_FILE);
-      }
-      s.push_back(c);
-      if (c != '"') {
-        skip_read = true;
-        continue;
-      }
-      c = ReadChar(yyscanner, context);
-      if (c <= 0) {
-        return SIMPLE_TOKEN(END_OF_FILE);
-      }
-      s.push_back(c);
-      if (c != '"') {
-        skip_read = true;
-        continue;
+    if (c == '"') {
+      if (!single_line) {
+        // checks for 2 more '"'s on block string
+        c = ReadChar(yyscanner, context);
+        if (c <= 0) {
+          return SIMPLE_TOKEN(END_OF_FILE);
+        }
+        s.push_back(c);
+        if (c != '"') {
+          skip_read = true;
+          continue;
+        }
+        c = ReadChar(yyscanner, context);
+        if (c <= 0) {
+          return SIMPLE_TOKEN(END_OF_FILE);
+        }
+        s.push_back(c);
+        if (c != '"') {
+          skip_read = true;
+          continue;
+        }
       }
     }
 
@@ -380,8 +406,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   if (!single_line) {
     // block string
     llvm::StringRef str(s);
-    CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
 
+    CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
     Carbon::ErrorOr<std::string> block_string =
         Carbon::ParseBlockStringLiteral(str, hashtag_num);
     if (!block_string.ok()) {
@@ -390,6 +416,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     }
     return ARG_TOKEN(string_literal, *block_string);
   } else {
+    std::string hashtags(hashtag_num, '#');
     llvm::StringRef str(s);
     CARBON_CHECK(str.consume_front(hashtags + "\"") &&
                  str.consume_back("\"" + hashtags));
@@ -398,7 +425,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
         Carbon::UnescapeStringLiteral(str, hashtag_num);
     if (unescaped == std::nullopt) {
       return context.RecordSyntaxError(
-          llvm::formatv("Invalid escaping in string: {0}", str));
+          llvm::formatv("Invalid escaping in string: {0}",
+                        hashtags + "\"" + str + "\"" + hashtags));
     }
     return ARG_TOKEN(string_literal, *unescaped);
   }
