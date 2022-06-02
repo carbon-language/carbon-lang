@@ -10,28 +10,16 @@
 
 package ExplorerTest api;
 
-class Point {
+interface I {}
+impl i32 as I {}
 
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
-
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
-    return old;
-  }
-
-  var x: i32;
-  var y: i32;
+fn F(A:! i32, B:! i32, C:! i32, D:! i32, E:! i32,
+     T:! I where A == B and C == D and C == E and B == D) {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/combine_equality.carbon:[[@LINE+1]]: member access, F not in constraint interface I where .Self:! Type is interface I, A:! i32 == B:! i32 == E:! i32 == C:! i32 == D:! i32
+  T.F();
 }
 
 fn Main() -> i32 {
-  let p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
-  var x: auto = p.GetSetX(42);
-  if (p.x == 42) {
-    return x;
-  }
-  return 1;
+  F(1, 1, 1, 1, 1, i32);
+  return 0;
 }

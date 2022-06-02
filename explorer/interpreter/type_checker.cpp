@@ -18,6 +18,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/value.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -733,6 +734,140 @@ auto TypeChecker::ArgumentDeduction(
   }
 }
 
+// Builder for constraint types.
+//
+// This type supports incrementally building a constraint type by adding
+// constraints one at a time, and will deduplicate the constraints as it goes.
+//
+// TODO: The deduplication here is very inefficient. We should use value
+// canonicalization or hashing or similar to speed this up.
+class ConstraintTypeBuilder {
+ public:
+  ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
+      : self_binding_(arena->New<GenericBinding>(
+            source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc))) {}
+  ConstraintTypeBuilder(Nonnull<const GenericBinding*> self_binding)
+      : self_binding_(self_binding) {}
+  ConstraintTypeBuilder(Nonnull<const ConstraintType*> constraint)
+      : self_binding_(constraint->self_binding()),
+        impl_constraints_(constraint->impl_constraints()),
+        equality_constraints_(constraint->equality_constraints()),
+        lookup_contexts_(constraint->lookup_contexts()) {}
+
+  // Produce a type that refers to the `.Self` type of the constraint.
+  auto MakeSelfType(Nonnull<Arena*> arena) const
+      -> Nonnull<const VariableType*> {
+    return arena->New<VariableType>(self_binding_);
+  }
+
+  // Add an `impl` constraint -- `T is C` if not already present.
+  void AddImplConstraint(ConstraintType::ImplConstraint impl) {
+    for (ConstraintType::ImplConstraint existing : impl_constraints_) {
+      if (TypeEqual(existing.type, impl.type) &&
+          TypeEqual(existing.interface, impl.interface)) {
+        return;
+      }
+    }
+    impl_constraints_.push_back(std::move(impl));
+  }
+
+  // Add an `impl` constraint -- `A == B`, merging as necessary.
+  void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
+    // Check to see if any of the given values are already part of an equality
+    // constraint. If so, discard the value and note that we'll merge that
+    // constraint into the new one.
+    llvm::SmallDenseSet<size_t> merged_constraints;
+    {
+      size_t kept = 0;
+      for (size_t i = 0; i != equal.values.size(); ++i) {
+        if (std::optional<size_t> found_in =
+                FindInEqualityConstraints(equal.values[i])) {
+          merged_constraints.insert(*found_in);
+        } else {
+          equal.values[kept++] = equal.values[i];
+        }
+      }
+      equal.values.resize(kept);
+    }
+
+    // Merge and discard any constraints that overlapped `equal`.
+    if (!merged_constraints.empty()) {
+      size_t kept = 0;
+      for (size_t i = 0; i != equality_constraints_.size(); ++i) {
+        if (merged_constraints.contains(i)) {
+          equal.values.insert(equal.values.end(),
+                              equality_constraints_[i].values.begin(),
+                              equality_constraints_[i].values.end());
+        } else {
+          if (kept != i) {
+            equality_constraints_[kept] = std::move(equality_constraints_[i]);
+          }
+          ++kept;
+        }
+      }
+      equality_constraints_[kept++] = std::move(equal);
+      equality_constraints_.resize(kept);
+    } else {
+      equality_constraints_.push_back(std::move(equal));
+    }
+  }
+
+  // Add a context for qualified name lookup, if not already present.
+  void AddLookupContext(ConstraintType::LookupContext context) {
+    for (ConstraintType::LookupContext existing : lookup_contexts_) {
+      if (ValueEqual(existing.context, context.context)) {
+        return;
+      }
+    }
+    lookup_contexts_.push_back(std::move(context));
+  }
+
+  // Add all the constraints from another constraint type. The constraints must
+  // not refer to that other constraint type's self binding, because it will no
+  // longer be in scope.
+  void Add(Nonnull<const ConstraintType*> constraint) {
+    for (const auto& impl_constraint : constraint->impl_constraints()) {
+      AddImplConstraint(impl_constraint);
+    }
+
+    for (const auto& equality_constraint : constraint->equality_constraints()) {
+      AddEqualityConstraint(equality_constraint);
+    }
+
+    for (const auto& lookup_context : constraint->lookup_contexts()) {
+      AddLookupContext(lookup_context);
+    }
+  }
+
+  // Convert the builder into a ConstraintType. Note that this consumes the
+  // builder.
+  auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
+    return arena_->New<ConstraintType>(
+        self_binding_, std::move(impl_constraints_),
+        std::move(equality_constraints_), std::move(lookup_contexts_));
+  }
+
+ private:
+  // Find the given value in the equality constraints, returning the index of
+  // the constraint that contains it, if any.
+  auto FindInEqualityConstraints(const Value* value) -> std::optional<size_t> {
+    for (size_t i = 0; i != equality_constraints_.size(); ++i) {
+      for (const Value* v : equality_constraints_[i].values) {
+        if (ValueEqual(value, v)) {
+          return i;
+        }
+      }
+    }
+    return std::nullopt;
+  }
+
+ private:
+  Nonnull<const GenericBinding*> self_binding_;
+  std::vector<ConstraintType::ImplConstraint> impl_constraints_;
+  std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
+  std::vector<ConstraintType::LookupContext> lookup_contexts_;
+};
+
 auto TypeChecker::Substitute(
     const std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& dict,
     Nonnull<const Value*> type) const -> Nonnull<const Value*> {
@@ -806,39 +941,34 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::ConstraintType: {
       const auto& constraint = cast<ConstraintType>(*type);
-      std::vector<ConstraintType::ImplConstraint> impl_constraints;
-      impl_constraints.reserve(constraint.impl_constraints().size());
+      ConstraintTypeBuilder builder(constraint.self_binding());
       for (const auto& impl_constraint : constraint.impl_constraints()) {
-        impl_constraints.push_back(
+        builder.AddImplConstraint(
             {.type = Substitute(dict, impl_constraint.type),
              .interface = cast<InterfaceType>(
                  Substitute(dict, impl_constraint.interface))});
       }
 
-      std::vector<ConstraintType::EqualityConstraint> equality_constraints;
-      equality_constraints.reserve(constraint.equality_constraints().size());
       for (const auto& equality_constraint :
            constraint.equality_constraints()) {
         std::vector<Nonnull<const Value*>> values;
         for (const Value* value : equality_constraint.values) {
-          values.push_back(Substitute(dict, value));
+          // Ensure we don't create any duplicates through substitution.
+          if (std::find_if(values.begin(), values.end(), [&](const Value* v) {
+                return ValueEqual(v, value);
+              }) == values.end()) {
+            values.push_back(Substitute(dict, value));
+          }
         }
-        equality_constraints.push_back({.values = values});
+        builder.AddEqualityConstraint({.values = std::move(values)});
       }
-      // TODO: Coalesce same-type constraints that are now overlapping.
 
-      std::vector<ConstraintType::LookupContext> lookup_contexts;
-      lookup_contexts.reserve(constraint.lookup_contexts().size());
       for (const auto& lookup_context : constraint.lookup_contexts()) {
-        lookup_contexts.push_back(
+        builder.AddLookupContext(
             {.context = Substitute(dict, lookup_context.context)});
       }
-      // TODO: If the self_binding is substituted, should we track that
-      // somehow?
       Nonnull<const ConstraintType*> new_constraint =
-          arena_->New<ConstraintType>(
-              constraint.self_binding(), std::move(impl_constraints),
-              std::move(equality_constraints), std::move(lookup_contexts));
+          std::move(builder).Build(arena_);
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << constraint << " => "
                         << *new_constraint << "\n";
@@ -991,75 +1121,25 @@ auto TypeChecker::SatisfyImpls(
 auto TypeChecker::MakeConstraintForInterface(
     SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
     -> Nonnull<const ConstraintType*> {
-  auto* self_binding = arena_->New<GenericBinding>(
-      source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
-  auto* self = arena_->New<VariableType>(self_binding);
-  std::vector<ConstraintType::ImplConstraint> impl_constraints = {
-      ConstraintType::ImplConstraint{.type = self, .interface = iface_type}};
-  std::vector<ConstraintType::EqualityConstraint> equality_constraints = {};
-  std::vector<ConstraintType::LookupContext> lookup_contexts = {
-      {.context = iface_type}};
-  return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
-                                     std::move(equality_constraints),
-                                     std::move(lookup_contexts));
+  ConstraintTypeBuilder builder(arena_, source_loc);
+  builder.AddImplConstraint(
+      {.type = builder.MakeSelfType(arena_), .interface = iface_type});
+  builder.AddLookupContext({.context = iface_type});
+  return std::move(builder).Build(arena_);
 }
 
 auto TypeChecker::CombineConstraints(
     SourceLocation source_loc,
     llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
     -> Nonnull<const ConstraintType*> {
-  auto* self_binding = arena_->New<GenericBinding>(
-      source_loc, ".Self", arena_->New<TypeTypeLiteral>(source_loc));
-  auto* self = arena_->New<VariableType>(self_binding);
-  std::vector<ConstraintType::ImplConstraint> impl_constraints;
-  std::vector<ConstraintType::EqualityConstraint> equality_constraints;
-  std::vector<ConstraintType::LookupContext> lookup_contexts;
+  ConstraintTypeBuilder builder(arena_, source_loc);
+  auto* self = builder.MakeSelfType(arena_);
   for (Nonnull<const ConstraintType*> constraint : constraints) {
     BindingMap map;
     map[constraint->self_binding()] = self;
-    // TODO: Remove duplicates
-    for (ConstraintType::ImplConstraint impl : constraint->impl_constraints()) {
-      impl_constraints.push_back(
-          {.type = Substitute(map, impl.type),
-           .interface = cast<InterfaceType>(Substitute(map, impl.interface))});
-    }
-    for (ConstraintType::EqualityConstraint same :
-         constraint->equality_constraints()) {
-      std::vector<Nonnull<const Value*>> values;
-      for (const Value* value : same.values) {
-        values.push_back(Substitute(map, value));
-      }
-      auto AddEqualityConstraint =
-          [&](std::vector<Nonnull<const Value*>> values) {
-            // TODO: This is really inefficient. Use value canonicalization or
-            // hashing or similar to avoid the quadratic scan here.
-            for (const Value* value : values) {
-              for (ConstraintType::EqualityConstraint& existing :
-                   equality_constraints) {
-                for (const Value* existing_value : existing.values) {
-                  if (ValueEqual(value, existing_value)) {
-                    // There is overlap between two equality constraints.
-                    // Combine them into a single constraint.
-                    // TODO: Remove duplicates
-                    existing.values.insert(existing.values.end(),
-                                           values.begin(), values.end());
-                    return;
-                  }
-                }
-              }
-            }
-            equality_constraints.push_back({.values = std::move(values)});
-          };
-      AddEqualityConstraint(std::move(values));
-    }
-    // TODO: Remove duplicates
-    for (ConstraintType::LookupContext lookup : constraint->lookup_contexts()) {
-      lookup_contexts.push_back({.context = Substitute(map, lookup.context)});
-    }
+    builder.Add(cast<ConstraintType>(Substitute(map, constraint)));
   }
-  return arena_->New<ConstraintType>(self_binding, std::move(impl_constraints),
-                                     std::move(equality_constraints),
-                                     std::move(lookup_contexts));
+  return std::move(builder).Build(arena_);
 }
 
 auto TypeChecker::DeduceCallBindings(
@@ -1937,14 +2017,55 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                << "found " << base_type;
       }
 
-      // TODO: Build the right resulting constraint.
-      const ConstraintType* constraint = base;
+      // Apply the `where` clauses.
+      ConstraintTypeBuilder builder(base);
       for (Nonnull<const WhereClause*> clause : where.clauses()) {
-        (void)clause;
-        // ...
+        switch (clause->kind()) {
+          case WhereClauseKind::IsWhereClause: {
+            const auto& is_clause = cast<IsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> type,
+                InterpExp(&is_clause.type(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> constraint,
+                InterpExp(&is_clause.constraint(), arena_, trace_stream_));
+            if (auto* interface = dyn_cast<InterfaceType>(constraint)) {
+              // `where X is Y` produces an `impl` constraint.
+              builder.AddImplConstraint({.type = type, .interface = interface});
+            } else if (auto* constraint_type =
+                           dyn_cast<ConstraintType>(constraint)) {
+              // Transform `where .B is (C where .D is E)` into
+              // `where .B is C and .B.D is E` then add all the resulting
+              // constraints.
+              BindingMap map;
+              map[constraint_type->self_binding()] = type;
+              builder.Add(cast<ConstraintType>(Substitute(map, constraint)));
+            } else {
+              return CompilationError(is_clause.constraint().source_loc())
+                     << "expression after `is` does not resolve to a "
+                        "constraint, found value "
+                     << *constraint << " of type "
+                     << is_clause.constraint().static_type();
+            }
+            break;
+          }
+          case WhereClauseKind::EqualsWhereClause: {
+            const auto& equals_clause = cast<EqualsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> lhs,
+                InterpExp(&equals_clause.lhs(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> rhs,
+                InterpExp(&equals_clause.rhs(), arena_, trace_stream_));
+            if (!ValueEqual(lhs, rhs)) {
+              builder.AddEqualityConstraint({.values = {lhs, rhs}});
+            }
+            break;
+          }
+        }
       }
 
-      where.set_static_type(arena_->New<TypeOfConstraintType>(constraint));
+      where.set_static_type(arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
       where.set_value_category(ValueCategory::Let);
       return Success();
     }
@@ -2050,7 +2171,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       auto& is_clause = cast<IsWhereClause>(*clause);
       CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
-      if (!isa<TypeOfInterfaceType, TypeOfConstraintType>(
+      if (!isa<TypeOfInterfaceType, TypeOfConstraintType, TypeType>(
               is_clause.constraint().static_type())) {
         return CompilationError(is_clause.constraint().source_loc())
                << "expression after `is` does not resolve to a constraint, "

@@ -10,28 +10,9 @@
 
 package ExplorerTest api;
 
-class Point {
+interface A {}
 
-  fn Origin() -> Point {
-    return {.x = 0, .y = 0};
-  }
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_is_non_type.carbon:[[@LINE+1]]: expression after `is` does not resolve to a constraint, found i32
+alias B = A where i32 is 5;
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
-    return old;
-  }
-
-  var x: i32;
-  var y: i32;
-}
-
-fn Main() -> i32 {
-  let p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
-  var x: auto = p.GetSetX(42);
-  if (p.x == 42) {
-    return x;
-  }
-  return 1;
-}
+fn Main() -> i32 { return 0; }
