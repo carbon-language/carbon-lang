@@ -204,9 +204,8 @@ checked definitions, while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
--   **Generic definitions are type checked**, immediately diagnosing any errors.
-    They won't fail unexpectedly in the future due to a bug that is only
-    discovered when used with a new type.
+-   **Generic definitions are fully type checked**, removing the need to
+    instantiate to check for errors and giving greater confidence in code.
     -   Avoids compile time cost of re-checking the definition for every
         instantiation.
     -   When using a definition-checked generic, usage error messages are
