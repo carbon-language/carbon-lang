@@ -231,7 +231,6 @@ def main() -> None:
     guard_macro = input_filename.upper().translate(trans_table) + "_"
     print(f"#ifndef {guard_macro}")
     print(f"#define {guard_macro}")
-    print("\n#include <string_view>")
     print("\nnamespace Carbon {\n")
 
     for node in classes.values():
@@ -242,20 +241,6 @@ def main() -> None:
             for id in ids:
                 print(f"  {node.Root().leaves[id].name} = {id},")
             print("};\n")
-
-            print(
-                "inline std::string_view "
-                f"{node.name}KindName({node.name}Kind k) {{"
-            )
-            print("  switch(k) {")
-            for id in ids:
-                name = node.Root().leaves[id].name
-                desc = " ".join(
-                    w.lower() for w in re.sub(r"([A-Z])", r" \1", name).split()
-                )
-                print(f'    case {node.name}Kind::{name}: return "{desc}";')
-            print("  }")
-            print("}\n")
 
         if node.kind in [Class.Kind.ABSTRACT, Class.Kind.CONCRETE]:
             print(

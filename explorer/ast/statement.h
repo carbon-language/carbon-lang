@@ -111,6 +111,20 @@ class Assign : public Statement {
 
 class VariableDefinition : public Statement {
  public:
+  static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
+                     Nonnull<Pattern*> pattern, Nonnull<Expression*> init,
+                     ValueCategory value_category)
+      -> ErrorOr<Nonnull<VariableDefinition*>> {
+    if (pattern->kind() != PatternKind::BindingPattern &&
+        pattern->kind() != PatternKind::TuplePattern) {
+      return CompilationError(source_loc)
+             << "Expected a binding pattern or a tuple pattern for variable "
+                "definition";
+    }
+    return arena->New<VariableDefinition>(source_loc, pattern, init,
+                                          value_category);
+  }
+
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
                      Nonnull<Expression*> init, ValueCategory value_category)
       : Statement(AstNodeKind::VariableDefinition, source_loc),

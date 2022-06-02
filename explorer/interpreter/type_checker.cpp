@@ -2048,12 +2048,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
-      if (var.pattern().kind() != PatternKind::BindingPattern &&
-          var.pattern().kind() != PatternKind::TuplePattern &&
-          var.pattern().kind() != PatternKind::AlternativePattern) {
-        return CompilationError(var.pattern().source_loc())
-               << "Unexpected " << PatternKindName(var.pattern().kind());
-      }
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
       const Value& rhs_ty = var.init().static_type();
       // TODO: If the pattern contains a binding that implies a new impl is

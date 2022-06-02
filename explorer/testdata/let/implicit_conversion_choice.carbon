@@ -20,6 +20,9 @@ impl i32 as ImplicitAs(A) {
 }
 
 fn Main() -> i32 {
-  let A.Value(n: i32) = 2;
-  return n;
+  let a: A = 2;
+  match (a) {
+    case A.Value(n: i32) => { return n; }
+  }
+  return 0;
 }
