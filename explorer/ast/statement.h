@@ -117,9 +117,9 @@ class VariableDefinition : public Statement {
       -> ErrorOr<Nonnull<VariableDefinition*>> {
     if (pattern->kind() != PatternKind::BindingPattern &&
         pattern->kind() != PatternKind::TuplePattern) {
-      return CompilationError(source_loc)
-             << "Expected a binding pattern or a tuple pattern for variable "
-                "definition";
+      return Error(
+          "Expected a binding pattern or a tuple pattern for variable "
+          "definition");
     }
     return arena->New<VariableDefinition>(source_loc, pattern, init,
                                           value_category);
