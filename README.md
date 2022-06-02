@@ -57,9 +57,9 @@ with massive and growing codebases and investments. However, it is struggling to
 improve and meet developers' needs outlined above, in no small part due to
 accumulating decades of technical debt. Incrementally improving C++ is
 [extremely difficult](/docs/project/difficulties_improving_cpp.md), both due to
-the technical debt itself and challenges with its evolution process. We want a
-language that avoids inheriting the legacy of C or C++ directly, and instead
-starts with solid language foundations like a
+the technical debt itself and challenges with its evolution process. The best
+way to address these problems is to avoid inheriting the legacy of C or C++
+directly, and instead start with solid language foundations like a
 [modern generics system](#generics), modular code organization, and consistent,
 simple syntax.
 
@@ -134,7 +134,7 @@ and the language:
     -   Class types
     -   Inheritance
     -   Operator overloading
-    -   Lexical and syntax framework
+    -   Lexical and syntactic structure
     -   Code organization and modular structure
 -   A prototype interpreter demo that can both run isolated examples and gives a
     detailed analysis of the specific semantic model and abstract machine of
@@ -152,7 +152,7 @@ You can see our [roadmap](/docs/project/roadmap.md) for more details.
 
 If you're already a C++ developer, Carbon should have a gentle learning curve.
 It is built out of a consistent set of language constructs that should feel
-familiar.
+familiar and be easy to read and understand.
 
 C++ code like this:
 
@@ -176,10 +176,9 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
      alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
 
-You can also call Carbon from C++, and the other way around, without overhead.
-You can port your library to Carbon, or write new Carbon on top of your existing
-C++ investment. Carbon won't add a sea of dependencies or slow down your
-performance-critical code. For example:
+You can call Carbon from C++ without overhead and the other way around. This
+means you migrate a single C++ library to Carbon within an application, or write
+new Carbon on top of your existing C++ investment. For example:
 
 <a href="docs/images/snippets.md#mixed">
 <!--
