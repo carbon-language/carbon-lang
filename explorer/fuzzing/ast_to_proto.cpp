@@ -322,6 +322,10 @@ static auto PatternToProto(const Pattern& pattern) -> Fuzzing::Pattern {
       *pattern_proto.mutable_var_pattern()->mutable_pattern() =
           PatternToProto(cast<VarPattern>(pattern).pattern());
       break;
+    case PatternKind::AddrPattern:
+      *pattern_proto.mutable_addr_pattern()->mutable_binding_pattern() =
+          BindingPatternToProto(cast<AddrPattern>(pattern).binding());
+      break;
   }
   return pattern_proto;
 }
@@ -479,8 +483,23 @@ static auto DeclarationToProto(const Declaration& declaration)
             GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
-        *function_proto->mutable_me_pattern() =
-            BindingPatternToProto(function.me_pattern());
+        switch (function.me_pattern().kind()) {
+          case PatternKind::AddrPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            break;
+          case PatternKind::BindingPattern:
+            *function_proto->mutable_me_pattern() =
+                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            break;
+          default:
+            // Parser shouldn't allow me_pattern to be anything other than
+            // AddrPattern or BindingPattern
+            CARBON_FATAL() << "me_pattern in method declaration can be either "
+                              "AddrPattern or BindingPattern. Actual pattern: "
+                           << function.me_pattern();
+            break;
+        }
       }
       *function_proto->mutable_param_pattern() =
           TuplePatternToProto(function.param_pattern());
