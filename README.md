@@ -141,12 +141,15 @@ and the language:
     Carbon. We call this the [Carbon Explorer](/explorer/).
 
 We are currently focused on getting more broad feedback and participation from
-the C++ community, completing the 0.1 language design, and completing the Carbon
-Explorer implementation of this design. Beyond that, we plan to prioritize C++
-interoperability and a realistic toolchain that implements the 0.1 language and
-can be used to evaluate Carbon in more detail.
+the C++ community,
+[completing the 0.1 language design](/docs/project/roadmap.md#completing-the-language-design),
+and
+[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
+Beyond that, we plan to prioritize C++ interoperability and a realistic
+toolchain that implements the 0.1 language and can be used to evaluate Carbon in
+more detail.
 
-You can see our [roadmap](/docs/project/roadmap.md) for more details.
+You can see our [full roadmap](/docs/project/roadmap.md) for more details.
 
 ## Carbon and C++
 
