@@ -425,6 +425,11 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
     case Fuzzing::Pattern::kGenericBinding:
       GenericBindingToCarbon(pattern.generic_binding(), out);
       break;
+
+    case Fuzzing::Pattern::kAddrPattern:
+      out << "addr ";
+      BindingPatternToCarbon(pattern.addr_pattern().binding_pattern(), out);
+      break;
   }
 }
 
@@ -598,7 +603,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         if (function.has_me_pattern()) {
           // This is a class method.
           out << sep;
-          BindingPatternToCarbon(function.me_pattern(), out);
+          PatternToCarbon(function.me_pattern(), out);
         }
         out << "]";
       }

@@ -209,8 +209,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args,
-                  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> bool {
+                  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+                  Nonnull<Arena*> arena) -> bool {
   if (trace_stream) {
     **trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
   }
@@ -222,6 +222,14 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         (*bindings)->Initialize(*placeholder.value_node(), v);
       }
       return true;
+    }
+    case Value::Kind::AddrValue: {
+      const auto& addr = cast<AddrValue>(*p);
+      CARBON_CHECK(v->kind() == Value::Kind::LValue);
+      const auto& lvalue = cast<LValue>(*v);
+      return PatternMatch(
+          &addr.pattern(), arena->New<PointerValue>(lvalue.address()),
+          source_loc, bindings, generic_args, trace_stream, arena);
     }
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*p);
@@ -236,8 +244,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                              source_loc, bindings, generic_args,
-                              trace_stream)) {
+                              source_loc, bindings, generic_args, trace_stream,
+                              arena)) {
               return false;
             }
           }  // for
@@ -255,7 +263,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                      v_struct.elements()[i].name);
         if (!PatternMatch(p_struct.elements()[i].value,
                           v_struct.elements()[i].value, source_loc, bindings,
-                          generic_args, trace_stream)) {
+                          generic_args, trace_stream, arena)) {
           return false;
         }
       }
@@ -271,7 +279,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             return false;
           }
           return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc,
-                              bindings, generic_args, trace_stream);
+                              bindings, generic_args, trace_stream, arena);
         }
         default:
           CARBON_FATAL() << "expected a choice alternative in pattern, not "
@@ -283,11 +291,12 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
           if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
-                            bindings, generic_args, trace_stream)) {
+                            bindings, generic_args, trace_stream, arena)) {
             return false;
           }
           if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
-                            source_loc, bindings, generic_args, trace_stream)) {
+                            source_loc, bindings, generic_args, trace_stream,
+                            arena)) {
             return false;
           }
           return true;
@@ -503,6 +512,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
@@ -637,9 +647,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
       RuntimeScope function_scope(&heap_);
       BindingMap generic_args;
-      CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
-                                converted_args, call.source_loc(),
-                                &function_scope, generic_args, trace_stream_));
+      CARBON_CHECK(PatternMatch(
+          &function.param_pattern().value(), converted_args, call.source_loc(),
+          &function_scope, generic_args, trace_stream_, this->arena_));
       CARBON_CHECK(function.body().has_value())
           << "Calling a function that's missing a body";
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
@@ -657,10 +667,10 @@ auto Interpreter::CallFunction(const CallExpression& call,
       BindingMap generic_args;
       CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                 call.source_loc(), &method_scope, generic_args,
-                                trace_stream_));
+                                trace_stream_, this->arena_));
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                 call.source_loc(), &method_scope, generic_args,
-                                trace_stream_));
+                                trace_stream_, this->arena_));
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : m.type_args()) {
         method_scope.Initialize(bind, val);
@@ -681,7 +691,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
       RuntimeScope params_scope(&heap_);
       BindingMap generic_args;
       CARBON_CHECK(PatternMatch(&name.params().value(), arg, call.source_loc(),
-                                &params_scope, generic_args, trace_stream_));
+                                &params_scope, generic_args, trace_stream_,
+                                this->arena_));
       switch (decl.kind()) {
         case DeclarationKind::ClassDeclaration: {
           switch (phase()) {
@@ -804,9 +815,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.object()));
+        //    { { e.f :: C, E, F} :: S, H}
+        // -> { { e :: [].f :: C, E, F} :: S, H}
+        if (access.is_field_addr_me_method()) {
+          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        } else {
+          return todo_.Spawn(
+              std::make_unique<ExpressionAction>(&access.object()));
+        }
       } else {
+        //    { { v :: [].f :: C, E, F} :: S, H}
+        // -> { { v_f :: C, E, F} : S, H}
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
@@ -842,10 +861,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             witness = cast<Witness>(witness_value);
           }
           FieldPath::Component member(access.member(), witness);
+          const Value* aggregate;
+          if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
+            CARBON_ASSIGN_OR_RETURN(
+                aggregate,
+                this->heap_.Read(lvalue->address(), exp.source_loc()));
+          } else {
+            aggregate = act.results()[0];
+          }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
-              act.results()[0]->GetMember(arena_, FieldPath(member),
-                                          exp.source_loc()));
+              aggregate->GetMember(arena_, FieldPath(member), exp.source_loc(),
+                                   act.results()[0]));
           return todo_.FinishAction(member_value);
         }
       }
@@ -892,9 +919,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                                 exp.source_loc()));
           }
           FieldPath::Component field(access.member().name(), witness);
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> member,
-              object->GetMember(arena_, FieldPath(field), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
+                                  object->GetMember(arena_, FieldPath(field),
+                                                    exp.source_loc(), object));
           return todo_.FinishAction(member);
         }
       }
@@ -1148,6 +1175,14 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
       } else {
         return todo_.FinishAction(act.results()[0]);
       }
+    case PatternKind::AddrPattern:
+      const auto& addr = cast<AddrPattern>(pattern);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<PatternAction>(&addr.binding()));
+      } else {
+        return todo_.FinishAction(arena_->New<AddrValue>(act.results()[0]));
+      }
+      break;
   }
 }
 
@@ -1181,7 +1216,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Convert(act.results()[0], &c.pattern().static_type(),
                     stmt.source_loc()));
         if (PatternMatch(&c.pattern().value(), val, stmt.source_loc(), &matches,
-                         generic_args, trace_stream_)) {
+                         generic_args, trace_stream_, this->arena_)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
@@ -1262,7 +1297,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         RuntimeScope matches(&heap_);
         BindingMap generic_args;
         CARBON_CHECK(PatternMatch(p, v, stmt.source_loc(), &matches,
-                                  generic_args, trace_stream_))
+                                  generic_args, trace_stream_, this->arena_))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
         todo_.MergeScope(std::move(matches));

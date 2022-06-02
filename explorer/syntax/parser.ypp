@@ -142,6 +142,7 @@
 %type <Nonnull<Expression*>> if_expression
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
+%type <Nonnull<Pattern*>> deduced_param
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
 %type <std::vector<Nonnull<AstNode*>>> impl_deduced_params
 %type <std::vector<Nonnull<AstNode*>>> deduced_param_list
@@ -155,7 +156,7 @@
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
 %type <std::string> binding_lhs
-%type <std::optional<Nonnull<BindingPattern*>>> receiver
+%type <std::optional<Nonnull<Pattern*>>> receiver
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -174,6 +175,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  ADDR
   ALIAS
   AMPERSAND
   AND
@@ -797,27 +799,22 @@ generic_binding:
       $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
     }
 ;
+deduced_param:
+  generic_binding
+    { $$ = $1; }
+| variable_declaration
+    { $$ = $1; }
+| ADDR variable_declaration
+    { $$ = arena->New<AddrPattern>(context.source_loc(), $2); }
+;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Nonnull<AstNode*>>(); }
-| generic_binding
+    { $$ = {}; }
+| deduced_param
+    { $$ = {$1}; }
+| deduced_param_list COMMA deduced_param
     {
-      $$ = std::vector<Nonnull<AstNode*>>();
-      $$.push_back($1);
-    }
-| deduced_param_list COMMA generic_binding
-    {
-      $$ = $1;
-      $$.push_back($3);
-    }
-| variable_declaration
-    {
-      $$ = std::vector<Nonnull<AstNode*>>();
-      $$.push_back($1);
-    }
-| deduced_param_list COMMA variable_declaration
-    {
-      $$ = $1;
+      $$ = $1;  // TODO: can we std::move here?
       $$.push_back($3);
     }
 ;
@@ -838,6 +835,8 @@ receiver:
     { $$ = std::nullopt; }
 | LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
     { $$ = $2; }
+| LEFT_CURLY_BRACE ADDR variable_declaration RIGHT_CURLY_BRACE
+    { $$ = arena->New<AddrPattern>(context.source_loc(), $3); }
 ;
 function_declaration:
   FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block

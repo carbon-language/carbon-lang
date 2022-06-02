@@ -1,0 +1,98 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+        statements {
+          match {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+            clauses {
+              pattern {
+                expression_pattern {
+                  expression {
+                    int_literal {
+                      value: 1
+                    }
+                  }
+                }
+              }
+              statement {
+                block {
+                  statements {
+                    assign {
+                      lhs {
+                        identifier {
+                          name: "x"
+                        }
+                      }
+                      rhs {
+                        int_literal {
+                          value: 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              statement {
+                block {
+                  statements {
+                    return_statement {
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              is_default: true
+            }
+          }
+        }
+      }
+    }
+  }
+}
