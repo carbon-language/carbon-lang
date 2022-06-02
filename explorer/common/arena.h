@@ -16,10 +16,9 @@ namespace Carbon {
 class Arena {
  public:
   // Allocates an object in the arena, returning a pointer to it.
-  template <
-      typename T, typename... Args,
-      // `std::is_constructible_v` returns false if T's constructor is private.
-      typename = std::void_t<decltype(void(new T(std::declval<Args>()...)))>>
+  template <typename T, typename... Args,
+            // `std::is_constructible_v` returns false if T's ctor is private.
+            typename = std::void_t<decltype(void(T(std::declval<Args>()...)))>>
   auto New(Args&&... args) -> Nonnull<T*> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
