@@ -7,6 +7,7 @@
 // RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-me-type.carbon:36: type error in method access: 'class Point' is not implicitly convertible to 'class Shape'
 
 package ExplorerTest api;
 
@@ -32,7 +33,6 @@ class Point {
 
 fn Main() -> i32 {
   var p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail-method-me-type.carbon:[[@LINE+1]]: type error in method access: 'class Point' is not implicitly convertible to 'class Shape'
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;
