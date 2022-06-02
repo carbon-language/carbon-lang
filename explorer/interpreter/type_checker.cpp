@@ -994,7 +994,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "checking expression " << *e;
+    **trace_stream_ << "checking " << ExpressionKindName(e->kind()) << " "
+                    << *e;
     **trace_stream_ << "\nconstants: ";
     PrintConstants(**trace_stream_);
     **trace_stream_ << "\n";
@@ -1793,7 +1794,7 @@ auto TypeChecker::TypeCheckPattern(
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "checking pattern " << *p;
+    **trace_stream_ << "checking " << PatternKindName(p->kind()) << " " << *p;
     if (expected) {
       **trace_stream_ << ", expecting " << **expected;
     }
@@ -1986,7 +1987,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_) {
-    **trace_stream_ << "checking statement " << *s << "\n";
+    **trace_stream_ << "checking " << StatementKindName(s->kind()) << " " << *s
+                    << "\n";
   }
   switch (s->kind()) {
     case StatementKind::Match: {
@@ -2723,6 +2725,9 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
 auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
                                        const ImplScope& impl_scope)
     -> ErrorOr<Success> {
+  if (trace_stream_) {
+    **trace_stream_ << "checking " << DeclarationKindName(d->kind()) << "\n";
+  }
   switch (d->kind()) {
     case DeclarationKind::InterfaceDeclaration: {
       CARBON_RETURN_IF_ERROR(TypeCheckInterfaceDeclaration(
