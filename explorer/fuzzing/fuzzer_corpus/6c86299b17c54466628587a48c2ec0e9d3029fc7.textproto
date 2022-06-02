@@ -10,6 +10,7 @@ compilation_unit {
         function {
           name: "Add"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -19,6 +20,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -51,6 +53,7 @@ compilation_unit {
         function {
           name: "Scale"
           me_pattern {
+            binding_pattern {
             name: "me"
             type {
               expression_pattern {
@@ -60,6 +63,7 @@ compilation_unit {
                   }
                 }
               }
+            }
             }
           }
           param_pattern {
@@ -98,7 +102,7 @@ compilation_unit {
   }
   declarations {
     class_declaration {
-      name: "Point"
+      name: "Point1"
       members {
         variable {
           binding {
@@ -134,7 +138,7 @@ compilation_unit {
           kind: InternalImpl
           impl_type {
             identifier {
-              name: "Point"
+              name: "Point1"
             }
           }
           interface {
@@ -146,15 +150,17 @@ compilation_unit {
             function {
               name: "Add"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Point"
+                        name: "Point1"
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -165,7 +171,7 @@ compilation_unit {
                       expression_pattern {
                         expression {
                           identifier {
-                            name: "Point"
+                            name: "Point1"
                           }
                         }
                       }
@@ -177,7 +183,7 @@ compilation_unit {
                 kind: Expression
                 type {
                   identifier {
-                    name: "Point"
+                    name: "Point1"
                   }
                 }
               }
@@ -253,15 +259,17 @@ compilation_unit {
             function {
               name: "Scale"
               me_pattern {
+                binding_pattern {
                 name: "me"
                 type {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Point"
+                        name: "Point1"
                       }
                     }
                   }
+                }
                 }
               }
               param_pattern {
@@ -283,7 +291,7 @@ compilation_unit {
                 kind: Expression
                 type {
                   identifier {
-                    name: "Point"
+                    name: "Point1"
                   }
                 }
               }
@@ -333,6 +341,303 @@ compilation_unit {
                               arguments {
                                 identifier {
                                   name: "v"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name: "Point2"
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Point2"
+            }
+          }
+          interface {
+            identifier {
+              name: "Vector"
+            }
+          }
+          members {
+            function {
+              name: "Add"
+              me_pattern {
+                binding_pattern {
+                name: "me"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point2"
+                      }
+                    }
+                  }
+                }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "b"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "Point2"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  identifier {
+                    name: "Point2"
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            primitive_operator {
+                              op: Add
+                              arguments {
+                                primitive_operator {
+                                  op: Add
+                                  arguments {
+                                    simple_member_access {
+                                      field: "x"
+                                      object {
+                                        identifier {
+                                          name: "me"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  arguments {
+                                    simple_member_access {
+                                      field: "x"
+                                      object {
+                                        identifier {
+                                          name: "b"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                int_literal {
+                                  value: 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fields {
+                          name: "y"
+                          expression {
+                            primitive_operator {
+                              op: Add
+                              arguments {
+                                primitive_operator {
+                                  op: Add
+                                  arguments {
+                                    simple_member_access {
+                                      field: "y"
+                                      object {
+                                        identifier {
+                                          name: "me"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  arguments {
+                                    simple_member_access {
+                                      field: "y"
+                                      object {
+                                        identifier {
+                                          name: "b"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                int_literal {
+                                  value: 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          members {
+            function {
+              name: "Scale"
+              me_pattern {
+                binding_pattern {
+                name: "me"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point2"
+                      }
+                    }
+                  }
+                }
+                }
+              }
+              param_pattern {
+                fields {
+                  binding_pattern {
+                    name: "v"
+                    type {
+                      expression_pattern {
+                        expression {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              return_term {
+                kind: Expression
+                type {
+                  identifier {
+                    name: "Point2"
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_statement {
+                    expression {
+                      struct_literal {
+                        fields {
+                          name: "x"
+                          expression {
+                            primitive_operator {
+                              op: Mul
+                              arguments {
+                                primitive_operator {
+                                  op: Mul
+                                  arguments {
+                                    simple_member_access {
+                                      field: "x"
+                                      object {
+                                        identifier {
+                                          name: "me"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  arguments {
+                                    identifier {
+                                      name: "v"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                int_literal {
+                                  value: 2
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fields {
+                          name: "y"
+                          expression {
+                            primitive_operator {
+                              op: Mul
+                              arguments {
+                                primitive_operator {
+                                  op: Mul
+                                  arguments {
+                                    simple_member_access {
+                                      field: "y"
+                                      object {
+                                        identifier {
+                                          name: "me"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  arguments {
+                                    identifier {
+                                      name: "v"
+                                    }
+                                  }
+                                }
+                              }
+                              arguments {
+                                int_literal {
+                                  value: 2
                                 }
                               }
                             }
@@ -439,6 +744,14 @@ compilation_unit {
           }
         }
       }
+      deduced_parameters {
+        name: "V"
+        type {
+          identifier {
+            name: "Vector"
+          }
+        }
+      }
       param_pattern {
         fields {
           binding_pattern {
@@ -461,7 +774,7 @@ compilation_unit {
               expression_pattern {
                 expression {
                   identifier {
-                    name: "T"
+                    name: "V"
                   }
                 }
               }
@@ -485,8 +798,17 @@ compilation_unit {
       return_term {
         kind: Expression
         type {
-          identifier {
-            name: "T"
+          tuple_literal {
+            fields {
+              identifier {
+                name: "T"
+              }
+            }
+            fields {
+              identifier {
+                name: "V"
+              }
+            }
           }
         }
       }
@@ -494,40 +816,85 @@ compilation_unit {
         statements {
           return_statement {
             expression {
-              call {
-                function {
-                  identifier {
-                    name: "ScaleGeneric"
-                  }
-                }
-                argument {
-                  tuple_literal {
-                    fields {
-                      call {
-                        function {
-                          simple_member_access {
-                            field: "Add"
-                            object {
-                              identifier {
-                                name: "a"
+              tuple_literal {
+                fields {
+                  call {
+                    function {
+                      identifier {
+                        name: "ScaleGeneric"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "Add"
+                                object {
+                                  identifier {
+                                    name: "a"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  identifier {
+                                    name: "a"
+                                  }
+                                }
                               }
                             }
                           }
                         }
-                        argument {
-                          tuple_literal {
-                            fields {
-                              identifier {
-                                name: "b"
-                              }
-                            }
+                        fields {
+                          identifier {
+                            name: "s"
                           }
                         }
                       }
                     }
-                    fields {
+                  }
+                }
+                fields {
+                  call {
+                    function {
                       identifier {
-                        name: "s"
+                        name: "ScaleGeneric"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "Add"
+                                object {
+                                  identifier {
+                                    name: "b"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  identifier {
+                                    name: "b"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fields {
+                          identifier {
+                            name: "s"
+                          }
+                        }
                       }
                     }
                   }
@@ -561,7 +928,7 @@ compilation_unit {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Point"
+                        name: "Point1"
                       }
                     }
                   }
@@ -599,7 +966,7 @@ compilation_unit {
                   expression_pattern {
                     expression {
                       identifier {
-                        name: "Point"
+                        name: "Point2"
                       }
                     }
                   }
@@ -631,13 +998,31 @@ compilation_unit {
         statements {
           variable_definition {
             pattern {
-              binding_pattern {
-                name: "p"
-                type {
-                  expression_pattern {
-                    expression {
-                      identifier {
-                        name: "Point"
+              tuple_pattern {
+                fields {
+                  binding_pattern {
+                    name: "p"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "Point1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields {
+                  binding_pattern {
+                    name: "q"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "Point2"
+                          }
+                        }
                       }
                     }
                   }
@@ -680,18 +1065,33 @@ compilation_unit {
               primitive_operator {
                 op: Sub
                 arguments {
-                  simple_member_access {
-                    field: "x"
-                    object {
-                      identifier {
-                        name: "p"
+                  primitive_operator {
+                    op: Sub
+                    arguments {
+                      simple_member_access {
+                        field: "x"
+                        object {
+                          identifier {
+                            name: "q"
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      simple_member_access {
+                        field: "x"
+                        object {
+                          identifier {
+                            name: "p"
+                          }
+                        }
                       }
                     }
                   }
                 }
                 arguments {
                   int_literal {
-                    value: 15
+                    value: 40
                   }
                 }
               }

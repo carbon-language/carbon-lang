@@ -184,6 +184,23 @@ class BindingPattern : public Pattern {
   std::optional<ValueCategory> value_category_;
 };
 
+class AddrPattern : public Pattern {
+ public:
+  explicit AddrPattern(SourceLocation source_loc,
+                       Nonnull<BindingPattern*> binding)
+      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAddrPattern(node->kind());
+  }
+
+  auto binding() const -> const BindingPattern& { return *binding_; }
+  auto binding() -> BindingPattern& { return *binding_; }
+
+ private:
+  Nonnull<BindingPattern*> binding_;
+};
+
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:

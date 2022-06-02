@@ -168,6 +168,14 @@ class SimpleMemberAccessExpression : public Expression {
   auto object() const -> const Expression& { return *object_; }
   auto object() -> Expression& { return *object_; }
   auto member() const -> const std::string& { return member_; }
+  // Returns true if the field is a method that has a "me" declaration in an
+  // AddrPattern.
+  auto is_field_addr_me_method() const -> bool {
+    return is_field_addr_me_method_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
 
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
@@ -186,6 +194,7 @@ class SimpleMemberAccessExpression : public Expression {
   Nonnull<Expression*> object_;
   std::string member_;
   std::optional<Nonnull<const ImplBinding*>> impl_;
+  bool is_field_addr_me_method_ = false;
 };
 
 // A compound member access expression of the form `object.(path)`.

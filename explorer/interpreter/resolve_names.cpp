@@ -242,6 +242,10 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(
           ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
       break;
+    case PatternKind::AddrPattern:
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(cast<AddrPattern>(pattern).binding(), enclosing_scope));
+      break;
   }
   return Success();
 }

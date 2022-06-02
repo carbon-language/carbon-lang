@@ -77,6 +77,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
@@ -129,6 +130,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
@@ -145,7 +147,6 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
-    case Value::Kind::PointerType:
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
@@ -168,6 +169,9 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
         }
       }
       return true;
+    }
+    case Value::Kind::PointerType: {
+      return IsType(&cast<PointerType>(*value).type(), concrete);
     }
   }
 }
@@ -438,7 +442,7 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   if (has_arguments) {
     TupleValue args(interface.arguments);
     if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, bindings, trace_stream_)) {
+                      std::nullopt, bindings, trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -703,6 +707,7 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue: {
@@ -814,6 +819,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
@@ -1141,9 +1147,24 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               case DeclarationKind::VariableDeclaration:
                 access.set_value_category(access.object().value_category());
                 break;
-              case DeclarationKind::FunctionDeclaration:
+              case DeclarationKind::FunctionDeclaration: {
+                auto func_decl = cast<FunctionDeclaration>(*member);
+                if (func_decl->is_method() && func_decl->me_pattern().kind() ==
+                                                  PatternKind::AddrPattern) {
+                  access.set_is_field_addr_me_method();
+                  CARBON_RETURN_IF_ERROR(
+                      ExpectType(e->source_loc(), "method access",
+                                 &func_decl->me_pattern().static_type(),
+                                 &access.object().static_type(), &impl_scope));
+                  if (access.object().value_category() != ValueCategory::Var) {
+                    return CompilationError(e->source_loc())
+                           << "method " << access.member()
+                           << " requires its receiver to be an lvalue";
+                  }
+                }
                 access.set_value_category(ValueCategory::Let);
                 break;
+              }
               default:
                 CARBON_FATAL() << "member " << access.member()
                                << " is not a field or method";
@@ -1512,8 +1533,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Var);
           return Success();
         case Operator::Ptr:
-          CARBON_RETURN_IF_ERROR(ExpectExactType(
-              e->source_loc(), "*", arena_->New<TypeType>(), ts[0]));
+          CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(), "*",
+                                            arena_->New<TypeType>(), ts[0],
+                                            &impl_scope));
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
@@ -1805,7 +1827,8 @@ auto TypeChecker::TypeCheckPattern(
         } else {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_)) {
+                            std::nullopt, generic_args, trace_stream_,
+                            this->arena_)) {
             return CompilationError(binding.type().source_loc())
                    << "Type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
@@ -1921,17 +1944,40 @@ auto TypeChecker::TypeCheckPattern(
       SetValue(p, expr_value);
       return Success();
     }
-    case PatternKind::VarPattern:
-      auto& let_var_pattern = cast<VarPattern>(*p);
+    case PatternKind::VarPattern: {
+      auto& var_pattern = cast<VarPattern>(*p);
 
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckPattern(&let_var_pattern.pattern(), expected, impl_scope,
-                           let_var_pattern.value_category()));
-      let_var_pattern.set_static_type(&let_var_pattern.pattern().static_type());
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var_pattern.pattern(), expected,
+                                              impl_scope,
+                                              var_pattern.value_category()));
+      var_pattern.set_static_type(&var_pattern.pattern().static_type());
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> pattern_value,
-          InterpPattern(&let_var_pattern, arena_, trace_stream_));
-      SetValue(&let_var_pattern, pattern_value);
+          InterpPattern(&var_pattern, arena_, trace_stream_));
+      SetValue(&var_pattern, pattern_value);
+      return Success();
+    }
+    case PatternKind::AddrPattern:
+      std::optional<Nonnull<const Value*>> expected_ptr;
+      auto& addr_pattern = cast<AddrPattern>(*p);
+      if (expected) {
+        expected_ptr = arena_->New<PointerType>(expected.value());
+      }
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
+                                              expected_ptr, impl_scope,
+                                              enclosing_value_category));
+
+      if (auto* inner_binding_type =
+              dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
+        addr_pattern.set_static_type(&inner_binding_type->type());
+      } else {
+        return CompilationError(addr_pattern.source_loc())
+               << "Type associated with addr must be a pointer type.";
+      }
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> pattern_value,
+          InterpPattern(&addr_pattern, arena_, trace_stream_));
+      SetValue(&addr_pattern, pattern_value);
       return Success();
   }
 }
@@ -2605,6 +2651,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:

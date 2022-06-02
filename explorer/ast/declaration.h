@@ -104,7 +104,7 @@ class FunctionDeclaration : public Declaration {
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      std::string name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
-                     std::optional<Nonnull<BindingPattern*>> me_pattern,
+                     std::optional<Nonnull<Pattern*>> me_pattern,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body)
@@ -113,7 +113,7 @@ class FunctionDeclaration : public Declaration {
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   FunctionDeclaration(SourceLocation source_loc, std::string name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<BindingPattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> me_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body)
@@ -139,8 +139,8 @@ class FunctionDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto me_pattern() const -> const BindingPattern& { return **me_pattern_; }
-  auto me_pattern() -> BindingPattern& { return **me_pattern_; }
+  auto me_pattern() const -> const Pattern& { return **me_pattern_; }
+  auto me_pattern() -> Pattern& { return **me_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
@@ -155,7 +155,7 @@ class FunctionDeclaration : public Declaration {
  private:
   std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
-  std::optional<Nonnull<BindingPattern*>> me_pattern_;
+  std::optional<Nonnull<Pattern*>> me_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
