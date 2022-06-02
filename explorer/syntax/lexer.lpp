@@ -64,6 +64,7 @@ FN                   "fn"
 FN_TYPE              "__Fn"
 FORALL               "forall"
 IF                   "if"
+IS                   "is"
 IMPL                 "impl"
 IMPORT               "import"
 INTERFACE            "interface"
@@ -94,6 +95,7 @@ TYPE                 "Type"
 UNDERSCORE           "_"
 UNIMPL_EXAMPLE       "__unimplemented_example_infix"
 VAR                  "var"
+WHERE                "where"
 WHILE                "while"
 /* table-end */
 
@@ -170,6 +172,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return SIMPLE_TOKEN(FORALL);              }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
+{IS}                  { return SIMPLE_TOKEN(IS);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return SIMPLE_TOKEN(INTERFACE);           }
@@ -197,6 +200,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {UNDERSCORE}          { return SIMPLE_TOKEN(UNDERSCORE);          }
 {UNIMPL_EXAMPLE}      { return SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
 {VAR}                 { return SIMPLE_TOKEN(VAR);                 }
+{WHERE}               { return SIMPLE_TOKEN(WHERE);               }
 {WHILE}               { return SIMPLE_TOKEN(WHILE);               }
  /* table-end */
 

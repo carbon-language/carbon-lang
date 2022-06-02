@@ -119,6 +119,12 @@ class TypeChecker {
                         const ImplScope& impl_scope, bool concrete = true)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Type checks and interprets `type_expression`, and validates it represents a
+  // [concrete] type.
+  auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
+                            const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
   // `expected` is the type that this pattern is expected to have, if the

@@ -416,6 +416,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::IfExpression:
+    case ExpressionKind::WhereExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::InstantiateImpl:
       CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
@@ -1085,6 +1086,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.FinishAction(act.results()[1]);
       }
       break;
+    }
+    case ExpressionKind::WhereExpression: {
+      return todo_.FinishAction(
+          &cast<TypeOfConstraintType>(exp.static_type()).constraint_type());
     }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;

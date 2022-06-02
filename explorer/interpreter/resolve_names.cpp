@@ -87,6 +87,9 @@ static auto AddExposedNames(const Declaration& declaration,
 static auto ResolveNames(Expression& expression,
                          const StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
+static auto ResolveNames(WhereClause& clause,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
 static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
 static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
@@ -176,6 +179,19 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(if_expr.else_expression(), enclosing_scope));
       break;
     }
+    case ExpressionKind::WhereExpression: {
+      auto& where = cast<WhereExpression>(expression);
+      // TODO: Introduce `.Self` into scope?
+      // StaticScope where_scope;
+      // where_scope.AddParent(&enclosing_scope);
+      // where_scope.Add(".Self", ???);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(where.base(), enclosing_scope));
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, enclosing_scope));
+      }
+      break;
+    }
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(
@@ -197,6 +213,29 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:
       return CompilationError(expression.source_loc()) << "Unimplemented";
+  }
+  return Success();
+}
+
+static auto ResolveNames(WhereClause& clause,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
+  switch (clause.kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(ResolveNames(is_clause.type(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(is_clause.constraint(), enclosing_scope));
+      break;
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& equals_clause = cast<EqualsWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(equals_clause.lhs(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(equals_clause.rhs(), enclosing_scope));
+      break;
+    }
   }
   return Success();
 }

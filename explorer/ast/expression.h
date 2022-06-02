@@ -666,6 +666,101 @@ class IfExpression : public Expression {
   Nonnull<Expression*> else_expression_;
 };
 
+// A clause appearing on the right-hand side of a `where` operator.
+class WhereClause : public AstNode {
+ public:
+  ~WhereClause() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromWhereClause(node->kind());
+  }
+
+  auto kind() const -> WhereClauseKind {
+    return static_cast<WhereClauseKind>(root_kind());
+  }
+
+ protected:
+  WhereClause(WhereClauseKind kind, SourceLocation source_loc)
+      : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
+};
+
+// An `is` where clause: `ConstraintA where .Type is ConstraintB`.
+class IsWhereClause : public WhereClause {
+ public:
+  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
+                         Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
+        type_(type),
+        constraint_(constraint) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromIsWhereClause(node->kind());
+  }
+
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  auto constraint() const -> const Expression& { return *constraint_; }
+  auto constraint() -> Expression& { return *constraint_; }
+
+ private:
+  Nonnull<Expression*> type_;
+  Nonnull<Expression*> constraint_;
+};
+
+// An `==` where clause: `Constraint where .Type == i32`.
+class EqualsWhereClause : public WhereClause {
+ public:
+  explicit EqualsWhereClause(SourceLocation source_loc,
+                             Nonnull<Expression*> lhs, Nonnull<Expression*> rhs)
+      : WhereClause(WhereClauseKind::EqualsWhereClause, source_loc),
+        lhs_(lhs),
+        rhs_(rhs) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromEqualsWhereClause(node->kind());
+  }
+
+  auto lhs() const -> const Expression& { return *lhs_; }
+  auto lhs() -> Expression& { return *lhs_; }
+
+  auto rhs() const -> const Expression& { return *rhs_; }
+  auto rhs() -> Expression& { return *rhs_; }
+
+ private:
+  Nonnull<Expression*> lhs_;
+  Nonnull<Expression*> rhs_;
+};
+
+// A `where` expression: `AddableWith(i32) where .Result == i32`.
+class WhereExpression : public Expression {
+ public:
+  explicit WhereExpression(SourceLocation source_loc, Nonnull<Expression*> base,
+                           std::vector<Nonnull<WhereClause*>> clauses)
+      : Expression(AstNodeKind::WhereExpression, source_loc),
+        base_(base),
+        clauses_(std::move(clauses)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromWhereExpression(node->kind());
+  }
+
+  auto base() const -> const Expression& { return *base_; }
+  auto base() -> Expression& { return *base_; }
+
+  auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
+    return clauses_;
+  }
+  auto clauses() -> llvm::ArrayRef<Nonnull<WhereClause*>> { return clauses_; }
+
+ private:
+  Nonnull<Expression*> base_;
+  std::vector<Nonnull<WhereClause*>> clauses_;
+};
+
 // Instantiate a generic impl.
 class InstantiateImpl : public Expression {
  public:

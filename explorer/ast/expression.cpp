@@ -171,6 +171,15 @@ void Expression::Print(llvm::raw_ostream& out) const {
           << if_expr.then_expression() << " else " << if_expr.else_expression();
       break;
     }
+    case ExpressionKind::WhereExpression: {
+      const auto& where = cast<WhereExpression>(*this);
+      out << where.base() << " where ";
+      llvm::ListSeparator sep(" and ");
+      for (const WhereClause* clause : where.clauses()) {
+        out << sep << *clause;
+      }
+      break;
+    }
     case ExpressionKind::InstantiateImpl: {
       const auto& inst_impl = cast<InstantiateImpl>(*this);
       out << "instantiate " << *inst_impl.generic_impl();
@@ -246,6 +255,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
+    case ExpressionKind::WhereExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
@@ -259,6 +269,27 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << "...";
       break;
   }
+}
+
+WhereClause::~WhereClause() = default;
+
+void WhereClause::Print(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& clause = cast<IsWhereClause>(*this);
+      out << clause.type() << " is " << clause.constraint();
+      break;
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& clause = cast<EqualsWhereClause>(*this);
+      out << clause.lhs() << " == " << clause.rhs();
+      break;
+    }
+  }
+}
+
+void WhereClause::PrintID(llvm::raw_ostream& out) const {
+  out << "...";
 }
 
 }  // namespace Carbon

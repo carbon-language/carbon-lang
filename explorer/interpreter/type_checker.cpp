@@ -1915,6 +1915,39 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       return Success();
     }
+    case ExpressionKind::WhereExpression: {
+      auto& where = cast<WhereExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&where.base(), impl_scope));
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, impl_scope));
+      }
+
+      const ConstraintType* base;
+      const Value& base_type = where.base().static_type();
+      if (auto* constraint_type_type =
+              dyn_cast<TypeOfConstraintType>(&base_type)) {
+        base = &constraint_type_type->constraint_type();
+      } else if (auto* interface_type_type =
+                     dyn_cast<TypeOfInterfaceType>(&base_type)) {
+        base = MakeConstraintForInterface(
+            e->source_loc(), &interface_type_type->interface_type());
+      } else {
+        return CompilationError(e->source_loc())
+               << "expected constraint as first operand of `where` expression, "
+               << "found " << base_type;
+      }
+
+      // TODO: Build the right resulting constraint.
+      const ConstraintType* constraint = base;
+      for (Nonnull<const WhereClause*> clause : where.clauses()) {
+        (void)clause;
+        // ...
+      }
+
+      where.set_static_type(arena_->New<TypeOfConstraintType>(constraint));
+      where.set_value_category(ValueCategory::Let);
+      return Success();
+    }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
@@ -2007,6 +2040,35 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
       concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
                : ExpectIsType(type_expression->source_loc(), type));
   return type;
+}
+
+auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
+                                       const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  switch (clause->kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
+      if (!isa<TypeOfInterfaceType, TypeOfConstraintType>(
+              is_clause.constraint().static_type())) {
+        return CompilationError(is_clause.constraint().source_loc())
+               << "expression after `is` does not resolve to a constraint, "
+               << "found " << is_clause.constraint().static_type();
+      }
+      return Success();
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& equals_clause = cast<EqualsWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.lhs(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.rhs(), impl_scope));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          clause->source_loc(), "values in `where ==` constraint",
+          &equals_clause.lhs().static_type(),
+          &equals_clause.rhs().static_type()));
+      return Success();
+    }
+  }
 }
 
 auto TypeChecker::TypeCheckPattern(
