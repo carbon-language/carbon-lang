@@ -211,10 +211,10 @@
   FN_TYPE
   FORALL
   IF
-  IS
   IMPL
   IMPORT
   INTERFACE
+  IS
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
@@ -528,19 +528,13 @@ or_expression:
 ;
 where_clause:
   comparison_operand IS comparison_operand
-    {
-      $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3);
-    }
+    { $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3); }
 | comparison_operand EQUAL_EQUAL comparison_operand
-    {
-      $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3);
-    }
+    { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
 ;
 where_clause_list:
   where_clause
-    {
-      $$ = {$1};
-    }
+    { $$ = {$1}; }
 | where_clause_list AND where_clause
     {
       $$ = std::move($1);
@@ -549,9 +543,7 @@ where_clause_list:
 ;
 where_expression:
   type_expression WHERE where_clause_list
-    {
-      $$ = arena->New<WhereExpression>(context.source_loc(), $1, $3);
-    }
+    { $$ = arena->New<WhereExpression>(context.source_loc(), $1, $3); }
 ;
 statement_expression:
   ref_deref_expression

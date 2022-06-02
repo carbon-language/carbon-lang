@@ -2065,7 +2065,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
       }
 
-      where.set_static_type(arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
+      where.set_static_type(
+          arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
       where.set_value_category(ValueCategory::Let);
       return Success();
     }

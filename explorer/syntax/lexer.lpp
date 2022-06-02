@@ -64,10 +64,10 @@ FN                   "fn"
 FN_TYPE              "__Fn"
 FORALL               "forall"
 IF                   "if"
-IS                   "is"
 IMPL                 "impl"
 IMPORT               "import"
 INTERFACE            "interface"
+IS                   "is"
 LEFT_CURLY_BRACE     "{"
 LEFT_PARENTHESIS     "("
 LEFT_SQUARE_BRACKET  "["
@@ -172,10 +172,10 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {FN}                  { return SIMPLE_TOKEN(FN);                  }
 {FORALL}              { return SIMPLE_TOKEN(FORALL);              }
 {IF}                  { return SIMPLE_TOKEN(IF);                  }
-{IS}                  { return SIMPLE_TOKEN(IS);                  }
 {IMPL}                { return SIMPLE_TOKEN(IMPL);                }
 {IMPORT}              { return SIMPLE_TOKEN(IMPORT);              }
 {INTERFACE}           { return SIMPLE_TOKEN(INTERFACE);           }
+{IS}                  { return SIMPLE_TOKEN(IS);                  }
 {LEFT_CURLY_BRACE}    { return SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
 {LEFT_PARENTHESIS}    { return SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
 {LEFT_SQUARE_BRACKET} { return SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }

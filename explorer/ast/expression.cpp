@@ -288,8 +288,6 @@ void WhereClause::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void WhereClause::PrintID(llvm::raw_ostream& out) const {
-  out << "...";
-}
+void WhereClause::PrintID(llvm::raw_ostream& out) const { out << "..."; }
 
 }  // namespace Carbon

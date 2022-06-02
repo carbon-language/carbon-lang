@@ -122,8 +122,7 @@ class TypeChecker {
   // Type checks and interprets `type_expression`, and validates it represents a
   // [concrete] type.
   auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
-                            const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
+                            const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `p`.
   //
