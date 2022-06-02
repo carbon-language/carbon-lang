@@ -165,7 +165,7 @@ https://drive.google.com/corp/drive/folders/1CsbHo3vamrxmBwHkoyz1kU0sGFqAh688
      alt="A snippet of C++ code. Follow the link to read it.">
 </a>
 
-corresponds to this Carbon code with similar performance:
+corresponds to this Carbon code:
 
 <a href="docs/images/snippets.md#carbon">
 <!--

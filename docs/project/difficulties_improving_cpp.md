@@ -6,10 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-C++ is already the dominant programming language for the performance critical
-software our goals prioritize. The most direct way to deliver a modern and
-excellent developer experience for those use cases and developers would be to
-improve C++.
+C++ is the dominant programming language for the performance critical software
+our goals prioritize. The most direct way to deliver a modern and excellent
+developer experience for those use cases and developers would be to improve C++.
 
 Improving C++ to modernize it and deliver the kind of experience developers
 expect from a programming language today is difficult in part because **C++ has
@@ -29,13 +28,13 @@ heavily motivated by preserving its access to existing C/C++ ecosystems, and
 forms one of the foundations of common Linux package management approaches. A
 consequence is that rather than changing or replacing language designs to
 simplify and improve the language, features have overwhelmingly been added over
-time. This both creates its own technical debt when those features interact in
-surprising and complex ways, as well as missing opportunities to reduce
-technical debt by replacing or removing legacy features.
+time. This both creates technical debt due to complicated feature interaction,
+and fails to benefit from on cleanup opportunities in the form of replacing or
+removing legacy features.
 
-Carbon is specifically exploring significant backwards incompatible changes. It
-doesn't inherit the legacy of C or C++ directly, and instead is starting with
-solid foundations, like a modern generics system, modular code organization, and
+Carbon is exploring significant backwards incompatible changes. It doesn't
+inherit the legacy of C or C++ directly, and instead is starting with solid
+foundations, like a modern generics system, modular code organization, and
 consistent, simple syntax. Then, it builds a simplified and improved language
 around those foundational components that remains both interoperable with and
 migratable from C++, while giving up transparent backwards compatibility. This
@@ -49,10 +48,10 @@ with [ours](https://wg21.link/p2137). When [pushed](https://wg21.link/p1863) to
 address
 [the technical debt caused by not breaking the ABI](https://wg21.link/p2028),
 **C++'s process
-[failed to reach any definitive conclusion](https://cor3ntin.github.io/posts/abi/#abi-discussions-in-prague)**.
-The primary issue is the failure of the process to make a clear and firm
-decision, but it also failed to move C++'s priorities and direction towards more
-significant improvements.
+[did not reach any definitive conclusion](https://cor3ntin.github.io/posts/abi/#abi-discussions-in-prague)**.
+This both failed to meaningfully change C++'s direction and priorities towards
+improvements rather than backwards compatibility, and moreover showed that the
+process was unable to make clear and firm directional decisions at all.
 
 Beyond C++'s evolution direction, the mechanics of the process also make
 improving C++ difficult. **C++'s process is oriented around standardization
