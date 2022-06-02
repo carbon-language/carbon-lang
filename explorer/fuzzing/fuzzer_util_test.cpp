@@ -19,7 +19,7 @@ static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
 // A workaround for https://github.com/carbon-language/carbon-lang/issues/1208.
 TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
-  int file_count = 0;
+  int parsed_file_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     llvm::outs() << "Processing " << f << "\n";
     std::ifstream file(f.str(), std::ios::in);
@@ -31,10 +31,10 @@ TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
     if (auto carbon_proto = ParseCarbonTextProto(contents.str());
         carbon_proto.ok()) {
       ParseAndExecute(carbon_proto->compilation_unit());
+      ++parsed_file_count;
     }
-    ++file_count;
   }
-  EXPECT_GT(file_count, 0);
+  EXPECT_GT(parsed_file_count, 0);
 }
 
 TEST(FuzzerUtilTest, GetRunfilesFile) {
