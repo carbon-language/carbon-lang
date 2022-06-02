@@ -146,6 +146,10 @@ static auto PrimitiveOperatorToCarbon(
     case Fuzzing::PrimitiveOperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
+
+    case Fuzzing::PrimitiveOperatorExpression::Combine:
+      BinaryOperatorToCarbon(arg0, " & ", arg1, out);
+      break;
   }
   out << ")";
 }
