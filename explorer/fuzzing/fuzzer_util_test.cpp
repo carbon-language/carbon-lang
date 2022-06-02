@@ -17,8 +17,7 @@ namespace {
 
 static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
-// A workaround for
-// https://github.com/carbon-language/carbon-lang/issues/1208.
+// A workaround for https://github.com/carbon-language/carbon-lang/issues/1208.
 TEST(FuzzerUtilTest, RunFuzzerOnCorpus) {
   int file_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
