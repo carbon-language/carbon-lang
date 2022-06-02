@@ -125,13 +125,6 @@ class VariableDefinition : public Statement {
                                           value_category);
   }
 
-  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init, ValueCategory value_category)
-      : Statement(AstNodeKind::VariableDefinition, source_loc),
-        pattern_(pattern),
-        init_(init),
-        value_category_(value_category) {}
-
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDefinition(node->kind());
   }
@@ -146,9 +139,18 @@ class VariableDefinition : public Statement {
   void set_init(Nonnull<Expression*> init) { init_ = init; }
 
  private:
+  VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
+                     Nonnull<Expression*> init, ValueCategory value_category)
+      : Statement(AstNodeKind::VariableDefinition, source_loc),
+        pattern_(pattern),
+        init_(init),
+        value_category_(value_category) {}
+
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;
   ValueCategory value_category_;
+
+  friend class Arena;
 };
 
 class If : public Statement {

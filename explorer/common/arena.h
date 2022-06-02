@@ -18,7 +18,8 @@ class Arena {
   // Allocates an object in the arena, returning a pointer to it.
   template <
       typename T, typename... Args,
-      typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
+      // `std::is_constructible_v` returns false if T's constructor is private.
+      typename = std::void_t<decltype(void(new T(std::declval<Args>()...)))>>
   auto New(Args&&... args) -> Nonnull<T*> {
     auto smart_ptr =
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
