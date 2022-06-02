@@ -12,7 +12,7 @@
 // CHECK: ********** source program **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** type checking **********
-// CHECK: checking pattern (format_str: String)
+// CHECK: checking tuple pattern (format_str: String)
 // CHECK: ********** type checking complete **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** starting execution **********

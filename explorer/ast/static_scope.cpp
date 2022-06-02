@@ -9,15 +9,26 @@
 
 namespace Carbon {
 
-auto StaticScope::Add(std::string name, ValueNodeView entity)
-    -> ErrorOr<Success> {
-  auto [it, success] = declared_names_.insert({name, entity});
-  if (!success && it->second != entity) {
-    return CompilationError(entity.base().source_loc())
-           << "Duplicate name `" << name << "` also found at "
-           << it->second.base().source_loc();
+auto StaticScope::Add(const std::string& name, ValueNodeView entity,
+                      bool usable) -> ErrorOr<Success> {
+  auto [it, inserted] = declared_names_.insert({name, {entity, usable}});
+  if (!inserted) {
+    if (it->second.entity != entity) {
+      return CompilationError(entity.base().source_loc())
+             << "Duplicate name `" << name << "` also found at "
+             << it->second.entity.base().source_loc();
+    }
+    CARBON_CHECK(usable || !it->second.usable)
+        << entity.base().source_loc() << " attempting to mark a usable name `"
+        << name << "` as unusable";
   }
   return Success();
+}
+
+void StaticScope::MarkUsable(const std::string& name) {
+  auto it = declared_names_.find(name);
+  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  it->second.usable = true;
 }
 
 auto StaticScope::Resolve(const std::string& name,
@@ -36,7 +47,12 @@ auto StaticScope::TryResolve(const std::string& name,
     -> ErrorOr<std::optional<ValueNodeView>> {
   auto it = declared_names_.find(name);
   if (it != declared_names_.end()) {
-    return std::make_optional(it->second);
+    if (!it->second.usable) {
+      return CompilationError(source_loc)
+             << "'" << name
+             << "' is not usable until after it has been completely declared";
+    }
+    return std::make_optional(it->second.entity);
   }
   std::optional<ValueNodeView> result;
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
