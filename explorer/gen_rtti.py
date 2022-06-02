@@ -296,7 +296,7 @@ def main() -> None:
             assert node.id_range is not None
             ids = range(node.id_range[0], node.id_range[1])
             print(
-                "std::string_view " f"{node.name}KindName({node.name}Kind k) {{"
+                f"std::string_view {node.name}KindName({node.name}Kind k) {{"
             )
             print("  switch(k) {")
             for id in ids:
