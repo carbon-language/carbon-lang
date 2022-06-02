@@ -171,6 +171,15 @@ class SimpleMemberAccessExpression : public Expression {
   auto object() -> Expression& { return *object_; }
   auto member() const -> const std::string& { return member_; }
 
+  // Returns true if the field is a method that has a "me" declaration in an
+  // AddrPattern.
+  auto is_field_addr_me_method() const -> bool {
+    return is_field_addr_me_method_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
+
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
@@ -201,6 +210,7 @@ class SimpleMemberAccessExpression : public Expression {
  private:
   Nonnull<Expression*> object_;
   std::string member_;
+  bool is_field_addr_me_method_ = false;
   std::optional<Nonnull<const Expression*>> impl_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };

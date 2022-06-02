@@ -66,7 +66,8 @@ static auto AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(alias.name(), &alias, /*usable=*/false));
       break;
     }
   }
@@ -241,6 +242,10 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     case PatternKind::VarPattern:
       CARBON_RETURN_IF_ERROR(
           ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
+      break;
+    case PatternKind::AddrPattern:
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(cast<AddrPattern>(pattern).binding(), enclosing_scope));
       break;
   }
   return Success();
@@ -454,8 +459,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
     }
 
     case DeclarationKind::AliasDeclaration: {
-      CARBON_RETURN_IF_ERROR(ResolveNames(
-          cast<AliasDeclaration>(declaration).target(), enclosing_scope));
+      auto& alias = cast<AliasDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
+      enclosing_scope.MarkUsable(alias.name());
       break;
     }
   }

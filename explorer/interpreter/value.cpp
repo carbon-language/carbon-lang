@@ -31,7 +31,7 @@ auto StructValue::FindField(const std::string& name) const
 
 static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                       const FieldPath::Component& field,
-                      SourceLocation source_loc)
+                      SourceLocation source_loc, Nonnull<const Value*> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   const std::string& f = field.name();
 
@@ -93,7 +93,7 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const FunctionValue& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), &object,
+          return arena->New<BoundMethodValue>(&m.declaration(), me_value,
                                               class_type.type_args(),
                                               class_type.witnesses());
         } else {
@@ -131,12 +131,13 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 }
 
 auto Value::GetMember(Nonnull<Arena*> arena, const FieldPath& path,
-                      SourceLocation source_loc) const
+                      SourceLocation source_loc,
+                      Nonnull<const Value*> me_value) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const FieldPath::Component& field : path.components_) {
-    CARBON_ASSIGN_OR_RETURN(value,
-                            Carbon::GetMember(arena, value, field, source_loc));
+    CARBON_ASSIGN_OR_RETURN(
+        value, Carbon::GetMember(arena, value, field, source_loc, me_value));
   }
   return value;
 }
@@ -229,6 +230,11 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << "_";
       }
       out << ">";
+      break;
+    }
+    case Value::Kind::AddrValue: {
+      const auto& addr = cast<AddrValue>(*this);
+      out << "Addr<" << addr.pattern() << ">";
       break;
     }
     case Value::Kind::AlternativeValue: {
@@ -645,6 +651,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
     case Value::Kind::PointerValue:
     case Value::Kind::LValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -757,6 +764,7 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:

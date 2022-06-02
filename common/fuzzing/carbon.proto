@@ -180,6 +180,10 @@ message VarPattern {
   optional Pattern pattern = 1;
 }
 
+message AddrPattern {
+  optional BindingPattern binding_pattern = 1;
+}
+
 message Pattern {
   oneof kind {
     BindingPattern binding_pattern = 1;
@@ -189,6 +193,7 @@ message Pattern {
     AutoPattern auto_pattern = 5;
     VarPattern var_pattern = 6;
     GenericBinding generic_binding = 7;
+    AddrPattern addr_pattern = 8;
   }
 }
 
@@ -287,7 +292,7 @@ message ReturnTerm {
 message FunctionDeclaration {
   optional string name = 1;
   repeated GenericBinding deduced_parameters = 2;
-  optional BindingPattern me_pattern = 3;
+  optional Pattern me_pattern = 3;
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
