@@ -312,8 +312,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       if (next_hash_tags == std::nullopt) {
         return SIMPLE_TOKEN(END_OF_FILE);
       }
-      c = next_hash_tags.value().back();
-      s.append(next_hash_tags.value());
+      c = (*next_hash_tags).back();
+      s.append(*next_hash_tags);
       if (c == '#') {
         skip_scan = true;
       } else {
@@ -374,11 +374,11 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     if (next_hash_tags == std::nullopt) {
       return SIMPLE_TOKEN(END_OF_FILE);
     }
-    s.append(next_hash_tags.value());
+    s.append(*next_hash_tags);
 
     if (c == '\\') {
       if (hashtag_num > 0) {
-        c = next_hash_tags.value().back();
+        c = (*next_hash_tags).back();
       }
       if (hashtag_num == 0 || c == '#') {
         c = ReadChar(yyscanner, context);
@@ -393,7 +393,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     } else {
       // c == '"'
       if (hashtag_num > 0) {
-        c = next_hash_tags.value().back();
+        c = (*next_hash_tags).back();
       }
       if (hashtag_num == 0 || c == '#') {
         break;
