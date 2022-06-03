@@ -1071,7 +1071,7 @@ PeekTopOfStack(&int_stack);
 
 #### Generic choice types
 
-<!-- [Choice types](#choice-types) --> may be parameterized similarly to classes:
+<!-- FIXME [Choice types](#choice-types) --> may be parameterized similarly to classes:
 
 ```carbon
 choice Result(T:! Type, Error:! Type) {
@@ -1197,21 +1197,34 @@ impl forall [T:! Printable] Vector(T) as Printable;
 
 #### Common type
 
-> **TODO:**
+There are some situations where the common type for two types is needed:
 
-Common type: used to define the result of
-[conditional expressions like `if c then t else f`](expressions/if.md) and other
-situations where a common type needs to be found for two types, as in:
+-   A [conditional expression like `if c then t else f`](expressions/if.md)
+    returns a value with the common type of `t` and `f`.
+-   If there are multiple parameters to a function with a type parameter, it
+    will be set to the common type of the corresponding arguments, as in:
+
+    ```carbon
+    fn F[T:! Type](x: T, y: T);
+
+    // Calls `F` with `T` set to the
+    // common type of `G()` and `H()`:
+    F(G(), H());
+    ```
+
+-   The inferred return type of a function with
+    <!-- FIXME [`auto` return type](#auto-return-type) -->
+    is the common type of its `return` statements.
+
+The common type is specified by implementing the `CommonTypeWith` interface:
 
 ```carbon
-fn F[T:! Type](x: T, y: T);
-
-var a: U;
-var b: V;
-// Calls `F` with the `T` set to
-// the common type of `U` and `V`:
-F(a, b);
+// Common type of `A` and `B` is `C`.
+impl A as CommonTypeWith(B) where .Result == C { }
 ```
+
+The common type is required to be a type that both types have an
+[implicit conversion](expressions/implicit_conversions.md) to.
 
 > References:
 >
