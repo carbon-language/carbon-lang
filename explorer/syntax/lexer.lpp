@@ -461,8 +461,7 @@ auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
 auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context, std::size_t hashtag_num) -> std::optional<std::string> {
   std::string s = "";
   std::size_t hashtag_count = 0;
-  bool counting_hashtag = true;
-  while (counting_hashtag && hashtag_count++ < hashtag_num) {
+  while (hashtag_count++ < hashtag_num) {
     int c = ReadChar(yyscanner, context);
     if (c <= 0) {
       return std::nullopt;
@@ -470,7 +469,7 @@ auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context, std::
     s.push_back(c);
 
     if (c != '#') {
-      counting_hashtag = false;
+      return s;
     }
   }
   return s;
