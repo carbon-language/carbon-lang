@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in simple string: "new
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
   // CHECK-EMPTY:
   Print("new
 line");
