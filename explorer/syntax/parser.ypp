@@ -112,7 +112,6 @@
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
-%type <Nonnull<Block*>> nonempty_block
 %type <Nonnull<Block*>> block
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> primary_expression
@@ -718,9 +717,9 @@ maybe_empty_tuple_pattern:
 ;
 
 clause:
-  CASE pattern DOUBLE_ARROW statement
+  CASE pattern DOUBLE_ARROW block
     { $$ = Match::Clause($2, $4); }
-| DEFAULT DOUBLE_ARROW statement
+| DEFAULT DOUBLE_ARROW block
     {
       $$ = Match::Clause(arena->New<BindingPattern>(
                              context.source_loc(), std::string(AnonymousName),
@@ -766,15 +765,6 @@ statement:
       auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
     }
-// We disallow empty blocks in places where an arbitrary statement can occur
-// in order to avoid ambiguity with the empty struct literal `{}`. We can
-// allow non-empty blocks because a non-empty struct literal always starts with
-// a designator, and a block never does, so one token of lookahead suffices
-// to disambiguate. As of this writing, the "official" resolution of this
-// ambiguity is an open question (see
-// https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals)
-| nonempty_block
-    { $$ = $1; }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
@@ -818,13 +808,6 @@ statement_list:
 block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
-;
-nonempty_block:
-  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
-    {
-      $2.push_back($3);
-      $$ = arena->New<Block>(context.source_loc(), std::move($2));
-    }
 ;
 return_term:
   // Empty
