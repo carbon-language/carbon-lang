@@ -21,6 +21,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   // or std::nullopt on EOF
   auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context,
                     std::size_t hashtag_num) -> std::optional<std::string>;
+  // Removes quotes and escapes a single line string. Reports an error on
+  // invalid escaping.
+  auto ProcessSingleLineString(std::string s,
+                               Carbon::ParseAndLexContext& context,
+                               std::size_t hashtag_num)
+      -> Carbon::Parser::symbol_type;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -296,8 +302,6 @@ operand_start         [(A-Za-z0-9_\"]
   // Skip reading next char when a char is read but not checked in last
   // iteration.
   bool skip_read = false;
-  // Stop further scanning in case of #*\"\"\"#*.
-  bool skip_scan = false;
   // Current char during scanning.
   int c;
 
@@ -312,7 +316,7 @@ operand_start         [(A-Za-z0-9_\"]
       c = (*next_hash_tags).back();
       s.append(*next_hash_tags);
       if (c == '#') {
-        skip_scan = true;
+        return ProcessSingleLineString(s, context, hashtag_num);
       } else {
         skip_read = true;
         multi_line = true;
@@ -322,7 +326,7 @@ operand_start         [(A-Za-z0-9_\"]
     }
   }
 
-  while (!skip_scan) {
+  for (;;) {
     if (skip_read) {
       skip_read = false;
     } else {
@@ -413,19 +417,7 @@ operand_start         [(A-Za-z0-9_\"]
     }
     return ARG_TOKEN(string_literal, *block_string);
   } else {
-    std::string hashtags(hashtag_num, '#');
-    llvm::StringRef str(s);
-    CARBON_CHECK(str.consume_front(hashtags + "\"") &&
-                 str.consume_back("\"" + hashtags));
-
-    std::optional<std::string> unescaped =
-        Carbon::UnescapeStringLiteral(str, hashtag_num);
-    if (unescaped == std::nullopt) {
-      return context.RecordSyntaxError(
-          llvm::formatv("Invalid escaping in string: {0}",
-                        hashtags + "\"" + str + "\"" + hashtags));
-    }
-    return ARG_TOKEN(string_literal, *unescaped);
+    return ProcessSingleLineString(s, context, hashtag_num);
   }
 }
 
@@ -482,4 +474,19 @@ auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context, std::
     }
   }
   return s;
+}
+
+auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context, std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
+  std::string hashtags(hashtag_num, '#');
+  llvm::StringRef str(s);
+  CARBON_CHECK(str.consume_front(hashtags + "\"") &&
+               str.consume_back("\"" + hashtags));
+
+  std::optional<std::string> unescaped =
+      Carbon::UnescapeStringLiteral(str, hashtag_num);
+  if (unescaped == std::nullopt) {
+    return context.RecordSyntaxError(
+        llvm::formatv("Invalid escaping in string: {0}", s));
+  }
+  return ARG_TOKEN(string_literal, *unescaped);
 }
