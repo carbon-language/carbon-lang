@@ -64,6 +64,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
+    -   [Associated types](#associated-types)
     -   [Generic entities](#generic-entities)
         -   [Generic Classes](#generic-classes)
         -   [Generic choice types](#generic-choice-types)
@@ -977,7 +978,15 @@ class Circle {
 }
 ```
 
-**FIXME:** [external impls](generics/details.md#external-impl)
+In this case, `Print` is a member of `Circle`. Interfaces may also be
+implemented [externally](generics/details.md#external-impl), which means the
+members of the interface are not direct members of the type. Those methods may
+still be called using
+[compound member access syntax to qualify the name of the member](generics/details.md#qualified-member-names-and-compound-member-access),
+as in `x.(Printable.Print)()`. External implementations don't have to be in the
+same library as the type definition, subject to the orphan rule
+([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
+[coherence](generics/terminology.md#coherence).
 
 **FIXME:**
 [forward declarations](generics/details.md#forward-declarations-and-cyclic-references)
@@ -1018,10 +1027,58 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
 
+### Associated types
+
+An associated type is a type member of an interface whose value is determined by
+the implementation of that interface for a specific type. These values are set
+to compile-time values, and so use the
+[`:!` generic syntax](#checked-and-template-parameters) inside a
+
+<!-- FIXME [`let` declaration](#constant-let-declarations) -->
+
+without an initializer. This allows types in the signatures of functions in the
+interface to vary. For example, an interface describing a
+[stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
+associated type to represent the type of elements stored in the stack.
+
+```
+interface StackInterface {
+  let ElementType:! Movable;
+  fn Push[addr me: Self*](value: ElementType);
+  fn Pop[addr me: Self*]() -> ElementType;
+  fn IsEmpty[addr me: Self*]() -> bool;
+}
+```
+
+Then different types implementing `StackInterface` can specify different type
+values for the `ElementType` member of the interface using a `where` clause:
+
+```carbon
+class IntStack {
+  impl as StackInterface where .ElementType == i32 {
+    fn Push[addr me: Self*](value: i32);
+    // ...
+  }
+}
+
+class FruitStack {
+  impl as StackInterface where .ElementType == Fruit {
+    fn Push[addr me: Self*](value: Fruit);
+    // ...
+  }
+}
+```
+
+> References:
+>
+> -   [Generics: Associated types](generics/details.md#associated-types)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+
 ### Generic entities
 
-Many kinds of Carbon entities, not just functions: may be made generic by adding
-checked or template parameters
+Many Carbon entities, not just functions, may be made generic by adding
+[checked or template parameters](#checked-and-template-parameters).
 
 #### Generic Classes
 
@@ -1093,7 +1150,9 @@ Interfaces without parameters may only be implemented once for a given type, but
 a type can have distinct implementations of `AddWith(i32)` and
 `AddWith(BigInt)`.
 
-**FIXME:** Contrast with associated types
+Parameters to an interface _determine_ which implementation is selected for a
+type, in contrast to [associated types](#associated-types) which are _determined
+by_ the implementation of an interface for a type.
 
 > References:
 >
