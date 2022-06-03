@@ -1139,16 +1139,32 @@ impl forall [T:! Printable] Vector(T) as Printable;
 
 ### Operator overloading
 
-> **TODO:** Operators are translated into calls into interface methods, so to
-> overload an operator for a type, implement the corresponding interface for
-> that type.
+Uses of an operator in an [expression](#expressions) is translated into a call
+to a method of an interface. For example, if `x` has type `T` and `y` has type
+`U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So
+overloading of the `+` operator is accomplished by implementing interface
+`AddWith(U)` for type `T`. In order to support
+[implicit conversion](expressions/implicit_conversions.md) of the first operand
+to type `T` and the second argument to type `U`, add the `like` keyword to both
+types in the `impl` declaration, as in:
 
-> **TODO:** `like` for implicit conversions
+```carbon
+external impl like T as AddWith(like U) where .Result == V {
+  // `Self` is `T` here
+  fn Op[me: Self](other: U) -> V { ... }
+}
+```
 
-> **TODO:** Binary operators taking the same or different types
+When the operand types and result type are all the same, this is equivalent to
+implementing the `Add` interface:
 
-> **TODO:** Change this to a table? Concern: no support for merging cells in a
-> markdown table unless you make it using html.
+```carbon
+external impl T as Add {
+  fn Op[me: Self](other: Self) -> Self { ... }
+}
+```
+
+The interfaces that correspond to each operator are given by:
 
 -   [Arithmetic](expressions/arithmetic.md#extensibility):
     -   `-x`: `Negate`
@@ -1167,15 +1183,19 @@ impl forall [T:! Printable] Vector(T) as Printable;
 -   Comparison:
     -   `x == y`, `x != y` overloaded by implementing
         [`Eq` or `EqWith(U)`](expressions/comparison_operators.md#equality)
-    -   `x < y`, `x > y`, `x <= 8`, `8 >= 8` overloaded by implementing
+    -   `x < y`, `x > y`, `x <= y`, `x >= y` overloaded by implementing
         [`Ordered` or `OrderedWith(U)`](expressions/comparison_operators.md#ordering)
 -   Conversion:
     -   `x as U` is rewritten to use the
         [`As(U)`](expressions/as_expressions.md#extensibility) interface
     -   Implicit conversions use
         [`ImplicitAs(U)`](expressions/implicit_conversions.md#extensibility)
+-   **TODO:** Dereference: `*p`
 -   **TODO:** Indexing: `a[3]`
 -   **TODO:** Function call: `f(4)`
+
+The
+[logical operators can not be overloaded](expressions/logical_operators.md#overloading).
 
 > References:
 >
