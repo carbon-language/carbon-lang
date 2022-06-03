@@ -302,7 +302,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   bool skip_read = false;
   // set to true in case of #*\"\"\"#* to stop further scanning
   bool skip_scan = false;
-  int c = 0;
+  // current char during scanning
+  int c;
 
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
