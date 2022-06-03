@@ -181,6 +181,10 @@ _LINE_PATTERN = r"""(?P<prefix> \w*) \s*
 
 def main() -> None:
     input_filename = sys.argv[1]
+    header_filename = sys.argv[2]
+    cpp_filename = sys.argv[3]
+    relative_header = sys.argv[4]
+
     with open(input_filename) as file:
         lines = file.readlines()
 
@@ -226,11 +230,15 @@ def main() -> None:
         if node.kind == Class.Kind.ROOT:
             node.Finalize()
 
+    header_file = open(header_filename, "w")
+    sys.stdout = header_file
+
     print(f"// Generated from {input_filename} by explorer/gen_rtti.py\n")
     trans_table = str.maketrans({"/": "_", ".": "_"})
     guard_macro = input_filename.upper().translate(trans_table) + "_"
     print(f"#ifndef {guard_macro}")
     print(f"#define {guard_macro}")
+    print("\n#include <string_view>")
     print("\nnamespace Carbon {\n")
 
     for node in classes.values():
@@ -241,6 +249,8 @@ def main() -> None:
             for id in ids:
                 print(f"  {node.Root().leaves[id].name} = {id},")
             print("};\n")
+
+            print(f"std::string_view {node.name}KindName({node.name}Kind k);\n")
 
         if node.kind in [Class.Kind.ABSTRACT, Class.Kind.CONCRETE]:
             print(
@@ -272,6 +282,32 @@ def main() -> None:
 
     print("}  // namespace Carbon\n")
     print(f"#endif  // {guard_macro}")
+
+    header_file.close()
+
+    cpp_file = open(cpp_filename, "w")
+    sys.stdout = cpp_file
+
+    print(f"// Generated from {input_filename} by explorer/gen_rtti.py\n")
+    print(f'#include "{relative_header}"')
+    print("\nnamespace Carbon {\n")
+    for node in classes.values():
+        if node.kind != Class.Kind.CONCRETE:
+            assert node.id_range is not None
+            ids = range(node.id_range[0], node.id_range[1])
+            print(f"std::string_view {node.name}KindName({node.name}Kind k) {{")
+            print("  switch(k) {")
+            for id in ids:
+                name = node.Root().leaves[id].name
+                desc = " ".join(
+                    w.lower() for w in re.sub(r"([A-Z])", r" \1", name).split()
+                )
+                print(f'    case {node.name}Kind::{name}: return "{desc}";')
+            print("  }")
+            print("}\n")
+
+    print("}  // namespace Carbon\n")
+    cpp_file.close()
 
 
 if __name__ == "__main__":
