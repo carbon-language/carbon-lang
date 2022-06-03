@@ -339,7 +339,7 @@ operand_start         [(A-Za-z0-9_\"]
 
     if (!multi_line && (c == '\n' || c == '\v' || c == '\f' || c == '\r')) {
       return context.RecordSyntaxError(
-          llvm::formatv("missing closing quote in simple string: {0}", s));
+          llvm::formatv("missing closing quote in single-line string: {0}", s));
     }
 
     if (c != '"' && c != '\\') {
