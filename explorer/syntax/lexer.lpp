@@ -21,7 +21,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   // or std::nullopt on EOF
   auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context,
                     std::size_t hashtag_num) -> std::optional<std::string>;
-  auto EscapeSingleLineString(std::string s, std::size_t hashtag_num);
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -111,9 +110,6 @@ horizontal_whitespace [ \t\r]
 whitespace            [ \t\r\n]
 one_line_comment      \/\/[^\n]*\n
 operand_start         [(A-Za-z0-9_\"]
-
-/* Single-line string literals should reject vertical whitespace. */
-string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
 %{
   // This macro is expanded immediately before each action specified below.
@@ -291,22 +287,23 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 }
 
 #*(\"\"\"|\") {
-  // raw string literal.
+  // Raw string literal.
   std::string s(yytext);
   std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
   std::string hashtags(hashtag_num, '#');
   bool multi_line = false;
-  // set to true when no need to read before check
+  // Skip reading next char when a char is read but not checked in last
+  // iteration.
   bool skip_read = false;
-  // set to true in case of #*\"\"\"#* to stop further scanning
+  // Stop further scanning in case of #*\"\"\"#*.
   bool skip_scan = false;
-  // current char during scanning
+  // Current char during scanning.
   int c;
 
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
-      // check if it's a single line string, like #"""#
+      // Check if it's a single line string, like #"""#.
       std::optional<std::string> next_hash_tags =
           ReadHashTags(yyscanner, context, hashtag_num);
       if (next_hash_tags == std::nullopt) {
@@ -347,7 +344,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 
     if (c == '"') {
       if (multi_line) {
-        // Checks for 2 more '"'s on block string.
+        // Check for 2 more '"'s on block string.
         c = ReadChar(yyscanner, context);
         if (c <= 0) {
           return SIMPLE_TOKEN(END_OF_FILE);
@@ -404,7 +401,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   }
 
   if (multi_line) {
-    // block string
+    // Block string literal.
     llvm::StringRef str(s);
 
     CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
