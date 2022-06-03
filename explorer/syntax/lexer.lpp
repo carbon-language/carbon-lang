@@ -296,8 +296,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
   std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
   std::string hashtags(hashtag_num, '#');
-  // if it's possible to be a string line string
-  bool single_line = true;
+  bool multi_line = false;
   // set to true when no need to read before check
   bool skip_read = false;
   // set to true in case of #*\"\"\"#* to stop further scanning
@@ -319,10 +318,10 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
         skip_scan = true;
       } else {
         skip_read = true;
-        single_line = false;
+        multi_line = true;
       }
     } else {
-      single_line = false;
+      multi_line = true;
     }
   }
 
@@ -337,7 +336,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
       s.push_back(c);
     }
 
-    if (single_line && (c == '\n' || c == '\v' || c == '\f' || c == '\r')) {
+    if (!multi_line && (c == '\n' || c == '\v' || c == '\f' || c == '\r')) {
       return context.RecordSyntaxError(
           llvm::formatv("missing closing quote in simple string: {0}", s));
     }
@@ -347,8 +346,8 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     }
 
     if (c == '"') {
-      if (!single_line) {
-        // checks for 2 more '"'s on block string
+      if (multi_line) {
+        // Checks for 2 more '"'s on block string.
         c = ReadChar(yyscanner, context);
         if (c <= 0) {
           return SIMPLE_TOKEN(END_OF_FILE);
@@ -404,7 +403,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
     }
   }
 
-  if (!single_line) {
+  if (multi_line) {
     // block string
     llvm::StringRef str(s);
 
