@@ -13,7 +13,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 0;
-  {
+  if (true) {
     var x: i32 = 1;
   }
   return x;
