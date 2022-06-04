@@ -49,8 +49,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
     auto IsEof() -> bool;
   };
-  // Reads consecutive hash tags (up to hashtag_num) and returns visited chars
-  // or std::nullopt on EOF
+  // Tries to Read [hashtag_num] hashtags. Returns true on success.
   auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num)
       -> bool;
   // Removes quotes and escapes a single line string. Reports an error on
