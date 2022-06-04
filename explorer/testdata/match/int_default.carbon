@@ -14,11 +14,14 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var t: auto = 5;
   match (t) {
-    case 3 =>
+    case 3 => {
       return -1;
-    case 4 =>
+    }
+    case 4 => {
       return -1;
-    default =>
+    }
+    default => {
       return 0;
+    }
   }
 }
