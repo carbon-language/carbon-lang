@@ -165,6 +165,14 @@ static auto ResolveNames(Expression& expression,
       identifier.set_value_node(value_node);
       break;
     }
+    case ExpressionKind::DotSelfExpression: {
+      auto& dot_self = cast<DotSelfExpression>(expression);
+      CARBON_ASSIGN_OR_RETURN(
+          const auto value_node,
+          enclosing_scope.Resolve(".Self", dot_self.source_loc()));
+      dot_self.set_self_binding(&cast<GenericBinding>(value_node.base()));
+      break;
+    }
     case ExpressionKind::IntrinsicExpression:
       CARBON_RETURN_IF_ERROR(ResolveNames(
           cast<IntrinsicExpression>(expression).args(), enclosing_scope));
@@ -181,13 +189,17 @@ static auto ResolveNames(Expression& expression,
     }
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(expression);
-      // TODO: Introduce `.Self` into scope?
-      // StaticScope where_scope;
-      // where_scope.AddParent(&enclosing_scope);
-      // where_scope.Add(".Self", ???);
-      CARBON_RETURN_IF_ERROR(ResolveNames(where.base(), enclosing_scope));
+      // Introduce `.Self` into scope.
+      StaticScope where_scope;
+      where_scope.AddParent(&enclosing_scope);
+      // TODO: For now, `.Self` is in scope but not usable within its own
+      // declaration. It's unclear what the right handling is here.
+      CARBON_RETURN_IF_ERROR(
+          where_scope.Add(".Self", &where.self_binding(), /*usable=*/false));
+      CARBON_RETURN_IF_ERROR(ResolveNames(where.self_binding(), where_scope));
+      where_scope.MarkUsable(".Self");
       for (Nonnull<WhereClause*> clause : where.clauses()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, enclosing_scope));
+        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, where_scope));
       }
       break;
     }

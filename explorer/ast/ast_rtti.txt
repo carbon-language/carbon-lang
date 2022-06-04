@@ -57,7 +57,7 @@ abstract class Expression : AstNode;
   class TypeTypeLiteral : Expression;
   class ValueLiteral : Expression;
   class IdentifierExpression : Expression;
-  class DesignatorExpression : Expression;
+  class DotSelfExpression : Expression;
   class IntrinsicExpression : Expression;
   class IfExpression : Expression;
   class WhereExpression : Expression;

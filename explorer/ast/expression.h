@@ -28,6 +28,7 @@ class MemberName;
 class VariableType;
 class InterfaceType;
 class ImplBinding;
+class GenericBinding;
 
 class Expression : public AstNode {
  public:
@@ -154,46 +155,28 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
-// A designator expression, `.name`.
-//
-// A designator expression refers to a member of a value that determined based
-// on the context where it appears:
-//
-// - Inside a `where` clause defining a constraint, it refers to the type
-//   satisfying the constraint.
-//
-// TODO: Document other uses once they exist.
-class DesignatorExpression : public Expression {
+// A `.Self` expression within a `where` clause.
+class DotSelfExpression : public Expression {
  public:
-  explicit DesignatorExpression(SourceLocation source_loc, std::string name)
-      : Expression(AstNodeKind::DesignatorExpression, source_loc),
-        name_(std::move(name)) {}
+  explicit DotSelfExpression(SourceLocation source_loc)
+      : Expression(AstNodeKind::DotSelfExpression, source_loc) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromDesignatorExpression(node->kind());
+    return InheritsFromDotSelfExpression(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  // The self binding. Cannot be called before name resolution.
+  auto self_binding() const -> const GenericBinding& { return **self_binding_; }
 
-  // Returns the Expression that this designator desugars into, if known.
-  // Usually a SimpleMemberAccessExpression, but could be something else such
-  // as an IdentifierExpression or ValueLiteral.
-  // Set by type checking.
-  auto desugared() const -> std::optional<Nonnull<const Expression*>> {
-    return desugared_;
-  }
-
-  // Sets the desugared expression. Called during type checking.
-  void set_desugared(Nonnull<const Expression*> desugared) {
-    CARBON_CHECK(!desugared_.has_value());
-    desugared_ = desugared;
-    set_static_type(desugared->static_type());
-    set_value_category(desugared->value_category());
+  // Sets the self binding. Called only once, during name resolution.
+  void set_self_binding(Nonnull<const GenericBinding*> self_binding) {
+    CARBON_CHECK(!self_binding_.has_value());
+    self_binding_ = self_binding;
   }
 
  private:
   std::string name_;
-  std::optional<Nonnull<Expression*>> desugared_;
+  std::optional<Nonnull<const GenericBinding*>> self_binding_;
 };
 
 class SimpleMemberAccessExpression : public Expression {
@@ -778,20 +761,24 @@ class EqualsWhereClause : public WhereClause {
 };
 
 // A `where` expression: `AddableWith(i32) where .Result == i32`.
+//
+// The first operand is rewritten to a generic binding, for example
+// `.Self:! AddableWith(i32)`, which may be used in the clauses.
 class WhereExpression : public Expression {
  public:
-  explicit WhereExpression(SourceLocation source_loc, Nonnull<Expression*> base,
+  explicit WhereExpression(SourceLocation source_loc,
+                           Nonnull<GenericBinding*> self_binding,
                            std::vector<Nonnull<WhereClause*>> clauses)
       : Expression(AstNodeKind::WhereExpression, source_loc),
-        base_(base),
+        self_binding_(self_binding),
         clauses_(std::move(clauses)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromWhereExpression(node->kind());
   }
 
-  auto base() const -> const Expression& { return *base_; }
-  auto base() -> Expression& { return *base_; }
+  auto self_binding() const -> const GenericBinding& { return *self_binding_; }
+  auto self_binding() -> GenericBinding& { return *self_binding_; }
 
   auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
     return clauses_;
@@ -799,7 +786,7 @@ class WhereExpression : public Expression {
   auto clauses() -> llvm::ArrayRef<Nonnull<WhereClause*>> { return clauses_; }
 
  private:
-  Nonnull<Expression*> base_;
+  Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
 };
 

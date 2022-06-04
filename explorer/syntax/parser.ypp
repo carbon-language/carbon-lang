@@ -300,7 +300,14 @@ primary_expression:
   identifier
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), $1); }
 | designator
-    { $$ = arena->New<DesignatorExpression>(context.source_loc(), $1); }
+    {
+      // `.Foo` is rewritten to `.Self.Foo`.
+      $$ = arena->New<SimpleMemberAccessExpression>(
+          context.source_loc(),
+          arena->New<DotSelfExpression>(context.source_loc()), $1);
+    }
+| PERIOD SELF
+    { $$ = arena->New<DotSelfExpression>(context.source_loc()); }
 | integer_literal
     { $$ = arena->New<IntLiteral>(context.source_loc(), $1); }
 | string_literal
@@ -544,7 +551,11 @@ where_clause_list:
 ;
 where_expression:
   type_expression WHERE where_clause_list
-    { $$ = arena->New<WhereExpression>(context.source_loc(), $1, $3); }
+    {
+      auto* self =
+          arena -> New<GenericBinding>(context.source_loc(), ".Self", $1);
+      $$ = arena->New<WhereExpression>(context.source_loc(), self, $3);
+    }
 ;
 statement_expression:
   ref_deref_expression
