@@ -14,6 +14,7 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var x: i32 = 0;
   if (true) {
+    // TODO: If we disallow declaring shadowed names, we should reject this.
     var x: i32 = 1;
   }
   return x;
