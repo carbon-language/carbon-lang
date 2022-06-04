@@ -299,6 +299,8 @@ api_or_impl:
 primary_expression:
   identifier
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), $1); }
+| designator
+    { $$ = arena->New<DesignatorExpression>(context.source_loc(), $1); }
 | integer_literal
     { $$ = arena->New<IntLiteral>(context.source_loc(), $1); }
 | string_literal

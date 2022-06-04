@@ -1728,6 +1728,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       ident.set_value_category(ident.value_node().value_category());
       return Success();
     }
+    case ExpressionKind::DesignatorExpression:
+      // If a designator can appear here, it will have already been
+      // type-checked.
+      return CompilationError(e->source_loc())
+             << "missing expression before `.`; "
+             << "designator expression cannot be used here";
     case ExpressionKind::IntLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<IntType>());
@@ -1998,10 +2004,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(*e);
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&where.base(), impl_scope));
-      for (Nonnull<WhereClause*> clause : where.clauses()) {
-        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, impl_scope));
-      }
-
       const ConstraintType* base;
       const Value& base_type = where.base().static_type();
       if (auto* constraint_type_type =
@@ -2017,8 +2019,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                << "found " << base_type;
       }
 
-      // Apply the `where` clauses.
       ConstraintTypeBuilder builder(base);
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        CARBON_RETURN_IF_ERROR(UpdateDesignators( TODO
+        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, impl_scope));
+      }
+
+      // Apply the `where` clauses.
       for (Nonnull<const WhereClause*> clause : where.clauses()) {
         switch (clause->kind()) {
           case WhereClauseKind::IsWhereClause: {

@@ -154,6 +154,48 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
+// A designator expression, `.name`.
+//
+// A designator expression refers to a member of a value that determined based
+// on the context where it appears:
+//
+// - Inside a `where` clause defining a constraint, it refers to the type
+//   satisfying the constraint.
+//
+// TODO: Document other uses once they exist.
+class DesignatorExpression : public Expression {
+ public:
+  explicit DesignatorExpression(SourceLocation source_loc, std::string name)
+      : Expression(AstNodeKind::DesignatorExpression, source_loc),
+        name_(std::move(name)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDesignatorExpression(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+
+  // Returns the Expression that this designator desugars into, if known.
+  // Usually a SimpleMemberAccessExpression, but could be something else such
+  // as an IdentifierExpression or ValueLiteral.
+  // Set by type checking.
+  auto desugared() const -> std::optional<Nonnull<const Expression*>> {
+    return desugared_;
+  }
+
+  // Sets the desugared expression. Called during type checking.
+  void set_desugared(Nonnull<const Expression*> desugared) {
+    CARBON_CHECK(!desugared_.has_value());
+    desugared_ = desugared;
+    set_static_type(desugared->static_type());
+    set_value_category(desugared->value_category());
+  }
+
+ private:
+  std::string name_;
+  std::optional<Nonnull<Expression*>> desugared_;
+};
+
 class SimpleMemberAccessExpression : public Expression {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
