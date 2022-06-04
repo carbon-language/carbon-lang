@@ -331,8 +331,8 @@ operand_start         [(A-Za-z0-9_\"]
   // Raw string literal.
   ScanHelper scan_helper(yytext, yyscanner, context);
   std::string s = scan_helper.GetCurrentStr();
-  const std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   const std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
+  const std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   bool multi_line = false;
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
