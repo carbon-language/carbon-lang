@@ -27,8 +27,9 @@ static auto FromHex(char c) -> std::optional<char> {
   return std::nullopt;
 }
 
-auto UnescapeStringLiteral(llvm::StringRef source, std::size_t hashtag_num,
-                           bool is_block_string) -> std::optional<std::string> {
+auto UnescapeStringLiteral(llvm::StringRef source,
+                           const std::size_t hashtag_num, bool is_block_string)
+    -> std::optional<std::string> {
   std::string ret;
   std::string escape = "\\" + std::string(hashtag_num, '#');
   ret.reserve(source.size());
@@ -104,7 +105,8 @@ auto UnescapeStringLiteral(llvm::StringRef source, std::size_t hashtag_num,
   return ret;
 }
 
-auto ParseBlockStringLiteral(llvm::StringRef source, std::size_t hashtag_num)
+auto ParseBlockStringLiteral(llvm::StringRef source,
+                             const std::size_t hashtag_num)
     -> ErrorOr<std::string> {
   llvm::SmallVector<llvm::StringRef> lines;
   source.split(lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/true);

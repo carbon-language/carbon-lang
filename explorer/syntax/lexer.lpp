@@ -17,15 +17,51 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   // Reads and returns a single character. Reports an error on EOF.
   auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
+
+  class ScanHelper {
+   private:
+    std::string s;
+    yyscan_t yyscanner;
+    Carbon::ParseAndLexContext& context;
+    // Skips reading next char.
+    bool skip_read;
+    bool is_eof;
+
+   public:
+    ScanHelper(const char* text, yyscan_t yyscanner,
+               Carbon::ParseAndLexContext& context)
+        : s(std::string(text)),
+          yyscanner(yyscanner),
+          context(context),
+          skip_read(false),
+          is_eof(false) {}
+    // Advances yyscanner by one char. Sets is_eof to true and returns false on
+    // EOF.
+    auto Advance() -> bool;
+    // Returns last scanned char.
+    auto GetLastChar() -> int;
+    // Returns scanned string.
+    auto GetCurrentStr() -> std::string;
+
+    auto GetSkipRead() -> bool;
+
+    auto SetSkipRead(bool skip) -> void;
+
+    auto IsEof() -> bool;
+  };
   // Reads consecutive hash tags (up to hashtag_num) and returns visited chars
   // or std::nullopt on EOF
-  auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context,
-                    std::size_t hashtag_num) -> std::optional<std::string>;
+  auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num)
+      -> bool;
   // Removes quotes and escapes a single line string. Reports an error on
   // invalid escaping.
   auto ProcessSingleLineString(std::string s,
                                Carbon::ParseAndLexContext& context,
                                std::size_t hashtag_num)
+      -> Carbon::Parser::symbol_type;
+  auto ProcessMultiLineString(std::string s,
+                              Carbon::ParseAndLexContext& context,
+                              std::size_t hashtag_num)
       -> Carbon::Parser::symbol_type;
 %}
 
@@ -294,130 +330,95 @@ operand_start         [(A-Za-z0-9_\"]
 
 #*(\"\"\"|\") {
   // Raw string literal.
-  std::string s(yytext);
-  std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
-  std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
-  std::string hashtags(hashtag_num, '#');
+  ScanHelper scan_helper(yytext, yyscanner, context);
+  std::string s = scan_helper.GetCurrentStr();
+  const std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
+  const std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
   bool multi_line = false;
-  // Skip reading next char when a char is read but not checked in last
-  // iteration.
-  bool skip_read = false;
-  // Current char during scanning.
-  int c;
-
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
-      // Check if it's a single line string, like #"""#.
-      std::optional<std::string> next_hash_tags =
-          ReadHashTags(yyscanner, context, hashtag_num);
-      if (next_hash_tags == std::nullopt) {
+      // Check if it's a single-line string, like #"""#.
+      if (ReadHashTags(scan_helper, hashtag_num)) {
+        return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
+                                       hashtag_num);
+      } else if (scan_helper.IsEof()) {
         return SIMPLE_TOKEN(END_OF_FILE);
-      }
-      c = (*next_hash_tags).back();
-      s.append(*next_hash_tags);
-      if (c == '#') {
-        return ProcessSingleLineString(s, context, hashtag_num);
       } else {
-        skip_read = true;
-        multi_line = true;
+        scan_helper.SetSkipRead(true);
       }
-    } else {
-      multi_line = true;
     }
+    multi_line = true;
   }
 
   for (;;) {
-    if (skip_read) {
-      skip_read = false;
-    } else {
-      c = ReadChar(yyscanner, context);
-      if (c <= 0) {
-        return SIMPLE_TOKEN(END_OF_FILE);
-      }
-      s.push_back(c);
-    }
-
-    if (!multi_line && (c == '\n' || c == '\v' || c == '\f' || c == '\r')) {
-      return context.RecordSyntaxError(
-          llvm::formatv("missing closing quote in single-line string: {0}", s));
-    }
-
-    if (c != '"' && c != '\\') {
-      continue;
-    }
-
-    if (c == '"') {
-      if (multi_line) {
-        // Check for 2 more '"'s on block string.
-        c = ReadChar(yyscanner, context);
-        if (c <= 0) {
-          return SIMPLE_TOKEN(END_OF_FILE);
-        }
-        s.push_back(c);
-        if (c != '"') {
-          skip_read = true;
-          continue;
-        }
-        c = ReadChar(yyscanner, context);
-        if (c <= 0) {
-          return SIMPLE_TOKEN(END_OF_FILE);
-        }
-        s.push_back(c);
-        if (c != '"') {
-          skip_read = true;
-          continue;
-        }
-      }
-    }
-
-    std::optional<std::string> next_hash_tags =
-        ReadHashTags(yyscanner, context, hashtag_num);
-    if (next_hash_tags == std::nullopt) {
+    if (scan_helper.GetSkipRead()) {
+      scan_helper.SetSkipRead(false);
+    } else if (!scan_helper.Advance()) {
       return SIMPLE_TOKEN(END_OF_FILE);
     }
-    s.append(*next_hash_tags);
 
-    if (c == '\\') {
-      if (hashtag_num > 0) {
-        c = (*next_hash_tags).back();
-      }
-      if (hashtag_num == 0 || c == '#') {
-        c = ReadChar(yyscanner, context);
-        if (c <= 0) {
-          return SIMPLE_TOKEN(END_OF_FILE);
+    switch (scan_helper.GetLastChar()) {
+      case '\n':  // Fall through.
+      case '\v':  // Fall through.
+      case '\f':  // Fall through.
+      case '\r':
+        if (!multi_line) {
+          return context.RecordSyntaxError(
+              llvm::formatv("missing closing quote in single-line string: {0}",
+                            scan_helper.GetCurrentStr()));
         }
-        s.push_back(c);
-      } else {
-        skip_read = true;
-      }
-      continue;
-    } else {
-      // c == '"'
-      if (hashtag_num > 0) {
-        c = (*next_hash_tags).back();
-      }
-      if (hashtag_num == 0 || c == '#') {
         break;
-      } else {
-        skip_read = true;
-      }
+      case '"':
+        if (multi_line) {
+          // Check for 2 more '"'s on block string.
+          if (!scan_helper.Advance()) {
+            return SIMPLE_TOKEN(END_OF_FILE);
+          }
+          if (scan_helper.GetLastChar() != '"') {
+            scan_helper.SetSkipRead(true);
+            continue;
+          }
+          if (!scan_helper.Advance()) {
+            return SIMPLE_TOKEN(END_OF_FILE);
+          }
+          if (scan_helper.GetLastChar() != '"') {
+            scan_helper.SetSkipRead(true);
+            continue;
+          }
+          // Now we are at the last " of """.
+        }
+
+        if (ReadHashTags(scan_helper, hashtag_num)) {
+          // Reach closing quotes, break out of the loop.
+          goto post;
+        } else if (scan_helper.IsEof()) {
+          return SIMPLE_TOKEN(END_OF_FILE);
+        } else {
+          scan_helper.SetSkipRead(true);
+        }
+        break;
+      case '\\':
+        if (ReadHashTags(scan_helper, hashtag_num)) {
+          if (!scan_helper.Advance()) {
+            return SIMPLE_TOKEN(END_OF_FILE);
+          }
+        } else if (scan_helper.IsEof()) {
+          return SIMPLE_TOKEN(END_OF_FILE);
+        } else {
+          scan_helper.SetSkipRead(true);
+        }
+        break;
+      default:
+        continue;
     }
   }
-
-  if (multi_line) {
-    // Block string literal.
-    llvm::StringRef str(s);
-
-    CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
-    Carbon::ErrorOr<std::string> block_string =
-        Carbon::ParseBlockStringLiteral(str, hashtag_num);
-    if (!block_string.ok()) {
-      return context.RecordSyntaxError(llvm::formatv(
-          "Invalid block string: {0}", block_string.error().message()));
-    }
-    return ARG_TOKEN(string_literal, *block_string);
-  } else {
-    return ProcessSingleLineString(s, context, hashtag_num);
+  post : if (multi_line) {
+    return ProcessMultiLineString(scan_helper.GetCurrentStr(), context,
+                                  hashtag_num);
+  }
+  else {
+    return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
+                                   hashtag_num);
   }
 }
 
@@ -450,6 +451,8 @@ operand_start         [(A-Za-z0-9_\"]
 
 %%
 
+
+
 auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
   const int c = yyinput(yyscanner);
   if (c <= 0) {
@@ -458,24 +461,17 @@ auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
   return c;
 }
 
-auto ReadHashTags(yyscan_t yyscanner, Carbon::ParseAndLexContext& context, std::size_t hashtag_num) -> std::optional<std::string> {
-  std::string s = "";
+auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num) -> bool {
   std::size_t hashtag_count = 0;
   while (hashtag_count++ < hashtag_num) {
-    int c = ReadChar(yyscanner, context);
-    if (c <= 0) {
-      return std::nullopt;
-    }
-    s.push_back(c);
-
-    if (c != '#') {
-      return s;
+    if (!scan_helper.Advance() || scan_helper.GetLastChar() != '#') {
+      return false;
     }
   }
-  return s;
+  return true;
 }
 
-auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context, std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
+auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context, const std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
   llvm::StringRef str(s);
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&
@@ -489,3 +485,36 @@ auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context,
   }
   return ARG_TOKEN(string_literal, *unescaped);
 }
+
+auto ProcessMultiLineString(std::string s, Carbon::ParseAndLexContext& context, const std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
+  llvm::StringRef str(s);
+  std::string hashtags(hashtag_num, '#');
+  CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
+  Carbon::ErrorOr<std::string> block_string =
+      Carbon::ParseBlockStringLiteral(str, hashtag_num);
+  if (!block_string.ok()) {
+    return context.RecordSyntaxError(llvm::formatv(
+        "Invalid block string: {0}", block_string.error().message()));
+  }
+  return ARG_TOKEN(string_literal, *block_string);
+}
+
+auto ScanHelper::Advance() -> bool {
+  int c = ReadChar(yyscanner, context);
+  if (c <= 0) {
+    is_eof = true;
+    return false;
+  }
+  s.push_back(c);
+  return true;
+}
+
+auto ScanHelper::GetLastChar() -> int { return s.back(); }
+
+auto ScanHelper::GetCurrentStr() -> std::string { return s; }
+
+auto ScanHelper::GetSkipRead() -> bool { return skip_read; }
+
+auto ScanHelper::SetSkipRead(bool skip) -> void { skip_read = skip; }
+
+auto ScanHelper::IsEof() -> bool { return is_eof; }
