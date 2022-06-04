@@ -14,8 +14,9 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var x: i32 = 0;
   match (x) {
-    case 1 =>
+    case 1 => {
       return 1;
+    }
   }
   return 0;
 }
