@@ -10,10 +10,10 @@ C++ is the dominant programming language for the performance critical software
 our goals prioritize. The most direct way to deliver a modern and excellent
 developer experience for those use cases and developers would be to improve C++.
 
-Improving C++ to modernize it and deliver the kind of experience developers
-expect from a programming language today is difficult in part because **C++ has
-decades of technical debt** accumulated in the design of the language. It
-inherited the legacy of C, including
+Improving C++ to better provide modern language features and deliver the kind of
+experience developers expect from a programming language today is difficult in
+part because **C++ has decades of technical debt** accumulated in the design of
+the language. It inherited the legacy of C, including
 [textual preprocessing and inclusion](https://clang.llvm.org/docs/Modules.html#problems-with-the-current-model).
 At the time, this was essential to C++'s success by giving it instant and high
 quality access to a large C ecosystem. However, over time this has resulted in
@@ -70,15 +70,15 @@ those directly shape our decisions. We also have a clear
 decisions rapidly when needed. The open-source model enables the Carbon project
 to expand its scope beyond just the language. We will build a holistic
 collection of tools that provide a rich developer experience, ranging from the
-compiler and standard library to IDE tools and more. **We will even close a huge
-gap in the C++ ecosystem with a built-in package manager.**
+compiler and standard library to IDE tools and more. **We will even try to close
+a huge gap in the C++ ecosystem with a language built-in package manager.**
 
 Carbon is particularly focused on a specific set of [goals](goals.md). These
 will not align with every user of C++, but have significant interest across a
-wide range of users that are capable and motivated to evolve their codebase
-towards a more modern language. Given the difficulties posed by C++'s technical
-debt, sustained priority of backwards compatibility, and evolution process, we
-wanted to explore an alternative approach to achieve these goals -- through a
+wide range of users that are capable and motivated to evolve and modernize their
+codebase. Given the difficulties posed by C++'s technical debt, sustained
+priority of backwards compatibility, and evolution process, we wanted to explore
+an alternative approach to achieve these goals -- through a
 backwards-incompatible successor language, designed with robust support for
 interoperability with and migration from C++. We hope other efforts to
 incrementally improve C++ continue, and would love to share ideas where we can.
