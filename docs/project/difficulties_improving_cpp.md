@@ -10,8 +10,8 @@ C++ is the dominant programming language for the performance critical software
 our goals prioritize. The most direct way to deliver a modern and excellent
 developer experience for those use cases and developers would be to improve C++.
 
-Improving C++ to better provide modern language features and deliver the kind of
-experience developers expect from a programming language today is difficult in
+Improving C++ to deliver the kind of experience developers expect from a
+programming language today, providing modern language features, is difficult in
 part because **C++ has decades of technical debt** accumulated in the design of
 the language. It inherited the legacy of C, including
 [textual preprocessing and inclusion](https://clang.llvm.org/docs/Modules.html#problems-with-the-current-model).
