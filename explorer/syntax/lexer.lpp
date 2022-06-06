@@ -329,6 +329,8 @@ operand_start         [(A-Za-z0-9_\"]
 
 #*(\"\"\"|\") {
   // Raw string literal.
+  // yytext and chars scanned by scan_helper hold the source text, not the
+  // string the source represents.
   ScanHelper scan_helper(yytext, yyscanner, context);
   std::string s = scan_helper.GetCurrentStr();
   const std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
