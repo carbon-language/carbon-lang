@@ -87,16 +87,16 @@ void Expression::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
-      out << index.aggregate() << "[" << index.offset() << "]";
+      out << index.object() << "[" << index.offset() << "]";
       break;
     }
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(*this);
-      out << access.aggregate() << "." << access.field();
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(*this);
+      out << access.object() << "." << access.member();
       break;
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(*this);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(*this);
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
@@ -200,6 +200,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
   }
@@ -236,9 +237,13 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
+    case ExpressionKind::ValueLiteral:
+      // FIXME: For layering reasons, we can't print out the value from here.
+      out << "ValueLiteral";
+      break;
     case ExpressionKind::IndexExpression:
-    case ExpressionKind::FieldAccessExpression:
-    case ExpressionKind::CompoundFieldAccessExpression:
+    case ExpressionKind::SimpleMemberAccessExpression:
+    case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:

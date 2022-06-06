@@ -1,0 +1,96 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name: "BadSimpleMemberAccess"
+      deduced_parameters {
+        name: "T"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "a"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              simple_member_access {
+                field: "x"
+                object {
+                  identifier {
+                    name: "a"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "BadSimpleMemberAccess"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

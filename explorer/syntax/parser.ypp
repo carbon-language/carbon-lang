@@ -112,7 +112,6 @@
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
-%type <Nonnull<Block*>> nonempty_block
 %type <Nonnull<Block*>> block
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> primary_expression
@@ -142,6 +141,7 @@
 %type <Nonnull<Expression*>> if_expression
 %type <Nonnull<Expression*>> expression
 %type <Nonnull<GenericBinding*>> generic_binding
+%type <Nonnull<Pattern*>> deduced_param
 %type <std::vector<Nonnull<AstNode*>>> deduced_params
 %type <std::vector<Nonnull<AstNode*>>> impl_deduced_params
 %type <std::vector<Nonnull<AstNode*>>> deduced_param_list
@@ -155,7 +155,7 @@
 %type <std::vector<FieldInitializer>> struct_type_literal_contents
 %type <Nonnull<TupleLiteral*>> tuple
 %type <std::string> binding_lhs
-%type <std::optional<Nonnull<BindingPattern*>>> receiver
+%type <std::optional<Nonnull<Pattern*>>> receiver
 %type <Nonnull<BindingPattern*>> variable_declaration
 %type <ParenContents<Expression>> paren_expression_base
 %type <ParenContents<Expression>> paren_expression_contents
@@ -174,6 +174,7 @@
 %token
   // Most tokens have their spelling defined in lexer.lpp.
   // table-begin
+  ADDR
   ALIAS
   AMPERSAND
   AND
@@ -308,7 +309,7 @@ primary_expression:
       $$ = arena->New<IntTypeLiteral>(context.source_loc());
     }
 | SELF
-    // FIXME: Should we create a new TypeLiteral for `Self`?
+    // TODO: Should we create a new TypeLiteral for `Self`?
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | STRING
     { $$ = arena->New<StringTypeLiteral>(context.source_loc()); }
@@ -327,11 +328,14 @@ primary_expression:
 postfix_expression:
   primary_expression
 | postfix_expression designator
-    { $$ = arena->New<FieldAccessExpression>(context.source_loc(), $1, $2); }
+    {
+      $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), $1,
+                                                    $2);
+    }
 | postfix_expression PERIOD LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
     {
-      $$ = arena->New<CompoundFieldAccessExpression>(context.source_loc(), $1,
-                                                     $4);
+      $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(), $1,
+                                                      $4);
     }
 | postfix_expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET
     { $$ = arena->New<IndexExpression>(context.source_loc(), $1, $3); }
@@ -672,9 +676,9 @@ maybe_empty_tuple_pattern:
 ;
 
 clause:
-  CASE pattern DOUBLE_ARROW statement
+  CASE pattern DOUBLE_ARROW block
     { $$ = Match::Clause($2, $4); }
-| DEFAULT DOUBLE_ARROW statement
+| DEFAULT DOUBLE_ARROW block
     {
       $$ = Match::Clause(arena->New<BindingPattern>(
                              context.source_loc(), std::string(AnonymousName),
@@ -720,15 +724,6 @@ statement:
       auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
     }
-// We disallow empty blocks in places where an arbitrary statement can occur
-// in order to avoid ambiguity with the empty struct literal `{}`. We can
-// allow non-empty blocks because a non-empty struct literal always starts with
-// a designator, and a block never does, so one token of lookahead suffices
-// to disambiguate. As of this writing, the "official" resolution of this
-// ambiguity is an open question (see
-// https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/classes.md#literals)
-| nonempty_block
-    { $$ = $1; }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
@@ -773,13 +768,6 @@ block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
-nonempty_block:
-  LEFT_CURLY_BRACE statement_list statement RIGHT_CURLY_BRACE
-    {
-      $2.push_back($3);
-      $$ = arena->New<Block>(context.source_loc(), std::move($2));
-    }
-;
 return_term:
   // Empty
     { $$ = ReturnTerm::Omitted(context.source_loc()); }
@@ -794,27 +782,22 @@ generic_binding:
       $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
     }
 ;
+deduced_param:
+  generic_binding
+    { $$ = $1; }
+| variable_declaration
+    { $$ = $1; }
+| ADDR variable_declaration
+    { $$ = arena->New<AddrPattern>(context.source_loc(), $2); }
+;
 deduced_param_list:
   // Empty
-    { $$ = std::vector<Nonnull<AstNode*>>(); }
-| generic_binding
+    { $$ = {}; }
+| deduced_param
+    { $$ = {$1}; }
+| deduced_param_list COMMA deduced_param
     {
-      $$ = std::vector<Nonnull<AstNode*>>();
-      $$.push_back($1);
-    }
-| deduced_param_list COMMA generic_binding
-    {
-      $$ = $1;
-      $$.push_back($3);
-    }
-| variable_declaration
-    {
-      $$ = std::vector<Nonnull<AstNode*>>();
-      $$.push_back($1);
-    }
-| deduced_param_list COMMA variable_declaration
-    {
-      $$ = $1;
+      $$ = $1;  // TODO: can we std::move here?
       $$.push_back($3);
     }
 ;
@@ -835,6 +818,8 @@ receiver:
     { $$ = std::nullopt; }
 | LEFT_CURLY_BRACE variable_declaration RIGHT_CURLY_BRACE
     { $$ = $2; }
+| LEFT_CURLY_BRACE ADDR variable_declaration RIGHT_CURLY_BRACE
+    { $$ = arena->New<AddrPattern>(context.source_loc(), $3); }
 ;
 function_declaration:
   FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
@@ -933,7 +918,7 @@ declaration:
       // TODO: Type of `Self` should be the interface being declared, not
       // `Type`.
       auto ty_ty = arena -> New<TypeTypeLiteral>(context.source_loc());
-      // FIXME: Should this be switched to use a `SelfDeclaration` instead?
+      // TODO: Should this be switched to use a `SelfDeclaration` instead?
       auto self =
           arena -> New<GenericBinding>(context.source_loc(), "Self", ty_ty);
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,

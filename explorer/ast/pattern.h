@@ -184,6 +184,23 @@ class BindingPattern : public Pattern {
   std::optional<ValueCategory> value_category_;
 };
 
+class AddrPattern : public Pattern {
+ public:
+  explicit AddrPattern(SourceLocation source_loc,
+                       Nonnull<BindingPattern*> binding)
+      : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromAddrPattern(node->kind());
+  }
+
+  auto binding() const -> const BindingPattern& { return *binding_; }
+  auto binding() -> BindingPattern& { return *binding_; }
+
+ private:
+  Nonnull<BindingPattern*> binding_;
+};
+
 // A pattern that matches a tuple value field-wise.
 class TuplePattern : public Pattern {
  public:
@@ -285,11 +302,11 @@ class AlternativePattern : public Pattern {
                      Nonnull<Expression*> alternative,
                      Nonnull<TuplePattern*> arguments)
       -> ErrorOr<Nonnull<AlternativePattern*>> {
-    CARBON_ASSIGN_OR_RETURN(Nonnull<FieldAccessExpression*> field_access,
-                            RequireFieldAccess(alternative));
-    return arena->New<AlternativePattern>(source_loc,
-                                          &field_access->aggregate(),
-                                          field_access->field(), arguments);
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<SimpleMemberAccessExpression*> member_access,
+        RequireSimpleMemberAccess(alternative));
+    return arena->New<AlternativePattern>(source_loc, &member_access->object(),
+                                          member_access->member(), arguments);
   }
 
   // Constructs an AlternativePattern that matches a value of the type
@@ -317,8 +334,8 @@ class AlternativePattern : public Pattern {
   auto arguments() -> TuplePattern& { return *arguments_; }
 
  private:
-  static auto RequireFieldAccess(Nonnull<Expression*> alternative)
-      -> ErrorOr<Nonnull<FieldAccessExpression*>>;
+  static auto RequireSimpleMemberAccess(Nonnull<Expression*> alternative)
+      -> ErrorOr<Nonnull<SimpleMemberAccessExpression*>>;
 
   Nonnull<Expression*> choice_type_;
   std::string alternative_name_;

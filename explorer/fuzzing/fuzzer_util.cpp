@@ -4,6 +4,8 @@
 
 #include "explorer/fuzzing/fuzzer_util.h"
 
+#include <google/protobuf/text_format.h>
+
 #include "common/check.h"
 #include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/interpreter/exec_program.h"
@@ -39,6 +41,20 @@ auto Internal::GetRunfilesFile(const std::string& file)
     return ErrorBuilder() << full_path << " doesn't exist";
   }
   return full_path;
+}
+
+auto ParseCarbonTextProto(const std::string& contents, bool allow_unknown)
+    -> ErrorOr<Fuzzing::Carbon> {
+  google::protobuf::TextFormat::Parser parser;
+  if (allow_unknown) {
+    parser.AllowUnknownField(true);
+    parser.AllowUnknownExtension(true);
+  }
+  Fuzzing::Carbon carbon_proto;
+  if (!parser.ParseFromString(contents, &carbon_proto)) {
+    return ErrorBuilder() << "Couldn't parse Carbon text proto";
+  }
+  return carbon_proto;
 }
 
 auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)

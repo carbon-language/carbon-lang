@@ -45,7 +45,7 @@ static auto IdentifierToCarbon(std::string_view s, llvm::raw_ostream& out)
 
 static auto StringLiteralToCarbon(std::string_view s, llvm::raw_ostream& out) {
   out << '"';
-  out.write_escaped(s);
+  out.write_escaped(s, /*UseHexEscapes=*/true);
   out << '"';
 }
 
@@ -200,32 +200,32 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
     case Fuzzing::Expression::kFunctionType: {
       const auto& fun_type = expression.function_type();
       out << "__Fn";
-      ExpressionToCarbon(fun_type.parameter(), out);
+      TupleLiteralExpressionToCarbon(fun_type.parameter(), out);
       out << " -> ";
       ExpressionToCarbon(fun_type.return_type(), out);
       break;
     }
 
-    case Fuzzing::Expression::kFieldAccess: {
-      const auto& field_access = expression.field_access();
-      ExpressionToCarbon(field_access.aggregate(), out);
+    case Fuzzing::Expression::kSimpleMemberAccess: {
+      const auto& simple_member_access = expression.simple_member_access();
+      ExpressionToCarbon(simple_member_access.object(), out);
       out << ".";
-      IdentifierToCarbon(field_access.field(), out);
+      IdentifierToCarbon(simple_member_access.field(), out);
       break;
     }
 
-    case Fuzzing::Expression::kCompoundFieldAccess: {
-      const auto& field_access = expression.compound_field_access();
-      ExpressionToCarbon(field_access.object(), out);
+    case Fuzzing::Expression::kCompoundMemberAccess: {
+      const auto& simple_member_access = expression.compound_member_access();
+      ExpressionToCarbon(simple_member_access.object(), out);
       out << ".(";
-      ExpressionToCarbon(field_access.path(), out);
+      ExpressionToCarbon(simple_member_access.path(), out);
       out << ")";
       break;
     }
 
     case Fuzzing::Expression::kIndex: {
       const auto& index = expression.index();
-      ExpressionToCarbon(index.aggregate(), out);
+      ExpressionToCarbon(index.object(), out);
       out << "[";
       ExpressionToCarbon(index.offset(), out);
       out << "]";
@@ -425,6 +425,11 @@ static auto PatternToCarbon(const Fuzzing::Pattern& pattern,
     case Fuzzing::Pattern::kGenericBinding:
       GenericBindingToCarbon(pattern.generic_binding(), out);
       break;
+
+    case Fuzzing::Pattern::kAddrPattern:
+      out << "addr ";
+      BindingPatternToCarbon(pattern.addr_pattern().binding_pattern(), out);
+      break;
   }
 }
 
@@ -598,7 +603,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         if (function.has_me_pattern()) {
           // This is a class method.
           out << sep;
-          BindingPatternToCarbon(function.me_pattern(), out);
+          PatternToCarbon(function.me_pattern(), out);
         }
         out << "]";
       }
@@ -644,7 +649,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       for (const auto& alternative : choice.alternatives()) {
         out << sep;
         IdentifierToCarbon(alternative.name(), out);
-        ExpressionToCarbon(alternative.signature(), out);
+        TupleLiteralExpressionToCarbon(alternative.signature(), out);
       }
       out << "}";
       break;

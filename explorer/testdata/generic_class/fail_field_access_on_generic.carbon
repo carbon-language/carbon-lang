@@ -10,11 +10,11 @@
 
 package ExplorerTest api;
 
-fn BadFieldAccess[T:! Type](a: T) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: field access, unexpected T:! Type of non-interface type Type in a.x
+fn BadSimpleMemberAccess[T:! Type](a: T) -> T {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access, unexpected T:! Type of non-interface type Type in a.x
   return a.x;
 }
 
 fn Main() -> i32 {
-  return BadFieldAccess(0);
+  return BadSimpleMemberAccess(0);
 }

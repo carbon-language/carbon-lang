@@ -1,0 +1,155 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name: "Point"
+      members {
+        function {
+          name: "Origin"
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Point"
+              }
+            }
+          }
+          body {
+            statements {
+              return_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name: "Main"
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Point"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Origin"
+                    object {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

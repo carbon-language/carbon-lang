@@ -61,6 +61,7 @@ class Value {
     ParameterizedEntityName,
     MemberName,
     BindingPlaceholderValue,
+    AddrValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
     StringType,
@@ -80,9 +81,12 @@ class Value {
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid field
-  // path for *this.
-  auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc) const
+  // path for *this. If the sub-Value is a method and its me_pattern is an
+  // AddrPattern, then pass the LValue representing the receiver as `me_value`,
+  // otherwise pass `*this`.
+  auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
+                 SourceLocation source_loc,
+                 Nonnull<const Value*> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -395,6 +399,22 @@ class BindingPlaceholderValue : public Value {
   std::optional<ValueNodeView> value_node_;
 };
 
+// Value for addr pattern
+class AddrValue : public Value {
+ public:
+  explicit AddrValue(Nonnull<const Value*> pattern)
+      : Value(Kind::AddrValue), pattern_(pattern) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AddrValue;
+  }
+
+  auto pattern() const -> const Value& { return *pattern_; }
+
+ private:
+  Nonnull<const Value*> pattern_;
+};
+
 // The int type.
 class IntType : public Value {
  public:
@@ -643,7 +663,7 @@ class InterfaceType : public Value {
   }
   auto args() const -> const BindingMap& { return args_; }
 
-  // FIXME: These aren't used for anything yet.
+  // TODO: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
