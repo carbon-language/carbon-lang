@@ -50,8 +50,8 @@ address
 **C++'s process
 [did not reach any definitive conclusion](https://cor3ntin.github.io/posts/abi/#abi-discussions-in-prague)**.
 This both failed to meaningfully change C++'s direction and priorities towards
-improvements rather than backwards compatibility, and moreover showed that the
-process was unable to make clear and firm directional decisions at all.
+improvements rather than backwards compatibility, and demonstrates how the
+process can fail to make directional decisions.
 
 Beyond C++'s evolution direction, the mechanics of the process also make
 improving C++ difficult. **C++'s process is oriented around standardization
