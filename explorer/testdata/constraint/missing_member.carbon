@@ -10,11 +10,20 @@
 
 package ExplorerTest api;
 
-fn BadSimpleMemberAccess[T:! Type](a: T) -> T {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access into unconstrained type
-  return a.x;
+interface A { fn F() -> i32; }
+interface B { fn G() -> i32; }
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where .Self:! Type is interface A, .Self:! Type is interface B
+fn Get[T:! A & B](n: T) -> i32 { return n.H(); }
+
+impl i32 as A {
+  fn F() -> i32 { return 1; }
+}
+impl i32 as B {
+  fn G() -> i32 { return 2; }
 }
 
 fn Main() -> i32 {
-  return BadSimpleMemberAccess(0);
+  var z: i32 = 0;
+  return Get(z);
 }

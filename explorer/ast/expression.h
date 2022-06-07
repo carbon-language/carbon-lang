@@ -26,6 +26,7 @@ namespace Carbon {
 class Value;
 class MemberName;
 class VariableType;
+class InterfaceType;
 class ImplBinding;
 
 class Expression : public AstNode {
@@ -111,6 +112,7 @@ enum class Operator {
   Add,
   AddressOf,
   And,
+  Combine,
   Deref,
   Eq,
   Mul,
@@ -168,6 +170,7 @@ class SimpleMemberAccessExpression : public Expression {
   auto object() const -> const Expression& { return *object_; }
   auto object() -> Expression& { return *object_; }
   auto member() const -> const std::string& { return member_; }
+
   // Returns true if the field is a method that has a "me" declaration in an
   // AddrPattern.
   auto is_field_addr_me_method() const -> bool {
@@ -180,21 +183,36 @@ class SimpleMemberAccessExpression : public Expression {
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
     return impl_;
   }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const ImplBinding*> impl) {
+  void set_impl(Nonnull<const Expression*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
+  }
+
+  // If `object` is a constrained type parameter and `member` was found in an
+  // interface, returns that interface. Should not be called before
+  // typechecking.
+  auto found_in_interface() const
+      -> std::optional<Nonnull<const InterfaceType*>> {
+    return found_in_interface_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_found_in_interface(Nonnull<const InterfaceType*> interface) {
+    CARBON_CHECK(!found_in_interface_.has_value());
+    found_in_interface_ = interface;
   }
 
  private:
   Nonnull<Expression*> object_;
   std::string member_;
-  std::optional<Nonnull<const ImplBinding*>> impl_;
   bool is_field_addr_me_method_ = false;
+  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
 // A compound member access expression of the form `object.(path)`.

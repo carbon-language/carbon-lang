@@ -84,7 +84,8 @@ class Interpreter {
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
 
-  auto EvalPrim(Operator op, const std::vector<Nonnull<const Value*>>& args,
+  auto EvalPrim(Operator op, Nonnull<const Value*> static_type,
+                const std::vector<Nonnull<const Value*>>& args,
                 SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns the result of converting `value` to type `destination_type`.
@@ -158,7 +159,7 @@ void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "\n}\n";
 }
 
-auto Interpreter::EvalPrim(Operator op,
+auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> static_type,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
@@ -190,6 +191,8 @@ auto Interpreter::EvalPrim(Operator op,
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
+    case Operator::Combine:
+      return &cast<TypeOfConstraintType>(static_type)->constraint_type();
   }
 }
 
@@ -473,7 +476,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         CARBON_ASSIGN_OR_RETURN(inst_type_args[ty_var],
                                 InstantiateType(ty_arg, source_loc));
       }
-      std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>> witnesses;
+      ImplWitnessMap witnesses;
       for (const auto& [bind, impl_exp] : class_type.impls()) {
         CARBON_ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
       }
@@ -506,6 +509,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AutoType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
@@ -519,6 +523,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -814,51 +819,43 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
-        //    { { e.f :: C, E, F} :: S, H}
-        // -> { { e :: [].f :: C, E, F} :: S, H}
+        // First, evaluate the first operand.
         if (access.is_field_addr_me_method()) {
           return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
         } else {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
         }
+      } else if (act.pos() == 1 && access.impl().has_value() &&
+                 !forming_member_name) {
+        // Next, if we're accessing an interface member, evaluate the `impl`
+        // expression to find the corresponding witness.
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(access.impl().value()));
       } else {
-        //    { { v :: [].f :: C, E, F} :: S, H}
-        // -> { { v_f :: C, E, F} : S, H}
+        // Finally, produce the result.
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
           // suitable member name value.
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          std::optional<const InterfaceType*> iface_result;
           std::optional<const Value*> type_result;
-          if (auto* iface_type = dyn_cast<InterfaceType>(act.results()[0])) {
-            iface_result = iface_type;
-          } else {
+          if (!isa<InterfaceType, ConstraintType>(act.results()[0])) {
             type_result = act.results()[0];
-            if (access.impl().has_value()) {
-              iface_result =
-                  cast<InterfaceType>(access.impl().value()->interface());
-            }
           }
-          MemberName* member_name = arena_->New<MemberName>(
-              type_result, iface_result, member_name_type->member());
+          MemberName* member_name =
+              arena_->New<MemberName>(type_result, access.found_in_interface(),
+                                      member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
           // `value.field_name`. Extract the value within the given object.
           std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
-            CARBON_ASSIGN_OR_RETURN(
-                auto witness_addr,
-                todo_.ValueOfNode(*access.impl(), access.source_loc()));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> witness_value,
-                heap_.Read(llvm::cast<LValue>(witness_addr)->address(),
-                           access.source_loc()));
-            witness = cast<Witness>(witness_value);
+            witness = cast<Witness>(act.results()[1]);
           }
           FieldPath::Component member(access.member(), witness);
           const Value* aggregate;
@@ -963,9 +960,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> value,
-            EvalPrim(op.op(), act.results(), exp.source_loc()));
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                                EvalPrim(op.op(), &op.static_type(),
+                                         act.results(), exp.source_loc()));
         return todo_.FinishAction(value);
       }
     }
@@ -995,7 +992,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         if (num_impls > 0) {
           int i = 2;
           for (const auto& [impl_bind, impl_exp] : call.impls()) {
-            witnesses[impl_bind] = cast<Witness>(act.results()[i]);
+            witnesses[impl_bind] = act.results()[i];
             ++i;
           }
         }
