@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     // Returns last scanned char.
     auto GetLastChar() -> int;
     // Returns scanned string.
-    auto GetCurrentStr() -> std::string&;
+    auto GetCurrentStr() -> const std::string&;
 
     auto GetSkipRead() -> bool;
 
@@ -506,7 +506,7 @@ auto ScanHelper::Advance() -> bool {
 
 auto ScanHelper::GetLastChar() -> int { return s.back(); }
 
-auto ScanHelper::GetCurrentStr() -> std::string& { return s; }
+auto ScanHelper::GetCurrentStr() -> const std::string& { return s; }
 
 auto ScanHelper::GetSkipRead() -> bool { return skip_read; }
 
