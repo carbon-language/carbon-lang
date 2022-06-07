@@ -183,7 +183,7 @@ The behavior of the Carbon compiler depends on the _build mode_:
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values. This
-means that the grammar for writing a type is the expression](#expressions)
+means that the grammar for writing a type is the [expression](#expressions)
 grammar. Expressions written where a type is expected must be able to be
 evaluated at compile-time and must evaluate to a type value.
 
@@ -264,7 +264,7 @@ Integers may be written in decimal, hexadecimal, or binary:
 -   `0x1FE` (hexadecimal)
 -   `0b1010` (binary)
 
-Underscores `_` may be as a digit separator, but for decimal and hexadecimal
+Underscores `_` may be used as digit separators, but for decimal and hexadecimal
 literals, they can only appear in conventional locations. Numeric literals are
 case-sensitive: `0x`, `0b` must be lowercase, whereas hexadecimal digits must be
 uppercase. Integer literals never contain a `.`.
@@ -568,7 +568,7 @@ are two kinds of patterns:
 
 -   _Refutable_ patterns can fail to match based on the runtime value being
     matched.
--   _Irrefutable_ patterns must match at compile time.
+-   _Irrefutable_ patterns are guaranteed to match, so long as the code type-checks.
 
 Irrefutable patterns are used in [function parameters](#functions),
 [variable `var` declarations](#variable-var-declarations), and
@@ -660,7 +660,7 @@ There are two kinds of name-binding declarations:
 -   constant declarations, introduced with `let`, and
 -   variable declarations, introduced with `var`.
 
-There are no forward declarations of these, all name-binding declarations are
+There are no forward declarations of these; all name-binding declarations are
 [definitions](#declarations-definitions-and-scopes).
 
 ### Constant `let` declarations
@@ -797,7 +797,7 @@ fn Positive(a: i64) -> auto {
 
 ### Blocks and statements
 
-A _code block_ or _block_ is a sequence of _statements_. Blocks define a
+A _code block_ or _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
 semicolon, and can be one of:
@@ -1079,7 +1079,7 @@ This is instead of
 constructs in other languages, such as Swift. The `match` keyword is followed by
 an expression in parentheses, whose value is matched against the `case`
 declarations, each of which contains a [refutable pattern](#refutable-patterns),
-in order. The refutable pattern may optionally be folloed by an `if` expression,
+in order. The refutable pattern may optionally be followed by an `if` expression,
 which may use the names from bindings in the pattern.
 
 The code for the first matching `case` is executed. An optional `default` code
