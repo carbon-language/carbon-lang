@@ -19,18 +19,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
 
   class ScanHelper {
-   private:
-    std::string s;
-    yyscan_t yyscanner;
-    Carbon::ParseAndLexContext& context;
-    // Skips reading next char.
-    bool skip_read;
-    bool is_eof;
-
    public:
     ScanHelper(const char* text, yyscan_t yyscanner,
                Carbon::ParseAndLexContext& context)
-        : s(std::string(text)),
+        : s(text),
           yyscanner(yyscanner),
           context(context),
           skip_read(false),
@@ -41,26 +33,33 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     // Returns last scanned char.
     auto GetLastChar() -> int;
     // Returns scanned string.
-    auto GetCurrentStr() -> std::string;
+    auto GetCurrentStr() -> std::string&;
 
     auto GetSkipRead() -> bool;
 
     auto SetSkipRead(bool skip) -> void;
 
     auto IsEof() -> bool;
+
+   private:
+    std::string s;
+    yyscan_t yyscanner;
+    Carbon::ParseAndLexContext& context;
+    // Skips reading next char.
+    bool skip_read;
+    bool is_eof;
   };
   // Tries to Read [hashtag_num] hashtags. Returns true on success.
-  auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num)
-      -> bool;
+  auto ReadHashTags(ScanHelper& scan_helper, size_t hashtag_num) -> bool;
   // Removes quotes and escapes a single line string. Reports an error on
   // invalid escaping.
-  auto ProcessSingleLineString(std::string s,
+  auto ProcessSingleLineString(llvm::StringRef str,
                                Carbon::ParseAndLexContext& context,
-                               std::size_t hashtag_num)
+                               size_t hashtag_num)
       -> Carbon::Parser::symbol_type;
-  auto ProcessMultiLineString(std::string s,
+  auto ProcessMultiLineString(llvm::StringRef str,
                               Carbon::ParseAndLexContext& context,
-                              std::size_t hashtag_num)
+                              size_t hashtag_num)
       -> Carbon::Parser::symbol_type;
 %}
 
@@ -333,8 +332,8 @@ operand_start         [(A-Za-z0-9_\"]
   // string the source represents.
   ScanHelper scan_helper(yytext, yyscanner, context);
   std::string s = scan_helper.GetCurrentStr();
-  const std::size_t hashtag_num = std::count(s.begin(), s.end(), '#');
-  const std::size_t leading_quotes = std::count(s.begin(), s.end(), '"');
+  const size_t hashtag_num = std::count(s.begin(), s.end(), '#');
+  const size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   bool multi_line = false;
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
@@ -391,7 +390,13 @@ operand_start         [(A-Za-z0-9_\"]
 
         if (ReadHashTags(scan_helper, hashtag_num)) {
           // Reach closing quotes, break out of the loop.
-          goto post;
+          if (multi_line) {
+            return ProcessMultiLineString(scan_helper.GetCurrentStr(), context,
+                                          hashtag_num);
+          } else {
+            return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
+                                           hashtag_num);
+          }
         } else if (scan_helper.IsEof()) {
           return SIMPLE_TOKEN(END_OF_FILE);
         } else {
@@ -412,14 +417,6 @@ operand_start         [(A-Za-z0-9_\"]
       default:
         continue;
     }
-  }
-  post : if (multi_line) {
-    return ProcessMultiLineString(scan_helper.GetCurrentStr(), context,
-                                  hashtag_num);
-  }
-  else {
-    return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
-                                   hashtag_num);
   }
 }
 
@@ -462,9 +459,8 @@ auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
   return c;
 }
 
-auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num) -> bool {
-  std::size_t hashtag_count = 0;
-  while (hashtag_count++ < hashtag_num) {
+auto ReadHashTags(ScanHelper& scan_helper, const size_t hashtag_num) -> bool {
+  for (size_t i = 0; i < hashtag_num; ++i) {
     if (!scan_helper.Advance() || scan_helper.GetLastChar() != '#') {
       return false;
     }
@@ -472,9 +468,8 @@ auto ReadHashTags(ScanHelper& scan_helper, const std::size_t hashtag_num) -> boo
   return true;
 }
 
-auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context, const std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
+auto ProcessSingleLineString(llvm::StringRef str, Carbon::ParseAndLexContext& context, const size_t hashtag_num) -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
-  llvm::StringRef str(s);
   CARBON_CHECK(str.consume_front(hashtags + "\"") &&
                str.consume_back("\"" + hashtags));
 
@@ -482,13 +477,12 @@ auto ProcessSingleLineString(std::string s, Carbon::ParseAndLexContext& context,
       Carbon::UnescapeStringLiteral(str, hashtag_num);
   if (unescaped == std::nullopt) {
     return context.RecordSyntaxError(
-        llvm::formatv("Invalid escaping in string: {0}", s));
+        llvm::formatv("Invalid escaping in string: {0}", str));
   }
   return ARG_TOKEN(string_literal, *unescaped);
 }
 
-auto ProcessMultiLineString(std::string s, Carbon::ParseAndLexContext& context, const std::size_t hashtag_num) -> Carbon::Parser::symbol_type {
-  llvm::StringRef str(s);
+auto ProcessMultiLineString(llvm::StringRef str, Carbon::ParseAndLexContext& context, const size_t hashtag_num) -> Carbon::Parser::symbol_type {
   std::string hashtags(hashtag_num, '#');
   CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
   Carbon::ErrorOr<std::string> block_string =
@@ -512,7 +506,7 @@ auto ScanHelper::Advance() -> bool {
 
 auto ScanHelper::GetLastChar() -> int { return s.back(); }
 
-auto ScanHelper::GetCurrentStr() -> std::string { return s; }
+auto ScanHelper::GetCurrentStr() -> std::string& { return s; }
 
 auto ScanHelper::GetSkipRead() -> bool { return skip_read; }
 

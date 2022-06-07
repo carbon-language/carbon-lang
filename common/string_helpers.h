@@ -19,14 +19,12 @@ namespace Carbon {
 // Unescapes Carbon escape sequences in the source string. Returns std::nullopt
 // on bad input. `is_block_string` enables escaping unique to block string
 // literals, such as \<newline>.
-auto UnescapeStringLiteral(llvm::StringRef source,
-                           const std::size_t hashtag_num = 0,
+auto UnescapeStringLiteral(llvm::StringRef source, size_t hashtag_num = 0,
                            bool is_block_string = false)
     -> std::optional<std::string>;
 
 // Parses a block string literal in `source`.
-auto ParseBlockStringLiteral(llvm::StringRef source,
-                             const std::size_t hashtag_num = 0)
+auto ParseBlockStringLiteral(llvm::StringRef source, size_t hashtag_num = 0)
     -> ErrorOr<std::string>;
 
 // Returns true if the pointer is in the string ref (including equality with
