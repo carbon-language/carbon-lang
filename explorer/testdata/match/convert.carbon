@@ -20,9 +20,9 @@ fn Main() -> i32 {
   var a: A = {};
 
   match ((a, a)) {
-    case (0, n: i32) => return 1;
-    case (n: i32, 0) => return 1;
-    case (1, 1) => return 0;
+    case (0, n: i32) => { return 1; }
+    case (n: i32, 0) => { return 1; }
+    case (1, 1) => { return 0; }
   }
 
   return 1;

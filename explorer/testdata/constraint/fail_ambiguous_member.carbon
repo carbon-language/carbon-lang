@@ -10,11 +10,20 @@
 
 package ExplorerTest api;
 
+interface A { fn F() -> i32; }
+interface B { fn F() -> i32; }
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
+fn Get[T:! A & B](n: T) -> i32 { return n.F(); }
+
+impl i32 as A {
+  fn F() -> i32 { return 1; }
+}
+impl i32 as B {
+  fn F() -> i32 { return 2; }
+}
+
 fn Main() -> i32 {
-  match (0) {
-    case x: i32 =>
-      // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:15
-      var x: i32 = 0;
-  }
-  return 0;
+  var z: i32 = 0;
+  return Get(z);
 }

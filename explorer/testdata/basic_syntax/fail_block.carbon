@@ -10,20 +10,9 @@
 
 package ExplorerTest api;
 
-interface A { fn F() -> i32; }
-interface B { fn F() -> i32; }
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
-fn Get[T:! A & B](n: T) -> i32 { return n.F(); }
-
-impl i32 as A {
-  fn F() -> i32 { return 1; }
-}
-impl i32 as B {
-  fn F() -> i32 { return 2; }
-}
-
 fn Main() -> i32 {
-  var z: i32 = 0;
-  return Get(z);
+  {
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_block.carbon:[[@LINE+1]]: syntax error, unexpected RETURN, expecting PERIOD or RIGHT_CURLY_BRACE
+    return 0;
+  }
 }

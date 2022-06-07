@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 choice Ch {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_alternative_uses_choice.carbon:[[@LINE+1]]: could not resolve 'Ch'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_alternative_uses_choice.carbon:[[@LINE+1]]: 'Ch' is not usable until after it has been completely declared
   Opt(Ch)
 }
 
