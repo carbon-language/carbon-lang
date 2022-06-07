@@ -55,6 +55,7 @@ auto ToString(Operator op) -> std::string_view {
     case Operator::Add:
       return "+";
     case Operator::AddressOf:
+    case Operator::Combine:
       return "&";
     case Operator::Neg:
     case Operator::Sub:

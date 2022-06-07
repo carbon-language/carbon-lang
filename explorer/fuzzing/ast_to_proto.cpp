@@ -56,6 +56,8 @@ static auto OperatorToProtoEnum(const Operator op)
       return Fuzzing::PrimitiveOperatorExpression::Or;
     case Operator::Sub:
       return Fuzzing::PrimitiveOperatorExpression::Sub;
+    case Operator::Combine:
+      return Fuzzing::PrimitiveOperatorExpression::Combine;
   }
 }
 
