@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_hex_truncated.carbon:[[@LINE+1]]: Invalid escaping in string: "str\x"
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_hex_truncated.carbon:[[@LINE+1]]: Invalid escaping in string: str\x
   Print("str\x");
   return 0;
 }

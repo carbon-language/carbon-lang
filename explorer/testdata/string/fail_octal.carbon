@@ -11,7 +11,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_octal.carbon:[[@LINE+1]]: Invalid escaping in string: "str\01"
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/string/fail_octal.carbon:[[@LINE+1]]: Invalid escaping in string: str\01
   Print("str\01");
   return 0;
 }
