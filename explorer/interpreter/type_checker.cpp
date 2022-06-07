@@ -1725,7 +1725,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::DotSelfExpression: {
       auto& dot_self = cast<DotSelfExpression>(*e);
-      dot_self.set_static_type(&dot_self.self_binding().static_type());
+      if (dot_self.self_binding().is_type_checked()) {
+        dot_self.set_static_type(&dot_self.self_binding().static_type());
+      } else {
+        dot_self.set_static_type(arena_->New<TypeType>());
+        dot_self.self_binding().set_named_as_type_via_dot_self();
+      }
       dot_self.set_value_category(ValueCategory::Let);
       return Success();
     }
@@ -2274,6 +2279,11 @@ auto TypeChecker::TypeCheckPattern(
                << binding;
       }
       binding.set_static_type(type);
+      if (binding.named_as_type_via_dot_self() && !IsTypeOfType(type)) {
+        return CompilationError(binding.type().source_loc())
+               << "`.Self` used in type of non-type binding `" << binding.name()
+               << "`";
+      }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> val,
                               InterpPattern(&binding, arena_, trace_stream_));
       binding.set_symbolic_identity(val);

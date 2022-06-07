@@ -77,6 +77,12 @@ class Pattern : public AstNode {
   // and after typechecking it's guaranteed to be true.
   auto has_value() const -> bool { return value_.has_value(); }
 
+  // Determines whether the pattern has already been type-checked. Should
+  // only be used by type-checking.
+  auto is_type_checked() const -> bool {
+    return static_type_.has_value() && value_.has_value();
+  }
+
  protected:
   // Constructs a Pattern representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -266,11 +272,23 @@ class GenericBinding : public Pattern {
     impl_binding_ = binding;
   }
 
+  // Returns whether this binding has been named as a type within its own type
+  // expression via `.Self`. Set by type-checking.
+  auto named_as_type_via_dot_self() const -> bool {
+    return named_as_type_via_dot_self_;
+  }
+  // Set that this binding was named as a type within its own type expression
+  // via `.Self`.
+  void set_named_as_type_via_dot_self() {
+    named_as_type_via_dot_self_ = true;
+  }
+
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
+  bool named_as_type_via_dot_self_ = false;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as

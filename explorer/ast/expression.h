@@ -167,16 +167,17 @@ class DotSelfExpression : public Expression {
 
   // The self binding. Cannot be called before name resolution.
   auto self_binding() const -> const GenericBinding& { return **self_binding_; }
+  auto self_binding() -> GenericBinding& { return **self_binding_; }
 
   // Sets the self binding. Called only once, during name resolution.
-  void set_self_binding(Nonnull<const GenericBinding*> self_binding) {
+  void set_self_binding(Nonnull<GenericBinding*> self_binding) {
     CARBON_CHECK(!self_binding_.has_value());
     self_binding_ = self_binding;
   }
 
  private:
   std::string name_;
-  std::optional<Nonnull<const GenericBinding*>> self_binding_;
+  std::optional<Nonnull<GenericBinding*>> self_binding_;
 };
 
 class SimpleMemberAccessExpression : public Expression {
