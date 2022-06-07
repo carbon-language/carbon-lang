@@ -201,9 +201,9 @@ code to help you switch an existing C++ codebase to Carbon.
 
 ## Generics
 
-Carbon provides a **modern
-[generics](/docs/design/generics/overview.md#what-are-generics) system** with
-checked definitions, while still **supporting opt-in
+Carbon provides a
+**[modern generics system](/docs/design/generics/overview.md#what-are-generics)**
+with checked definitions, while still **supporting opt-in
 [templates](/docs/design/templates.md) for seamless C++ interop**. Checked
 generics provide several advantages compared to C++ templates:
 
