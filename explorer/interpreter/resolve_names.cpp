@@ -47,8 +47,9 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
-      // Choice name is added to the scope after the choice's alternatives.
-      // See https://github.com/carbon-language/carbon-lang/issues/1248.
+      auto& choice = cast<ChoiceDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(choice.name(), &choice, /*usable=*/false));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -314,13 +315,14 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       break;
     }
     case StatementKind::Continuation: {
+      auto& continuation = cast<Continuation>(statement);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          continuation.name(), &continuation, /*usable=*/false));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(continuation.body(), continuation_scope));
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation));
+      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
+                                          continuation_scope));
+      enclosing_scope.MarkUsable(continuation.name());
       break;
     }
     case StatementKind::Run:
@@ -441,7 +443,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
                  << "` in choice type";
         }
       }
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
+      enclosing_scope.MarkUsable(choice.name());
       break;
     }
     case DeclarationKind::VariableDeclaration: {
