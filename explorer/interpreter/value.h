@@ -674,6 +674,9 @@ class InterfaceType : public Value {
 
 // A type-of-type for an unknown constrained type.
 //
+// These types are formed by the `&` operator that combines constraints and by
+// `where` expressions.
+//
 // A constraint has three main properties:
 //
 // * A collection of (type, interface) pairs for interfaces that are known to
