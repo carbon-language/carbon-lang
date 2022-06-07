@@ -18,7 +18,7 @@ impl A as ImplicitAs(i32) {
 fn Main() -> i32 {
   var a: A = {};
 
-  // FIXME: It's not clear whether this should be valid. The patterns here have
+  // TODO: It's not clear whether this should be valid. The patterns here have
   // different types, but we could perform different conversions on the source
   // expression when checking each pattern.
   match ((a, a)) {
