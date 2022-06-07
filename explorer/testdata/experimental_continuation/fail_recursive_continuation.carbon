@@ -12,7 +12,7 @@ package ExplorerTest api;
 
 fn f() {
   __continuation k {
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_recursive_continuation.carbon:[[@LINE+1]]: could not resolve 'k'
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_recursive_continuation.carbon:[[@LINE+1]]: 'k' is not usable until after it has been completely declared
   __run k;
   }
 }
