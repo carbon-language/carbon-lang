@@ -43,6 +43,13 @@ auto ImplScope::Resolve(Nonnull<const Value*> iface_type,
   return SelectImpl(result, iface_type, type, source_loc, *this, type_checker);
 }
 
+// Returns whether `impl1` is more specific, equally specific, less
+// specific, or incomparable with respect to `impl2`.
+//
+// Note: tis relation is a partial order (and not a total order), which is why
+// `Incomparable` is one of the potential results.
+//
+// (Part of the altenerative design for generics.)
 auto ImplScope::MoreSpecificImpl(const ImplScope::ImplResult& impl1,
                                  const ImplScope::ImplResult& impl2,
                                  SourceLocation source_loc,
@@ -66,6 +73,10 @@ auto ImplScope::MoreSpecificImpl(const ImplScope::ImplResult& impl1,
   }
 }
 
+// Given a list of `impls`, returns the most specific impl in the list
+// if one exists.
+//
+// (Part of the altenerative design for generics.)
 auto ImplScope::SelectImpl(const std::list<ImplScope::ImplResult>& impls,
                            Nonnull<const Value*> iface_type,
                            Nonnull<const Value*> impl_type,
@@ -73,39 +84,55 @@ auto ImplScope::SelectImpl(const std::list<ImplScope::ImplResult>& impls,
                            const ImplScope& original_scope,
                            const TypeChecker& type_checker) const
     -> ErrorOr<Nonnull<Expression*>> {
-  std::list<ImplScope::ImplResult> maximals;
-  for (const ImplResult& r : impls) {
-    std::list<ImplScope::ImplResult> new_maximals;
-    bool include_r = true;
-    for (const ImplResult& m : maximals) {
-      switch (
-          MoreSpecificImpl(r, m, source_loc, original_scope, type_checker)) {
-        case ImplComparison::MoreSpecific:
-          // Don't add m to new_maximals.
-          break;
-        case ImplComparison::LessSpecific:
-          new_maximals.push_back(m);
-          include_r = false;
-          break;
-        case ImplComparison::EquallySpecific:
-        case ImplComparison::Incomparable:
-          new_maximals.push_back(m);
-          break;
+  if (type_checker.alt_generics()) {
+    std::list<ImplScope::ImplResult> maximals;
+    for (const ImplResult& r : impls) {
+      std::list<ImplScope::ImplResult> new_maximals;
+      bool include_r = true;
+      for (const ImplResult& m : maximals) {
+        switch (
+            MoreSpecificImpl(r, m, source_loc, original_scope, type_checker)) {
+          case ImplComparison::MoreSpecific:
+            // Don't add m to new_maximals.
+            break;
+          case ImplComparison::LessSpecific:
+            new_maximals.push_back(m);
+            include_r = false;
+            break;
+          case ImplComparison::EquallySpecific:
+          case ImplComparison::Incomparable:
+            new_maximals.push_back(m);
+            break;
+        }
       }
+      if (include_r) {
+        new_maximals.push_back(r);
+      }
+      maximals = std::move(new_maximals);
     }
-    if (include_r) {
-      new_maximals.push_back(r);
+    if (maximals.size() == 0) {
+      return CompilationError(source_loc)
+             << "could not find implementation of " << *iface_type << " for "
+             << *impl_type;
+    } else if (maximals.size() == 1) {
+      return maximals.front().impl_expression;
+    } else {
+      return CompilationError(source_loc)
+             << "ambiguous implementations of " << *iface_type << " for "
+             << *impl_type;
     }
-    maximals = std::move(new_maximals);
-  }
-  if (maximals.size() == 0) {
-    return CompilationError(source_loc) << "could not find implementation of "
-                                        << *iface_type << " for " << *impl_type;
-  } else if (maximals.size() == 1) {
-    return maximals.front().impl_expression;
   } else {
-    return CompilationError(source_loc) << "ambiguous implementations of "
-                                        << *iface_type << " for " << *impl_type;
+    if (impls.size() == 1) {
+      return impls.front().impl_expression;
+    } else if (impls.size() == 0) {
+      return CompilationError(source_loc)
+             << "could not find implementation of " << *iface_type << " for "
+             << *impl_type;
+    } else {
+      return CompilationError(source_loc)
+             << "ambiguous implementations of " << *iface_type << " for "
+             << *impl_type;
+    }
   }
 }
 

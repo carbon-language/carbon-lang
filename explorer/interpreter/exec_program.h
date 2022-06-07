@@ -16,8 +16,8 @@ namespace Carbon {
 
 // Runs the top-level declaration list.
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int>;
+                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+                 bool alt_generics) -> ErrorOr<int>;
 
 }  // namespace Carbon
 

@@ -50,6 +50,10 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
   // Find the path of the executable if possible and use that as a relative root
   cl::opt<std::string> prelude_file_name("prelude", cl::desc("<prelude file>"),
                                          cl::init(default_prelude_file.str()));
+
+  cl::opt<bool> alt_generics("alt_generics",
+                             cl::desc("Enable alternative generics design"));
+
   cl::ParseCommandLineOptions(argc, argv);
 
   // Set up a stream for trace output.
@@ -76,7 +80,7 @@ static auto Main(llvm::StringRef default_prelude_file, int argc, char* argv[])
 
   // Typecheck and run the parsed program.
   CARBON_ASSIGN_OR_RETURN(int return_code,
-                          ExecProgram(&arena, ast, trace_stream));
+                          ExecProgram(&arena, ast, trace_stream, alt_generics));
   // Print the return code to stdout even when we aren't tracing.
   (trace_stream ? **trace_stream : llvm::outs())
       << "result: " << return_code << "\n";

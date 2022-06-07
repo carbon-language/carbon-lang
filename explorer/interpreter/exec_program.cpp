@@ -18,8 +18,8 @@
 namespace Carbon {
 
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int> {
+                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+                 bool alt_generics) -> ErrorOr<int> {
   if (trace_stream) {
     **trace_stream << "********** source program **********\n";
     for (const auto decl : ast.declarations) {
@@ -43,7 +43,8 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream) {
     **trace_stream << "********** type checking **********\n";
   }
-  CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
+  CARBON_RETURN_IF_ERROR(
+      TypeChecker(arena, trace_stream, alt_generics).TypeCheck(ast));
   if (trace_stream) {
     **trace_stream << "\n";
     **trace_stream << "********** type checking complete **********\n";

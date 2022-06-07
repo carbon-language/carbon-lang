@@ -45,8 +45,8 @@ static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
 class Interpreter {
  public:
   // Constructs an Interpreter which allocates values on `arena`, and prints
-  // traces if `trace` is true. `phase` indicates whether it executes at
-  // compile time or run time.
+  // traces if `trace_stream` contains a value. `phase` indicates whether it
+  // executes at compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
               std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
       : arena_(arena),

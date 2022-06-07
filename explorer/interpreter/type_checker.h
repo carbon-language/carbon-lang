@@ -22,8 +22,11 @@ namespace Carbon {
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
-                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-      : arena_(arena), trace_stream_(trace_stream) {}
+                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+                       bool alt_generics)
+      : arena_(arena),
+        trace_stream_(trace_stream),
+        alt_generics_(alt_generics) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
   // on the individual nodes.
@@ -56,6 +59,9 @@ class TypeChecker {
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
       -> std::optional<Nonnull<Expression*>>;
+
+  // Return whether exploring is using the alternative design for generics.
+  bool alt_generics() const { return alt_generics_; }
 
  private:
   // Information about the currently enclosing scopes.
@@ -334,6 +340,7 @@ class TypeChecker {
   Builtins builtins_;
 
   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+  bool alt_generics_;
 };
 
 }  // namespace Carbon
