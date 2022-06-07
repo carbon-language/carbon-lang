@@ -271,9 +271,9 @@ class TypeChecker {
   //
   // If `impl_scope` is `std::nullopt`, only built-in conversions are
   // considered.
-  // FIXME: Remove this behavior.
+  // TODO: Remove this behavior.
   //
-  // FIXME: Does not actually perform the conversion if a user-defined
+  // TODO: Does not actually perform the conversion if a user-defined
   // conversion is needed. Should be used very rarely for that reason.
   auto ExpectType(SourceLocation source_loc, const std::string& context,
                   Nonnull<const Value*> expected, Nonnull<const Value*> actual,
