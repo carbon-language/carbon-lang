@@ -11,10 +11,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  match (0) {
-    case x: i32 =>
-      // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/testdata/name_lookup/fail_match_duplicate.carbon:15
-      var x: i32 = 0;
+  {
+    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_block.carbon:[[@LINE+1]]: syntax error, unexpected RETURN, expecting PERIOD or RIGHT_CURLY_BRACE
+    return 0;
   }
-  return 0;
 }
