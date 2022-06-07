@@ -568,7 +568,8 @@ are two kinds of patterns:
 
 -   _Refutable_ patterns can fail to match based on the runtime value being
     matched.
--   _Irrefutable_ patterns are guaranteed to match, so long as the code type-checks.
+-   _Irrefutable_ patterns are guaranteed to match, so long as the code
+    type-checks.
 
 Irrefutable patterns are used in [function parameters](#functions),
 [variable `var` declarations](#variable-var-declarations), and
@@ -1079,8 +1080,8 @@ This is instead of
 constructs in other languages, such as Swift. The `match` keyword is followed by
 an expression in parentheses, whose value is matched against the `case`
 declarations, each of which contains a [refutable pattern](#refutable-patterns),
-in order. The refutable pattern may optionally be followed by an `if` expression,
-which may use the names from bindings in the pattern.
+in order. The refutable pattern may optionally be followed by an `if`
+expression, which may use the names from bindings in the pattern.
 
 The code for the first matching `case` is executed. An optional `default` code
 block may be placed after the `case` declarations, it will be executed if none
