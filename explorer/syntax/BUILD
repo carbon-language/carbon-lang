@@ -53,6 +53,9 @@ cc_library(
 cc_library(
     name = "syntax",
     srcs = [
+        "lex_helper.h",
+        "lex_scan_helper.cpp",
+        "lex_scan_helper.h",
         "lexer.cpp",
         "lexer.h",
         "parse.cpp",

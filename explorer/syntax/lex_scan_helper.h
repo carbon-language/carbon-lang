@@ -1,0 +1,67 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_EXPLORER_SYNTAX_LEX_SCAN_HELPER_H_
+#define CARBON_EXPLORER_SYNTAX_LEX_SCAN_HELPER_H_
+
+#include <string>
+
+#include "explorer/syntax/parse_and_lex_context.h"
+#include "explorer/syntax/parser.h"
+
+extern auto YyinputWrapper(yyscan_t yyscanner) -> int;
+
+namespace Carbon {
+
+class StringLexHelper {
+ public:
+  StringLexHelper(const char* text, yyscan_t yyscanner,
+                  Carbon::ParseAndLexContext& context)
+      : str_(text),
+        yyscanner_(yyscanner),
+        context_(context),
+        skip_read_(false),
+        is_eof_(false) {}
+  // Advances yyscanner by one char. Sets is_eof to true and returns false on
+  // EOF.
+  auto Advance() -> bool;
+  // Returns last scanned char.
+  auto last_char() -> int { return str_.back(); };
+  // Returns scanned string.
+  auto str() -> const std::string& { return str_; };
+
+  auto skip_read() -> bool { return skip_read_; };
+
+  auto set_skip_read(bool skip) -> void { skip_read_ = skip; };
+
+  auto is_eof() -> bool { return is_eof_; };
+
+ private:
+  std::string str_;
+  yyscan_t yyscanner_;
+  Carbon::ParseAndLexContext& context_;
+  // Skips reading next char.
+  bool skip_read_;
+  bool is_eof_;
+};
+
+// Reads and returns a single character. Reports an error on EOF.
+auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
+
+// Tries to Read [hashtag_num] hashtags. Returns true on success.
+auto ReadHashTags(Carbon::StringLexHelper& scan_helper, size_t hashtag_num)
+    -> bool;
+
+// Removes quotes and escapes a single line string. Reports an error on
+// invalid escaping.
+auto ProcessSingleLineString(llvm::StringRef str,
+                             Carbon::ParseAndLexContext& context,
+                             size_t hashtag_num) -> Carbon::Parser::symbol_type;
+auto ProcessMultiLineString(llvm::StringRef str,
+                            Carbon::ParseAndLexContext& context,
+                            size_t hashtag_num) -> Carbon::Parser::symbol_type;
+
+}  // namespace Carbon
+
+#endif  // CARBON_EXPLORER_SYNTAX_LEX_SCAN_HELPER_H_

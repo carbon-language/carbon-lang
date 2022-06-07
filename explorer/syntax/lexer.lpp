@@ -9,58 +9,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
   #include "common/check.h"
   #include "common/error.h"
-  #include "common/string_helpers.h"
+  #include "explorer/syntax/lex_helper.h"
+  #include "explorer/syntax/lex_scan_helper.h"
   #include "explorer/syntax/parse_and_lex_context.h"
   #include "explorer/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
   #include "llvm/Support/FormatVariadic.h"
 
-  // Reads and returns a single character. Reports an error on EOF.
-  auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int;
-
-  class ScanHelper {
-   public:
-    ScanHelper(const char* text, yyscan_t yyscanner,
-               Carbon::ParseAndLexContext& context)
-        : s(text),
-          yyscanner(yyscanner),
-          context(context),
-          skip_read(false),
-          is_eof(false) {}
-    // Advances yyscanner by one char. Sets is_eof to true and returns false on
-    // EOF.
-    auto Advance() -> bool;
-    // Returns last scanned char.
-    auto GetLastChar() -> int;
-    // Returns scanned string.
-    auto GetCurrentStr() -> const std::string&;
-
-    auto GetSkipRead() -> bool;
-
-    auto SetSkipRead(bool skip) -> void;
-
-    auto IsEof() -> bool;
-
-   private:
-    std::string s;
-    yyscan_t yyscanner;
-    Carbon::ParseAndLexContext& context;
-    // Skips reading next char.
-    bool skip_read;
-    bool is_eof;
-  };
-  // Tries to Read [hashtag_num] hashtags. Returns true on success.
-  auto ReadHashTags(ScanHelper& scan_helper, size_t hashtag_num) -> bool;
-  // Removes quotes and escapes a single line string. Reports an error on
-  // invalid escaping.
-  auto ProcessSingleLineString(llvm::StringRef str,
-                               Carbon::ParseAndLexContext& context,
-                               size_t hashtag_num)
-      -> Carbon::Parser::symbol_type;
-  auto ProcessMultiLineString(llvm::StringRef str,
-                              Carbon::ParseAndLexContext& context,
-                              size_t hashtag_num)
-      -> Carbon::Parser::symbol_type;
+  auto YyinputWrapper(yyscan_t yyscanner) -> int;
 %}
 
 /* Turn off legacy bits we don't need. */
@@ -150,25 +106,6 @@ horizontal_whitespace [ \t\r]
 whitespace            [ \t\r\n]
 one_line_comment      \/\/[^\n]*\n
 operand_start         [(A-Za-z0-9_\"]
-
-%{
-  // This macro is expanded immediately before each action specified below.
-  //
-  // Advances the current token position by yyleng columns without changing
-  // the line number, and takes us out of the after-whitespace / after-operand
-  // state.
-  #define YY_USER_ACTION                                             \
-    context.current_token_position.columns(yyleng);                  \
-    if (YY_START == AFTER_WHITESPACE || YY_START == AFTER_OPERAND) { \
-      BEGIN(INITIAL);                                                \
-    }
-
-  #define SIMPLE_TOKEN(name) \
-    Carbon::Parser::make_##name(context.current_token_position);
-
-  #define ARG_TOKEN(name, arg) \
-    Carbon::Parser::make_##name(arg, context.current_token_position);
-%}
 
 %%
 
@@ -328,36 +265,36 @@ operand_start         [(A-Za-z0-9_\"]
 
 #*(\"\"\"|\") {
   // Raw string literal.
-  // yytext and chars scanned by scan_helper hold the source text, not the
+  // yytext and chars scanned by str_lex_helper hold the source text, not the
   // string the source represents.
-  ScanHelper scan_helper(yytext, yyscanner, context);
-  std::string s = scan_helper.GetCurrentStr();
+  Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
+  std::string s = str_lex_helper.str();
   const size_t hashtag_num = std::count(s.begin(), s.end(), '#');
   const size_t leading_quotes = std::count(s.begin(), s.end(), '"');
   bool multi_line = false;
   if (leading_quotes == 3) {
     if (hashtag_num > 0) {
       // Check if it's a single-line string, like #"""#.
-      if (ReadHashTags(scan_helper, hashtag_num)) {
-        return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
-                                       hashtag_num);
-      } else if (scan_helper.IsEof()) {
+      if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+        return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
+                                               hashtag_num);
+      } else if (str_lex_helper.is_eof()) {
         return SIMPLE_TOKEN(END_OF_FILE);
       } else {
-        scan_helper.SetSkipRead(true);
+        str_lex_helper.set_skip_read(true);
       }
     }
     multi_line = true;
   }
 
   for (;;) {
-    if (scan_helper.GetSkipRead()) {
-      scan_helper.SetSkipRead(false);
-    } else if (!scan_helper.Advance()) {
+    if (str_lex_helper.skip_read()) {
+      str_lex_helper.set_skip_read(false);
+    } else if (!str_lex_helper.Advance()) {
       return SIMPLE_TOKEN(END_OF_FILE);
     }
 
-    switch (scan_helper.GetLastChar()) {
+    switch (str_lex_helper.last_char()) {
       case '\n':  // Fall through.
       case '\v':  // Fall through.
       case '\f':  // Fall through.
@@ -365,53 +302,53 @@ operand_start         [(A-Za-z0-9_\"]
         if (!multi_line) {
           return context.RecordSyntaxError(
               llvm::formatv("missing closing quote in single-line string: {0}",
-                            scan_helper.GetCurrentStr()));
+                            str_lex_helper.str()));
         }
         break;
       case '"':
         if (multi_line) {
           // Check for 2 more '"'s on block string.
-          if (!scan_helper.Advance()) {
+          if (!str_lex_helper.Advance()) {
             return SIMPLE_TOKEN(END_OF_FILE);
           }
-          if (scan_helper.GetLastChar() != '"') {
-            scan_helper.SetSkipRead(true);
+          if (str_lex_helper.last_char() != '"') {
+            str_lex_helper.set_skip_read(true);
             continue;
           }
-          if (!scan_helper.Advance()) {
+          if (!str_lex_helper.Advance()) {
             return SIMPLE_TOKEN(END_OF_FILE);
           }
-          if (scan_helper.GetLastChar() != '"') {
-            scan_helper.SetSkipRead(true);
+          if (str_lex_helper.last_char() != '"') {
+            str_lex_helper.set_skip_read(true);
             continue;
           }
           // Now we are at the last " of """.
         }
 
-        if (ReadHashTags(scan_helper, hashtag_num)) {
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
           // Reach closing quotes, break out of the loop.
           if (multi_line) {
-            return ProcessMultiLineString(scan_helper.GetCurrentStr(), context,
-                                          hashtag_num);
+            return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
+                                                  hashtag_num);
           } else {
-            return ProcessSingleLineString(scan_helper.GetCurrentStr(), context,
-                                           hashtag_num);
+            return Carbon::ProcessSingleLineString(str_lex_helper.str(),
+                                                   context, hashtag_num);
           }
-        } else if (scan_helper.IsEof()) {
+        } else if (str_lex_helper.is_eof()) {
           return SIMPLE_TOKEN(END_OF_FILE);
         } else {
-          scan_helper.SetSkipRead(true);
+          str_lex_helper.set_skip_read(true);
         }
         break;
       case '\\':
-        if (ReadHashTags(scan_helper, hashtag_num)) {
-          if (!scan_helper.Advance()) {
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          if (!str_lex_helper.Advance()) {
             return SIMPLE_TOKEN(END_OF_FILE);
           }
-        } else if (scan_helper.IsEof()) {
+        } else if (str_lex_helper.is_eof()) {
           return SIMPLE_TOKEN(END_OF_FILE);
         } else {
-          scan_helper.SetSkipRead(true);
+          str_lex_helper.set_skip_read(true);
         }
         break;
       default:
@@ -449,67 +386,4 @@ operand_start         [(A-Za-z0-9_\"]
 
 %%
 
-
-
-auto ReadChar(yyscan_t yyscanner, Carbon::ParseAndLexContext& context) -> int {
-  const int c = yyinput(yyscanner);
-  if (c <= 0) {
-    context.RecordSyntaxError("Unexpected end of file");
-  }
-  return c;
-}
-
-auto ReadHashTags(ScanHelper& scan_helper, const size_t hashtag_num) -> bool {
-  for (size_t i = 0; i < hashtag_num; ++i) {
-    if (!scan_helper.Advance() || scan_helper.GetLastChar() != '#') {
-      return false;
-    }
-  }
-  return true;
-}
-
-auto ProcessSingleLineString(llvm::StringRef str, Carbon::ParseAndLexContext& context, const size_t hashtag_num) -> Carbon::Parser::symbol_type {
-  std::string hashtags(hashtag_num, '#');
-  CARBON_CHECK(str.consume_front(hashtags + "\"") &&
-               str.consume_back("\"" + hashtags));
-
-  std::optional<std::string> unescaped =
-      Carbon::UnescapeStringLiteral(str, hashtag_num);
-  if (unescaped == std::nullopt) {
-    return context.RecordSyntaxError(
-        llvm::formatv("Invalid escaping in string: {0}", str));
-  }
-  return ARG_TOKEN(string_literal, *unescaped);
-}
-
-auto ProcessMultiLineString(llvm::StringRef str, Carbon::ParseAndLexContext& context, const size_t hashtag_num) -> Carbon::Parser::symbol_type {
-  std::string hashtags(hashtag_num, '#');
-  CARBON_CHECK(str.consume_front(hashtags) && str.consume_back(hashtags));
-  Carbon::ErrorOr<std::string> block_string =
-      Carbon::ParseBlockStringLiteral(str, hashtag_num);
-  if (!block_string.ok()) {
-    return context.RecordSyntaxError(llvm::formatv(
-        "Invalid block string: {0}", block_string.error().message()));
-  }
-  return ARG_TOKEN(string_literal, *block_string);
-}
-
-auto ScanHelper::Advance() -> bool {
-  int c = ReadChar(yyscanner, context);
-  if (c <= 0) {
-    is_eof = true;
-    return false;
-  }
-  s.push_back(c);
-  return true;
-}
-
-auto ScanHelper::GetLastChar() -> int { return s.back(); }
-
-auto ScanHelper::GetCurrentStr() -> const std::string& { return s; }
-
-auto ScanHelper::GetSkipRead() -> bool { return skip_read; }
-
-auto ScanHelper::SetSkipRead(bool skip) -> void { skip_read = skip; }
-
-auto ScanHelper::IsEof() -> bool { return is_eof; }
+auto YyinputWrapper(yyscan_t yyscanner) -> int { return yyinput(yyscanner); }
