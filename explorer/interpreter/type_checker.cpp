@@ -229,7 +229,7 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
                                  destination_field.value().value,
-                                 // FIXME: We don't have a way to perform
+                                 // TODO: We don't have a way to perform
                                  // user-defined conversions of a struct field
                                  // yet, because we can't write a suitable impl
                                  // for ImplicitAs.
@@ -264,7 +264,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
     std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool {
   // Check for an exact match or for an implicit conversion.
-  // FIXME: `impl`s of `ImplicitAs` should be provided to cover these
+  // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
@@ -354,7 +354,7 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     }
     case Value::Kind::TypeType:
-      // FIXME: This seems suspicious. Shouldn't this require that the type
+      // TODO: This seems suspicious. Shouldn't this require that the type
       // implements the interface?
       if (destination->kind() == Value::Kind::InterfaceType) {
         return true;
@@ -363,7 +363,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     case Value::Kind::InterfaceType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfChoiceType:
-      // FIXME: These types should presumably also convert to interface types.
+      // TODO: These types should presumably also convert to interface types.
       if (destination->kind() == Value::Kind::TypeType) {
         return true;
       }
@@ -391,10 +391,10 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
     -> ErrorOr<Nonnull<Expression*>> {
-  // FIXME: If a builtin conversion works, for now we don't create any
+  // TODO: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
-  // FIXME: This doesn't work for cases of combined built-in and user-defined
+  // TODO: This doesn't work for cases of combined built-in and user-defined
   // conversion, such as converting a struct element via an `ImplicitAs` impl.
   if (IsImplicitlyConvertible(&source->static_type(), destination,
                               std::nullopt)) {
@@ -1586,7 +1586,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           llvm::ArrayRef<Nonnull<const Pattern*>> params =
               param_name.params().fields();
           for (size_t i = 0; i != params.size(); ++i) {
-            // FIXME: Should we disallow all other kinds of top-level params?
+            // TODO: Should we disallow all other kinds of top-level params?
             if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
               if (binding->impl_binding().has_value()) {
@@ -1999,13 +1999,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
-        // FIXME: Should user-defined conversions be permitted in `match`
+        // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
             ValueCategory::Let));
         if (expected_type.has_value()) {
-          // FIXME: For now, we require all patterns to have the same type. If
+          // TODO: For now, we require all patterns to have the same type. If
           // that's not the same type as the scrutinee, we will convert the
           // scrutinee. We might want to instead allow a different conversion
           // to be performed for each pattern.
@@ -2576,7 +2576,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         binding_map[iface_decl.self()] = impl_type_value;
         Nonnull<const Value*> iface_mem_type =
             Substitute(binding_map, &m->static_type());
-        // FIXME: How should the signature in the implementation be permitted
+        // TODO: How should the signature in the implementation be permitted
         // to differ from the signature in the interface?
         CARBON_RETURN_IF_ERROR(
             ExpectExactType((*mem)->source_loc(), "member of implementation",
@@ -2715,7 +2715,7 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
     // Check to see if this declaration is a builtin.
-    // FIXME: Only do this when type-checking the prelude.
+    // TODO: Only do this when type-checking the prelude.
     builtins_.Register(decl);
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));

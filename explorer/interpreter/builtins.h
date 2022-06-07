@@ -21,7 +21,7 @@ class Builtins {
   explicit Builtins() {}
 
   enum class Builtin { ImplicitAs, Last = ImplicitAs };
-  // FIXME: In C++20, replace with `using enum Builtin;`.
+  // TODO: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
 
   // Register a declaration that might be a builtin.
