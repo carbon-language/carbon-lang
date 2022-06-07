@@ -279,9 +279,7 @@ class GenericBinding : public Pattern {
   }
   // Set that this binding was named as a type within its own type expression
   // via `.Self`.
-  void set_named_as_type_via_dot_self() {
-    named_as_type_via_dot_self_ = true;
-  }
+  void set_named_as_type_via_dot_self() { named_as_type_via_dot_self_ = true; }
 
  private:
   std::string name_;

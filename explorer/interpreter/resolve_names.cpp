@@ -195,8 +195,7 @@ static auto ResolveNames(Expression& expression,
       // Introduce `.Self` into scope on the right of the `where` keyword.
       StaticScope where_scope;
       where_scope.AddParent(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(
-          where_scope.Add(".Self", &where.self_binding()));
+      CARBON_RETURN_IF_ERROR(where_scope.Add(".Self", &where.self_binding()));
       for (Nonnull<WhereClause*> clause : where.clauses()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*clause, where_scope));
       }
