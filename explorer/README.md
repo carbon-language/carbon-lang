@@ -143,17 +143,20 @@ has the format:
 
     syntax .position. [[ results ]] { scope }
 
-which can have up to four parts: (1) the `syntax` for the part of the program to
-be executed such as an expression or statement, (2) the `position` of execution
-(an integer) for this action (each action can take multiple steps to complete),
-(3) the `results` from subexpressions of this part, and (4) the `scope` is the
-variables whose lifetimes are associated with this part of the program.
+which can have up to four parts:
+
+1. the `syntax` for the part of the program to be executed such as an expression
+   or statement,
+2. the `position` of execution (an integer) for this action (each action can
+   take multiple steps to complete),
+3. the `results` from subexpressions of this part, and
+4. the `scope` is the variables whose lifetimes are associated with this part of
+   the program.
 
 The stack always begins with a function call to `Main`.
 
 In the special case of a function call, when the function call finishes, the
-result value appears at the end of (3), that is, after the results of the
-function expression and the argument tuple.
+result value appears at the end of the `results`.
 
 ### Step of Execution
 
