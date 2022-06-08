@@ -172,8 +172,8 @@ where
     and
 -   `file-location` gives the file and line number for the `syntax`.
 
-Each step of execution can push new actions on the stack, pop actions, and
-update the position number and result values associated with an action.
+Each step of execution can push new actions on the stack, pop actions, increment
+the position number of an action, and add result values to an action.
 
 ## Experimental feature: Delimited Continuations
 
