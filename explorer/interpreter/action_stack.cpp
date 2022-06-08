@@ -12,14 +12,15 @@
 namespace Carbon {
 
 void ActionStack::Print(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep(" :: ");
+  llvm::ListSeparator sep(" ## ");
   for (const std::unique_ptr<Action>& action : todo_) {
     out << sep << *action;
   }
 }
 
+// OBSOLETE
 void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep(" :: ");
+  llvm::ListSeparator sep(" ## ");
   for (const std::unique_ptr<Action>& action : todo_) {
     if (action->scope().has_value()) {
       out << sep << *action->scope();

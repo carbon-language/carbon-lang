@@ -117,6 +117,61 @@ To explain this boilerplate:
 Please refer to
 [Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/README.md).
 
+## Trace Program Execution
+
+When tracing is turned on (using the `--trace_file=...` option), `explorer`
+prints the state of the program and each step that is performed during
+execution.
+
+### State of the Program
+
+The state of the program is printed in the following format, which consists of
+two components: (1) a stack of actions and (2) a memory.
+
+    {
+    stack: action1 ## action2 ## ...
+    memory: 0: valueA, 1: valueB, 2: valueC, ...
+    }
+
+The memory is a mapping of addresses to values. The memory is used to represent
+both heap-allocated objects and also mutable parts of the procedure call stack,
+for example, for local variables. When an address is deallocated, it stays in
+memory but `!!` is printed before its value.
+
+The stack is list of actions separated by double pound signs (`##`). Each action
+has the format:
+
+    syntax .position. [[ results ]] { scope }
+
+which can have up to four parts: (1) the `syntax` for the part of the program to
+be executed such as an expression or statement, (2) the `position` of execution
+(an integer) for this action (each action can take multiple steps to complete),
+(3) the `results` from subexpressions of this part, and (4) the `scope` is the
+variables whose lifetimes are associated with this part of the program.
+
+The stack always begins with a function call to `Main`.
+
+In the special case of a function call, when the function call finishes, the
+result value appears at the end of (3), that is, after the results of the
+function expression and the argument tuple.
+
+### Step of Execution
+
+Each step of execution is printed in the following format:
+
+    --- step kind syntax .position. (file-location) --->
+
+where
+
+-   `syntax` is the part of the program being executed,
+-   `kind` is the category of the part, such as `exp`, `stmt`, or `decl`.
+-   `position` is says how far along the explorer is in executing this action,
+    and
+-   `file-location` gives the file and line number for the `syntax`.
+
+Each step of execution can push new actions on the stack, pop actions, and
+update the position number and result values associated with an action.
+
 ## Experimental feature: Delimited Continuations
 
 Delimited continuations provide a kind of resumable exception with first-class
