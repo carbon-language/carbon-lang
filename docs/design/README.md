@@ -16,7 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
 -   [Types are values](#types-are-values)
-    -   [Structural and nominal types](#structural-and-nominal-types)
 -   [Primitive types](#primitive-types)
     -   [`bool`](#bool)
     -   [Integer types](#integer-types)
@@ -56,7 +55,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`match`](#match)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
-        -   [Assignment, copying](#assignment-copying)
+        -   [Assignment](#assignment)
         -   [Class functions and factory functions](#class-functions-and-factory-functions)
         -   [Methods](#methods)
         -   [Inheritance](#inheritance)
@@ -186,15 +185,6 @@ themselves modeled as values; specifically, compile-time constant values. This
 means that the grammar for writing a type is the [expression](#expressions)
 grammar. Expressions written where a type is expected must be able to be
 evaluated at compile-time and must evaluate to a type value.
-
-### Structural and nominal types
-
-Some types are _structural_, which means they are equal if they have the same
-components. This is in contrast to _nominal_ types that have a name that
-identifies a specific definition. Two nominal types are equal if their names
-resolve to the same definition. If a nominal type is [generic](#generics), and
-so has parameters, then the parameters must also be equal for the types to be
-equal.
 
 ## Primitive types
 
@@ -402,15 +392,17 @@ fn DoubleTuple(x: (i32, i32)) -> (i32, i32) {
 }
 ```
 
-Tuple types are [structural](#structural-and-nominal-types).
+Tuple types are
+[structural](https://en.wikipedia.org/wiki/Structural_type_system).
 
 > References: [Tuples](tuples.md)
 
 ### Struct types
 
-Carbon also has [structural types](#structural-and-nominal-types) whose members
-are identified by name instead of position. These are called _structural data
-classes_, also known as a _struct types_ or _structs_.
+Carbon also has
+[structural types](https://en.wikipedia.org/wiki/Structural_type_system) whose
+members are identified by name instead of position. These are called _structural
+data classes_, also known as a _struct types_ or _structs_.
 
 Both struct types and values are written inside curly braces (`{`...`}`). In
 both cases, they have a comma-separated list of members that start with a period
@@ -586,7 +578,8 @@ patterns.
 ### Binding patterns
 
 The most common irrefutable pattern is a _binding pattern_, consisting of a new
-name, a colon (`:`), and a type. It can only match values that may be
+name, a colon (`:`), and a type. It binds the matched value of that type to that
+name. It can only match values that may be
 [implicitly converted](expressions/implicit_conversions.md) to that type. A
 underscore (`_`) may be used instead of the name to ignore the value.
 
@@ -798,10 +791,10 @@ fn Positive(a: i64) -> auto {
 
 ### Blocks and statements
 
-A _code block_ or _block_ is a sequence of _statements_. A block defines a
+A _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
-semicolon, and can be one of:
+semicolon or block, and can be one of:
 
 -   an [expression](#expressions),
 -   a [variable declaration](#variable-var-declarations),
@@ -1083,9 +1076,9 @@ declarations, each of which contains a [refutable pattern](#refutable-patterns),
 in order. The refutable pattern may optionally be followed by an `if`
 expression, which may use the names from bindings in the pattern.
 
-The code for the first matching `case` is executed. An optional `default` code
-block may be placed after the `case` declarations, it will be executed if none
-of the `case` declarations match.
+The code for the first matching `case` is executed. An optional `default` block
+may be placed after the `case` declarations, it will be executed if none of the
+`case` declarations match.
 
 An example `match` is:
 
@@ -1179,7 +1172,7 @@ Both [structural data classes](#struct-types) and nominal classes are considered
 _class types_, but they are commonly referred to as "structs" and "classes"
 respectively when that is not confusing. Like structs, classes refer to their
 members by name. Unlike structs, classes are
-[nominal types](#structural-and-nominal-types).
+[nominal types](https://en.wikipedia.org/wiki/Nominal_type_system#Nominal_typing).
 
 > References:
 >
@@ -1189,7 +1182,7 @@ members by name. Unlike structs, classes are
 > -   Proposal
 >     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
-#### Assignment, copying
+#### Assignment
 
 There is an [implicit conversions](expressions/implicit_conversions.md) defined
 between a [struct literal](#struct-types) and a class type with the same fields,
@@ -1199,14 +1192,6 @@ This may be used to assign or initialize a variable with a class type, as in:
 ```carbon
 var sprocket: Widget = {.x = 3, .y = 4, .payload = "Sproing"};
 sprocket = {.x = 2, .y = 1, .payload = "Bounce"};
-```
-
-You may also copy a value of a class type into a variable of the same type.
-
-```carbon
-var thingy: Widget = sprocket;
-sprocket = thingy;
-Assert(sprocket.x == thingy.x);
 ```
 
 > References:
@@ -1549,7 +1534,7 @@ choice LikeABoolean { False, True }
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 > -   Proposal
->     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
+>     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
 > -   Question-for-leads issue
 >     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
