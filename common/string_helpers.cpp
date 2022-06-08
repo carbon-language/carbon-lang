@@ -30,8 +30,9 @@ static auto FromHex(char c) -> std::optional<char> {
 auto UnescapeStringLiteral(llvm::StringRef source, const size_t hashtag_num,
                            bool is_block_string) -> std::optional<std::string> {
   std::string ret;
-  std::string escape = "\\" + std::string(hashtag_num, '#');
   ret.reserve(source.size());
+  std::string escape = "\\";
+  escape.resize(hashtag_num + 1, '#');
   size_t i = 0;
   while (i < source.size()) {
     char c = source[i];
