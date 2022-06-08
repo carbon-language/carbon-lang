@@ -18,11 +18,7 @@ class StringLexHelper {
  public:
   StringLexHelper(const char* text, yyscan_t yyscanner,
                   Carbon::ParseAndLexContext& context)
-      : str_(text),
-        yyscanner_(yyscanner),
-        context_(context),
-        skip_read_(false),
-        is_eof_(false) {}
+      : str_(text), yyscanner_(yyscanner), context_(context), is_eof_(false) {}
   // Advances yyscanner by one char. Sets is_eof to true and returns false on
   // EOF.
   auto Advance() -> bool;
@@ -31,10 +27,6 @@ class StringLexHelper {
   // Returns scanned string.
   auto str() -> const std::string& { return str_; };
 
-  auto skip_read() -> bool { return skip_read_; };
-
-  auto set_skip_read(bool skip) -> void { skip_read_ = skip; };
-
   auto is_eof() -> bool { return is_eof_; };
 
  private:
@@ -42,7 +34,6 @@ class StringLexHelper {
   yyscan_t yyscanner_;
   Carbon::ParseAndLexContext& context_;
   // Skips reading next char.
-  bool skip_read_;
   bool is_eof_;
 };
 
