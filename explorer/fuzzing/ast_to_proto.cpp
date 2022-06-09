@@ -179,6 +179,35 @@ static auto ExpressionToProto(const Expression& expression)
       break;
     }
 
+    case ExpressionKind::WhereExpression: {
+      const auto& where = cast<WhereExpression>(expression);
+      auto* where_proto = expression_proto.mutable_where();
+      *where_proto->mutable_base() = ExpressionToProto(where.base());
+      for (const WhereClause* where : where.clauses()) {
+        Fuzzing::WhereClause clause_proto;
+        switch (where->kind()) {
+          case WhereClauseKind::IsWhereClause: {
+            auto* is_proto = clause_proto.mutable_is();
+            *is_proto->mutable_type() =
+                ExpressionToProto(cast<IsWhereClause>(where)->type());
+            *is_proto->mutable_constraint() =
+                ExpressionToProto(cast<IsWhereClause>(where)->constraint());
+            break;
+          }
+          case WhereClauseKind::EqualsWhereClause: {
+            auto* equals_proto = clause_proto.mutable_equals();
+            *equals_proto->mutable_lhs() =
+                ExpressionToProto(cast<EqualsWhereClause>(where)->lhs());
+            *equals_proto->mutable_rhs() =
+                ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
+            break;
+          }
+        }
+        *where_proto->add_clauses() = clause_proto;
+      }
+      break;
+    }
+
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(expression);
       auto* intrinsic_proto = expression_proto.mutable_intrinsic();
