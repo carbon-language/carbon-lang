@@ -1859,11 +1859,9 @@ An associated type is a type member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
 to compile-time values in implementations, and so use the
 [`:!` generic syntax](#checked-and-template-parameters) inside a
-
-<!-- FIXME [`let` declaration](#constant-let-declarations) -->
-
-without an initializer. This allows types in the signatures of functions in the
-interface to vary. For example, an interface describing a
+[`let` declaration](#constant-let-declarations) without an initializer. This
+allows types in the signatures of functions in the interface to vary. For
+example, an interface describing a
 [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
 associated type to represent the type of elements stored in the stack.
 
@@ -1954,7 +1952,7 @@ PeekTopOfStack(&int_stack);
 
 #### Generic choice types
 
-<!-- FIXME [Choice types](#choice-types) --> may be parameterized similarly to classes:
+[Choice types](#choice-types) may be parameterized similarly to classes:
 
 ```carbon
 choice Result(T:! Type, Error:! Type) {
@@ -2156,8 +2154,8 @@ There are some situations where the common type for two types is needed:
     ```
 
 -   The inferred return type of a function with
-    <!-- FIXME [`auto` return type](#auto-return-type) -->
-    is the common type of its `return` statements.
+    [`auto` return type](#auto-return-type) is the common type of its `return`
+    statements.
 
 The common type is specified by implementing the `CommonTypeWith` interface:
 
