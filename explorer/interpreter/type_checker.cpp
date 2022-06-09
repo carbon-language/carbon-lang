@@ -176,6 +176,54 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
   }
 }
 
+// Checks variable definition pattern structure.
+static auto CheckVariableDefinitionPattern(const Pattern& p, const bool lhs)
+    -> ErrorOr<Success> {
+  auto expect = [&](const bool expected) -> ErrorOr<Success> {
+    if (expected) {
+      return Success();
+    } else {
+      return CompilationError(p.source_loc())
+             << PatternKindName(p.kind()) << " is not allowed on the "
+             << (lhs ? "left" : "right")
+             << " hand side of a variable definition";
+    }
+  };
+  switch (p.kind()) {
+    case PatternKind::AutoPattern:
+      return expect(!lhs);
+
+    case PatternKind::BindingPattern: {
+      CARBON_RETURN_IF_ERROR(expect(lhs));
+      auto& binding = cast<BindingPattern>(p);
+      return CheckVariableDefinitionPattern(binding.type(), /*lhs=*/false);
+    }
+    case PatternKind::TuplePattern: {
+      auto& tuple = cast<TuplePattern>(p);
+      for (const auto& field : tuple.fields()) {
+        CARBON_RETURN_IF_ERROR(CheckVariableDefinitionPattern(*field, lhs));
+      }
+      return Success();
+    }
+
+    case PatternKind::ExpressionPattern:
+      return expect(!lhs);
+
+    case PatternKind::VarPattern: {
+      CARBON_RETURN_IF_ERROR(expect(lhs));
+      auto& var_pattern = cast<VarPattern>(p);
+      return CheckVariableDefinitionPattern(var_pattern.pattern(), lhs);
+    }
+
+    case PatternKind::GenericBinding:
+    case PatternKind::AlternativePattern:
+    case PatternKind::AddrPattern:
+      return CompilationError(p.source_loc())
+             << PatternKindName(p.kind())
+             << " is not allowed in a variable definition";
+  }
+}
+
 auto TypeChecker::ExpectIsType(SourceLocation source_loc,
                                Nonnull<const Value*> value)
     -> ErrorOr<Success> {
@@ -2050,6 +2098,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::VariableDefinition: {
       auto& var = cast<VariableDefinition>(*s);
+      CARBON_RETURN_IF_ERROR(
+          CheckVariableDefinitionPattern(var.pattern(), /*lhs=*/true));
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
       const Value& rhs_ty = var.init().static_type();
       // TODO: If the pattern contains a binding that implies a new impl is

@@ -702,25 +702,13 @@ statement:
     { $$ = arena->New<Assign>(context.source_loc(), $1, $3); }
 | VAR pattern EQUAL expression SEMICOLON
     {
-      auto var = VariableDefinition::Create(arena, context.source_loc(), $2, $4,
-                                            ValueCategory::Var);
-      if (var.ok()) {
-        $$ = *var;
-      } else {
-        context.RecordSyntaxError(var.error().message());
-        YYERROR;
-      }
+      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
+                                          ValueCategory::Var);
     }
 | LET pattern EQUAL expression SEMICOLON
     {
-      auto var = VariableDefinition::Create(arena, context.source_loc(), $2, $4,
-                                            ValueCategory::Let);
-      if (var.ok()) {
-        $$ = *var;
-      } else {
-        context.RecordSyntaxError(var.error().message());
-        YYERROR;
-      }
+      $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
+                                          ValueCategory::Let);
     }
 | statement_expression SEMICOLON
     { $$ = arena->New<ExpressionStatement>(context.source_loc(), $1); }
