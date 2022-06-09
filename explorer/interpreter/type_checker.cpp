@@ -505,6 +505,12 @@ auto TypeChecker::ArgumentDeduction(
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
+    **trace_stream_ << "bindings: ";
+    llvm::ListSeparator sep;
+    for (auto binding : bindings_to_deduce) {
+      **trace_stream_ << sep << *binding;
+    }
+    **trace_stream_ << "\n";
   }
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
@@ -774,8 +780,9 @@ auto TypeChecker::Substitute(
       auto ret = Substitute(dict, &fn_type.return_type());
       // TODO: Only remove the bindings that are in `dict`; we may still need
       // to do deduction.
-      return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
-                                       llvm::None);
+      return arena_->New<FunctionType>(param, fn_type.generic_parameters(), ret,
+                                       fn_type.deduced_bindings(),
+                                       fn_type.impl_bindings());
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
@@ -1779,6 +1786,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
+          if (trace_stream_) {
+            **trace_stream_ << "checking call to function of type " << fun_t
+                            << "\n";
+          }
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
               fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
@@ -1883,6 +1894,28 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
+        case IntrinsicExpression::Intrinsic::Alloc: {
+          if (intrinsic_exp.args().fields().size() != 1) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_new takes 1 argument";
+          }
+          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          e->set_static_type(arena_->New<PointerType>(arg_type));
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::Dealloc: {
+          if (intrinsic_exp.args().fields().size() != 1) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_new takes 1 argument";
+          }
+          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          CARBON_RETURN_IF_ERROR(
+              ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleValue::Empty());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
       }
     }
     case ExpressionKind::IntTypeLiteral:

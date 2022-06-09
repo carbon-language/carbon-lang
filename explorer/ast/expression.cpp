@@ -21,8 +21,10 @@ using llvm::isa;
 auto IntrinsicExpression::FindIntrinsic(std::string_view name,
                                         SourceLocation source_loc)
     -> ErrorOr<Intrinsic> {
-  static const auto& intrinsic_map =
-      *new std::map<std::string_view, Intrinsic>({{"print", Intrinsic::Print}});
+  static const auto& intrinsic_map = *new std::map<std::string_view, Intrinsic>(
+      {{"print", Intrinsic::Print},
+       {"new", Intrinsic::Alloc},
+       {"delete", Intrinsic::Dealloc}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
@@ -157,14 +159,23 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << "fn " << fn.parameter() << " -> " << fn.return_type();
       break;
     }
-    case ExpressionKind::IntrinsicExpression:
-      out << "intrinsic_expression(";
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& iexp = cast<IntrinsicExpression>(*this);
+      out << "intrinsic_";
       switch (cast<IntrinsicExpression>(*this).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           out << "print";
+          break;
+        case IntrinsicExpression::Intrinsic::Alloc:
+          out << "new";
+          break;
+        case IntrinsicExpression::Intrinsic::Dealloc:
+          out << "delete";
+          break;
       }
-      out << ")";
+      out << iexp.args();
       break;
+    }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(*this);
       out << "if " << if_expr.condition() << " then "

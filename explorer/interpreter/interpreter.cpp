@@ -1019,6 +1019,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
           return todo_.FinishAction(TupleValue::Empty());
         }
+        case IntrinsicExpression::Intrinsic::Alloc: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
+          CARBON_CHECK(args.elements().size() == 1);
+          Address addr(heap_.AllocateValue(args.elements()[0]));
+          return todo_.FinishAction(arena_->New<PointerValue>(addr));
+        }
+        case IntrinsicExpression::Intrinsic::Dealloc: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
+          CARBON_CHECK(args.elements().size() == 1);
+          heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
+          return todo_.FinishAction(TupleValue::Empty());
+        }
       }
     }
     case ExpressionKind::IntTypeLiteral: {
@@ -1423,7 +1435,11 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&var_decl.initializer()));
         } else {
-          todo_.Initialize(&var_decl.binding(), act.results()[0]);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> v,
+              Convert(act.results()[0], &var_decl.binding().static_type(),
+                      var_decl.source_loc()));
+          todo_.Initialize(&var_decl.binding(), v);
           return todo_.FinishAction();
         }
       } else {
