@@ -1162,9 +1162,9 @@ Classes may have other kinds of members beyond fields declared in its scope:
     `class let` or `static let`?
 -   `class`, to define a
     [_member class_ or _nested class_](https://en.wikipedia.org/wiki/Inner_class)
--   Every class automatically has a
-    [constant member](#constant-let-declarations) named `Self` equal to the
-    class type itself.
+
+Within the scope of a class, the unqualified name `Self` can be used to refer to
+the class itself.
 
 Members of a class are [accessed](expressions/member_access.md) using the dot
 (`.`) notation, so given an instance `dial` of type `Widget`, `dial.payload`
