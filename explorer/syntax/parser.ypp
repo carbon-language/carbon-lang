@@ -108,6 +108,8 @@
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
+%type <std::vector<Nonnull<Declaration*>>> interface_body
+%type <std::vector<Nonnull<Declaration*>>> impl_body
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
@@ -967,7 +969,7 @@ declaration:
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
                                            ValueCategory::Let);
     }
-| INTERFACE identifier type_params LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| INTERFACE identifier type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
       // TODO: Type of `Self` should be the interface being declared, not
       // `Type`.
@@ -978,7 +980,7 @@ declaration:
       $$ = arena->New<InterfaceDeclaration>(context.source_loc(), $2, $3, self,
                                             $5);
     }
-| impl_kind IMPL impl_deduced_params impl_type AS expression LEFT_CURLY_BRACE declaration_list RIGHT_CURLY_BRACE
+| impl_kind IMPL impl_deduced_params impl_type AS expression LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
           arena, context.source_loc(), $1, $4, $6, $3, $8);
@@ -1010,6 +1012,29 @@ declaration_list:
     {
       $$ = $1;
       $$.push_back(Nonnull<Declaration*>($2));
+    }
+;
+interface_body:
+  // Empty
+    { $$ = {}; }
+| interface_body function_declaration
+    {
+      $$ = $1;
+      $$.push_back($2);
+    }
+;
+impl_body:
+  // Empty
+    { $$ = {}; }
+| impl_body function_declaration
+    {
+      $$ = $1;
+      $$.push_back($2);
+    }
+| impl_body alias_declaration
+    {
+      $$ = $1;
+      $$.push_back($2);
     }
 ;
 %%

@@ -20,9 +20,9 @@
 // CHECK: ********** calling main function **********
 // CHECK: {
 // CHECK: stack:
-// CHECK: heap:
+// CHECK: memory:
 // CHECK: }
-// CHECK: --- step exp Main() (<Main()>:0) --->
+// CHECK: --- step exp Main() .0. (<Main()>:0) --->
 // CHECK: result: 0
 
 package ExplorerTest api;
