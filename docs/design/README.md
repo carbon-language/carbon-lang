@@ -120,7 +120,7 @@ import Console;
 
 // Prints the Fibonacci numbers less than `limit`.
 fn Fibonacci(limit: i64) {
-  var (a, b): (i64, i64) = (0, 1);
+  var (a: i64, b: i64) = (0, 1);
   while (a < limit) {
     Console.Print(a, " ");
     let next: i64 = a + b;
@@ -232,7 +232,7 @@ programming error:
 The unsigned-integer types are: `u8`, `u16`, `u32`, `u64`, `u128`, `u256`, and
 `Carbon.UInt(N)`. Unsigned integer types wrap around on overflow, we strongly
 advise that they are not used except when those semantics are desired. These
-types are intended for [hashing](https://en.wikipedia.org/wiki/Hash_function),
+types are intended for bit manipulation or modular arithmetic as often found in [hashing](https://en.wikipedia.org/wiki/Hash_function),
 [cryptography](https://en.wikipedia.org/wiki/Cryptography), and
 [PRNG](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) use cases.
 Values which can never be negative, like sizes, but for which wrapping does not
@@ -583,7 +583,7 @@ The most common irrefutable pattern is a _binding pattern_, consisting of a new
 name, a colon (`:`), and a type. It binds the matched value of that type to that
 name. It can only match values that may be
 [implicitly converted](expressions/implicit_conversions.md) to that type. A
-underscore (`_`) may be used instead of the name to ignore the value.
+underscore (`_`) may be used instead of the name to match a value but without binding any name to it.
 
 Binding patterns default to `let` bindings except inside a context where the
 `var` keyword is used:
