@@ -352,6 +352,33 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       out << "]";
       break;
     }
+
+    case Fuzzing::Expression::kWhere: {
+      const Fuzzing::WhereExpression& where = expression.where();
+      ExpressionToCarbon(where.base(), out);
+      out << " where ";
+      llvm::ListSeparator sep(" and ");
+      for (const auto& clause : where.clauses()) {
+        out << sep;
+        switch (clause.kind_case()) {
+          case Fuzzing::WhereClause::kIs:
+            ExpressionToCarbon(clause.is().type(), out);
+            out << " is ";
+            ExpressionToCarbon(clause.is().constraint(), out);
+            break;
+          case Fuzzing::WhereClause::kEquals:
+            ExpressionToCarbon(clause.equals().lhs(), out);
+            out << " == ";
+            ExpressionToCarbon(clause.equals().rhs(), out);
+            break;
+          case Fuzzing::WhereClause::KIND_NOT_SET:
+            // Arbitrary default to avoid invalid syntax.
+            out << ".Self == .Self";
+            break;
+        }
+      }
+      break;
+    }
   }
 }
 

@@ -45,7 +45,7 @@ class AstNode {
 
   // Print the AST rooted at the node.
   virtual void Print(llvm::raw_ostream& out) const = 0;
-  // Print identifying information about the node, such as it's name.
+  // Print identifying information about the node, such as its name.
   virtual void PrintID(llvm::raw_ostream& out) const = 0;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
