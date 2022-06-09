@@ -146,6 +146,10 @@ static auto PrimitiveOperatorToCarbon(
     case Fuzzing::PrimitiveOperatorExpression::Or:
       BinaryOperatorToCarbon(arg0, " or ", arg1, out);
       break;
+
+    case Fuzzing::PrimitiveOperatorExpression::Combine:
+      BinaryOperatorToCarbon(arg0, " & ", arg1, out);
+      break;
   }
   out << ")";
 }
@@ -346,6 +350,33 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       out << "; ";
       ExpressionToCarbon(array_literal.size(), out);
       out << "]";
+      break;
+    }
+
+    case Fuzzing::Expression::kWhere: {
+      const Fuzzing::WhereExpression& where = expression.where();
+      ExpressionToCarbon(where.base(), out);
+      out << " where ";
+      llvm::ListSeparator sep(" and ");
+      for (const auto& clause : where.clauses()) {
+        out << sep;
+        switch (clause.kind_case()) {
+          case Fuzzing::WhereClause::kIs:
+            ExpressionToCarbon(clause.is().type(), out);
+            out << " is ";
+            ExpressionToCarbon(clause.is().constraint(), out);
+            break;
+          case Fuzzing::WhereClause::kEquals:
+            ExpressionToCarbon(clause.equals().lhs(), out);
+            out << " == ";
+            ExpressionToCarbon(clause.equals().rhs(), out);
+            break;
+          case Fuzzing::WhereClause::KIND_NOT_SET:
+            // Arbitrary default to avoid invalid syntax.
+            out << ".Self == .Self";
+            break;
+        }
+      }
       break;
     }
   }

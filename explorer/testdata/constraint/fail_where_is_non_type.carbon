@@ -10,9 +10,9 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  match (0) {
-    case 1 => { return 0; }
-  }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
-}
+interface A {}
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_is_non_type.carbon:[[@LINE+1]]: expression after `is` does not resolve to a constraint, found i32
+alias B = A where i32 is 5;
+
+fn Main() -> i32 { return 0; }

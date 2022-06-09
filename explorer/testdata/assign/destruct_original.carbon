@@ -15,7 +15,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = -1;
-  {
+  if (true) {
     var y: i32 = 0;
     x = y;
     // y dies here

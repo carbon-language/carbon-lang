@@ -10,9 +10,14 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  match (0) {
-    case 1 => { return 0; }
-  }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+interface A {
+  // TODO: Use `let T:! Type;` here once we support it.
+  fn T();
 }
+
+external impl i32 as A {
+  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_bad_member_kind.carbon:[[@LINE+1]]: syntax error, unexpected CLASS, expecting ALIAS or FN or RIGHT_CURLY_BRACE
+  class T {}
+}
+
+fn Main() -> i32 { return 0; }

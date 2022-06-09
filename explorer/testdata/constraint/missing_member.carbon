@@ -10,9 +10,20 @@
 
 package ExplorerTest api;
 
+interface A { fn F() -> i32; }
+interface B { fn G() -> i32; }
+
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/missing_member.carbon:[[@LINE+1]]: member access, H not in constraint interface A & interface B where .Self:! Type is interface A, .Self:! Type is interface B
+fn Get[T:! A & B](n: T) -> i32 { return n.H(); }
+
+impl i32 as A {
+  fn F() -> i32 { return 1; }
+}
+impl i32 as B {
+  fn G() -> i32 { return 2; }
+}
+
 fn Main() -> i32 {
-  match (0) {
-    case 1 => { return 0; }
-  }
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_non_exhaustive_match.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+  var z: i32 = 0;
+  return Get(z);
 }
