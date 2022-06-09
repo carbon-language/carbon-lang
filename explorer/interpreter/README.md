@@ -47,20 +47,25 @@ represented using the [`Heap`](heap.h) class, which is essentially a mapping of
 
 ### Example
 
-To evaluate the expression `((1 + 2) + 3)`, the interpreter starts by pushing an
+To evaluate the expression `((1 + 2) + 4)`, the interpreter starts by pushing an
 `Action` onto the stack that corresponds to the whole expression:
 
-`((1 + 2) + 3)`[0]{} :: ...
+    ((1 + 2) + 4) .0. ## ...
 
 In this notation, we're expressing the stack as a sequence of `Action`s
-separated by `::`, with the top at the left, and representing each `Action` as
-the expression it evaluates, followed by its state. The state of an `Action`
-currently consists of:
+separated by `##`, with the top at the left, and representing each `Action` as
+the expression it evaluates, followed by its state. An `Action` consists of:
 
--   An integer `pos`, which is initially 0 and usually counts the number of
-    steps executed. Here that's denoted with a number in square brackets.
+-   The syntax for the part of the program being executed, in this case
+    `((1 + 2) + 4)`.
+-   An integer `pos` for position, which is initially 0 and usually counts the
+    number of steps executed. Here that's denoted with a number between two
+    periods.
 -   A vector `results`, which collects the results of any sub-`Action`s spawned
-    by the `Action`. Here that's denoted by a list in curly braces.
+    by the `Action`. Above the results are omitted because they are currently
+    empty.
+-   A `scope` mapping variables to their values, for those variables whose
+    lifetimes are associated with this action.
 
 Then the interpreter proceeds by repeatedly taking the next step of the `Action`
 at the top of the stack. For expression `Action`s, `pos` typically identifies
@@ -68,41 +73,42 @@ the operand that the next step should begin evaluation of. In this case, that
 operand is the expression `(1 + 2)`, so we push a new `Action` onto the stack,
 and increment `pos` on the old one:
 
-`(1 + 2)`[0]{} :: `((1 + 2) + 3)`[1]{} :: ...
+    (1 + 2) .0. ## ((1 + 2) + 4) .1. ## ...
 
 The next step spawns an action to evaluate `1`:
 
-`1`[0]{} :: `(1 + 2)`[1]{} :: `((1 + 2) + 3)`[1]{} :: ...
+    1 .0. ## (1 + 2) .1. ## ((1 + 2) + 4) .1. ## ...
 
 That expression can be fully evaluated in a single step, so the next step
 evaluates it, appends the result to the next `Action` down the stack, and pops
 the now-completed `Action` off the stack:
 
-`(1 + 2)`[1]{1} :: `((1 + 2) + 3)`[1]{} :: ...
+    (1 + 2) .1. [[1]] ## ((1 + 2) + 4) .1. ## ...
 
-The top `Action`'s `pos` is 1, so the next step begins evaluation of the second
-operand:
+The result `1` has been stored in the `results` list of the top `Action`, which
+is displayed between `[[` and `]]`. The top `Action`'s `pos` is 1, so the next
+step begins evaluation of the second operand:
 
-`2`[0]{} :: `(1 + 2)`[2]{1} :: `((1 + 2) + 3)`[1]{} :: ...
+    2 .0. ## (1 + 2) .2. [[1]] ## ((1 + 2) + 4) .1. ## ...
 
 Which again can be evaluated immediately:
 
-`(1 + 2)`[2]{1, 2} :: `((1 + 2) + 3)`[1]{} :: ...
+    (1 + 2) .2. [[1, 2]] ## ((1 + 2) + 4) .1. ## ...
 
 This expression has two operands, so now that `pos` is 2, all operands have been
 evaluated, and their results are in the corresponding entries of `results`.
 Thus, the next step can compute the expression value, passing it down to the
 parent `Action` and popping the completed action as before:
 
-`((1 + 2) + 3)`[1]{3} :: ...
+    ((1 + 2) + 4) .1. [[3]] ## ...
 
 Evaluation now proceeds to the second operand:
 
-`3`[0]{} :: `((1 + 2) + 3)`[2]{3} :: ...
+    4 .0. ## ((1 + 2) + 4) .2. [[3]] ## ...
 
 Which, again, can be evaluated immediately:
 
-`((1 + 2) + 3)`[2]{3, 3} :: ...
+    ((1 + 2) + 4) .2. [[3, 4]] ## ...
 
 `pos` now indicates that all subexpressions have been evaluated, so the next
-step computes the final result of 6, and passes it down the stack.
+step computes the final result of `7`.

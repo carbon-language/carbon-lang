@@ -121,6 +121,7 @@ class Action {
 
   // Returns the scope associated with this Action, if any.
   auto scope() -> std::optional<RuntimeScope>& { return scope_; }
+  auto scope() const -> const std::optional<RuntimeScope>& { return scope_; }
 
   // Associates this action with a new scope, with initial state `scope`.
   // Values that are local to this scope will be deallocated when this
