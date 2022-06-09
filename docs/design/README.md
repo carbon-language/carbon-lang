@@ -71,6 +71,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic interfaces](#generic-interfaces)
         -   [Generic implementations](#generic-implementations)
     -   [Other features](#other-features)
+    -   [`observe` declarations](#observe-declarations)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
@@ -739,7 +740,7 @@ fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 > -   Proposal
->     [#752: api file default publicn](https://github.com/carbon-language/carbon-lang/pull/752)
+>     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
 > -   Question-for-leads issue
 >     [#1136: what is the top-level scope in a source file, and what names are found there?](https://github.com/carbon-language/carbon-lang/issues/1136)
 
@@ -988,8 +989,9 @@ same library as the type definition, subject to the orphan rule
 ([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
 [coherence](generics/terminology.md#coherence).
 
-**FIXME:**
-[forward declarations](generics/details.md#forward-declarations-and-cyclic-references)
+Interfaces and implementations may be
+[forward declared](generics/details.md#forward-declarations-and-cyclic-references)
+by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 
 ### Combining constraints
 
@@ -1031,7 +1033,7 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 
 An associated type is a type member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
-to compile-time values, and so use the
+to compile-time values in implementations, and so use the
 [`:!` generic syntax](#checked-and-template-parameters) inside a
 
 <!-- FIXME [`let` declaration](#constant-let-declarations) -->
@@ -1180,21 +1182,59 @@ impl forall [T:! Printable] Vector(T) as Printable;
 
 ### Other features
 
-**TODO:**
+Carbon generics have a number of other features, including:
 
--   [named and template constraints](generics/details.md#named-constraints)
--   [adapter types](generics/details.md#adapting-types)
--   [`where` constraints](generics/details.md#where-constraints)
--   [implied constraints](generics/details.md#implied-constraints)
--   `observe` declarations:
-    [observing types are equal](generics/details.md#observe-declarations),
-    [observing types implement an interface](generics/details.md#observing-a-type-implements-an-interface)
--   [dynamic erased types](generics/details.md#runtime-type-fields)
--   [variadics](generics/details.md#variadic-arguments)
+-   [Named constraints](generics/details.md#named-constraints) may be used to
+    disambiguate when combining two interfaces that have name conflicts. Named
+    constraints may be implemented and otherwise used in place of an interface.
+-   [Template constraints](generics/details.md#named-constraints) are a kind of
+    named constraint that can contain structural requirements. For example, a
+    template constraint could match any type that has a function with a specific
+    name and signature without any explicit declaration that the type implements
+    the constraint. Template constraints may only be used as requirements for
+    template parameters.
+-   An [adapter type](generics/details.md#adapting-types) is a type with the
+    same data representation as an existing type, so you may cast between the
+    two types, but can implement different interfaces or implement interfaces
+    differently.
+-   Additional requirements can be placed on the associated types of an
+    interface using
+    [`where` constraints](generics/details.md#where-constraints).
+-   [Implied constraints](generics/details.md#implied-constraints) allows some
+    constraints to be omitted from a function signature.
+-   FIXME: [dynamic erased types](generics/details.md#runtime-type-fields)
+-   FIXME: [variadics](generics/details.md#variadic-arguments)
 
 > References:
 >
 > -   [Generics details](generics/details.md)
+> -   FIXME
+
+### `observe` declarations
+
+Determining whether two types must be equal in a generic context is in general
+undecidable, as
+[has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+
+To make compilation fast, the Carbon compiler will limit its search to a depth
+of 1, only identifying types as equal if there is an explicit declaration that
+they are equal in the code, such as in a
+[`where` constraint](generics/details.md#where-constraints). There will be
+situations where two types must be equal as the result of combining these facts,
+but the compiler will return a type error since it did not realize they are
+equal due to the limit of the search. An
+[`observe`...`==` declaration](generics/details.md#observe-declarations) may be
+added to describe how two types are equal, allowing more code to pass type
+checking.
+
+An `observe` declaration showing types are equal can increase the set of
+interfaces the compiler knows that a type implements. It is also possible that
+knowing a type implements one interface implies that it implements another, from
+an
+[interface requirement](generics/details.md#interface-requiring-other-interfaces)
+or [generic implementation](#generic-implementations). An `observe`...`is`
+declaration may be used to
+[observe that a type implements an interface](generics/details.md#observing-a-type-implements-an-interface).
 
 ### Operator overloading
 
