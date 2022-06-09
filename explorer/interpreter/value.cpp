@@ -860,22 +860,6 @@ auto FindMember(const std::string& name,
   return std::nullopt;
 }
 
-auto Member::name() const -> std::string {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return GetName(*decl).value();
-  } else {
-    return member_.get<const NamedValue*>()->name;
-  }
-}
-
-auto Member::type() const -> const Value& {
-  if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-    return decl->static_type();
-  } else {
-    return *member_.get<const NamedValue*>()->value;
-  }
-}
-
 void ImplBinding::Print(llvm::raw_ostream& out) const {
   out << "impl binding " << *type_var_ << " as " << *iface_;
 }

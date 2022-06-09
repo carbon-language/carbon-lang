@@ -26,6 +26,7 @@ cc_library(
         "//common:ostream",
         "//explorer/ast:declaration",
         "//explorer/ast:expression",
+        "//explorer/ast:member",
         "//explorer/ast:statement",
         "//explorer/common:arena",
         "//explorer/common:error_builders",

@@ -13,6 +13,7 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
+#include "explorer/ast/member.h"
 #include "explorer/ast/paren_contents.h"
 #include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
@@ -196,7 +197,7 @@ class SimpleMemberAccessExpression : public Expression {
                                         std::string member)
       : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
         object_(object),
-        member_(std::move(member)) {}
+        member_name_(std::move(member)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSimpleMemberAccessExpression(node->kind());
@@ -204,7 +205,20 @@ class SimpleMemberAccessExpression : public Expression {
 
   auto object() const -> const Expression& { return *object_; }
   auto object() -> Expression& { return *object_; }
-  auto member() const -> const std::string& { return member_; }
+  auto member_name() const -> const std::string& { return member_name_; }
+
+  // Returns the `Member` that the member name resolved to.
+  // Should not be called before typechecking.
+  auto member() const -> const Member& {
+    CARBON_CHECK(member_.has_value());
+    return *member_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_member(Member member) {
+    CARBON_CHECK(!member_.has_value());
+    member_ = member;
+  }
 
   // Returns true if the field is a method that has a "me" declaration in an
   // AddrPattern.
@@ -244,7 +258,8 @@ class SimpleMemberAccessExpression : public Expression {
 
  private:
   Nonnull<Expression*> object_;
-  std::string member_;
+  std::string member_name_;
+  std::optional<Member> member_;
   bool is_field_addr_me_method_ = false;
   std::optional<Nonnull<const Expression*>> impl_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;

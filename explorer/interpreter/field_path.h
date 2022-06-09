@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/member.h"
 #include "explorer/ast/static_scope.h"
 #include "llvm/Support/Compiler.h"
 

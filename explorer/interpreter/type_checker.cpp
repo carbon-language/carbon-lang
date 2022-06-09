@@ -1431,16 +1431,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (object_type.kind()) {
         case Value::Kind::StructType: {
           const auto& struct_type = cast<StructType>(object_type);
-          for (const auto& [field_name, field_type] : struct_type.fields()) {
-            if (access.member() == field_name) {
-              access.set_static_type(field_type);
+          for (const auto& field : struct_type.fields()) {
+            if (access.member_name() == field.name) {
+              access.set_member(Member(&field));
+              access.set_static_type(field.value);
               access.set_value_category(access.object().value_category());
               return Success();
             }
           }
           return CompilationError(access.source_loc())
                  << "struct " << struct_type << " does not have a field named "
-                 << access.member();
+                 << access.member_name();
         }
         case Value::Kind::TypeType: {
           CARBON_ASSIGN_OR_RETURN(
@@ -1448,7 +1449,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               InterpExp(&access.object(), arena_, trace_stream_));
           if (const auto* struct_type = dyn_cast<StructType>(type)) {
             for (const auto& field : struct_type->fields()) {
-              if (access.member() == field.name) {
+              if (access.member_name() == field.name) {
+                access.set_member(Member(&field));
                 access.set_static_type(
                     arena_->New<TypeOfMemberName>(Member(&field)));
                 access.set_value_category(ValueCategory::Let);
@@ -1457,7 +1459,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             return CompilationError(access.source_loc())
                    << "struct " << *struct_type
-                   << " does not have a field named " << access.member();
+                   << " does not have a field named " << access.member_name();
           }
           // TODO: We should handle all types here, not only structs. For
           // example:
@@ -1473,11 +1475,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case Value::Kind::NominalClassType: {
           const auto& t_class = cast<NominalClassType>(object_type);
-          if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.member(), t_class.declaration().members());
+          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
+                  access.member_name(), t_class.declaration().members());
               member.has_value()) {
             Nonnull<const Value*> field_type =
                 Substitute(t_class.type_args(), &(*member)->static_type());
+            access.set_member(Member(member.value()));
             access.set_static_type(field_type);
             switch ((*member)->kind()) {
               case DeclarationKind::VariableDeclaration:
@@ -1496,7 +1499,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                       &access.object().static_type(), &impl_scope));
                   if (access.object().value_category() != ValueCategory::Var) {
                     return CompilationError(e->source_loc())
-                           << "method " << access.member()
+                           << "method " << access.member_name()
                            << " requires its receiver to be an lvalue";
                   }
                 }
@@ -1504,7 +1507,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 break;
               }
               default:
-                CARBON_FATAL() << "member " << access.member()
+                CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";
                 break;
             }
@@ -1512,21 +1515,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(e->source_loc())
                    << "class " << t_class.declaration().name()
-                   << " does not have a field named " << access.member();
+                   << " does not have a field named " << access.member_name();
           }
         }
         case Value::Kind::TypeOfChoiceType: {
           const ChoiceType& choice =
               cast<TypeOfChoiceType>(object_type).choice_type();
           std::optional<Nonnull<const Value*>> parameter_types =
-              choice.FindAlternative(access.member());
+              choice.FindAlternative(access.member_name());
           if (!parameter_types.has_value()) {
             return CompilationError(e->source_loc())
                    << "choice " << choice.name()
-                   << " does not have an alternative named " << access.member();
+                   << " does not have an alternative named "
+                   << access.member_name();
           }
-          access.set_static_type(arena_->New<FunctionType>(
-              *parameter_types, llvm::None, &choice, llvm::None, llvm::None));
+          Nonnull<const Value*> type = arena_->New<FunctionType>(
+              *parameter_types, llvm::None, &choice, llvm::None, llvm::None);
+          // TODO: Should there be a Declaration corresponding to each choice
+          // type alternative?
+          access.set_member(Member(
+              arena_->New<NamedValue>(NamedValue{access.member_name(), type})));
+          access.set_static_type(type);
           access.set_value_category(ValueCategory::Let);
           return Success();
         }
@@ -1534,8 +1543,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const NominalClassType& class_type =
               cast<TypeOfClassType>(object_type).class_type();
           if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.member(), class_type.declaration().members());
+                  access.member_name(), class_type.declaration().members());
               member.has_value()) {
+            access.set_member(Member(member.value()));
             switch ((*member)->kind()) {
               case DeclarationKind::FunctionDeclaration: {
                 const auto& func = cast<FunctionDeclaration>(*member);
@@ -1558,7 +1568,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           } else {
             return CompilationError(access.source_loc())
                    << class_type << " does not have a member named "
-                   << access.member();
+                   << access.member_name();
           }
         }
         case Value::Kind::TypeOfInterfaceType:
@@ -1571,7 +1581,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
-              LookupInConstraint(e->source_loc(), type, access.member()));
+              LookupInConstraint(e->source_loc(), type, access.member_name()));
+          access.set_member(Member(result.member));
           access.set_found_in_interface(result.interface);
           access.set_static_type(
               arena_->New<TypeOfMemberName>(Member(result.member)));
@@ -1588,13 +1599,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), &typeof_var,
-                                 access.member()));
+                                 access.member_name()));
 
           const Value& member_type = result.member->static_type();
           BindingMap binding_map = result.interface->args();
           binding_map[result.interface->declaration().self()] = &object_type;
           Nonnull<const Value*> inst_member_type =
               Substitute(binding_map, &member_type);
+          access.set_member(Member(result.member));
           access.set_found_in_interface(result.interface);
           access.set_static_type(inst_member_type);
 
@@ -1617,10 +1629,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), &object_type,
-                                 access.member()));
+                                 access.member_name()));
           CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
                                   impl_scope.Resolve(result.interface, type,
                                                      e->source_loc(), *this));
+          access.set_member(Member(result.member));
           access.set_impl(impl);
           access.set_found_in_interface(result.interface);
 

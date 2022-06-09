@@ -12,12 +12,12 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/member.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/field_path.h"
 #include "explorer/interpreter/stack.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -110,15 +110,6 @@ class Value {
 
  private:
   const Kind kind_;
-};
-
-// A NamedValue represents a value with a name, such as a single struct field.
-struct NamedValue {
-  // The field name.
-  std::string name;
-
-  // The field's value.
-  Nonnull<const Value*> value;
 };
 
 // An integer value.
@@ -853,32 +844,6 @@ class ParameterizedEntityName : public Value {
  private:
   Nonnull<const Declaration*> declaration_;
   Nonnull<const TuplePattern*> params_;
-};
-
-// A member of a type.
-//
-// This is either a declared member of a class, interface, or similar, or a
-// member of a struct with no declaration.
-class Member {
- public:
-  explicit Member(const Declaration* declaration) : member_(declaration) {}
-  explicit Member(const NamedValue* struct_member) : member_(struct_member) {}
-
-  // The name of the member.
-  auto name() const -> std::string;
-  // The declared type of the member, which might include type variables.
-  auto type() const -> const Value&;
-  // A declaration of the member, if any exists.
-  auto declaration() const -> std::optional<Nonnull<const Declaration*>> {
-    if (const Declaration* decl = member_.dyn_cast<const Declaration*>()) {
-      return decl;
-    }
-    return std::nullopt;
-  }
-
- private:
-  llvm::PointerUnion<Nonnull<const Declaration*>, Nonnull<const NamedValue*>>
-      member_;
 };
 
 // The name of a member of a class or interface.

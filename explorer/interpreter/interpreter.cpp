@@ -336,7 +336,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         // -> { { &v.f :: C, E, F} :: S, H }
         Address object = cast<LValue>(*act.results()[0]).address();
         Address member = object.SubobjectAddress(
-            cast<SimpleMemberAccessExpression>(exp).member());
+            cast<SimpleMemberAccessExpression>(exp).member().name());
         return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
@@ -849,7 +849,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (access.impl().has_value()) {
             witness = cast<Witness>(act.results()[1]);
           }
-          FieldPath::Component member(access.member(), witness);
+          FieldPath::Component member(access.member().name(), witness);
           const Value* aggregate;
           if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
             CARBON_ASSIGN_OR_RETURN(
