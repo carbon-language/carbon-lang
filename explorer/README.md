@@ -143,14 +143,14 @@ has the format:
 
     syntax .position. [[ results ]] { scope }
 
-which can have up to four parts:
+which can have up to four parts.
 
-1. the `syntax` for the part of the program to be executed such as an expression
-   or statement,
-2. the `position` of execution (an integer) for this action (each action can
-   take multiple steps to complete),
-3. the `results` from subexpressions of this part, and
-4. the `scope` is the variables whose lifetimes are associated with this part of
+1. The `syntax` for the part of the program to be executed such as an expression
+   or statement.
+2. The `position` of execution (an integer) for this action (each action can
+   take multiple steps to complete).
+3. The `results` from subexpressions of this part.
+4. The `scope` is the variables whose lifetimes are associated with this part of
    the program.
 
 The stack always begins with a function call to `Main`.
@@ -164,13 +164,11 @@ Each step of execution is printed in the following format:
 
     --- step kind syntax .position. (file-location) --->
 
-where
-
--   `syntax` is the part of the program being executed,
--   `kind` is the category of the part, such as `exp`, `stmt`, or `decl`.
--   `position` is says how far along the explorer is in executing this action,
-    and
--   `file-location` gives the file and line number for the `syntax`.
+-   The `syntax` is the part of the program being executed.
+-   The `kind` is the syntactic category of the part, such as `exp`, `stmt`, or
+    `decl`.
+-   The `position` says how far along `explorer` is in executing this action.
+-   The `file-location` gives the filename and line number for the `syntax`.
 
 Each step of execution can push new actions on the stack, pop actions, increment
 the position number of an action, and add result values to an action.
