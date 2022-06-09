@@ -151,11 +151,7 @@ Interpreter::~Interpreter() {
 
 void Interpreter::PrintState(llvm::raw_ostream& out) {
   out << "{\nstack: " << todo_;
-  out << "\nheap: " << heap_;
-  if (!todo_.IsEmpty()) {
-    out << "\nvalues: ";
-    todo_.PrintScopes(out);
-  }
+  out << "\nmemory: " << heap_;
   out << "\n}\n";
 }
 
@@ -320,8 +316,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
   if (trace_stream_) {
-    **trace_stream_ << "--- step lvalue " << exp << " (" << exp.source_loc()
-                    << ") --->\n";
+    **trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
+                    << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -734,8 +730,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
   if (trace_stream_) {
-    **trace_stream_ << "--- step exp " << exp << " (" << exp.source_loc()
-                    << ") --->\n";
+    **trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
+                    << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::InstantiateImpl: {
@@ -1108,8 +1104,8 @@ auto Interpreter::StepPattern() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Pattern& pattern = cast<PatternAction>(act).pattern();
   if (trace_stream_) {
-    **trace_stream_ << "--- step pattern " << pattern << " ("
-                    << pattern.source_loc() << ") --->\n";
+    **trace_stream_ << "--- step pattern " << pattern << " ." << act.pos()
+                    << ". (" << pattern.source_loc() << ") --->\n";
   }
   switch (pattern.kind()) {
     case PatternKind::AutoPattern: {
@@ -1189,7 +1185,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "--- step stmt ";
     stmt.PrintDepth(1, **trace_stream_);
-    **trace_stream_ << " (" << stmt.source_loc() << ") --->\n";
+    **trace_stream_ << " ." << act.pos() << ". "
+                    << "(" << stmt.source_loc() << ") --->\n";
   }
   switch (stmt.kind()) {
     case StatementKind::Match: {
@@ -1413,8 +1410,10 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
   if (trace_stream_) {
-    **trace_stream_ << "--- step declaration (" << decl.source_loc()
-                    << ") --->\n";
+    **trace_stream_ << "--- step decl ";
+    decl.PrintID(**trace_stream_);
+    **trace_stream_ << " ." << act.pos() << ". "
+                    << "(" << decl.source_loc() << ") --->\n";
   }
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
