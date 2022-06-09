@@ -119,8 +119,8 @@ class TypeChecker {
                         const ImplScope& impl_scope, bool concrete = true)
       -> ErrorOr<Nonnull<const Value*>>;
 
-  // Type checks and interprets `type_expression`, and validates it represents a
-  // [concrete] type.
+  // Type checks and interprets `clause`, and validates it represents a valid
+  // `where` clause.
   auto TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                             const ImplScope& impl_scope) -> ErrorOr<Success>;
 

@@ -692,7 +692,8 @@ class IfExpression : public Expression {
   Nonnull<Expression*> else_expression_;
 };
 
-// A clause appearing on the right-hand side of a `where` operator.
+// A clause appearing on the right-hand side of a `where` operator that forms a
+// more precise constraint from a more general one.
 class WhereClause : public AstNode {
  public:
   ~WhereClause() override = 0;
@@ -713,7 +714,10 @@ class WhereClause : public AstNode {
       : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
 };
 
-// An `is` where clause: `ConstraintA where .Type is ConstraintB`.
+// An `is` where clause.
+//
+// For example, `ConstraintA where .Type is ConstraintB` requires that the
+// associated type `.Type` implements the constraint `ConstraintB`.
 class IsWhereClause : public WhereClause {
  public:
   explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
@@ -737,7 +741,10 @@ class IsWhereClause : public WhereClause {
   Nonnull<Expression*> constraint_;
 };
 
-// An `==` where clause: `Constraint where .Type == i32`.
+// An `==` where clause.
+//
+// For example, `Constraint where .Type == i32` requires that the associated
+// type `.Type` is `i32`.
 class EqualsWhereClause : public WhereClause {
  public:
   explicit EqualsWhereClause(SourceLocation source_loc,
