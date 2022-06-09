@@ -68,7 +68,8 @@ class ExitingStream {
     // We assume LLVM's exit handling is installed, which will stack trace on
     // std::abort(). We print a stack trace on construction, so this avoids that
     // stack trace on exit.
-    _exit(1);
+    // Using `exit()` and not `_exit()` to allow the fuzzer to 'see' the CHECKs.
+    exit(1);
   }
 
  private:
