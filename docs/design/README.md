@@ -123,7 +123,9 @@ fn Fibonacci(limit: i64) {
   var (a, b): (i64, i64) = (0, 1);
   while (a < limit) {
     Console.Print(a, " ");
-    (a, b) = (b, a + b);
+    let next: i64 = a + b;
+    a = b;
+    b = next;
   }
   Console.Print("\n");
 }
@@ -188,15 +190,15 @@ evaluated at compile-time and must evaluate to a type value.
 
 ## Primitive types
 
-Some types are used as the building blocks for other types and are made
-available through the [prelude package](#name-lookup-for-common-types).
-
 Primitive types fall into the following categories:
 
 -   the boolean type `bool`,
 -   signed and unsigned integer types,
 -   IEEE-754 floating-point types, and
 -   string types.
+
+These are made available through the
+[prelude package](#name-lookup-for-common-types).
 
 > References: [Primitive types](primitive_types.md)
 
@@ -833,9 +835,6 @@ Assignment statements mutate the value of the
 described on the left-hand side of the assignment.
 
 -   Assignment: `x = y;`. `x` is assigned the value of `y`.
--   Destructuring assignment: `(x, y) = z;`. `z` must be a tuple with the same
-    number of compents as the left-hand side. `x` is assigned the value of
-    `z[0]` and `y` is assigned the value of `z[1]`.
 -   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
     to `j - 1`.
 -   Compound assignment: `x += y;`, `x -= y;`, `x *= y;`, `x /= y;`, `x &= y;`,
