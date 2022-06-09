@@ -26,6 +26,7 @@ namespace Carbon {
 class Value;
 class MemberName;
 class VariableType;
+class InterfaceType;
 class ImplBinding;
 
 class Expression : public AstNode {
@@ -70,6 +71,12 @@ class Expression : public AstNode {
     value_category_ = value_category;
   }
 
+  // Determines whether the expression has already been type-checked. Should
+  // only be used by type-checking.
+  auto is_type_checked() -> bool {
+    return static_type_.has_value() && value_category_.has_value();
+  }
+
  protected:
   // Constructs an Expression representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
@@ -105,6 +112,7 @@ enum class Operator {
   Add,
   AddressOf,
   And,
+  Combine,
   Deref,
   Eq,
   Mul,
@@ -146,40 +154,65 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
-class FieldAccessExpression : public Expression {
+class SimpleMemberAccessExpression : public Expression {
  public:
-  explicit FieldAccessExpression(SourceLocation source_loc,
-                                 Nonnull<Expression*> aggregate,
-                                 std::string field)
-      : Expression(AstNodeKind::FieldAccessExpression, source_loc),
-        aggregate_(aggregate),
-        field_(std::move(field)) {}
+  explicit SimpleMemberAccessExpression(SourceLocation source_loc,
+                                        Nonnull<Expression*> object,
+                                        std::string member)
+      : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
+        object_(object),
+        member_(std::move(member)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromFieldAccessExpression(node->kind());
+    return InheritsFromSimpleMemberAccessExpression(node->kind());
   }
 
-  auto aggregate() const -> const Expression& { return *aggregate_; }
-  auto aggregate() -> Expression& { return *aggregate_; }
-  auto field() const -> const std::string& { return field_; }
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+  auto member() const -> const std::string& { return member_; }
 
-  // If `aggregate` has a generic type, returns the `ImplBinding` that
+  // Returns true if the field is a method that has a "me" declaration in an
+  // AddrPattern.
+  auto is_field_addr_me_method() const -> bool {
+    return is_field_addr_me_method_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
+
+  // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
     return impl_;
   }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const ImplBinding*> impl) {
+  void set_impl(Nonnull<const Expression*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
   }
 
+  // If `object` is a constrained type parameter and `member` was found in an
+  // interface, returns that interface. Should not be called before
+  // typechecking.
+  auto found_in_interface() const
+      -> std::optional<Nonnull<const InterfaceType*>> {
+    return found_in_interface_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_found_in_interface(Nonnull<const InterfaceType*> interface) {
+    CARBON_CHECK(!found_in_interface_.has_value());
+    found_in_interface_ = interface;
+  }
+
  private:
-  Nonnull<Expression*> aggregate_;
-  std::string field_;
-  std::optional<Nonnull<const ImplBinding*>> impl_;
+  Nonnull<Expression*> object_;
+  std::string member_;
+  bool is_field_addr_me_method_ = false;
+  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
 // A compound member access expression of the form `object.(path)`.
@@ -195,17 +228,17 @@ class FieldAccessExpression : public Expression {
 //
 // Note that the `path` is evaluated during type-checking, not at runtime, so
 // the corresponding `member` is determined statically.
-class CompoundFieldAccessExpression : public Expression {
+class CompoundMemberAccessExpression : public Expression {
  public:
-  explicit CompoundFieldAccessExpression(SourceLocation source_loc,
-                                         Nonnull<Expression*> object,
-                                         Nonnull<Expression*> path)
-      : Expression(AstNodeKind::CompoundFieldAccessExpression, source_loc),
+  explicit CompoundMemberAccessExpression(SourceLocation source_loc,
+                                          Nonnull<Expression*> object,
+                                          Nonnull<Expression*> path)
+      : Expression(AstNodeKind::CompoundMemberAccessExpression, source_loc),
         object_(object),
         path_(path) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromCompoundFieldAccessExpression(node->kind());
+    return InheritsFromCompoundMemberAccessExpression(node->kind());
   }
 
   auto object() const -> const Expression& { return *object_; }
@@ -238,6 +271,9 @@ class CompoundFieldAccessExpression : public Expression {
     impl_ = impl;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
+
  private:
   Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
@@ -248,23 +284,23 @@ class CompoundFieldAccessExpression : public Expression {
 class IndexExpression : public Expression {
  public:
   explicit IndexExpression(SourceLocation source_loc,
-                           Nonnull<Expression*> aggregate,
+                           Nonnull<Expression*> object,
                            Nonnull<Expression*> offset)
       : Expression(AstNodeKind::IndexExpression, source_loc),
-        aggregate_(aggregate),
+        object_(object),
         offset_(offset) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIndexExpression(node->kind());
   }
 
-  auto aggregate() const -> const Expression& { return *aggregate_; }
-  auto aggregate() -> Expression& { return *aggregate_; }
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
   auto offset() const -> const Expression& { return *offset_; }
   auto offset() -> Expression& { return *offset_; }
 
  private:
-  Nonnull<Expression*> aggregate_;
+  Nonnull<Expression*> object_;
   Nonnull<Expression*> offset_;
 };
 
@@ -467,6 +503,9 @@ class CallExpression : public Expression {
     deduced_args_ = deduced_args;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
+
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
@@ -477,7 +516,7 @@ class CallExpression : public Expression {
 class FunctionTypeLiteral : public Expression {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
-                               Nonnull<Expression*> parameter,
+                               Nonnull<TupleLiteral*> parameter,
                                Nonnull<Expression*> return_type)
       : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
@@ -487,13 +526,13 @@ class FunctionTypeLiteral : public Expression {
     return InheritsFromFunctionTypeLiteral(node->kind());
   }
 
-  auto parameter() const -> const Expression& { return *parameter_; }
-  auto parameter() -> Expression& { return *parameter_; }
+  auto parameter() const -> const TupleLiteral& { return *parameter_; }
+  auto parameter() -> TupleLiteral& { return *parameter_; }
   auto return_type() const -> const Expression& { return *return_type_; }
   auto return_type() -> Expression& { return *return_type_; }
 
  private:
-  Nonnull<Expression*> parameter_;
+  Nonnull<TupleLiteral*> parameter_;
   Nonnull<Expression*> return_type_;
 };
 
@@ -535,6 +574,29 @@ class TypeTypeLiteral : public Expression {
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTypeTypeLiteral(node->kind());
   }
+};
+
+// A literal value. This is used in desugaring, and can't be expressed in
+// source syntax.
+class ValueLiteral : public Expression {
+ public:
+  // Value literals are created by type-checking, and so are created with their
+  // type and value category already known.
+  ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
+               Nonnull<const Value*> type, ValueCategory value_category)
+      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+    set_static_type(type);
+    set_value_category(value_category);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromValueLiteral(node->kind());
+  }
+
+  auto value() const -> const Value& { return *value_; }
+
+ private:
+  Nonnull<const Value*> value_;
 };
 
 class IntrinsicExpression : public Expression {
@@ -595,10 +657,115 @@ class IfExpression : public Expression {
   }
   auto else_expression() -> Expression& { return *else_expression_; }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_condition(Nonnull<Expression*> condition) { condition_ = condition; }
+
  private:
   Nonnull<Expression*> condition_;
   Nonnull<Expression*> then_expression_;
   Nonnull<Expression*> else_expression_;
+};
+
+// A clause appearing on the right-hand side of a `where` operator that forms a
+// more precise constraint from a more general one.
+class WhereClause : public AstNode {
+ public:
+  ~WhereClause() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromWhereClause(node->kind());
+  }
+
+  auto kind() const -> WhereClauseKind {
+    return static_cast<WhereClauseKind>(root_kind());
+  }
+
+ protected:
+  WhereClause(WhereClauseKind kind, SourceLocation source_loc)
+      : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
+};
+
+// An `is` where clause.
+//
+// For example, `ConstraintA where .Type is ConstraintB` requires that the
+// associated type `.Type` implements the constraint `ConstraintB`.
+class IsWhereClause : public WhereClause {
+ public:
+  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
+                         Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
+        type_(type),
+        constraint_(constraint) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromIsWhereClause(node->kind());
+  }
+
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  auto constraint() const -> const Expression& { return *constraint_; }
+  auto constraint() -> Expression& { return *constraint_; }
+
+ private:
+  Nonnull<Expression*> type_;
+  Nonnull<Expression*> constraint_;
+};
+
+// An `==` where clause.
+//
+// For example, `Constraint where .Type == i32` requires that the associated
+// type `.Type` is `i32`.
+class EqualsWhereClause : public WhereClause {
+ public:
+  explicit EqualsWhereClause(SourceLocation source_loc,
+                             Nonnull<Expression*> lhs, Nonnull<Expression*> rhs)
+      : WhereClause(WhereClauseKind::EqualsWhereClause, source_loc),
+        lhs_(lhs),
+        rhs_(rhs) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromEqualsWhereClause(node->kind());
+  }
+
+  auto lhs() const -> const Expression& { return *lhs_; }
+  auto lhs() -> Expression& { return *lhs_; }
+
+  auto rhs() const -> const Expression& { return *rhs_; }
+  auto rhs() -> Expression& { return *rhs_; }
+
+ private:
+  Nonnull<Expression*> lhs_;
+  Nonnull<Expression*> rhs_;
+};
+
+// A `where` expression: `AddableWith(i32) where .Result == i32`.
+class WhereExpression : public Expression {
+ public:
+  explicit WhereExpression(SourceLocation source_loc, Nonnull<Expression*> base,
+                           std::vector<Nonnull<WhereClause*>> clauses)
+      : Expression(AstNodeKind::WhereExpression, source_loc),
+        base_(base),
+        clauses_(std::move(clauses)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromWhereExpression(node->kind());
+  }
+
+  auto base() const -> const Expression& { return *base_; }
+  auto base() -> Expression& { return *base_; }
+
+  auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
+    return clauses_;
+  }
+  auto clauses() -> llvm::ArrayRef<Nonnull<WhereClause*>> { return clauses_; }
+
+ private:
+  Nonnull<Expression*> base_;
+  std::vector<Nonnull<WhereClause*>> clauses_;
 };
 
 // Instantiate a generic impl.

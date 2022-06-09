@@ -19,22 +19,22 @@ message CallExpression {
 }
 
 message FunctionTypeLiteral {
-  optional Expression parameter = 1;
+  optional TupleLiteralExpression parameter = 3;
   optional Expression return_type = 2;
 }
 
-message FieldAccessExpression {
+message SimpleMemberAccessExpression {
   optional string field = 1;
-  optional Expression aggregate = 2;
+  optional Expression object = 2;
 }
 
-message CompoundFieldAccessExpression {
+message CompoundMemberAccessExpression {
   optional Expression object = 1;
   optional Expression path = 2;
 }
 
 message IndexExpression {
-  optional Expression aggregate = 1;
+  optional Expression object = 1;
   optional Expression offset = 2;
 }
 
@@ -52,6 +52,7 @@ message PrimitiveOperatorExpression {
     Or = 9;
     Sub = 10;
     Ptr = 11;
+    Combine = 12;
   }
   optional Operator op = 1;
   repeated Expression arguments = 2;
@@ -120,11 +121,33 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
+message IsWhereClause {
+  optional Expression type = 1;
+  optional Expression constraint = 2;
+}
+
+message EqualsWhereClause {
+  optional Expression lhs = 1;
+  optional Expression rhs = 2;
+}
+
+message WhereClause {
+  oneof kind {
+    IsWhereClause is = 1;
+    EqualsWhereClause equals = 2;
+  }
+}
+
+message WhereExpression {
+  optional Expression base = 1;
+  repeated WhereClause clauses = 2;
+}
+
 message Expression {
   oneof kind {
     CallExpression call = 1;
     FunctionTypeLiteral function_type = 2;
-    FieldAccessExpression field_access = 3;
+    SimpleMemberAccessExpression simple_member_access = 3;
     IndexExpression index = 4;
     PrimitiveOperatorExpression primitive_operator = 5;
     TupleLiteralExpression tuple_literal = 6;
@@ -143,7 +166,8 @@ message Expression {
     TypeTypeLiteral type_type_literal = 19;
     UnimplementedExpression unimplemented_expression = 20;
     ArrayTypeLiteral array_type_literal = 21;
-    CompoundFieldAccessExpression compound_field_access = 22;
+    CompoundMemberAccessExpression compound_member_access = 22;
+    WhereExpression where = 23;
   }
 }
 
@@ -179,6 +203,10 @@ message VarPattern {
   optional Pattern pattern = 1;
 }
 
+message AddrPattern {
+  optional BindingPattern binding_pattern = 1;
+}
+
 message Pattern {
   oneof kind {
     BindingPattern binding_pattern = 1;
@@ -188,6 +216,7 @@ message Pattern {
     AutoPattern auto_pattern = 5;
     VarPattern var_pattern = 6;
     GenericBinding generic_binding = 7;
+    AddrPattern addr_pattern = 8;
   }
 }
 
@@ -286,7 +315,7 @@ message ReturnTerm {
 message FunctionDeclaration {
   optional string name = 1;
   repeated GenericBinding deduced_parameters = 2;
-  optional BindingPattern me_pattern = 3;
+  optional Pattern me_pattern = 3;
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
@@ -300,7 +329,7 @@ message ClassDeclaration {
 
 message AlternativeSignature {
   optional string name = 1;
-  optional Expression signature = 2;
+  optional TupleLiteralExpression signature = 3;
 }
 
 message ChoiceDeclaration {

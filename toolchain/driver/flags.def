@@ -5,7 +5,7 @@
 // Note: X-macro header. Do not use include guards.
 
 #ifndef CARBON_SUBCOMMAND
-// FIXME: We should expand `HelpText` to be a short help name, a synopsis, and a
+// TODO: We should expand `HelpText` to be a short help name, a synopsis, and a
 // long-form description.
 #define CARBON_SUBCOMMAND(Name, Spelling, HelpText)
 #endif

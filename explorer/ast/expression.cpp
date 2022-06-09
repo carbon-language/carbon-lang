@@ -55,6 +55,7 @@ auto ToString(Operator op) -> std::string_view {
     case Operator::Add:
       return "+";
     case Operator::AddressOf:
+    case Operator::Combine:
       return "&";
     case Operator::Neg:
     case Operator::Sub:
@@ -87,16 +88,16 @@ void Expression::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case ExpressionKind::IndexExpression: {
       const auto& index = cast<IndexExpression>(*this);
-      out << index.aggregate() << "[" << index.offset() << "]";
+      out << index.object() << "[" << index.offset() << "]";
       break;
     }
-    case ExpressionKind::FieldAccessExpression: {
-      const auto& access = cast<FieldAccessExpression>(*this);
-      out << access.aggregate() << "." << access.field();
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      const auto& access = cast<SimpleMemberAccessExpression>(*this);
+      out << access.object() << "." << access.member();
       break;
     }
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      const auto& access = cast<CompoundFieldAccessExpression>(*this);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      const auto& access = cast<CompoundMemberAccessExpression>(*this);
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
@@ -170,6 +171,15 @@ void Expression::Print(llvm::raw_ostream& out) const {
           << if_expr.then_expression() << " else " << if_expr.else_expression();
       break;
     }
+    case ExpressionKind::WhereExpression: {
+      const auto& where = cast<WhereExpression>(*this);
+      out << where.base() << " where ";
+      llvm::ListSeparator sep(" and ");
+      for (const WhereClause* clause : where.clauses()) {
+        out << sep << *clause;
+      }
+      break;
+    }
     case ExpressionKind::InstantiateImpl: {
       const auto& inst_impl = cast<InstantiateImpl>(*this);
       out << "instantiate " << *inst_impl.generic_impl();
@@ -200,6 +210,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
   }
@@ -236,10 +247,15 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
+    case ExpressionKind::ValueLiteral:
+      // TODO: For layering reasons, we can't print out the value from here.
+      out << "ValueLiteral";
+      break;
     case ExpressionKind::IndexExpression:
-    case ExpressionKind::FieldAccessExpression:
-    case ExpressionKind::CompoundFieldAccessExpression:
+    case ExpressionKind::SimpleMemberAccessExpression:
+    case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::IfExpression:
+    case ExpressionKind::WhereExpression:
     case ExpressionKind::TupleLiteral:
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
@@ -254,5 +270,24 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
   }
 }
+
+WhereClause::~WhereClause() = default;
+
+void WhereClause::Print(llvm::raw_ostream& out) const {
+  switch (kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& clause = cast<IsWhereClause>(*this);
+      out << clause.type() << " is " << clause.constraint();
+      break;
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& clause = cast<EqualsWhereClause>(*this);
+      out << clause.lhs() << " == " << clause.rhs();
+      break;
+    }
+  }
+}
+
+void WhereClause::PrintID(llvm::raw_ostream& out) const { out << "..."; }
 
 }  // namespace Carbon

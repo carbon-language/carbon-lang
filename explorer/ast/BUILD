@@ -16,7 +16,7 @@ cc_library(
 
 cc_library(
     name = "ast_node",
-    srcs = ["ast_node.cpp"],
+    srcs = ["ast_node.cpp", "ast_rtti.cpp",],
     hdrs = [
         "ast_node.h",
         "ast_rtti.h",
@@ -30,9 +30,11 @@ cc_library(
 genrule(
     name = "ast_rtti",
     srcs = ["ast_rtti.txt"],
-    outs = ["ast_rtti.h"],
+    outs = ["ast_rtti.h", "ast_rtti.cpp"],
     cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt) > \"$@\"",
+          " $(location ast_rtti.txt)" +
+          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
+          " $(rootpath ast_rtti.h)",
     tools = ["//explorer:gen_rtti"],
 )
 

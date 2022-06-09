@@ -55,18 +55,21 @@ class Value {
     StructType,
     NominalClassType,
     InterfaceType,
+    ConstraintType,
     ChoiceType,
     ContinuationType,  // The type of a continuation.
     VariableType,      // e.g., generic type parameters.
     ParameterizedEntityName,
     MemberName,
     BindingPlaceholderValue,
+    AddrValue,
     AlternativeConstructorValue,
     ContinuationValue,  // A first-class continuation value.
     StringType,
     StringValue,
     TypeOfClassType,
     TypeOfInterfaceType,
+    TypeOfConstraintType,
     TypeOfChoiceType,
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
@@ -80,9 +83,12 @@ class Value {
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid field
-  // path for *this.
-  auto GetField(Nonnull<Arena*> arena, const FieldPath& path,
-                SourceLocation source_loc) const
+  // path for *this. If the sub-Value is a method and its me_pattern is an
+  // AddrPattern, then pass the LValue representing the receiver as `me_value`,
+  // otherwise pass `*this`.
+  auto GetMember(Nonnull<Arena*> arena, const FieldPath& path,
+                 SourceLocation source_loc,
+                 Nonnull<const Value*> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -130,7 +136,7 @@ class IntValue : public Value {
 };
 
 using ImplWitnessMap =
-    std::map<Nonnull<const ImplBinding*>, Nonnull<const Witness*>>;
+    std::map<Nonnull<const ImplBinding*>, Nonnull<const Value*>>;
 
 // A function value.
 class FunctionValue : public Value {
@@ -156,10 +162,7 @@ class FunctionValue : public Value {
 
   auto type_args() const -> const BindingMap& { return type_args_; }
 
-  auto witnesses() const
-      -> const std::map<Nonnull<const ImplBinding*>, const Witness*>& {
-    return witnesses_;
-  }
+  auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
@@ -179,8 +182,7 @@ class BoundMethodValue : public Value {
   explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<const Value*> receiver,
                             const BindingMap& type_args,
-                            const std::map<Nonnull<const ImplBinding*>,
-                                           Nonnull<const Witness*>>& wits)
+                            const ImplWitnessMap& wits)
       : Value(Kind::BoundMethodValue),
         declaration_(declaration),
         receiver_(receiver),
@@ -395,6 +397,22 @@ class BindingPlaceholderValue : public Value {
   std::optional<ValueNodeView> value_node_;
 };
 
+// Value for addr pattern
+class AddrValue : public Value {
+ public:
+  explicit AddrValue(Nonnull<const Value*> pattern)
+      : Value(Kind::AddrValue), pattern_(pattern) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AddrValue;
+  }
+
+  auto pattern() const -> const Value& { return *pattern_; }
+
+ private:
+  Nonnull<const Value*> pattern_;
+};
+
 // The int type.
 class IntType : public Value {
  public:
@@ -561,8 +579,7 @@ class NominalClassType : public Value {
   // run-time type of an object.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
                             const BindingMap& type_args,
-                            const std::map<Nonnull<const ImplBinding*>,
-                                           Nonnull<const Witness*>>& wits)
+                            const ImplWitnessMap& wits)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         type_args_(type_args),
@@ -611,6 +628,7 @@ auto FindMember(const std::string& name,
     -> std::optional<Nonnull<const Declaration*>>;
 
 // An interface type.
+// TODO: Consider removing this once ConstraintType is ready.
 class InterfaceType : public Value {
  public:
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration)
@@ -643,7 +661,7 @@ class InterfaceType : public Value {
   }
   auto args() const -> const BindingMap& { return args_; }
 
-  // FIXME: These aren't used for anything yet.
+  // TODO: These aren't used for anything yet.
   auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
@@ -652,6 +670,78 @@ class InterfaceType : public Value {
   BindingMap args_;
   ImplExpMap impls_;
   ImplWitnessMap witnesses_;
+};
+
+// A type-of-type for an unknown constrained type.
+//
+// These types are formed by the `&` operator that combines constraints and by
+// `where` expressions.
+//
+// A constraint has three main properties:
+//
+// * A collection of (type, interface) pairs for interfaces that are known to
+//   be implemented by a type satisfying the constraint.
+// * A collection of sets of values, typically associated constants, that are
+//   known to be the same.
+// * A collection of contexts in which member name lookups will be performed
+//   for a type variable whose type is this constraint.
+//
+// Within these properties, the constrained type can be referred to with a
+// `VariableType` naming the `self_binding`.
+class ConstraintType : public Value {
+ public:
+  // A required implementation of an interface.
+  struct ImplConstraint {
+    Nonnull<const Value*> type;
+    Nonnull<const InterfaceType*> interface;
+  };
+
+  // A collection of values that are known to be the same.
+  struct EqualityConstraint {
+    std::vector<Nonnull<const Value*>> values;
+  };
+
+  // A context in which we might look up a name.
+  struct LookupContext {
+    Nonnull<const Value*> context;
+  };
+
+ public:
+  explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
+                          std::vector<ImplConstraint> impl_constraints,
+                          std::vector<EqualityConstraint> equality_constraints,
+                          std::vector<LookupContext> lookup_contexts)
+      : Value(Kind::ConstraintType),
+        self_binding_(self_binding),
+        impl_constraints_(std::move(impl_constraints)),
+        equality_constraints_(std::move(equality_constraints)),
+        lookup_contexts_(std::move(lookup_contexts)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ConstraintType;
+  }
+
+  auto self_binding() const -> Nonnull<const GenericBinding*> {
+    return self_binding_;
+  }
+
+  auto impl_constraints() const -> llvm::ArrayRef<ImplConstraint> {
+    return impl_constraints_;
+  }
+
+  auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
+    return equality_constraints_;
+  }
+
+  auto lookup_contexts() const -> llvm::ArrayRef<LookupContext> {
+    return lookup_contexts_;
+  }
+
+ private:
+  Nonnull<const GenericBinding*> self_binding_;
+  std::vector<ImplConstraint> impl_constraints_;
+  std::vector<EqualityConstraint> equality_constraints_;
+  std::vector<LookupContext> lookup_contexts_;
 };
 
 // The witness table for an impl.
@@ -939,6 +1029,23 @@ class TypeOfInterfaceType : public Value {
 
  private:
   Nonnull<const InterfaceType*> iface_type_;
+};
+
+class TypeOfConstraintType : public Value {
+ public:
+  explicit TypeOfConstraintType(Nonnull<const ConstraintType*> constraint_type)
+      : Value(Kind::TypeOfConstraintType), constraint_type_(constraint_type) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfConstraintType;
+  }
+
+  auto constraint_type() const -> const ConstraintType& {
+    return *constraint_type_;
+  }
+
+ private:
+  Nonnull<const ConstraintType*> constraint_type_;
 };
 
 // The type of an expression whose value is a choice type. Currently there is no

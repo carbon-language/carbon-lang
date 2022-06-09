@@ -185,12 +185,13 @@ void ReturnTerm::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto FunctionDeclaration::Create(
-    Nonnull<Arena*> arena, SourceLocation source_loc, std::string name,
-    std::vector<Nonnull<AstNode*>> deduced_params,
-    std::optional<Nonnull<BindingPattern*>> me_pattern,
-    Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
-    std::optional<Nonnull<Block*>> body)
+auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
+                                 SourceLocation source_loc, std::string name,
+                                 std::vector<Nonnull<AstNode*>> deduced_params,
+                                 std::optional<Nonnull<Pattern*>> me_pattern,
+                                 Nonnull<TuplePattern*> param_pattern,
+                                 ReturnTerm return_term,
+                                 std::optional<Nonnull<Block*>> body)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   std::vector<Nonnull<GenericBinding*>> resolved_params;
   // Look for the `me` parameter in the `deduced_parameters`
@@ -207,6 +208,16 @@ auto FunctionDeclaration::Create(
                  << "illegal binding pattern in implicit parameter list";
         }
         me_pattern = bp;
+        break;
+      }
+      case AstNodeKind::AddrPattern: {
+        Nonnull<AddrPattern*> abp = &cast<AddrPattern>(*param);
+        Nonnull<BindingPattern*> bp = &cast<BindingPattern>(abp->binding());
+        if (me_pattern.has_value() || bp->name() != "me") {
+          return CompilationError(source_loc)
+                 << "illegal binding pattern in implicit parameter list";
+        }
+        me_pattern = abp;
         break;
       }
       default:

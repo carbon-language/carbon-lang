@@ -12,7 +12,7 @@
 // CHECK: ********** source program **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** type checking **********
-// CHECK: checking pattern (format_str: String)
+// CHECK: checking tuple pattern (format_str: String)
 // CHECK: ********** type checking complete **********
 // CHECK: fn Print (format_str: String) {
 // CHECK: ********** starting execution **********
@@ -20,9 +20,9 @@
 // CHECK: ********** calling main function **********
 // CHECK: {
 // CHECK: stack:
-// CHECK: heap:
+// CHECK: memory:
 // CHECK: }
-// CHECK: --- step exp Main() (<Main()>:0) --->
+// CHECK: --- step exp Main() .0. (<Main()>:0) --->
 // CHECK: result: 0
 
 package ExplorerTest api;

@@ -166,7 +166,7 @@ class TokenizedBuffer::Lexer {
         case ' ':
         case '\t':
           // Skip other forms of whitespace while tracking column.
-          // FIXME: This obviously needs looooots more work to handle unicode
+          // TODO: This obviously needs looooots more work to handle unicode
           // whitespace as well as special handling to allow better tokenization
           // of operators. This is just a stub to check that our column
           // management works.

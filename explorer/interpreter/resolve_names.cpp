@@ -47,8 +47,9 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
-      // Choice name is added to the scope after the choice's alternatives.
-      // See https://github.com/carbon-language/carbon-lang/issues/1248.
+      auto& choice = cast<ChoiceDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(choice.name(), &choice, /*usable=*/false));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -66,7 +67,8 @@ static auto AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(alias.name(), &alias));
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(alias.name(), &alias, /*usable=*/false));
       break;
     }
   }
@@ -84,6 +86,9 @@ static auto AddExposedNames(const Declaration& declaration,
 // StaticScope, and then calling ResolveNames on each element, passing it the
 // already-populated StaticScope.
 static auto ResolveNames(Expression& expression,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success>;
+static auto ResolveNames(WhereClause& clause,
                          const StaticScope& enclosing_scope)
     -> ErrorOr<Success>;
 static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
@@ -111,20 +116,20 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(fun_type.return_type(), enclosing_scope));
       break;
     }
-    case ExpressionKind::FieldAccessExpression:
+    case ExpressionKind::SimpleMemberAccessExpression:
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<FieldAccessExpression>(expression).aggregate(),
+          ResolveNames(cast<SimpleMemberAccessExpression>(expression).object(),
                        enclosing_scope));
       break;
-    case ExpressionKind::CompoundFieldAccessExpression: {
-      auto& access = cast<CompoundFieldAccessExpression>(expression);
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      auto& access = cast<CompoundMemberAccessExpression>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(access.object(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(access.path(), enclosing_scope));
       break;
     }
     case ExpressionKind::IndexExpression: {
       auto& index = cast<IndexExpression>(expression);
-      CARBON_RETURN_IF_ERROR(ResolveNames(index.aggregate(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(ResolveNames(index.object(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(index.offset(), enclosing_scope));
       break;
     }
@@ -175,6 +180,18 @@ static auto ResolveNames(Expression& expression,
           ResolveNames(if_expr.else_expression(), enclosing_scope));
       break;
     }
+    case ExpressionKind::WhereExpression: {
+      auto& where = cast<WhereExpression>(expression);
+      // TODO: Introduce `.Self` into scope?
+      // StaticScope where_scope;
+      // where_scope.AddParent(&enclosing_scope);
+      // where_scope.Add(".Self", ???);
+      CARBON_RETURN_IF_ERROR(ResolveNames(where.base(), enclosing_scope));
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(*clause, enclosing_scope));
+      }
+      break;
+    }
     case ExpressionKind::ArrayTypeLiteral: {
       auto& array_literal = cast<ArrayTypeLiteral>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(
@@ -191,10 +208,34 @@ static auto ResolveNames(Expression& expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
+    case ExpressionKind::ValueLiteral:
       break;
     case ExpressionKind::InstantiateImpl:  // created after name resolution
     case ExpressionKind::UnimplementedExpression:
       return CompilationError(expression.source_loc()) << "Unimplemented";
+  }
+  return Success();
+}
+
+static auto ResolveNames(WhereClause& clause,
+                         const StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
+  switch (clause.kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(ResolveNames(is_clause.type(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(is_clause.constraint(), enclosing_scope));
+      break;
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& equals_clause = cast<EqualsWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(equals_clause.lhs(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(equals_clause.rhs(), enclosing_scope));
+      break;
+    }
   }
   return Success();
 }
@@ -240,6 +281,10 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     case PatternKind::VarPattern:
       CARBON_RETURN_IF_ERROR(
           ResolveNames(cast<VarPattern>(pattern).pattern(), enclosing_scope));
+      break;
+    case PatternKind::AddrPattern:
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(cast<AddrPattern>(pattern).binding(), enclosing_scope));
       break;
   }
   return Success();
@@ -308,13 +353,14 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       break;
     }
     case StatementKind::Continuation: {
+      auto& continuation = cast<Continuation>(statement);
+      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
+          continuation.name(), &continuation, /*usable=*/false));
       StaticScope continuation_scope;
       continuation_scope.AddParent(&enclosing_scope);
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(continuation.body(), continuation_scope));
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation));
+      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
+                                          continuation_scope));
+      enclosing_scope.MarkUsable(continuation.name());
       break;
     }
     case StatementKind::Run:
@@ -435,7 +481,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
                  << "` in choice type";
         }
       }
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(choice.name(), &choice));
+      enclosing_scope.MarkUsable(choice.name());
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -453,8 +499,9 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope)
     }
 
     case DeclarationKind::AliasDeclaration: {
-      CARBON_RETURN_IF_ERROR(ResolveNames(
-          cast<AliasDeclaration>(declaration).target(), enclosing_scope));
+      auto& alias = cast<AliasDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
+      enclosing_scope.MarkUsable(alias.name());
       break;
     }
   }
