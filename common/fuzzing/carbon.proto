@@ -79,6 +79,10 @@ message IdentifierExpression {
   optional string name = 1;
 }
 
+message DesignatorExpression {
+  optional string name = 1;
+}
+
 message IntrinsicExpression {
   enum Intrinsic {
     UnknownIntrinsic = 0;
@@ -168,6 +172,7 @@ message Expression {
     ArrayTypeLiteral array_type_literal = 21;
     CompoundMemberAccessExpression compound_member_access = 22;
     WhereExpression where = 23;
+    DesignatorExpression designator = 24;
   }
 }
 

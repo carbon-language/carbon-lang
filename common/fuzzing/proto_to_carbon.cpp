@@ -275,6 +275,13 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
+    case Fuzzing::Expression::kDesignator: {
+      const auto& designator = expression.designator();
+      out << ".";
+      IdentifierToCarbon(designator.name(), out);
+      break;
+    }
+
     case Fuzzing::Expression::kIntrinsic: {
       const auto& intrinsic = expression.intrinsic();
       switch (intrinsic.intrinsic()) {
