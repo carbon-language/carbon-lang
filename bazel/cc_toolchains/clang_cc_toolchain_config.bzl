@@ -478,6 +478,7 @@ def _impl(ctx):
             actions = all_compile_actions + all_link_actions,
             flag_groups = [flag_group(flags = [
                 "-fsanitize=fuzzer",
+                "-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION",
             ])],
         )],
     )
