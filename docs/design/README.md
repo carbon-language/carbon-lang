@@ -197,8 +197,7 @@ Primitive types fall into the following categories:
 -   IEEE-754 floating-point types, and
 -   string types.
 
-These are made available through the
-[prelude package](#name-lookup-for-common-types).
+These are made available through the [prelude](#name-lookup-for-common-types).
 
 > References: [Primitive types](primitive_types.md)
 
@@ -295,7 +294,9 @@ with an `f` and the number of bits: `f16`, `f32`, `f64`, and `f128`.
 
 #### Floating-point literals
 
-Decimal and hexadecimal real-number literals are supported:
+Floating-point types along with [user-defined types](#user-defined-types) may
+initialized from _real-number literals_. Decimal and hexadecimal real-number
+literals are supported:
 
 -   `123.456` (digits on both sides of the `.`)
 -   `123.456e789` (optional `+` or `-` after the `e`)
@@ -587,11 +588,11 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
-Binding patterns default to `let` bindings except inside a context where the
-`var` keyword is used:
+Binding patterns default to _`let` bindings_ except inside a context where the
+`var` keyword is used to make it a _`var` binding_:
 
 -   The result of a `let` binding is the name is bound to an
-    [r-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
+    [non-l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>).
     This means the value can not be modified, and its address cannot be taken.
 -   A `var` binding has dedicated storage, and so the name is an
     [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
@@ -636,8 +637,8 @@ has type `(f32, f32)`.
 Additional kinds of patterns are allowed in [`match` statements](#match), that
 may or may not match based on the runtime value of the `match` expression:
 
--   A _value pattern_ is an expression, such as `42`, whose value must be equal
-    to match.
+-   An _expression pattern_ is an expression, such as `42`, whose value must be
+    equal to match.
 -   A _choice pattern_ matches one case from a choice type, as described in
     [the choice types section](#choice-types).
 -   A _dynamic cast pattern_ is tests the dynamic type, as described in
