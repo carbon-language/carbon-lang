@@ -1639,7 +1639,7 @@ or names that are defined as part of the prelude.
 
 #### Name lookup for common types
 
-FIXME: should this be renamed to "The prelude"?
+> **TODO:** should this be renamed to "The prelude"?
 
 Common types that we expect to be used universally will be provided for every
 file, including `i32` and `bool`. These will likely be defined in a special
@@ -1986,15 +1986,34 @@ by_ the implementation of an interface for a type.
 
 #### Generic implementations
 
+An `impl` declaration may be parameterized by adding `forall [`_generic
+parameter list_`]` after the `impl` keyword introducer, as in:
+
 ```carbon
-impl forall [T:! Printable] Vector(T) as Printable;
+external impl forall [T:! Printable] Vector(T) as Printable;
+external impl forall [Key:! Hashable, Value:! Type]
+    HashMap(Key, Value) as Has(Key);
+external impl forall [T:! Ordered] T as PartiallyOrdered;
+external impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
+external impl forall [U:! Type, T:! As(U)]
+    Optional(T) as As(Optional(U));
 ```
 
-**FIXME**
+Generic implementations can create a situation where multiple `impl` definitions
+apply to a given type and interface query. The
+[specialization](generics/details.md#lookup-resolution-and-specialization) rules
+pick which definition is selected. These rules ensure:
 
--   [specialization](generics/details.md#lookup-resolution-and-specialization)
--   [`final` impls](generics/details.md#final-impls)
--   FIXME: coherence, orphan rules, etc.
+-   Implementations have [coherence](generics/terminology.md#coherence), so the
+    same implementation is always selected for a given query.
+-   Libraries will work together as long as they pass their separate checks.
+-   A generic function can assume that some impl will be successfully selected
+    if it can see an impl that applies, even though another more specific impl
+    may be selected.
+
+Implementations may be marked [`final`](generics/details.md#final-impls) to
+indicate that they may not be specialized, subject to
+[some restrictions](generics/details.md#libraries-that-can-contain-final-impls).
 
 > References:
 >
@@ -2172,6 +2191,8 @@ The common type is required to be a type that both types have an
 > -   [`if` expressions](expressions/if.md#finding-a-common-type)
 > -   Proposal
 >     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
+> -   Question-for-leads issue
+>     [#1077: find a way to permit impls of CommonTypeWith where the LHS and RHS type overlap](https://github.com/carbon-language/carbon-lang/issues/1077)
 
 ## Bidirectional interoperability with C/C++
 
