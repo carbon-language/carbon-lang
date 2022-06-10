@@ -352,8 +352,6 @@ enum class ImplKind { InternalImpl, ExternalImpl };
 
 class ImplDeclaration : public Declaration {
  public:
-  using ImplementsCarbonValueNode = void;
-
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                      ImplKind kind, Nonnull<Expression*> impl_type,
                      Nonnull<Expression*> interface,
