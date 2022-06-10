@@ -1628,7 +1628,14 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 ### Name lookup
 
 Unqualified name lookup will always find a file-local result, including aliases,
-or names that are defined as part of the prelude.
+or names that are defined as part of the prelude. There is no prioritization of
+scopes. This means that all relevant scopes are searched, and if the name is
+found multiple times referring to different entities, then it is an error. The
+error may be resolved by adding qualification to disambiguate the lookup.
+
+When defining a member of a class, like a [method](#methods), then the other
+members of the class' scope are searched as part of name lookup, even when that
+member is being defined out-of-line.
 
 > References:
 >
