@@ -10,11 +10,8 @@
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
-}
-
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: Expected a type, but got Vector
-external impl i32 as Vector {}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type String
+external impl i32 as String {}
 
 fn Main() -> i32 {
 }
