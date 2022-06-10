@@ -86,6 +86,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
 -   [Unfinished tales](#unfinished-tales)
+    -   [Safety](#safety)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Metaprogramming](#metaprogramming)
@@ -2242,12 +2243,18 @@ The common type is required to be a type that both types have an
 
 ## Unfinished tales
 
+### Safety
+
+> **TODO:**
+
+> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
+
 ### Pattern matching as function overload resolution
 
-> References: [Pattern matching](pattern_matching.md)
->
 > **TODO:** References need to be evolved. Needs a detailed design and a high
 > level summary provided inline.
+
+> References: [Pattern matching](pattern_matching.md)
 
 ### Lifetime and move semantics
 
