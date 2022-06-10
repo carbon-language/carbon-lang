@@ -155,7 +155,16 @@ class IdentifierExpression : public Expression {
   std::optional<ValueNodeView> value_node_;
 };
 
-// A `.Self` expression within a `where` clause.
+// A `.Self` expression within either a `:!` binding or a standalone `where`
+// expression.
+//
+// In a `:!` binding, the type of `.Self` is always `Type`. For example, in
+// `A:! AddableWith(.Self)`, the expression `.Self` refers to the same type as
+// `A`, but with type `Type`.
+//
+// In a `where` binding, the type of `.Self` is the constraint preceding the
+// `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
+// of `.Self` is `Foo`.
 class DotSelfExpression : public Expression {
  public:
   explicit DotSelfExpression(SourceLocation source_loc)
