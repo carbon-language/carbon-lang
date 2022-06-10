@@ -26,6 +26,7 @@ namespace Carbon {
 class Value;
 class MemberName;
 class VariableType;
+class InterfaceType;
 class ImplBinding;
 
 class Expression : public AstNode {
@@ -111,6 +112,7 @@ enum class Operator {
   Add,
   AddressOf,
   And,
+  Combine,
   Deref,
   Eq,
   Mul,
@@ -168,6 +170,7 @@ class SimpleMemberAccessExpression : public Expression {
   auto object() const -> const Expression& { return *object_; }
   auto object() -> Expression& { return *object_; }
   auto member() const -> const std::string& { return member_; }
+
   // Returns true if the field is a method that has a "me" declaration in an
   // AddrPattern.
   auto is_field_addr_me_method() const -> bool {
@@ -180,21 +183,36 @@ class SimpleMemberAccessExpression : public Expression {
   // If `object` has a generic type, returns the `ImplBinding` that
   // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
   // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const ImplBinding*>> {
+  auto impl() const -> std::optional<Nonnull<const Expression*>> {
     return impl_;
   }
 
   // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const ImplBinding*> impl) {
+  void set_impl(Nonnull<const Expression*> impl) {
     CARBON_CHECK(!impl_.has_value());
     impl_ = impl;
+  }
+
+  // If `object` is a constrained type parameter and `member` was found in an
+  // interface, returns that interface. Should not be called before
+  // typechecking.
+  auto found_in_interface() const
+      -> std::optional<Nonnull<const InterfaceType*>> {
+    return found_in_interface_;
+  }
+
+  // Can only be called once, during typechecking.
+  void set_found_in_interface(Nonnull<const InterfaceType*> interface) {
+    CARBON_CHECK(!found_in_interface_.has_value());
+    found_in_interface_ = interface;
   }
 
  private:
   Nonnull<Expression*> object_;
   std::string member_;
-  std::optional<Nonnull<const ImplBinding*>> impl_;
   bool is_field_addr_me_method_ = false;
+  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
 };
 
 // A compound member access expression of the form `object.(path)`.
@@ -646,6 +664,108 @@ class IfExpression : public Expression {
   Nonnull<Expression*> condition_;
   Nonnull<Expression*> then_expression_;
   Nonnull<Expression*> else_expression_;
+};
+
+// A clause appearing on the right-hand side of a `where` operator that forms a
+// more precise constraint from a more general one.
+class WhereClause : public AstNode {
+ public:
+  ~WhereClause() override = 0;
+
+  void Print(llvm::raw_ostream& out) const override;
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromWhereClause(node->kind());
+  }
+
+  auto kind() const -> WhereClauseKind {
+    return static_cast<WhereClauseKind>(root_kind());
+  }
+
+ protected:
+  WhereClause(WhereClauseKind kind, SourceLocation source_loc)
+      : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
+};
+
+// An `is` where clause.
+//
+// For example, `ConstraintA where .Type is ConstraintB` requires that the
+// associated type `.Type` implements the constraint `ConstraintB`.
+class IsWhereClause : public WhereClause {
+ public:
+  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
+                         Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
+        type_(type),
+        constraint_(constraint) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromIsWhereClause(node->kind());
+  }
+
+  auto type() const -> const Expression& { return *type_; }
+  auto type() -> Expression& { return *type_; }
+
+  auto constraint() const -> const Expression& { return *constraint_; }
+  auto constraint() -> Expression& { return *constraint_; }
+
+ private:
+  Nonnull<Expression*> type_;
+  Nonnull<Expression*> constraint_;
+};
+
+// An `==` where clause.
+//
+// For example, `Constraint where .Type == i32` requires that the associated
+// type `.Type` is `i32`.
+class EqualsWhereClause : public WhereClause {
+ public:
+  explicit EqualsWhereClause(SourceLocation source_loc,
+                             Nonnull<Expression*> lhs, Nonnull<Expression*> rhs)
+      : WhereClause(WhereClauseKind::EqualsWhereClause, source_loc),
+        lhs_(lhs),
+        rhs_(rhs) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromEqualsWhereClause(node->kind());
+  }
+
+  auto lhs() const -> const Expression& { return *lhs_; }
+  auto lhs() -> Expression& { return *lhs_; }
+
+  auto rhs() const -> const Expression& { return *rhs_; }
+  auto rhs() -> Expression& { return *rhs_; }
+
+ private:
+  Nonnull<Expression*> lhs_;
+  Nonnull<Expression*> rhs_;
+};
+
+// A `where` expression: `AddableWith(i32) where .Result == i32`.
+class WhereExpression : public Expression {
+ public:
+  explicit WhereExpression(SourceLocation source_loc, Nonnull<Expression*> base,
+                           std::vector<Nonnull<WhereClause*>> clauses)
+      : Expression(AstNodeKind::WhereExpression, source_loc),
+        base_(base),
+        clauses_(std::move(clauses)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromWhereExpression(node->kind());
+  }
+
+  auto base() const -> const Expression& { return *base_; }
+  auto base() -> Expression& { return *base_; }
+
+  auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
+    return clauses_;
+  }
+  auto clauses() -> llvm::ArrayRef<Nonnull<WhereClause*>> { return clauses_; }
+
+ private:
+  Nonnull<Expression*> base_;
+  std::vector<Nonnull<WhereClause*>> clauses_;
 };
 
 // Instantiate a generic impl.

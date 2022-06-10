@@ -98,31 +98,36 @@ auto RuntimeScope::Capture(
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LValAction:
-      out << cast<LValAction>(*this).expression();
+      out << cast<LValAction>(*this).expression() << " ";
       break;
     case Action::Kind::ExpressionAction:
-      out << cast<ExpressionAction>(*this).expression();
+      out << cast<ExpressionAction>(*this).expression() << " ";
       break;
     case Action::Kind::PatternAction:
-      out << cast<PatternAction>(*this).pattern();
+      out << cast<PatternAction>(*this).pattern() << " ";
       break;
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
+      out << " ";
       break;
     case Action::Kind::DeclarationAction:
       cast<DeclarationAction>(*this).declaration().Print(out);
+      out << " ";
       break;
     case Action::Kind::ScopeAction:
-      out << "ScopeAction";
+      break;
   }
-  out << "<" << pos_ << ">";
+  out << "." << pos_ << ".";
   if (!results_.empty()) {
-    out << "(";
+    out << " [[";
     llvm::ListSeparator sep;
     for (auto& result : results_) {
       out << sep << *result;
     }
-    out << ")";
+    out << "]]";
+  }
+  if (this->scope().has_value()) {
+    out << " " << *this->scope();
   }
 }
 

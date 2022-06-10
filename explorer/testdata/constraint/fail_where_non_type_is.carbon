@@ -10,11 +10,9 @@
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
-}
+interface A {}
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: Expected a type, but got Vector
-external impl i32 as Vector {}
+// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_non_type_is.carbon:[[@LINE+1]]: Expected a type, but got 4
+alias B = A where 4 is A;
 
-fn Main() -> i32 {
-}
+fn Main() -> i32 { return 0; }

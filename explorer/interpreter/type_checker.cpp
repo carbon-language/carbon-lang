@@ -18,6 +18,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/value.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -107,8 +108,10 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       return false;
     case Value::Kind::TypeType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
       // A value of one of these types is itself always a type.
       return true;
@@ -150,12 +153,14 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::StructType:
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::StaticArrayType:
       return true;
@@ -229,7 +234,7 @@ auto TypeChecker::FieldTypesImplicitlyConvertible(
     if (!destination_field.has_value() ||
         !IsImplicitlyConvertible(source_field.value,
                                  destination_field.value().value,
-                                 // FIXME: We don't have a way to perform
+                                 // TODO: We don't have a way to perform
                                  // user-defined conversions of a struct field
                                  // yet, because we can't write a suitable impl
                                  // for ImplicitAs.
@@ -264,7 +269,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
     std::optional<Nonnull<const ImplScope*>> impl_scope) const -> bool {
   // Check for an exact match or for an implicit conversion.
-  // FIXME: `impl`s of `ImplicitAs` should be provided to cover these
+  // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
@@ -354,17 +359,20 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
     }
     case Value::Kind::TypeType:
-      // FIXME: This seems suspicious. Shouldn't this require that the type
+      // TODO: This seems suspicious. Shouldn't this require that the type
       // implements the interface?
-      if (destination->kind() == Value::Kind::InterfaceType) {
+      if (isa<InterfaceType, ConstraintType>(destination)) {
         return true;
       }
       break;
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfChoiceType:
-      // FIXME: These types should presumably also convert to interface types.
-      if (destination->kind() == Value::Kind::TypeType) {
+    case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
+      // TODO: These types should presumably also convert to constraint types.
+      if (isa<TypeType>(destination)) {
         return true;
       }
       break;
@@ -391,10 +399,10 @@ auto TypeChecker::ImplicitlyConvert(const std::string& context,
                                     Nonnull<Expression*> source,
                                     Nonnull<const Value*> destination)
     -> ErrorOr<Nonnull<Expression*>> {
-  // FIXME: If a builtin conversion works, for now we don't create any
+  // TODO: If a builtin conversion works, for now we don't create any
   // expression to do the conversion and rely on the interpreter to know how to
   // do it.
-  // FIXME: This doesn't work for cases of combined built-in and user-defined
+  // TODO: This doesn't work for cases of combined built-in and user-defined
   // conversion, such as converting a struct element via an `ImplicitAs` impl.
   if (IsImplicitlyConvertible(&source->static_type(), destination,
                               std::nullopt)) {
@@ -684,12 +692,14 @@ auto TypeChecker::ArgumentDeduction(
       // TODO: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -724,9 +734,151 @@ auto TypeChecker::ArgumentDeduction(
   }
 }
 
+// Builder for constraint types.
+//
+// This type supports incrementally building a constraint type by adding
+// constraints one at a time, and will deduplicate the constraints as it goes.
+//
+// TODO: The deduplication here is very inefficient. We should use value
+// canonicalization or hashing or similar to speed this up.
+class ConstraintTypeBuilder {
+ public:
+  ConstraintTypeBuilder(Nonnull<Arena*> arena, SourceLocation source_loc)
+      : self_binding_(arena->New<GenericBinding>(
+            source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc))) {}
+  ConstraintTypeBuilder(Nonnull<const GenericBinding*> self_binding)
+      : self_binding_(self_binding) {}
+  ConstraintTypeBuilder(Nonnull<const ConstraintType*> constraint)
+      : self_binding_(constraint->self_binding()),
+        impl_constraints_(constraint->impl_constraints()),
+        equality_constraints_(constraint->equality_constraints()),
+        lookup_contexts_(constraint->lookup_contexts()) {}
+
+  // Produce a type that refers to the `.Self` type of the constraint.
+  auto MakeSelfType(Nonnull<Arena*> arena) const
+      -> Nonnull<const VariableType*> {
+    return arena->New<VariableType>(self_binding_);
+  }
+
+  // Add an `impl` constraint -- `T is C` if not already present.
+  void AddImplConstraint(ConstraintType::ImplConstraint impl) {
+    for (ConstraintType::ImplConstraint existing : impl_constraints_) {
+      if (TypeEqual(existing.type, impl.type) &&
+          TypeEqual(existing.interface, impl.interface)) {
+        return;
+      }
+    }
+    impl_constraints_.push_back(std::move(impl));
+  }
+
+  // Add an `impl` constraint -- `A == B`, merging as necessary.
+  void AddEqualityConstraint(ConstraintType::EqualityConstraint equal) {
+    // Check to see if any of the given values are already part of an equality
+    // constraint. If so, discard the value and note that we'll merge that
+    // constraint into the new one.
+    llvm::SmallDenseSet<size_t> merged_constraints;
+    {
+      size_t kept = 0;
+      for (size_t i = 0; i != equal.values.size(); ++i) {
+        if (std::optional<size_t> found_in =
+                FindInEqualityConstraints(equal.values[i])) {
+          merged_constraints.insert(*found_in);
+        } else {
+          equal.values[kept++] = equal.values[i];
+        }
+      }
+      equal.values.resize(kept);
+    }
+
+    // Merge and discard any constraints that overlapped `equal`.
+    if (!merged_constraints.empty()) {
+      size_t kept = 0;
+      for (size_t i = 0; i != equality_constraints_.size(); ++i) {
+        if (merged_constraints.contains(i)) {
+          equal.values.insert(equal.values.end(),
+                              equality_constraints_[i].values.begin(),
+                              equality_constraints_[i].values.end());
+        } else {
+          if (kept != i) {
+            equality_constraints_[kept] = std::move(equality_constraints_[i]);
+          }
+          ++kept;
+        }
+      }
+      equality_constraints_[kept++] = std::move(equal);
+      equality_constraints_.resize(kept);
+    } else {
+      equality_constraints_.push_back(std::move(equal));
+    }
+  }
+
+  // Add a context for qualified name lookup, if not already present.
+  void AddLookupContext(ConstraintType::LookupContext context) {
+    for (ConstraintType::LookupContext existing : lookup_contexts_) {
+      if (ValueEqual(existing.context, context.context)) {
+        return;
+      }
+    }
+    lookup_contexts_.push_back(std::move(context));
+  }
+
+  // Add all the constraints from another constraint type. The constraints must
+  // not refer to that other constraint type's self binding, because it will no
+  // longer be in scope.
+  void Add(Nonnull<const ConstraintType*> constraint) {
+    for (const auto& impl_constraint : constraint->impl_constraints()) {
+      AddImplConstraint(impl_constraint);
+    }
+
+    for (const auto& equality_constraint : constraint->equality_constraints()) {
+      AddEqualityConstraint(equality_constraint);
+    }
+
+    for (const auto& lookup_context : constraint->lookup_contexts()) {
+      AddLookupContext(lookup_context);
+    }
+  }
+
+  // Convert the builder into a ConstraintType. Note that this consumes the
+  // builder.
+  auto Build(Nonnull<Arena*> arena_) && -> Nonnull<const ConstraintType*> {
+    return arena_->New<ConstraintType>(
+        self_binding_, std::move(impl_constraints_),
+        std::move(equality_constraints_), std::move(lookup_contexts_));
+  }
+
+ private:
+  // Find the given value in the equality constraints, returning the index of
+  // the constraint that contains it, if any.
+  auto FindInEqualityConstraints(const Value* value) -> std::optional<size_t> {
+    for (size_t i = 0; i != equality_constraints_.size(); ++i) {
+      for (const Value* v : equality_constraints_[i].values) {
+        if (ValueEqual(value, v)) {
+          return i;
+        }
+      }
+    }
+    return std::nullopt;
+  }
+
+ private:
+  Nonnull<const GenericBinding*> self_binding_;
+  std::vector<ConstraintType::ImplConstraint> impl_constraints_;
+  std::vector<ConstraintType::EqualityConstraint> equality_constraints_;
+  std::vector<ConstraintType::LookupContext> lookup_contexts_;
+};
+
 auto TypeChecker::Substitute(
     const std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>>& dict,
     Nonnull<const Value*> type) const -> Nonnull<const Value*> {
+  auto SubstituteIntoBindingMap = [&](const BindingMap& map) -> BindingMap {
+    BindingMap result;
+    for (const auto& [name, value] : map) {
+      result[name] = Substitute(dict, value);
+    }
+    return result;
+  };
+
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       auto it = dict.find(&cast<VariableType>(*type).binding());
@@ -766,12 +918,10 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);
-      BindingMap type_args;
-      for (const auto& [name, value] : class_type.type_args()) {
-        type_args[name] = Substitute(dict, value);
-      }
       Nonnull<const NominalClassType*> new_class_type =
-          arena_->New<NominalClassType>(&class_type.declaration(), type_args);
+          arena_->New<NominalClassType>(
+              &class_type.declaration(),
+              SubstituteIntoBindingMap(class_type.type_args()));
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << class_type << " => "
                         << *new_class_type << "\n";
@@ -780,17 +930,50 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::InterfaceType: {
       const auto& iface_type = cast<InterfaceType>(*type);
-      BindingMap args;
-      for (const auto& [name, value] : iface_type.args()) {
-        args[name] = Substitute(dict, value);
-      }
-      Nonnull<const InterfaceType*> new_iface_type =
-          arena_->New<InterfaceType>(&iface_type.declaration(), args);
+      Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
+          &iface_type.declaration(),
+          SubstituteIntoBindingMap(iface_type.args()));
       if (trace_stream_) {
         **trace_stream_ << "substitution: " << iface_type << " => "
                         << *new_iface_type << "\n";
       }
       return new_iface_type;
+    }
+    case Value::Kind::ConstraintType: {
+      const auto& constraint = cast<ConstraintType>(*type);
+      ConstraintTypeBuilder builder(constraint.self_binding());
+      for (const auto& impl_constraint : constraint.impl_constraints()) {
+        builder.AddImplConstraint(
+            {.type = Substitute(dict, impl_constraint.type),
+             .interface = cast<InterfaceType>(
+                 Substitute(dict, impl_constraint.interface))});
+      }
+
+      for (const auto& equality_constraint :
+           constraint.equality_constraints()) {
+        std::vector<Nonnull<const Value*>> values;
+        for (const Value* value : equality_constraint.values) {
+          // Ensure we don't create any duplicates through substitution.
+          if (std::find_if(values.begin(), values.end(), [&](const Value* v) {
+                return ValueEqual(v, value);
+              }) == values.end()) {
+            values.push_back(Substitute(dict, value));
+          }
+        }
+        builder.AddEqualityConstraint({.values = std::move(values)});
+      }
+
+      for (const auto& lookup_context : constraint.lookup_contexts()) {
+        builder.AddLookupContext(
+            {.context = Substitute(dict, lookup_context.context)});
+      }
+      Nonnull<const ConstraintType*> new_constraint =
+          std::move(builder).Build(arena_);
+      if (trace_stream_) {
+        **trace_stream_ << "substitution: " << constraint << " => "
+                        << *new_constraint << "\n";
+      }
+      return new_constraint;
     }
     case Value::Kind::StaticArrayType:
     case Value::Kind::AutoType:
@@ -800,11 +983,15 @@ auto TypeChecker::Substitute(
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
+      return type;
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+      // TODO: We should substitute into the value and produce a new type of
+      // type for it.
       return type;
     case Value::Kind::Witness:
     case Value::Kind::ParameterizedEntityName:
@@ -855,6 +1042,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     return std::nullopt;
   }
 
+  // TODO: If the `interface` is a ConstraintType, for every impl_constraint,
+  // try deduction against that.
   if (ErrorOr<Success> e = ArgumentDeduction(
           source_loc, "match", impl.deduced, deduced_args, impl.interface,
           &iface, /*allow_implicit_conversion=*/false, impl_scope);
@@ -895,6 +1084,22 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                                     source_loc, impl.impl, deduced_args, impls);
 }
 
+auto TypeChecker::MakeConstraintWitness(
+    const ConstraintType& constraint,
+    std::vector<Nonnull<Expression*>> impl_constraint_witnesses,
+    SourceLocation source_loc) const -> Nonnull<Expression*> {
+  return arena_->New<TupleLiteral>(source_loc,
+                                   std::move(impl_constraint_witnesses));
+}
+
+auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<Expression*> witness,
+                                              size_t impl_offset) const
+    -> Nonnull<Expression*> {
+  return arena_->New<IndexExpression>(
+      witness->source_loc(), witness,
+      arena_->New<IntLiteral>(witness->source_loc(), impl_offset));
+}
+
 auto TypeChecker::SatisfyImpls(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     const ImplScope& impl_scope, SourceLocation source_loc,
@@ -911,6 +1116,30 @@ auto TypeChecker::SatisfyImpls(
     impls.emplace(impl_binding, impl);
   }
   return Success();
+}
+
+auto TypeChecker::MakeConstraintForInterface(
+    SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type)
+    -> Nonnull<const ConstraintType*> {
+  ConstraintTypeBuilder builder(arena_, source_loc);
+  builder.AddImplConstraint(
+      {.type = builder.MakeSelfType(arena_), .interface = iface_type});
+  builder.AddLookupContext({.context = iface_type});
+  return std::move(builder).Build(arena_);
+}
+
+auto TypeChecker::CombineConstraints(
+    SourceLocation source_loc,
+    llvm::ArrayRef<Nonnull<const ConstraintType*>> constraints)
+    -> Nonnull<const ConstraintType*> {
+  ConstraintTypeBuilder builder(arena_, source_loc);
+  auto* self = builder.MakeSelfType(arena_);
+  for (Nonnull<const ConstraintType*> constraint : constraints) {
+    BindingMap map;
+    map[constraint->self_binding()] = self;
+    builder.Add(cast<ConstraintType>(Substitute(map, constraint)));
+  }
+  return std::move(builder).Build(arena_);
 }
 
 auto TypeChecker::DeduceCallBindings(
@@ -988,6 +1217,69 @@ auto TypeChecker::DeduceCallBindings(
   call.set_argument(converted_argument);
 
   return Success();
+}
+
+struct ConstraintLookupResult {
+  Nonnull<const InterfaceType*> interface;
+  Nonnull<const Declaration*> member;
+  Nonnull<const Expression*> impl;
+};
+
+/// Look up a member name in a constraint, which might be a single interface or
+/// a compound constraint.
+static auto LookupInConstraint(SourceLocation source_loc,
+                               Nonnull<const Value*> type,
+                               const std::string& member_name)
+    -> ErrorOr<ConstraintLookupResult> {
+  // Find the set of lookup contexts.
+  llvm::ArrayRef<ConstraintType::LookupContext> lookup_contexts;
+  ConstraintType::LookupContext interface_context[1];
+  if (const auto* iface_type = dyn_cast<InterfaceType>(type)) {
+    // For an interface, look into that interface alone.
+    // TODO: Also look into any interfaces extended by it.
+    interface_context[0].context = iface_type;
+    lookup_contexts = interface_context;
+  } else if (const auto* constraint_type = dyn_cast<ConstraintType>(type)) {
+    // For a constraint, look in all of its lookup contexts.
+    lookup_contexts = constraint_type->lookup_contexts();
+  } else {
+    // Other kinds of constraint, such as TypeType, have no lookup contexts.
+  }
+
+  std::optional<ConstraintLookupResult> found;
+  for (ConstraintType::LookupContext lookup : lookup_contexts) {
+    if (!isa<InterfaceType>(lookup.context)) {
+      // TODO: Support other kinds of lookup context, notably named
+      // constraints.
+      continue;
+    }
+    const InterfaceType& iface_type = cast<InterfaceType>(*lookup.context);
+    if (std::optional<Nonnull<const Declaration*>> member =
+            FindMember(member_name, iface_type.declaration().members());
+        member.has_value()) {
+      if (found.has_value()) {
+        if (ValueEqual(found->interface, &iface_type)) {
+          continue;
+        }
+        // TODO: If we resolve to the same member either way, this
+        // is not ambiguous.
+        return CompilationError(source_loc)
+               << "ambiguous member access, " << member_name << " found in "
+               << *found->interface << " and " << iface_type;
+      }
+      found = {.interface = &iface_type, .member = member.value()};
+    }
+  }
+
+  if (!found) {
+    if (isa<TypeType>(type)) {
+      return CompilationError(source_loc)
+             << "member access into unconstrained type";
+    }
+    return CompilationError(source_loc)
+           << "member access, " << member_name << " not in " << *type;
+  }
+  return found.value();
 }
 
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
@@ -1224,107 +1516,94 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << access.member();
           }
         }
-        case Value::Kind::TypeOfInterfaceType: {
-          const InterfaceType& iface_type =
-              cast<TypeOfInterfaceType>(object_type).interface_type();
-          if (std::optional<Nonnull<const Declaration*>> member = FindMember(
-                  access.member(), iface_type.declaration().members());
-              member.has_value()) {
-            access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(*member)));
-            access.set_value_category(ValueCategory::Let);
-            return Success();
+        case Value::Kind::TypeOfInterfaceType:
+        case Value::Kind::TypeOfConstraintType: {
+          const Value* type;
+          if (isa<TypeOfInterfaceType>(object_type)) {
+            type = &cast<TypeOfInterfaceType>(object_type).interface_type();
           } else {
-            return CompilationError(access.source_loc())
-                   << iface_type << " does not have a member named "
-                   << access.member();
+            type = &cast<TypeOfConstraintType>(object_type).constraint_type();
           }
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), type, access.member()));
+          access.set_found_in_interface(result.interface);
+          access.set_static_type(
+              arena_->New<TypeOfMemberName>(Member(result.member)));
+          access.set_value_category(ValueCategory::Let);
+          return Success();
         }
         case Value::Kind::VariableType: {
           // This case handles access to a method on a receiver whose type
           // is a type variable. For example, `x.foo` where the type of
           // `x` is `T` and `foo` and `T` implements an interface that
           // includes `foo`.
-          const VariableType& var_type = cast<VariableType>(object_type);
-          const Value& typeof_var = var_type.binding().static_type();
-          switch (typeof_var.kind()) {
-            case Value::Kind::InterfaceType: {
-              const auto& iface_type = cast<InterfaceType>(typeof_var);
-              const InterfaceDeclaration& iface_decl = iface_type.declaration();
-              if (std::optional<Nonnull<const Declaration*>> member =
-                      FindMember(access.member(), iface_decl.members());
-                  member.has_value()) {
-                const Value& member_type = (*member)->static_type();
-                BindingMap binding_map = iface_type.args();
-                binding_map[iface_decl.self()] = &var_type;
-                Nonnull<const Value*> inst_member_type =
-                    Substitute(binding_map, &member_type);
-                access.set_static_type(inst_member_type);
-                CARBON_CHECK(var_type.binding().impl_binding().has_value());
-                access.set_impl(*var_type.binding().impl_binding());
-                return Success();
-              } else {
-                return CompilationError(e->source_loc())
-                       << "member access, " << access.member() << " not in "
-                       << iface_decl.name();
-              }
-              break;
-            }
-            default:
-              return CompilationError(e->source_loc())
-                     << "member access, unexpected " << object_type
-                     << " of non-interface type " << typeof_var << " in " << *e;
-          }
-          break;
+          const Value& typeof_var =
+              cast<VariableType>(object_type).binding().static_type();
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), &typeof_var,
+                                 access.member()));
+
+          const Value& member_type = result.member->static_type();
+          BindingMap binding_map = result.interface->args();
+          binding_map[result.interface->declaration().self()] = &object_type;
+          Nonnull<const Value*> inst_member_type =
+              Substitute(binding_map, &member_type);
+          access.set_found_in_interface(result.interface);
+          access.set_static_type(inst_member_type);
+
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> impl,
+              impl_scope.Resolve(result.interface, &object_type,
+                                 e->source_loc(), *this));
+          access.set_impl(impl);
+          return Success();
         }
-        case Value::Kind::InterfaceType: {
+        case Value::Kind::InterfaceType:
+        case Value::Kind::ConstraintType: {
           // This case handles access to a class function from a type variable.
           // If `T` is a type variable and `foo` is a class function in an
           // interface implemented by `T`, then `T.foo` accesses the `foo` class
           // function of `T`.
           CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> var_addr,
+              Nonnull<const Value*> type,
               InterpExp(&access.object(), arena_, trace_stream_));
-          const VariableType& var_type = cast<VariableType>(*var_addr);
-          const InterfaceType& iface_type = cast<InterfaceType>(object_type);
-          const InterfaceDeclaration& iface_decl = iface_type.declaration();
-          if (std::optional<Nonnull<const Declaration*>> member =
-                  FindMember(access.member(), iface_decl.members());
-              member.has_value()) {
-            CARBON_CHECK(var_type.binding().impl_binding().has_value());
-            access.set_impl(*var_type.binding().impl_binding());
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), &object_type,
+                                 access.member()));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> impl,
+                                  impl_scope.Resolve(result.interface, type,
+                                                     e->source_loc(), *this));
+          access.set_impl(impl);
+          access.set_found_in_interface(result.interface);
 
-            switch ((*member)->kind()) {
-              case DeclarationKind::FunctionDeclaration: {
-                const auto& func = cast<FunctionDeclaration>(*member);
-                if (func->is_method()) {
-                  break;
-                }
-                const Value& member_type = (*member)->static_type();
-                BindingMap binding_map = iface_type.args();
-                binding_map[iface_decl.self()] = &var_type;
-                Nonnull<const Value*> inst_member_type =
-                    Substitute(binding_map, &member_type);
-                access.set_static_type(inst_member_type);
-                return Success();
-              }
-              default:
+          switch (result.member->kind()) {
+            case DeclarationKind::FunctionDeclaration: {
+              const auto& func = cast<FunctionDeclaration>(*result.member);
+              if (func.is_method()) {
                 break;
+              }
+              const Value& member_type = func.static_type();
+              BindingMap binding_map = result.interface->args();
+              binding_map[result.interface->declaration().self()] = type;
+              Nonnull<const Value*> inst_member_type =
+                  Substitute(binding_map, &member_type);
+              access.set_static_type(inst_member_type);
+              return Success();
             }
-            // TODO: Consider setting the static type of all interface member
-            // declarations and instance member declarations to be member name
-            // types, rather than special-casing member accesses that name
-            // them.
-            access.set_static_type(
-                arena_->New<TypeOfMemberName>(Member(*member)));
-            access.set_value_category(ValueCategory::Let);
-            return Success();
-          } else {
-            return CompilationError(e->source_loc())
-                   << "member access, " << access.member() << " not in "
-                   << iface_decl.name();
+            default:
+              break;
           }
-          break;
+          // TODO: Consider setting the static type of all interface member
+          // declarations and instance member declarations to be member name
+          // types, rather than special-casing member accesses that name
+          // them.
+          access.set_static_type(
+              arena_->New<TypeOfMemberName>(Member(result.member)));
+          access.set_value_category(ValueCategory::Let);
+          return Success();
         }
         default:
           return CompilationError(e->source_loc())
@@ -1549,6 +1828,27 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(arena_->New<PointerType>(ts[0]));
           op.set_value_category(ValueCategory::Let);
           return Success();
+        case Operator::Combine: {
+          std::optional<Nonnull<const ConstraintType*>> constraints[2];
+          for (int i : {0, 1}) {
+            if (auto* iface_type_type = dyn_cast<TypeOfInterfaceType>(ts[i])) {
+              constraints[i] = MakeConstraintForInterface(
+                  e->source_loc(), &iface_type_type->interface_type());
+            } else if (auto* constraint_type_type =
+                           dyn_cast<TypeOfConstraintType>(ts[i])) {
+              constraints[i] = &constraint_type_type->constraint_type();
+            } else {
+              return CompilationError(op.arguments()[i]->source_loc())
+                     << "argument to " << ToString(op.op())
+                     << " should be a constraint, found `" << *ts[i] << "`";
+            }
+          }
+          op.set_static_type(
+              arena_->New<TypeOfConstraintType>(CombineConstraints(
+                  e->source_loc(), {*constraints[0], *constraints[1]})));
+          op.set_value_category(ValueCategory::Let);
+          return Success();
+        }
       }
       break;
     }
@@ -1586,7 +1886,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           llvm::ArrayRef<Nonnull<const Pattern*>> params =
               param_name.params().fields();
           for (size_t i = 0; i != params.size(); ++i) {
-            // FIXME: Should we disallow all other kinds of top-level params?
+            // TODO: Should we disallow all other kinds of top-level params?
             if (auto* binding = dyn_cast<GenericBinding>(params[i])) {
               generic_parameters.push_back({i, binding});
               if (binding->impl_binding().has_value()) {
@@ -1695,6 +1995,81 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       return Success();
     }
+    case ExpressionKind::WhereExpression: {
+      auto& where = cast<WhereExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&where.base(), impl_scope));
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, impl_scope));
+      }
+
+      const ConstraintType* base;
+      const Value& base_type = where.base().static_type();
+      if (auto* constraint_type_type =
+              dyn_cast<TypeOfConstraintType>(&base_type)) {
+        base = &constraint_type_type->constraint_type();
+      } else if (auto* interface_type_type =
+                     dyn_cast<TypeOfInterfaceType>(&base_type)) {
+        base = MakeConstraintForInterface(
+            e->source_loc(), &interface_type_type->interface_type());
+      } else {
+        return CompilationError(e->source_loc())
+               << "expected constraint as first operand of `where` expression, "
+               << "found " << base_type;
+      }
+
+      // Apply the `where` clauses.
+      ConstraintTypeBuilder builder(base);
+      for (Nonnull<const WhereClause*> clause : where.clauses()) {
+        switch (clause->kind()) {
+          case WhereClauseKind::IsWhereClause: {
+            const auto& is_clause = cast<IsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> type,
+                InterpExp(&is_clause.type(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> constraint,
+                InterpExp(&is_clause.constraint(), arena_, trace_stream_));
+            if (auto* interface = dyn_cast<InterfaceType>(constraint)) {
+              // `where X is Y` produces an `impl` constraint.
+              builder.AddImplConstraint({.type = type, .interface = interface});
+            } else if (auto* constraint_type =
+                           dyn_cast<ConstraintType>(constraint)) {
+              // Transform `where .B is (C where .D is E)` into
+              // `where .B is C and .B.D is E` then add all the resulting
+              // constraints.
+              BindingMap map;
+              map[constraint_type->self_binding()] = type;
+              builder.Add(cast<ConstraintType>(Substitute(map, constraint)));
+            } else {
+              return CompilationError(is_clause.constraint().source_loc())
+                     << "expression after `is` does not resolve to a "
+                        "constraint, found value "
+                     << *constraint << " of type "
+                     << is_clause.constraint().static_type();
+            }
+            break;
+          }
+          case WhereClauseKind::EqualsWhereClause: {
+            const auto& equals_clause = cast<EqualsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> lhs,
+                InterpExp(&equals_clause.lhs(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> rhs,
+                InterpExp(&equals_clause.rhs(), arena_, trace_stream_));
+            if (!ValueEqual(lhs, rhs)) {
+              builder.AddEqualityConstraint({.values = {lhs, rhs}});
+            }
+            break;
+          }
+        }
+      }
+
+      where.set_static_type(
+          arena_->New<TypeOfConstraintType>(std::move(builder).Build(arena_)));
+      where.set_value_category(ValueCategory::Let);
+      return Success();
+    }
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << *e;
     case ExpressionKind::ArrayTypeLiteral: {
@@ -1774,7 +2149,7 @@ void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
   CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
                  *impl_binding->type_var()->symbolic_identity(),
-                 CreateImplReference(impl_binding));
+                 CreateImplReference(impl_binding), *this);
 }
 
 auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
@@ -1787,6 +2162,35 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
       concrete ? ExpectIsConcreteType(type_expression->source_loc(), type)
                : ExpectIsType(type_expression->source_loc(), type));
   return type;
+}
+
+auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
+                                       const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  switch (clause->kind()) {
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
+      if (!isa<TypeOfInterfaceType, TypeOfConstraintType, TypeType>(
+              is_clause.constraint().static_type())) {
+        return CompilationError(is_clause.constraint().source_loc())
+               << "expression after `is` does not resolve to a constraint, "
+               << "found " << is_clause.constraint().static_type();
+      }
+      return Success();
+    }
+    case WhereClauseKind::EqualsWhereClause: {
+      auto& equals_clause = cast<EqualsWhereClause>(*clause);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.lhs(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&equals_clause.rhs(), impl_scope));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          clause->source_loc(), "values in `where ==` constraint",
+          &equals_clause.lhs().static_type(),
+          &equals_clause.rhs().static_type()));
+      return Success();
+    }
+  }
 }
 
 auto TypeChecker::TypeCheckPattern(
@@ -1864,7 +2268,7 @@ auto TypeChecker::TypeCheckPattern(
       binding.set_symbolic_identity(val);
       SetValue(&binding, val);
 
-      if (isa<InterfaceType>(type)) {
+      if (isa<InterfaceType, ConstraintType>(type)) {
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
         binding.set_impl_binding(impl_binding);
@@ -1999,13 +2403,13 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       for (auto& clause : match.clauses()) {
         ImplScope clause_scope;
         clause_scope.AddParent(&impl_scope);
-        // FIXME: Should user-defined conversions be permitted in `match`
+        // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
             &clause.pattern(), &match.expression().static_type(), clause_scope,
             ValueCategory::Let));
         if (expected_type.has_value()) {
-          // FIXME: For now, we require all patterns to have the same type. If
+          // TODO: For now, we require all patterns to have the same type. If
           // that's not the same type as the scrutinee, we will convert the
           // scrutinee. We might want to instead allow a different conversion
           // to be performed for each pattern.
@@ -2557,7 +2961,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                             impl_decl->deduced_parameters().end());
     scope_info.innermost_non_class_scope->Add(
         iface_type, std::move(deduced_bindings), impl_type_value, impl_bindings,
-        impl_id);
+        impl_id, *this);
   }
 
   // Declare the impl members.
@@ -2576,7 +2980,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
         binding_map[iface_decl.self()] = impl_type_value;
         Nonnull<const Value*> iface_mem_type =
             Substitute(binding_map, &m->static_type());
-        // FIXME: How should the signature in the implementation be permitted
+        // TODO: How should the signature in the implementation be permitted
         // to differ from the signature in the interface?
         CARBON_RETURN_IF_ERROR(
             ExpectExactType((*mem)->source_loc(), "member of implementation",
@@ -2676,9 +3080,11 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
 
     case Value::Kind::FunctionType:
     case Value::Kind::InterfaceType:
+    case Value::Kind::ConstraintType:
     case Value::Kind::TypeType:
     case Value::Kind::TypeOfClassType:
     case Value::Kind::TypeOfInterfaceType:
+    case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
@@ -2715,7 +3121,7 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   for (Nonnull<Declaration*> decl : ast.declarations) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(decl, impl_scope));
     // Check to see if this declaration is a builtin.
-    // FIXME: Only do this when type-checking the prelude.
+    // TODO: Only do this when type-checking the prelude.
     builtins_.Register(decl);
   }
   CARBON_RETURN_IF_ERROR(TypeCheckExp(*ast.main_call, impl_scope));

@@ -2,19 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
+// RUN: %{explorer} %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
+// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
 // RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
 // AUTOUPDATE: %{explorer} %s
+// CHECK: result: 1
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
-}
+interface A { fn Get() -> Self; }
+impl i32 as A { fn Get() -> Self { return 1; } }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: Expected a type, but got Vector
-external impl i32 as Vector {}
+alias AlsoA = A where i32 is A and 4 == 4;
+
+fn F[T:! AlsoA](x: T) -> T { return T.Get(); }
 
 fn Main() -> i32 {
+  var z: i32 = 0;
+  return F(z);
 }
