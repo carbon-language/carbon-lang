@@ -52,11 +52,9 @@ void ActionStack::Initialize(ValueNodeView value_node,
 auto ActionStack::ValueOfNode(ValueNodeView value_node,
                               SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  std::optional<const Value*> value = (phase_ == Phase::CompileTime)
-                                          ? value_node.symbolic_identity()
-                                          : value_node.constant_value();
-  if (value.has_value()) {
-    return *value;
+  std::optional<const Value*> constant_value = value_node.constant_value();
+  if (constant_value.has_value()) {
+    return *constant_value;
   }
   for (const std::unique_ptr<Action>& action : todo_) {
     // TODO: have static name resolution identify the scope of value_node
@@ -75,6 +73,13 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
     std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
     if (result.has_value()) {
       return *result;
+    }
+  }
+  if (phase_ == Phase::CompileTime) {
+    std::optional<const Value*> symbolic_identity =
+        value_node.symbolic_identity();
+    if (symbolic_identity.has_value()) {
+      return *symbolic_identity;
     }
   }
   // TODO: Move these errors to compile time and explain them more clearly.
