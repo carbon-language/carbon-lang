@@ -85,6 +85,7 @@ class Action {
     StatementAction,
     DeclarationAction,
     ScopeAction,
+    RecursiveAction,
   };
 
   Action(const Value&) = delete;
@@ -247,6 +248,20 @@ class ScopeAction : public Action {
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ScopeAction;
+  }
+};
+
+// Action which runs another action and does nothing further once that action
+// completes. This is useful to allow a sequence of steps for an action to be
+// run immediately rather than as part of the normal step queue.
+//
+// Should be avoided where possible.
+class RecursiveAction : public Action {
+ public:
+  explicit RecursiveAction() : Action(Kind::RecursiveAction) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::RecursiveAction;
   }
 };
 

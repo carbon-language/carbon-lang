@@ -91,17 +91,13 @@ class Interpreter {
   // Returns the result of converting `value` to type `destination_type`.
   auto Convert(Nonnull<const Value*> value,
                Nonnull<const Value*> destination_type,
-               SourceLocation source_loc) const
-      -> ErrorOr<Nonnull<const Value*>>;
+               SourceLocation source_loc) -> ErrorOr<Nonnull<const Value*>>;
 
-  // Evaluate an impl expression to produce a witness, or signal an
-  // error.
+  // Evaluate an expression immediately, recursively.
   //
-  // An impl expression is either
-  // 1) an IdentifierExpression whose value_node is an impl declaration, or
-  // 2) an InstantiateImpl expression.
-  auto EvalImplExp(Nonnull<const Expression*> exp) const
-      -> ErrorOr<Nonnull<const Witness*>>;
+  // TODO: Stop using this.
+  auto EvalExpRecursively(Nonnull<const Expression*> exp)
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Instantiate a type by replacing all type variables that occur inside the
   // type by the current values of those variables.
@@ -110,8 +106,7 @@ class Interpreter {
   //     __Fn (Point(T)) -> Point(U)
   // becomes
   //     __Fn (Point(i32)) -> Point(Bool)
-  auto InstantiateType(Nonnull<const Value*> type,
-                       SourceLocation source_loc) const
+  auto InstantiateType(Nonnull<const Value*> type, SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
@@ -421,39 +416,31 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::EvalImplExp(Nonnull<const Expression*> exp) const
-    -> ErrorOr<Nonnull<const Witness*>> {
-  switch (exp->kind()) {
-    case ExpressionKind::InstantiateImpl: {
-      const InstantiateImpl& inst_impl = cast<InstantiateImpl>(*exp);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> gen_impl,
-                              EvalImplExp(inst_impl.generic_impl()));
-      ImplWitnessMap witnesses;
-      for (auto& [bind, impl_exp] : inst_impl.impls()) {
-        CARBON_ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
-      }
-      return arena_->New<Witness>(&gen_impl->declaration(),
-                                  inst_impl.type_args(), witnesses);
-    }
-    case ExpressionKind::IdentifierExpression: {
-      const auto& ident = cast<IdentifierExpression>(*exp);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> value,
-          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
-        CARBON_ASSIGN_OR_RETURN(
-            value, heap_.Read(lvalue->address(), exp->source_loc()));
-      }
-      return cast<Witness>(value);
-    }
-    default: {
-      CARBON_FATAL() << "EvalImplExp, unexpected expression: " << *exp;
+auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
+    -> ErrorOr<Nonnull<const Value*>> {
+  if (trace_stream_) {
+    **trace_stream_ << "--- recursive eval of " << *exp << "\n";
+    PrintState(**trace_stream_);
+  }
+  todo_.BeginRecursiveAction();
+  CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<ExpressionAction>(exp)));
+  while (!isa<RecursiveAction>(todo_.CurrentAction())) {
+    CARBON_RETURN_IF_ERROR(Step());
+    if (trace_stream_) {
+      PrintState(**trace_stream_);
     }
   }
+  if (trace_stream_) {
+    **trace_stream_ << "--- recursive eval done\n";
+  }
+  Nonnull<const Value*> result =
+      cast<RecursiveAction>(todo_.CurrentAction()).results()[0];
+  CARBON_RETURN_IF_ERROR(todo_.FinishAction());
+  return result;
 }
 
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
-                                  SourceLocation source_loc) const
+                                  SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (type->kind()) {
     case Value::Kind::VariableType: {
@@ -473,9 +460,12 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
         CARBON_ASSIGN_OR_RETURN(inst_type_args[ty_var],
                                 InstantiateType(ty_arg, source_loc));
       }
-      ImplWitnessMap witnesses;
-      for (const auto& [bind, impl_exp] : class_type.impls()) {
-        CARBON_ASSIGN_OR_RETURN(witnesses[bind], EvalImplExp(impl_exp));
+      ImplWitnessMap witnesses = class_type.witnesses();
+      for (auto& [bind, witness] : witnesses) {
+        if (auto* sym = dyn_cast<SymbolicWitness>(witness)) {
+          CARBON_ASSIGN_OR_RETURN(witness,
+                                  EvalExpRecursively(&sym->impl_expression()));
+        }
       }
       return arena_->New<NominalClassType>(&class_type.declaration(),
                                            inst_type_args, witnesses);
@@ -487,7 +477,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
                           Nonnull<const Value*> destination_type,
-                          SourceLocation source_loc) const
+                          SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
@@ -507,7 +497,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
@@ -696,27 +687,12 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                 &params_scope, generic_args, trace_stream_,
                                 this->arena_));
       switch (decl.kind()) {
-        case DeclarationKind::ClassDeclaration: {
-          switch (phase()) {
-            case Phase::RunTime:
-              return todo_.FinishAction(arena_->New<NominalClassType>(
-                  &cast<ClassDeclaration>(decl), generic_args, witnesses));
-            case Phase::CompileTime:
-              return todo_.FinishAction(arena_->New<NominalClassType>(
-                  &cast<ClassDeclaration>(decl), generic_args, call.impls()));
-          }
-        }
-        case DeclarationKind::InterfaceDeclaration: {
-          switch (phase()) {
-            case Phase::RunTime:
-              return todo_.FinishAction(arena_->New<InterfaceType>(
-                  &cast<InterfaceDeclaration>(decl), generic_args, witnesses));
-            case Phase::CompileTime:
-              return todo_.FinishAction(
-                  arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             generic_args, call.impls()));
-          }
-        }
+        case DeclarationKind::ClassDeclaration:
+          return todo_.FinishAction(arena_->New<NominalClassType>(
+              &cast<ClassDeclaration>(decl), generic_args, witnesses));
+        case DeclarationKind::InterfaceDeclaration:
+          return todo_.FinishAction(arena_->New<InterfaceType>(
+              &cast<InterfaceDeclaration>(decl), generic_args, witnesses));
         default:
           CARBON_FATAL() << "unknown kind of ParameterizedEntityName " << decl;
       }
@@ -740,20 +716,24 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(inst_impl.generic_impl()));
-      } else if (act.pos() - 1 < int(inst_impl.impls().size())) {
+      }
+      if (act.pos() == 1 && isa<SymbolicWitness>(act.results()[0])) {
+        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
+      }
+      if (act.pos() - 1 < int(inst_impl.impls().size())) {
         auto iter = inst_impl.impls().begin();
         std::advance(iter, act.pos() - 1);
         return todo_.Spawn(std::make_unique<ExpressionAction>(iter->second));
       } else {
-        Nonnull<const Witness*> generic_witness =
-            cast<Witness>(act.results()[0]);
+        Nonnull<const ImplWitness*> generic_witness =
+            cast<ImplWitness>(act.results()[0]);
         ImplWitnessMap witnesses;
         int i = 0;
         for (const auto& [impl_bind, impl_exp] : inst_impl.impls()) {
           witnesses[impl_bind] = cast<Witness>(act.results()[i + 1]);
           ++i;
         }
-        return todo_.FinishAction(arena_->New<Witness>(
+        return todo_.FinishAction(arena_->New<ImplWitness>(
             &generic_witness->declaration(), inst_impl.type_args(), witnesses));
       }
     }
@@ -764,6 +744,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
+        if (isa<SymbolicWitness>(act.results()[0])) {
+          return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
+        }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
@@ -924,9 +907,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> value,
-          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
+      auto value_or_error =
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
+      if (!value_or_error.ok() && phase() == Phase::CompileTime &&
+          isa<ImplBinding>(ident.value_node().base())) {
+        // The `ImplBinding` might not be in scope. If so, just remember the
+        // expression from which it was derived.
+        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
+      }
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
+                              std::move(value_or_error));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), exp.source_loc()));
@@ -965,9 +955,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::CallExpression: {
       const CallExpression& call = cast<CallExpression>(exp);
-      // Don't evaluate the impls at compile time?
-      unsigned int num_impls =
-          phase() == Phase::CompileTime ? 0 : call.impls().size();
+      unsigned int num_impls = call.impls().size();
       if (act.pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
@@ -1468,6 +1456,8 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
+    case Action::Kind::RecursiveAction:
+      CARBON_FATAL() << "Tried to step a RecursiveAction";
   }  // switch
   return Success();
 }
