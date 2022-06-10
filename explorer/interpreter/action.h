@@ -251,9 +251,12 @@ class ScopeAction : public Action {
   }
 };
 
-// Action which runs another action and does nothing further once that action
-// completes. This is useful to allow a sequence of steps for an action to be
-// run immediately rather than as part of the normal step queue.
+// Action which contains another action and does nothing further once that
+// action completes. This action therefore acts as a marker on the action stack
+// that indicates that the interpreter should stop when the inner action has
+// finished, and holds the result of that inner action. This is useful to allow
+// a sequence of steps for an action to be run immediately rather than as part
+// of the normal step queue.
 //
 // Should be avoided where possible.
 class RecursiveAction : public Action {

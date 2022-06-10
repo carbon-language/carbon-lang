@@ -424,6 +424,9 @@ auto Interpreter::EvalExpRecursively(Nonnull<const Expression*> exp)
   }
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::make_unique<ExpressionAction>(exp)));
+  // Note that the only `RecursiveAction` we can encounter here is our own --
+  // if a nested action begins a recursive action, it will run until that
+  // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
     if (trace_stream_) {
