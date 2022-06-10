@@ -124,6 +124,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
       CARBON_FATAL() << "ScopeAction at top of stack";
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
+    case Action::Kind::RecursiveAction:
       PopScopes();
   }
   return Success();
@@ -135,6 +136,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
   switch (act->kind()) {
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
+    case Action::Kind::RecursiveAction:
       CARBON_FATAL() << "This kind of Action cannot produce results: " << *act;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction at top of stack";

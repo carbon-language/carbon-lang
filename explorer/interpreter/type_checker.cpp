@@ -82,7 +82,8 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -137,7 +138,8 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
       return false;
@@ -704,7 +706,8 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return handle_non_deduced_type();
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -993,7 +996,8 @@ auto TypeChecker::Substitute(
       // TODO: We should substitute into the value and produce a new type of
       // type for it.
       return type;
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1904,8 +1908,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                call.deduced_args(),
-                                                call.impls());
+                                                call.deduced_args());
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
               call.set_value_category(ValueCategory::Let);
@@ -1914,7 +1917,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             call.deduced_args(), call.impls());
+                                             call.deduced_args());
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
               call.set_value_category(ValueCategory::Let);
@@ -2991,7 +2994,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       }
     }
   }
-  impl_decl->set_constant_value(arena_->New<Witness>(impl_decl));
+  impl_decl->set_constant_value(arena_->New<ImplWitness>(impl_decl));
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
                     << " as " << impl_decl->interface() << "\n";
@@ -3053,7 +3056,8 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:
