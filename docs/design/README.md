@@ -1669,11 +1669,13 @@ file, including `i32` and `bool`. These will likely be defined in a special
 
 > References:
 >
-> -   FIXME: Name visibility and access control at file scope
+> -   [Exporting entities from an API file](code_and_name_organization/README.md#exporting-entities-from-an-api-file)
 > -   Question-for-leads issue
 >     [#665: `private` vs `public` _syntax_ strategy, as well as other visibility tools like `external`/`api`/etc.](https://github.com/carbon-language/carbon-lang/issues/665)
 > -   Proposal
 >     [#752: api file default public](https://github.com/carbon-language/carbon-lang/pull/752)
+> -   Proposal
+>     [#931: Generic impls access (details 4)](https://github.com/carbon-language/carbon-lang/pull/931)
 
 ## Generics
 
@@ -2069,9 +2071,14 @@ Carbon generics have a number of other features, including:
     interface using
     [`where` constraints](generics/details.md#where-constraints).
 -   [Implied constraints](generics/details.md#implied-constraints) allows some
-    constraints to be omitted from a function signature.
--   FIXME: [dynamic erased types](generics/details.md#runtime-type-fields)
--   FIXME: [variadics](generics/details.md#variadic-arguments)
+    constraints to be deduced and omitted from a function signature.
+-   [Dynamic erased types](generics/details.md#runtime-type-fields) can hold any
+    value with a type implementing an interface, and allows the functions in
+    that interface to be called using
+    [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
+    interfaces marked "`dyn`-safe".
+-   [Variadics](generics/details.md#variadic-arguments) supports variable-length
+    parameter lists.
 
 > References:
 >
