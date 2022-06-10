@@ -1700,17 +1700,9 @@ being passed as a separate explicit argument.
 > -   Proposal
 >     [#524: Generics overview](https://github.com/carbon-language/carbon-lang/pull/524)
 > -   Proposal
->     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
-> -   Proposal
->     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
-> -   Proposal
->     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+>     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Proposal
 >     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
-> -   Proposal
->     [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
-> -   Proposal
->     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
 
 ### Checked and template parameters
 
@@ -1760,6 +1752,10 @@ rigor of generics are problematic.
 > References:
 >
 > -   [Templates](templates.md)
+> -   Proposal
+>     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
+> -   Question-for-leads issue
+>     [#949: Constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
 > -   Proposal
 >     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
@@ -1817,6 +1813,21 @@ Interfaces and implementations may be
 [forward declared](generics/details.md#forward-declarations-and-cyclic-references)
 by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 
+> References:
+>
+> -   [Generics: Interfaces](generics/details.md#interfaces)
+> -   [Generics: Implementing interfaces](generics/details.md#implementing-interfaces)
+> -   Proposal
+>     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+> -   Proposal
+>     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
+> -   Proposal
+>     [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
+> -   Proposal
+>     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+
 ### Combining constraints
 
 A function can require calling types to implement multiple interfaces by
@@ -1852,6 +1863,8 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 > -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
+> -   Proposal
+>     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 
 ### Associated types
 
@@ -1898,6 +1911,8 @@ class FruitStack {
 > -   [Generics: Associated types](generics/details.md#associated-types)
 > -   Proposal
 >     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+> -   Proposal
+>     [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 
 ### Generic entities
 
@@ -2019,7 +2034,11 @@ indicate that they may not be specialized, subject to
 >
 > -   [Generic or parameterized impls](generics/details.md#parameterized-impls)
 > -   Proposal
+>     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
+> -   Proposal
 >     [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+> -   Proposal
+>     [#983: Generics details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
 
 ### Other features
 
@@ -2049,7 +2068,13 @@ Carbon generics have a number of other features, including:
 > References:
 >
 > -   [Generics details](generics/details.md)
-> -   FIXME
+> -   Proposal
+>     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
+> -   Proposal
+>     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
+
+> -   Proposal
+>     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 
 ### `observe` declarations
 
@@ -2076,6 +2101,15 @@ an
 or [generic implementation](#generic-implementations). An `observe`...`is`
 declaration may be used to
 [observe that a type implements an interface](generics/details.md#observing-a-type-implements-an-interface).
+
+> References:
+>
+> -   [Generics: `observe` declarations](generics/details.md#observe-declarations)
+> -   [Generics: Observing a type implements an interface](generics/details.md#observing-a-type-implements-an-interface)
+> -   Proposal
+>     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
+> -   Proposal
+>     [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
 
 ### Operator overloading
 
