@@ -2274,6 +2274,8 @@ auto TypeChecker::TypeCheckPattern(
       if (isa<InterfaceType, ConstraintType>(type)) {
         Nonnull<ImplBinding*> impl_binding =
             arena_->New<ImplBinding>(binding.source_loc(), &binding, type);
+        impl_binding->set_symbolic_identity(
+            arena_->New<SymbolicWitness>(CreateImplReference(impl_binding)));
         binding.set_impl_binding(impl_binding);
         BringImplIntoScope(impl_binding, impl_scope);
       }
