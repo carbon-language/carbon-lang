@@ -168,8 +168,11 @@ static auto SetFieldImpl(
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
-      return SetFieldImpl(arena, &cast<NominalClassValue>(*value).inits(),
-                          path_begin, path_end, field_value, source_loc);
+      const NominalClassValue& object = cast<NominalClassValue>(*value);
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
+                              SetFieldImpl(arena, &object.inits(), path_begin,
+                                           path_end, field_value, source_loc));
+      return arena->New<NominalClassValue>(&object.type(), inits);
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
@@ -273,13 +276,48 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
-    case Value::Kind::FunctionValue:
-      out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
+    case Value::Kind::FunctionValue: {
+      const FunctionValue& fun = cast<FunctionValue>(*this);
+      out << "fun<" << fun.declaration().name() << ">";
+      if (!fun.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : fun.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!fun.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : fun.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
-    case Value::Kind::BoundMethodValue:
-      out << "bound_method<"
-          << cast<BoundMethodValue>(*this).declaration().name() << ">";
+    }
+    case Value::Kind::BoundMethodValue: {
+      const BoundMethodValue& method = cast<BoundMethodValue>(*this);
+      out << "bound_method<" << method.declaration().name() << ">";
+      if (!method.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : method.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!method.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : method.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
+    }
     case Value::Kind::PointerValue:
       out << "ptr<" << cast<PointerValue>(*this).address() << ">";
       break;
@@ -309,14 +347,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "fn ";
       if (!fn_type.deduced_bindings().empty()) {
         out << "[";
-        unsigned int i = 0;
+        llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
-          if (i != 0) {
-            out << ", ";
-          }
-          out << deduced->name() << ":! " << deduced->type();
-          ++i;
+          out << sep << *deduced;
         }
         out << "]";
       }

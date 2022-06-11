@@ -666,20 +666,28 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
+      // Bind the receiver to the `me` parameter.
       CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
+      // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : m.type_args()) {
-        method_scope.Initialize(bind, val);
+        method_scope.Initialize(bind->original(), val);
       }
-
+      // Bring the deduced type arguments into scope.
+      for (const auto& [bind, val] : call.deduced_args()) {
+        method_scope.Initialize(bind->original(), val);
+      }
       // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : witnesses) {
+        method_scope.Initialize(impl_bind->original(), witness);
+      }
       for (const auto& [impl_bind, witness] : m.witnesses()) {
-        method_scope.Initialize(impl_bind, witness);
+        method_scope.Initialize(impl_bind->original(), witness);
       }
       CARBON_CHECK(method.body().has_value())
           << "Calling a method that's missing a body";
