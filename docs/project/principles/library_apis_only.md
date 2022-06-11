@@ -71,7 +71,7 @@ probably not be implemented in Carbon, but this principle applies only to
 function declarations, not function definitions.
 
 Similarly, a pointer type such as `Foo*` will be an alias for some library class
-type, for example `Carbon.Ptr(i32)`. As a result, Carbon will support
+type, for example `Carbon.Ptr(Foo)`. As a result, Carbon will support
 overloading pointer operations like `->` and unary `*`.
 
 All Carbon operations that use function-style syntax, such as `sizeof()` and
