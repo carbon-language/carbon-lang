@@ -18,10 +18,6 @@
 // CHECK: ********** starting execution **********
 // CHECK: ********** initializing globals **********
 // CHECK: ********** calling main function **********
-// CHECK: {
-// CHECK: stack:
-// CHECK: memory:
-// CHECK: }
 // CHECK: --- step exp Main() .0. (<Main()>:0) --->
 // CHECK: result: 0
 

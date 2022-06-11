@@ -83,6 +83,8 @@ message IntrinsicExpression {
   enum Intrinsic {
     UnknownIntrinsic = 0;
     Print = 1;
+    Alloc = 2;
+    Dealloc = 3;
   }
   optional Intrinsic intrinsic = 1;
   optional TupleLiteralExpression argument = 2;
