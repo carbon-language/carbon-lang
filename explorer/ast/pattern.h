@@ -278,7 +278,7 @@ class GenericBinding : public Pattern {
     return named_as_type_via_dot_self_;
   }
   // Set that this binding was named as a type within its own type expression
-  // via `.Self`.
+  // via `.Self`. May only be called during type-checking.
   void set_named_as_type_via_dot_self() { named_as_type_via_dot_self_ = true; }
 
  private:
