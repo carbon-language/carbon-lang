@@ -40,6 +40,7 @@ class Heap : public HeapAllocationInterface {
 
   // Marks this allocation, and all of its sub-objects, as dead.
   void Deallocate(AllocationId allocation) override;
+  void Deallocate(const Address& a);
 
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;

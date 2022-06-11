@@ -56,6 +56,7 @@ class Pattern : public AstNode {
     CARBON_CHECK(static_type_.has_value());
     return **static_type_;
   }
+  auto has_static_type() const -> bool { return static_type_.has_value(); }
 
   // Sets the static type of this expression. Can only be called once, during
   // typechecking.
@@ -266,11 +267,22 @@ class GenericBinding : public Pattern {
     impl_binding_ = binding;
   }
 
+  // Return the original generic binding.
+  auto original() const -> Nonnull<const GenericBinding*> {
+    if (original_.has_value())
+      return *original_;
+    else
+      return this;
+  }
+  // Set the original generic binding.
+  void set_original(Nonnull<const GenericBinding*> orig) { original_ = orig; }
+
  private:
   std::string name_;
   Nonnull<Expression*> type_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
+  std::optional<Nonnull<const GenericBinding*>> original_;
 };
 
 // Converts paren_contents to a Pattern, interpreting the parentheses as
