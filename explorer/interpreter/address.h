@@ -66,9 +66,9 @@ class Address {
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.
-  auto SubobjectAddress(std::string field_name) const -> Address {
+  auto SubobjectAddress(Member member) const -> Address {
     Address result = *this;
-    result.field_path_.Append(std::move(field_name));
+    result.field_path_.Append(member);
     return result;
   }
 
