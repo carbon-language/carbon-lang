@@ -81,7 +81,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic interfaces](#generic-interfaces)
         -   [Generic implementations](#generic-implementations)
     -   [Other features](#other-features)
-    -   [`observe` declarations](#observe-declarations)
+    -   [Generic type equality and `observe` declarations](#generic-type-equality-and-observe-declarations)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
@@ -1680,9 +1680,10 @@ file, including `i32` and `bool`. These will likely be defined in a special
 ## Generics
 
 Generics allow Carbon constructs like [functions](#functions) and
-[classes](#classes) to be written with compile-time parameters and apply generically
-to different types using those parameters. For example, this `Min` function has a type parameter
-`T` that can be any type that implements the `Ordered` interface.
+[classes](#classes) to be written with compile-time parameters and apply
+generically to different types using those parameters. For example, this `Min`
+function has a type parameter `T` that can be any type that implements the
+`Ordered` interface.
 
 ```carbon
 fn Min[T:! Ordered](x: T, y: T) -> T {
@@ -1813,10 +1814,11 @@ In this case, `Print` is a member of `Circle`. Interfaces may also be
 implemented [externally](generics/details.md#external-impl), which means the
 members of the interface are not direct members of the type. Those methods may
 still be called using
-[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access) to qualify the name of the member,
-as in `x.(Printable.Print)()`. External implementations don't have to be in the
-same library as the type definition, subject to the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
+[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access)
+to qualify the name of the member, as in `x.(Printable.Print)()`. External
+implementations don't have to be in the same library as the type definition,
+subject to the orphan rule ([1](generics/details.md#impl-lookup),
+[2](generics/details.md#orphan-rule)) for
 [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
@@ -1857,8 +1859,8 @@ fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
 
 The body of the function may call functions that are in either interface, except
 for names that are members of both. In that case, use the
-[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access) to qualify the name of the member,
-as in:
+[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access)
+to qualify the name of the member, as in:
 
 ```carbon
 fn DrawTies[T:! Renderable & GameResult](x: T) {
