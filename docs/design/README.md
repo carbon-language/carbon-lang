@@ -1647,8 +1647,6 @@ member is being defined out-of-line.
 
 #### Name lookup for common types
 
-> **TODO:** should this be renamed to "The prelude"?
-
 Common types that we expect to be used universally will be provided for every
 file, including `i32` and `bool`. These will likely be defined in a special
 "prelude" package.
