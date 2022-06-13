@@ -81,7 +81,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic interfaces](#generic-interfaces)
         -   [Generic implementations](#generic-implementations)
     -   [Other features](#other-features)
-    -   [`observe` declarations](#observe-declarations)
+    -   [Generic type equality and `observe` declarations](#generic-type-equality-and-observe-declarations)
     -   [Operator overloading](#operator-overloading)
         -   [Common type](#common-type)
 -   [Bidirectional interoperability with C/C++](#bidirectional-interoperability-with-cc)
@@ -1647,8 +1647,6 @@ member is being defined out-of-line.
 
 #### Name lookup for common types
 
-> **TODO:** should this be renamed to "The prelude"?
-
 Common types that we expect to be used universally will be provided for every
 file, including `i32` and `bool`. These will likely be defined in a special
 "prelude" package.
@@ -1680,9 +1678,10 @@ file, including `i32` and `bool`. These will likely be defined in a special
 ## Generics
 
 Generics allow Carbon constructs like [functions](#functions) and
-[classes](#classes) to have compile-time parameters to allow them to be
-applicable to more types. For example, this `Min` function has a type parameter
-`T` that can be any type that implements the `Ordered` interface.
+[classes](#classes) to be written with compile-time parameters and apply
+generically to different types using those parameters. For example, this `Min`
+function has a type parameter `T` that can be any type that implements the
+`Ordered` interface.
 
 ```carbon
 fn Min[T:! Ordered](x: T, y: T) -> T {
@@ -1724,7 +1723,7 @@ type checking is equivalent to saying the function would pass type checking
 given any type `T` that implements the `Ordered` interface. Then calls to `Min`
 only need to check that the deduced type value of `T` implements `Ordered`.
 
-Instead, the parameter could be declared to be a _template_ parameter by
+The parameter could alternatively be declared to be a _template_ parameter by
 prefixing with the `template` keyword, as in `template T:! Type`.
 
 ```carbon
@@ -1813,10 +1812,11 @@ In this case, `Print` is a member of `Circle`. Interfaces may also be
 implemented [externally](generics/details.md#external-impl), which means the
 members of the interface are not direct members of the type. Those methods may
 still be called using
-[compound member access syntax to qualify the name of the member](generics/details.md#qualified-member-names-and-compound-member-access),
-as in `x.(Printable.Print)()`. External implementations don't have to be in the
-same library as the type definition, subject to the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
+[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access)
+to qualify the name of the member, as in `x.(Printable.Print)()`. External
+implementations don't have to be in the same library as the type definition,
+subject to the orphan rule ([1](generics/details.md#impl-lookup),
+[2](generics/details.md#orphan-rule)) for
 [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
@@ -1857,8 +1857,8 @@ fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
 
 The body of the function may call functions that are in either interface, except
 for names that are members of both. In that case, use the
-[compound member access syntax to qualify the name of the member](generics/details.md#qualified-member-names-and-compound-member-access),
-as in:
+[compound member access syntax](generics/details.md#qualified-member-names-and-compound-member-access)
+to qualify the name of the member, as in:
 
 ```carbon
 fn DrawTies[T:! Renderable & GameResult](x: T) {
@@ -2091,7 +2091,7 @@ Carbon generics have a number of other features, including:
 > -   Proposal
 >     [#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818)
 
-### `observe` declarations
+### Generic type equality and `observe` declarations
 
 Determining whether two types must be equal in a generic context is in general
 undecidable, as

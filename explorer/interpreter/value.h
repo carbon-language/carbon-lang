@@ -45,7 +45,8 @@ class Value {
     NominalClassValue,
     AlternativeValue,
     TupleValue,
-    Witness,
+    ImplWitness,
+    SymbolicWitness,
     IntType,
     BoolType,
     TypeType,
@@ -564,17 +565,6 @@ class NominalClassType : public Value {
         declaration_(declaration),
         type_args_(type_args) {}
 
-  // Construct a class type that represents the result of applying the
-  // given generic class to the `type_args` and that records the result of the
-  // compile-time search for any required impls.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
-                            const BindingMap& type_args,
-                            const ImplExpMap& impls)
-      : Value(Kind::NominalClassType),
-        declaration_(declaration),
-        type_args_(type_args),
-        impls_(impls) {}
-
   // Construct a fully instantiated generic class type to represent the
   // run-time type of an object.
   explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration,
@@ -591,13 +581,6 @@ class NominalClassType : public Value {
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
-
-  // Maps each of an instantiated generic class's impl bindings to an
-  // expression that constructs the witness table for the corresponding
-  // argument. Should not be called on 1) a non-generic class, 2) a
-  // generic-class that is not instantiated, or 3) a fully
-  // instantiated runtime type of a generic class.
-  auto impls() const -> const ImplExpMap& { return impls_; }
 
   // Maps each of the class's impl bindings to the witness table
   // for the corresponding argument. Should only be called on a fully
@@ -618,7 +601,6 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   BindingMap type_args_;
-  ImplExpMap impls_;
   ImplWitnessMap witnesses_;
 };
 
@@ -640,12 +622,6 @@ class InterfaceType : public Value {
                          const BindingMap& args)
       : Value(Kind::InterfaceType), declaration_(declaration), args_(args) {}
   explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
-                         const BindingMap& args, const ImplExpMap& impls)
-      : Value(Kind::InterfaceType),
-        declaration_(declaration),
-        args_(args),
-        impls_(impls) {}
-  explicit InterfaceType(Nonnull<const InterfaceDeclaration*> declaration,
                          const BindingMap& args, const ImplWitnessMap& wits)
       : Value(Kind::InterfaceType),
         declaration_(declaration),
@@ -662,13 +638,11 @@ class InterfaceType : public Value {
   auto args() const -> const BindingMap& { return args_; }
 
   // TODO: These aren't used for anything yet.
-  auto impls() const -> const ImplExpMap& { return impls_; }
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
  private:
   Nonnull<const InterfaceDeclaration*> declaration_;
   BindingMap args_;
-  ImplExpMap impls_;
   ImplWitnessMap witnesses_;
 };
 
@@ -744,25 +718,37 @@ class ConstraintType : public Value {
   std::vector<LookupContext> lookup_contexts_;
 };
 
-// The witness table for an impl.
+// A witness table.
 class Witness : public Value {
+ protected:
+  explicit Witness(Value::Kind kind) : Value(kind) {}
+
+ public:
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ImplWitness ||
+           value->kind() == Kind::SymbolicWitness;
+  }
+};
+
+// The witness table for an impl.
+class ImplWitness : public Witness {
  public:
   // Construct a witness for
   // 1) a non-generic impl, or
   // 2) a generic impl that has not yet been applied to type arguments.
-  explicit Witness(Nonnull<const ImplDeclaration*> declaration)
-      : Value(Kind::Witness), declaration_(declaration) {}
+  explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration)
+      : Witness(Kind::ImplWitness), declaration_(declaration) {}
 
   // Construct an instantiated generic impl.
-  explicit Witness(Nonnull<const ImplDeclaration*> declaration,
-                   const BindingMap& type_args, const ImplWitnessMap& wits)
-      : Value(Kind::Witness),
+  explicit ImplWitness(Nonnull<const ImplDeclaration*> declaration,
+                       const BindingMap& type_args, const ImplWitnessMap& wits)
+      : Witness(Kind::ImplWitness),
         declaration_(declaration),
         type_args_(type_args),
         witnesses_(wits) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::Witness;
+    return value->kind() == Kind::ImplWitness;
   }
   auto declaration() const -> const ImplDeclaration& { return *declaration_; }
   auto type_args() const -> const BindingMap& { return type_args_; }
@@ -775,6 +761,25 @@ class Witness : public Value {
   Nonnull<const ImplDeclaration*> declaration_;
   BindingMap type_args_;
   ImplWitnessMap witnesses_;
+};
+
+// A witness table whose concrete value cannot be determined yet.
+//
+// These are used to represent symbolic witness values which can be computed at
+// runtime but whose values are not known statically.
+class SymbolicWitness : public Witness {
+ public:
+  explicit SymbolicWitness(Nonnull<const Expression*> impl_expr)
+      : Witness(Kind::SymbolicWitness), impl_expr_(impl_expr) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::SymbolicWitness;
+  }
+
+  auto impl_expression() const -> const Expression& { return *impl_expr_; }
+
+ private:
+  Nonnull<const Expression*> impl_expr_;
 };
 
 // A choice type.

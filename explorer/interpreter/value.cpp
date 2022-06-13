@@ -36,27 +36,34 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
   const std::string& f = field.name();
 
   if (field.witness().has_value()) {
-    Nonnull<const Witness*> witness = *field.witness();
+    Nonnull<const Witness*> witness = cast<Witness>(*field.witness());
     switch (witness->kind()) {
-      case Value::Kind::Witness: {
+      case Value::Kind::ImplWitness: {
+        auto* impl_witness = cast<ImplWitness>(witness);
         if (std::optional<Nonnull<const Declaration*>> mem_decl =
-                FindMember(f, witness->declaration().members());
+                FindMember(f, impl_witness->declaration().members());
             mem_decl.has_value()) {
           const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
           if (fun_decl.is_method()) {
-            return arena->New<BoundMethodValue>(
-                &fun_decl, v, witness->type_args(), witness->witnesses());
+            return arena->New<BoundMethodValue>(&fun_decl, v,
+                                                impl_witness->type_args(),
+                                                impl_witness->witnesses());
           } else {
             // Class function.
-            auto fun = cast<FunctionValue>(*fun_decl.constant_value());
+            auto* fun = cast<FunctionValue>(*fun_decl.constant_value());
             return arena->New<FunctionValue>(&fun->declaration(),
-                                             witness->type_args(),
-                                             witness->witnesses());
+                                             impl_witness->type_args(),
+                                             impl_witness->witnesses());
           }
         } else {
           return CompilationError(source_loc)
                  << "member " << f << " not in " << *witness;
         }
+      }
+      case Value::Kind::SymbolicWitness: {
+        return RuntimeError(source_loc)
+               << "member lookup for " << f << " in symbolic " << *witness
+               << " not implemented yet";
       }
       default:
         CARBON_FATAL() << "expected Witness, not " << *witness;
@@ -168,8 +175,11 @@ static auto SetFieldImpl(
       return arena->New<StructValue>(elements);
     }
     case Value::Kind::NominalClassValue: {
-      return SetFieldImpl(arena, &cast<NominalClassValue>(*value).inits(),
-                          path_begin, path_end, field_value, source_loc);
+      const NominalClassValue& object = cast<NominalClassValue>(*value);
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inits,
+                              SetFieldImpl(arena, &object.inits(), path_begin,
+                                           path_end, field_value, source_loc));
+      return arena->New<NominalClassValue>(&object.type(), inits);
     }
     case Value::Kind::TupleValue: {
       std::vector<Nonnull<const Value*>> elements =
@@ -273,13 +283,48 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
-    case Value::Kind::FunctionValue:
-      out << "fun<" << cast<FunctionValue>(*this).declaration().name() << ">";
+    case Value::Kind::FunctionValue: {
+      const FunctionValue& fun = cast<FunctionValue>(*this);
+      out << "fun<" << fun.declaration().name() << ">";
+      if (!fun.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : fun.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!fun.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : fun.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
-    case Value::Kind::BoundMethodValue:
-      out << "bound_method<"
-          << cast<BoundMethodValue>(*this).declaration().name() << ">";
+    }
+    case Value::Kind::BoundMethodValue: {
+      const BoundMethodValue& method = cast<BoundMethodValue>(*this);
+      out << "bound_method<" << method.declaration().name() << ">";
+      if (!method.type_args().empty()) {
+        out << "[";
+        llvm::ListSeparator sep;
+        for (const auto& [ty_var, ty_arg] : method.type_args()) {
+          out << sep << *ty_var << "=" << *ty_arg;
+        }
+        out << "]";
+      }
+      if (!method.witnesses().empty()) {
+        out << "{|";
+        llvm::ListSeparator sep;
+        for (const auto& [impl_bind, witness] : method.witnesses()) {
+          out << sep << *witness;
+        }
+        out << "|}";
+      }
       break;
+    }
     case Value::Kind::PointerValue:
       out << "ptr<" << cast<PointerValue>(*this).address() << ">";
       break;
@@ -309,14 +354,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "fn ";
       if (!fn_type.deduced_bindings().empty()) {
         out << "[";
-        unsigned int i = 0;
+        llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
-          if (i != 0) {
-            out << ", ";
-          }
-          out << deduced->name() << ":! " << deduced->type();
-          ++i;
+          out << sep << *deduced;
         }
         out << "]";
       }
@@ -337,13 +378,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "class ";
       PrintNameWithBindings(out, &class_type.declaration(),
                             class_type.type_args());
-      if (!class_type.impls().empty()) {
-        out << " impls ";
-        llvm::ListSeparator sep;
-        for (const auto& [impl_bind, impl] : class_type.impls()) {
-          out << sep << *impl;
-        }
-      }
       if (!class_type.witnesses().empty()) {
         out << " witnesses ";
         llvm::ListSeparator sep;
@@ -385,10 +419,15 @@ void Value::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case Value::Kind::Witness: {
-      const auto& witness = cast<Witness>(*this);
+    case Value::Kind::ImplWitness: {
+      const auto& witness = cast<ImplWitness>(*this);
       out << "witness " << *witness.declaration().impl_type() << " as "
           << witness.declaration().interface();
+      break;
+    }
+    case Value::Kind::SymbolicWitness: {
+      const auto& witness = cast<SymbolicWitness>(*this);
+      out << "witness " << witness.impl_expression();
       break;
     }
     case Value::Kind::ParameterizedEntityName:
@@ -660,7 +699,8 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2) -> bool {
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
       CARBON_FATAL() << "TypeEqual: unexpected Witness";
       break;
     case Value::Kind::AutoType:
@@ -748,7 +788,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2) -> bool {
     case Value::Kind::NominalClassType:
     case Value::Kind::InterfaceType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ChoiceType:
     case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:

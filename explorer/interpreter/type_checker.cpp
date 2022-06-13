@@ -82,7 +82,8 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -137,7 +138,8 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
       return false;
@@ -506,6 +508,12 @@ auto TypeChecker::ArgumentDeduction(
     -> ErrorOr<Success> {
   if (trace_stream_) {
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
+    **trace_stream_ << "bindings: ";
+    llvm::ListSeparator sep;
+    for (auto binding : bindings_to_deduce) {
+      **trace_stream_ << sep << *binding;
+    }
+    **trace_stream_ << "\n";
   }
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
@@ -704,7 +712,8 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
       return handle_non_deduced_type();
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -905,12 +914,58 @@ auto TypeChecker::Substitute(
     }
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*type);
-      auto param = Substitute(dict, &fn_type.parameters());
-      auto ret = Substitute(dict, &fn_type.return_type());
-      // TODO: Only remove the bindings that are in `dict`; we may still need
-      // to do deduction.
-      return arena_->New<FunctionType>(param, llvm::None, ret, llvm::None,
-                                       llvm::None);
+      std::map<Nonnull<const GenericBinding*>, Nonnull<const Value*>> new_dict(
+          dict);
+      // Create new generic parameters and generic bindings
+      // and add them to new_dict.
+      std::vector<FunctionType::GenericParameter> generic_parameters;
+      std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
+      std::map<Nonnull<const GenericBinding*>, Nonnull<const GenericBinding*>>
+          bind_map;  // Map old generic bindings to new ones.
+      for (const FunctionType::GenericParameter& gp :
+           fn_type.generic_parameters()) {
+        Nonnull<const Value*> new_type =
+            Substitute(dict, &gp.binding->static_type());
+        Nonnull<GenericBinding*> new_gb = arena_->New<GenericBinding>(
+            gp.binding->source_loc(), gp.binding->name(),
+            (Expression*)&gp.binding->type());  // How to avoid the cast? -jsiek
+        new_gb->set_original(gp.binding->original());
+        new_gb->set_static_type(new_type);
+        FunctionType::GenericParameter new_gp = {.index = gp.index,
+                                                 .binding = new_gb};
+        generic_parameters.push_back(new_gp);
+        new_dict[gp.binding] = arena_->New<VariableType>(new_gp.binding);
+        bind_map[gp.binding] = new_gb;
+      }
+      for (Nonnull<const GenericBinding*> gb : fn_type.deduced_bindings()) {
+        Nonnull<const Value*> new_type = Substitute(dict, &gb->static_type());
+        Nonnull<GenericBinding*> new_gb = arena_->New<GenericBinding>(
+            gb->source_loc(), gb->name(),
+            (Expression*)&gb->type());  // How to avoid the cast? -jsiek
+        new_gb->set_original(gb->original());
+        new_gb->set_static_type(new_type);
+        deduced_bindings.push_back(new_gb);
+        new_dict[gb] = arena_->New<VariableType>(new_gb);
+        bind_map[gb] = new_gb;
+      }
+      // Apply substitution to impl bindings and update their
+      // `type_var` pointers to the new generic bindings.
+      std::vector<Nonnull<const ImplBinding*>> impl_bindings;
+      for (auto ib : fn_type.impl_bindings()) {
+        Nonnull<ImplBinding*> new_ib =
+            arena_->New<ImplBinding>(ib->source_loc(), bind_map[ib->type_var()],
+                                     Substitute(new_dict, ib->interface()));
+        new_ib->set_original(ib->original());
+        impl_bindings.push_back(new_ib);
+      }
+      // Apply substitution to parameter types
+      auto param = Substitute(new_dict, &fn_type.parameters());
+      // Apply substitution to return type
+      auto ret = Substitute(new_dict, &fn_type.return_type());
+      // Create the new FunctionType
+      Nonnull<const Value*> new_fn_type = arena_->New<FunctionType>(
+          param, generic_parameters, ret, deduced_bindings, impl_bindings);
+      return new_fn_type;
     }
     case Value::Kind::PointerType: {
       return arena_->New<PointerType>(
@@ -922,10 +977,6 @@ auto TypeChecker::Substitute(
           arena_->New<NominalClassType>(
               &class_type.declaration(),
               SubstituteIntoBindingMap(class_type.type_args()));
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: " << class_type << " => "
-                        << *new_class_type << "\n";
-      }
       return new_class_type;
     }
     case Value::Kind::InterfaceType: {
@@ -933,10 +984,6 @@ auto TypeChecker::Substitute(
       Nonnull<const InterfaceType*> new_iface_type = arena_->New<InterfaceType>(
           &iface_type.declaration(),
           SubstituteIntoBindingMap(iface_type.args()));
-      if (trace_stream_) {
-        **trace_stream_ << "substitution: " << iface_type << " => "
-                        << *new_iface_type << "\n";
-      }
       return new_iface_type;
     }
     case Value::Kind::ConstraintType: {
@@ -993,7 +1040,8 @@ auto TypeChecker::Substitute(
       // TODO: We should substitute into the value and produce a new type of
       // type for it.
       return type;
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
@@ -1108,6 +1156,8 @@ auto TypeChecker::SatisfyImpls(
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
     Nonnull<const Value*> interface =
         Substitute(deduced_type_args, impl_binding->interface());
+    CARBON_CHECK(deduced_type_args.find(impl_binding->type_var()) !=
+                 deduced_type_args.end());
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<Expression*> impl,
         impl_scope.Resolve(interface,
@@ -1288,8 +1338,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
   if (trace_stream_) {
     **trace_stream_ << "checking " << ExpressionKindName(e->kind()) << " "
                     << *e;
-    **trace_stream_ << "\nconstants: ";
-    PrintConstants(**trace_stream_);
     **trace_stream_ << "\n";
   }
   if (e->is_type_checked()) {
@@ -1445,10 +1493,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 if (func_decl->is_method() && func_decl->me_pattern().kind() ==
                                                   PatternKind::AddrPattern) {
                   access.set_is_field_addr_me_method();
-                  CARBON_RETURN_IF_ERROR(
-                      ExpectType(e->source_loc(), "method access",
-                                 &func_decl->me_pattern().static_type(),
-                                 &access.object().static_type(), &impl_scope));
+                  Nonnull<const Value*> me_type =
+                      Substitute(t_class.type_args(),
+                                 &func_decl->me_pattern().static_type());
+                  CARBON_RETURN_IF_ERROR(ExpectType(
+                      e->source_loc(), "method access, receiver type", me_type,
+                      &access.object().static_type(), &impl_scope));
                   if (access.object().value_category() != ValueCategory::Var) {
                     return CompilationError(e->source_loc())
                            << "method " << access.member()
@@ -1859,6 +1909,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       switch (call.function().static_type().kind()) {
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
+          if (trace_stream_) {
+            **trace_stream_
+                << "checking call to function of type " << fun_t
+                << "\nwith arguments of type: " << call.argument().static_type()
+                << "\n";
+          }
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
               fun_t.deduced_bindings(), fun_t.impl_bindings(), impl_scope));
@@ -1904,8 +1960,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::ClassDeclaration: {
               Nonnull<NominalClassType*> inst_class_type =
                   arena_->New<NominalClassType>(&cast<ClassDeclaration>(decl),
-                                                call.deduced_args(),
-                                                call.impls());
+                                                call.deduced_args());
               call.set_static_type(
                   arena_->New<TypeOfClassType>(inst_class_type));
               call.set_value_category(ValueCategory::Let);
@@ -1914,7 +1969,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             case DeclarationKind::InterfaceDeclaration: {
               Nonnull<InterfaceType*> inst_iface_type =
                   arena_->New<InterfaceType>(&cast<InterfaceDeclaration>(decl),
-                                             call.deduced_args(), call.impls());
+                                             call.deduced_args());
               call.set_static_type(
                   arena_->New<TypeOfInterfaceType>(inst_iface_type));
               call.set_value_category(ValueCategory::Let);
@@ -1963,6 +2018,28 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           e->set_static_type(TupleValue::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();
+        case IntrinsicExpression::Intrinsic::Alloc: {
+          if (intrinsic_exp.args().fields().size() != 1) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_new takes 1 argument";
+          }
+          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          e->set_static_type(arena_->New<PointerType>(arg_type));
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::Dealloc: {
+          if (intrinsic_exp.args().fields().size() != 1) {
+            return CompilationError(e->source_loc())
+                   << "__intrinsic_new takes 1 argument";
+          }
+          auto arg_type = &intrinsic_exp.args().fields()[0]->static_type();
+          CARBON_RETURN_IF_ERROR(
+              ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleValue::Empty());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
       }
     }
     case ExpressionKind::IntTypeLiteral:
@@ -2991,7 +3068,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
       }
     }
   }
-  impl_decl->set_constant_value(arena_->New<Witness>(impl_decl));
+  impl_decl->set_constant_value(arena_->New<ImplWitness>(impl_decl));
   if (trace_stream_) {
     **trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
                     << " as " << impl_decl->interface() << "\n";
@@ -3053,7 +3130,8 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
-    case Value::Kind::Witness:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::SymbolicWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::BindingPlaceholderValue:

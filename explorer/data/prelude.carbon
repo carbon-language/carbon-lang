@@ -39,3 +39,14 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 fn Print(format_str: String) {
   __intrinsic_print(format_str);
 }
+
+class Heap {
+  fn New[T:! Type, me: Self](x : T) -> T* {
+    return __intrinsic_new(x);
+  }
+  fn Delete[T:! Type, me: Self](p : T*) {
+    __intrinsic_delete(p);
+  }
+}
+
+var heap: Heap = {};
