@@ -918,16 +918,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      auto value_or_error =
-          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
-      if (!value_or_error.ok() && phase() == Phase::CompileTime &&
-          isa<ImplBinding>(ident.value_node().base())) {
-        // The `ImplBinding` might not be in scope. If so, just remember the
-        // expression from which it was derived.
-        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-      }
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
-                              std::move(value_or_error));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), exp.source_loc()));
