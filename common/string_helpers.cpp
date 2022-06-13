@@ -27,8 +27,8 @@ static auto FromHex(char c) -> std::optional<char> {
   return std::nullopt;
 }
 
-auto UnescapeStringLiteral(llvm::StringRef source, const size_t hashtag_num,
-                           bool is_block_string) -> std::optional<std::string> {
+auto UnescapeStringLiteral(llvm::StringRef source, const size_t hashtag_num = 0,
+                           bool is_block_string = false) -> std::optional<std::string> {
   std::string ret;
   ret.reserve(source.size());
   std::string escape = "\\";
