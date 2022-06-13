@@ -5,7 +5,7 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
-#include <cstdlib>
+#include <unistd.h>
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
@@ -70,11 +70,11 @@ class ExitingStream {
     // stack trace on exit.
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // Using `exit()` to allow the fuzzer to 'see' the CHECKs.
-    std::exit(1);
+    exit(1);
 #else
-    // Using `quick_exit()` to suppress extra output (like asan leaks report)
+    // Using `_exit()` to suppress extra output (like asan leaks report)
     // after the crash message.
-    std::quick_exit(1);
+    _exit(1);
 #endif
   }
 
