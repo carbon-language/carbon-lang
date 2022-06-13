@@ -2259,51 +2259,54 @@ The common type is required to be a type that both types have an
 
 ### Safety
 
-Carbon's premise is that C++ users can't give up performance to get safety.
+Carbon's premise is that C++ users can't give up performance to get safety. Even
+if some isolated users can make that tradeoff, they share code with
+performance-sensitive users. Any path to safety must preserve performance of C++
+today. This rules out garbage collection, and many other options. The only well
+understood mechanism of achieving safety without giving up performance is
+compile-time safety. The leading example of how to achieve this is Rust.
 
--   Even if some isolated users can make that tradeoff, they share code with
-    performance sensitive users
--   Any path to safety must preserve performance of C++ today
-    -   Rules out garbage collection, many other options
--   Only well understood mechanism is compile-time safety
--   Leading example of how to achieve this is Rust
+The difference between Rust's approach and Carbon's is that Rust starts with
+safety and Carbons starts with migration. Rust supports interop with C, and
+there is ongoing work to improve the C++ interop story and develop migration
+tools, but the main refrain in the Rust community is to "rewrite it in Rust"
+([1](https://deprogrammaticaipsum.com/the-great-rewriting-in-rust/),
+[2](https://unhandledexpression.com/rust/2017/07/10/why-you-should-actually-rewrite-it-in-rust.html),
+[3](https://transitiontech.ca/random/RIIR)). Carbon's approach is to focus on
+migration from C++, including seamless interop, and then incrementally improve
+safety.
 
--   Rust: starts with safety, trying to make migration achievable.
--   Carbon: starts with migration, incrementally approaches safety. We can
-    design Carbon much more around today's C++ code and incrementally
-    approaching safety.
+What building blocks do we need in Carbon to be able to build up to an
+acceptable level of safety? This is what will drive the language design in order
+to enable this goal. We can look at existing languages like Rust and Swift to
+understand what fundamental capabilities they ended up needing. The two biggest
+steps are:
 
-Basically, what building blocks do we need in Carbon to be able to build up to
-an acceptable level of safety? This is what will drive the language design in
-order to enable this goal. We can look at existing languages like Rust and Swift
-to understand what fundamental capabilities they ended up needing. Two things
-are immediately clear:
-
--   Expand the type system to include more semantic information
--   More pervasive use of type system abstractions (typically generics)
+-   to expand the type system to include more semantic information, and
+-   to more pervasively use type system abstractions (typically generics).
 
 For migrating C++ code, we also need the ability to add features and migrate
-code to use those new features incrementally and over time.
+code to use those new features incrementally and over time. This requires
+designing the language with evolution baked in on day one. This impacts a wide
+range of features:
 
--   Requires designing the language with evolution baked in on day one
--   This impacts a wide range of features
-    -   Adding and removing APIs
-    -   Tooling support to drive migrations
-    -   ...
--   At the lowest level though: need simple and extensible syntax and grammar
+-   support for adding and removing APIs,
+-   tooling support to drive migrations, and
+-   at the lowest level Carbon needs a simple and extensible syntax and grammar.
 
 Carbon's clean grammar provides a simple and effective platform for adding
 necessary syntax to annotate more precise semantics. This requires a systematic
 cleanup and simplification of C++'s syntax and grammar, which is inherently a
 backwards incompatible change. Grammar changes are actually among the cheapest
-migrations since they are perfect for tooling and automation. Opens up
+migrations since they are perfect for tooling and automation. This opens up
 opportunities to provide easy pattern recognition and familiar syntactic anchors
-for humans. This will also simplify compilers, IDEs, and tooling.
+for humans. It also simplifies compilers, IDEs, and tooling.
 
-Once we have a simplified grammar, the next step is to introduce the building
-blocks for safety. These are things we need to add (relative to C++) without
-breaking migration. Rust can illustrate exactly why we need these specific
-features, but we need to also have a migration story for them.
+Once we have the ability to migrate C++ code to Carbon's simplified grammar, the
+next step is to introduce the building blocks for safety. These are things we
+need to add (relative to C++) without breaking migration. Rust can illustrate
+exactly why we need these specific features, but we need to also have a
+migration story for them.
 
 Rust shows the value of expanded semantic information in the type system such as
 precise lifetimes. This is hard to do in C++ since it has too many kinds of
