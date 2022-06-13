@@ -75,6 +75,13 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
       return *result;
     }
   }
+  // We don't know the value of this node, but at compile time we may still be
+  // able to form a symbolic value for it. For example, in
+  //
+  //   fn F[T:! Type](x: T) {}
+  //
+  // ... we don't know the value of `T` but can still symbolically evaluate it
+  // to a `VariableType`. At runtime we need actual values.
   if (phase_ == Phase::CompileTime) {
     std::optional<const Value*> symbolic_identity =
         value_node.symbolic_identity();
