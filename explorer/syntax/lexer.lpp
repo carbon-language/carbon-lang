@@ -81,6 +81,7 @@ PACKAGE              "package"
 PERIOD               "."
 PLUS                 "+"
 RETURN               "return"
+RETURNED             "returned"
 RIGHT_CURLY_BRACE    "}"
 RIGHT_PARENTHESIS    ")"
 RIGHT_SQUARE_BRACKET "]"
@@ -188,6 +189,7 @@ string_literal        \"([^\\\"\n\v\f\r]|\\.)*\"
 {PACKAGE}             { return SIMPLE_TOKEN(PACKAGE);             }
 {PERIOD}              { return SIMPLE_TOKEN(PERIOD);              }
 {PLUS}                { return SIMPLE_TOKEN(PLUS);                }
+{RETURNED}            { return SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return SIMPLE_TOKEN(RETURN);              }
 {RUN}                 { return SIMPLE_TOKEN(RUN);                 }
 {SELF}                { return SIMPLE_TOKEN(SELF);                }

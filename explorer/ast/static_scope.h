@@ -173,12 +173,22 @@ class StaticScope {
   auto Resolve(const std::string& name, SourceLocation source_loc) const
       -> ErrorOr<ValueNodeView>;
 
+  // Adds AST node of returned var declaration to this scope.
+  // Reports a compilation error if this scope or its anscestors already has a
+  // returned var.
+  auto AddReturnedVar(const SourceLocation& returned_var_loc)
+      -> ErrorOr<Success>;
+
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
   // than one definition is found.
   auto TryResolve(const std::string& name, SourceLocation source_loc) const
       -> ErrorOr<std::optional<ValueNodeView>>;
+
+  // Returns source location of returned var definition if it exists in the
+  // ancestor graph.
+  auto ResolveReturned() const -> std::optional<SourceLocation>;
 
   struct Entry {
     ValueNodeView entity;
@@ -189,6 +199,9 @@ class StaticScope {
 
   // A list of scopes used for name lookup within this scope.
   std::vector<Nonnull<StaticScope*>> parent_scopes_;
+
+  // Stores the code loc where the returned var is defined.
+  std::optional<SourceLocation> returned_var_loc_;
 };
 
 }  // namespace Carbon

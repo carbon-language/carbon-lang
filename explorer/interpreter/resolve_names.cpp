@@ -307,6 +307,10 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       auto& def = cast<VariableDefinition>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(def.init(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(def.pattern(), enclosing_scope));
+      if (def.is_returned()) {
+        CARBON_RETURN_IF_ERROR(
+            enclosing_scope.AddReturnedVar(def.pattern().source_loc()));
+      }
       break;
     }
     case StatementKind::If: {

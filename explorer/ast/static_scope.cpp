@@ -4,7 +4,10 @@
 
 #include "explorer/ast/static_scope.h"
 
+#include <optional>
+
 #include "explorer/common/error_builders.h"
+#include "explorer/common/source_location.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
@@ -68,6 +71,31 @@ auto StaticScope::TryResolve(const std::string& name,
     result = parent_result;
   }
   return result;
+}
+
+auto StaticScope::AddReturnedVar(const SourceLocation& returned_var_loc)
+    -> ErrorOr<Success> {
+  auto resolved_returned_var_loc = ResolveReturned();
+  if (resolved_returned_var_loc.has_value()) {
+    return CompilationError(returned_var_loc)
+           << "Duplicate definition of returned var also found at "
+           << *resolved_returned_var_loc;
+  }
+  returned_var_loc_ = returned_var_loc;
+  return Success();
+}
+
+auto StaticScope::ResolveReturned() const -> std::optional<SourceLocation> {
+  if (returned_var_loc_.has_value()) {
+    return returned_var_loc_;
+  }
+  for (Nonnull<const StaticScope*> parent : parent_scopes_) {
+    auto parent_returned_var_loc = parent->ResolveReturned();
+    if (parent_returned_var_loc.has_value()) {
+      return parent_returned_var_loc;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon
