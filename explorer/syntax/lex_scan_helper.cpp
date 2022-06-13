@@ -52,7 +52,7 @@ auto ProcessSingleLineString(llvm::StringRef str,
     return context.RecordSyntaxError(
         llvm::formatv("Invalid escaping in string: {0}", str));
   }
-  return ARG_TOKEN(string_literal, *unescaped);
+  return CARBON_ARG_TOKEN(string_literal, *unescaped);
 }
 
 auto ProcessMultiLineString(llvm::StringRef str,
@@ -67,7 +67,7 @@ auto ProcessMultiLineString(llvm::StringRef str,
     return context.RecordSyntaxError(llvm::formatv(
         "Invalid block string: {0}", block_string.error().message()));
   }
-  return ARG_TOKEN(string_literal, *block_string);
+  return CARBON_ARG_TOKEN(string_literal, *block_string);
 }
 
 }  // namespace Carbon

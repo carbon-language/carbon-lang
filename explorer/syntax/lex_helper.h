@@ -16,10 +16,10 @@
     BEGIN(INITIAL);                                                \
   }
 
-#define SIMPLE_TOKEN(name) \
+#define CARBON_SIMPLE_TOKEN(name) \
   Carbon::Parser::make_##name(context.current_token_position);
 
-#define ARG_TOKEN(name, arg) \
+#define CARBON_ARG_TOKEN(name, arg) \
   Carbon::Parser::make_##name(arg, context.current_token_position);
 
 #endif  // CARBON_EXPLORER_SYNTAX_LEX_HELPER_H_
