@@ -15,8 +15,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   #include "explorer/syntax/parser.h"
   #include "llvm/ADT/StringExtras.h"
   #include "llvm/Support/FormatVariadic.h"
-
-  auto YyinputWrapper(yyscan_t yyscanner) -> int;
 %}
 
 /* Turn off legacy bits we don't need. */
