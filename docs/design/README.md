@@ -2276,23 +2276,20 @@ tools, but the main refrain in the Rust community is to "rewrite it in Rust"
 migration from C++, including seamless interop, and then incrementally improve
 safety.
 
-What building blocks do we need in Carbon to be able to build up to an
-acceptable level of safety? This is what will drive the language design in order
-to enable this goal. We can look at existing languages like Rust and Swift to
-understand what fundamental capabilities they ended up needing. The two biggest
-steps are:
+The first impact on Carbon's design to support its safety strategy are the necessary building blocks for this level of compile time safety. We look at existing languages like Rust and Swift to
+understand what fundamental capabilities they ended up needing. The two components that stand out are:
 
--   to expand the type system to include more semantic information, and
--   to more pervasively use type system abstractions (typically generics).
+-   Expanded type system that includes more semantic information.
+-   More pervasive use of type system abstractions (typically generics).
 
 For migrating C++ code, we also need the ability to add features and migrate
 code to use those new features incrementally and over time. This requires
 designing the language with evolution baked in on day one. This impacts a wide
 range of features:
 
--   support for adding and removing APIs,
--   tooling support to drive migrations, and
--   at the lowest level Carbon needs a simple and extensible syntax and grammar.
+-   At the lowest level, a simple and extensible syntax and grammar.
+-   Tools and support for adding and removing APIs.
+-   Scalable migration strategies, including tooling support.
 
 Carbon's clean grammar provides a simple and effective platform for adding
 necessary syntax to annotate more precise semantics. This requires a systematic
@@ -2311,7 +2308,7 @@ migration story for them.
 Rust shows the value of expanded semantic information in the type system such as
 precise lifetimes. This is hard to do in C++ since it has too many kinds of
 references and pointers, which increases the complexity in the type system
-multiplicatively. Carbon code compressing C++ type variations into just values
+multiplicatively. Carbon is attempting to compress C++'s type variations into just values
 and [pointers](#pointer-types).
 
 Rust also shows the value of functions parameterized by lifetimes. Since
@@ -2324,15 +2321,15 @@ In conclusion, there are two patterns in how Carbon diverges from C++:
 
 -   Simplify and removing things to create space for new safety features. This
     trivially requires breaking backwards compatibility.
--   Re-engineer foundations to model and enforce safety. This has been tried and
-    failed in C++ without the simplifications in #1.
+-   Re-engineer foundations to model and enforce safety. This has complex and
+    difficulty in C++ without first simplifying the language.
 
 This leads to Carbon's incremenatl path to safety:
 
--   Keep your performance, your existing codebase, and your developers
--   Adopt it through a scalable, tool-assisted migration from C++
--   Get onto an incremental path towards safety over the next decade
--   With initial improvements to safety starting day one
+-   Keep your performance, your existing codebase, and your developers.
+-   Adopt Carbon through a scalable, tool-assisted migration from C++.
+-   Address initial, easy safety improvements starting day one.
+-   Shift the Carbon code onto an incremental path towards memory safety over the next decade.
 
 > References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
