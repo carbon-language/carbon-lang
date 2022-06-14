@@ -2277,7 +2277,7 @@ migration from C++, including seamless interop, and then incrementally improve
 safety.
 
 The first impact on Carbon's design to support its safety strategy are the
-necessary building blocks for this level of compile time safety. We look at
+necessary building blocks for this level of compile-time safety. We look at
 existing languages like Rust and Swift to understand what fundamental
 capabilities they ended up needing. The two components that stand out are:
 
@@ -2292,20 +2292,6 @@ range of features:
 -   At the lowest level, a simple and extensible syntax and grammar.
 -   Tools and support for adding and removing APIs.
 -   Scalable migration strategies, including tooling support.
-
-Carbon's clean grammar provides a simple and effective platform for adding
-necessary syntax to annotate more precise semantics. This requires a systematic
-cleanup and simplification of C++'s syntax and grammar, which is inherently a
-backwards incompatible change. Grammar changes are actually among the cheapest
-migrations since they are perfect for tooling and automation. This opens up
-opportunities to provide easy pattern recognition and familiar syntactic anchors
-for humans. It also simplifies compilers, IDEs, and tooling.
-
-Once we have the ability to migrate C++ code to Carbon's simplified grammar, the
-next step is to introduce the building blocks for safety. These are things we
-need to add (relative to C++) without breaking migration. Rust can illustrate
-exactly why we need these specific features, but we need to also have a
-migration story for them.
 
 Rust shows the value of expanded semantic information in the type system such as
 precise lifetimes. This is hard to do in C++ since it has too many kinds of
@@ -2326,7 +2312,7 @@ In conclusion, there are two patterns in how Carbon diverges from C++:
 -   Re-engineer foundations to model and enforce safety. This has complex and
     difficulty in C++ without first simplifying the language.
 
-This leads to Carbon's incremenatl path to safety:
+This leads to Carbon's incremental path to safety:
 
 -   Keep your performance, your existing codebase, and your developers.
 -   Adopt Carbon through a scalable, tool-assisted migration from C++.
