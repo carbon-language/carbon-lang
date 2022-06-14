@@ -1,0 +1,11 @@
+executable("llvm-gsymutil") {
+  deps = [
+    "//llvm/lib/DebugInfo/DWARF",
+    "//llvm/lib/DebugInfo/GSYM",
+    "//llvm/lib/Object",
+    "//llvm/lib/Support",
+    "//llvm/lib/Target",
+    "//llvm/lib/Target:TargetsToBuild",
+  ]
+  sources = [ "llvm-gsymutil.cpp" ]
+}

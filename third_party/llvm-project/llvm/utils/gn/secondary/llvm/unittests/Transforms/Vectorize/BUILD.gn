@@ -1,0 +1,15 @@
+import("//llvm/utils/unittest/unittest.gni")
+
+unittest("VectorizeTests") {
+  deps = [
+    "//llvm/lib/Analysis",
+    "//llvm/lib/AsmParser",
+    "//llvm/lib/IR",
+    "//llvm/lib/Transforms/Vectorize",
+  ]
+  sources = [
+    "VPlanHCFGTest.cpp",
+    "VPlanSlpTest.cpp",
+    "VPlanTest.cpp",
+  ]
+}

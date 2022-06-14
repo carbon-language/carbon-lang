@@ -1,0 +1,137 @@
+// -*- C++ -*-
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_CSTDDEF
+#define _LIBCPP_CSTDDEF
+
+/*
+    cstddef synopsis
+
+Macros:
+
+    offsetof(type,member-designator)
+    NULL
+
+namespace std
+{
+
+Types:
+
+    ptrdiff_t
+    size_t
+    max_align_t // C++11
+    nullptr_t
+    byte // C++17
+
+}  // std
+
+*/
+
+#include <__assert> // all public C++ headers provide the assertion handler
+#include <__config>
+#include <__type_traits/enable_if.h>
+#include <__type_traits/integral_constant.h>
+#include <__type_traits/is_integral.h>
+#include <stddef.h>
+#include <version>
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#  pragma GCC system_header
+#endif
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+
+using ::nullptr_t;
+using ::ptrdiff_t _LIBCPP_USING_IF_EXISTS;
+using ::size_t _LIBCPP_USING_IF_EXISTS;
+
+#if !defined(_LIBCPP_CXX03_LANG)
+using ::max_align_t _LIBCPP_USING_IF_EXISTS;
+#endif
+
+_LIBCPP_END_NAMESPACE_STD
+
+#if _LIBCPP_STD_VER > 14
+namespace std  // purposefully not versioned
+{
+enum class byte : unsigned char {};
+
+constexpr byte  operator| (byte  __lhs, byte __rhs) noexcept
+{
+    return static_cast<byte>(
+      static_cast<unsigned char>(
+         static_cast<unsigned int>(__lhs) | static_cast<unsigned int>(__rhs)
+    ));
+}
+
+constexpr byte& operator|=(byte& __lhs, byte __rhs) noexcept
+{ return __lhs = __lhs | __rhs; }
+
+constexpr byte  operator& (byte  __lhs, byte __rhs) noexcept
+{
+    return static_cast<byte>(
+      static_cast<unsigned char>(
+         static_cast<unsigned int>(__lhs) & static_cast<unsigned int>(__rhs)
+    ));
+}
+
+constexpr byte& operator&=(byte& __lhs, byte __rhs) noexcept
+{ return __lhs = __lhs & __rhs; }
+
+constexpr byte  operator^ (byte  __lhs, byte __rhs) noexcept
+{
+    return static_cast<byte>(
+      static_cast<unsigned char>(
+         static_cast<unsigned int>(__lhs) ^ static_cast<unsigned int>(__rhs)
+    ));
+}
+
+constexpr byte& operator^=(byte& __lhs, byte __rhs) noexcept
+{ return __lhs = __lhs ^ __rhs; }
+
+constexpr byte  operator~ (byte __b) noexcept
+{
+    return static_cast<byte>(
+      static_cast<unsigned char>(
+        ~static_cast<unsigned int>(__b)
+    ));
+}
+
+template <class _Tp>
+using _EnableByteOverload = __enable_if_t<is_integral<_Tp>::value, byte>;
+
+template <class _Integer>
+  constexpr _EnableByteOverload<_Integer> &
+  operator<<=(byte& __lhs, _Integer __shift) noexcept
+  { return __lhs = __lhs << __shift; }
+
+template <class _Integer>
+  constexpr _EnableByteOverload<_Integer>
+  operator<< (byte  __lhs, _Integer __shift) noexcept
+  { return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(__lhs) << __shift)); }
+
+template <class _Integer>
+  constexpr _EnableByteOverload<_Integer> &
+  operator>>=(byte& __lhs, _Integer __shift) noexcept
+  { return __lhs = __lhs >> __shift; }
+
+template <class _Integer>
+  constexpr _EnableByteOverload<_Integer>
+  operator>> (byte  __lhs, _Integer __shift) noexcept
+  { return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(__lhs) >> __shift)); }
+
+template <class _Integer, class = _EnableByteOverload<_Integer> >
+  _LIBCPP_NODISCARD_EXT constexpr _Integer
+  to_integer(byte __b) noexcept { return static_cast<_Integer>(__b); }
+
+} // namespace std
+
+#endif
+
+#endif // _LIBCPP_CSTDDEF

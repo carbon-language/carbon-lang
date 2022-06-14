@@ -1,0 +1,25 @@
+add_entrypoint_object(
+  mmap
+  SRCS
+    mmap.cpp
+  HDRS
+    ../mmap.h
+  DEPENDS
+    libc.include.sys_mman
+    libc.include.sys_syscall
+    libc.src.__support.OSUtil.osutil
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  munmap
+  SRCS
+    munmap.cpp
+  HDRS
+    ../munmap.h
+  DEPENDS
+    libc.include.sys_mman
+    libc.include.sys_syscall
+    libc.src.__support.OSUtil.osutil
+    libc.src.errno.errno
+)

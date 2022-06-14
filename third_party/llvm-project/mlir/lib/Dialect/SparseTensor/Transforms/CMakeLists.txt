@@ -1,0 +1,32 @@
+add_mlir_dialect_library(MLIRSparseTensorTransforms
+  CodegenUtils.cpp
+  Sparsification.cpp
+  SparseTensorConversion.cpp
+  SparseTensorPasses.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/SparseTensor
+
+  DEPENDS
+  MLIRSparseTensorPassIncGen
+
+  LINK_LIBS PUBLIC
+  MLIRArithmeticDialect
+  MLIRBufferizationDialect
+  MLIRComplexDialect
+  MLIRFuncDialect
+  MLIRIR
+  MLIRLLVMDialect
+  MLIRLinalgDialect
+  MLIRLinalgTransforms
+  MLIRMemRefDialect
+  MLIRPass
+  MLIRSCFDialect
+  MLIRSCFTransforms
+  MLIRSCFUtils
+  MLIRSparseTensorDialect
+  MLIRSparseTensorUtils
+  MLIRTensorDialect
+  MLIRTransforms
+  MLIRVectorDialect
+)
