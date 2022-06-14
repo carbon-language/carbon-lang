@@ -229,6 +229,7 @@
   PERIOD
   PLUS
   RETURN
+  RETURNED
   RIGHT_CURLY_BRACE
   RIGHT_PARENTHESIS
   RIGHT_SQUARE_BRACKET
@@ -746,6 +747,12 @@ statement:
     {
       $$ = arena->New<VariableDefinition>(context.source_loc(), $2, $4,
                                           ValueCategory::Var);
+    }
+| RETURNED VAR variable_declaration EQUAL expression SEMICOLON
+    {
+      $$ = arena->New<VariableDefinition>(context.source_loc(), $3, $5,
+                                          ValueCategory::Var,
+                                          /*is_returned*/ true);
     }
 | LET pattern EQUAL expression SEMICOLON
     {

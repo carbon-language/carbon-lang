@@ -112,11 +112,13 @@ class Assign : public Statement {
 class VariableDefinition : public Statement {
  public:
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
-                     Nonnull<Expression*> init, ValueCategory value_category)
+                     Nonnull<Expression*> init, ValueCategory value_category,
+                     bool is_returned = false)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
-        value_category_(value_category) {}
+        value_category_(value_category),
+        is_returned_(is_returned) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDefinition(node->kind());
@@ -127,6 +129,7 @@ class VariableDefinition : public Statement {
   auto init() const -> const Expression& { return *init_; }
   auto init() -> Expression& { return *init_; }
   auto value_category() const -> ValueCategory { return value_category_; }
+  auto is_returned() const -> bool { return is_returned_; };
 
   // Can only be called by type-checking, if a conversion was required.
   void set_init(Nonnull<Expression*> init) { init_ = init; }
@@ -135,6 +138,7 @@ class VariableDefinition : public Statement {
   Nonnull<Pattern*> pattern_;
   Nonnull<Expression*> init_;
   ValueCategory value_category_;
+  const bool is_returned_;
 };
 
 class If : public Statement {
