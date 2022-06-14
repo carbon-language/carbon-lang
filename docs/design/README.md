@@ -2268,9 +2268,11 @@ compile-time safety. The leading example of how to achieve this is Rust.
 
 The difference between Rust's approach and Carbon's is that Rust starts with
 safety and Carbons starts with migration. Rust supports interop with C, and
-there is ongoing work to improve the C++ interop story and develop migration
-tools, but thus far the common pattern in the Rust community is to "rewrite it
-in Rust" ([1](https://deprogrammaticaipsum.com/the-great-rewriting-in-rust/),
+there is ongoing work to improve the C++-interop story and develop migration
+tools. However, there is a large gap in programming models between the two
+languages, generally requiring a revision to the architecture. So, thus far the
+common pattern in the Rust community is to "rewrite it in Rust"
+([1](https://deprogrammaticaipsum.com/the-great-rewriting-in-rust/),
 [2](https://unhandledexpression.com/rust/2017/07/10/why-you-should-actually-rewrite-it-in-rust.html),
 [3](https://transitiontech.ca/random/RIIR)). Carbon's approach is to focus on
 migration from C++, including seamless interop, and then incrementally improve
