@@ -5,7 +5,7 @@
 #ifndef CARBON_EXPLORER_SYNTAX_LEX_HELPER_H_
 #define CARBON_EXPLORER_SYNTAX_LEX_HELPER_H_
 
-// This macro is expanded immediately before each action specified below.
+// Flex expands this macro immediately before each action.
 //
 // Advances the current token position by yyleng columns without changing
 // the line number, and takes us out of the after-whitespace / after-operand
