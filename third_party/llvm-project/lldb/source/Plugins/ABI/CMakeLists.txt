@@ -1,5 +1,0 @@
-foreach(target AArch64 ARM ARC Hexagon Mips PowerPC SystemZ X86)
-  if (${target} IN_LIST LLVM_TARGETS_TO_BUILD)
-    add_subdirectory(${target})
-  endif()
-endforeach()

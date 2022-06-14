@@ -1,5 +1,0 @@
-add_subdirectory(Breakpad)
-add_subdirectory(DWARF)
-add_subdirectory(NativePDB)
-add_subdirectory(PDB)
-add_subdirectory(Symtab)

@@ -1,4 +1,0 @@
-breakpoint set --file UdtLayoutTest.cpp --line 60
-run
-target variable
-frame variable

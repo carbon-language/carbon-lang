@@ -1,4 +1,0 @@
-// This test checks that -D disassembles from a data section
-// RUN: llvm-objdump -D %p/Inputs/disassemble-data.obj | FileCheck %s
-
-// CHECK: Disassembly of section .data:

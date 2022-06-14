@@ -1,5 +1,0 @@
-include(LLVMLibCTargetNameUtils)
-include(LLVMLibCHeaderRules)
-include(LLVMLibCObjectRules)
-include(LLVMLibCLibraryRules)
-include(LLVMLibCTestRules)
