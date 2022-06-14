@@ -22,7 +22,7 @@ class StringLexHelper {
   // Advances yyscanner by one char. Sets is_eof to true and returns false on
   // EOF.
   auto Advance() -> bool;
-  // Returns last scanned char.
+  // Returns the last scanned char.
   auto last_char() -> int { return str_.back(); };
   // Returns scanned string.
   auto str() -> const std::string& { return str_; };
