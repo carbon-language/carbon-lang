@@ -2276,8 +2276,10 @@ tools, but the main refrain in the Rust community is to "rewrite it in Rust"
 migration from C++, including seamless interop, and then incrementally improve
 safety.
 
-The first impact on Carbon's design to support its safety strategy are the necessary building blocks for this level of compile time safety. We look at existing languages like Rust and Swift to
-understand what fundamental capabilities they ended up needing. The two components that stand out are:
+The first impact on Carbon's design to support its safety strategy are the
+necessary building blocks for this level of compile time safety. We look at
+existing languages like Rust and Swift to understand what fundamental
+capabilities they ended up needing. The two components that stand out are:
 
 -   Expanded type system that includes more semantic information.
 -   More pervasive use of type system abstractions (typically generics).
@@ -2308,8 +2310,8 @@ migration story for them.
 Rust shows the value of expanded semantic information in the type system such as
 precise lifetimes. This is hard to do in C++ since it has too many kinds of
 references and pointers, which increases the complexity in the type system
-multiplicatively. Carbon is attempting to compress C++'s type variations into just values
-and [pointers](#pointer-types).
+multiplicatively. Carbon is attempting to compress C++'s type variations into
+just values and [pointers](#pointer-types).
 
 Rust also shows the value of functions parameterized by lifetimes. Since
 lifetimes are only used to establish safety properties of the code, there is no
@@ -2329,7 +2331,8 @@ This leads to Carbon's incremenatl path to safety:
 -   Keep your performance, your existing codebase, and your developers.
 -   Adopt Carbon through a scalable, tool-assisted migration from C++.
 -   Address initial, easy safety improvements starting day one.
--   Shift the Carbon code onto an incremental path towards memory safety over the next decade.
+-   Shift the Carbon code onto an incremental path towards memory safety over
+    the next decade.
 
 > References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
