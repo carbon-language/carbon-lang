@@ -662,20 +662,28 @@ auto Interpreter::CallFunction(const CallExpression& call,
                   call.source_loc()));
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
+      // Bind the receiver to the `me` parameter.
       CARBON_CHECK(PatternMatch(&method.me_pattern().value(), m.receiver(),
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
+      // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
                                 call.source_loc(), &method_scope, generic_args,
                                 trace_stream_, this->arena_));
       // Bring the class type arguments into scope.
       for (const auto& [bind, val] : m.type_args()) {
-        method_scope.Initialize(bind, val);
+        method_scope.Initialize(bind->original(), val);
       }
-
+      // Bring the deduced type arguments into scope.
+      for (const auto& [bind, val] : call.deduced_args()) {
+        method_scope.Initialize(bind->original(), val);
+      }
       // Bring the impl witness tables into scope.
+      for (const auto& [impl_bind, witness] : witnesses) {
+        method_scope.Initialize(impl_bind->original(), witness);
+      }
       for (const auto& [impl_bind, witness] : m.witnesses()) {
-        method_scope.Initialize(impl_bind, witness);
+        method_scope.Initialize(impl_bind->original(), witness);
       }
       CARBON_CHECK(method.body().has_value())
           << "Calling a method that's missing a body";
@@ -911,16 +919,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      auto value_or_error =
-          todo_.ValueOfNode(ident.value_node(), ident.source_loc());
-      if (!value_or_error.ok() && phase() == Phase::CompileTime &&
-          isa<ImplBinding>(ident.value_node().base())) {
-        // The `ImplBinding` might not be in scope. If so, just remember the
-        // expression from which it was derived.
-        return todo_.FinishAction(arena_->New<SymbolicWitness>(&exp));
-      }
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
-                              std::move(value_or_error));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
       if (const auto* lvalue = dyn_cast<LValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), exp.source_loc()));
@@ -1018,6 +1019,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           const auto& args = cast<TupleValue>(*act.results()[0]);
           // TODO: This could eventually use something like llvm::formatv.
           llvm::outs() << cast<StringValue>(*args.elements()[0]).value();
+          return todo_.FinishAction(TupleValue::Empty());
+        }
+        case IntrinsicExpression::Intrinsic::Alloc: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
+          CARBON_CHECK(args.elements().size() == 1);
+          Address addr(heap_.AllocateValue(args.elements()[0]));
+          return todo_.FinishAction(arena_->New<PointerValue>(addr));
+        }
+        case IntrinsicExpression::Intrinsic::Dealloc: {
+          const auto& args = cast<TupleValue>(*act.results()[0]);
+          CARBON_CHECK(args.elements().size() == 1);
+          heap_.Deallocate(cast<PointerValue>(args.elements()[0])->address());
           return todo_.FinishAction(TupleValue::Empty());
         }
       }
@@ -1428,7 +1441,11 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&var_decl.initializer()));
         } else {
-          todo_.Initialize(&var_decl.binding(), act.results()[0]);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> v,
+              Convert(act.results()[0], &var_decl.binding().static_type(),
+                      var_decl.source_loc()));
+          todo_.Initialize(&var_decl.binding(), v);
           return todo_.FinishAction();
         }
       } else {

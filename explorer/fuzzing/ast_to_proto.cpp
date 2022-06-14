@@ -230,6 +230,12 @@ static auto ExpressionToProto(const Expression& expression)
         case IntrinsicExpression::Intrinsic::Print:
           intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Print);
           break;
+        case IntrinsicExpression::Intrinsic::Alloc:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Alloc);
+          break;
+        case IntrinsicExpression::Intrinsic::Dealloc:
+          intrinsic_proto->set_intrinsic(Fuzzing::IntrinsicExpression::Dealloc);
+          break;
       }
       *intrinsic_proto->mutable_argument() =
           TupleLiteralExpressionToProto(intrinsic.args());

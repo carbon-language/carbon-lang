@@ -293,6 +293,12 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
         case Fuzzing::IntrinsicExpression::Print:
           out << "__intrinsic_print";
           break;
+        case Fuzzing::IntrinsicExpression::Alloc:
+          out << "__intrinsic_new";
+          break;
+        case Fuzzing::IntrinsicExpression::Dealloc:
+          out << "__intrinsic_delete";
+          break;
       }
       TupleLiteralExpressionToCarbon(intrinsic.argument(), out);
     } break;
