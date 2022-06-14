@@ -69,8 +69,8 @@ class ExitingStream {
     // std::abort(). We print a stack trace on construction, so this avoids that
     // stack trace on exit.
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    // Using `exit()` to allow the fuzzer to 'see' the CHECKs.
-    exit(1);
+    // Using `std::abort()` to allow the fuzzer to 'see' the CHECKs.
+    std::abort();
 #else
     // Using `_exit()` to suppress extra output (like asan leaks report)
     // after the crash message.
