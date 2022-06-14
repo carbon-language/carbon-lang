@@ -2259,7 +2259,68 @@ The common type is required to be a type that both types have an
 
 ### Safety
 
-> **TODO:**
+Carbon's premise is that C++ users can't give up performance to get safety. Even
+if some isolated users can make that tradeoff, they share code with
+performance-sensitive users. Any path to safety must preserve performance of C++
+today. This rules out garbage collection, and many other options. The only well
+understood mechanism of achieving safety without giving up performance is
+compile-time safety. The leading example of how to achieve this is Rust.
+
+The difference between Rust's approach and Carbon's is that Rust starts with
+safety and Carbons starts with migration. Rust supports interop with C, and
+there is ongoing work to improve the C++-interop story and develop migration
+tools. However, there is a large gap in programming models between the two
+languages, generally requiring a revision to the architecture. So, thus far the
+common pattern in the Rust community is to "rewrite it in Rust"
+([1](https://deprogrammaticaipsum.com/the-great-rewriting-in-rust/),
+[2](https://unhandledexpression.com/rust/2017/07/10/why-you-should-actually-rewrite-it-in-rust.html),
+[3](https://transitiontech.ca/random/RIIR)). Carbon's approach is to focus on
+migration from C++, including seamless interop, and then incrementally improve
+safety.
+
+The first impact on Carbon's design to support its safety strategy are the
+necessary building blocks for this level of compile-time safety. We look at
+existing languages like Rust and Swift to understand what fundamental
+capabilities they ended up needing. The two components that stand out are:
+
+-   Expanded type system that includes more semantic information.
+-   More pervasive use of type system abstractions (typically generics).
+
+For migrating C++ code, we also need the ability to add features and migrate
+code to use those new features incrementally and over time. This requires
+designing the language with evolution baked in on day one. This impacts a wide
+range of features:
+
+-   At the lowest level, a simple and extensible syntax and grammar.
+-   Tools and support for adding and removing APIs.
+-   Scalable migration strategies, including tooling support.
+
+Rust shows the value of expanded semantic information in the type system such as
+precise lifetimes. This is hard to do in C++ since it has too many kinds of
+references and pointers, which increases the complexity in the type system
+multiplicatively. Carbon is attempting to compress C++'s type variations into
+just values and [pointers](#pointer-types).
+
+Rust also shows the value of functions parameterized by lifetimes. Since
+lifetimes are only used to establish safety properties of the code, there is no
+reason to pay the cost of monomorphization for those parameters. So we need a
+[generics system](#generics) that can reason about code before it is
+instantiated, unlike C++ templates.
+
+In conclusion, there are two patterns in how Carbon diverges from C++:
+
+-   Simplify and removing things to create space for new safety features. This
+    trivially requires breaking backwards compatibility.
+-   Re-engineer foundations to model and enforce safety. This has complex and
+    difficulty in C++ without first simplifying the language.
+
+This leads to Carbon's incremental path to safety:
+
+-   Keep your performance, your existing codebase, and your developers.
+-   Adopt Carbon through a scalable, tool-assisted migration from C++.
+-   Address initial, easy safety improvements starting day one.
+-   Shift the Carbon code onto an incremental path towards memory safety over
+    the next decade.
 
 > References: [Safety strategy](/docs/project/principles/safety_strategy.md)
 
