@@ -267,8 +267,8 @@ operand_start         [(A-Za-z0-9_\"]
   // string the source represents.
   Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
   std::string s = str_lex_helper.str();
-  const size_t hashtag_num = std::count(s.begin(), s.end(), '#');
-  const size_t leading_quotes = std::count(s.begin(), s.end(), '"');
+  const int hashtag_num = std::count(s.begin(), s.end(), '#');
+  const int leading_quotes = std::count(s.begin(), s.end(), '"');
   if (leading_quotes == 3 && hashtag_num > 0) {
     // Check if it's a single-line string, like #"""#.
     if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
