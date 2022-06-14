@@ -75,7 +75,8 @@ auto StaticScope::TryResolve(const std::string& name,
 
 auto StaticScope::AddReturnedVar(const SourceLocation& returned_var_loc)
     -> ErrorOr<Success> {
-  auto resolved_returned_var_loc = ResolveReturned();
+  std::optional<Carbon::SourceLocation> resolved_returned_var_loc =
+      ResolveReturned();
   if (resolved_returned_var_loc.has_value()) {
     return CompilationError(returned_var_loc)
            << "Duplicate definition of returned var also found at "
@@ -90,7 +91,8 @@ auto StaticScope::ResolveReturned() const -> std::optional<SourceLocation> {
     return returned_var_loc_;
   }
   for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    auto parent_returned_var_loc = parent->ResolveReturned();
+    std::optional<Carbon::SourceLocation> parent_returned_var_loc =
+        parent->ResolveReturned();
     if (parent_returned_var_loc.has_value()) {
       return parent_returned_var_loc;
     }

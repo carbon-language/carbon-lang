@@ -173,9 +173,9 @@ class StaticScope {
   auto Resolve(const std::string& name, SourceLocation source_loc) const
       -> ErrorOr<ValueNodeView>;
 
-  // Adds AST node of returned var declaration to this scope.
-  // Reports a compilation error if this scope or its anscestors already has a
-  // returned var.
+  // Adds source location of returned var declaration to this scope.
+  // Throws a compilation error when there is an existing returned var in the
+  // ancestor graph.
   auto AddReturnedVar(const SourceLocation& returned_var_loc)
       -> ErrorOr<Success>;
 

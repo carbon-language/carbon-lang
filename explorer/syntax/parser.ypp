@@ -774,7 +774,6 @@ statement:
       auto [return_exp, is_omitted_exp] = $2;
       $$ = arena->New<Return>(context.source_loc(), return_exp, is_omitted_exp);
     }
-    }
 | MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE
   clause_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Match>(context.source_loc(), $3, $6); }
@@ -800,11 +799,9 @@ optional_else:
 | ELSE block
     { $$ = $2; }
 ;
-{ $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; };
 return_expression:
   // Empty
     { $$ = {arena->New<TupleLiteral>(context.source_loc()), true}; }
-    { $$ = $1; }
 | expression
     { $$ = {$1, false}; }
 ;
